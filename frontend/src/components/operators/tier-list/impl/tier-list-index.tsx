@@ -4,8 +4,12 @@ import { ArrowRight, Calendar, LayoutList, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
 import { Badge } from "~/components/ui/shadcn/badge";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { cn } from "~/lib/utils";
+import type { TierListType } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 
 interface TierListPreview {
@@ -14,6 +18,7 @@ interface TierListPreview {
     slug: string;
     description: string | null;
     is_active: boolean;
+    tier_list_type: TierListType;
     created_at: string;
     updated_at: string;
     operatorCount: number;
@@ -25,6 +30,8 @@ interface TierListIndexProps {
     tierLists: TierListPreview[];
 }
 
+type FilterType = "all" | "official" | "community";
+
 const CONTAINER_TRANSITION = {
     type: "spring" as const,
     stiffness: 500,
@@ -32,7 +39,16 @@ const CONTAINER_TRANSITION = {
 };
 
 export function TierListIndex({ tierLists }: TierListIndexProps) {
+    const [filter, setFilter] = useState<FilterType>("all");
+
     const activeTierLists = tierLists.filter((tl) => tl.is_active);
+    const filteredTierLists = activeTierLists.filter((tl) => {
+        if (filter === "all") return true;
+        return tl.tier_list_type === filter;
+    });
+
+    const officialCount = activeTierLists.filter((tl) => tl.tier_list_type === "official").length;
+    const communityCount = activeTierLists.filter((tl) => tl.tier_list_type === "community").length;
 
     return (
         <div className="min-w-0 space-y-6">
@@ -42,19 +58,26 @@ export function TierListIndex({ tierLists }: TierListIndexProps) {
                 <p className="text-muted-foreground">Browse operator tier lists and rankings</p>
             </div>
 
-            {/* Stats */}
-            <div className="flex items-center gap-4 text-muted-foreground text-sm">
-                <div className="flex items-center gap-1.5">
+            {/* Filter Tabs */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <Tabs defaultValue="all" onValueChange={(v) => setFilter(v as FilterType)} value={filter}>
+                    <TabsList>
+                        <TabsTrigger value="all">All ({activeTierLists.length})</TabsTrigger>
+                        <TabsTrigger value="official">Official ({officialCount})</TabsTrigger>
+                        <TabsTrigger value="community">Community ({communityCount})</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                     <LayoutList className="h-4 w-4" />
-                    <span>{activeTierLists.length} tier lists available</span>
+                    <span>{filteredTierLists.length} tier lists</span>
                 </div>
             </div>
 
             {/* Tier Lists Grid */}
             <AnimatePresence mode="wait">
-                {activeTierLists.length > 0 ? (
-                    <motion.div animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" exit={{ opacity: 0, y: 8 }} initial={{ opacity: 0, y: 8 }} transition={CONTAINER_TRANSITION}>
-                        {activeTierLists.map((tierList, index) => (
+                {filteredTierLists.length > 0 ? (
+                    <motion.div animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" exit={{ opacity: 0, y: 8 }} initial={{ opacity: 0, y: 8 }} key={filter} transition={CONTAINER_TRANSITION}>
+                        {filteredTierLists.map((tierList, index) => (
                             <motion.div
                                 animate={{ opacity: 1, y: 0 }}
                                 initial={{ opacity: 0, y: 8 }}
@@ -70,12 +93,12 @@ export function TierListIndex({ tierLists }: TierListIndexProps) {
                         ))}
                     </motion.div>
                 ) : (
-                    <motion.div animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center" exit={{ opacity: 0, scale: 0.98 }} initial={{ opacity: 0, scale: 0.98 }} transition={CONTAINER_TRANSITION}>
+                    <motion.div animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center" exit={{ opacity: 0, scale: 0.98 }} initial={{ opacity: 0, scale: 0.98 }} key={`empty-${filter}`} transition={CONTAINER_TRANSITION}>
                         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
                             <LayoutList className="h-8 w-8 text-muted-foreground" />
                         </div>
                         <h3 className="mb-2 font-semibold text-foreground text-lg">No tier lists available</h3>
-                        <p className="max-w-sm text-muted-foreground text-sm">Check back later for operator tier lists and rankings.</p>
+                        <p className="max-w-sm text-muted-foreground text-sm">{filter === "community" ? "No community tier lists have been created yet." : filter === "official" ? "No official tier lists are available." : "Check back later for operator tier lists and rankings."}</p>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -131,6 +154,7 @@ function TierListCard({ tierList }: { tierList: TierListPreview }) {
 
                 {/* Stats and Meta */}
                 <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
+                    <TierListTypeBadge showIcon={false} type={tierList.tier_list_type} />
                     <Badge className="gap-1 bg-secondary/50 text-muted-foreground" variant="secondary">
                         <Users className="h-3 w-3" />
                         {tierList.operatorCount} operators

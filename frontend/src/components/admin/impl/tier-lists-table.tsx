@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Eye, LayoutList, MoreHorizontal, Plus, RefreshCw, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Eye, LayoutList, MoreHorizontal, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
 import type { TierListSummary } from "~/types/frontend/admin";
 import { Badge } from "../../ui/shadcn/badge";
 import { Button } from "../../ui/shadcn/button";
@@ -18,8 +19,10 @@ interface TierListsTableProps {
     onDelete?: (tierList: TierListSummary) => void;
     onCreate?: () => void;
     onView?: (tierList: TierListSummary) => void;
+    onModerate?: (tierList: TierListSummary) => void;
     canCreate?: boolean;
     canDelete?: boolean;
+    canModerate?: boolean;
 }
 
 type SortField = "name" | "operatorCount" | "tierCount" | "versionCount" | "createdAt" | "updatedAt";
@@ -39,7 +42,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
     );
 }
 
-export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, onDelete, onCreate, onView, canCreate = true, canDelete = true }: TierListsTableProps) {
+export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, onDelete, onCreate, onView, onModerate, canCreate = true, canDelete = true, canModerate = false }: TierListsTableProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [sortField, setSortField] = useState<SortField>("updatedAt");
@@ -122,7 +125,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                         {/* Search */}
                         <div className="relative">
                             <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                            <Input className="h-8 w-[200px] border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tier lists..." value={searchQuery} />
+                            <Input className="h-8 w-50 border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search tier lists..." value={searchQuery} />
                         </div>
 
                         {/* Filter Dropdown */}
@@ -233,44 +236,45 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/30">
-                            <TableHead className="w-[200px]">
+                            <TableHead className="w-50">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("name")} type="button">
                                     <span>Name</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[100px]">Status</TableHead>
+                            <TableHead className="w-25">Type</TableHead>
+                            <TableHead className="w-25">Status</TableHead>
                             <TableHead className="w-20">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("tierCount")} type="button">
                                     <span>Tiers</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[100px]">
+                            <TableHead className="w-25">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("operatorCount")} type="button">
                                     <span>Operators</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[100px]">
+                            <TableHead className="w-25">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("versionCount")} type="button">
                                     <span>Versions</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[120px]">
+                            <TableHead className="w-30">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("updatedAt")} type="button">
                                     <span>Updated</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[60px]">Actions</TableHead>
+                            <TableHead className="w-15">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginatedTierLists.length === 0 ? (
                             <TableRow>
-                                <TableCell className="h-24 text-center text-muted-foreground" colSpan={7}>
+                                <TableCell className="h-24 text-center text-muted-foreground" colSpan={8}>
                                     No tier lists found.
                                 </TableCell>
                             </TableRow>
@@ -282,6 +286,9 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                                             <span className="font-medium text-sm">{tierList.name}</span>
                                             <span className="font-mono text-muted-foreground text-xs">{tierList.slug}</span>
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <TierListTypeBadge showIcon={false} type={tierList.tierListType} />
                                     </TableCell>
                                     <TableCell>
                                         <StatusBadge isActive={tierList.isActive} />
@@ -318,6 +325,12 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                                                         Edit
                                                     </DropdownMenuItem>
                                                 )}
+                                                {canModerate && onModerate && tierList.tierListType === "community" && (
+                                                    <DropdownMenuItem onClick={() => onModerate(tierList)}>
+                                                        <Shield className="mr-2 h-4 w-4" />
+                                                        Moderate
+                                                    </DropdownMenuItem>
+                                                )}
                                                 {canDelete && onDelete && (
                                                     <>
                                                         <DropdownMenuSeparator />
@@ -348,7 +361,7 @@ export function TierListsTable({ tierLists, loading = false, onRefresh, onEdit, 
                         <div className="flex items-center gap-2">
                             <span className="hidden sm:inline">Show</span>
                             <Select onValueChange={(v) => setItemsPerPage(Number(v))} value={itemsPerPage.toString()}>
-                                <SelectTrigger className="h-8 w-[70px] bg-muted/50">
+                                <SelectTrigger className="h-8 w-17.5 bg-muted/50">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

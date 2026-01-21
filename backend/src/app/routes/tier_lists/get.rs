@@ -37,6 +37,8 @@ pub struct TierListDetail {
     pub slug: String,
     pub description: Option<String>,
     pub is_active: bool,
+    pub tier_list_type: String,
+    pub created_by: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub tiers: Vec<TierWithOperators>,
@@ -56,6 +58,11 @@ pub async fn get_tier_list(
             ApiError::Internal("Database error".into())
         })?
         .ok_or_else(|| ApiError::NotFound("Tier list not found".into()))?;
+
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
 
     // Get tiers
     let tiers = Tier::find_by_tier_list(&state.db, tier_list.id)
@@ -113,6 +120,8 @@ pub async fn get_tier_list(
         slug: tier_list.slug,
         description: tier_list.description,
         is_active: tier_list.is_active,
+        tier_list_type: tier_list.tier_list_type,
+        created_by: tier_list.created_by.map(|id| id.to_string()),
         created_at: tier_list.created_at.to_rfc3339(),
         updated_at: tier_list.updated_at.to_rfc3339(),
         tiers: tiers_with_operators,

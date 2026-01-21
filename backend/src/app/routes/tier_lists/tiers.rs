@@ -11,7 +11,7 @@ use crate::app::state::AppState;
 use crate::core::authentication::permissions::Permission;
 use crate::database::models::tier_lists::{CreateTier, Tier, TierChangeLog};
 
-use super::middleware::{check_permission, get_tier_list_by_slug, require_auth};
+use super::middleware::{check_tier_list_permission, get_tier_list_by_slug, require_auth};
 
 #[derive(Serialize)]
 pub struct TierData {
@@ -85,6 +85,11 @@ pub async fn list_tiers(
 ) -> Result<Json<ListTiersResponse>, ApiError> {
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
     let tiers = Tier::find_by_tier_list(&state.db, tier_list.id)
         .await
         .map_err(|e| {
@@ -117,7 +122,12 @@ pub async fn create_tier(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let input = CreateTier {
         name: body.name,
@@ -169,7 +179,12 @@ pub async fn update_tier(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let tier_uuid =
         Uuid::parse_str(&tier_id).map_err(|_| ApiError::BadRequest("Invalid tier ID".into()))?;
@@ -211,7 +226,12 @@ pub async fn delete_tier(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let tier_uuid =
         Uuid::parse_str(&tier_id).map_err(|_| ApiError::BadRequest("Invalid tier ID".into()))?;
@@ -255,7 +275,12 @@ pub async fn reorder_tiers(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let tier_orders: Result<Vec<(Uuid, i32)>, _> = body
         .order

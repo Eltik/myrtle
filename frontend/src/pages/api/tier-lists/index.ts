@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import { canCreateTierList, isAdminRole } from "~/lib/permissions";
+import { isAdminRole } from "~/lib/permissions";
+import type { TierListType } from "~/types/api/impl/tier-list";
 
 interface TierListFromBackend {
     id: string;
@@ -9,6 +10,8 @@ interface TierListFromBackend {
     slug: string;
     description: string | null;
     is_active: boolean;
+    tier_list_type: TierListType;
+    created_by: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -58,7 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     try {
         if (req.method === "GET") {
             // GET /tier-lists - List all tier lists (public)
-            const response = await backendFetch("/tier-lists");
+            // Support type filter: ?type=official|community|all (default: all)
+            const typeFilter = req.query.type as string | undefined;
+            const queryParams = typeFilter ? `?type=${encodeURIComponent(typeFilter)}` : "";
+            const response = await backendFetch(`/tier-lists${queryParams}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -77,7 +83,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         if (req.method === "POST") {
-            // POST /tier-lists - Create a new tier list (requires TierListAdmin or SuperAdmin)
+            // POST /tier-lists - Create a new tier list
+            // - Any authenticated user can create community tier lists
+            // - Only admins can create official tier lists
             const siteToken = getSiteToken(req);
 
             if (!siteToken) {
@@ -89,14 +97,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
             // Server-side role verification
             const { valid, role } = await verifyUserRole(siteToken);
-            if (!valid || !isAdminRole(role ?? undefined) || !canCreateTierList(role as Parameters<typeof canCreateTierList>[0])) {
-                return res.status(403).json({
+            if (!valid) {
+                return res.status(401).json({
                     success: false,
-                    error: "You don't have permission to create tier lists",
+                    error: "Invalid or expired session",
                 });
             }
 
-            const { name, slug, description, is_active } = req.body;
+            const { name, slug, description, is_active, tier_list_type } = req.body;
 
             if (!name || !slug) {
                 return res.status(400).json({
@@ -104,6 +112,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     error: "Name and slug are required",
                 });
             }
+
+            // Determine tier list type based on user role
+            // Non-admins can only create community tier lists
+            const isAdmin = isAdminRole(role ?? undefined);
+            const effectiveType: TierListType = isAdmin && tier_list_type === "official" ? "official" : "community";
+
+            // Only admins can create active official tier lists
+            const effectiveActive = effectiveType === "official" ? (is_active ?? false) : true;
 
             const response = await backendFetch("/tier-lists", {
                 method: "POST",
@@ -114,7 +130,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     name,
                     slug,
                     description: description || null,
-                    is_active: is_active ?? false,
+                    is_active: effectiveActive,
+                    tier_list_type: effectiveType,
                 }),
             });
 

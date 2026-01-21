@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import { isAdminRole } from "~/lib/permissions";
+import type { TierListType } from "~/types/api/impl/tier-list";
 
 interface TierData {
     id: string | null;
@@ -38,19 +39,20 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 interface VerifyResponse {
     valid: boolean;
     role?: string;
+    user_id?: string;
 }
 
-async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
+async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null; userId: string | null }> {
     try {
         const response = await backendFetch("/auth/verify", {
             method: "POST",
             body: JSON.stringify({ token }),
         });
-        if (!response.ok) return { valid: false, role: null };
+        if (!response.ok) return { valid: false, role: null, userId: null };
         const data: VerifyResponse = await response.json();
-        return { valid: data.valid, role: data.role || null };
+        return { valid: data.valid, role: data.role || null, userId: data.user_id || null };
     } catch {
-        return { valid: false, role: null };
+        return { valid: false, role: null, userId: null };
     }
 }
 
@@ -81,16 +83,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
     }
 
-    // Server-side role verification - require any admin role
-    const { valid, role } = await verifyUserRole(siteToken);
-    if (!valid || !isAdminRole(role ?? undefined)) {
-        return res.status(403).json({
+    // Server-side role verification
+    const { valid, role, userId } = await verifyUserRole(siteToken);
+    if (!valid) {
+        return res.status(401).json({
             success: false,
-            error: "You don't have permission to edit tier lists",
+            error: "Invalid or expired session",
         });
     }
 
     try {
+        // Fetch the tier list to check type and ownership
+        const tierListResponse = await backendFetch(`/tier-lists/${slug}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!tierListResponse.ok) {
+            return res.status(tierListResponse.status).json({
+                success: false,
+                error: "Tier list not found",
+            });
+        }
+
+        const tierListData = await tierListResponse.json();
+        const tierListType = (tierListData.tier_list_type || "official") as TierListType;
+        const createdBy = tierListData.created_by;
+
+        // Authorization: community tier lists require ownership, official require admin
+        if (tierListType === "community") {
+            if (createdBy !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't own this tier list",
+                });
+            }
+        } else {
+            // Official tier lists require admin role
+            if (!isAdminRole(role ?? undefined)) {
+                return res.status(403).json({
+                    success: false,
+                    error: "You don't have permission to edit tier lists",
+                });
+            }
+        }
         const { tiers } = req.body as SyncRequest;
 
         if (!tiers || !Array.isArray(tiers)) {

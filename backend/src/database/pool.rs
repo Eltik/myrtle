@@ -165,6 +165,74 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Add community tier list columns to tier_lists table
+    sqlx::query(
+        r#"
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tier_lists' AND column_name = 'tier_list_type') THEN
+                ALTER TABLE tier_lists ADD COLUMN tier_list_type VARCHAR(20) NOT NULL DEFAULT 'official';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tier_lists' AND column_name = 'is_deleted') THEN
+                ALTER TABLE tier_lists ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT false;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tier_lists' AND column_name = 'deleted_by') THEN
+                ALTER TABLE tier_lists ADD COLUMN deleted_by UUID REFERENCES users(id);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tier_lists' AND column_name = 'deleted_reason') THEN
+                ALTER TABLE tier_lists ADD COLUMN deleted_reason TEXT;
+            END IF;
+        END $$;
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Index for tier list type filtering
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tier_lists_type ON tier_lists(tier_list_type)")
+        .execute(pool)
+        .await?;
+
+    // Index for community tier lists by owner
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_tier_lists_community_owner ON tier_lists(created_by) WHERE tier_list_type = 'community'",
+    )
+    .execute(pool)
+    .await?;
+
+    // Tier list reports table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS tier_list_reports (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tier_list_id UUID NOT NULL REFERENCES tier_lists(id) ON DELETE CASCADE,
+            reporter_id UUID NOT NULL REFERENCES users(id),
+            reason VARCHAR(50) NOT NULL,
+            description TEXT,
+            status VARCHAR(20) NOT NULL DEFAULT 'pending',
+            reviewed_by UUID REFERENCES users(id),
+            reviewed_at TIMESTAMPTZ,
+            action_taken TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(tier_list_id, reporter_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_tier_list_reports_status ON tier_list_reports(status)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_tier_list_reports_tier_list ON tier_list_reports(tier_list_id)",
+    )
+    .execute(pool)
+    .await?;
+
     // Leaderboard performance indices
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_users_server ON users(server)")
         .execute(pool)

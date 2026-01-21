@@ -57,3 +57,17 @@ export function canDeleteTierList(role: AdminRole | null): boolean {
 export function canToggleTierListActive(role: AdminRole | null): boolean {
     return hasMinRole(role, "tier_list_admin");
 }
+
+/**
+ * Check if user can moderate community tier lists (tier_list_admin or higher)
+ */
+export function canModerateTierList(role: AdminRole | null): boolean {
+    return hasMinRole(role, "tier_list_admin");
+}
+
+/**
+ * Check if user can review tier list reports (any admin role)
+ */
+export function canReviewReports(role: AdminRole | null): boolean {
+    return hasMinRole(role, "tier_list_editor");
+}

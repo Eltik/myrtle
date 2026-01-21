@@ -41,6 +41,21 @@ async function verifyUserRole(token: string): Promise<{ valid: boolean; role: Ad
     }
 }
 
+// Verify user is authenticated (doesn't require admin role)
+async function verifyUserAuth(token: string): Promise<{ valid: boolean; role: string | null }> {
+    try {
+        const response = await backendFetch("/auth/verify", {
+            method: "POST",
+            body: JSON.stringify({ token }),
+        });
+        if (!response.ok) return { valid: false, role: null };
+        const data: VerifyResponse = await response.json();
+        return { valid: data.valid, role: data.role || null };
+    } catch {
+        return { valid: false, role: null };
+    }
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     const { slug } = req.query;
 
@@ -89,6 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     slug: data.slug,
                     description: data.description,
                     is_active: data.is_active,
+                    tier_list_type: data.tier_list_type || "official",
                     created_by: data.created_by,
                     created_at: data.created_at,
                     updated_at: data.updated_at,
@@ -167,7 +183,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         if (req.method === "DELETE") {
-            // DELETE /tier-lists/{slug} - Delete tier list (requires TierListAdmin or SuperAdmin)
+            // DELETE /tier-lists/{slug} - Delete tier list
+            // - Community tier lists: owner can delete
+            // - Official tier lists: requires TierListAdmin or SuperAdmin
             const siteToken = getSiteToken(req);
 
             if (!siteToken) {
@@ -177,9 +195,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
 
-            // Server-side role verification
-            const { valid, role } = await verifyUserRole(siteToken);
-            if (!valid || !canDeleteTierList(role)) {
+            // Verify user is authenticated (any authenticated user can potentially delete community tier lists)
+            const { valid, role } = await verifyUserAuth(siteToken);
+            if (!valid) {
+                return res.status(401).json({
+                    success: false,
+                    error: "Invalid or expired session",
+                });
+            }
+
+            // Fetch the tier list to check type
+            const tierListResponse = await backendFetch(`/tier-lists/${slug}`, {
+                method: "GET",
+            });
+
+            if (!tierListResponse.ok) {
+                return res.status(tierListResponse.status).json({
+                    success: false,
+                    error: "Tier list not found",
+                });
+            }
+
+            const tierListData = await tierListResponse.json();
+            const tierListType = tierListData.tier_list_type || "official";
+
+            // For official tier lists, require admin permissions
+            // For community tier lists, let the backend check ownership
+            if (tierListType !== "community" && !canDeleteTierList(role as AdminRole | null)) {
                 return res.status(403).json({
                     success: false,
                     error: "You don't have permission to delete tier lists",

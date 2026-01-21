@@ -1,7 +1,10 @@
 "use client";
 
-import { BookOpen, ChevronRight, ClipboardList, HelpCircle, History } from "lucide-react";
-import { useState } from "react";
+import { BookOpen, ChevronRight, ClipboardList, Flag, HelpCircle, History } from "lucide-react";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { ReportTierListDialog } from "~/components/tier-lists/report-tier-list-dialog";
+import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/shadcn/dialog";
@@ -9,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/shadcn/
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { useAuth } from "~/hooks/use-auth";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 import type { OperatorFromList } from "~/types/api/operators";
 import { TierRow } from "./impl/tier-row";
@@ -21,11 +25,13 @@ interface TierListViewProps {
 }
 
 export function TierListView({ tierListData, operatorsData, versions }: TierListViewProps) {
+    const { user } = useAuth();
     const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState<TierListVersionSummary | null>(null);
     const [versionDialogOpen, setVersionDialogOpen] = useState(false);
     const [changelogDialogOpen, setChangelogDialogOpen] = useState(false);
+    const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
     const handleVersionClick = (version: TierListVersionSummary) => {
         setSelectedVersion(version);
@@ -42,7 +48,31 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
         }
     };
 
+    const handleReport = useCallback(
+        async (data: { reason: string; description?: string }) => {
+            const response = await fetch(`/api/tier-lists/${tierListData.tier_list.slug}/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to submit report");
+            }
+
+            toast.success("Report submitted. Thank you for helping keep the community safe.");
+        },
+        [tierListData.tier_list.slug],
+    );
+
     const latestVersion = versions[0];
+
+    // Check if user can report this tier list
+    const isCommunityTierList = tierListData.tier_list.tier_list_type === "community";
+    const isOwner = user?.status.uid === tierListData.tier_list.created_by;
+    const canReport = user && isCommunityTierList && !isOwner;
 
     return (
         <div className="min-w-0 space-y-6">
@@ -50,74 +80,87 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
             <div className="space-y-2">
                 <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="font-bold text-3xl text-foreground md:text-4xl">{tierListData.tier_list.name}</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="font-bold text-3xl text-foreground md:text-4xl">{tierListData.tier_list.name}</h1>
+                            <TierListTypeBadge type={tierListData.tier_list.tier_list_type} />
+                        </div>
                         {tierListData.tier_list.description && <p className="text-muted-foreground text-sm">{tierListData.tier_list.description}</p>}
                     </div>
 
-                    {/* Info Button */}
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button className="shrink-0" size="icon" variant="ghost">
-                                <HelpCircle className="h-5 w-5 text-muted-foreground" />
-                                <span className="sr-only">Tier list information</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                        {/* Report Button - only for community tier lists when logged in and not owner */}
+                        {canReport && (
+                            <Button onClick={() => setReportDialogOpen(true)} size="icon" variant="ghost">
+                                <Flag className="h-5 w-5 text-muted-foreground" />
+                                <span className="sr-only">Report tier list</span>
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="end" className="w-80">
-                            <Tabs defaultValue="how-it-works">
-                                <TabsList className="w-full">
-                                    <TabsTrigger className="flex-1 text-xs" value="how-it-works">
-                                        <BookOpen className="mr-1.5 h-3 w-3" />
-                                        How It Works
-                                    </TabsTrigger>
-                                    <Separator className="h-4" orientation="vertical" />
-                                    <TabsTrigger className="flex-1 text-xs" value="criteria">
-                                        <ClipboardList className="mr-1.5 h-3 w-3" />
-                                        Criteria
-                                    </TabsTrigger>
-                                </TabsList>
-                                <Separator className="my-3" />
-                                <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="how-it-works">
-                                    <p>Operators are ranked by overall performance across game modes:</p>
-                                    <ul className="space-y-1 text-xs">
-                                        <li>
-                                            <span className="font-medium text-foreground">S+ / S:</span> Meta-defining, excel in most situations
-                                        </li>
-                                        <li>
-                                            <span className="font-medium text-foreground">A+ / A:</span> Strong impact and good versatility
-                                        </li>
-                                        <li>
-                                            <span className="font-medium text-foreground">B+ / B:</span> Solid choices in their niche
-                                        </li>
-                                        <li>
-                                            <span className="font-medium text-foreground">C / D:</span> Situational or outclassed
-                                        </li>
-                                    </ul>
-                                    <p className="text-muted-foreground/70 text-xs italic">Rankings vary by team comp and stage. Left-to-right = general recommendation.</p>
-                                </TabsContent>
-                                <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="criteria">
-                                    <p className="text-xs">Operators are evaluated on:</p>
-                                    <div className="space-y-1.5">
-                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
-                                            <p className="font-medium text-foreground text-xs">Combat Performance</p>
-                                            <p className="text-[10px]">DPS, survivability, CC, skill cycling</p>
+                        )}
+
+                        {/* Info Button */}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button className="shrink-0" size="icon" variant="ghost">
+                                    <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                                    <span className="sr-only">Tier list information</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="w-80">
+                                <Tabs defaultValue="how-it-works">
+                                    <TabsList className="w-full">
+                                        <TabsTrigger className="flex-1 text-xs" value="how-it-works">
+                                            <BookOpen className="mr-1.5 h-3 w-3" />
+                                            How It Works
+                                        </TabsTrigger>
+                                        <Separator className="h-4" orientation="vertical" />
+                                        <TabsTrigger className="flex-1 text-xs" value="criteria">
+                                            <ClipboardList className="mr-1.5 h-3 w-3" />
+                                            Criteria
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <Separator className="my-3" />
+                                    <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="how-it-works">
+                                        <p>Operators are ranked by overall performance across game modes:</p>
+                                        <ul className="space-y-1 text-xs">
+                                            <li>
+                                                <span className="font-medium text-foreground">S+ / S:</span> Meta-defining, excel in most situations
+                                            </li>
+                                            <li>
+                                                <span className="font-medium text-foreground">A+ / A:</span> Strong impact and good versatility
+                                            </li>
+                                            <li>
+                                                <span className="font-medium text-foreground">B+ / B:</span> Solid choices in their niche
+                                            </li>
+                                            <li>
+                                                <span className="font-medium text-foreground">C / D:</span> Situational or outclassed
+                                            </li>
+                                        </ul>
+                                        <p className="text-muted-foreground/70 text-xs italic">Rankings vary by team comp and stage. Left-to-right = general recommendation.</p>
+                                    </TabsContent>
+                                    <TabsContent className="mt-0 space-y-2 text-muted-foreground text-sm" value="criteria">
+                                        <p className="text-xs">Operators are evaluated on:</p>
+                                        <div className="space-y-1.5">
+                                            <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                                <p className="font-medium text-foreground text-xs">Combat Performance</p>
+                                                <p className="text-[10px]">DPS, survivability, CC, skill cycling</p>
+                                            </div>
+                                            <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                                <p className="font-medium text-foreground text-xs">Versatility</p>
+                                                <p className="text-[10px]">Effectiveness across stages and teams</p>
+                                            </div>
+                                            <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                                <p className="font-medium text-foreground text-xs">Ease of Use</p>
+                                                <p className="text-[10px]">Cost, timing, positioning flexibility</p>
+                                            </div>
+                                            <div className="rounded border border-border/50 bg-muted/30 p-2">
+                                                <p className="font-medium text-foreground text-xs">Investment Value</p>
+                                                <p className="text-[10px]">Performance vs resources spent</p>
+                                            </div>
                                         </div>
-                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
-                                            <p className="font-medium text-foreground text-xs">Versatility</p>
-                                            <p className="text-[10px]">Effectiveness across stages and teams</p>
-                                        </div>
-                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
-                                            <p className="font-medium text-foreground text-xs">Ease of Use</p>
-                                            <p className="text-[10px]">Cost, timing, positioning flexibility</p>
-                                        </div>
-                                        <div className="rounded border border-border/50 bg-muted/30 p-2">
-                                            <p className="font-medium text-foreground text-xs">Investment Value</p>
-                                            <p className="text-[10px]">Performance vs resources spent</p>
-                                        </div>
-                                    </div>
-                                </TabsContent>
-                            </Tabs>
-                        </PopoverContent>
-                    </Popover>
+                                    </TabsContent>
+                                </Tabs>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
 
                 {/* Version Info - Below title */}
@@ -205,6 +248,9 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
 
             {/* Version Detail Dialog */}
             <VersionDetailDialog onOpenChange={setVersionDialogOpen} open={versionDialogOpen} tierListSlug={tierListData.tier_list.slug} version={selectedVersion} />
+
+            {/* Report Dialog */}
+            <ReportTierListDialog onOpenChange={setReportDialogOpen} onReport={handleReport} open={reportDialogOpen} tierListName={tierListData.tier_list.name} tierListSlug={tierListData.tier_list.slug} />
         </div>
     );
 }
