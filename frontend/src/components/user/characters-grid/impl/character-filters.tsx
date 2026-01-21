@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { capitalize } from "~/lib/utils";
-import type { RarityFilter, SortBy, SortOrder, ViewMode } from "./types";
+import type { RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
 
 interface CharacterFiltersProps {
     searchTerm: string;

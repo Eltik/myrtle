@@ -79,7 +79,7 @@ export function CreateCommunityTierListDialog({ open, onOpenChange, onCreate }: 
 
     return (
         <Dialog onOpenChange={handleClose} open={open}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-125">
                 <DialogHeader>
                     <DialogTitle>Create Community Tier List</DialogTitle>
                     <DialogDescription>Create your own tier list to share your operator rankings with the community. You can add tiers and operators after creation.</DialogDescription>

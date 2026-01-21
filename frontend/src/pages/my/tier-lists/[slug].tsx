@@ -7,8 +7,8 @@ import { TierListEditor } from "~/components/admin/impl/tier-list-editor";
 import { SEO } from "~/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { useAuth } from "~/hooks/use-auth";
+import type { OperatorFromList } from "~/types/api";
 import type { TierListResponse } from "~/types/api/impl/tier-list";
-import type { OperatorFromList } from "~/types/api/operators";
 
 export default function EditMyTierListPage() {
     const router = useRouter();
@@ -104,7 +104,7 @@ export default function EditMyTierListPage() {
     }, [user, authLoading, slug, fetchTierList]);
 
     const handleBack = useCallback(() => {
-        router.push("/my-tier-lists");
+        router.push("/my/tier-lists");
     }, [router]);
 
     const handleSave = useCallback(
@@ -170,7 +170,7 @@ export default function EditMyTierListPage() {
     if (authLoading || loading) {
         return (
             <>
-                <SEO description="Edit your community tier list." noIndex path={`/my-tier-lists/${slug}`} title="Edit Tier List" />
+                <SEO description="Edit your community tier list." noIndex path={`/my/tier-lists/${slug}`} title="Edit Tier List" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -181,7 +181,7 @@ export default function EditMyTierListPage() {
     if (!user?.status) {
         return (
             <>
-                <SEO description="Edit your community tier list." noIndex path={`/my-tier-lists/${slug}`} title="Edit Tier List" />
+                <SEO description="Edit your community tier list." noIndex path={`/my/tier-lists/${slug}`} title="Edit Tier List" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -197,7 +197,7 @@ export default function EditMyTierListPage() {
     if (error) {
         return (
             <>
-                <SEO description="Edit your community tier list." noIndex path={`/my-tier-lists/${slug}`} title="Edit Tier List" />
+                <SEO description="Edit your community tier list." noIndex path={`/my/tier-lists/${slug}`} title="Edit Tier List" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -213,7 +213,7 @@ export default function EditMyTierListPage() {
     if (!tierListData) {
         return (
             <>
-                <SEO description="Edit your community tier list." noIndex path={`/my-tier-lists/${slug}`} title="Edit Tier List" />
+                <SEO description="Edit your community tier list." noIndex path={`/my/tier-lists/${slug}`} title="Edit Tier List" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -228,7 +228,7 @@ export default function EditMyTierListPage() {
 
     return (
         <>
-            <SEO description={`Edit ${tierListData.tier_list.name} - your community tier list.`} noIndex path={`/my-tier-lists/${slug}`} title={`Edit ${tierListData.tier_list.name}`} />
+            <SEO description={`Edit ${tierListData.tier_list.name} - your community tier list.`} noIndex path={`/my/tier-lists/${slug}`} title={`Edit ${tierListData.tier_list.name}`} />
             <div className="mx-auto max-w-7xl">
                 <TierListEditor allOperators={allOperators} canToggleActive={false} onBack={handleBack} onSave={handleSave} operatorsData={operatorsData} operatorsLoading={operatorsLoading} tierListData={tierListData} />
             </div>

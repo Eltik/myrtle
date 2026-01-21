@@ -572,7 +572,7 @@ export default function PrivacyPage() {
                     </div>
                     <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
                         <Button asChild size="lg">
-                            <Link href="/settings">Manage Your Privacy Settings</Link>
+                            <Link href="/my/settings">Manage Your Privacy Settings</Link>
                         </Button>
                         <Button asChild size="lg" variant="outline">
                             <Link href="/">Return Home</Link>

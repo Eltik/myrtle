@@ -2,7 +2,7 @@ import { parse } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { backendFetch } from "~/lib/backend-fetch";
 import { isAdminRole } from "~/lib/permissions";
-import type { AdminStats } from "~/types/frontend/admin";
+import type { AdminStats } from "~/types/frontend/impl/admin";
 
 interface VerifyResponse {
     valid: boolean;

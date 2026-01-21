@@ -4,7 +4,7 @@ import { Info } from "lucide-react";
 import { Label } from "~/components/ui/shadcn/label";
 import { Switch } from "~/components/ui/shadcn/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
-import type { OperatorSortMode } from "./types";
+import type { OperatorSortMode } from "~/types/frontend/impl/tools/recruitment";
 
 interface FilterOptionsProps {
     includeRobots: boolean;

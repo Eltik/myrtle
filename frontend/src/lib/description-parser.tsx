@@ -4,7 +4,7 @@ import XRegExp, { type MatchRecursiveValueNameMatch } from "xregexp";
  * @author All credit to https://github.com/iansjk/sanity-gone/blob/main/src/utils/description-parser.ts
  */
 
-import type { InterpolatedValue } from "~/types/frontend/operators";
+import type { InterpolatedValue } from "~/types/frontend/impl/operators";
 
 const descriptionTagLeftDelim = "<(?:@ba.|\\$)[^>]+>";
 const descriptionTagRightDelim = "</>";

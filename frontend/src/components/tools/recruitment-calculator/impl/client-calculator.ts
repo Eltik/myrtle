@@ -1,5 +1,5 @@
+import type { CalculatorOptions, OperatorSortMode, RecruitableOperator, RecruitableOperatorWithTags, TagCombinationResult } from "~/types/frontend/impl/tools/recruitment";
 import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
-import type { CalculatorOptions, OperatorSortMode, RecruitableOperator, RecruitableOperatorWithTags, TagCombinationResult } from "./types";
 
 /**
  * Convert rarity string to number

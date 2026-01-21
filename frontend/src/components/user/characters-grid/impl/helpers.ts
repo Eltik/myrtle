@@ -1,6 +1,6 @@
 import { getRarityStarCount } from "~/lib/utils";
 import type { CharacterData } from "~/types/api/impl/user";
-import type { RarityFilter, SortBy, SortOrder } from "./types";
+import type { RarityFilter, SortBy, SortOrder } from "~/types/frontend/impl/user";
 
 type CharacterWithStatic = CharacterData & { static?: { name?: string; rarity?: string } };
 

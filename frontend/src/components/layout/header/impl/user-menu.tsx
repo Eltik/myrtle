@@ -46,13 +46,13 @@ export function UserMenu({ user, loading, logout }: UserMenuProps) {
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link href="/my-tier-lists">
+                        <Link href="/my/tier-lists">
                             <LayoutList className="h-4 w-4" />
                             My Tier Lists
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="cursor-pointer">
-                        <Link href="/settings">
+                        <Link href="/my/settings">
                             <Cog className="h-4 w-4" />
                             Settings
                         </Link>

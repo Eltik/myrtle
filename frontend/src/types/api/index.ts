@@ -1,5 +1,6 @@
 // API Types - Re-exports all types from individual modules
 
+export * from "./impl/auth";
 export * from "./impl/enemy";
 export * from "./impl/gacha";
 export * from "./impl/handbook";

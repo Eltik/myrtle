@@ -3,7 +3,7 @@
  * Handles localStorage persistence and default values
  */
 
-import type { DpsChartSettings, PartialChartSettings, SettingsTab } from "~/components/tools/dps-calculator/impl/chart-settings/types";
+import type { DpsChartSettings, PartialChartSettings, SettingsTab } from "~/types/frontend/impl/tools/dps-chart-settings";
 
 export const DPS_CHART_SETTINGS_STORAGE_KEY = "myrtle-dps-chart-settings";
 export const DPS_CHART_SETTINGS_TAB_KEY = "myrtle-dps-chart-settings-tab";

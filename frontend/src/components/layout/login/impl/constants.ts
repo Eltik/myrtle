@@ -1,4 +1,4 @@
-import type { AKServer } from "./types";
+import type { AKServer } from "~/types/api";
 
 export const SERVER_OPTIONS: { value: AKServer; label: string }[] = [
     { value: "en", label: "Global (EN)" },

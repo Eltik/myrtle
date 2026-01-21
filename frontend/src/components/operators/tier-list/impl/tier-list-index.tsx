@@ -5,12 +5,12 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
+import { TierListTypeBadge } from "~/components/tier-lists";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { cn } from "~/lib/utils";
+import type { OperatorFromList } from "~/types/api";
 import type { TierListType } from "~/types/api/impl/tier-list";
-import type { OperatorFromList } from "~/types/api/operators";
 
 interface TierListPreview {
     id: string;
@@ -116,7 +116,7 @@ function TierListCard({ tierList }: { tierList: TierListPreview }) {
     return (
         <Link className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition-all duration-200 hover:border-primary/50 hover:bg-card" href={`/operators/tier-list?slug=${tierList.slug}`}>
             {/* Preview Header - Operator portraits */}
-            <div className="relative h-28 overflow-hidden bg-gradient-to-b from-muted/50 to-transparent">
+            <div className="relative h-28 overflow-hidden bg-linear-to-b from-muted/50 to-transparent">
                 {tierList.topOperators.length > 0 ? (
                     <div className="flex h-full w-full items-center justify-center gap-1 overflow-hidden px-2 py-3">
                         {tierList.topOperators.slice(0, 5).map((operator, idx) => (
@@ -138,7 +138,7 @@ function TierListCard({ tierList }: { tierList: TierListPreview }) {
                 )}
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-card/50 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-card/50 to-transparent" />
             </div>
 
             {/* Content */}

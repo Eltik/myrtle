@@ -99,7 +99,7 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                     <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                 </div>
                             </div>
-                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/settings" onClick={() => setMobileMenuOpen(false)}>
+                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/settings" onClick={() => setMobileMenuOpen(false)}>
                                 <Cog className="mr-2 h-4 w-4" />
                                 Settings
                             </Link>

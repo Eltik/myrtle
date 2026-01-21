@@ -11,8 +11,9 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "~/components/ui/shadcn/in
 import { Label } from "~/components/ui/shadcn/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { useAuth } from "~/hooks/use-auth";
+import type { AKServer } from "~/types/api";
+import type { LoginResponse, SendCodeResponse } from "~/types/api/impl/auth";
 import { SERVER_OPTIONS } from "./constants";
-import type { AKServer, LoginResponse, SendCodeResponse } from "./types";
 
 interface LoginContentProps {
     onSuccess?: () => void;

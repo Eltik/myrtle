@@ -3,7 +3,7 @@ import { Separator } from "~/components/ui/shadcn/separator";
 import type { AdminRole } from "~/lib/permissions";
 import { canManageUsers } from "~/lib/permissions";
 import { cn } from "~/lib/utils";
-import type { AdminStats } from "~/types/frontend/admin";
+import type { AdminStats } from "~/types/frontend/impl/admin";
 
 interface StatsGridProps {
     stats: AdminStats;

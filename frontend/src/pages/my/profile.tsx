@@ -21,7 +21,7 @@ export default function ProfilePage() {
     if (loading) {
         return (
             <>
-                <SEO description="View your Arknights profile on myrtle.moe" noIndex path="/profile" title="Profile" />
+                <SEO description="View your Arknights profile on myrtle.moe" noIndex path="/my/profile" title="Profile" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -35,7 +35,7 @@ export default function ProfilePage() {
     if (!user?.status?.uid) {
         return (
             <>
-                <SEO description="Profile not found. You need to be logged in to view your profile." noIndex path="/profile" title="Profile Not Found" />
+                <SEO description="Profile not found. You need to be logged in to view your profile." noIndex path="/my/profile" title="Profile Not Found" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <h1 className="mb-4 font-bold text-4xl">Profile Not Found</h1>
@@ -49,7 +49,7 @@ export default function ProfilePage() {
     // Redirecting state (shouldn't be visible for long)
     return (
         <>
-            <SEO description="Redirecting to your profile" noIndex path="/profile" title="Redirecting..." />
+            <SEO description="Redirecting to your profile" noIndex path="/my/profile" title="Redirecting..." />
             <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                 <div className="text-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

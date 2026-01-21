@@ -4,8 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { cn } from "~/lib/utils";
+import type { RecruitmentTag, TagType } from "~/types/frontend/impl/tools/recruitment";
 import { SENIOR_OPERATOR_TAG_ID, TAG_GROUP_LABELS, TAG_GROUP_ORDER, TOP_OPERATOR_TAG_ID } from "./constants";
-import type { RecruitmentTag, TagType } from "./types";
 
 interface TagSelectorProps {
     tags: Record<TagType, RecruitmentTag[]>;

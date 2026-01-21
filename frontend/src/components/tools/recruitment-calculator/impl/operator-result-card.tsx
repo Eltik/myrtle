@@ -5,7 +5,7 @@ import Image from "next/image";
 import { CLASS_DISPLAY, CLASS_ICON, RARITY_COLORS } from "~/components/operators/list/constants";
 import { RarityStars } from "~/components/operators/list/ui/impl/rarity-stars";
 import { cn } from "~/lib/utils";
-import type { RecruitableOperator } from "./types";
+import type { RecruitableOperator } from "~/types/frontend/impl/tools/recruitment";
 
 interface OperatorResultCardProps {
     operator: RecruitableOperator;

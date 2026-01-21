@@ -2,7 +2,7 @@
 
 import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { RecentUser } from "~/types/frontend/admin";
+import type { RecentUser } from "~/types/frontend/impl/admin";
 import { Avatar, AvatarFallback } from "../../ui/shadcn/avatar";
 import { Badge } from "../../ui/shadcn/badge";
 import { Button } from "../../ui/shadcn/button";

@@ -1,6 +1,6 @@
 import { descriptionToHtml } from "~/lib/description-parser";
 import type { Blackboard, OperatorPhase, Talent, TalentCandidate } from "~/types/api";
-import type { InterpolatedValue } from "~/types/frontend/operators";
+import type { InterpolatedValue } from "~/types/frontend/impl/operators";
 
 /**
  * Formats operator description with blackboard interpolation.

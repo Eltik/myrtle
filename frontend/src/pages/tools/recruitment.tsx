@@ -1,8 +1,8 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { SEO } from "~/components/seo";
 import { RecruitmentCalculator } from "~/components/tools/recruitment-calculator";
-import type { GachaTag, RecruitableOperatorWithTags } from "~/components/tools/recruitment-calculator/impl/types";
 import { env } from "~/env";
+import type { GachaTag, RecruitableOperatorWithTags } from "~/types/frontend/impl/tools/recruitment";
 
 interface Props {
     tags: GachaTag[];

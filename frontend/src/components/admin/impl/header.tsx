@@ -2,7 +2,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "~/components/ui/shadcn/button";
 import type { AuthUser } from "~/hooks/use-auth";
 import { cn } from "~/lib/utils";
-import type { AdminRole } from "~/types/frontend/admin";
+import type { AdminRole } from "~/types/frontend/impl/admin";
 
 const ROLE_BADGE_STYLES: Record<AdminRole, string> = {
     tier_list_editor: "bg-blue-500/10 text-blue-500",

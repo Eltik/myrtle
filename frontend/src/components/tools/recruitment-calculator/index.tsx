@@ -4,13 +4,13 @@ import { Calculator, RotateCcw } from "lucide-react";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
+import type { GachaTag, OperatorSortMode, RecruitableOperatorWithTags } from "~/types/frontend/impl/tools/recruitment";
 import { calculateResults } from "./impl/client-calculator";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { FilterOptions } from "./impl/filter-options";
 import { groupTagsByType, transformTags } from "./impl/helpers";
 import { ResultsList } from "./impl/results-list";
 import { TagSelector } from "./impl/tag-selector";
-import type { GachaTag, OperatorSortMode, RecruitableOperatorWithTags } from "./impl/types";
 
 const STORAGE_KEY_SORT_MODE = "recruitment-operator-sort-mode";
 

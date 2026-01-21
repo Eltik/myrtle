@@ -31,7 +31,7 @@ export const STEPS = [
         description: "Monitor your collection, track upgrade progress, and never miss an operator or material you need.",
         action: {
             label: "View Profile",
-            href: "/profile",
+            href: "/my/profile",
         },
     },
 ] as const;

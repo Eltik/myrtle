@@ -7,7 +7,7 @@ import { SEO } from "~/components/seo";
 import { useAuth } from "~/hooks/use-auth";
 import type { AdminRole } from "~/lib/permissions";
 import { isAdminRole } from "~/lib/permissions";
-import type { AdminStats } from "~/types/frontend/admin";
+import type { AdminStats } from "~/types/frontend/impl/admin";
 
 export default function AdminPage() {
     const router = useRouter();

@@ -1,4 +1,4 @@
-import type { OperatorPhase } from "../api";
+import type { OperatorPhase } from "../../api";
 
 export enum GridCell {
     Operator = "operator",

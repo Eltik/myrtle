@@ -335,3 +335,6 @@ export interface Drone {
     allSkillLvlup: AllSkillLevelUp[];
     modules: OperatorModule[];
 }
+
+// Derived type for operator lists (subset of Operator fields)
+export type OperatorFromList = Pick<Operator, "id" | "name" | "nationId" | "groupId" | "teamId" | "position" | "isSpChar" | "rarity" | "profession" | "subProfessionId" | "profile" | "artists" | "portrait" | "phases" | "handbook">;

@@ -1,3 +1,5 @@
+// Recruitment calculator types
+
 // Backend API types
 export interface GachaTag {
     tagId: number;

@@ -67,7 +67,7 @@ export default function SettingsPage() {
     if (loading) {
         return (
             <>
-                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
+                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -78,7 +78,7 @@ export default function SettingsPage() {
     if (!user?.status) {
         return (
             <>
-                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
+                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
 
     return (
         <>
-            <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/settings" title="Settings" />
+            <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
 
             <div className="mx-auto max-w-3xl space-y-6">
                 <div className="space-y-2">

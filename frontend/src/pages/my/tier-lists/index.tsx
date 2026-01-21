@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MyTierListsManagement } from "~/components/my/tier-lists";
 import { SEO } from "~/components/seo";
-import { MyTierListsManagement } from "~/components/tier-lists/my-tier-lists-management";
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { useAuth } from "~/hooks/use-auth";
 import type { TierListType } from "~/types/api/impl/tier-list";
@@ -53,7 +53,7 @@ export default function MyTierListsPage() {
     if (authLoading) {
         return (
             <>
-                <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my-tier-lists" title="My Tier Lists" />
+                <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my/tier-lists" title="My Tier Lists" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -64,7 +64,7 @@ export default function MyTierListsPage() {
     if (!user?.status) {
         return (
             <>
-                <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my-tier-lists" title="My Tier Lists" />
+                <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my/tier-lists" title="My Tier Lists" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -79,7 +79,7 @@ export default function MyTierListsPage() {
 
     return (
         <>
-            <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my-tier-lists" title="My Tier Lists" />
+            <SEO description="Create and manage your community tier lists for Arknights operators." noIndex path="/my/tier-lists" title="My Tier Lists" />
             <div className="mx-auto max-w-6xl">
                 <MyTierListsManagement loading={loading} onRefresh={fetchTierLists} tierLists={tierLists} />
             </div>
