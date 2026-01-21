@@ -18,6 +18,16 @@ pub struct TierList {
     pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    #[serde(default = "default_tier_list_type")]
+    pub tier_list_type: String,
+    #[serde(default)]
+    pub is_deleted: bool,
+    pub deleted_by: Option<Uuid>,
+    pub deleted_reason: Option<String>,
+}
+
+fn default_tier_list_type() -> String {
+    "official".to_string()
 }
 
 /// Tier definitions within a list (e.g., S+, S, A, B, C)
@@ -119,6 +129,8 @@ pub struct CreateTierList {
     pub name: String,
     pub slug: String,
     pub description: Option<String>,
+    #[serde(default = "default_tier_list_type")]
+    pub tier_list_type: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -168,8 +180,8 @@ impl TierList {
     ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
             r#"
-            INSERT INTO tier_lists (name, slug, description, created_by)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO tier_lists (name, slug, description, created_by, tier_list_type)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             "#,
         )
@@ -177,6 +189,7 @@ impl TierList {
         .bind(&input.slug)
         .bind(&input.description)
         .bind(created_by)
+        .bind(&input.tier_list_type)
         .fetch_one(pool)
         .await
     }
@@ -247,6 +260,103 @@ impl TierList {
             .execute(pool)
             .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    /// Count community tier lists by owner (for limit enforcement)
+    pub async fn count_community_by_owner(
+        pool: &PgPool,
+        owner_id: Uuid,
+    ) -> Result<i64, sqlx::Error> {
+        sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*) FROM tier_lists
+            WHERE created_by = $1 AND tier_list_type = 'community' AND is_deleted = false
+            "#,
+        )
+        .bind(owner_id)
+        .fetch_one(pool)
+        .await
+    }
+
+    /// Find community tier lists by owner
+    pub async fn find_community_by_owner(
+        pool: &PgPool,
+        owner_id: Uuid,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            SELECT * FROM tier_lists
+            WHERE created_by = $1 AND tier_list_type = 'community'
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(owner_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    /// Find all active tier lists with optional type filter
+    pub async fn find_all_active_by_type(
+        pool: &PgPool,
+        tier_list_type: Option<&str>,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        match tier_list_type {
+            Some(t) => {
+                sqlx::query_as::<_, Self>(
+                    r#"
+                    SELECT * FROM tier_lists
+                    WHERE is_active = true AND is_deleted = false AND tier_list_type = $1
+                    ORDER BY created_at DESC
+                    "#,
+                )
+                .bind(t)
+                .fetch_all(pool)
+                .await
+            }
+            None => {
+                sqlx::query_as::<_, Self>(
+                    r#"
+                    SELECT * FROM tier_lists
+                    WHERE is_active = true AND is_deleted = false
+                    ORDER BY created_at DESC
+                    "#,
+                )
+                .fetch_all(pool)
+                .await
+            }
+        }
+    }
+
+    /// Soft delete a tier list (for moderation)
+    pub async fn soft_delete(
+        pool: &PgPool,
+        id: Uuid,
+        deleted_by: Uuid,
+        reason: &str,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query(
+            r#"
+            UPDATE tier_lists
+            SET is_deleted = true, deleted_by = $1, deleted_reason = $2, updated_at = NOW()
+            WHERE id = $3
+            "#,
+        )
+        .bind(deleted_by)
+        .bind(reason)
+        .bind(id)
+        .execute(pool)
+        .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Check if the tier list is a community tier list
+    pub fn is_community(&self) -> bool {
+        self.tier_list_type == "community"
+    }
+
+    /// Check if the user is the owner of this tier list
+    pub fn is_owner(&self, user_id: Uuid) -> bool {
+        self.created_by == Some(user_id)
     }
 }
 
@@ -809,5 +919,142 @@ impl TierListSnapshot {
             tiers: tier_snapshots,
             metadata: serde_json::json!({}),
         })
+    }
+}
+
+// ============================================================================
+// Tier List Reports (for community tier list moderation)
+// ============================================================================
+
+/// Report for inappropriate community tier lists
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TierListReport {
+    pub id: Uuid,
+    pub tier_list_id: Uuid,
+    pub reporter_id: Uuid,
+    pub reason: String,
+    pub description: Option<String>,
+    pub status: String,
+    pub reviewed_by: Option<Uuid>,
+    pub reviewed_at: Option<DateTime<Utc>>,
+    pub action_taken: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateReport {
+    pub reason: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReviewReport {
+    pub status: String,
+    pub action_taken: Option<String>,
+}
+
+impl TierListReport {
+    /// Create a new report
+    pub async fn create(
+        pool: &PgPool,
+        tier_list_id: Uuid,
+        reporter_id: Uuid,
+        input: CreateReport,
+    ) -> Result<Self, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            INSERT INTO tier_list_reports (tier_list_id, reporter_id, reason, description)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+            "#,
+        )
+        .bind(tier_list_id)
+        .bind(reporter_id)
+        .bind(&input.reason)
+        .bind(&input.description)
+        .fetch_one(pool)
+        .await
+    }
+
+    /// Find report by ID
+    pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>("SELECT * FROM tier_list_reports WHERE id = $1")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+    }
+
+    /// Find all reports for a tier list
+    pub async fn find_by_tier_list(
+        pool: &PgPool,
+        tier_list_id: Uuid,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            "SELECT * FROM tier_list_reports WHERE tier_list_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(tier_list_id)
+        .fetch_all(pool)
+        .await
+    }
+
+    /// Find all pending reports (for admin moderation)
+    pub async fn find_pending(pool: &PgPool, limit: i64) -> Result<Vec<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            SELECT * FROM tier_list_reports
+            WHERE status = 'pending'
+            ORDER BY created_at ASC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+
+    /// Check if user has already reported a tier list
+    pub async fn has_reported(
+        pool: &PgPool,
+        tier_list_id: Uuid,
+        reporter_id: Uuid,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM tier_list_reports WHERE tier_list_id = $1 AND reporter_id = $2",
+        )
+        .bind(tier_list_id)
+        .bind(reporter_id)
+        .fetch_one(pool)
+        .await?;
+        Ok(result > 0)
+    }
+
+    /// Review a report (admin action)
+    pub async fn review(
+        pool: &PgPool,
+        id: Uuid,
+        reviewed_by: Uuid,
+        input: ReviewReport,
+    ) -> Result<Option<Self>, sqlx::Error> {
+        sqlx::query_as::<_, Self>(
+            r#"
+            UPDATE tier_list_reports
+            SET status = $1, reviewed_by = $2, reviewed_at = NOW(), action_taken = $3
+            WHERE id = $4
+            RETURNING *
+            "#,
+        )
+        .bind(&input.status)
+        .bind(reviewed_by)
+        .bind(&input.action_taken)
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    }
+
+    /// Count pending reports (for admin dashboard)
+    pub async fn count_pending(pool: &PgPool) -> Result<i64, sqlx::Error> {
+        sqlx::query_scalar("SELECT COUNT(*) FROM tier_list_reports WHERE status = 'pending'")
+            .fetch_one(pool)
+            .await
     }
 }

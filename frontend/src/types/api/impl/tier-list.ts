@@ -1,11 +1,14 @@
 // Tier List types matching the backend Rust models
 
+export type TierListType = "official" | "community";
+
 export interface TierList {
     id: string;
     name: string;
     slug: string;
     description: string | null;
     is_active: boolean;
+    tier_list_type: TierListType;
     created_by: string | null;
     created_at: string;
     updated_at: string;
@@ -61,4 +64,34 @@ export interface TierWithPlacements extends Tier {
 export interface TierListResponse {
     tier_list: TierList;
     tiers: TierWithPlacements[];
+}
+
+// Report types for community tier lists
+export type ReportReason = "inappropriate_content" | "spam" | "harassment" | "other";
+export type ReportStatus = "pending" | "reviewed" | "dismissed";
+
+export interface TierListReport {
+    id: string;
+    tier_list_id: string;
+    reporter_id: string;
+    reason: string;
+    description: string | null;
+    status: ReportStatus;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
+    action_taken: string | null;
+    created_at: string;
+    // Enriched data from backend
+    tier_list_name?: string;
+    tier_list_slug?: string;
+}
+
+export interface CreateReportRequest {
+    reason: ReportReason;
+    description?: string;
+}
+
+export interface ReviewReportRequest {
+    action: "approve" | "dismiss";
+    action_taken?: string;
 }

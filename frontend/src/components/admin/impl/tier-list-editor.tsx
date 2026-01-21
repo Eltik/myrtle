@@ -185,6 +185,9 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
     const [tierListDescription, setTierListDescription] = useState(tierListData.tier_list.description ?? "");
     const [isActive, setIsActive] = useState(tierListData.tier_list.is_active);
     const [saving, setSaving] = useState(false);
+
+    // Track original tier IDs to detect deletions
+    const originalTierIds = useMemo(() => new Set(tierListData.tiers.map((t) => t.id)), [tierListData.tiers]);
     const [addOperatorDialogOpen, setAddOperatorDialogOpen] = useState(false);
     const [selectedTierForAdd, setSelectedTierForAdd] = useState<string | null>(null);
     const [operatorSearch, setOperatorSearch] = useState("");
@@ -520,8 +523,13 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         if (tierListName !== tierListData.tier_list.name) return true;
         if (tierListDescription !== (tierListData.tier_list.description ?? "")) return true;
         if (isActive !== tierListData.tier_list.is_active) return true;
+        // Check if any tiers were deleted
+        const currentTierIds = new Set(tiers.map((t) => t.id));
+        for (const originalId of originalTierIds) {
+            if (!currentTierIds.has(originalId)) return true;
+        }
         return tiers.some((t) => t.isModified || t.isNew);
-    }, [tierListName, tierListDescription, isActive, tiers, tierListData]);
+    }, [tierListName, tierListDescription, isActive, tiers, tierListData, originalTierIds]);
 
     return (
         <div className="space-y-6">

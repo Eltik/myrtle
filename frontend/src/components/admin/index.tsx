@@ -1,8 +1,9 @@
 import type { AuthUser } from "~/hooks/use-auth";
-import { canManageUsers } from "~/lib/permissions";
+import { canManageUsers, canReviewReports } from "~/lib/permissions";
 import type { AdminRole, AdminStats } from "~/types/frontend/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/shadcn/card";
 import { Header } from "./impl/header";
+import { ModerationPanel } from "./impl/moderation-panel";
 import { StatsGrid } from "./impl/stats-grid";
 import { TierListManagement } from "./impl/tier-list-management";
 import { UsersTable } from "./impl/users-table";
@@ -24,7 +25,7 @@ export function AdminPanel({ user, role, stats, statsLoading, onRefresh }: Admin
             {/* Stats Grid - only visible to super_admin who has full stats access */}
             {canManageUsers(role) &&
                 (statsLoading ? (
-                    <div className="flex min-h-[200px] items-center justify-center">
+                    <div className="flex min-h-50 items-center justify-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                 ) : stats ? (
@@ -36,6 +37,9 @@ export function AdminPanel({ user, role, stats, statsLoading, onRefresh }: Admin
 
             {/* Tier List Management */}
             <TierListManagement loading={statsLoading} onRefresh={onRefresh} role={role} tierLists={stats?.tierLists.tierLists ?? []} />
+
+            {/* Content Moderation - visible to tier_list_admin and super_admin */}
+            {canReviewReports(role) && <ModerationPanel />}
 
             {/* Recent Activity */}
             {stats && stats.recentActivity.length > 0 && (

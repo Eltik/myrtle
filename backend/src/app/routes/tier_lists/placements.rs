@@ -11,7 +11,7 @@ use crate::app::state::AppState;
 use crate::core::authentication::permissions::Permission;
 use crate::database::models::tier_lists::{CreatePlacement, Tier, TierChangeLog, TierPlacement};
 
-use super::middleware::{check_permission, get_tier_list_by_slug, require_auth};
+use super::middleware::{check_tier_list_permission, get_tier_list_by_slug, require_auth};
 
 #[derive(Serialize)]
 pub struct PlacementData {
@@ -86,6 +86,11 @@ pub async fn list_placements(
 ) -> Result<Json<ListPlacementsResponse>, ApiError> {
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
     let placements = TierPlacement::find_by_tier_list(&state.db, tier_list.id)
         .await
         .map_err(|e| {
@@ -143,7 +148,12 @@ pub async fn add_placement(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let tier_uuid = Uuid::parse_str(&body.tier_id)
         .map_err(|_| ApiError::BadRequest("Invalid tier ID".into()))?;
@@ -239,7 +249,12 @@ pub async fn update_placement(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let placement_uuid = Uuid::parse_str(&placement_id)
         .map_err(|_| ApiError::BadRequest("Invalid placement ID".into()))?;
@@ -299,7 +314,12 @@ pub async fn move_placement(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let placement_uuid = Uuid::parse_str(&placement_id)
         .map_err(|_| ApiError::BadRequest("Invalid placement ID".into()))?;
@@ -387,7 +407,12 @@ pub async fn remove_placement(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    check_permission(&state, &auth, tier_list.id, Permission::Edit).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Edit).await?;
 
     let placement_uuid = Uuid::parse_str(&placement_id)
         .map_err(|_| ApiError::BadRequest("Invalid placement ID".into()))?;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Cog, LogOut } from "lucide-react";
+import { ChevronDown, Cog, LayoutList, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Button } from "~/components/ui/shadcn/button";
@@ -45,6 +45,12 @@ export function UserMenu({ user, loading, logout }: UserMenuProps) {
                         <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                     </div>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/my-tier-lists">
+                            <LayoutList className="h-4 w-4" />
+                            My Tier Lists
+                        </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild className="cursor-pointer">
                         <Link href="/settings">
                             <Cog className="h-4 w-4" />

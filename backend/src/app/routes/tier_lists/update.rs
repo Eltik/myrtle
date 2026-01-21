@@ -10,7 +10,7 @@ use crate::app::state::AppState;
 use crate::core::authentication::permissions::Permission;
 use crate::database::models::tier_lists::{TierList, UpdateTierList};
 
-use super::middleware::{check_permission, get_tier_list_by_slug, require_auth};
+use super::middleware::{check_tier_list_permission, get_tier_list_by_slug, require_auth};
 
 #[derive(Deserialize)]
 pub struct UpdateTierListRequest {
@@ -32,6 +32,7 @@ pub struct TierListData {
     pub slug: String,
     pub description: Option<String>,
     pub is_active: bool,
+    pub tier_list_type: String,
     pub updated_at: String,
 }
 
@@ -42,7 +43,9 @@ pub struct DeleteResponse {
 }
 
 /// PUT /tier-lists/{slug}
-/// Update a tier list (requires Admin permission)
+/// Update a tier list
+/// - Community tier lists: owner only
+/// - Official tier lists: requires Admin permission
 pub async fn update_tier_list(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -52,8 +55,13 @@ pub async fn update_tier_list(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    // Check admin permission
-    check_permission(&state, &auth, tier_list.id, Permission::Admin).await?;
+    // Check if tier list is deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
+
+    // Check permission (ownership for community, permission system for official)
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Admin).await?;
 
     let input = UpdateTierList {
         name: body.name,
@@ -77,13 +85,16 @@ pub async fn update_tier_list(
             slug: updated.slug,
             description: updated.description,
             is_active: updated.is_active,
+            tier_list_type: updated.tier_list_type,
             updated_at: updated.updated_at.to_rfc3339(),
         },
     }))
 }
 
 /// DELETE /tier-lists/{slug}
-/// Delete a tier list (requires Admin permission)
+/// Delete a tier list
+/// - Community tier lists: owner can hard delete, admins can hard delete
+/// - Official tier lists: requires Admin permission
 pub async fn delete_tier_list(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -92,9 +103,15 @@ pub async fn delete_tier_list(
     let auth = require_auth(&headers, &state.jwt_secret)?;
     let tier_list = get_tier_list_by_slug(&state, &slug).await?;
 
-    // Check admin permission
-    check_permission(&state, &auth, tier_list.id, Permission::Admin).await?;
+    // Check if tier list is already deleted
+    if tier_list.is_deleted {
+        return Err(ApiError::NotFound("Tier list not found".into()));
+    }
 
+    // Check permission (ownership for community, permission system for official)
+    check_tier_list_permission(&state, &auth, &tier_list, Permission::Admin).await?;
+
+    // Hard delete for both community (owner) and official (admin)
     let deleted = TierList::delete(&state.db, tier_list.id)
         .await
         .map_err(|e| {
@@ -105,7 +122,7 @@ pub async fn delete_tier_list(
     if deleted {
         Ok(Json(DeleteResponse {
             success: true,
-            message: format!("Tier list '{slug}' deleted successfully"),
+            message: format!("Tier list '{}' deleted successfully", slug),
         }))
     } else {
         Err(ApiError::NotFound("Tier list not found".into()))

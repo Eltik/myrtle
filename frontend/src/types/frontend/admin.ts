@@ -37,6 +37,8 @@ export interface TierListSummary {
     name: string;
     slug: string;
     isActive: boolean;
+    tierListType: "official" | "community";
+    createdBy: string | null;
     tierCount: number;
     operatorCount: number;
     versionCount: number;

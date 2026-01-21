@@ -177,8 +177,27 @@ fn create_router(state: AppState) -> Router {
             "/tier-lists/{slug}/permissions/{user_id}/{permission}",
             delete(tier_lists::permissions::revoke_permission),
         )
+        // Community tier list specific
+        .route("/tier-lists/mine", get(tier_lists::mine::list_mine))
+        .route(
+            "/tier-lists/{slug}/report",
+            post(tier_lists::report::report_tier_list),
+        )
         // Admin routes
         .route("/admin/stats", get(admin::stats::get_stats))
+        // Admin tier list moderation
+        .route(
+            "/admin/tier-lists/reports",
+            get(tier_lists::report::list_reports),
+        )
+        .route(
+            "/admin/tier-lists/reports/{report_id}/review",
+            post(tier_lists::report::review_report),
+        )
+        .route(
+            "/admin/tier-lists/{slug}/moderate",
+            post(tier_lists::moderate::moderate_tier_list),
+        )
         .layer(middleware::from_fn_with_state(
             (rate_store.clone(), state.clone()),
             rate_limit,

@@ -13,6 +13,7 @@ interface TierListPreview {
     slug: string;
     description: string | null;
     is_active: boolean;
+    tier_list_type: "official" | "community";
     created_at: string;
     updated_at: string;
     operatorCount: number;
@@ -94,6 +95,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                     slug: string;
                     description: string | null;
                     is_active: boolean;
+                    tier_list_type: "official" | "community";
                     created_at: string;
                     updated_at: string;
                 }>;
@@ -142,6 +144,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                                 slug: tierList.slug,
                                 description: tierList.description ?? null,
                                 is_active: tierList.is_active,
+                                tier_list_type: tierList.tier_list_type || "official",
                                 created_at: tierList.created_at,
                                 updated_at: tierList.updated_at,
                                 operatorCount: 0,
@@ -180,6 +183,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
+                            tier_list_type: tierList.tier_list_type || "official",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount,
@@ -193,6 +197,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
+                            tier_list_type: tierList.tier_list_type || "official",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount: 0,
@@ -237,6 +242,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 slug: rawData.slug,
                 description: rawData.description ?? null,
                 is_active: rawData.is_active ?? false,
+                tier_list_type: rawData.tier_list_type || "official",
                 created_by: rawData.created_by ?? null,
                 created_at: rawData.created_at ?? null,
                 updated_at: rawData.updated_at ?? null,
