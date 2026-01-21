@@ -7,8 +7,8 @@ import { ArrowLeft, Check, ChevronDown, ChevronUp, GripVertical, Plus, Save, Set
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { cn, rarityToNumber } from "~/lib/utils";
+import type { OperatorFromList } from "~/types/api";
 import type { Tier, TierListResponse, TierPlacement, TierWithPlacements } from "~/types/api/impl/tier-list";
-import type { OperatorFromList } from "~/types/api/operators";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "../../ui/motion-primitives/disclosure";
 import { Badge } from "../../ui/shadcn/badge";
 import { Button } from "../../ui/shadcn/button";

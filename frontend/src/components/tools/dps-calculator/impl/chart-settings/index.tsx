@@ -7,10 +7,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/shadcn/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { useDpsChartSettings } from "~/context/dps-chart-settings-context";
 import { getStoredSettingsTab, setStoredSettingsTab } from "~/lib/dps-chart-settings";
+import type { SettingsTab } from "~/types/frontend/impl/tools/dps-chart-settings";
 import { DataDisplaySection } from "./data-display-section";
 import { ExportSection } from "./export-section";
 import { RangeSettingsSection } from "./range-settings-section";
-import type { SettingsTab } from "./types";
 import { VisualSettingsSection } from "./visual-settings-section";
 
 interface ChartSettingsPopoverProps {

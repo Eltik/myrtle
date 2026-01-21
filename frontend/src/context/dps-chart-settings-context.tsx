@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import type { DpsChartSettings, PartialChartSettings } from "~/components/tools/dps-calculator/impl/chart-settings/types";
 import { DEFAULT_CHART_SETTINGS, getStoredChartSettings, mergeChartSettings, setStoredChartSettings } from "~/lib/dps-chart-settings";
+import type { DpsChartSettings, PartialChartSettings } from "~/types/frontend/impl/tools/dps-chart-settings";
 
 interface DpsChartSettingsContextType {
     /** Current chart settings */

@@ -2,8 +2,7 @@ import type { NextPage } from "next";
 import { OperatorsList } from "~/components/operators/list/operators-list";
 import { SEO } from "~/components/seo";
 import { env } from "~/env";
-import type { Operator } from "~/types/api";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { Operator, OperatorFromList } from "~/types/api";
 
 const Operators: NextPage<Props> = ({ data }) => {
     return (

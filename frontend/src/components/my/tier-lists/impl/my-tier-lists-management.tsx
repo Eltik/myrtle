@@ -195,7 +195,7 @@ function TierListCard({ tierList, onDelete }: { tierList: CommunityTierList; onD
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                                <Link href={`/my-tier-lists/${tierList.slug}`}>
+                                <Link href={`/my/tier-lists/${tierList.slug}`}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                 </Link>

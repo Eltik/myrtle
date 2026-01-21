@@ -69,7 +69,7 @@ export default function GachaPage() {
     if (authLoading) {
         return (
             <>
-                <SEO description="View your Arknights gacha pull history." noIndex path="/gacha" title="Gacha History" />
+                <SEO description="View your Arknights gacha pull history." noIndex path="/my/gacha" title="Gacha History" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>
@@ -81,7 +81,7 @@ export default function GachaPage() {
     if (!user?.status) {
         return (
             <>
-                <SEO description="View your Arknights gacha pull history." noIndex path="/gacha" title="Gacha History" />
+                <SEO description="View your Arknights gacha pull history." noIndex path="/my/gacha" title="Gacha History" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <Card className="max-w-md">
                         <CardHeader>
@@ -97,7 +97,7 @@ export default function GachaPage() {
     // Authenticated - render content
     return (
         <>
-            <SEO description="View your Arknights gacha pull history." noIndex path="/gacha" title="Gacha History" />
+            <SEO description="View your Arknights gacha pull history." noIndex path="/my/gacha" title="Gacha History" />
             <div className="mx-auto max-w-6xl">
                 <h1 className="mb-6 font-bold text-3xl">Gacha History</h1>
 

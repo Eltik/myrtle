@@ -1,4 +1,4 @@
-import type { TagType } from "./types";
+import type { TagType } from "~/types/frontend/impl/tools/recruitment";
 
 // Maximum number of tags that can be selected
 export const MAX_SELECTED_TAGS = 5;

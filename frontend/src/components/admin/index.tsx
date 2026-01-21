@@ -1,6 +1,6 @@
 import type { AuthUser } from "~/hooks/use-auth";
 import { canManageUsers, canReviewReports } from "~/lib/permissions";
-import type { AdminRole, AdminStats } from "~/types/frontend/admin";
+import type { AdminRole, AdminStats } from "~/types/frontend/impl/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/shadcn/card";
 import { Header } from "./impl/header";
 import { ModerationPanel } from "./impl/moderation-panel";

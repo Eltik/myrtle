@@ -6,9 +6,9 @@ import { useState } from "react";
 import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/operators/list/constants";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { cn } from "~/lib/utils";
+import type { TagCombinationResult } from "~/types/frontend/impl/tools/recruitment";
 import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import { OperatorResultCard } from "./operator-result-card";
-import type { TagCombinationResult } from "./types";
 
 interface CombinationResultProps {
     result: TagCombinationResult;

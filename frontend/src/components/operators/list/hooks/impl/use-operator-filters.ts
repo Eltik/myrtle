@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { rarityToNumber } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { CLASS_SORT_ORDER } from "../../constants";
 
 export type SortOption = "name" | "rarity" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "aspd";

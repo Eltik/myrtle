@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { OperatorCardGrid } from "./ui/impl/operator-card-grid";
 import { OperatorCardList } from "./ui/impl/operator-card-list";
 

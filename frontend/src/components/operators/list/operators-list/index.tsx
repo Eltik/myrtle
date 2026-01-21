@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES, SORT_OPTIONS } from "../constants";
 import { useOperatorFilters } from "../hooks";
 import type { SortOption } from "../hooks/impl/use-operator-filters";

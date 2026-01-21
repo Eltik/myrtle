@@ -1,5 +1,5 @@
+import type { GachaTag, RecruitableOperator, RecruitmentTag, TagCombinationResult, TagType } from "~/types/frontend/impl/tools/recruitment";
 import { SENIOR_OPERATOR_TAG_ID, TAG_ID_TO_TYPE_MAP, TOP_OPERATOR_TAG_ID } from "./constants";
-import type { GachaTag, RecruitableOperator, RecruitmentTag, TagCombinationResult, TagType } from "./types";
 
 /**
  * Convert rarity string to number

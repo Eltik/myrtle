@@ -3,12 +3,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import type { CharacterData, User } from "~/types/api/impl/user";
+import type { RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
 import { CharacterCard } from "../character-card";
 import { CompactCharacterCard } from "../character-card/compact-card";
 import { checkIsMaxed } from "../character-card/impl/helpers";
 import { CharacterFilters } from "./impl/character-filters";
 import { filterAndSortCharacters } from "./impl/helpers";
-import type { RarityFilter, SortBy, SortOrder, ViewMode } from "./impl/types";
 
 // Static UI icons that appear in every dialog
 const STATIC_ICONS = [

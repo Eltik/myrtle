@@ -1,7 +1,7 @@
 "use client";
 
+import type { TagCombinationResult } from "~/types/frontend/impl/tools/recruitment";
 import { CombinationResult } from "./combination-result";
-import type { TagCombinationResult } from "./types";
 
 interface ResultsListProps {
     results: TagCombinationResult[];

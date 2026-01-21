@@ -2,8 +2,8 @@
 
 import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Eye, LayoutList, MoreHorizontal, Plus, RefreshCw, Search, Shield, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
-import type { TierListSummary } from "~/types/frontend/admin";
+import { TierListTypeBadge } from "~/components/tier-lists";
+import type { TierListSummary } from "~/types/frontend/impl/admin";
 import { Badge } from "../../ui/shadcn/badge";
 import { Button } from "../../ui/shadcn/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../../ui/shadcn/dropdown-menu";

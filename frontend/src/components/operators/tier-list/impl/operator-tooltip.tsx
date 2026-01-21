@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { memo, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { capitalize, formatSubProfession, rarityToNumber } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "../../list/constants";
 import { FactionLogo } from "../../list/ui/impl/faction-logo";
 

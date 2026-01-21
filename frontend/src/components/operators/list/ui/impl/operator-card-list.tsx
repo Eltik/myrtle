@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { RARITY_COLORS } from "../../constants";
 import { ClassIcon } from "./class-icon";
 import { FactionLogo } from "./faction-logo";

@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Slider } from "~/components/ui/shadcn/slider";
 import { Switch } from "~/components/ui/shadcn/switch";
 import { useDpsChartSettings } from "~/context/dps-chart-settings-context";
-import type { ChartType, GridStyle, LegendPosition, LineType } from "./types";
+import type { ChartType, GridStyle, LegendPosition, LineType } from "~/types/frontend/impl/tools/dps-chart-settings";
 
 const CHART_TYPE_OPTIONS: { value: ChartType; label: string }[] = [
     { value: "line", label: "Line Chart" },

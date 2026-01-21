@@ -3,8 +3,7 @@
 import { BookOpen, ChevronRight, ClipboardList, Flag, HelpCircle, History } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { ReportTierListDialog } from "~/components/tier-lists/report-tier-list-dialog";
-import { TierListTypeBadge } from "~/components/tier-lists/tier-list-type-badge";
+import { ReportTierListDialog, TierListTypeBadge } from "~/components/tier-lists";
 import { Badge } from "~/components/ui/shadcn/badge";
 import { Button } from "~/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "~/components/ui/shadcn/dialog";
@@ -13,8 +12,8 @@ import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { useAuth } from "~/hooks/use-auth";
+import type { OperatorFromList } from "~/types/api";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
-import type { OperatorFromList } from "~/types/api/operators";
 import { TierRow } from "./impl/tier-row";
 import { VersionDetailDialog } from "./impl/version-detail-dialog";
 

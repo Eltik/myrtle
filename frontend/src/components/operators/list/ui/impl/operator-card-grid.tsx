@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { memo } from "react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import { capitalize, cn, formatSubProfession, rarityToNumber } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api/operators";
+import type { OperatorFromList } from "~/types/api";
 import { HOVER_DELAY, RARITY_BLUR_COLORS, RARITY_COLORS, RARITY_COLORS_LIGHT } from "../../constants";
 import { ClassIcon } from "./class-icon";
 import { FactionLogo } from "./faction-logo";
