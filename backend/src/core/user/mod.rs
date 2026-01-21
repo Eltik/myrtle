@@ -1,3 +1,4 @@
+pub mod gacha;
 pub mod get;
 pub mod score;
 pub mod search;

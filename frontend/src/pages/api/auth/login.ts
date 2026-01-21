@@ -29,6 +29,9 @@ interface BackendLoginResponse {
     uid: string;
     secret: string;
     seqnum: number;
+    yostar_email: string;
+    yssid: string | null;
+    yssid_sig: string | null;
 }
 
 interface SuccessResponse {
@@ -89,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const backendData: BackendLoginResponse = await loginResponse.json();
 
-        if (!backendData.uid || !backendData.secret || typeof backendData.seqnum !== "number") {
+        if (!backendData.uid || !backendData.secret || typeof backendData.seqnum !== "number" || !backendData.yostar_email) {
             console.error("Invalid backend response structure:", backendData);
             return res.status(500).json({
                 success: false,
@@ -128,6 +131,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 secret: backendData.secret,
                 seqnum: backendData.seqnum + 1,
                 server,
+                yostar_email: backendData.yostar_email,
+                yssid: backendData.yssid ?? undefined,
+                yssid_sig: backendData.yssid_sig ?? undefined,
             },
             refreshData.site_token,
         );
