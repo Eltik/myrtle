@@ -17,6 +17,9 @@ export const SessionSchema = z.object({
     secret: z.string().min(1, "Secret is required"),
     seqnum: z.number().int().min(0),
     server: AKServerSchema,
+    yostar_email: z.string().optional(),
+    yssid: z.string().optional(),
+    yssid_sig: z.string().optional(),
 });
 export type SessionData = z.infer<typeof SessionSchema>;
 
@@ -62,7 +65,19 @@ export function getSiteToken(req: NextApiRequest): string | null {
 /**
  * Set auth cookies after login or refresh
  */
-export function setAuthCookies(res: NextApiResponse, session: { uid: string; secret: string; seqnum: number; server: string }, siteToken: string): void {
+export function setAuthCookies(
+    res: NextApiResponse,
+    session: {
+        uid: string;
+        secret: string;
+        seqnum: number;
+        server: string;
+        yostar_email?: string;
+        yssid?: string;
+        yssid_sig?: string;
+    },
+    siteToken: string,
+): void {
     const sessionData = JSON.stringify(session);
 
     res.setHeader("Set-Cookie", [

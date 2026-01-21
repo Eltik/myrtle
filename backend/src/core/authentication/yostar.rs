@@ -231,3 +231,78 @@ pub async fn submit_auth(
 
     Ok(AuthResponse { token: data.token })
 }
+
+// Account portal login (account.yo-star.com)
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AccountPortalLoginBody<'a> {
+    channel: &'a str,
+    token: &'a str,
+    #[serde(rename = "openId")]
+    open_id: &'a str,
+    account: &'a str,
+    check_account: bool,
+}
+
+#[derive(Debug)]
+pub struct AccountPortalSession {
+    pub yssid: String,
+    pub yssid_sig: String,
+}
+
+pub async fn account_portal_login(
+    client: &Client,
+    email: &str,
+    auth_token: &str,
+) -> Result<AccountPortalSession, FetchError> {
+    let body = AccountPortalLoginBody {
+        channel: "yostar",
+        token: auth_token,
+        open_id: email,
+        account: email,
+        check_account: false,
+    };
+
+    let response = client
+        .post("https://account.yo-star.com/api/user/login")
+        .header("Content-Type", "application/json")
+        .header("Lang", "en")
+        .header("Accept", "application/json, text/plain, */*")
+        .header("Origin", "https://account.yo-star.com")
+        .header("Referer", "https://account.yo-star.com/login")
+        .json(&body)
+        .send()
+        .await
+        .map_err(FetchError::RequestFailed)?;
+
+    // Extract YSSID cookies from set-cookie headers
+    let mut yssid = String::new();
+    let mut yssid_sig = String::new();
+
+    for (name, value) in response.headers() {
+        if name.as_str().eq_ignore_ascii_case("set-cookie") {
+            let cookie_str = value.to_str().unwrap_or("");
+            if cookie_str.starts_with("YSSID=") && !cookie_str.starts_with("YSSID.sig=") {
+                if let Some(val) = cookie_str.strip_prefix("YSSID=") {
+                    yssid = val.split(';').next().unwrap_or("").to_string();
+                }
+            } else if cookie_str.starts_with("YSSID.sig=")
+                && let Some(val) = cookie_str.strip_prefix("YSSID.sig=")
+            {
+                yssid_sig = val.split(';').next().unwrap_or("").to_string();
+            }
+        }
+    }
+
+    // Consume response body
+    let _ = response.text().await;
+
+    if yssid.is_empty() || yssid_sig.is_empty() {
+        return Err(FetchError::ParseError(format!(
+            "Missing YSSID cookies. YSSID: '{}', YSSID.sig: '{}'",
+            yssid, yssid_sig
+        )));
+    }
+
+    Ok(AccountPortalSession { yssid, yssid_sig })
+}

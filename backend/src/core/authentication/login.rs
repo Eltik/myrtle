@@ -7,9 +7,15 @@ use crate::core::authentication::{
     config::GlobalConfig,
     constants::{AuthSession, FetchError, Server},
     get::{get_secret, get_u8_token},
-    yostar::{request_token, submit_auth},
+    yostar::{AccountPortalSession, account_portal_login, request_token, submit_auth},
 };
 use crate::events::{ConfigEvent, EventEmitter};
+
+pub struct LoginResult {
+    pub session: AuthSession,
+    pub yostar_email: String,
+    pub portal_session: Option<AccountPortalSession>,
+}
 
 pub async fn login(
     client: &Client,
@@ -19,8 +25,22 @@ pub async fn login(
     code: &str,
     server: Server,
     session: Option<AuthSession>,
-) -> Result<AuthSession, FetchError> {
+) -> Result<LoginResult, FetchError> {
     let yostar_data = submit_auth(client, email, code, server).await?;
+
+    // Get YSSID cookies from account portal (only for Yostar servers)
+    let portal_session = if server.yostar_domain().is_some() {
+        match account_portal_login(client, email, &yostar_data.token).await {
+            Ok(session) => Some(session),
+            Err(e) => {
+                eprintln!("Warning: Failed to get YSSID cookies: {:?}", e);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     let token_data = request_token(client, email, &yostar_data.token, server).await?;
 
     let mut session = session.unwrap_or_else(|| AuthSession::new(None, None, None, None));
@@ -41,5 +61,9 @@ pub async fn login(
 
     events.emit(ConfigEvent::AuthLoginSuccess(session.clone()));
 
-    Ok(session)
+    Ok(LoginResult {
+        session,
+        yostar_email: email.to_string(),
+        portal_session,
+    })
 }

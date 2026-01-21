@@ -23,6 +23,9 @@ pub struct LoginResponse {
     pub uid: String,
     pub secret: String,
     pub seqnum: u32,
+    pub yostar_email: String,
+    pub yssid: Option<String>,
+    pub yssid_sig: Option<String>,
 }
 
 // /login?email={email}&code={code}&server={server}
@@ -62,7 +65,7 @@ async fn login_impl(
     code: &str,
     server: Server,
 ) -> Result<Json<LoginResponse>, ApiError> {
-    let session = login::login(
+    let result = login::login(
         &state.client,
         &state.config,
         &state.events,
@@ -77,9 +80,17 @@ async fn login_impl(
         ApiError::Internal("Internal server error.".into())
     })?;
 
+    let (yssid, yssid_sig) = match result.portal_session {
+        Some(portal) => (Some(portal.yssid), Some(portal.yssid_sig)),
+        None => (None, None),
+    };
+
     Ok(Json(LoginResponse {
-        uid: session.uid,
-        secret: session.secret,
-        seqnum: session.seqnum,
+        uid: result.session.uid,
+        secret: result.session.secret,
+        seqnum: result.session.seqnum,
+        yostar_email: result.yostar_email,
+        yssid,
+        yssid_sig,
     }))
 }
