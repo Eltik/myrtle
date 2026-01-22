@@ -21,8 +21,15 @@ impl IntoResponse for ApiError {
         let (status, message) = match self {
             ApiError::NotFound(msg) => (StatusCode::NOT_FOUND, msg),
             ApiError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
-            ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg), // Add this
+            ApiError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg),
         };
         (status, Json(ErrorBody { error: message })).into_response()
+    }
+}
+
+impl From<sqlx::Error> for ApiError {
+    fn from(err: sqlx::Error) -> Self {
+        eprintln!("Database error: {err:?}");
+        ApiError::Internal("Database error occurred.".into())
     }
 }

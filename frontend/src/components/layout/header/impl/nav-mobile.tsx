@@ -1,6 +1,6 @@
 "use client";
 
-import { Cog, ExternalLink, LogOut, Menu } from "lucide-react";
+import { Cog, ExternalLink, LayoutList, LogOut, Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
@@ -99,6 +99,10 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                     <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                 </div>
                             </div>
+                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/tier-lists" onClick={() => setMobileMenuOpen(false)}>
+                                <LayoutList className="mr-2 h-4 w-4" />
+                                My Tier Lists
+                            </Link>
                             <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/settings" onClick={() => setMobileMenuOpen(false)}>
                                 <Cog className="mr-2 h-4 w-4" />
                                 Settings
