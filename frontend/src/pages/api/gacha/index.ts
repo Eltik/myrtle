@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSessionFromCookie } from "~/lib/auth";
+import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 
 // Types matching backend response
@@ -64,9 +64,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Call backend /gacha endpoint
+        // Include token for automatic gacha record storage (opt-out model)
+        const token = getSiteToken(req);
+
         const params = new URLSearchParams();
         params.set("yssid", yssid);
         params.set("yssid_sig", yssid_sig);
+        if (token) {
+            params.set("token", token);
+        }
 
         const gachaResponse = await backendFetch(`/gacha?${params.toString()}`);
 

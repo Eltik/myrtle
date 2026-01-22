@@ -266,5 +266,75 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    // =========================================================================
+    // Gacha Records Tables
+    // =========================================================================
+
+    // Individual gacha pull records
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS gacha_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            pull_timestamp BIGINT NOT NULL,
+            char_id VARCHAR(100) NOT NULL,
+            pool_id VARCHAR(100) NOT NULL,
+            char_name VARCHAR(255) NOT NULL,
+            rarity SMALLINT NOT NULL,
+            pool_name VARCHAR(255) NOT NULL,
+            gacha_type VARCHAR(50) NOT NULL,
+            type_name VARCHAR(100) NOT NULL,
+            pull_timestamp_str VARCHAR(50),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT unique_user_pull UNIQUE (user_id, pull_timestamp, char_id, pool_id)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // User gacha settings (opt-out model)
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS user_gacha_settings (
+            user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            store_records BOOLEAN NOT NULL DEFAULT true,
+            share_anonymous_stats BOOLEAN NOT NULL DEFAULT true,
+            last_sync_at TIMESTAMPTZ,
+            last_sync_limited_at BIGINT,
+            last_sync_regular_at BIGINT,
+            last_sync_special_at BIGINT,
+            total_pulls INTEGER NOT NULL DEFAULT 0,
+            six_star_count INTEGER NOT NULL DEFAULT 0,
+            five_star_count INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Gacha records indexes
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gacha_records_user_time ON gacha_records(user_id, pull_timestamp DESC)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gacha_records_char_id ON gacha_records(char_id)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_gacha_records_rarity ON gacha_records(rarity)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gacha_settings_share_stats ON user_gacha_settings(share_anonymous_stats) WHERE share_anonymous_stats = true",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

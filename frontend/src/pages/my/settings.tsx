@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronRight, RefreshCw, SettingsIcon, UserX } from "lucide-react";
+import { BarChart3, ChevronRight, Database, RefreshCw, SettingsIcon, UserX } from "lucide-react";
 import { motion } from "motion/react";
 import type { GetServerSideProps } from "next";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SEO } from "~/components/seo";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
@@ -13,6 +13,14 @@ import { Separator } from "~/components/ui/shadcn/separator";
 import { Switch } from "~/components/ui/shadcn/switch";
 import { useAuth } from "~/hooks/use-auth";
 
+interface GachaSettings {
+    store_records: boolean;
+    share_anonymous_stats: boolean;
+    total_pulls: number;
+    six_star_count: number;
+    five_star_count: number;
+}
+
 export default function SettingsPage() {
     const { user, loading, refreshProfile } = useAuth();
     const [publicProfile, setPublicProfile] = useState(true);
@@ -20,6 +28,86 @@ export default function SettingsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [showPrivacy, setShowPrivacy] = useState(true);
     const [showProfile, setShowProfile] = useState(true);
+    const [showGacha, setShowGacha] = useState(true);
+
+    // Gacha settings state
+    const [gachaSettings, setGachaSettings] = useState<GachaSettings | null>(null);
+    const [isLoadingGacha, setIsLoadingGacha] = useState(true);
+    const [isSavingGacha, setIsSavingGacha] = useState(false);
+
+    // Fetch gacha settings on mount
+    const fetchGachaSettings = useCallback(async () => {
+        try {
+            const response = await fetch("/api/gacha/settings");
+            const data = await response.json();
+
+            if (data.success) {
+                setGachaSettings(data.settings);
+            }
+        } catch (error) {
+            console.error("Error fetching gacha settings:", error);
+        } finally {
+            setIsLoadingGacha(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (user?.status) {
+            fetchGachaSettings();
+        }
+    }, [user?.status, fetchGachaSettings]);
+
+    // Handle gacha storage toggle
+    const handleGachaStorageToggle = async (checked: boolean) => {
+        setIsSavingGacha(true);
+        try {
+            const response = await fetch("/api/gacha/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ storeRecords: checked }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setGachaSettings(data.settings);
+                toast.success(checked ? "Gacha records will now be stored" : "Gacha record storage disabled");
+            } else {
+                toast.error(data.error || "Failed to update gacha settings");
+            }
+        } catch (error) {
+            console.error("Error updating gacha settings:", error);
+            toast.error("Failed to update gacha settings");
+        } finally {
+            setIsSavingGacha(false);
+        }
+    };
+
+    // Handle anonymous stats toggle
+    const handleAnonymousStatsToggle = async (checked: boolean) => {
+        setIsSavingGacha(true);
+        try {
+            const response = await fetch("/api/gacha/settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ shareAnonymousStats: checked }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setGachaSettings(data.settings);
+                toast.success(checked ? "Your data will be included in global statistics" : "Your data will be excluded from global statistics");
+            } else {
+                toast.error(data.error || "Failed to update gacha settings");
+            }
+        } catch (error) {
+            console.error("Error updating gacha settings:", error);
+            toast.error("Failed to update gacha settings");
+        } finally {
+            setIsSavingGacha(false);
+        }
+    };
 
     const handleVisibilityToggle = async (checked: boolean) => {
         setIsSaving(true);
@@ -203,6 +291,100 @@ export default function SettingsPage() {
                                             </>
                                         )}
                                     </Button>
+                                </div>
+                            </DisclosureContent>
+                        </Disclosure>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Gacha Settings</CardTitle>
+                        <CardDescription>Control how your gacha pull data is stored and used</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <Disclosure onOpenChange={setShowGacha} open={showGacha} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                            <DisclosureTrigger>
+                                <div className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-secondary/50">
+                                    <div className="flex items-center gap-3">
+                                        <Database className="h-5 w-5 text-primary" />
+                                        <div className="text-left">
+                                            <p className="font-medium text-sm">Gacha Data Storage</p>
+                                            <p className="text-muted-foreground text-xs">{isLoadingGacha ? "Loading settings..." : gachaSettings?.store_records ? "Your gacha records are being stored" : "Gacha record storage is disabled"}</p>
+                                        </div>
+                                    </div>
+                                    <motion.div animate={{ rotate: showGacha ? 90 : 0 }} className="will-change-transform" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    </motion.div>
+                                </div>
+                            </DisclosureTrigger>
+                            <DisclosureContent>
+                                <div className="mt-4 space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+                                    {isLoadingGacha ? (
+                                        <div className="flex items-center justify-center py-4">
+                                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <label className="font-medium text-sm" htmlFor="store-gacha">
+                                                        Store Gacha Records
+                                                    </label>
+                                                    <p className="text-muted-foreground text-xs">Save your pull history when viewing gacha data</p>
+                                                </div>
+                                                <Switch checked={gachaSettings?.store_records ?? true} disabled={isSavingGacha} id="store-gacha" onCheckedChange={handleGachaStorageToggle} />
+                                            </div>
+
+                                            <Separator />
+
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-0.5">
+                                                    <label className="font-medium text-sm" htmlFor="share-stats">
+                                                        Share Anonymous Statistics
+                                                    </label>
+                                                    <p className="text-muted-foreground text-xs">Include your data in global pull rate statistics</p>
+                                                </div>
+                                                <Switch checked={gachaSettings?.share_anonymous_stats ?? true} disabled={isSavingGacha} id="share-stats" onCheckedChange={handleAnonymousStatsToggle} />
+                                            </div>
+
+                                            <Separator />
+
+                                            {gachaSettings && gachaSettings.total_pulls > 0 && (
+                                                <>
+                                                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                                                        <BarChart3 className="h-4 w-4" />
+                                                        <span>Your stored statistics:</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                                        <div className="rounded-lg bg-background p-3">
+                                                            <p className="font-bold text-lg">{gachaSettings.total_pulls.toLocaleString()}</p>
+                                                            <p className="text-muted-foreground text-xs">Total Pulls</p>
+                                                        </div>
+                                                        <div className="rounded-lg bg-background p-3">
+                                                            <p className="font-bold text-lg text-orange-500">{gachaSettings.six_star_count.toLocaleString()}</p>
+                                                            <p className="text-muted-foreground text-xs">6★ Operators</p>
+                                                        </div>
+                                                        <div className="rounded-lg bg-background p-3">
+                                                            <p className="font-bold text-lg text-yellow-500">{gachaSettings.five_star_count.toLocaleString()}</p>
+                                                            <p className="text-muted-foreground text-xs">5★ Operators</p>
+                                                        </div>
+                                                    </div>
+                                                    <Separator />
+                                                </>
+                                            )}
+
+                                            <div className="text-muted-foreground text-xs">
+                                                <p className="mb-2 font-medium">About gacha data storage:</p>
+                                                <ul className="ml-4 list-disc space-y-1">
+                                                    <li>When enabled, your pull history is automatically saved when you view the Gacha page</li>
+                                                    <li>Stored data helps track your personal pull statistics over time</li>
+                                                    <li>Anonymous statistics contribute to global pull rate calculations</li>
+                                                    <li>You can disable storage at any time without losing previously stored data</li>
+                                                </ul>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </DisclosureContent>
                         </Disclosure>

@@ -23,7 +23,9 @@ use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::search::search_users;
 use crate::app::routes::static_data;
 use crate::app::routes::tier_lists;
-use crate::app::routes::yostar::gacha::{get_all_gacha, get_gacha_by_type};
+use crate::app::routes::yostar::gacha::{
+    get_all_gacha, get_gacha_by_type, get_gacha_settings, get_global_stats, update_gacha_settings,
+};
 use crate::app::routes::yostar::login::{login_by_query, login_by_server, login_no_server};
 use crate::app::routes::yostar::refresh::{refresh_by_query, refresh_by_server, refresh_no_server};
 use crate::app::routes::yostar::send_code::{
@@ -86,9 +88,12 @@ fn create_router(state: AppState) -> Router {
             "/refresh/{uid}/{secret}/{seqnum}/{server}",
             post(refresh_by_server),
         )
-        // Gacha records
+        // Gacha records (auto-stores by default, opt-out available)
         .route("/gacha", get(get_all_gacha))
         .route("/gacha/type", get(get_gacha_by_type))
+        .route("/gacha/settings", get(get_gacha_settings))
+        .route("/gacha/settings", post(update_gacha_settings))
+        .route("/gacha/stats", get(get_global_stats))
         .nest("/static", static_router)
         // DPS Calculator
         .route("/dps-calculator", post(calculate_dps))

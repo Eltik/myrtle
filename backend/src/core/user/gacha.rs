@@ -1,5 +1,6 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use crate::core::authentication::constants::FetchError;
 
@@ -20,12 +21,33 @@ impl GachaType {
         }
     }
 
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            GachaType::Limited => "limited",
+            GachaType::Regular => "regular",
+            GachaType::Special => "special",
+        }
+    }
+
     pub fn all() -> &'static [GachaType] {
         &[GachaType::Limited, GachaType::Regular, GachaType::Special]
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+impl FromStr for GachaType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "limited" => Ok(GachaType::Limited),
+            "regular" => Ok(GachaType::Regular),
+            "special" => Ok(GachaType::Special),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaItem {
     pub char_id: String,
