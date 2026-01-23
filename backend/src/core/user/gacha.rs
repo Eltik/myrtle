@@ -32,6 +32,32 @@ impl GachaType {
     pub fn all() -> &'static [GachaType] {
         &[GachaType::Limited, GachaType::Regular, GachaType::Special]
     }
+
+    /// Derive gacha type from pool_id prefix.
+    /// Returns None if the prefix doesn't match any known type.
+    pub fn from_pool_id(pool_id: &str) -> Option<Self> {
+        if pool_id.starts_with("LIMITED_") {
+            Some(GachaType::Limited)
+        } else if pool_id.starts_with("NORM_")
+            || pool_id.starts_with("CLASSIC_")
+            || pool_id.starts_with("BOOT_")
+        {
+            Some(GachaType::Regular)
+        } else if pool_id.starts_with("SINGLE_") || pool_id.starts_with("LINKAGE_") {
+            Some(GachaType::Special)
+        } else {
+            None
+        }
+    }
+
+    /// Get the pool_id prefixes that match this gacha type.
+    pub fn pool_prefixes(&self) -> &'static [&'static str] {
+        match self {
+            GachaType::Limited => &["LIMITED_"],
+            GachaType::Regular => &["NORM_", "CLASSIC_", "BOOT_"],
+            GachaType::Special => &["SINGLE_", "LINKAGE_"],
+        }
+    }
 }
 
 impl FromStr for GachaType {
@@ -127,14 +153,21 @@ async fn fetch_all_records(
 
 /// Filter records by gacha type based on poolId prefix
 fn filter_by_type(records: &[GachaItem], gacha_type: GachaType) -> Vec<GachaItem> {
-    let prefix = match gacha_type {
-        GachaType::Limited => "LIMITED_",
-        GachaType::Regular => "CLASSIC_", // Standard/Regular banner
-        GachaType::Special => "SINGLE_",  // Single-target banners
-    };
+    let prefixes = gacha_type.pool_prefixes();
     records
         .iter()
-        .filter(|r| r.pool_id.starts_with(prefix))
+        .filter(|r| prefixes.iter().any(|p| r.pool_id.starts_with(p)))
+        .cloned()
+        .collect()
+}
+
+/// Get records that don't match any known gacha type prefix.
+/// Useful for debugging and identifying new banner types.
+#[allow(dead_code)]
+pub fn get_uncategorized_records(records: &[GachaItem]) -> Vec<GachaItem> {
+    records
+        .iter()
+        .filter(|r| GachaType::from_pool_id(&r.pool_id).is_none())
         .cloned()
         .collect()
 }

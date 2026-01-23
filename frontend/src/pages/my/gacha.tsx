@@ -1,20 +1,136 @@
 "use client";
 
-import { useEffect } from "react";
+import { AlertCircle, History, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/my/gacha";
 import { SEO } from "~/components/seo";
-import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/shadcn/alert";
+import { Button } from "~/components/ui/shadcn/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
+import { Separator } from "~/components/ui/shadcn/separator";
 import { useAuth } from "~/hooks/use-auth";
 import { useGacha } from "~/hooks/use-gacha";
+import type { GachaHistoryParams, GachaType } from "~/types/api";
+
+const DEFAULT_PAGE_SIZE = 25;
 
 export default function GachaPage() {
     const { user, loading: authLoading } = useAuth();
-    const { records, loading, error, fetchAllRecords } = useGacha();
+    const { records, loading: loadingRecords, error: recordsError, fetchAllRecords, history, loadingHistory, fetchHistory, settings, fetchSettings } = useGacha();
 
+    const [activeTab, setActiveTab] = useState<"all" | GachaType>("all");
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+    const [filters, setFilters] = useState<GachaHistoryParams>({
+        limit: pageSize,
+        offset: 0,
+        order: "desc",
+    });
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [isTabSwitching, setIsTabSwitching] = useState(false);
+
+    // Update filters when page size changes
+    const handlePageSizeChange = useCallback(
+        (newSize: number) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+            const newFilters = {
+                ...filters,
+                limit: newSize,
+                offset: 0,
+                gachaType: activeTab === "all" ? undefined : activeTab,
+            };
+            setFilters(newFilters);
+            fetchHistory(newFilters);
+        },
+        [filters, activeTab, fetchHistory],
+    );
+
+    // Fetch initial data
     useEffect(() => {
         if (user?.status && !authLoading) {
             fetchAllRecords();
+            fetchSettings();
+            fetchHistory({ ...filters, gachaType: activeTab === "all" ? undefined : activeTab });
         }
-    }, [user?.status, authLoading, fetchAllRecords]);
+    }, [user?.status, authLoading, activeTab, fetchAllRecords, fetchHistory, fetchSettings, filters]);
+
+    // Handle tab change
+    const handleTabChange = useCallback(
+        async (tab: string) => {
+            setIsTabSwitching(true);
+            setCurrentPage(1);
+            setActiveTab(tab as "all" | GachaType);
+            const newFilters = {
+                ...filters,
+                offset: 0,
+                gachaType: tab === "all" ? undefined : (tab as GachaType),
+            };
+            setFilters(newFilters);
+            await fetchHistory(newFilters);
+            setIsTabSwitching(false);
+        },
+        [filters, fetchHistory],
+    );
+
+    // Handle filter apply
+    const handleApplyFilters = useCallback(() => {
+        setCurrentPage(1);
+        const newFilters = {
+            ...filters,
+            offset: 0,
+            gachaType: activeTab === "all" ? undefined : activeTab,
+        };
+        setFilters(newFilters);
+        fetchHistory(newFilters);
+        toast.success("Filters applied");
+    }, [filters, activeTab, fetchHistory]);
+
+    // Handle filter reset
+    const handleResetFilters = useCallback(() => {
+        setCurrentPage(1);
+        const newFilters: GachaHistoryParams = {
+            limit: pageSize,
+            offset: 0,
+            order: "desc",
+            gachaType: activeTab === "all" ? undefined : activeTab,
+        };
+        setFilters(newFilters);
+        fetchHistory(newFilters);
+        toast.success("Filters reset");
+    }, [pageSize, activeTab, fetchHistory]);
+
+    // Handle page change
+    const handlePageChange = useCallback(
+        (page: number) => {
+            setCurrentPage(page);
+            const newFilters = {
+                ...filters,
+                offset: (page - 1) * pageSize,
+                gachaType: activeTab === "all" ? undefined : activeTab,
+            };
+            setFilters(newFilters);
+            fetchHistory(newFilters);
+        },
+        [filters, pageSize, activeTab, fetchHistory],
+    );
+
+    // Handle refresh
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchAllRecords();
+            await fetchHistory({ ...filters, gachaType: activeTab === "all" ? undefined : activeTab });
+            toast.success("Gacha data refreshed");
+        } catch (error) {
+            console.error("Error refreshing gacha data:", error);
+            toast.error("Failed to refresh gacha data");
+        } finally {
+            setIsRefreshing(false);
+        }
+    }, [fetchAllRecords, fetchHistory, filters, activeTab]);
 
     // Loading auth state
     if (authLoading) {
@@ -45,59 +161,119 @@ export default function GachaPage() {
         );
     }
 
+    // Check if storage is disabled
+    const storageDisabled = settings && !settings.store_records;
+
     // Authenticated - render content
     return (
         <>
-            <SEO description="View your Arknights gacha pull history." noIndex path="/my/gacha" title="Gacha History" />
-            <div className="mx-auto max-w-6xl">
-                <h1 className="mb-6 font-bold text-3xl">Gacha History</h1>
-
-                {loading && (
-                    <div className="flex min-h-[30vh] items-center justify-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <SEO description="View your Arknights gacha pull history and statistics." noIndex path="/my/gacha" title="Gacha History" />
+            <div className="mx-auto max-w-7xl space-y-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                            <History className="h-8 w-8 text-primary" />
+                            <h1 className="font-bold text-3xl">Gacha History</h1>
+                        </div>
+                        <p className="text-muted-foreground">Track your pull statistics and history</p>
                     </div>
+                    <div className="flex gap-2">
+                        <GachaSettingsPopover onPageSizeChange={handlePageSizeChange} pageSize={pageSize} />
+                        <Button disabled={isRefreshing} onClick={handleRefresh} size="sm" variant="outline">
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                            Refresh
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Storage Disabled Warning */}
+                {storageDisabled && (
+                    <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Gacha Storage Disabled</AlertTitle>
+                        <AlertDescription>
+                            You have disabled gacha record storage. Enable it in{" "}
+                            <Link className="font-medium underline underline-offset-4" href="/my/settings">
+                                settings
+                            </Link>{" "}
+                            to view your pull history.
+                        </AlertDescription>
+                    </Alert>
                 )}
 
-                {error && (
-                    <Card className="border-destructive">
-                        <CardHeader>
-                            <CardTitle className="text-destructive">Error</CardTitle>
-                            <CardDescription>{error}</CardDescription>
-                        </CardHeader>
-                    </Card>
+                {/* Error Display */}
+                {recordsError && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{recordsError}</AlertDescription>
+                    </Alert>
                 )}
 
-                {!loading && !error && records && (
-                    <div className="space-y-6">
-                        {/* TODO: Implement gacha UI components */}
-                        {/* For now, just display the counts */}
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Limited Headhunting</CardTitle>
-                                    <CardDescription>
-                                        {records.limited.total} pulls ({records.limited.records.length} loaded)
-                                    </CardDescription>
-                                </CardHeader>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Regular Headhunting</CardTitle>
-                                    <CardDescription>
-                                        {records.regular.total} pulls ({records.regular.records.length} loaded)
-                                    </CardDescription>
-                                </CardHeader>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Special Headhunting</CardTitle>
-                                    <CardDescription>
-                                        {records.special.total} pulls ({records.special.records.length} loaded)
-                                    </CardDescription>
-                                </CardHeader>
-                            </Card>
+                {/* Loading State */}
+                {loadingRecords && !records && (
+                    <div className="flex min-h-[30vh] items-center justify-center">
+                        <div className="text-center">
+                            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                            <p className="mt-4 text-muted-foreground text-sm">Loading gacha data...</p>
                         </div>
                     </div>
+                )}
+
+                {/* Main Content */}
+                {!loadingRecords && records && !storageDisabled && (
+                    <>
+                        {/* Statistics Overview */}
+                        <StatsOverview loading={loadingRecords} records={records} />
+
+                        <Separator />
+
+                        {/* Banner Tabs and History */}
+                        <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={records}>
+                            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+                                {/* Pull History List */}
+                                <div className="space-y-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Pull History</CardTitle>
+                                            <CardDescription>{history?.pagination.total ? `${history.pagination.total.toLocaleString()} total pulls` : "No pulls recorded"}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <PullHistoryList
+                                                currentPage={currentPage}
+                                                isPageLoading={loadingHistory && !!history}
+                                                loading={loadingHistory && !history}
+                                                onPageChange={handlePageChange}
+                                                records={history?.records ?? []}
+                                                totalPages={history?.pagination.total ? Math.ceil(history.pagination.total / pageSize) : 1}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Filters Sidebar */}
+                                <div className="lg:sticky lg:top-4 lg:self-start">
+                                    <PullFilters filters={filters} onApply={handleApplyFilters} onFiltersChange={setFilters} onReset={handleResetFilters} />
+                                </div>
+                            </div>
+                        </BannerTabs>
+                    </>
+                )}
+
+                {/* Empty State */}
+                {!loadingRecords && records && !storageDisabled && history?.pagination.total === 0 && (
+                    <Card>
+                        <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12 text-center">
+                            <History className="mb-4 h-12 w-12 text-muted-foreground" />
+                            <h3 className="mb-2 font-semibold text-lg">No Pull History</h3>
+                            <p className="mb-4 max-w-sm text-muted-foreground text-sm">Your pull history will appear here once you sync your gacha data from the game.</p>
+                            <Button onClick={handleRefresh} variant="outline">
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Sync Gacha Data
+                            </Button>
+                        </CardContent>
+                    </Card>
                 )}
             </div>
         </>

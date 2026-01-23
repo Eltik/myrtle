@@ -1,6 +1,12 @@
 import type { GachaItem, GachaRecords } from "~/types/api";
 
 /**
+ * Pity system constants
+ */
+export const SOFT_PITY_START = 50;
+export const HARD_PITY = 99;
+
+/**
  * Statistics calculated from gacha records
  */
 export interface GachaStats {
@@ -186,4 +192,33 @@ export function formatPullDate(timestamp: number): string {
  */
 export function formatRate(rate: number): string {
     return `${(rate * 100).toFixed(2)}%`;
+}
+
+/**
+ * Calculate average pulls per 6-star.
+ */
+export function calculateAvgPullsPerSixStar(totalPulls: number, sixStarCount: number): number {
+    if (sixStarCount === 0) return 0;
+    return totalPulls / sixStarCount;
+}
+
+/**
+ * Count 6-stars obtained in soft pity range (pulls 50-99).
+ * This analyzes the pull history to find the pity count when each 6-star was obtained.
+ */
+export function countSixStarsInSoftPity(records: GachaItem[]): number {
+    let softPityCount = 0;
+    let pullsSinceLastSixStar = 0;
+    const sortedRecords = [...records].sort((a, b) => a.at - b.at); // oldest first
+
+    for (const record of sortedRecords) {
+        pullsSinceLastSixStar++;
+        if (parseRarity(record.star) === 6) {
+            if (pullsSinceLastSixStar >= SOFT_PITY_START) {
+                softPityCount++;
+            }
+            pullsSinceLastSixStar = 0;
+        }
+    }
+    return softPityCount;
 }

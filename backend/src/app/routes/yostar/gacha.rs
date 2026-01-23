@@ -135,19 +135,20 @@ async fn store_records_for_user(
             settings.last_sync_special_at,
         ),
     ] {
-        // Filter to only new records
+        // Filter to only new records (newer than last sync timestamp)
         let new_records: Vec<_> = type_records
             .iter()
             .filter(|r| last_sync.is_none() || r.at > last_sync.unwrap())
             .cloned()
             .collect();
 
-        if !new_records.is_empty()
-            && GachaRecord::store_batch(&state.db, user_id, &new_records, gacha_type)
-                .await
-                .is_ok()
-        {
-            // Update sync timestamp
+        if new_records.is_empty() {
+            continue;
+        }
+
+        // Store records - gacha_type is derived from pool_id in store_batch
+        if GachaRecord::store_batch(&state.db, user_id, &new_records).await.is_ok() {
+            // Update sync timestamp to prevent re-processing
             if let Some(max_ts) = new_records.iter().map(|r| r.at).max() {
                 let _ = UserGachaSettings::update_sync_timestamp(
                     &state.db, user_id, gacha_type, max_ts,
@@ -157,7 +158,7 @@ async fn store_records_for_user(
         }
     }
 
-    // Recalculate counts (ignore errors)
+    // Recalculate aggregate counts
     let _ = UserGachaSettings::recalculate_counts(&state.db, user_id).await;
 }
 
@@ -184,7 +185,7 @@ async fn store_type_records_for_user(
         .collect();
 
     if !new_records.is_empty()
-        && let Ok(_) = GachaRecord::store_batch(&state.db, user_id, &new_records, gacha_type).await
+        && let Ok(_) = GachaRecord::store_batch(&state.db, user_id, &new_records).await
         && let Some(max_ts) = new_records.iter().map(|r| r.at).max()
     {
         let _ =
