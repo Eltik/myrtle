@@ -1,69 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { SEO } from "~/components/seo";
 import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { useAuth } from "~/hooks/use-auth";
-
-// Types matching API response
-interface GachaItem {
-    charId: string;
-    charName: string;
-    star: string;
-    color: string;
-    poolId: string;
-    poolName: string;
-    typeName: string;
-    at: number;
-    atStr: string;
-}
-
-interface GachaTypeRecords {
-    gacha_type: "limited" | "regular" | "special";
-    records: GachaItem[];
-    total: number;
-}
-
-interface GachaRecords {
-    limited: GachaTypeRecords;
-    regular: GachaTypeRecords;
-    special: GachaTypeRecords;
-}
+import { useGacha } from "~/hooks/use-gacha";
 
 export default function GachaPage() {
     const { user, loading: authLoading } = useAuth();
-    const [gachaData, setGachaData] = useState<GachaRecords | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchGachaRecords = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetch("/api/gacha");
-            const data = await response.json();
-
-            if (data.success) {
-                setGachaData(data.data);
-            } else {
-                setError(data.error || "Failed to fetch gacha records");
-            }
-        } catch (err) {
-            console.error("Error fetching gacha records:", err);
-            setError("An error occurred while fetching gacha records");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const { records, loading, error, fetchAllRecords } = useGacha();
 
     useEffect(() => {
-        if (user?.status) {
-            fetchGachaRecords();
-        } else if (!authLoading) {
-            setLoading(false);
+        if (user?.status && !authLoading) {
+            fetchAllRecords();
         }
-    }, [user, authLoading, fetchGachaRecords]);
+    }, [user?.status, authLoading, fetchAllRecords]);
 
     // Loading auth state
     if (authLoading) {
@@ -116,7 +67,7 @@ export default function GachaPage() {
                     </Card>
                 )}
 
-                {!loading && !error && gachaData && (
+                {!loading && !error && records && (
                     <div className="space-y-6">
                         {/* TODO: Implement gacha UI components */}
                         {/* For now, just display the counts */}
@@ -125,7 +76,7 @@ export default function GachaPage() {
                                 <CardHeader>
                                     <CardTitle>Limited Headhunting</CardTitle>
                                     <CardDescription>
-                                        {gachaData.limited.total} pulls ({gachaData.limited.records.length} loaded)
+                                        {records.limited.total} pulls ({records.limited.records.length} loaded)
                                     </CardDescription>
                                 </CardHeader>
                             </Card>
@@ -133,7 +84,7 @@ export default function GachaPage() {
                                 <CardHeader>
                                     <CardTitle>Regular Headhunting</CardTitle>
                                     <CardDescription>
-                                        {gachaData.regular.total} pulls ({gachaData.regular.records.length} loaded)
+                                        {records.regular.total} pulls ({records.regular.records.length} loaded)
                                     </CardDescription>
                                 </CardHeader>
                             </Card>
@@ -141,7 +92,7 @@ export default function GachaPage() {
                                 <CardHeader>
                                     <CardTitle>Special Headhunting</CardTitle>
                                     <CardDescription>
-                                        {gachaData.special.total} pulls ({gachaData.special.records.length} loaded)
+                                        {records.special.total} pulls ({records.special.records.length} loaded)
                                     </CardDescription>
                                 </CardHeader>
                             </Card>

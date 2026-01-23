@@ -15,9 +15,9 @@ pub enum GachaType {
 impl GachaType {
     pub fn as_query_param(&self) -> &'static str {
         match self {
-            GachaType::Limited => "Limited+Headhunting",
-            GachaType::Regular => "Regular+Headhunting",
-            GachaType::Special => "Special+Headhunting",
+            GachaType::Limited => "Limited Headhunting",
+            GachaType::Regular => "Regular Headhunting",
+            GachaType::Special => "Special Headhunting",
         }
     }
 
@@ -69,6 +69,7 @@ struct GachaApiResponse {
 #[derive(Debug, Deserialize)]
 struct GachaRow {
     rows: Vec<GachaItem>,
+    #[allow(dead_code)]
     count: Option<i64>,
 }
 
@@ -88,23 +89,20 @@ pub struct GachaRecords {
 
 const PAGE_SIZE: i32 = 50;
 
-async fn fetch_gacha_type(
+/// Fetch all gacha records from the API (the API ignores type filter)
+async fn fetch_all_records(
     client: &Client,
     yostar_ssid: &str,
     yostar_sig: &str,
-    gacha_type: GachaType,
-) -> Result<GachaTypeRecords, FetchError> {
+) -> Result<Vec<GachaItem>, FetchError> {
     let mut index = 1;
     let mut all: Vec<GachaItem> = Vec::new();
-    let mut total: Option<i64> = None;
     let cookie = format!("YSSID={}; YSSID.sig={}", yostar_ssid, yostar_sig);
 
     loop {
         let url = format!(
-            "https://account.yo-star.com/api/game/gachas?key=ark&index={}&size={}&type={}",
-            index,
-            PAGE_SIZE,
-            gacha_type.as_query_param()
+            "https://account.yo-star.com/api/game/gachas?key=ark&index={}&size={}",
+            index, PAGE_SIZE,
         );
 
         let response = client
@@ -116,10 +114,6 @@ async fn fetch_gacha_type(
 
         let data: GachaApiResponse = response.json().await.map_err(FetchError::RequestFailed)?;
 
-        if total.is_none() {
-            total = data.data.count;
-        }
-
         if data.data.rows.is_empty() {
             break;
         }
@@ -128,30 +122,53 @@ async fn fetch_gacha_type(
         index += 1;
     }
 
-    Ok(GachaTypeRecords {
-        gacha_type,
-        records: all,
-        total: total.unwrap_or(0),
-    })
+    Ok(all)
 }
 
-/// Fetch all gacha records (limited, regular, special) in parallel
+/// Filter records by gacha type based on poolId prefix
+fn filter_by_type(records: &[GachaItem], gacha_type: GachaType) -> Vec<GachaItem> {
+    let prefix = match gacha_type {
+        GachaType::Limited => "LIMITED_",
+        GachaType::Regular => "CLASSIC_", // Standard/Regular banner
+        GachaType::Special => "SINGLE_",  // Single-target banners
+    };
+    records
+        .iter()
+        .filter(|r| r.pool_id.starts_with(prefix))
+        .cloned()
+        .collect()
+}
+
+/// Fetch all gacha records and categorize by type
 pub async fn get_gacha(
     client: &Client,
     yostar_ssid: &str,
     yostar_sig: &str,
 ) -> Result<GachaRecords, FetchError> {
-    // Fetch all three types in parallel
-    let (limited, regular, special) = tokio::join!(
-        fetch_gacha_type(client, yostar_ssid, yostar_sig, GachaType::Limited),
-        fetch_gacha_type(client, yostar_ssid, yostar_sig, GachaType::Regular),
-        fetch_gacha_type(client, yostar_ssid, yostar_sig, GachaType::Special),
-    );
+    // Fetch all records once (API ignores type parameter)
+    let all_records = fetch_all_records(client, yostar_ssid, yostar_sig).await?;
+
+    // Filter records by poolId prefix
+    let limited_records = filter_by_type(&all_records, GachaType::Limited);
+    let regular_records = filter_by_type(&all_records, GachaType::Regular);
+    let special_records = filter_by_type(&all_records, GachaType::Special);
 
     Ok(GachaRecords {
-        limited: limited?,
-        regular: regular?,
-        special: special?,
+        limited: GachaTypeRecords {
+            gacha_type: GachaType::Limited,
+            total: limited_records.len() as i64,
+            records: limited_records,
+        },
+        regular: GachaTypeRecords {
+            gacha_type: GachaType::Regular,
+            total: regular_records.len() as i64,
+            records: regular_records,
+        },
+        special: GachaTypeRecords {
+            gacha_type: GachaType::Special,
+            total: special_records.len() as i64,
+            records: special_records,
+        },
     })
 }
 
@@ -162,5 +179,12 @@ pub async fn get_gacha_by_type(
     yostar_sig: &str,
     gacha_type: GachaType,
 ) -> Result<GachaTypeRecords, FetchError> {
-    fetch_gacha_type(client, yostar_ssid, yostar_sig, gacha_type).await
+    let all_records = fetch_all_records(client, yostar_ssid, yostar_sig).await?;
+    let filtered = filter_by_type(&all_records, gacha_type);
+
+    Ok(GachaTypeRecords {
+        gacha_type,
+        total: filtered.len() as i64,
+        records: filtered,
+    })
 }

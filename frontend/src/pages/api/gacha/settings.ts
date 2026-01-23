@@ -2,23 +2,13 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
+import type { GachaSettings } from "~/types/api";
 
 // Schema for updating gacha settings
 const UpdateGachaSettingsSchema = z.object({
     storeRecords: z.boolean().optional(),
     shareAnonymousStats: z.boolean().optional(),
 });
-
-// Response types
-interface GachaSettings {
-    user_id: string;
-    store_records: boolean;
-    share_anonymous_stats: boolean;
-    total_pulls: number;
-    six_star_count: number;
-    five_star_count: number;
-    last_sync_at: string | null;
-}
 
 interface SuccessResponse {
     success: true;
