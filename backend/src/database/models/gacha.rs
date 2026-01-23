@@ -254,18 +254,18 @@ impl GachaRecord {
             .unwrap_or(3)
     }
 
-    /// Store multiple gacha records with deduplication
+    /// Store multiple gacha records with deduplication.
+    /// The gacha_type for each record is derived from its pool_id prefix,
+    /// ensuring consistency regardless of upstream categorization.
     pub async fn store_batch(
         pool: &PgPool,
         user_id: Uuid,
         records: &[crate::core::user::gacha::GachaItem],
-        gacha_type: GachaType,
     ) -> Result<usize, sqlx::Error> {
         if records.is_empty() {
             return Ok(0);
         }
 
-        let gacha_type_str = gacha_type.as_str();
         let mut inserted = 0;
 
         for chunk in records.chunks(100) {
@@ -276,7 +276,17 @@ impl GachaRecord {
             let char_names: Vec<&str> = chunk.iter().map(|r| r.char_name.as_str()).collect();
             let rarities: Vec<i16> = chunk.iter().map(|r| Self::parse_rarity(&r.star)).collect();
             let pool_names: Vec<&str> = chunk.iter().map(|r| r.pool_name.as_str()).collect();
-            let gacha_types: Vec<&str> = vec![gacha_type_str; chunk.len()];
+
+            let gacha_types: Vec<String> = chunk
+                .iter()
+                .map(|r| {
+                    GachaType::from_pool_id(&r.pool_id)
+                        .unwrap_or(GachaType::Limited)
+                        .as_str()
+                        .to_string()
+                })
+                .collect();
+            let gacha_type_refs: Vec<&str> = gacha_types.iter().map(|s| s.as_str()).collect();
             let type_names: Vec<&str> = chunk.iter().map(|r| r.type_name.as_str()).collect();
             let timestamp_strs: Vec<&str> = chunk.iter().map(|r| r.at_str.as_str()).collect();
 
@@ -300,7 +310,7 @@ impl GachaRecord {
             .bind(&char_names)
             .bind(&rarities)
             .bind(&pool_names)
-            .bind(&gacha_types)
+            .bind(&gacha_type_refs)
             .bind(&type_names)
             .bind(&timestamp_strs)
             .execute(pool)
