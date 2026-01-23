@@ -50,6 +50,130 @@ export interface GachaGlobalStats {
 }
 
 // ============================================
+// Gacha History Types (User Pull History)
+// ============================================
+
+/** Individual pull entry from stored history */
+export interface GachaRecordEntry {
+    id: string;
+    charId: string;
+    charName: string;
+    rarity: number;
+    poolId: string;
+    poolName: string;
+    gachaType: string;
+    pullTimestamp: number;
+    pullTimestampStr: string | null;
+}
+
+/** Pagination metadata for gacha history */
+export interface GachaPaginationInfo {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+}
+
+/** Date range filter */
+export interface DateRange {
+    from: number | null;
+    to: number | null;
+}
+
+/** Filters applied to history query */
+export interface HistoryFilters {
+    rarity: number | null;
+    gachaType: string | null;
+    charId: string | null;
+    dateRange: DateRange | null;
+}
+
+/** Response for user pull history endpoint */
+export interface GachaHistoryResponse {
+    records: GachaRecordEntry[];
+    pagination: GachaPaginationInfo;
+    filtersApplied: HistoryFilters;
+}
+
+/** Query parameters for history endpoint */
+export interface GachaHistoryParams {
+    limit?: number;
+    offset?: number;
+    rarity?: number;
+    gachaType?: GachaType;
+    charId?: string;
+    from?: number;
+    to?: number;
+    order?: "asc" | "desc";
+}
+
+// ============================================
+// Enhanced Statistics Types
+// ============================================
+
+/** Collective statistics for all consenting users */
+export interface CollectiveStats {
+    totalPulls: number;
+    totalUsers: number;
+    totalSixStars: number;
+    totalFiveStars: number;
+}
+
+/** Pull rate percentages */
+export interface PullRates {
+    sixStarRate: number;
+    fiveStarRate: number;
+}
+
+/** Operator popularity statistics */
+export interface OperatorPopularity {
+    charId: string;
+    charName: string;
+    rarity: number;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Hourly pull distribution */
+export interface HourlyPullData {
+    hour: number;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Day of week pull distribution */
+export interface DayOfWeekPullData {
+    day: number;
+    dayName: string;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Pull timing data for graphs */
+export interface PullTimingData {
+    byHour: HourlyPullData[];
+    byDayOfWeek: DayOfWeekPullData[];
+}
+
+/** Full enhanced statistics response */
+export interface GachaEnhancedStats {
+    collectiveStats: CollectiveStats;
+    pullRates: PullRates;
+    mostCommonOperators: OperatorPopularity[];
+    averagePullsToSixStar: number;
+    averagePullsToFiveStar: number;
+    pullTiming?: PullTimingData;
+    computedAt: string;
+    cached: boolean;
+}
+
+/** Query parameters for enhanced stats endpoint */
+export interface GachaEnhancedStatsParams {
+    topN?: number;
+    includeTiming?: boolean;
+}
+
+// ============================================
 // Gacha Pool Types (Game Client Data)
 // ============================================
 
