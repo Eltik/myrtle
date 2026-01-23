@@ -1,31 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-
-// Types matching backend response
-interface GachaItem {
-    charId: string;
-    charName: string;
-    star: string;
-    color: string;
-    poolId: string;
-    poolName: string;
-    typeName: string;
-    at: number;
-    atStr: string;
-}
-
-interface GachaTypeRecords {
-    gacha_type: "limited" | "regular" | "special";
-    records: GachaItem[];
-    total: number;
-}
-
-interface GachaRecords {
-    limited: GachaTypeRecords;
-    regular: GachaTypeRecords;
-    special: GachaTypeRecords;
-}
+import type { GachaRecords } from "~/types/api";
 
 interface SuccessResponse {
     success: true;

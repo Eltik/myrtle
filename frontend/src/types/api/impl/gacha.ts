@@ -1,5 +1,58 @@
 // Gacha types
 
+// ============================================
+// Gacha Record Types (Pull History)
+// ============================================
+
+export type GachaType = "limited" | "regular" | "special";
+
+export interface GachaItem {
+    charId: string;
+    charName: string;
+    star: string;
+    color: string;
+    poolId: string;
+    poolName: string;
+    typeName: string;
+    at: number;
+    atStr: string;
+}
+
+export interface GachaTypeRecords {
+    gacha_type: GachaType;
+    records: GachaItem[];
+    total: number;
+}
+
+export interface GachaRecords {
+    limited: GachaTypeRecords;
+    regular: GachaTypeRecords;
+    special: GachaTypeRecords;
+}
+
+export interface GachaSettings {
+    user_id: string;
+    store_records: boolean;
+    share_anonymous_stats: boolean;
+    total_pulls: number;
+    six_star_count: number;
+    five_star_count: number;
+    last_sync_at: string | null;
+}
+
+export interface GachaGlobalStats {
+    total_pulls: number;
+    six_star_count: number;
+    five_star_count: number;
+    six_star_rate: number;
+    five_star_rate: number;
+    contributor_count: number;
+}
+
+// ============================================
+// Gacha Pool Types (Game Client Data)
+// ============================================
+
 export interface GachaPoolClient {
     gachaPoolId: string;
     gachaIndex: number;
