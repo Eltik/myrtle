@@ -336,5 +336,24 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Additional indexes for gacha history queries with filters
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gacha_records_user_rarity ON gacha_records(user_id, rarity)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gacha_records_user_gacha_type ON gacha_records(user_id, gacha_type)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_gacha_records_user_char ON gacha_records(user_id, char_id)",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

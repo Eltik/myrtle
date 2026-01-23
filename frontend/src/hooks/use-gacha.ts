@@ -1,16 +1,20 @@
 import { useCallback, useState } from "react";
-import type { GachaGlobalStats, GachaRecords, GachaSettings } from "~/types/api";
+import type { GachaEnhancedStats, GachaEnhancedStatsParams, GachaGlobalStats, GachaHistoryParams, GachaHistoryResponse, GachaRecordEntry, GachaRecords, GachaSettings } from "~/types/api";
 
 export interface UseGachaReturn {
     // Data state
     records: GachaRecords | null;
     settings: GachaSettings | null;
     globalStats: GachaGlobalStats | null;
+    history: GachaHistoryResponse | null;
+    enhancedStats: GachaEnhancedStats | null;
 
     // Loading states
     loading: boolean;
     loadingSettings: boolean;
     loadingStats: boolean;
+    loadingHistory: boolean;
+    loadingEnhancedStats: boolean;
 
     // Error state
     error: string | null;
@@ -25,6 +29,11 @@ export interface UseGachaReturn {
 
     // Stats functions
     fetchGlobalStats: () => Promise<GachaGlobalStats | null>;
+    fetchEnhancedStats: (params?: GachaEnhancedStatsParams) => Promise<GachaEnhancedStats | null>;
+
+    // History functions
+    fetchHistory: (params?: GachaHistoryParams) => Promise<GachaHistoryResponse | null>;
+    fetchOperatorHistory: (charId: string) => Promise<GachaRecordEntry[] | null>;
 
     // Utility
     clearError: () => void;
@@ -39,11 +48,15 @@ export function useGacha(): UseGachaReturn {
     const [records, setRecords] = useState<GachaRecords | null>(null);
     const [settings, setSettings] = useState<GachaSettings | null>(null);
     const [globalStats, setGlobalStats] = useState<GachaGlobalStats | null>(null);
+    const [history, setHistory] = useState<GachaHistoryResponse | null>(null);
+    const [enhancedStats, setEnhancedStats] = useState<GachaEnhancedStats | null>(null);
 
     // Loading states
     const [loading, setLoading] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(false);
     const [loadingStats, setLoadingStats] = useState(false);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [loadingEnhancedStats, setLoadingEnhancedStats] = useState(false);
 
     // Error state
     const [error, setError] = useState<string | null>(null);
@@ -169,6 +182,106 @@ export function useGacha(): UseGachaReturn {
     }, []);
 
     /**
+     * Fetch user's pull history with pagination and filters.
+     * Requires authentication.
+     */
+    const fetchHistory = useCallback(async (params?: GachaHistoryParams): Promise<GachaHistoryResponse | null> => {
+        setLoadingHistory(true);
+
+        try {
+            const searchParams = new URLSearchParams();
+            if (params?.limit !== undefined) searchParams.set("limit", String(params.limit));
+            if (params?.offset !== undefined) searchParams.set("offset", String(params.offset));
+            if (params?.rarity !== undefined) searchParams.set("rarity", String(params.rarity));
+            if (params?.gachaType !== undefined) searchParams.set("gachaType", params.gachaType);
+            if (params?.charId !== undefined) searchParams.set("charId", params.charId);
+            if (params?.from !== undefined) searchParams.set("from", String(params.from));
+            if (params?.to !== undefined) searchParams.set("to", String(params.to));
+            if (params?.order !== undefined) searchParams.set("order", params.order);
+
+            const queryString = searchParams.toString();
+            const url = queryString ? `/api/gacha/history?${queryString}` : "/api/gacha/history";
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                setHistory(data.data);
+                return data.data;
+            }
+
+            setError(data.error || "Failed to fetch gacha history");
+            return null;
+        } catch (err) {
+            console.error("Error fetching gacha history:", err);
+            setError("An error occurred while fetching gacha history");
+            return null;
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, []);
+
+    /**
+     * Fetch all pulls of a specific operator for the user.
+     * Requires authentication.
+     */
+    const fetchOperatorHistory = useCallback(async (charId: string): Promise<GachaRecordEntry[] | null> => {
+        setLoadingHistory(true);
+
+        try {
+            const response = await fetch(`/api/gacha/history/${encodeURIComponent(charId)}`);
+            const data = await response.json();
+
+            if (data.success) {
+                return data.data;
+            }
+
+            setError(data.error || "Failed to fetch operator history");
+            return null;
+        } catch (err) {
+            console.error("Error fetching operator history:", err);
+            setError("An error occurred while fetching operator history");
+            return null;
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, []);
+
+    /**
+     * Fetch comprehensive global statistics.
+     * This is a public endpoint - no authentication required.
+     */
+    const fetchEnhancedStats = useCallback(async (params?: GachaEnhancedStatsParams): Promise<GachaEnhancedStats | null> => {
+        setLoadingEnhancedStats(true);
+
+        try {
+            const searchParams = new URLSearchParams();
+            if (params?.topN !== undefined) searchParams.set("topN", String(params.topN));
+            if (params?.includeTiming !== undefined) searchParams.set("includeTiming", String(params.includeTiming));
+
+            const queryString = searchParams.toString();
+            const url = queryString ? `/api/gacha/stats/enhanced?${queryString}` : "/api/gacha/stats/enhanced";
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                setEnhancedStats(data.data);
+                return data.data;
+            }
+
+            // Don't set error for stats - it's optional data
+            console.warn("Failed to fetch enhanced gacha stats:", data.error);
+            return null;
+        } catch (err) {
+            console.error("Error fetching enhanced gacha stats:", err);
+            return null;
+        } finally {
+            setLoadingEnhancedStats(false);
+        }
+    }, []);
+
+    /**
      * Clear the current error state.
      */
     const clearError = useCallback(() => {
@@ -180,11 +293,15 @@ export function useGacha(): UseGachaReturn {
         records,
         settings,
         globalStats,
+        history,
+        enhancedStats,
 
         // Loading states
         loading,
         loadingSettings,
         loadingStats,
+        loadingHistory,
+        loadingEnhancedStats,
 
         // Error
         error,
@@ -195,6 +312,9 @@ export function useGacha(): UseGachaReturn {
         fetchSettings,
         updateSettings,
         fetchGlobalStats,
+        fetchEnhancedStats,
+        fetchHistory,
+        fetchOperatorHistory,
         clearError,
     };
 }
