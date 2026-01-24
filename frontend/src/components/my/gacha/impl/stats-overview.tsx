@@ -1,12 +1,13 @@
 "use client";
 
-import { BarChart3, HelpCircle, Sparkles, Star, Target, TrendingUp } from "lucide-react";
+import { BarChart3, HelpCircle, Sparkles, Star, Target, TrendingUp, Users } from "lucide-react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { Progress } from "~/components/ui/shadcn/progress";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
-import { calculateAvgPullsPerSixStar, calculatePity, calculateStats, countSixStarsInSoftPity, formatRate, getAllRecords, HARD_PITY, parseRarity, SOFT_PITY_START } from "~/lib/gacha-utils";
+import { calculateAvgPullsPerSixStar, calculatePity, calculateStats, countSixStarsInSoftPity, formatRate, getAllRecords, getMostCommonOperatorsByRarity, HARD_PITY, parseRarity, SOFT_PITY_START } from "~/lib/gacha-utils";
 import type { GachaRecords } from "~/types/api";
 
 interface StatsOverviewProps {
@@ -57,6 +58,9 @@ export function StatsOverview({ records, loading }: StatsOverviewProps) {
     const limitedAvg = limitedSixStarCount > 0 ? records.limited.total / limitedSixStarCount : 0;
     const regularAvg = regularSixStarCount > 0 ? records.regular.total / regularSixStarCount : 0;
     const specialAvg = specialSixStarCount > 0 ? records.special.total / specialSixStarCount : 0;
+
+    // Get most common operators by rarity
+    const mostCommonOperators = getMostCommonOperatorsByRarity(allRecords, 3);
 
     return (
         <div className="space-y-4">
@@ -300,6 +304,56 @@ export function StatsOverview({ records, loading }: StatsOverviewProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Most Common Operators */}
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-muted-foreground" />
+                        <CardTitle>Most Common Operators</CardTitle>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        {([6, 5, 4, 3] as const).map((rarity) => {
+                            const operators = mostCommonOperators[rarity] ?? [];
+                            const rarityColors = {
+                                6: { text: "text-orange-500", bg: "bg-orange-500/10" },
+                                5: { text: "text-yellow-500", bg: "bg-yellow-500/10" },
+                                4: { text: "text-purple-500", bg: "bg-purple-500/10" },
+                                3: { text: "text-blue-500", bg: "bg-blue-500/10" },
+                            } as const;
+                            const colors = rarityColors[rarity];
+
+                            return (
+                                <div className="space-y-3" key={rarity}>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`font-semibold text-sm ${colors.text}`}>{rarity}★ Operators</span>
+                                    </div>
+                                    {operators.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {operators.map((op, index) => (
+                                                <div className={`flex items-center gap-2 rounded-md p-2 ${colors.bg}`} key={op.charId}>
+                                                    <span className="font-semibold text-muted-foreground text-xs">#{index + 1}</span>
+                                                    <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md border border-border/50">
+                                                        <Image alt={op.charName} className="object-cover" fill sizes="32px" src={`/api/cdn/avatar/${encodeURIComponent(op.charId)}`} />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate font-medium text-xs">{op.charName}</p>
+                                                    </div>
+                                                    <span className={`shrink-0 font-bold text-sm ${colors.text}`}>×{op.count}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="py-4 text-center text-muted-foreground text-xs">No data</p>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
