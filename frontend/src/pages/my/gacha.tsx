@@ -2,7 +2,7 @@
 
 import { AlertCircle, History, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/my/gacha";
 import { SEO } from "~/components/seo";
@@ -30,6 +30,7 @@ export default function GachaPage() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [isTabSwitching, setIsTabSwitching] = useState(false);
+    const initialFetchDone = useRef(false);
 
     // Update filters when page size changes
     const handlePageSizeChange = useCallback(
@@ -48,14 +49,15 @@ export default function GachaPage() {
         [filters, activeTab, fetchHistory],
     );
 
-    // Fetch initial data
+    // Fetch initial data only once when user authenticates
     useEffect(() => {
-        if (user?.status && !authLoading) {
+        if (user?.status && !authLoading && !initialFetchDone.current) {
+            initialFetchDone.current = true;
             fetchAllRecords();
             fetchSettings();
-            fetchHistory({ ...filters, gachaType: activeTab === "all" ? undefined : activeTab });
+            fetchHistory({ limit: pageSize, offset: 0, order: "desc" });
         }
-    }, [user?.status, authLoading, activeTab, fetchAllRecords, fetchHistory, fetchSettings, filters]);
+    }, [user?.status, authLoading, fetchAllRecords, fetchHistory, fetchSettings, pageSize]);
 
     // Handle tab change
     const handleTabChange = useCallback(
@@ -231,13 +233,14 @@ export default function GachaPage() {
 
                         {/* Banner Tabs and History */}
                         <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={records}>
-                            <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+                            <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr_300px]">
                                 {/* Pull History List */}
-                                <div className="space-y-4">
-                                    <Card>
+                                <div className="min-w-0 space-y-4">
+                                    <Card className="overflow-hidden">
                                         <CardHeader>
                                             <CardTitle>Pull History</CardTitle>
                                             <CardDescription>{history?.pagination.total ? `${history.pagination.total.toLocaleString()} total pulls` : "No pulls recorded"}</CardDescription>
+                                            <Separator className="mt-2" />
                                         </CardHeader>
                                         <CardContent>
                                             <PullHistoryList
@@ -253,7 +256,7 @@ export default function GachaPage() {
                                 </div>
 
                                 {/* Filters Sidebar */}
-                                <div className="lg:sticky lg:top-4 lg:self-start">
+                                <div className="lg:sticky lg:top-16 lg:self-start">
                                     <PullFilters filters={filters} onApply={handleApplyFilters} onFiltersChange={setFilters} onReset={handleResetFilters} />
                                 </div>
                             </div>
@@ -264,7 +267,7 @@ export default function GachaPage() {
                 {/* Empty State */}
                 {!loadingRecords && records && !storageDisabled && history?.pagination.total === 0 && (
                     <Card>
-                        <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12 text-center">
+                        <CardContent className="flex min-h-75 flex-col items-center justify-center py-12 text-center">
                             <History className="mb-4 h-12 w-12 text-muted-foreground" />
                             <h3 className="mb-2 font-semibold text-lg">No Pull History</h3>
                             <p className="mb-4 max-w-sm text-muted-foreground text-sm">Your pull history will appear here once you sync your gacha data from the game.</p>

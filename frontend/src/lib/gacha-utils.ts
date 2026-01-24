@@ -177,7 +177,7 @@ export function getRarityBgColor(star: string): string {
  * Format pull timestamp for display.
  */
 export function formatPullDate(timestamp: number): string {
-    const date = new Date(timestamp * 1000);
+    const date = new Date(timestamp);
     return date.toLocaleDateString(undefined, {
         year: "numeric",
         month: "short",

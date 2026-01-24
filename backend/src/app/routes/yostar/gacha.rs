@@ -147,7 +147,10 @@ async fn store_records_for_user(
         }
 
         // Store records - gacha_type is derived from pool_id in store_batch
-        if GachaRecord::store_batch(&state.db, user_id, &new_records).await.is_ok() {
+        if GachaRecord::store_batch(&state.db, user_id, &new_records)
+            .await
+            .is_ok()
+        {
             // Update sync timestamp to prevent re-processing
             if let Some(max_ts) = new_records.iter().map(|r| r.at).max() {
                 let _ = UserGachaSettings::update_sync_timestamp(
