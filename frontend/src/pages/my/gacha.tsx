@@ -239,7 +239,13 @@ export default function GachaPage() {
                                     <Card className="overflow-hidden">
                                         <CardHeader>
                                             <CardTitle>Pull History</CardTitle>
-                                            <CardDescription>{history?.pagination.total ? `${history.pagination.total.toLocaleString()} total pulls` : "No pulls recorded"}</CardDescription>
+                                            <CardDescription>
+                                                {(() => {
+                                                    if (!records) return "No pulls recorded";
+                                                    const total = activeTab === "all" ? records.limited.total + records.regular.total + records.special.total : activeTab === "limited" ? records.limited.total : activeTab === "regular" ? records.regular.total : records.special.total;
+                                                    return total > 0 ? `${total.toLocaleString()} total pulls` : "No pulls recorded";
+                                                })()}
+                                            </CardDescription>
                                             <Separator className="mt-2" />
                                         </CardHeader>
                                         <CardContent>

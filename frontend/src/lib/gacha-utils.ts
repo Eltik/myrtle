@@ -222,3 +222,58 @@ export function countSixStarsInSoftPity(records: GachaItem[]): number {
     }
     return softPityCount;
 }
+
+/**
+ * Operator count entry for most common operators
+ */
+export interface OperatorCount {
+    charId: string;
+    charName: string;
+    count: number;
+    rarity: number;
+}
+
+/**
+ * Get most common operators by rarity.
+ * Returns top N operators for each rarity level.
+ */
+export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): Record<number, OperatorCount[]> {
+    const countsByRarity: Record<number, Map<string, { charName: string; count: number }>> = {
+        6: new Map(),
+        5: new Map(),
+        4: new Map(),
+        3: new Map(),
+    };
+
+    for (const record of records) {
+        const rarity = parseRarity(record.star);
+        if (rarity >= 3 && rarity <= 6) {
+            const map = countsByRarity[rarity];
+            const existing = map.get(record.charId);
+            if (existing) {
+                existing.count++;
+            } else {
+                map.set(record.charId, { charName: record.charName, count: 1 });
+            }
+        }
+    }
+
+    const result: Record<number, OperatorCount[]> = {};
+    for (const rarity of [6, 5, 4, 3]) {
+        const map = countsByRarity[rarity];
+        const sorted = Array.from(map.entries())
+            .map(([charId, { charName, count }]) => ({ charId, charName, count, rarity }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, topN);
+        result[rarity] = sorted;
+    }
+
+    return result;
+}
+
+/**
+ * Check if a pool is a collab/linkage banner
+ */
+export function isCollabBanner(poolId: string): boolean {
+    return poolId.startsWith("LINKAGE_");
+}

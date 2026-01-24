@@ -4,6 +4,7 @@ import type React from "react";
 
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import type { GachaRecords } from "~/types/api";
 
 interface BannerTabsProps {
@@ -21,7 +22,16 @@ export function BannerTabs({ records: _records, activeTab, onTabChange, children
                 <TabsTrigger value="all">All Banners</TabsTrigger>
                 <TabsTrigger value="limited">Limited</TabsTrigger>
                 <TabsTrigger value="regular">Regular</TabsTrigger>
-                <TabsTrigger value="special">Special</TabsTrigger>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <TabsTrigger value="special">Special</TabsTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Includes Single-Pull and Collab banners</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </TabsList>
             <TabsContent className="mt-6" value={activeTab}>
                 {isLoading ? (
