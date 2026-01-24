@@ -48,7 +48,7 @@ export function PullHistoryList({ records, loading, currentPage, totalPages, onP
     }
 
     return (
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
             {records.map((record) => {
                 const rarity = record.rarity;
                 const isExpanded = expandedPull === record.id;
@@ -86,12 +86,12 @@ export function PullHistoryList({ records, loading, currentPage, totalPages, onP
                                         </div>
 
                                         {/* Info row: Banner, Pool, Date */}
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className="text-muted-foreground">{record.gachaType}</span>
+                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                            <span className="shrink-0 text-muted-foreground">{record.gachaType}</span>
+                                            <span className="hidden text-muted-foreground/50 sm:inline">·</span>
+                                            <span className="hidden truncate text-muted-foreground sm:inline">{record.poolName}</span>
                                             <span className="text-muted-foreground/50">·</span>
-                                            <span className="truncate text-muted-foreground">{record.poolName}</span>
-                                            <span className="text-muted-foreground/50">·</span>
-                                            <span className="shrink-0 text-muted-foreground">{formatPullDate(record.pullTimestamp)}</span>
+                                            <span className="text-muted-foreground">{formatPullDate(record.pullTimestamp)}</span>
                                         </div>
                                     </div>
 
