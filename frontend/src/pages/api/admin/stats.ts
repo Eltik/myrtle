@@ -104,11 +104,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                             active: tierLists.filter((t: { is_active: boolean }) => t.is_active).length,
                             totalVersions: 0,
                             totalPlacements: 0,
-                            tierLists: tierLists.map((t: { id: string; name: string; slug: string; is_active: boolean; created_at: string; updated_at: string }) => ({
+                            tierLists: tierLists.map((t: { id: string; name: string; slug: string; is_active: boolean; tier_list_type?: string; created_at: string; updated_at: string }) => ({
                                 id: t.id,
                                 name: t.name,
                                 slug: t.slug,
                                 isActive: t.is_active,
+                                tierListType: (t.tier_list_type || "official") as "official" | "community",
                                 tierCount: 0,
                                 operatorCount: 0,
                                 versionCount: 0,
