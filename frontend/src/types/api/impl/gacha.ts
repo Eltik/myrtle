@@ -117,6 +117,8 @@ export interface CollectiveStats {
     totalUsers: number;
     totalSixStars: number;
     totalFiveStars: number;
+    totalFourStars: number;
+    totalThreeStars: number;
 }
 
 /** Pull rate percentages */
@@ -149,10 +151,17 @@ export interface DayOfWeekPullData {
     percentage: number;
 }
 
+/** Pull history by date (time series) */
+export interface DatePullData {
+    date: string;
+    pullCount: number;
+}
+
 /** Pull timing data for graphs */
 export interface PullTimingData {
     byHour: HourlyPullData[];
     byDayOfWeek: DayOfWeekPullData[];
+    byDate?: DatePullData[];
 }
 
 /** Full enhanced statistics response */

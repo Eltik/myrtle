@@ -6,12 +6,12 @@ use crate::{
     },
     database::models::{
         gacha::{
-            CollectiveStats, DateRange, DayOfWeekPullData, EnhancedStatsResponse, GachaRecord,
-            GachaRecordEntry, GlobalPullRates, HistoryFilters, HistoryResponse, HourlyPullData,
-            OperatorPopularity, PaginationInfo, PullRates, PullTimingData, UpdateGachaSettings,
-            UserGachaSettings, calculate_avg_pulls_to_rarity, get_collective_stats,
-            get_global_pull_rates, get_most_common_operators, get_pull_timing_by_day,
-            get_pull_timing_by_hour,
+            CollectiveStats, DatePullData, DateRange, DayOfWeekPullData, EnhancedStatsResponse,
+            GachaRecord, GachaRecordEntry, GlobalPullRates, HistoryFilters, HistoryResponse,
+            HourlyPullData, OperatorPopularity, PaginationInfo, PullRates, PullTimingData,
+            UpdateGachaSettings, UserGachaSettings, calculate_avg_pulls_to_rarity,
+            get_collective_stats, get_global_pull_rates, get_most_common_operators,
+            get_pull_timing_by_date, get_pull_timing_by_day, get_pull_timing_by_hour,
         },
         user::User,
     },
@@ -486,6 +486,9 @@ pub async fn get_enhanced_stats(
     let pull_timing = if include_timing {
         let hourly = get_pull_timing_by_hour(&state.db).await.unwrap_or_default();
         let daily = get_pull_timing_by_day(&state.db).await.unwrap_or_default();
+        let by_date_raw = get_pull_timing_by_date(&state.db, None)
+            .await
+            .unwrap_or_default();
 
         let total_hourly: i64 = hourly.iter().map(|h| h.pull_count).sum();
         let total_daily: i64 = daily.iter().map(|d| d.pull_count).sum();
@@ -499,6 +502,15 @@ pub async fn get_enhanced_stats(
             "Friday",
             "Saturday",
         ];
+
+        // Convert date rows to DatePullData
+        let by_date: Vec<DatePullData> = by_date_raw
+            .into_iter()
+            .map(|d| DatePullData {
+                date: d.date.format("%Y-%m-%d").to_string(),
+                pull_count: d.pull_count,
+            })
+            .collect();
 
         Some(PullTimingData {
             by_hour: hourly
@@ -529,6 +541,11 @@ pub async fn get_enhanced_stats(
                     },
                 })
                 .collect(),
+            by_date: if by_date.is_empty() {
+                None
+            } else {
+                Some(by_date)
+            },
         })
     } else {
         None
@@ -552,6 +569,8 @@ pub async fn get_enhanced_stats(
             total_users: collective.total_users,
             total_six_stars: collective.total_six_stars,
             total_five_stars: collective.total_five_stars,
+            total_four_stars: collective.total_four_stars,
+            total_three_stars: collective.total_three_stars,
         },
         pull_rates: PullRates {
             six_star_rate,

@@ -249,6 +249,7 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
         const rarity = parseRarity(record.star);
         if (rarity >= 3 && rarity <= 6) {
             const map = countsByRarity[rarity];
+            if (!map) continue;
             const existing = map.get(record.charId);
             if (existing) {
                 existing.count++;
@@ -261,6 +262,7 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
     const result: Record<number, OperatorCount[]> = {};
     for (const rarity of [6, 5, 4, 3]) {
         const map = countsByRarity[rarity];
+        if (!map) continue;
         const sorted = Array.from(map.entries())
             .map(([charId, { charName, count }]) => ({ charId, charName, count, rarity }))
             .sort((a, b) => b.count - a.count)
