@@ -18,7 +18,14 @@ export const navItems: NavItem[] = [
             { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
             { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
             { label: "Randomizer", href: "/tools/randomizer", description: "Randomize squads and stages" },
-            { label: "Gacha", href: "/my/gacha", description: "View your gacha pull history" },
+        ],
+    },
+    {
+        label: "Gacha",
+        href: "#",
+        dropdown: [
+            { label: "My History", href: "/my/gacha", description: "View your personal pull history" },
+            { label: "Global Statistics", href: "/stats/gacha", description: "Community-wide gacha statistics" },
         ],
     },
     {

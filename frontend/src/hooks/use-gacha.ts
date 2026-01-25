@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { convertHistoryToRecords } from "~/lib/gacha-utils";
 import type { GachaEnhancedStats, GachaEnhancedStatsParams, GachaGlobalStats, GachaHistoryParams, GachaHistoryResponse, GachaRecordEntry, GachaRecords, GachaSettings } from "~/types/api";
 
 export interface UseGachaReturn {
@@ -8,6 +9,8 @@ export interface UseGachaReturn {
     globalStats: GachaGlobalStats | null;
     history: GachaHistoryResponse | null;
     enhancedStats: GachaEnhancedStats | null;
+    /** All history records converted to GachaRecords format for statistics */
+    storedRecords: GachaRecords | null;
 
     // Loading states
     loading: boolean;
@@ -15,6 +18,7 @@ export interface UseGachaReturn {
     loadingStats: boolean;
     loadingHistory: boolean;
     loadingEnhancedStats: boolean;
+    loadingStoredRecords: boolean;
 
     // Error state
     error: string | null;
@@ -34,6 +38,8 @@ export interface UseGachaReturn {
     // History functions
     fetchHistory: (params?: GachaHistoryParams) => Promise<GachaHistoryResponse | null>;
     fetchOperatorHistory: (charId: string) => Promise<GachaRecordEntry[] | null>;
+    /** Fetch all stored records for statistics calculation */
+    fetchStoredRecords: () => Promise<GachaRecords | null>;
 
     // Utility
     clearError: () => void;
@@ -48,6 +54,7 @@ export function useGacha(): UseGachaReturn {
     const [records, setRecords] = useState<GachaRecords | null>(null);
     const [settings, setSettings] = useState<GachaSettings | null>(null);
     const [globalStats, setGlobalStats] = useState<GachaGlobalStats | null>(null);
+    const [storedRecords, setStoredRecords] = useState<GachaRecords | null>(null);
     const [history, setHistory] = useState<GachaHistoryResponse | null>(null);
     const [enhancedStats, setEnhancedStats] = useState<GachaEnhancedStats | null>(null);
 
@@ -57,6 +64,7 @@ export function useGacha(): UseGachaReturn {
     const [loadingStats, setLoadingStats] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingEnhancedStats, setLoadingEnhancedStats] = useState(false);
+    const [loadingStoredRecords, setLoadingStoredRecords] = useState(false);
 
     // Error state
     const [error, setError] = useState<string | null>(null);
@@ -282,6 +290,34 @@ export function useGacha(): UseGachaReturn {
     }, []);
 
     /**
+     * Fetch all stored records from database for statistics calculation.
+     * Fetches up to 5000 records to compute accurate statistics.
+     */
+    const fetchStoredRecords = useCallback(async (): Promise<GachaRecords | null> => {
+        setLoadingStoredRecords(true);
+
+        try {
+            // Fetch with high limit to get all records for stats
+            const response = await fetch("/api/gacha/history?limit=5000&offset=0&order=desc");
+            const data = await response.json();
+
+            if (data.success && data.data?.records) {
+                const converted = convertHistoryToRecords(data.data.records);
+                setStoredRecords(converted);
+                return converted;
+            }
+
+            console.warn("Failed to fetch stored records for stats:", data.error);
+            return null;
+        } catch (err) {
+            console.error("Error fetching stored records:", err);
+            return null;
+        } finally {
+            setLoadingStoredRecords(false);
+        }
+    }, []);
+
+    /**
      * Clear the current error state.
      */
     const clearError = useCallback(() => {
@@ -295,6 +331,7 @@ export function useGacha(): UseGachaReturn {
         globalStats,
         history,
         enhancedStats,
+        storedRecords,
 
         // Loading states
         loading,
@@ -302,6 +339,7 @@ export function useGacha(): UseGachaReturn {
         loadingStats,
         loadingHistory,
         loadingEnhancedStats,
+        loadingStoredRecords,
 
         // Error
         error,
@@ -314,6 +352,7 @@ export function useGacha(): UseGachaReturn {
         fetchGlobalStats,
         fetchEnhancedStats,
         fetchHistory,
+        fetchStoredRecords,
         fetchOperatorHistory,
         clearError,
     };
