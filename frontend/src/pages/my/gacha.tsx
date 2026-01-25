@@ -18,7 +18,7 @@ const DEFAULT_PAGE_SIZE = 25;
 
 export default function GachaPage() {
     const { user, loading: authLoading } = useAuth();
-    const { records, loading: loadingRecords, error: recordsError, fetchAllRecords, history, loadingHistory, fetchHistory, settings, fetchSettings } = useGacha();
+    const { storedRecords, loading: loadingRecords, loadingStoredRecords, error: recordsError, fetchAllRecords, fetchStoredRecords, history, loadingHistory, fetchHistory, settings, fetchSettings } = useGacha();
 
     const [activeTab, setActiveTab] = useState<"all" | GachaType>("all");
     const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -56,8 +56,9 @@ export default function GachaPage() {
             fetchAllRecords();
             fetchSettings();
             fetchHistory({ limit: pageSize, offset: 0, order: "desc" });
+            fetchStoredRecords(); // Fetch all stored records for statistics
         }
-    }, [user?.status, authLoading, fetchAllRecords, fetchHistory, fetchSettings, pageSize]);
+    }, [user?.status, authLoading, fetchAllRecords, fetchHistory, fetchSettings, fetchStoredRecords, pageSize]);
 
     // Handle tab change
     const handleTabChange = useCallback(
@@ -124,6 +125,7 @@ export default function GachaPage() {
         setIsRefreshing(true);
         try {
             await fetchAllRecords();
+            await fetchStoredRecords(); // Refresh stored records for statistics
             await fetchHistory({ ...filters, gachaType: activeTab === "all" ? undefined : activeTab });
             toast.success("Gacha data refreshed");
         } catch (error) {
@@ -132,7 +134,7 @@ export default function GachaPage() {
         } finally {
             setIsRefreshing(false);
         }
-    }, [fetchAllRecords, fetchHistory, filters, activeTab]);
+    }, [fetchAllRecords, fetchStoredRecords, fetchHistory, filters, activeTab]);
 
     // Loading auth state
     if (authLoading) {
@@ -214,7 +216,7 @@ export default function GachaPage() {
                 )}
 
                 {/* Loading State */}
-                {loadingRecords && !records && (
+                {(loadingStoredRecords || loadingRecords) && !storedRecords && (
                     <div className="flex min-h-[30vh] items-center justify-center">
                         <div className="text-center">
                             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -223,16 +225,16 @@ export default function GachaPage() {
                     </div>
                 )}
 
-                {/* Main Content */}
-                {!loadingRecords && records && !storageDisabled && (
+                {/* Main Content - Use storedRecords (from database) for statistics */}
+                {!loadingStoredRecords && storedRecords && !storageDisabled && (
                     <>
-                        {/* Statistics Overview */}
-                        <StatsOverview loading={loadingRecords} records={records} />
+                        {/* Statistics Overview - uses stored database records */}
+                        <StatsOverview loading={loadingStoredRecords} records={storedRecords} />
 
                         <Separator />
 
-                        {/* Banner Tabs and History */}
-                        <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={records}>
+                        {/* Banner Tabs and History - uses stored records for tab counters */}
+                        <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={storedRecords}>
                             <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr_300px]">
                                 {/* Pull History List */}
                                 <div className="min-w-0 space-y-4">
@@ -241,8 +243,8 @@ export default function GachaPage() {
                                             <CardTitle>Pull History</CardTitle>
                                             <CardDescription>
                                                 {(() => {
-                                                    if (!records) return "No pulls recorded";
-                                                    const total = activeTab === "all" ? records.limited.total + records.regular.total + records.special.total : activeTab === "limited" ? records.limited.total : activeTab === "regular" ? records.regular.total : records.special.total;
+                                                    if (!storedRecords) return "No pulls recorded";
+                                                    const total = activeTab === "all" ? storedRecords.limited.total + storedRecords.regular.total + storedRecords.special.total : activeTab === "limited" ? storedRecords.limited.total : activeTab === "regular" ? storedRecords.regular.total : storedRecords.special.total;
                                                     return total > 0 ? `${total.toLocaleString()} total pulls` : "No pulls recorded";
                                                 })()}
                                             </CardDescription>
@@ -271,7 +273,7 @@ export default function GachaPage() {
                 )}
 
                 {/* Empty State */}
-                {!loadingRecords && records && !storageDisabled && history?.pagination.total === 0 && (
+                {!loadingStoredRecords && storedRecords && !storageDisabled && history?.pagination.total === 0 && (
                     <Card>
                         <CardContent className="flex min-h-75 flex-col items-center justify-center py-12 text-center">
                             <History className="mb-4 h-12 w-12 text-muted-foreground" />

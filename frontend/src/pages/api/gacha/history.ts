@@ -5,8 +5,9 @@ import { backendFetch } from "~/lib/backend-fetch";
 import type { GachaHistoryResponse } from "~/types/api";
 
 // Schema for query parameters
+// Note: limit max is 5000 to allow fetching all records for statistics
 const HistoryQuerySchema = z.object({
-    limit: z.coerce.number().int().min(1).max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(5000).optional(),
     offset: z.coerce.number().int().min(0).optional(),
     rarity: z.coerce.number().int().min(1).max(6).optional(),
     gachaType: z.enum(["limited", "regular", "special"]).optional(),

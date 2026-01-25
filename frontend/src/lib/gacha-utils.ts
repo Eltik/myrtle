@@ -279,3 +279,75 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
 export function isCollabBanner(poolId: string): boolean {
     return poolId.startsWith("LINKAGE_");
 }
+
+/**
+ * Convert GachaRecordEntry array to GachaItem array.
+ * Used when computing statistics from database records.
+ */
+export function convertRecordEntryToGachaItem(entry: { charId: string; charName: string; rarity: number; poolId: string; poolName: string; gachaType: string; pullTimestamp: number; pullTimestampStr: string | null }): GachaItem {
+    return {
+        charId: entry.charId,
+        charName: entry.charName,
+        star: String(entry.rarity), // Convert numeric rarity to string for parseRarity()
+        color: "", // Not available from database, but not used in stats
+        poolId: entry.poolId,
+        poolName: entry.poolName,
+        typeName: entry.gachaType, // Use gacha type as type name
+        at: entry.pullTimestamp,
+        atStr: entry.pullTimestampStr ?? "",
+    };
+}
+
+/**
+ * Convert an array of GachaRecordEntry to GachaRecords structure.
+ * Groups records by gacha_type and creates the expected format for StatsOverview.
+ */
+export function convertHistoryToRecords(
+    entries: Array<{
+        charId: string;
+        charName: string;
+        rarity: number;
+        poolId: string;
+        poolName: string;
+        gachaType: string;
+        pullTimestamp: number;
+        pullTimestampStr: string | null;
+    }>,
+): GachaRecords {
+    const limited: GachaItem[] = [];
+    const regular: GachaItem[] = [];
+    const special: GachaItem[] = [];
+
+    for (const entry of entries) {
+        const item = convertRecordEntryToGachaItem(entry);
+        switch (entry.gachaType) {
+            case "limited":
+                limited.push(item);
+                break;
+            case "regular":
+                regular.push(item);
+                break;
+            case "special":
+                special.push(item);
+                break;
+        }
+    }
+
+    return {
+        limited: {
+            gacha_type: "limited",
+            records: limited,
+            total: limited.length,
+        },
+        regular: {
+            gacha_type: "regular",
+            records: regular,
+            total: regular.length,
+        },
+        special: {
+            gacha_type: "special",
+            records: special,
+            total: special.length,
+        },
+    };
+}

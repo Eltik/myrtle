@@ -319,7 +319,8 @@ pub async fn get_user_history(
         .ok_or(ApiError::NotFound("User not found.".into()))?;
 
     // Validate and clamp parameters
-    let limit = params.limit.clamp(1, 100);
+    // Note: limit max is 5000 to allow fetching all records for statistics
+    let limit = params.limit.clamp(1, 5000);
     let offset = params.offset.max(0);
     let descending = params.order != "asc";
 
