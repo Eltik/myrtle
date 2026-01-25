@@ -145,6 +145,8 @@ pub struct CollectiveStats {
     pub total_users: i64,
     pub total_six_stars: i64,
     pub total_five_stars: i64,
+    pub total_four_stars: i64,
+    pub total_three_stars: i64,
 }
 
 /// Pull rate percentages
@@ -208,12 +210,29 @@ pub struct DayOfWeekPullRow {
     pub pull_count: i64,
 }
 
+/// Pull history by date (time series)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DatePullData {
+    pub date: String,
+    pub pull_count: i64,
+}
+
+/// Row type for date pull query
+#[derive(Debug, FromRow)]
+pub struct DatePullRow {
+    pub date: chrono::NaiveDate,
+    pub pull_count: i64,
+}
+
 /// Pull timing data for graphs
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PullTimingData {
     pub by_hour: Vec<HourlyPullData>,
     pub by_day_of_week: Vec<DayOfWeekPullData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub by_date: Option<Vec<DatePullData>>,
 }
 
 /// Full enhanced statistics response
@@ -238,6 +257,8 @@ pub struct CollectiveStatsRow {
     pub total_users: i64,
     pub total_six_stars: i64,
     pub total_five_stars: i64,
+    pub total_four_stars: i64,
+    pub total_three_stars: i64,
 }
 
 // ============================================================================
@@ -535,32 +556,38 @@ pub async fn get_global_pull_rates(pool: &PgPool) -> Result<GlobalPullRates, sql
 // Enhanced Global Statistics
 // ============================================================================
 
-/// Get most common operators pulled (only from consenting users)
+/// Get most common operators pulled per rarity (only from consenting users)
+/// Returns top N operators for each rarity level (3, 4, 5, 6)
 pub async fn get_most_common_operators(
     pool: &PgPool,
-    limit: i32,
+    limit_per_rarity: i32,
 ) -> Result<Vec<OperatorPullCountRow>, sqlx::Error> {
     sqlx::query_as::<_, OperatorPullCountRow>(
         r#"
-        SELECT
-            gr.char_id,
-            gr.char_name,
-            gr.rarity,
-            COUNT(*) as pull_count
-        FROM gacha_records gr
-        JOIN user_gacha_settings ugs ON gr.user_id = ugs.user_id
-        WHERE ugs.share_anonymous_stats = true
-        GROUP BY gr.char_id, gr.char_name, gr.rarity
-        ORDER BY pull_count DESC
-        LIMIT $1
+        WITH ranked AS (
+            SELECT
+                gr.char_id,
+                gr.char_name,
+                gr.rarity,
+                COUNT(*) as pull_count,
+                ROW_NUMBER() OVER (PARTITION BY gr.rarity ORDER BY COUNT(*) DESC) as rn
+            FROM gacha_records gr
+            JOIN user_gacha_settings ugs ON gr.user_id = ugs.user_id
+            WHERE ugs.share_anonymous_stats = true
+            GROUP BY gr.char_id, gr.char_name, gr.rarity
+        )
+        SELECT char_id, char_name, rarity, pull_count
+        FROM ranked
+        WHERE rn <= $1
+        ORDER BY rarity DESC, pull_count DESC
         "#,
     )
-    .bind(limit)
+    .bind(limit_per_rarity)
     .fetch_all(pool)
     .await
 }
 
-/// Get collective stats (total pulls, users, 6-stars, 5-stars)
+/// Get collective stats (total pulls, users, and counts by rarity)
 pub async fn get_collective_stats(pool: &PgPool) -> Result<CollectiveStatsRow, sqlx::Error> {
     sqlx::query_as::<_, CollectiveStatsRow>(
         r#"
@@ -568,7 +595,9 @@ pub async fn get_collective_stats(pool: &PgPool) -> Result<CollectiveStatsRow, s
             COUNT(*) as total_pulls,
             COUNT(DISTINCT gr.user_id) as total_users,
             COUNT(*) FILTER (WHERE rarity = 6) as total_six_stars,
-            COUNT(*) FILTER (WHERE rarity = 5) as total_five_stars
+            COUNT(*) FILTER (WHERE rarity = 5) as total_five_stars,
+            COUNT(*) FILTER (WHERE rarity = 4) as total_four_stars,
+            COUNT(*) FILTER (WHERE rarity = 3) as total_three_stars
         FROM gacha_records gr
         JOIN user_gacha_settings ugs ON gr.user_id = ugs.user_id
         WHERE ugs.share_anonymous_stats = true
@@ -656,4 +685,48 @@ pub async fn get_pull_timing_by_day(pool: &PgPool) -> Result<Vec<DayOfWeekPullRo
     )
     .fetch_all(pool)
     .await
+}
+
+/// Get pull timing data by date (time series)
+/// If days is None, returns all historical data
+pub async fn get_pull_timing_by_date(
+    pool: &PgPool,
+    days: Option<i32>,
+) -> Result<Vec<DatePullRow>, sqlx::Error> {
+    match days {
+        Some(d) => {
+            sqlx::query_as::<_, DatePullRow>(
+                r#"
+                SELECT
+                    DATE(to_timestamp(pull_timestamp / 1000)) as date,
+                    COUNT(*) as pull_count
+                FROM gacha_records gr
+                JOIN user_gacha_settings ugs ON gr.user_id = ugs.user_id
+                WHERE ugs.share_anonymous_stats = true
+                  AND pull_timestamp >= EXTRACT(EPOCH FROM (NOW() - ($1 || ' days')::INTERVAL)) * 1000
+                GROUP BY date
+                ORDER BY date
+                "#,
+            )
+            .bind(d)
+            .fetch_all(pool)
+            .await
+        }
+        None => {
+            sqlx::query_as::<_, DatePullRow>(
+                r#"
+                SELECT
+                    DATE(to_timestamp(pull_timestamp / 1000)) as date,
+                    COUNT(*) as pull_count
+                FROM gacha_records gr
+                JOIN user_gacha_settings ugs ON gr.user_id = ugs.user_id
+                WHERE ugs.share_anonymous_stats = true
+                GROUP BY date
+                ORDER BY date
+                "#,
+            )
+            .fetch_all(pool)
+            .await
+        }
+    }
 }
