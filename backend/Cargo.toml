@@ -75,3 +75,10 @@ dialoguer = "0.12"
 
 # TTL-based cache for rate limiting
 moka = { version = "0.12", features = ["future"] }
+
+# Memory profiling
+sysinfo = "0.32"
+
+# Use jemalloc for better memory management (returns memory to OS)
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = "0.6"

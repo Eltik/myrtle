@@ -144,6 +144,16 @@ impl SearchQueryBuilder {
 
     /// Build the final SELECT query and collect all parameters
     pub fn build(&self) -> (String, Vec<QueryParam>) {
+        self.build_with_fields(false, false, false)
+    }
+
+    /// Build SELECT query with optional full field inclusion
+    pub fn build_with_fields(
+        &self,
+        include_data: bool,
+        include_score: bool,
+        include_settings: bool,
+    ) -> (String, Vec<QueryParam>) {
         let mut all_params: Vec<QueryParam> = Vec::new();
 
         let where_clause = if self.conditions.is_empty() {
@@ -169,8 +179,36 @@ impl SearchQueryBuilder {
         all_params.push(QueryParam::Int(self.limit));
         all_params.push(QueryParam::Int(self.offset));
 
+        let select_fields = format!(
+            r#"uid,
+            server,
+            updated_at,
+            data->'status'->>'nickName' as nickname,
+            (data->'status'->>'level')::BIGINT as level,
+            data->'status'->>'secretary' as secretary,
+            data->'status'->>'secretarySkinId' as secretary_skin_id,
+            (score->>'totalScore')::FLOAT as total_score,
+            score->'grade'->>'grade' as grade{}{}{}
+            "#,
+            if include_data {
+                ", data"
+            } else {
+                ", NULL::jsonb as data"
+            },
+            if include_score {
+                ", score"
+            } else {
+                ", NULL::jsonb as score"
+            },
+            if include_settings {
+                ", settings"
+            } else {
+                ", NULL::jsonb as settings"
+            }
+        );
+
         let query = format!(
-            r#"SELECT * FROM users
+            r#"SELECT {select_fields} FROM users
 WHERE {}
 ORDER BY {} {} NULLS LAST
 LIMIT ${} OFFSET ${}"#,
