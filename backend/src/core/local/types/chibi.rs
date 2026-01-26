@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 // ============================================================================
 // Chibi Types - Spine animation data for operators
@@ -117,17 +118,32 @@ pub struct CachedChibiData {
 // ============================================================================
 
 /// All chibi data
+/// Uses Arc<ChibiCharacter> to share data between Vec and HashMap without cloning
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChibiData {
     /// Raw repo items from crawling
     #[serde(skip)]
     pub raw_items: Vec<RepoItem>,
-    /// Processed character data for frontend
-    pub characters: Vec<ChibiCharacter>,
-    /// Lookup by operator code
+    /// Processed character data for frontend (uses Arc for zero-copy sharing)
+    #[serde(serialize_with = "serialize_arc_vec")]
+    pub characters: Vec<Arc<ChibiCharacter>>,
+    /// Lookup by operator code (shares Arc with characters vec)
     #[serde(skip)]
-    pub by_operator: HashMap<String, ChibiCharacter>,
+    pub by_operator: HashMap<String, Arc<ChibiCharacter>>,
+}
+
+/// Custom serializer to serialize Vec<Arc<T>> as Vec<T>
+fn serialize_arc_vec<S>(data: &[Arc<ChibiCharacter>], serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    use serde::ser::SerializeSeq;
+    let mut seq = serializer.serialize_seq(Some(data.len()))?;
+    for item in data {
+        seq.serialize_element(item.as_ref())?;
+    }
+    seq.end()
 }
 
 impl ChibiData {
@@ -136,7 +152,7 @@ impl ChibiData {
     }
 
     pub fn get_by_operator(&self, operator_code: &str) -> Option<&ChibiCharacter> {
-        self.by_operator.get(operator_code)
+        self.by_operator.get(operator_code).map(|arc| arc.as_ref())
     }
 
     pub fn is_loaded(&self) -> bool {

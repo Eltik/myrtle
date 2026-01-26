@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 
 use crate::core::local::types::chibi::{
     AnimationType, ChibiCharacter, ChibiData, ChibiSkin, SpineFiles,
@@ -51,19 +52,20 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiDataResult {
         dynchars_count = process_dynchars(&dynchars_path, &mut characters);
     }
 
-    let characters_vec: Vec<ChibiCharacter> = characters.into_values().collect();
-    let operator_count = characters_vec.len();
+    // Convert to Arc<ChibiCharacter> for zero-copy sharing between Vec and HashMap
+    let characters_arc: Vec<Arc<ChibiCharacter>> = characters.into_values().map(Arc::new).collect();
+    let operator_count = characters_arc.len();
 
-    // Build lookup map
-    let by_operator: HashMap<String, ChibiCharacter> = characters_vec
+    // Build lookup map by cloning the Arc (cheap reference count increment)
+    let by_operator: HashMap<String, Arc<ChibiCharacter>> = characters_arc
         .iter()
-        .map(|c| (c.operator_code.clone(), c.clone()))
+        .map(|c| (c.operator_code.clone(), Arc::clone(c)))
         .collect();
 
     ChibiDataResult {
         data: ChibiData {
             raw_items: Vec::new(),
-            characters: characters_vec,
+            characters: characters_arc,
             by_operator,
         },
         operator_count,
@@ -447,6 +449,6 @@ fn extract_char_id_from_skin(skin_id: &str) -> Option<String> {
 }
 
 /// Extract list of operator codes
-pub fn extract_operator_list(characters: &[ChibiCharacter]) -> Vec<String> {
+pub fn extract_operator_list(characters: &[Arc<ChibiCharacter>]) -> Vec<String> {
     characters.iter().map(|c| c.operator_code.clone()).collect()
 }

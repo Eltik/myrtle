@@ -72,3 +72,6 @@ clap = { version = "4", features = ["derive"] }
 sha2 = "0.10"
 indicatif = "0.18"
 dialoguer = "0.12"
+
+# TTL-based cache for rate limiting
+moka = { version = "0.12", features = ["future"] }
