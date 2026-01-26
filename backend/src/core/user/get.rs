@@ -17,10 +17,58 @@ use crate::core::{
 
 const DEBUG_LOGS_DIR: &str = "debug_logs";
 
+/// Maximum number of debug log directories to keep
+const MAX_DEBUG_LOGS: usize = 10;
+
+/// Cleans up old debug log directories, keeping only the most recent ones
+fn cleanup_old_debug_logs() {
+    use std::fs;
+    use std::path::Path;
+
+    let path = Path::new(DEBUG_LOGS_DIR);
+    if !path.exists() {
+        return;
+    }
+
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+
+    // Collect all debug log directories
+    let mut dirs: Vec<_> = entries
+        .flatten()
+        .filter(|e| {
+            e.path().is_dir()
+                && e.file_name()
+                    .to_str()
+                    .is_some_and(|name| name.starts_with("parse_error_"))
+        })
+        .collect();
+
+    // Only cleanup if we exceed the limit
+    if dirs.len() <= MAX_DEBUG_LOGS {
+        return;
+    }
+
+    // Sort by name (which includes timestamp, so alphabetical = chronological)
+    dirs.sort_by_key(|d| d.file_name());
+
+    // Remove oldest directories (keep the last MAX_DEBUG_LOGS)
+    let to_remove = dirs.len() - MAX_DEBUG_LOGS;
+    for dir in dirs.into_iter().take(to_remove) {
+        if let Err(e) = fs::remove_dir_all(dir.path()) {
+            eprintln!("Failed to remove old debug log directory: {e}");
+        }
+    }
+}
+
 /// Saves debug information when JSON parsing fails
 fn save_debug_logs(raw_json: &str, error: &serde_json::Error) {
     use std::fs;
     use std::path::Path;
+
+    // Clean up old logs first to prevent unbounded growth
+    cleanup_old_debug_logs();
 
     let col = error.column();
     let line = error.line();

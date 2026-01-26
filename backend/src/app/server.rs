@@ -3,14 +3,13 @@ use axum::routing::{delete, get, post, put};
 use axum::{Router, response::Json};
 use reqwest::Client;
 use serde::Serialize;
-use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
-use crate::app::middleware::rate_limit::{RateLimitStore, rate_limit};
+use crate::app::middleware::rate_limit::{new_rate_limit_store, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
 use crate::app::routes::admin;
 use crate::app::routes::auth::update_settings::update_settings;
@@ -54,7 +53,7 @@ async fn root() -> &'static str {
 }
 
 fn create_router(state: AppState) -> Router {
-    let rate_store: RateLimitStore = Arc::new(RwLock::new(HashMap::new()));
+    let rate_store = new_rate_limit_store();
 
     // Use the asset source from state for CDN routes
     let cdn_router = Router::new()
