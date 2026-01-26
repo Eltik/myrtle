@@ -230,4 +230,67 @@ impl User {
         .fetch_one(pool)
         .await
     }
+
+    /// Find users for leaderboard with optimized field selection
+    pub async fn find_for_leaderboard_optimized(
+        pool: &PgPool,
+        sort_expression: &str,
+        order: &str,
+        server: Option<&str>,
+        limit: i64,
+        offset: i64,
+        include_full_scores: bool,
+    ) -> Result<Vec<crate::app::routes::leaderboard::LeaderboardUser>, sqlx::Error> {
+        // Build optimized SELECT clause - only fetch fields we actually need
+        let score_fields = if include_full_scores {
+            r#"(score->>'operatorScore')::FLOAT as operator_score,
+               (score->>'stageScore')::FLOAT as stage_score,
+               (score->>'roguelikeScore')::FLOAT as roguelike_score,
+               (score->>'sandboxScore')::FLOAT as sandbox_score,
+               (score->>'medalScore')::FLOAT as medal_score,
+               (score->>'baseScore')::FLOAT as base_score,
+               (score->'grade'->>'compositeScore')::FLOAT as composite_score,
+               score->'grade' as grade_data"#
+        } else {
+            r#"NULL::FLOAT as operator_score,
+               NULL::FLOAT as stage_score,
+               NULL::FLOAT as roguelike_score,
+               NULL::FLOAT as sandbox_score,
+               NULL::FLOAT as medal_score,
+               NULL::FLOAT as base_score,
+               NULL::FLOAT as composite_score,
+               NULL::jsonb as grade_data"#
+        };
+
+        let query = format!(
+            r#"
+            SELECT
+                uid,
+                server,
+                updated_at,
+                data->'status'->>'nickName' as nickname,
+                (data->'status'->>'level')::BIGINT as level,
+                data->'status'->>'secretary' as secretary,
+                data->'status'->>'secretarySkinId' as secretary_skin_id,
+                (score->>'totalScore')::FLOAT as total_score,
+                score->'grade'->>'grade' as grade,
+                {}
+            FROM users
+            WHERE score IS NOT NULL
+              AND score != 'null'::jsonb
+              AND ($1::VARCHAR IS NULL OR server = $1)
+              AND (settings->>'publicProfile' IS NULL OR (settings->>'publicProfile')::BOOLEAN = true)
+            ORDER BY {} {} NULLS LAST
+            LIMIT $2 OFFSET $3
+            "#,
+            score_fields, sort_expression, order
+        );
+
+        sqlx::query_as::<_, crate::app::routes::leaderboard::LeaderboardUser>(&query)
+            .bind(server)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(pool)
+            .await
+    }
 }

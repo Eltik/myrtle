@@ -3,7 +3,9 @@
 //! Provides query parameters for sorting/filtering and response types
 //! for the leaderboard API.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 /// Activity metrics breakdown for grade calculation
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -217,4 +219,27 @@ pub struct LeaderboardMeta {
     pub order: String,
     pub server_filter: Option<String>,
     pub fields: String,
+}
+
+/// Lightweight user struct for leaderboard results
+#[derive(Debug, Clone, FromRow)]
+pub struct LeaderboardUser {
+    pub uid: String,
+    pub server: String,
+    pub updated_at: DateTime<Utc>,
+    pub nickname: Option<String>,
+    pub level: Option<i64>,
+    pub secretary: Option<String>,
+    pub secretary_skin_id: Option<String>,
+    pub total_score: Option<f64>,
+    pub grade: Option<String>,
+    pub operator_score: Option<f64>,
+    pub stage_score: Option<f64>,
+    pub roguelike_score: Option<f64>,
+    pub sandbox_score: Option<f64>,
+    pub medal_score: Option<f64>,
+    pub base_score: Option<f64>,
+    pub composite_score: Option<f64>,
+    #[sqlx(default)]
+    pub grade_data: Option<serde_json::Value>,
 }

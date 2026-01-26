@@ -2,7 +2,9 @@
 //!
 //! Query parameters, response types, and enums for the `/search` endpoint.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 /// Main search query parameters
 #[derive(Debug, Deserialize)]
@@ -304,4 +306,25 @@ mod tests {
         assert!(RangeFilter::parse("abc").is_none());
         assert!(RangeFilter::parse(",").is_none());
     }
+}
+
+/// Lightweight user struct for search results
+#[derive(Debug, Clone, FromRow)]
+pub struct SearchUser {
+    pub uid: String,
+    pub server: String,
+    pub updated_at: DateTime<Utc>,
+    pub nickname: Option<String>,
+    pub level: Option<i64>,
+    pub secretary: Option<String>,
+    pub secretary_skin_id: Option<String>,
+    pub total_score: Option<f64>,
+    pub grade: Option<String>,
+    // Only populated if explicitly requested via fields param
+    #[sqlx(default)]
+    pub data: Option<serde_json::Value>,
+    #[sqlx(default)]
+    pub score: Option<serde_json::Value>,
+    #[sqlx(default)]
+    pub settings: Option<serde_json::Value>,
 }

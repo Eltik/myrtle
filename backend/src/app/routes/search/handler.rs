@@ -2,8 +2,6 @@
 //!
 //! Provides the main handler for the `/search` endpoint with Redis caching.
 
-use std::collections::HashSet;
-
 use axum::{
     Json,
     extract::{Query, State},
@@ -12,7 +10,6 @@ use redis::AsyncCommands;
 use sqlx::PgPool;
 
 use crate::app::{error::ApiError, state::AppState};
-use crate::database::models::user::User;
 
 use super::filters::apply_filters;
 use super::query_builder::{QueryParam, SearchQueryBuilder};
@@ -43,6 +40,12 @@ pub async fn search_users(
         return Ok(Json(response));
     }
 
+    // Parse fields selection to determine what to fetch from database
+    let fields_str = params.fields.as_deref().unwrap_or("");
+    let include_data = fields_str.contains("data");
+    let include_score = fields_str.contains("score");
+    let include_settings = fields_str.contains("settings");
+
     // Build search query
     let mut builder = SearchQueryBuilder::new(params.logic);
     builder.add_privacy_filter(); // Filter out users with publicProfile: false
@@ -51,27 +54,17 @@ pub async fn search_users(
     builder.set_sort(params.sort_by.to_sql_expression(), order);
     builder.set_pagination(limit, offset);
 
-    // Execute search query
-    let (query, query_params) = builder.build();
+    let (query, query_params) =
+        builder.build_with_fields(include_data, include_score, include_settings);
     let users = execute_search_query(&state.db, &query, &query_params).await?;
 
     // Get total count for pagination
     let (count_query, count_params) = builder.build_count();
     let total = execute_count_query(&state.db, &count_query, &count_params).await?;
 
-    // Parse fields selection
-    let selected_fields: Option<HashSet<String>> = params.fields.as_ref().map(|f| {
-        f.split(',')
-            .map(|s| s.trim().to_lowercase())
-            .filter(|s| !s.is_empty())
-            .collect()
-    });
-
     // Transform to response entries
-    let results: Vec<SearchResultEntry> = users
-        .into_iter()
-        .map(|user| transform_to_search_entry(user, &selected_fields))
-        .collect();
+    let results: Vec<SearchResultEntry> =
+        users.into_iter().map(transform_to_search_entry).collect();
 
     let response = SearchResponse {
         results,
@@ -165,9 +158,9 @@ async fn execute_search_query(
     pool: &PgPool,
     query: &str,
     params: &[QueryParam],
-) -> Result<Vec<User>, ApiError> {
+) -> Result<Vec<SearchUser>, ApiError> {
     // Build the query dynamically with sqlx
-    let mut query_builder = sqlx::query_as::<_, User>(query);
+    let mut query_builder = sqlx::query_as::<_, SearchUser>(query);
 
     for param in params {
         query_builder = match param {
@@ -205,39 +198,15 @@ async fn execute_count_query(
     })
 }
 
-/// Transform a User database record into a SearchResultEntry
-fn transform_to_search_entry(
-    user: User,
-    selected_fields: &Option<HashSet<String>>,
-) -> SearchResultEntry {
-    // Extract nickname from user.data JSONB
-    let nickname = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("nickName"))
-        .and_then(|n| n.as_str())
-        .unwrap_or("Unknown")
-        .to_string();
-
-    // Extract level from user.data JSONB
-    let level = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("level"))
-        .and_then(|l| l.as_i64())
-        .unwrap_or(0);
-
-    // Extract avatar from secretary skin ID (matches user profile behavior)
-    let status = user.data.get("status");
-    let secretary = status
-        .and_then(|s| s.get("secretary"))
-        .and_then(|s| s.as_str());
-    let secretary_skin_id = status
-        .and_then(|s| s.get("secretarySkinId"))
-        .and_then(|s| s.as_str());
+/// Transform a SearchUser database record into a SearchResultEntry
+fn transform_to_search_entry(user: SearchUser) -> SearchResultEntry {
+    let nickname = user.nickname.unwrap_or_else(|| "Unknown".to_string());
+    let level = user.level.unwrap_or(0);
+    let secretary = user.secretary.clone();
+    let secretary_skin_id = user.secretary_skin_id.as_deref();
 
     // Use secretarySkinId for avatar, falling back to secretary base ID for default skins
-    let avatar_id = match (secretary, secretary_skin_id) {
+    let avatar_id = match (secretary.as_deref(), secretary_skin_id) {
         (Some(sec), Some(skin_id)) => {
             // If skin doesn't contain @ and ends with #1, use base secretary ID
             if !skin_id.contains('@') && skin_id.ends_with("#1") {
@@ -250,35 +219,8 @@ fn transform_to_search_entry(
         _ => None,
     };
 
-    // Keep secretary as separate field for filtering
-    let secretary = secretary.map(|s| s.to_string());
-
-    // Extract grade from score JSONB
-    let grade = user
-        .score
-        .get("grade")
-        .and_then(|g| g.get("grade"))
-        .and_then(|g| g.as_str())
-        .unwrap_or("F")
-        .to_string();
-
-    // Extract total score
-    let total_score = user
-        .score
-        .get("totalScore")
-        .and_then(|v| v.as_f64())
-        .unwrap_or(0.0) as f32;
-
-    // Include full data only if requested via fields param
-    let include_data = selected_fields.as_ref().is_some_and(|f| f.contains("data"));
-
-    let include_score = selected_fields
-        .as_ref()
-        .is_some_and(|f| f.contains("score"));
-
-    let include_settings = selected_fields
-        .as_ref()
-        .is_some_and(|f| f.contains("settings"));
+    let grade = user.grade.unwrap_or_else(|| "F".to_string());
+    let total_score = user.total_score.unwrap_or(0.0) as f32;
 
     SearchResultEntry {
         uid: user.uid,
@@ -290,16 +232,8 @@ fn transform_to_search_entry(
         grade,
         total_score,
         updated_at: user.updated_at.to_rfc3339(),
-        data: if include_data { Some(user.data) } else { None },
-        score: if include_score {
-            Some(user.score)
-        } else {
-            None
-        },
-        settings: if include_settings {
-            Some(user.settings)
-        } else {
-            None
-        },
+        data: user.data,
+        score: user.score,
+        settings: user.settings,
     }
 }

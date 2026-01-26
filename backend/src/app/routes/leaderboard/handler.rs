@@ -11,7 +11,11 @@ use redis::AsyncCommands;
 use crate::app::{error::ApiError, state::AppState};
 use crate::database::models::user::User;
 
-use super::types::*;
+use super::types::{
+    ActivityMetricsResponse, EngagementMetricsResponse, GradeBreakdown, LeaderboardEntry,
+    LeaderboardFields, LeaderboardMeta, LeaderboardQuery, LeaderboardResponse, LeaderboardUser,
+    PaginationInfo,
+};
 
 /// Handler for GET /leaderboard
 ///
@@ -45,14 +49,15 @@ pub async fn get_leaderboard(
         return Ok(Json(response));
     }
 
-    // Query database
-    let users = User::find_for_leaderboard(
+    let is_full = params.fields == LeaderboardFields::Full;
+    let users = User::find_for_leaderboard_optimized(
         &state.db,
         params.sort_by.to_sql_expression(),
         order,
         params.server.as_deref(),
         limit,
         offset,
+        is_full,
     )
     .await
     .map_err(|e| {
@@ -64,11 +69,11 @@ pub async fn get_leaderboard(
         .await
         .unwrap_or(0);
 
-    // Transform to response entries (pass fields parameter for conditional field inclusion)
+    // Transform to response entries
     let entries: Vec<LeaderboardEntry> = users
         .into_iter()
         .enumerate()
-        .map(|(i, user)| transform_to_entry(user, offset + i as i64 + 1, params.fields))
+        .map(|(i, user)| transform_to_entry(user, offset + i as i64 + 1, is_full))
         .collect();
 
     let response = LeaderboardResponse {
@@ -95,33 +100,12 @@ pub async fn get_leaderboard(
     Ok(Json(response))
 }
 
-/// Transform a User database record into a LeaderboardEntry
-fn transform_to_entry(user: User, rank: i64, fields: LeaderboardFields) -> LeaderboardEntry {
-    // Extract nickname from user.data JSONB
-    let nickname = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("nickName"))
-        .and_then(|n| n.as_str())
-        .unwrap_or("Unknown")
-        .to_string();
-
-    // Extract level from user.data JSONB
-    let level = user
-        .data
-        .get("status")
-        .and_then(|s| s.get("level"))
-        .and_then(|l| l.as_i64())
-        .unwrap_or(0);
-
-    // Extract avatar from secretary skin ID (matches user profile behavior)
-    let status = user.data.get("status");
-    let secretary = status
-        .and_then(|s| s.get("secretary"))
-        .and_then(|s| s.as_str());
-    let secretary_skin_id = status
-        .and_then(|s| s.get("secretarySkinId"))
-        .and_then(|s| s.as_str());
+/// Transform a LeaderboardUser database record into a LeaderboardEntry
+fn transform_to_entry(user: LeaderboardUser, rank: i64, is_full: bool) -> LeaderboardEntry {
+    let nickname = user.nickname.unwrap_or_else(|| "Unknown".to_string());
+    let level = user.level.unwrap_or(0);
+    let secretary = user.secretary.as_deref();
+    let secretary_skin_id = user.secretary_skin_id.as_deref();
 
     // Use secretarySkinId for avatar, falling back to secretary base ID for default skins
     let avatar_id = match (secretary, secretary_skin_id) {
@@ -137,9 +121,6 @@ fn transform_to_entry(user: User, rank: i64, fields: LeaderboardFields) -> Leade
         _ => None,
     };
 
-    let grade_data = user.score.get("grade");
-    let is_full = fields == LeaderboardFields::Full;
-
     LeaderboardEntry {
         // Core fields (always present)
         rank,
@@ -148,57 +129,47 @@ fn transform_to_entry(user: User, rank: i64, fields: LeaderboardFields) -> Leade
         nickname,
         level,
         avatar_id,
-        total_score: extract_f32(&user.score, "totalScore"),
-        grade: grade_data
-            .and_then(|g| g.get("grade"))
-            .and_then(|v| v.as_str())
-            .unwrap_or("F")
-            .to_string(),
+        total_score: user.total_score.unwrap_or(0.0) as f32,
+        grade: user.grade.unwrap_or_else(|| "F".to_string()),
         updated_at: user.updated_at.to_rfc3339(),
 
-        // Optional fields (only with fields=full)
         operator_score: if is_full {
-            Some(extract_f32(&user.score, "operatorScore"))
+            user.operator_score.map(|s| s as f32)
         } else {
             None
         },
         stage_score: if is_full {
-            Some(extract_f32(&user.score, "stageScore"))
+            user.stage_score.map(|s| s as f32)
         } else {
             None
         },
         roguelike_score: if is_full {
-            Some(extract_f32(&user.score, "roguelikeScore"))
+            user.roguelike_score.map(|s| s as f32)
         } else {
             None
         },
         sandbox_score: if is_full {
-            Some(extract_f32(&user.score, "sandboxScore"))
+            user.sandbox_score.map(|s| s as f32)
         } else {
             None
         },
         medal_score: if is_full {
-            Some(extract_f32(&user.score, "medalScore"))
+            user.medal_score.map(|s| s as f32)
         } else {
             None
         },
         base_score: if is_full {
-            Some(extract_f32(&user.score, "baseScore"))
+            user.base_score.map(|s| s as f32)
         } else {
             None
         },
         composite_score: if is_full {
-            Some(
-                grade_data
-                    .and_then(|g| g.get("compositeScore"))
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0) as f32,
-            )
+            user.composite_score.map(|s| s as f32)
         } else {
             None
         },
         grade_breakdown: if is_full {
-            Some(extract_grade_breakdown(grade_data))
+            Some(extract_grade_breakdown(user.grade_data.as_ref()))
         } else {
             None
         },
@@ -276,9 +247,4 @@ fn extract_grade_breakdown(grade_data: Option<&serde_json::Value>) -> GradeBreak
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0) as f32,
     }
-}
-
-/// Helper to extract f32 from JSONB value
-fn extract_f32(json: &serde_json::Value, key: &str) -> f32 {
-    json.get(key).and_then(|v| v.as_f64()).unwrap_or(0.0) as f32
 }

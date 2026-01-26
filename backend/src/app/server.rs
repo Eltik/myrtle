@@ -9,7 +9,10 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 
-use crate::app::middleware::rate_limit::{new_rate_limit_store, rate_limit};
+use crate::app::middleware::memory_profiler::{
+    MemoryStats, init_memory_profiling, memory_tracking_middleware, spawn_memory_monitor,
+};
+use crate::app::middleware::rate_limit::{RateLimitStore, new_rate_limit_store, rate_limit};
 use crate::app::middleware::static_assets::serve_asset;
 use crate::app::routes::admin;
 use crate::app::routes::auth::update_settings::update_settings;
@@ -52,9 +55,11 @@ async fn root() -> &'static str {
     "Myrtle API"
 }
 
-fn create_router(state: AppState) -> Router {
-    let rate_store = new_rate_limit_store();
-
+fn create_router(
+    state: AppState,
+    memory_stats: Arc<MemoryStats>,
+    rate_store: RateLimitStore,
+) -> Router {
     // Use the asset source from state for CDN routes
     let cdn_router = Router::new()
         .route("/cdn/{*asset_path}", get(serve_asset))
@@ -218,6 +223,10 @@ fn create_router(state: AppState) -> Router {
             (rate_store.clone(), state.clone()),
             rate_limit,
         ))
+        .layer(middleware::from_fn_with_state(
+            memory_stats,
+            memory_tracking_middleware,
+        ))
         .with_state(state)
         .merge(cdn_router)
 }
@@ -330,6 +339,16 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         asset_source,
     };
 
+    // Initialize memory profiling
+    let memory_stats = init_memory_profiling()
+        .map_err(|e| format!("Failed to initialize memory profiling: {e}"))?;
+
+    // Create rate limit store
+    let rate_store = new_rate_limit_store();
+
+    // Start memory monitoring background task
+    spawn_memory_monitor(memory_stats.clone(), rate_store.clone());
+
     // Start cron jobs
     spawn_reload_job(state.client.clone(), events.clone(), 3600);
 
@@ -340,7 +359,8 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Start server
     axum::serve(
         listener,
-        create_router(state).into_make_service_with_connect_info::<SocketAddr>(),
+        create_router(state, memory_stats, rate_store)
+            .into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await?;
 
