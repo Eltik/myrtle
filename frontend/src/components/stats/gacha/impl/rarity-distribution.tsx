@@ -41,18 +41,18 @@ export function RarityDistribution({ collectiveStats, rarityData, rateComparison
         >
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="min-w-0">
                             <CardTitle className="flex items-center gap-2">
-                                <PieChartIcon className="h-5 w-5" />
+                                <PieChartIcon className="h-5 w-5 shrink-0" />
                                 Rarity Distribution
                             </CardTitle>
                             <CardDescription>Breakdown of pulled operators by rarity</CardDescription>
                         </div>
                         {/* Luck Indicator Badge */}
-                        <div className={`flex items-center gap-2 rounded-full px-3 py-1.5 ${luckStatus.bg}`}>
+                        <div className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 ${luckStatus.bg}`}>
                             <luckStatus.icon className={`h-4 w-4 ${luckStatus.color}`} />
-                            <span className={`font-semibold text-sm ${luckStatus.color}`}>{luckStatus.label}</span>
+                            <span className={`whitespace-nowrap font-semibold text-sm ${luckStatus.color}`}>{luckStatus.label}</span>
                         </div>
                     </div>
                 </CardHeader>
