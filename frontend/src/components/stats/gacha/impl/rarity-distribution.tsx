@@ -57,7 +57,7 @@ export function RarityDistribution({ collectiveStats, rarityData, rateComparison
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+                    <div className="grid gap-6 *:min-w-0 lg:grid-cols-2">
                         {/* Pie Chart */}
                         <div>
                             <ChartContainer
