@@ -1,5 +1,5 @@
 import { PieChartIcon } from "lucide-react";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { Cell, Pie, PieChart } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "~/components/ui/shadcn/chart";
@@ -57,11 +57,11 @@ export function RarityDistribution({ collectiveStats, rarityData, rateComparison
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
                         {/* Pie Chart */}
                         <div>
                             <ChartContainer
-                                className="mx-auto aspect-square h-64"
+                                className="mx-auto aspect-square max-h-64"
                                 config={{
                                     sixStar: {
                                         label: "6-Star",
@@ -81,17 +81,15 @@ export function RarityDistribution({ collectiveStats, rarityData, rateComparison
                                     },
                                 }}
                             >
-                                <ResponsiveContainer height="100%" width="100%">
-                                    <PieChart>
-                                        <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={false} />
-                                        <Pie cx="50%" cy="50%" data={rarityData} dataKey="value" innerRadius={60} nameKey="name" outerRadius={80} paddingAngle={2}>
-                                            {rarityData.map((entry) => (
-                                                <Cell fill={entry.color} key={`cell-${entry.name}`} />
-                                            ))}
-                                        </Pie>
-                                        <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                <PieChart>
+                                    <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={false} />
+                                    <Pie cx="50%" cy="50%" data={rarityData} dataKey="value" innerRadius={60} nameKey="name" outerRadius={80} paddingAngle={2}>
+                                        {rarityData.map((entry) => (
+                                            <Cell fill={entry.color} key={`cell-${entry.name}`} />
+                                        ))}
+                                    </Pie>
+                                    <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" />
+                                </PieChart>
                             </ChartContainer>
                         </div>
 

@@ -1,5 +1,5 @@
 import { TrendingUp } from "lucide-react";
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { Line, LineChart, XAxis, YAxis } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/shadcn/chart";
@@ -47,14 +47,12 @@ export function PullActivityChart({ dateData }: PullActivityChartProps) {
                             },
                         }}
                     >
-                        <ResponsiveContainer height="100%" width="100%">
-                            <LineChart data={dateData}>
-                                <XAxis dataKey="date" interval="preserveStartEnd" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} />
-                                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={50} />
-                                <ChartTooltip content={<ChartTooltipContent />} cursor={{ stroke: "hsl(var(--muted-foreground))", strokeDasharray: "5 5" }} />
-                                <Line activeDot={{ r: 5, fill: CHART_COLORS.activity }} dataKey="pulls" dot={{ fill: CHART_COLORS.activity, strokeWidth: 0, r: 3 }} stroke={CHART_COLORS.activity} strokeWidth={2} type="monotone" />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <LineChart data={dateData}>
+                            <XAxis dataKey="date" interval="preserveStartEnd" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={50} />
+                            <ChartTooltip content={<ChartTooltipContent />} cursor={{ stroke: "hsl(var(--muted-foreground))", strokeDasharray: "5 5" }} />
+                            <Line activeDot={{ r: 5, fill: CHART_COLORS.activity }} dataKey="pulls" dot={{ fill: CHART_COLORS.activity, strokeWidth: 0, r: 3 }} stroke={CHART_COLORS.activity} strokeWidth={2} type="monotone" />
+                        </LineChart>
                     </ChartContainer>
                 </CardContent>
             </Card>

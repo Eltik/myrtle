@@ -58,7 +58,7 @@ export function MostCommonOperators({ operatorsByRarity }: MostCommonOperatorsPr
                                                                     <Image alt={op.charName} className="object-cover" fill sizes="32px" src={`/api/cdn/avatar/${encodeURIComponent(op.charId)}`} />
                                                                 </div>
                                                                 <div className="min-w-0 flex-1">
-                                                                    <p className="truncate font-medium text-xs">{op.charName}</p>
+                                                                    <p className="truncate font-medium text-xs">{op.charName.length > 0 ? op.charName : op.charId}</p>
                                                                 </div>
                                                                 <span className={`shrink-0 font-bold text-sm ${colors.text}`}>×{op.pullCount.toLocaleString()}</span>
                                                             </div>
