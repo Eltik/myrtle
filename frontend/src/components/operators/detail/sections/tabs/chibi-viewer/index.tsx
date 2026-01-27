@@ -5,7 +5,9 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, type ViewType } from "./impl/constants";
+import { DownloadButton } from "./impl/download-button";
 import { encodeAssetPath, getAvailableViewTypes, getChibiSkinData, loadSpineWithEncodedUrls } from "./impl/helpers";
+import { useChibiRecorder } from "./impl/use-chibi-recorder";
 
 interface ChibiViewerProps {
     chibi: ChibiCharacter;
@@ -18,12 +20,20 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const mountedRef = useRef(true);
     const loadIdRef = useRef(0);
+    const recordingRef = useRef(false);
 
     const [selectedAnimation, setSelectedAnimation] = useState<string>("Idle");
     const [availableAnimations, setAvailableAnimations] = useState<string[]>([]);
     const [viewType, setViewType] = useState<ViewType>("front");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const { isRecording, progress, startRecording, cancelRecording } = useChibiRecorder({
+        appRef,
+        spineRef,
+        selectedAnimation,
+        recordingRef,
+    });
 
     const availableViewTypes = useMemo(() => getAvailableViewTypes(chibi, skinName), [chibi, skinName]);
 
@@ -186,14 +196,16 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
             appRef.current = app;
             container.appendChild(app.view as HTMLCanvasElement);
 
-            // Animation loop
+            // Animation loop - skips update/render while recording (recorder drives the spine directly)
             const tick = () => {
                 if (!mountedRef.current) return;
-                if (spineRef.current) {
-                    spineRef.current.update(0.016); // ~60fps
-                }
-                if (appRef.current?.renderer) {
-                    appRef.current.renderer.render(appRef.current.stage);
+                if (!recordingRef.current) {
+                    if (spineRef.current) {
+                        spineRef.current.update(0.016); // ~60fps
+                    }
+                    if (appRef.current?.renderer) {
+                        appRef.current.renderer.render(appRef.current.stage);
+                    }
                 }
                 animationFrameId = requestAnimationFrame(tick);
             };
@@ -226,8 +238,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
         <div className="w-full rounded-lg border border-border bg-card/30 p-3">
             <h4 className="mb-2 font-medium text-foreground">Chibi Preview</h4>
 
-            <div className="mb-3 flex flex-wrap gap-2">
-                <Select disabled={isLoading || availableViewTypes.length <= 1} onValueChange={handleViewTypeChange} value={viewType}>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Select disabled={isLoading || availableViewTypes.length <= 1 || isRecording} onValueChange={handleViewTypeChange} value={viewType}>
                     <SelectTrigger className="h-8 w-[90px] text-xs">
                         <SelectValue placeholder="View" />
                     </SelectTrigger>
@@ -238,7 +250,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                     </SelectContent>
                 </Select>
 
-                <Select disabled={isLoading || availableAnimations.length === 0} onValueChange={handleAnimationChange} value={selectedAnimation}>
+                <Select disabled={isLoading || availableAnimations.length === 0 || isRecording} onValueChange={handleAnimationChange} value={selectedAnimation}>
                     <SelectTrigger className="h-8 min-w-[100px] flex-1 text-xs">
                         <SelectValue placeholder="Animation" />
                     </SelectTrigger>
@@ -250,6 +262,8 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                         ))}
                     </SelectContent>
                 </Select>
+
+                <DownloadButton disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
             </div>
 
             <div className="relative h-[180px] w-full overflow-hidden rounded-md bg-[#111014]">
