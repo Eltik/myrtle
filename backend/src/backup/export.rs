@@ -23,6 +23,9 @@ pub const TABLE_EXPORT_ORDER: &[&str] = &[
     "tier_list_versions",    // FK: tier_list_id -> tier_lists, published_by -> users
     "tier_change_log",       // FK: tier_list_id, version_id, changed_by
     "tier_list_permissions", // FK: tier_list_id, user_id, granted_by
+    "tier_list_reports",     // FK: tier_list_id, reporter_id, reviewed_by -> users
+    "gacha_records",         // FK: user_id -> users
+    "user_gacha_settings",   // FK: user_id -> users
 ];
 
 /// Default Redis key patterns to export

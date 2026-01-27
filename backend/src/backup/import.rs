@@ -23,6 +23,9 @@ pub const TABLE_IMPORT_ORDER: &[&str] = &[
     "tier_list_versions",
     "tier_change_log",
     "tier_list_permissions",
+    "tier_list_reports",
+    "gacha_records",
+    "user_gacha_settings",
 ];
 
 /// Get the primary conflict target for a table.
@@ -41,6 +44,12 @@ fn get_primary_conflict_target(table_name: &str) -> &'static str {
         "tier_list_permissions" => "tier_list_id, user_id, permission",
         // For tiers, use the composite unique constraint
         "tiers" => "tier_list_id, display_order",
+        // For tier_list_reports, one report per user per tier list
+        "tier_list_reports" => "tier_list_id, reporter_id",
+        // For gacha_records, unique pull per user/timestamp/char/pool
+        "gacha_records" => "user_id, pull_timestamp, char_id, pool_id",
+        // For user_gacha_settings, primary key is user_id
+        "user_gacha_settings" => "user_id",
         // Default to id for other tables
         _ => "id",
     }

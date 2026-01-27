@@ -37,7 +37,7 @@ pub enum Commands {
         redis_only: bool,
 
         /// Specific PostgreSQL tables to export (comma-separated)
-        /// Available: users, tier_lists, tiers, tier_placements, tier_list_versions, tier_change_log, tier_list_permissions
+        /// Available: users, tier_lists, tiers, tier_placements, tier_list_versions, tier_change_log, tier_list_permissions, tier_list_reports, gacha_records, user_gacha_settings
         #[arg(long, value_delimiter = ',')]
         tables: Option<Vec<String>>,
 
