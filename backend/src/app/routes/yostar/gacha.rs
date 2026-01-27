@@ -466,20 +466,33 @@ pub async fn get_enhanced_stats(
         .await
         .unwrap_or(0.0);
 
-    // Calculate operator percentages
+    // Calculate operator percentages, resolving empty char_name from game data
     let total_pulls_f64 = collective.total_pulls as f64;
     let operator_popularity: Vec<OperatorPopularity> = operators
         .into_iter()
-        .map(|op| OperatorPopularity {
-            char_id: op.char_id,
-            char_name: op.char_name,
-            rarity: op.rarity,
-            pull_count: op.pull_count,
-            percentage: if total_pulls_f64 > 0.0 {
-                (op.pull_count as f64 / total_pulls_f64) * 100.0
+        .map(|op| {
+            let char_name = if op.char_name.is_empty() {
+                state
+                    .game_data
+                    .operators
+                    .get(&op.char_id)
+                    .map(|o| o.name.clone())
+                    .unwrap_or(op.char_name)
             } else {
-                0.0
-            },
+                op.char_name
+            };
+
+            OperatorPopularity {
+                char_id: op.char_id,
+                char_name,
+                rarity: op.rarity,
+                pull_count: op.pull_count,
+                percentage: if total_pulls_f64 > 0.0 {
+                    (op.pull_count as f64 / total_pulls_f64) * 100.0
+                } else {
+                    0.0
+                },
+            }
         })
         .collect();
 
