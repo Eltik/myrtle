@@ -47,18 +47,14 @@ impl Muelsyse {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.5 if self.trait_dmg else 1
     /// if self.trait_dmg and self.module == 2: atk_scale = 1.65
     /// copy_factor = 1 if self.module == 1 and self.module_lvl == 3 else 0.5 + 0.2 * self.elite
-    ///
     /// atkbuff = self.skill_params[2] if self.skill == 1 else self.skill_params[1] * min(self.skill,1)
     /// aspd = self.skill_params[3] if self.skill == 1 else 0
-    ///
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = hitdmg/self.atk_interval * (self.attack_speed + aspd)/100
-    ///
     /// main = 1 if self.talent_dmg else 0
     /// clone_atk = self.cloned_op.atk * copy_factor * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// if not self.cloned_op.ranged and self.talent2_dmg: clone_atk += 250
@@ -70,7 +66,6 @@ impl Muelsyse {
     /// extra_summons_skill =  min(4,2.5/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100)) * 2) if self.skill == 2 else min(4,2.5/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100)))
     /// if self.skill == 0: extra_summons_skill = extra_summons
     /// extra_summons = (50 * extra_summons + 15 * extra_summons_skill) / 65
-    ///
     /// if self.skill == 3 and self.cloned_op.ranged:
     /// extra_summons = 4 if self.skill_dmg else 2
     /// dps += (main+extra_summons) * summondamage/(self.cloned_op.atk_interval/((self.attack_speed + aspd)/100))
@@ -127,14 +122,14 @@ impl Muelsyse {
             0
         };
 
-        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut extra_summons: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atk_scale: f64 = 0.0;
-        let mut extra_summons: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
 
         atk_scale = if self.unit.trait_damage { 1.5 } else { 1.0 };
         if self.unit.trait_damage && (self.unit.module_index as f64) == 2.0 {

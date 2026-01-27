@@ -43,7 +43,6 @@ impl Lucilla {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// fragile = self.talent1_params[0] - 1 if self.elite > 0 and self.talent_dmg else 0
     /// if self.skill == 2 and self.skill_dmg: fragile *= self.skill_params[3]
     /// fragile = max(fragile, self.buff_fragile)
@@ -83,13 +82,13 @@ impl Lucilla {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skilldmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         let mut fragile = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0) - 1.0

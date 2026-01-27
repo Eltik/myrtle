@@ -40,7 +40,6 @@ impl Durnar {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// extra_scale = 0.1 if self.module == 1 else 0
     /// final_atk = self.atk * (1 + self.skill_params[0] * min(self.skill,1) + self.buff_atk + self.talent1_params[0]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1 + extra_scale) * (1-res/100), final_atk * (1 + extra_scale) * 0.05) if self.skill > 0 else np.fmax(final_atk - defense, final_atk * 0.05)

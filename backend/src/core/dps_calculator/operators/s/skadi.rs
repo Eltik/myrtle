@@ -40,7 +40,6 @@ impl Skadi {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] + self.skill_params[0] * min(self.skill,1)
     /// aspd = 0 if self.skill != 1 else self.skill_params[1]
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1

@@ -43,7 +43,6 @@ impl MrNothing {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0
     /// aspd = self.skill_params[3] if self.skill == 2 and self.skill_dmg else 0
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat

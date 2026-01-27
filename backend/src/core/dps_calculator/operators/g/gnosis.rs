@@ -43,7 +43,6 @@ impl Gnosis {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// coldfragile = 0.5 * (max(self.talent1_params) - 1) if self.elite > 0 else 0
     /// frozenfragile = 2 * coldfragile
     /// coldfragile = max(coldfragile, self.buff_fragile)
@@ -51,10 +50,9 @@ impl Gnosis {
     /// frozenres = np.fmax(0, res - 15)
     /// atkbuff = 0.05 * self.module_lvl if self.module == 2 and self.module_lvl > 1 else 0
     /// extra_sp = 0.25 if self.module == 2 and self.skill == 1 and self.module_dmg else 0
-    /// ####the actual skills
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
-    /// sp_cost = self.skill_cost/(1+ self.sp_boost + extra_sp) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+ self.sp_boost + extra_sp) + 1.2
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)*(1+coldfragile)/(1+self.buff_fragile)
     /// skilldmg1 = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)*(1+coldfragile)/(1+self.buff_fragile)
@@ -67,14 +65,12 @@ impl Gnosis {
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval*(self.attack_speed)/100
-    ///
     /// if self.skill == 3:
     /// aspd = self.skill_params[1]
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)*(1+coldfragile)/(1+self.buff_fragile)
     /// if self.skill_dmg: hitdmg = np.fmax(final_atk * (1-frozenres/100), final_atk * 0.05)*(1+frozenfragile)/(1+self.buff_fragile)
     /// dps = hitdmg/(self.atk_interval/((self.attack_speed + aspd)/100)) * min(2, self.targets)
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -99,16 +95,16 @@ impl Gnosis {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skilldmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         let mut coldfragile = if ((self.unit.elite as f64) as f64) > 0.0 {
             0.5 * (self
@@ -140,7 +136,6 @@ impl Gnosis {
         } else {
             0.0
         };
-        // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64)

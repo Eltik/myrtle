@@ -45,18 +45,16 @@ impl Hoolheyak {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 1
     /// newres = np.fmax(res-10,0) if self.module in [1,3] else res
     /// dmg_scale = 1
     /// if self.module == 2 and self.talent2_dmg:
     /// dmg_scale += 0.1 * (self.module_lvl -1)
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
-    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2 #sp lockout
-    /// if self.module == 2 and self.module_dmg: sp_cost = self.skill_cost/(1 + self.sp_boost + 1/self.atk_interval*self.attack_speed/100) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2
+    /// if self.module == 2 and self.module_dmg: sp_cost = self.skill_cost/(1 + self.sp_boost + 1/self.atk_interval*self.attack_speed/100) + 1.2
     /// hitdmgarts = np.fmax(final_atk * atk_scale * (1-newres/100), final_atk * atk_scale * 0.05) * dmg_scale
     /// skilldmg = np.fmax(final_atk * atk_scale * skill_scale * (1-newres/100), final_atk * atk_scale * skill_scale * 0.05) * dmg_scale
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
@@ -68,7 +66,6 @@ impl Hoolheyak {
     /// else:
     /// avghit = (skilldmg * min(2, self.targets) + int(atks_per_skillactivation) * hitdmgarts) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[0]
     /// hitdmgarts = np.fmax(final_atk * atk_scale * skill_scale * (1-newres/100), final_atk * atk_scale * skill_scale * 0.05) * dmg_scale
@@ -101,15 +98,15 @@ impl Hoolheyak {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut sp_cost: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atk_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
 
         atk_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {

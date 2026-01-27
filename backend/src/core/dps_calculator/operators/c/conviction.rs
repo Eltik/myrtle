@@ -44,9 +44,7 @@ impl Conviction {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
-    ///
     /// if self.skill < 2:
     /// skill_scale = (self.skill_params[0]-1) * self.skill + 1
     /// skill_scale2 = (self.skill_params[3]-1) * self.skill + 1
@@ -54,17 +52,16 @@ impl Conviction {
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// skilldmg1 = np.fmax(final_atk * atk_scale * skill_scale - defense, final_atk* atk_scale * skill_scale * 0.05)
     /// skilldmg2 = np.fmax(final_atk * atk_scale * skill_scale2 - defense, final_atk* atk_scale * skill_scale2 * 0.05)
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg1 * 0.95 + skilldmg2 * 0.05
     /// if atks_per_skillactivation > 1:
     /// avghit = (0.95 * skilldmg1 + 0.05 * skilldmg2 + (atks_per_skillactivation - 1) * hitdmg) / atks_per_skillactivation
     /// dps = avghit/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[1]
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale * atk_scale * (1-res/100), final_atk * skill_scale * atk_scale * 0.05) * self.targets
@@ -97,15 +94,15 @@ impl Conviction {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15

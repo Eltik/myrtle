@@ -41,7 +41,6 @@ impl Hoederer {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// if self.elite > 0:
     /// atk_scale = max(self.talent1_params) if self.talent_dmg else min(self.talent1_params)
@@ -49,7 +48,6 @@ impl Hoederer {
     /// if self.module == 1:
     /// if self.module_lvl == 2: dmg_bonus = 1.06
     /// if self.module_lvl == 3: dmg_bonus = 1.1
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -103,20 +101,20 @@ impl Hoederer {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut counting_hits: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut stun_duration: f64 = 0.0;
-        let mut chance_to_attack_stunned: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut atk_cycle: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut chance_to_attack_stunned: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut stun_duration: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut counting_hits: f64 = 0.0;
+        let mut atk_cycle: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
 
         atk_scale = 1.0;
         if (self.unit.elite as f64) > 0.0 {

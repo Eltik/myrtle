@@ -41,7 +41,6 @@ impl Odda {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// atkbuff = self.talent1_params[1] if self.talent_dmg and self.elite > 0 else 0
     /// if self.skill < 2:
@@ -89,16 +88,16 @@ impl Odda {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut splashhitdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut splashhitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15

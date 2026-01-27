@@ -1,5 +1,4 @@
-// Use jemalloc as the global allocator for better memory management
-// jemalloc is much better at returning freed memory to the OS
+// Use jemalloc for improved memory reclamation behavior
 #[cfg(not(target_env = "msvc"))]
 use tikv_jemallocator::Jemalloc;
 

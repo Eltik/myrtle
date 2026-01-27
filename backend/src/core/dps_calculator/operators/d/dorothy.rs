@@ -45,21 +45,19 @@ impl Dorothy {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent2_params[0] * self.talent2_params[1] if self.talent2_dmg else 0
     /// cdmg = 1.2 if self.module == 2 else 1
     /// if self.module == 1 and self.module_lvl == 3 and self.module_dmg: cdmg = 1.5
     /// sp_cost = max(self.skill_cost / (1+ self.sp_boost),5)
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// mine_scale = self.skill_params[1] if self.trait_dmg and self.skill > 0 else 0
-    ///
     /// if self.skill == 1:
     /// defshred = 1 + self.skill_params[2]
     /// hitdmgmine = np.fmax(final_atk * mine_scale - defense * defshred, final_atk * mine_scale * 0.05) * cdmg
     /// if not self.trait_dmg or not self.skill_dmg:
     /// defshred = 1
     /// elif not self.talent_dmg:
-    /// defshred = 1 + 5 / sp_cost * self.skill_params[2]  #include uptime of the debuff for auto attacks
+    /// defshred = 1 + 5 / sp_cost * self.skill_params[2]
     /// hitdmg = np.fmax(final_atk - defense * defshred, final_atk * 0.05)
     /// if self.skill in [0,2]:
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -93,15 +91,15 @@ impl Dorothy {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgmine: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut cdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut hitdmgmine: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
 
         atkbuff = if self.unit.talent2_damage {
             self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)

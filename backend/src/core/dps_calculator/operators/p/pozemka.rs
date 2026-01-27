@@ -48,7 +48,6 @@ impl Pozemka {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// defshred = 0
     /// if self.talent_dmg:
     /// if self.talent2_dmg:
@@ -59,7 +58,6 @@ impl Pozemka {
     /// defshred += 0.05 * (self.module_lvl - 1)
     /// newdef = defense * (1-defshred)
     /// atk_scale = 1.05 if self.module_dmg and self.module == 2 else 1
-    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]*self.skill) + self.buff_atk_flat
     /// rate = self.skill_params[1] if self.skill == 1 else 0
@@ -74,7 +72,6 @@ impl Pozemka {
     /// hitdmg2 = np.fmax(final_atk2 * atk_scale * skill_scale - newdef, final_atk2 * atk_scale * skill_scale * 0.05)
     /// avghit = rate * hitdmg2 + (1 - rate) * hitdmg
     /// dps += avghit/self.drone_atk_interval
-    ///
     /// if self.skill == 3:
     /// self.atk_interval = 1
     /// skill_scale = self.skill_params[1]
@@ -111,17 +108,17 @@ impl Pozemka {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk2: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg_tw: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut defshred: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut final_atk2: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg_tw: f64 = 0.0;
 
         defshred = 0.0;
         if self.unit.talent_damage {

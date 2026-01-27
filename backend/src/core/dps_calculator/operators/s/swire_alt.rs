@@ -45,12 +45,10 @@ impl SwireAlt {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// if self.talent_dmg and self.elite > 0:
     /// atkbuff = self.talent1_params[3] * self.talent1_params[2]
     /// if self.module == 2: atkbuff += 0.2
-    ///
     /// atkcycle = (self.atk_interval/(self.attack_speed/100))
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -89,13 +87,13 @@ impl SwireAlt {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skill_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atkbuff = 0.0;
         if self.unit.talent_damage && (self.unit.elite as f64) > 0.0 {

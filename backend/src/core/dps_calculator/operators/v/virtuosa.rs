@@ -43,7 +43,6 @@ impl Virtuosa {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// ele_gauge = 1000 if self.trait_dmg else 2000
     /// necro_scale = self.talent1_params[0]
     /// necro_fragile = max(self.talent2_params) if self.elite == 2 else 1
@@ -51,8 +50,6 @@ impl Virtuosa {
     /// if self.module == 2: ele_fragile = 1.1
     /// falloutdmg = 12000
     /// if self.module == 2 and self.module_lvl > 1: falloutdmg = 15 * (800 + 50 * self.module_lvl)
-    ///
-    /// ####the actual skills
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// necro_skill_scale = self.skill_params[1]
@@ -71,13 +68,12 @@ impl Virtuosa {
     /// dps = avghit/(self.atk_interval/(self.attack_speed/100))
     /// necro_dps = final_atk * necro_scale * necro_fragile
     /// necro_skill_dps = final_atk * necro_skill_scale * necro_fragile / sp_cost
-    /// time_to_fallout_1 = ele_gauge / (necro_dps + necro_skill_dps) #this is meant as a rough estimate to her saving skill charges against fallout, potentially improving dps
+    /// time_to_fallout_1 = ele_gauge / (necro_dps + necro_skill_dps)
     /// time_to_fallout = ele_gauge / (necro_dps + necro_skill_dps/(time_to_fallout_1)*(time_to_fallout_1 + 15))
     /// if skill_scale < 2.05: time_to_fallout = time_to_fallout_1
     /// dps += falloutdmg * ele_fragile / (15 + time_to_fallout) / (1 + self.buff_fragile)
     /// if self.targets > 1:
     /// dps += falloutdmg * ele_fragile / (15 + ele_gauge/necro_dps) / (1 + self.buff_fragile) * (self.targets -1)
-    ///
     /// if self.skill == 2:
     /// aspd = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -92,7 +88,6 @@ impl Virtuosa {
     /// dps = np.fmin(self.targets, 2) * (artsdps + targetEledps/(1 + self.buff_fragile))
     /// if self.targets > 2:
     /// dps += ambientEledps * (self.targets - 2) / (1 + self.buff_fragile)
-    ///
     /// if self.skill in [0,3]:
     /// if self.skill == 3: necro_fragile = self.skill_params[1] * (necro_fragile - 1) + 1
     /// atkbuff = self.skill_params[0]
@@ -129,21 +124,21 @@ impl Virtuosa {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut necro_dps: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
         let mut time_to_fallout_1: f64 = 0.0;
-        let mut necro_skill_dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skill_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut necro_dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut necro_skill_dps: f64 = 0.0;
 
         let mut ele_gauge = if self.unit.trait_damage {
             1000.0
@@ -174,7 +169,6 @@ impl Virtuosa {
         if (self.unit.module_index as f64) == 2.0 && (self.unit.module_level as f64) > 1.0 {
             falloutdmg = 15.0 * (800.0 + 50.0 * (self.unit.module_level as f64));
         }
-        // ###the actual skills
         if (self.unit.skill_index as f64) == 1.0 {
             skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
             let mut necro_skill_scale = self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);

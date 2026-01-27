@@ -44,7 +44,6 @@ impl Warmy {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// falloutdmg = 7000
     /// burst_scale = 1.1 if ((self.skill == 2 and self.skill_dmg) or (self.skill == 1 and self.trait_dmg)) and self.module == 1 else 1
     /// if self.skill == 0:
@@ -64,7 +63,6 @@ impl Warmy {
     /// timeToFallout = elegauge/(dpsNorm * 0.15)
     /// dps = (dpsNorm * timeToFallout + dpsFallout * burst_scale * 10 + falloutdmg)/(timeToFallout + 10)
     /// if not self.trait_dmg: dps = dpsNorm
-    ///
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
@@ -96,15 +94,15 @@ impl Warmy {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut newres: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut burst_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         let mut falloutdmg = 7000.0;
         burst_scale = if ((((self.unit.skill_index as f64) as f64) == 2.0

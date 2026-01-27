@@ -44,12 +44,10 @@ impl Pallas {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// atkbuff = min(self.talent1_params) if self.talent_dmg and self.elite > 0 else 0
     /// if self.trait_dmg:
     /// atk_scale = 1.3 if self.module == 1 else 1.2
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -58,21 +56,18 @@ impl Pallas {
     /// sp_cost = self.skill_cost
     /// avgphys = (sp_cost * hitdmg + (1 + self.skill) * skillhitdmg) / (sp_cost + 1)
     /// dps = avgphys/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// atkbuff += self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 3:
     /// if self.skill_dmg:
-    /// atkbuff = max(atkbuff, self.skill_params[2]) #vigor doesnt stack
+    /// atkbuff = max(atkbuff, self.skill_params[2])
     /// atkbuff += self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100     * min(self.targets, 3)
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -97,15 +92,15 @@ impl Pallas {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut avgphys: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
 
         atk_scale = 1.0;
         atkbuff = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {

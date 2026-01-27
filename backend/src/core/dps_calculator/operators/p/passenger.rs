@@ -43,18 +43,15 @@ impl Passenger {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// targetscaling = [0,1,2,3,4,5] if self.module == 2 else [0, 1, 1.85, 1.85+0.85**2, 1.85+0.85**2+0.85**3, 1.85+0.85**2+0.85**3+0.85**4]
     /// if self.module == 1: targetscaling = [0, 1, 1.9, 1.9+0.9**2, 1.9+0.9**2+0.9**3, 1.9+0.9**2+0.9**3+0.9**4]
     /// targets = min(5, self.targets) if self.skill == 2 else min(4, self.targets)
     /// if self.elite < 2 and self.skill == 3: targetscaling[4] = targetscaling[3]
-    ///
     /// dmg_scale = self.talent1_params[1] if self.elite > 0 and self.talent_dmg else 1
     /// sp_boost = 0
     /// atkbuff = self.talent2_params[0] if self.talent2_dmg and self.elite == 2 else 0
     /// if self.module == 1 and self.module_lvl > 1 and self.talent2_dmg:
     /// sp_boost = 0.05 + 0.1 * self.module_lvl
-    ///
     /// if self.skill == 1:
     /// sp_cost = self.skill_cost/(1+sp_boost + self.sp_boost) +1.2
     /// atk_scale = self.skill_params[0]
@@ -103,16 +100,16 @@ impl Passenger {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
 
         let mut targetscaling = if ((self.unit.module_index as f64) as f64) == 2.0 {
             [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
@@ -145,7 +142,7 @@ impl Passenger {
         } else {
             ((4) as f64).min((self.unit.targets as f64) as f64)
         };
-        // UNTRANSLATED: if self.elite < 2 and self.skill == 3: targetscaling[4] = targetscaling[3]
+        // TODO: not translated: if self.elite < 2 and self.skill == 3: targetscaling[4] = targetscaling[3]
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
         } else {

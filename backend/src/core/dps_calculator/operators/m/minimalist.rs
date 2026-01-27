@@ -41,7 +41,6 @@ impl Minimalist {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drone_dmg = 1.2 if self.module == 2 else 1.1
     /// if not self.trait_dmg: drone_dmg = 0.2
     /// crate = self.talent1_params[0] if self.elite > 0 else 0
@@ -54,11 +53,11 @@ impl Minimalist {
     /// if self.skill == 2:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// skill_scale = self.skill_params[0]
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// dmgperinterval = final_atk + drone_dmg * final_atk
     /// hitdmg = np.fmax(dmgperinterval * (1-res/100), dmgperinterval * 0.05) * (1 + crate*(cdmg-1))
     /// skilldmg = hitdmg * skill_scale * 2
-    /// if not self.trait_dmg: skilldmg *= 2.55/2.4 #because it hits twice, the second hit is guaranteed to hit for more
+    /// if not self.trait_dmg: skilldmg *= 2.55/2.4
     /// atkcycle = self.atk_interval/((self.attack_speed)/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg
@@ -92,17 +91,17 @@ impl Minimalist {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dmgperinterval: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut dmgperinterval: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut drone_dmg = if ((self.unit.module_index as f64) as f64) == 2.0 {
             1.2

@@ -44,12 +44,10 @@ impl Typhon {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// if self.module == 2 and self.module_dmg: atk_scale = 1.12
     /// crit_scale = self.talent2_params[0] if self.talent2_dmg and self.elite == 2 else 1
     /// def_ignore = 0 if self.elite == 0 else 5 * self.talent1_params[1]
-    ///
     /// if self.skill < 2:
     /// atkbuff = self.skill_params[0] * self.skill
     /// aspd = self.skill_params[1] * self.skill
@@ -100,15 +98,15 @@ impl Typhon {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut totaldmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut critdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut totaldmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15
@@ -181,7 +179,6 @@ impl Typhon {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// ammo = self.skill_params[3]
     /// return(self.skill_dps(defense,res) * ammo * (5.5/(self.attack_speed/100)))
@@ -214,10 +211,10 @@ impl Typhon {
 
         if (self.unit.skill_index as f64) == 3.0 {
             let mut ammo = self.unit.skill_parameters.get(3).copied().unwrap_or(0.0);
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (5.5/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * ammo * (5.5/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * self.skill_duration) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * self.skill_duration) - requires manual implementation
             0.0 // placeholder
         }
     }

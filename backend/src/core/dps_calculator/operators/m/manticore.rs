@@ -40,7 +40,6 @@ impl Manticore {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_interval = 5.2 if self.skill == 2 else self.atk_interval
     /// atkbuff_talent = self.talent1_params[1] if self.elite > 0 else 0
     /// if self.module == 1 and self.module_lvl > 1: atkbuff_talent += 0.05 * (self.module_lvl -1)

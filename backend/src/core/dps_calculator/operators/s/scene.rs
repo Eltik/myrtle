@@ -41,7 +41,6 @@ impl Scene {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drones = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat

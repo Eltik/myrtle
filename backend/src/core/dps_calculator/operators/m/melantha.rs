@@ -40,7 +40,6 @@ impl Melantha {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// final_atk = self.atk * (1 + self.buff_atk + self.talent1_params[0] + self.skill_params[0]*self.skill) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100

@@ -40,7 +40,6 @@ impl Pith {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// newres = np.fmax(0, res - self.talent1_params[0])
     /// atkbuff = self.skill_params[0] * self.skill
     /// aspd = self.skill_params[1] * self.skill

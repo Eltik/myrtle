@@ -43,7 +43,6 @@ impl Morgan {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 0
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// skill_scale = max(self.skill_params[:2]) if self.skill > 0 else 1

@@ -260,15 +260,11 @@ fn format_skill(skill: &mut CharacterSkill, main_skill_lvl: i32, game_data: &Gam
     }
 }
 
-/// Calculate trust level from favor points
-/// TODO: Implement properly when favor_table is loaded
+/// Calculates trust level from favor points.
+///
+/// Uses a linear approximation. Trust ranges from 0-200.
+/// TODO: Use favor_table lookup for accurate thresholds.
 fn calculate_trust(favor_point: i32, _game_data: &GameData) -> i32 {
-    // Simplified trust calculation
-    // Real implementation would use favor_table to find the correct trust level
-    // Trust ranges from 0-200, favor_point threshold varies
-
-    // Placeholder: rough approximation
-    // In reality, you'd binary search through favor_table frames
     (favor_point / 100).min(200)
 }
 

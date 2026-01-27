@@ -43,7 +43,6 @@ impl LapplandAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drone_dmg = 1.1
     /// drones = 1
     /// if not self.trait_dmg:

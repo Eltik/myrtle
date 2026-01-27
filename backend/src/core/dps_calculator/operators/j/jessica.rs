@@ -41,7 +41,6 @@ impl Jessica {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = max(self.talent1_params)
     /// aspd += 8 if self.module == 2 and self.module_dmg else 1
     /// atkbuff = (self.module_lvl-1) * 0.03 if self.module == 2 and self.module_lvl > 1 else 0
@@ -80,14 +79,14 @@ impl Jessica {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         aspd = self
             .unit

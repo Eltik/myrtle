@@ -43,7 +43,6 @@ impl HoshigumaAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// extra_scale = 0.1 if self.module == 1 else 0
     /// atkbuff = self.talent2_params[2] if self.talent2_dmg and self.talent_dmg and self.elite == 2 else 0
     /// if self.module == 1 and self.module_lvl > 1 and self.talent2_dmg and self.talent_dmg: atkbuff += 0.05 * self.module_lvl
@@ -57,13 +56,11 @@ impl HoshigumaAlter {
     /// skill_scale = self.skill_params[2] + extra_scale
     /// reflectdmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
     /// dps += reflectdmg * self.hits
-    ///
     /// if self.skill == 3:
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk + self.skill_params[1]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1 + extra_scale) * (1-res/100), final_atk * (1 + extra_scale) * 0.05)
     /// hits = 4 if self.skill_dmg else 3
     /// dps = hits * hitdmg/self.atk_interval * self.attack_speed/100 * min(self.skill_params[2], self.targets)
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -88,12 +85,12 @@ impl HoshigumaAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -154,7 +151,6 @@ impl HoshigumaAlter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3 and self.skill_dmg: self.skill_duration = 11
     /// return super().total_dmg(defense, res)
     #[allow(
@@ -186,7 +182,7 @@ impl HoshigumaAlter {
         if (self.unit.skill_index as f64) == 3.0 && self.unit.skill_damage {
             skill_duration = 11.0;
         }
-        // UNTRANSLATED: return super().total_dmg(defense, res) - method calls need manual implementation
+        // TODO: return super().total_dmg(defense, res) - requires manual implementation
         0.0 // placeholder
     }
 }

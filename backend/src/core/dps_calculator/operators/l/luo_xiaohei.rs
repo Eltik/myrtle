@@ -43,10 +43,8 @@ impl LuoXiaohei {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = 1 + 0.04 * self.module_lvl if self.below50 else 1
     /// aspd = 12 if self.module == 2 and (self.module_dmg or self.targets > 1) else 0
-    ///
     /// if self.skill == 0:
     /// atk_scale = 1 if self.trait_dmg else 0.8
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -99,12 +97,12 @@ impl LuoXiaohei {
             below50 = true;
         }
 
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
 
         let mut dmg_scale = if below50 {
             1.0 + 0.04 * ((self.unit.module_level as f64) as f64)

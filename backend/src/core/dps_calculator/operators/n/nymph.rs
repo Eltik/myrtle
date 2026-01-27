@@ -48,12 +48,10 @@ impl Nymph {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// talent1_scale = self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 0
     /// atkbuff = self.talent2_params[0] * self.talent2_params[1] if self.elite == 2 and self.talent2_dmg else 0
     /// aspd = self.talent2_params[2] if self.module == 1 and self.module_lvl > 1 and self.talent2_dmg else 0
     /// burst_scale = 1.1 if self.module == 1 else 1
-    ///
     /// if self.skill == 1:
     /// atkbuff += self.skill_params[0]
     /// necrosis_scale = self.skill_params[1]
@@ -64,7 +62,6 @@ impl Nymph {
     /// if self.trait_dmg and self.talent_dmg:
     /// eledmg = final_atk * ele_scale
     /// dps = (hitdmg+eledmg)/self.atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 2:
     /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2
     /// atk_scale = self.skill_params[0]
@@ -74,7 +71,6 @@ impl Nymph {
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// skilldmg = np.fmax(final_atk * atk_scale * (1-res/100), final_atk * atk_scale * 0.05) * self.targets
     /// dps = hitdmg/self.atk_interval * (self.attack_speed+aspd)/100 + skilldmg/sp_cost
-    ///
     /// if self.skill in [0,3]:
     /// atkbuff += self.skill_params[0] if self.skill == 3 else 0
     /// aspd += self.skill_params[1] if self.skill == 3 else 0
@@ -83,14 +79,12 @@ impl Nymph {
     /// if self.trait_dmg and self.talent_dmg and self.skill == 3:
     /// hitdmg = final_atk * np.fmax(1,-res) /(1+self.buff_fragile) * burst_scale
     /// dps = hitdmg/self.atk_interval * (self.attack_speed+aspd)/100 * min(self.targets,1+self.skill/3)
-    ///
     /// extra_dmg = 0
     /// if self.talent_dmg and self.trait_dmg:
     /// dmg_rate = talent1_scale
     /// if self.skill == 2:
     /// dmg_rate = talent1_overwrite
     /// extra_dmg = final_atk * dmg_rate
-    ///
     /// return dps + extra_dmg
     #[allow(
         unused_variables,
@@ -115,22 +109,22 @@ impl Nymph {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut dmg_rate: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut eledmg: f64 = 0.0;
-        let mut necrosis_scale: f64 = 0.0;
         let mut extra_dmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut dmg_rate: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut talent1_overwrite: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut eledmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut necrosis_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
 
         let mut talent1_scale =
             if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {

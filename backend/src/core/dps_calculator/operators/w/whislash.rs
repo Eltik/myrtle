@@ -41,7 +41,6 @@ impl Whislash {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// if self.trait_dmg:
     /// atk_scale = 1.3 if self.module == 1 else 1.2

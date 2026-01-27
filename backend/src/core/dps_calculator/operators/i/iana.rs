@@ -40,7 +40,6 @@ impl Iana {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.15 if self.module == 1 else 0
     /// fragile = self.talent1_params[2] - 1
     /// fragile = max(fragile, self.buff_fragile)

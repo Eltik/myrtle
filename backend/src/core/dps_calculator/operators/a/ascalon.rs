@@ -43,18 +43,16 @@ impl Ascalon {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// talentstacks = 3 if self.talent_dmg else 1
     /// talentscale = self.talent1_params[1]
     /// aspd = self.talent2_params[0]
     /// if self.elite == 2 and self.talent2_dmg: aspd += self.talent2_params[1]
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale - defense, final_atk * skill_scale * 0.05) * 2
-    /// sp_cost = self.skill_cost + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed+ aspd)*100
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg
@@ -70,7 +68,6 @@ impl Ascalon {
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[1]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/atk_interval * (self.attack_speed+aspd)/100 * self.targets
-    ///
     /// dps += self.targets * final_atk * talentstacks * talentscale * np.fmax(1-res/100, 0.05)
     /// return dps
     #[allow(
@@ -96,15 +93,15 @@ impl Ascalon {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         let mut talentstacks = if self.unit.talent_damage { 3.0 } else { 1.0 };
         let mut talentscale = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);

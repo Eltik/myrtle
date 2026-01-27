@@ -48,13 +48,10 @@ impl Qiubai {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
-    ///
     /// bonus = 0.1 if self.module == 1 else 0
     /// extrascale = self.talent1_params[0] if self.elite > 0 else 0
     /// dmg = 1 + 0.1 * (self.module_lvl-1) if self.module == 1 and self.module_dmg else 1
     /// atk_scale = 1 if self.trait_dmg else 0.8
-    ///
     /// if self.skill  < 2:
     /// skill_scale = self.skill_params[0]
     /// if not self.talent_dmg:
@@ -68,7 +65,6 @@ impl Qiubai {
     /// avghit = (hitdmg + hitdmgarts + bonusdmg) * self.skill_cost + skilldmg + bonusdmg * self.targets
     /// avghit = avghit/(self.skill_cost+1) if self.skill == 1 else hitdmg + hitdmgarts + bonusdmg
     /// dps = avghit/self.atk_interval * (self.attack_speed)/100
-    /// ####the actual skills
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[0]
     /// aspd = self.skill_params[1] * self.skill_params[2] if self.skill_dmg else 0
@@ -79,14 +75,14 @@ impl Qiubai {
     /// bind_chance = self.talent2_params[0]
     /// counting_hits = int(1.5/atk_cycle) + 1
     /// chance_to_attack_bind = 1 - (1-bind_chance) ** counting_hits
-    /// if not self.talent_dmg and not self.talent2_dmg: #talent not active
+    /// if not self.talent_dmg and not self.talent2_dmg:
     /// extrascale = 0
     /// dmg = 1
-    /// elif self.module_dmg and not self.talent_dmg: #vs slow + self applied
+    /// elif self.module_dmg and not self.talent_dmg:
     /// dmg = (dmg - 1) * chance_to_attack_bind + 1
-    /// elif not self.module_dmg and self.talent_dmg: #vs slow OR bind
+    /// elif not self.module_dmg and self.talent_dmg:
     /// dmg = 1
-    /// elif not self.module_dmg and not self.talent_dmg: #only self applied
+    /// elif not self.module_dmg and not self.talent_dmg:
     /// extrascale *= chance_to_attack_bind
     /// dmg = 1
     /// hitdmgarts = np.fmax(final_atk * (1+extrascale) * (1-res/100), final_atk * (1+extrascale) * 0.05) * dmg
@@ -116,20 +112,20 @@ impl Qiubai {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut bonusdmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut extrascale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut extrascale: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut dmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skilldmg: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dmg: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -175,7 +171,6 @@ impl Qiubai {
                 hitdmg + hitdmgarts + bonusdmg
             };
             dps = avghit / (self.unit.attack_interval as f64) * (self.unit.attack_speed) / 100.0;
-            // ###the actual skills
         }
         if (self.unit.skill_index as f64) == 3.0 {
             atkbuff = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
@@ -198,7 +193,6 @@ impl Qiubai {
             let mut chance_to_attack_bind =
                 1.0 - ((1.0 - bind_chance) as f64).powf(counting_hits as f64);
             if !self.unit.talent_damage && !self.unit.talent2_damage {
-                // talent not active
                 extrascale = 0.0;
                 dmg = 1.0;
             } else if self.unit.module_damage && !self.unit.talent_damage {

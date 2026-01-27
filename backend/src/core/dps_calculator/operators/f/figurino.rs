@@ -41,7 +41,6 @@ impl Figurino {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = self.talent1_params[0] if self.elite > 0 and self.talent_dmg else 1
     /// if self.skill < 1:
     /// atkbuff = self.skill_params[0] * self.skill
@@ -77,12 +76,12 @@ impl Figurino {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)

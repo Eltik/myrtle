@@ -40,7 +40,6 @@ impl Quartz {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[1]
     /// if self.skill < 2:
     /// atkbuff += self.skill_params[0] * self.skill
@@ -77,13 +76,13 @@ impl Quartz {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
 
         atkbuff = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         if (self.unit.skill_index as f64) < 2.0 {

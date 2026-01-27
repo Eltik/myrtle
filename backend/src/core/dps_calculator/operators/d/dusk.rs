@@ -51,18 +51,15 @@ impl Dusk {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// freedps = 0
     /// if self.talent2_dmg:
     /// final_freeling = self.drone_atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// freehit = np.fmax(final_freeling - defense, final_freeling * 0.05)
     /// freedps = freehit/self.drone_atk_interval
-    ///
     /// atkbuff = self.talent1_params[0] * self.talent1_params[1] if self.talent_dmg and self.elite > 0 else 0
-    ///
     /// if self.skill < 2:
     /// skill_scale = (self.skill_params[0]-1) * self.skill + 1
-    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2 #lockout
+    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
@@ -110,17 +107,17 @@ impl Dusk {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut freedps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
 
         freedps = 0.0;
         if self.unit.talent2_damage {

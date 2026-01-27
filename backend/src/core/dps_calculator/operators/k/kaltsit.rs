@@ -46,13 +46,11 @@ impl Kaltsit {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 0
     /// if self.module == 2 and self.talent_dmg:
     /// if self.module_lvl == 2: aspd = 12
     /// if self.module_lvl == 3: aspd = 20
     /// atkbuff = 0.25 * (self.module_lvl - 1) if self.module == 3 else 0
-    ///
     /// if self.skill < 2:
     /// final_atk = self.drone_atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -88,12 +86,12 @@ impl Kaltsit {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = 0.0;
         if (self.unit.module_index as f64) == 2.0 && self.unit.talent_damage {

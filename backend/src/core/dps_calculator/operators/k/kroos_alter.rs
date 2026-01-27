@@ -43,7 +43,6 @@ impl KroosAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// crate = 0 if self.elite == 0 else self.talent1_params[0]
     /// cdmg = self.talent1_params[1]
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1

@@ -41,14 +41,11 @@ impl Shalem {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// extra_scale = 0.1 if self.module == 1 else 0
     /// aspd = self.talent1_params[0] if self.talent_dmg else 0
     /// atkbuff = self.talent1_params[1] if self.talent_dmg else 0
     /// crate = self.talent2_params[0] if self.elite == 2 else 0
     /// newres = res * (1 + self.talent2_params[1]) if self.elite == 2 else res
-    ///
-    /// ####the actual skills
     /// if self.skill == 0:
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk -defense , final_atk * 0.05)
@@ -96,18 +93,18 @@ impl Shalem {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut countinghits: f64 = 0.0;
         let mut nocrit: f64 = 0.0;
         let mut shreddmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut countinghits: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -134,7 +131,6 @@ impl Shalem {
         } else {
             res
         };
-        // ###the actual skills
         if (self.unit.skill_index as f64) == 0.0 {
             final_atk =
                 self.unit.atk * (1.0 + atkbuff + self.unit.buff_atk) + self.unit.buff_atk_flat;

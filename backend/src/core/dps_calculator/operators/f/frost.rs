@@ -44,7 +44,6 @@ impl Frost {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// newdef = np.fmax(0, defense - 40 * self.module_lvl) if self.module == 2 and self.module_lvl > 1 else defense
     /// hitdmg = np.fmax(final_atk - newdef, final_atk * 0.05)
@@ -81,11 +80,11 @@ impl Frost {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitrate: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
-        let mut hitrate: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut critdmg: f64 = 0.0;
 
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;

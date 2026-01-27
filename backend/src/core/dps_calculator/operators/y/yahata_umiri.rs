@@ -43,30 +43,25 @@ impl YahataUmiri {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg = self.talent2_params[0] if self.talent_dmg else 1
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill == 0:
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * self.attack_speed / 100 * self.targets
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// skillhit = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * 5
-    /// if self.skill_dmg: # Fever
+    /// if self.skill_dmg:
     /// dps = skillhit / self.atk_interval * self.attack_speed / 100 * self.targets
     /// else:
     /// dpsnorm = hitdmg / self.atk_interval * self.attack_speed / 100
     /// dpsskill = skillhit / 2.1
     /// interval = self.atk_interval / self.attack_speed * 100
     /// dps = (dpsnorm * self.skill_cost * interval + dpsskill * 2.1)/(self.skill_cost * interval + 2.1) * self.targets
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[0]
     /// dps = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * self.targets
-    ///
     /// return dps * dmg
     #[allow(
         unused_variables,
@@ -91,11 +86,11 @@ impl YahataUmiri {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut dmg = if self.unit.talent_damage {
             self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)
@@ -115,7 +110,6 @@ impl YahataUmiri {
                 .max((final_atk * skill_scale * 0.05) as f64)
                 * 5.0;
             if self.unit.skill_damage {
-                // Fever
                 dps = skillhit / (self.unit.attack_interval as f64) * self.unit.attack_speed
                     / 100.0
                     * (self.unit.targets as f64);

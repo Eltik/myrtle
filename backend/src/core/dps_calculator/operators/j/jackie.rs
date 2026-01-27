@@ -41,7 +41,6 @@ impl Jackie {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[1] if self.talent_dmg else 0
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)

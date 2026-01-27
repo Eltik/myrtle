@@ -41,7 +41,6 @@ impl Underflow {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// aspd = self.skill_params[3] if self.skill == 2 else 0
     /// targets = self.skill_params[4] if self.skill == 2 else 1

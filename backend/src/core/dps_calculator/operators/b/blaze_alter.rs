@@ -44,14 +44,12 @@ impl BlazeAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// burst_scale = 1.1 if self.module == 1 and self.skill_dmg else 1
     /// falloutdmg = 7000
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0
     /// module_atk = 0.05 * (self.module_lvl - 1) if self.module == 1 and self.module_lvl > 1 and ((self.trait_dmg and self.skill != 3) or (self.skill_dmg and self.skill == 3)) else 0
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// if self.elite > 0: falloutdmg += final_atk * self.talent1_params[0]
-    ///
     /// if self.skill == 0:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
@@ -62,7 +60,7 @@ impl BlazeAlter {
     /// newres = np.fmax(0,res-20)
     /// elegauge = 1000 if self.skill_dmg else 2000
     /// hitdmg1 = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
-    /// hitdmg2 = np.fmax(final_atk * (1-newres/100), final_atk * 0.05) #number 2 is against enemies under burn fallout
+    /// hitdmg2 = np.fmax(final_atk * (1-newres/100), final_atk * 0.05)
     /// skilldmg1 = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
     /// skilldmg2 = np.fmax(final_atk * skill_scale * (1-newres/100), final_atk * skill_scale * 0.05)
     /// dpsNorm = hitdmg1/self.atk_interval * (self.attack_speed)/100 + skilldmg1 * self.targets
@@ -70,7 +68,6 @@ impl BlazeAlter {
     /// timeToFallout = elegauge/(skilldmg1 * self.skill_params[1])
     /// dps = (dpsNorm * timeToFallout + dpsFallout * burst_scale * 10 + falloutdmg)/(timeToFallout + 10)
     /// if not self.trait_dmg: dps = dpsNorm
-    ///
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[0]
     /// skill_scale = self.skill_params[2]
@@ -78,7 +75,7 @@ impl BlazeAlter {
     /// newres = np.fmax(0,res-20)
     /// elegauge = 1000 if self.skill_dmg else 2000
     /// hitdmg1 = np.fmax(final_atk * (1-res/100), final_atk * 0.05) * min(self.targets,3)
-    /// hitdmg2 = np.fmax(final_atk * (1-newres/100), final_atk * 0.05) * min(self.targets,3) #number 2 is against enemies under burn fallout
+    /// hitdmg2 = np.fmax(final_atk * (1-newres/100), final_atk * 0.05) * min(self.targets,3)
     /// skilldmg1 = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
     /// skilldmg2 = np.fmax(final_atk * skill_scale * (1-newres/100), final_atk * skill_scale * 0.05)
     /// dpsNorm = hitdmg1/2.5 * (self.attack_speed)/100 + skilldmg1 * self.targets
@@ -86,7 +83,6 @@ impl BlazeAlter {
     /// timeToFallout = elegauge/(skilldmg1 * self.skill_params[1])
     /// dps = (dpsNorm * timeToFallout + dpsFallout * burst_scale * 10 + falloutdmg)/(timeToFallout + 10)
     /// if not self.trait_dmg: dps = dpsNorm
-    ///
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk + module_atk) + self.buff_atk_flat
@@ -118,23 +114,23 @@ impl BlazeAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut dps_norm: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut elegauge: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps_fallout: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
         let mut skilldmg1: f64 = 0.0;
-        let mut hitdmg1: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut hitdmg2: f64 = 0.0;
+        let mut hitdmg1: f64 = 0.0;
+        let mut elegauge: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut newres: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps_norm: f64 = 0.0;
+        let mut dps_fallout: f64 = 0.0;
         let mut burst_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         burst_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.skill_damage {
             1.1
@@ -251,7 +247,6 @@ impl BlazeAlter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// return(self.skill_dps(defense,res) * self.skill_params[2] * (0.3/(self.attack_speed/100)))
     /// else:
@@ -282,10 +277,10 @@ impl BlazeAlter {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * self.skill_params[2] * (0.3/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * self.skill_params[2] * (0.3/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

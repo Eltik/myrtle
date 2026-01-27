@@ -43,7 +43,6 @@ impl Mudrock {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[0] if self.skill == 3 else 0
     /// if self.module == 2 and self.module_dmg: atkbuff += 0.08
     /// dmg = self.talent2_params[1] if self.module == 2 and self.module_lvl > 1 and self.talent2_dmg else 1
@@ -52,13 +51,12 @@ impl Mudrock {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05) * dmg
     /// dps = hitdmg/atk_interval * self.attack_speed/100
     /// if self.skill == 3: dps *= min(self.targets,3)
-    ///
     /// if self.skill == 2 and self.hits > 0:
     /// atk_scale = self.skill_params[0]
     /// skilldmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05) * dmg
     /// spcost = self.skill_cost
     /// extra_sp = (self.module_lvl-1)/9 if self.module == 1 else 0
-    /// if self.module_lvl == 2: extra_sp *= (spcost-1)/spcost #these roughly factor in the wasted potential. realistically more gets wasted due to the lockout
+    /// if self.module_lvl == 2: extra_sp *= (spcost-1)/spcost
     /// if self.module_lvl == 3: extra_sp *= (2*spcost-3)/(2*spcost)
     /// skillcycle = spcost / (self.hits+extra_sp) + 1.2
     /// dps += skilldmg / skillcycle * self.targets
@@ -87,11 +85,11 @@ impl Mudrock {
         let mut res = enemy.res;
 
         let mut skilldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 3.0 {

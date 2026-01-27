@@ -43,10 +43,8 @@ impl Totter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] if self.talent_dmg  else 0
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -87,16 +85,16 @@ impl Totter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avgphys: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if self.unit.talent_damage {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)

@@ -52,14 +52,12 @@ impl ExecutorAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// crate = self.talent1_params[0] + self.talent1_params[1] * self.ammo if self.elite > 0 and self.skill != 0 else 0
     /// try: critdefignore = self.talent1_params[2]
     /// except: critdefignore = 0
     /// crate = min(crate, 1)
     /// aspd = 12 if self.module == 2 and self.module_dmg else 0
     /// modatkbuff = 0.04 * self.module_lvl if self.module == 2 and self.module_lvl > 1 else 0
-    ///
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// if self.skill < 2:
     /// defignore = self.skill_params[1] if self.skill == 1 else 0
@@ -70,7 +68,6 @@ impl ExecutorAlter {
     /// critdmg =  np.fmax(final_atk - newdef, final_atk * 0.05) + np.fmax(final_atk - critdef, final_atk * 0.05)
     /// avgdmg = crate * critdmg + (1-crate) * hitdmg
     /// dps = avgdmg/self.atk_interval * (self.attack_speed+aspd)/100 * self.targets
-    ///
     /// if self.skill == 2:
     /// critdef = np.fmax(0, defense - critdefignore)
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk + modatkbuff) + self.buff_atk_flat
@@ -78,7 +75,6 @@ impl ExecutorAlter {
     /// critdmg =  np.fmax(final_atk - defense, final_atk * 0.05) + np.fmax(final_atk - critdef, final_atk * 0.05)
     /// avgdmg = crate * critdmg + (1-crate) * hitdmg
     /// dps = avgdmg/self.atk_interval * (self.attack_speed+aspd)/100 * self.targets
-    ///
     /// if self.skill == 3:
     /// atkbuff += self.ammo * self.skill_params[1]
     /// critdef = np.fmax(0, defense - critdefignore)
@@ -125,17 +121,17 @@ impl ExecutorAlter {
             ammo = 1.0;
         }
 
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut critdef: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut critdefignore: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut modatkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
+        let mut critdefignore: f64 = 0.0;
 
         let mut crit_rate = if ((self.unit.elite as f64) as f64) > 0.0
             && ((self.unit.skill_index as f64) as f64) != 0.0

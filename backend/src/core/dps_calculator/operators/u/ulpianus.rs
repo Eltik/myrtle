@@ -40,22 +40,19 @@ impl Ulpianus {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// bonus_base = self.talent2_params[0] * self.talent2_params[2] if self.talent2_dmg and self.elite == 2 else 0
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// sp_cost = self.skill_cost
     /// final_atk = (self.atk + bonus_base) * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale - defense, final_atk * skill_scale * 0.05)
-    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
-    ///
     /// dps = avghit/self.atk_interval * self.attack_speed/100 * min(2,self.targets)
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[1]
@@ -93,13 +90,13 @@ impl Ulpianus {
 
         let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skilldmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
 
         let mut bonus_base = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) == 2.0
         {

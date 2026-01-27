@@ -43,7 +43,6 @@ impl Scavenger {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.08 if self.module == 1 and self.module_dmg else 0
     /// atkbuff += self.talent1_params[0] if self.talent_dmg else 0
     /// atkbuff += self.skill_params[0] if self.skill == 2 else 0

@@ -41,19 +41,17 @@ impl Rosa {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent2_params[0]
     /// atk_scale = 1
     /// additional_scale = 0
     /// defshred = 0
-    /// if self.talent_dmg: #aka: if heavy
+    /// if self.talent_dmg:
     /// if self.elite > 0: defshred = 0.2 + 0.2 * self.elite
     /// if self.module == 1:
     /// atk_scale = 1.15
     /// if self.module_lvl == 2: additional_scale = 0.4
     /// if self.module_lvl == 3: additional_scale = 0.6
     /// newdef = defense * (1-defshred)
-    ///
     /// if self.skill < 2:
     /// atkbuff += self.skill_params[0] * self.skill
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
@@ -97,21 +95,20 @@ impl Rosa {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut defshred: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
         atk_scale = 1.0;
         let mut additional_scale = 0.0;
         defshred = 0.0;
         if self.unit.talent_damage {
-            // aka: if heavy
             if (self.unit.elite as f64) > 0.0 {
                 defshred = 0.2 + 0.2 * (self.unit.elite as f64);
             }

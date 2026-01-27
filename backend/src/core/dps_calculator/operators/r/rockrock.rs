@@ -44,7 +44,6 @@ impl Rockrock {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drone_dmg = 1.1
     /// if not self.trait_dmg:
     /// drone_dmg = 0.35 if self.module == 1 else 0.2

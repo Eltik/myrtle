@@ -41,16 +41,13 @@ impl Lemuen {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent2_params[1] if self.talent2_dmg and self.elite > 1 else 0
     /// dmg = min(self.talent1_params) if self.talent_dmg and self.elite > 0 else 1
-    ///
     /// if self.skill < 2:
     /// atk_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05) * min(self.targets, 1 + self.skill) * dmg
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// aspd = self.skill_params[0]
     /// atkbuff += self.skill_params[1]
@@ -67,7 +64,6 @@ impl Lemuen {
     /// centralhit_dmg = np.fmax(final_atk * self.skill_params[4] - defense, final_atk * self.skill_params[4] * 0.05) * dmg
     /// outerhit_dmg = np.fmax(final_atk * self.skill_params[6] - defense, final_atk * self.skill_params[6] * 0.05) * dmg
     /// dps = ammo * centralhit_dmg * self.targets
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -92,13 +88,13 @@ impl Lemuen {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = if self.unit.talent2_damage && ((self.unit.elite as f64) as f64) > 1.0 {
             self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
@@ -179,7 +175,6 @@ impl Lemuen {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// extra_ammo = self.talent2_params[2] if self.elite > 1 and self.talent2_dmg else 0
     /// if self.skill == 1:
     /// return(self.skill_dps(defense,res) * (self.skill_params[1] + extra_ammo) * (self.atk_interval/(self.attack_speed/100)))
@@ -219,13 +214,13 @@ impl Lemuen {
             0.0
         };
         if (self.unit.skill_index as f64) == 1.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * (self.skill_params[1] + extra_ammo) * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * (self.skill_params[1] + extra_ammo) * (self.atk_interval/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else if (self.unit.skill_index as f64) == 2.0 && self.unit.talent_damage {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * (self.skill_params[2] + extra_ammo) * (self.skill_params[3])) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * (self.skill_params[2] + extra_ammo) * (self.skill_params[3])) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

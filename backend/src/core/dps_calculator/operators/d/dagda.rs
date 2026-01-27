@@ -43,7 +43,6 @@ impl Dagda {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 10 if self.module == 1 and self.module_dmg else 0
     /// crate = 0.3
     /// cdmg = self.talent1_params[2] if self.talent_dmg else self.talent1_params[1]

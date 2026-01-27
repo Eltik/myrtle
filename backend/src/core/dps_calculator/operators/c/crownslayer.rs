@@ -44,7 +44,6 @@ impl Crownslayer {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.1 if self.module_dmg and self.module == 2 else 0
     /// atk_scale = self.talent2_params[0] if self.talent2_dmg and self.elite == 2 else 1
     /// if self.skill < 2:
@@ -81,12 +80,12 @@ impl Crownslayer {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
 
         atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {

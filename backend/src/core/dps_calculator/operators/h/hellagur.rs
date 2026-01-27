@@ -41,7 +41,6 @@ impl Hellagur {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = max(self.talent1_params) if self.talent_dmg else 0
     /// atkbuff = self.skill_params[0] if self.skill > 1 else 0
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
@@ -82,15 +81,15 @@ impl Hellagur {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avgphys: f64 = 0.0;
 
         aspd = if self.unit.talent_damage {
             self.unit

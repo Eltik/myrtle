@@ -44,7 +44,6 @@ impl Erato {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// newdef = defense * (1 - self.talent1_params[0]) if self.talent_dmg or self.skill == 1 else defense
     /// if self.skill < 2:
@@ -55,7 +54,7 @@ impl Erato {
     /// if self.talent_dmg: hitdmg_base = hitdmg
     /// skilldmg = np.fmax(final_atk * skill_scale * atk_scale - newdef, final_atk * skill_scale * atk_scale * 0.05)
     /// if self.skill == 0: skilldmg = hitdmg
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = int(sp_cost / atkcycle)
     /// hits_on_sleep = min(int(5 / atkcycle), atks_per_skillactivation)
@@ -63,7 +62,6 @@ impl Erato {
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmg + hits_on_sleep * hitdmg + (atks_per_skillactivation-hits_on_sleep) * hitdmg_base) / (atks_per_skillactivation +1)
     /// dps = avghit/self.atk_interval*self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[0]
     /// aspd = self.skill_params[1]
@@ -94,17 +92,17 @@ impl Erato {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15

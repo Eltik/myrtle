@@ -41,7 +41,6 @@ impl Siege {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.08 if self.module == 1 and self.module_dmg else 0
     /// atkbuff += self.talent1_params[0]
     /// if self.module == 1 and self.module_lvl > 1: atkbuff += 0.02 + 0.02 * self.module_lvl
@@ -91,16 +90,16 @@ impl Siege {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut avghit: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             0.08

@@ -41,7 +41,6 @@ impl Blemishine {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// atk_scale = self.talent2_params[0] if self.talent2_dmg else 1
     /// if self.skill < 2:
@@ -51,7 +50,7 @@ impl Blemishine {
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// skilldmg = np.fmax(final_atk * atk_scale * skill_scale - defense, final_atk* atk_scale * skill_scale * 0.05)
     /// if self.skill == 0: skilldmg = hitdmg
-    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg
@@ -96,15 +95,15 @@ impl Blemishine {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
 
         atkbuff = 0.0;

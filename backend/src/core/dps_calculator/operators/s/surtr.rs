@@ -43,12 +43,10 @@ impl Surtr {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// resignore = self.talent1_params[0]
     /// newres = np.fmax(0, res - resignore)
     /// aspd = 8 if self.module == 1 and self.module_dmg else 0
-    ///
     /// if self.skill == 1:
     /// atk_scale = self.skill_params[0]
     /// hits = self.skill_cost
@@ -98,15 +96,15 @@ impl Surtr {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut newres: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = 0.0;
         let mut resignore = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);

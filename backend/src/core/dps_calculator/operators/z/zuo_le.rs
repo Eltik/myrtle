@@ -41,7 +41,6 @@ impl ZuoLe {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// sp_recovery = 1
     /// aspd = max(self.talent1_params) if self.talent_dmg and self.talent2_dmg else 0
     /// if self.talent_dmg and self.talent2_dmg: sp_recovery += self.talent1_params[2]
@@ -49,7 +48,6 @@ impl ZuoLe {
     /// sp_recovery += self.talent2_params[2] / self.atk_interval * (self.attack_speed+aspd)/100 if self.talent_dmg and self.talent2_dmg else self.talent2_params[0] / self.atk_interval * (self.attack_speed+aspd)/100
     /// tal_scale = 0.9 + 0.1 * self.module_lvl if self.module == 2 and self.talent2_dmg and self.talent_dmg else 1
     /// apply_rate = self.talent2_params[2] if self.talent_dmg and self.talent2_dmg and self.elite == 2 else 0.2
-    ///
     /// if self.skill == 0:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -64,7 +62,7 @@ impl ZuoLe {
     /// skilldmg = np.fmax(final_atk * atk_scale - defense, final_atk* atk_scale * 0.05)
     /// hitdmg2 = np.fmax(final_atk * tal_scale - defense, final_atk * tal_scale * 0.05)
     /// hitdmg = hitdmg * (1-apply_rate) + hitdmg2 * apply_rate
-    /// sp_cost = self.skill_cost / (sp_recovery + self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost / (sp_recovery + self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/((self.attack_speed + aspd)/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg * hits
@@ -89,7 +87,7 @@ impl ZuoLe {
     /// hitdmg = hitdmg * (1-apply_rate) + hitdmg2 * apply_rate
     /// skilldmg = np.fmax(final_atk * atk_scale - defense, final_atk* atk_scale * 0.05)
     /// skilldmg2= np.fmax(2*final_atk * atk_scale - defense, 2*final_atk* atk_scale * 0.05)
-    /// sp_cost = self.skill_cost / (sp_recovery + self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost / (sp_recovery + self.sp_boost) + 1.2
     /// dps = hitdmg/self.atk_interval * (self.attack_speed + aspd)/100
     /// dps += (6 * skilldmg + skilldmg2) / sp_cost * min(self.targets,3)
     /// return dps
@@ -116,17 +114,17 @@ impl ZuoLe {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         let mut sp_recovery = 1.0;
         aspd = if self.unit.talent_damage && self.unit.talent2_damage {

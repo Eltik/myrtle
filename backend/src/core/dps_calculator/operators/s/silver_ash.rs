@@ -43,21 +43,16 @@ impl SilverAsh {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// if not self.trait_dmg and self.skill != 3:
     /// atk_scale = 0.8
     /// atkbuff = self.talent1_params[0]
-    ///
     /// if self.module == 1:
     /// if self.module_lvl == 2:
     /// if self.talent_dmg and self.module_dmg: atk_scale *= 1.1
     /// if self.module_lvl == 3:
     /// if self.talent_dmg and self.module_dmg: atk_scale *= 1.15
-    ///
     /// bonus = 0.1 if self.module == 1 else 0
-    ///
-    /// ####the actual skills
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -103,14 +98,14 @@ impl SilverAsh {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
 
@@ -136,7 +131,6 @@ impl SilverAsh {
         } else {
             0.0
         };
-        // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = if ((self.unit.skill_index as f64) as f64) == 1.0 {
                 self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)

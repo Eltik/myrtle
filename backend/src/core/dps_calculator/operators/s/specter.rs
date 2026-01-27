@@ -41,7 +41,6 @@ impl Specter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.1 if self.module_dmg and self.module == 1 else 1
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * min(self.skill,1)) + self.buff_atk_flat
     /// dmgbuff = 1 if self.module_lvl < 2 else 1.03

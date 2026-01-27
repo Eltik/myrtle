@@ -43,7 +43,6 @@ impl Beehunter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] * self.talent1_params[1] if self.talent_dmg else 0
     /// aspd = 10 if self.module == 1 and self.module_dmg else 0
     /// atk_interval = self.atk_interval * (1 + self.skill_params[0]) if self.skill == 2 else self.atk_interval

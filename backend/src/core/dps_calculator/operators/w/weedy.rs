@@ -43,12 +43,10 @@ impl Weedy {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// if self.module == 1 and self.module_dmg:
     /// if self.module_lvl == 2: atkbuff += 0.15
     /// if self.module_lvl == 3: atkbuff += 0.2
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// sp_cost = self.skill_cost/(1+ self.sp_boost) + 1.2
@@ -61,17 +59,14 @@ impl Weedy {
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/(self.atk_interval/(self.attack_speed/100)) * self.targets
-    ///
     /// if self.skill == 2:
     /// atkbuff += self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/(3.84/(self.attack_speed/100)) * min(self.targets, 2)
-    ///
     /// if self.talent_dmg and self.elite > 0:
     /// summonhit = np.fmax(self.drone_atk - defense, self.drone_atk * 0.05)
     /// dps += summonhit / self.drone_atk_interval
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -96,15 +91,15 @@ impl Weedy {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atkbuff = 0.0;
         if (self.unit.module_index as f64) == 1.0 && self.unit.module_damage {

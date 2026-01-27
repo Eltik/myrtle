@@ -41,7 +41,6 @@ impl ProjektRed {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.1 if self.module_dmg and self.module == 2 else 0
     /// mindmg = 0.05 if self.elite == 0 else self.talent1_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk + self.skill_params[0]*self.skill) + self.buff_atk_flat

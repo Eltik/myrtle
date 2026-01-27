@@ -41,13 +41,11 @@ impl Lappland {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 0.8 if not self.trait_dmg and self.skill == 1 else 1
     /// bonus = 0.1 if self.module == 1 else 0
     /// fragile = 0.04 * (self.module_lvl-1) if self.module == 1 and self.module_lvl > 1 else 0
     /// fragile = max(fragile, self.buff_fragile)
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * min(self.skill,1)) + self.buff_atk_flat
-    /// ####the actual skills
     /// if self.skill < 2:
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// bonusdmg = np.fmax(final_atk * bonus *(1-res/100), final_atk * bonus * 0.05)
@@ -80,12 +78,12 @@ impl Lappland {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut bonusdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
 
         atk_scale = if !self.unit.trait_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
             0.8
@@ -111,7 +109,6 @@ impl Lappland {
                 + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
                     * ((self.unit.skill_index as f64) as f64).min((1) as f64))
             + self.unit.buff_atk_flat;
-        // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
             hitdmg = ((final_atk * atk_scale - defense) as f64)
                 .max((final_atk * atk_scale * 0.05) as f64);

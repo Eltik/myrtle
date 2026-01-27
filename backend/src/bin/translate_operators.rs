@@ -469,21 +469,14 @@ impl PythonToRustTranslator {
                 }
             }
 
-            let (code_part, comment_part) = if let Some(hash_pos) = trimmed.find('#') {
-                (&trimmed[..hash_pos], Some(&trimmed[hash_pos..]))
+            let code_part = if let Some(hash_pos) = trimmed.find('#') {
+                &trimmed[..hash_pos]
             } else {
-                (trimmed, None)
+                trimmed
             };
             let trimmed = code_part.trim();
 
             if trimmed.is_empty() {
-                if let Some(comment) = comment_part {
-                    rust_lines.push(format!(
-                        "{}// {}",
-                        self.indent(self.indent_level),
-                        &comment[1..].trim()
-                    ));
-                }
                 continue;
             }
 
@@ -529,7 +522,7 @@ impl PythonToRustTranslator {
                     || expr.contains("self.avg_dps")
                 {
                     rust_lines.push(format!(
-                        "{}// UNTRANSLATED: {} - method calls need manual implementation",
+                        "{}// TODO: {} - requires manual implementation",
                         self.indent(self.indent_level),
                         trimmed
                     ));
@@ -829,15 +822,10 @@ impl PythonToRustTranslator {
             if trimmed.starts_with("if ") && trimmed.ends_with(':') {
                 let condition = &trimmed[3..trimmed.len() - 1];
                 let rust_condition = self.translate_condition(condition);
-                let comment_suffix = comment_part
-                    .map(|c| format!(" // {}", &c[1..].trim()))
-                    .unwrap_or_default();
-
                 rust_lines.push(format!(
-                    "{}if {} {{{}",
+                    "{}if {} {{",
                     self.indent(self.indent_level),
-                    rust_condition,
-                    comment_suffix
+                    rust_condition
                 ));
                 indent_stack.push((line_indent, is_skill_check));
 
@@ -889,13 +877,13 @@ impl PythonToRustTranslator {
                         indent_stack.push((line_indent, false));
                     } else {
                         rust_lines.push(format!(
-                            "{}// UNTRANSLATED ELSE (no matching if): else:",
+                            "{}// TODO: unmatched else block",
                             self.indent(self.indent_level)
                         ));
                     }
                 } else {
                     rust_lines.push(format!(
-                        "{}// UNTRANSLATED ELSE (empty stack): else:",
+                        "{}// TODO: unmatched else block",
                         self.indent(self.indent_level)
                     ));
                 }
@@ -939,12 +927,12 @@ impl PythonToRustTranslator {
                 }
                 // Fallback for unrecognized for loop patterns
                 rust_lines.push(format!(
-                    "{}// UNTRANSLATED FOR LOOP: {}",
+                    "{}// TODO: for loop not translated: {}",
                     self.indent(self.indent_level),
                     trimmed
                 ));
                 rust_lines.push(format!(
-                    "{}// TODO: Implement loop logic manually",
+                    "{}// TODO: requires manual loop implementation",
                     self.indent(self.indent_level)
                 ));
                 skip_until_indent = Some(line_indent);
@@ -989,7 +977,7 @@ impl PythonToRustTranslator {
 
             // Fallback: skip unrecognized lines
             rust_lines.push(format!(
-                "{}// UNTRANSLATED: {}",
+                "{}// TODO: not translated: {}",
                 self.indent(self.indent_level),
                 trimmed
             ));
@@ -1959,56 +1947,35 @@ impl PythonToRustTranslator {
             .to_string();
         result = p
             .self_freeze_rate
-            .replace_all(
-                &result,
-                "0.0 /* self.freezeRate - needs manual implementation */",
-            )
+            .replace_all(&result, "0.0 /* self.freezeRate - not implemented */")
             .to_string();
         result = p
             .self_count
-            .replace_all(
-                &result,
-                "1.0 /* self.count - needs manual implementation */",
-            )
+            .replace_all(&result, "1.0 /* self.count - not implemented */")
             .to_string();
         result = p
             .self_below50
-            .replace_all(
-                &result,
-                "false /* self.below50 - needs manual implementation */",
-            )
+            .replace_all(&result, "false /* self.below50 - not implemented */")
             .to_string();
         result = p
             .self_ammo
-            .replace_all(&result, "1.0 /* self.ammo - needs manual implementation */")
+            .replace_all(&result, "1.0 /* self.ammo - not implemented */")
             .to_string();
         result = p
             .self_shadows
-            .replace_all(
-                &result,
-                "1.0 /* self.shadows - needs manual implementation */",
-            )
+            .replace_all(&result, "1.0 /* self.shadows - not implemented */")
             .to_string();
         result = p
             .self_params
-            .replace_all(
-                &result,
-                "1.0 /* self.params - needs manual implementation */",
-            )
+            .replace_all(&result, "1.0 /* self.params - not implemented */")
             .to_string();
         result = p
             .self_params2
-            .replace_all(
-                &result,
-                "1.0 /* self.params2 - needs manual implementation */",
-            )
+            .replace_all(&result, "1.0 /* self.params2 - not implemented */")
             .to_string();
         result = p
             .self_no_kill
-            .replace_all(
-                &result,
-                "false /* self.no_kill - needs manual implementation */",
-            )
+            .replace_all(&result, "false /* self.no_kill - not implemented */")
             .to_string();
 
         result = p
@@ -3199,10 +3166,7 @@ fn generate_rust_file(op: &OperatorClass) -> String {
         let mut translated = translator.translate(&op.skill_dps_body);
         // For operators with extra vars, replace placeholder comments with actual variable usage
         if !extra_vars.is_empty() {
-            translated = translated.replace(
-                "1.0 /* self.params - needs manual implementation */",
-                "params",
-            );
+            translated = translated.replace("1.0 /* self.params - not implemented */", "params");
         }
         // Apply operator-specific replacements
         for (from, to) in &replacements {
@@ -3244,14 +3208,9 @@ fn generate_rust_file(op: &OperatorClass) -> String {
             let below50_code = generate_below50_code(&op.init_modifications);
             if !below50_code.is_empty() {
                 // Replace both possible patterns
-                translated = translated.replace(
-                    "false /* self.below50 - needs manual implementation */",
-                    "below50",
-                );
-                translated = translated.replace(
-                    "false /* below50 - needs manual implementation */",
-                    "below50",
-                );
+                translated =
+                    translated.replace("false /* self.below50 - not implemented */", "below50");
+                translated = translated.replace("false /* below50 - not implemented */", "below50");
                 translated = format!("{below50_code}\n{translated}");
             }
         }
@@ -3263,12 +3222,9 @@ fn generate_rust_file(op: &OperatorClass) -> String {
                 .unwrap_or_else(|| generate_shadows_code(&op.init_modifications));
             if !shadows_code.is_empty() {
                 // Replace both possible patterns
-                translated = translated.replace(
-                    "1.0 /* self.shadows - needs manual implementation */",
-                    "shadows",
-                );
-                translated = translated
-                    .replace("1.0 /* shadows - needs manual implementation */", "shadows");
+                translated =
+                    translated.replace("1.0 /* self.shadows - not implemented */", "shadows");
+                translated = translated.replace("1.0 /* shadows - not implemented */", "shadows");
                 translated = format!("{shadows_code}\n{translated}");
             }
         }
@@ -3278,10 +3234,8 @@ fn generate_rust_file(op: &OperatorClass) -> String {
             let ammo_code = generate_ammo_code(&op.init_modifications);
             if !ammo_code.is_empty() {
                 // Replace both possible patterns
-                translated =
-                    translated.replace("1.0 /* self.ammo - needs manual implementation */", "ammo");
-                translated =
-                    translated.replace("1.0 /* ammo - needs manual implementation */", "ammo");
+                translated = translated.replace("1.0 /* self.ammo - not implemented */", "ammo");
+                translated = translated.replace("1.0 /* ammo - not implemented */", "ammo");
                 translated = format!("{ammo_code}\n{translated}");
             }
         }
@@ -3293,7 +3247,24 @@ fn generate_rust_file(op: &OperatorClass) -> String {
     let skill_dps_comment = op
         .skill_dps_body
         .lines()
-        .map(|l| format!("    /// {}", l.trim().replace('\t', "    ")))
+        .filter_map(|l| {
+            let trimmed = l.trim().replace('\t', "    ");
+            // Skip Python comment-only lines
+            if trimmed.starts_with('#') {
+                return None;
+            }
+            // Strip trailing Python comments from code lines
+            let clean = if let Some(hash_pos) = trimmed.find(" #") {
+                trimmed[..hash_pos].trim_end().to_string()
+            } else {
+                trimmed
+            };
+            if clean.is_empty() {
+                None
+            } else {
+                Some(format!("    /// {}", clean))
+            }
+        })
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -3386,7 +3357,24 @@ impl {} {{
         let total_dmg_comment = op
             .total_dmg_body
             .lines()
-            .map(|l| format!("    /// {}", l.trim().replace('\t', "    ")))
+            .filter_map(|l| {
+                let trimmed = l.trim().replace('\t', "    ");
+                // Skip Python comment-only lines
+                if trimmed.starts_with('#') {
+                    return None;
+                }
+                // Strip trailing Python comments from code lines
+                let clean = if let Some(hash_pos) = trimmed.find(" #") {
+                    trimmed[..hash_pos].trim_end().to_string()
+                } else {
+                    trimmed
+                };
+                if clean.is_empty() {
+                    None
+                } else {
+                    Some(format!("    /// {}", clean))
+                }
+            })
             .collect::<Vec<_>>()
             .join("\n");
 

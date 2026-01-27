@@ -40,7 +40,6 @@ impl Vulcan {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0
     /// targets = 2 if self.skill == 2 else 1
     /// atk_interval = 2 if self.skill == 2 else self.atk_interval

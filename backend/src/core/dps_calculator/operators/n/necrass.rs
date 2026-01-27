@@ -50,7 +50,6 @@ impl Necrass {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = self.talent2_params[1] if self.elite > 1 and self.talent2_dmg else 1
     /// atk_scale = 1.15 if self.module_dmg and self.module == 1 else 1
     /// atkbuff = 0.05 + 0.1 * self.module_lvl if self.module == 1 and self.module_lvl > 1  and not self.no_kill else 0
@@ -69,7 +68,7 @@ impl Necrass {
     /// skilldmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * dmg_scale
     /// dps = hitdmg / self.atk_interval * (self.attack_speed) / 100
     /// hits = self.talent1_params[0] if self.trait_dmg else 1
-    /// dps += hits * skilldmg * self.targets / (self.skill_cost/(1 + self.sp_boost) + 1.2) #sp lockout
+    /// dps += hits * skilldmg * self.targets / (self.skill_cost/(1 + self.sp_boost) + 1.2)
     /// final_atk_summon = self.drone_atk * (1 + self.buff_atk + summon_atk) + self.buff_atk_flat
     /// summondmg = np.fmax(final_atk_summon * (1-res/100), final_atk_summon * 0.05) * dmg_scale
     /// dps += hits * summondmg / self.drone_atk_interval * (self.attack_speed) / 100
@@ -95,7 +94,6 @@ impl Necrass {
     /// final_atk_summon = self.drone_atk * (1 + self.buff_atk + summon_atk) + self.buff_atk_flat
     /// summondmg = np.fmax(final_atk_summon * (1-res/100), final_atk_summon * 0.05) * dmg_scale
     /// dps += 2 * summondmg / self.drone_atk_interval * (self.attack_speed) / 100
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -121,20 +119,20 @@ impl Necrass {
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut main_summon_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut main_atk_buff: f64 = 0.0;
         let mut mainhit: f64 = 0.0;
-        let mut summondmg: f64 = 0.0;
-        let mut maindps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut skilldmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk_summon: f64 = 0.0;
+        let mut maindps: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut main_summon_atk: f64 = 0.0;
         let mut mainskilldps: f64 = 0.0;
-        let mut main_atk_buff: f64 = 0.0;
+        let mut summondmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk_summon: f64 = 0.0;
 
         let mut dmg_scale = if ((self.unit.elite as f64) as f64) > 1.0 && self.unit.talent2_damage {
             self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
@@ -149,7 +147,7 @@ impl Necrass {
         atkbuff = if ((self.unit.module_index as f64) as f64) == 1.0
             && ((self.unit.module_level as f64) as f64) > 1.0
             && !false
-        /* false /* self.no_kill - needs manual implementation */ - needs manual implementation */
+        /* false /* self.no_kill - not implemented */ - not implemented */
         {
             0.05 + 0.1 * ((self.unit.module_level as f64) as f64)
         } else {

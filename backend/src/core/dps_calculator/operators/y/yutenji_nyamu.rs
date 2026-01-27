@@ -41,7 +41,6 @@ impl YutenjiNyamu {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// atkbuff = self.talent2_params[2] if self.elite > 0 else 0
     /// hits = 3 if self.skill == 1 else 8
@@ -49,11 +48,10 @@ impl YutenjiNyamu {
     /// prob = self.talent1_params[0]
     /// duration = self.talent1_params[1]
     /// fragile = self.talent1_params[2]
-    /// counting_hits = hits * int(duration/self.atk_interval) + max(1,hits/2) #only approximation, the later hits in the chain have a higher fragile chance
+    /// counting_hits = hits * int(duration/self.atk_interval) + max(1,hits/2)
     /// fragile_chance = 1 - (1-prob)**counting_hits
     /// fragile = fragile * fragile_chance + (1-fragile_chance)
     /// fragile = max(fragile, 1+self.buff_fragile)
-    ///
     /// if self.skill == 0:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -97,19 +95,19 @@ impl YutenjiNyamu {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut small_scale: f64 = 0.0;
+        let mut smallhitdmg: f64 = 0.0;
+        let mut big_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut bighitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut smallsplashhitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut smallsplashhitdmg: f64 = 0.0;
         let mut bigsplashhitdmg: f64 = 0.0;
-        let mut bighitdmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut smallhitdmg: f64 = 0.0;
-        let mut small_scale: f64 = 0.0;
-        let mut big_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15

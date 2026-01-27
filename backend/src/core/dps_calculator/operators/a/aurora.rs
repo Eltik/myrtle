@@ -41,7 +41,6 @@ impl Aurora {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_interval = 1.85 if self.skill == 2 else self.atk_interval
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0
     /// skill_scale = self.skill_params[3]

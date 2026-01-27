@@ -44,15 +44,13 @@ impl Pinecone {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// if self.trait_dmg or self.skill == 2: atk_scale = 1.6 if self.module == 1 else 1.5
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] * self.skill
     /// defignore = self.skill_params[1] if self.skill == 1 else 0
     /// newdef = np.fmax(0, defense - defignore)
-    /// sp_cost = self.skill_cost +1.2 #sp_lockout
+    /// sp_cost = self.skill_cost +1.2
     /// final_atk = self.atk * (1+ self.buff_atk) + self.buff_atk_flat
     /// if self.talent_dmg: sp_cost = sp_cost / (1+ self.talent1_params[0])
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
@@ -88,15 +86,15 @@ impl Pinecone {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         atk_scale = 1.0;
         if self.unit.trait_damage || (self.unit.skill_index as f64) == 2.0 {

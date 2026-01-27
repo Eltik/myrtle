@@ -41,12 +41,10 @@ impl Walter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// bonushits = 2 if self.module == 1 else 1
     /// maintargetscale = 1 if self.elite == 0 else self.talent1_params[0]
     /// explosionscale = 0 if self.elite == 0 else self.talent1_params[2]
     /// prob = 1 - 0.85 ** bonushits
-    ///
     /// if self.skill == 0:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg_main = np.fmax(final_atk * maintargetscale - defense, final_atk * maintargetscale * 0.05)
@@ -58,7 +56,6 @@ impl Walter {
     /// prob2 = 1 - 0.85 ** (bonushits+2)
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// hitdmg_main = np.fmax(final_atk * maintargetscale - defense, final_atk * maintargetscale * 0.05)
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// bonushitdmg_main = np.fmax(final_atk * maintargetscale * 0.5 - defense, final_atk * maintargetscale * 0.5 * 0.05)
@@ -73,21 +70,17 @@ impl Walter {
     /// dps = (avghit_main+avg_explosion)/self.atk_interval * self.attack_speed/100
     /// if self.targets > 1:
     /// dps += (avghit+avg_explosion)/self.atk_interval * self.attack_speed/100 * (self.targets - 1)
-    ///
     /// if self.skill == 2:
     /// atk_interval = self.atk_interval + self.skill_params[0]
     /// atkbuff = self.skill_params[1]
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// atk_scale = self.skill_params[2] if self.skill_dmg else 1
     /// hitdmg_main = np.fmax(final_atk * maintargetscale * atk_scale - defense, final_atk * maintargetscale * atk_scale * 0.05)
-    /// #hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// bonushitdmg_main = np.fmax(final_atk * maintargetscale * atk_scale * 0.5 - defense, final_atk * maintargetscale * atk_scale * 0.05)
-    /// #bonushitdmg = np.fmax(final_atk * atk_scale * 0.5 - defense, final_atk * atk_scale * 0.05)
     /// explosiondmg = np.fmax(final_atk * explosionscale - defense, final_atk * explosionscale * 0.05)
     /// dps = (hitdmg_main + bonushitdmg_main * bonushits + prob * explosiondmg)/atk_interval * self.attack_speed/100
     /// if self.skill_dmg: dps *= 4
     /// elif self.targets > 1: dps *= min(3, self.targets)
-    ///
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[0]
     /// skill_scale = self.skill_params[3]
@@ -100,7 +93,6 @@ impl Walter {
     /// dps = (hitdmg_main + bonushitdmg_main * bonushits + explosiondmg)/5 * self.attack_speed/100
     /// if self.targets > 1:
     /// dps += (hitdmg + bonushitdmg * bonushits + explosiondmg)/self.atk_interval * self.attack_speed/100 * (self.targets-1)
-    ///
     /// shadowhit = np.fmax(self.drone_atk * (1-res/100), self.drone_atk * 0.05) * self.shadows
     /// dps += shadowhit/4.25
     /// return dps
@@ -146,19 +138,19 @@ impl Walter {
             }
         }
 
-        let mut final_atk: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut explosiondmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
         let mut bonushitdmg_main: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut bonushitdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut hitdmg_main: f64 = 0.0;
+        let mut bonushitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         let mut bonushits = if ((self.unit.module_index as f64) as f64) == 1.0 {
             2.0
@@ -238,10 +230,8 @@ impl Walter {
             };
             hitdmg_main = ((final_atk * maintargetscale * atk_scale - defense) as f64)
                 .max((final_atk * maintargetscale * atk_scale * 0.05) as f64);
-            // hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
             bonushitdmg_main = ((final_atk * maintargetscale * atk_scale * 0.5 - defense) as f64)
                 .max((final_atk * maintargetscale * atk_scale * 0.05) as f64);
-            // bonushitdmg = np.fmax(final_atk * atk_scale * 0.5 - defense, final_atk * atk_scale * 0.05)
             explosiondmg = ((final_atk * explosionscale - defense) as f64)
                 .max((final_atk * explosionscale * 0.05) as f64);
             dps = (hitdmg_main + bonushitdmg_main * bonushits + prob * explosiondmg) / atk_interval
@@ -288,7 +278,6 @@ impl Walter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// return(self.skill_dps(defense,res) * 6 * (5/(self.attack_speed/100)))
     /// else:
@@ -319,10 +308,10 @@ impl Walter {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 6 * (5/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * 6 * (5/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

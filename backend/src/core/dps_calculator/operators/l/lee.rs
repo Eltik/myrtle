@@ -43,7 +43,6 @@ impl Lee {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[1] if self.talent_dmg and self.elite > 0 else 0
     /// if self.targets == 1 and self.talent_dmg: aspd *= 2
     /// atkbuff = 0.2 if self.module == 2 and self.module_dmg else 0

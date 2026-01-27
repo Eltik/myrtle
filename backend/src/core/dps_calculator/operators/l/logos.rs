@@ -44,7 +44,6 @@ impl Logos {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// bonuschance = self.talent1_params[0] if self.elite > 0 else 0
     /// if self.module == 3: bonuschance += 0.1 * (self.module_lvl - 1)
     /// bonusdmg = self.talent1_params[1]
@@ -58,7 +57,6 @@ impl Logos {
     /// if self.shreds[2] < 1 and self.shreds[2] > 0:
     /// newres *= self.shreds[2]
     /// shreddmg = self.talent2_params[2] if self.elite == 2 else 0
-    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]*self.skill) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-newres/100), final_atk * 0.05) + np.fmax(shreddmg * (1-newres/100), shreddmg * 0.05)
@@ -71,7 +69,6 @@ impl Logos {
     /// dps += 12000/(fallouttime + 15)/(1+self.buff_fragile)
     /// if self.module_lvl > 1:
     /// dps += final_atk * falloutdmg /self.atk_interval * self.attack_speed/100 * bonuschance * 15 / (fallouttime + 15)
-    ///
     /// if self.skill == 2:
     /// scaling = self.skill_params[2]
     /// if self.skill_dmg: scaling *= 3
@@ -86,7 +83,6 @@ impl Logos {
     /// dps += 12000/(fallouttime + 15)/(1+self.buff_fragile)
     /// if self.module_lvl > 1:
     /// dps += final_atk * falloutdmg * 2 * bonuschance * 15 / (fallouttime + 15)
-    ///
     /// if self.skill == 3:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-newres/100), final_atk * 0.05) + np.fmax(shreddmg * (1-newres/100), shreddmg * 0.05)
@@ -124,14 +120,14 @@ impl Logos {
         let mut res = enemy.res;
 
         let mut bonusdmg: f64 = 0.0;
-        let mut newres: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
         let mut eledps: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut fallouttime: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut bonuschance = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)

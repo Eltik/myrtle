@@ -41,9 +41,7 @@ impl Ines {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// stolen_atk = 0 if self.elite < 1 else self.talent1_params[0]
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[1]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat + stolen_atk
@@ -86,12 +84,12 @@ impl Ines {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
 

@@ -41,7 +41,6 @@ impl Raidian {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drones = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// dmg = self.skill_params[6] if self.skill == 3 and drones > 0 else 1

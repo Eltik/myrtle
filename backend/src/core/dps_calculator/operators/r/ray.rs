@@ -44,11 +44,9 @@ impl Ray {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.2
     /// dmg_scale = 1 + self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 1
     /// atkbuff = self.talent2_params[0] * self.talent2_params[1] if self.talent2_dmg and self.elite == 2 else 0
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -99,14 +97,14 @@ impl Ray {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atk_scale = 1.2;
         let mut dmg_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
@@ -190,7 +188,6 @@ impl Ray {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100)))
     /// else:
@@ -221,10 +218,10 @@ impl Ray {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(self.skill_dps(defense,res)) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

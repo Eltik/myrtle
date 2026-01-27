@@ -43,9 +43,7 @@ impl ReedAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = self.talent1_params[2] if (self.talent_dmg and self.elite > 1) or self.skill == 3 else 1
-    ///
     /// if self.skill < 2:
     /// atkbuff = self.skill_params[0] * self.skill
     /// aspd = self.skill_params[1] * self.skill
@@ -57,7 +55,7 @@ impl ReedAlter {
     /// multiplier = 2 if self.skill_dmg else 1
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmgarts = np.fmax(1-res/100,  0.05) * final_atk * atk_scale * dmg_scale * multiplier
-    /// dps = hitdmgarts/0.8  #/1.5 * 3 (or /0.5) is technically the limit, the /0.8 come from the balls taking 2.4 for a rotation
+    /// dps = hitdmgarts/0.8
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[1]
     /// atk_scale = self.skill_params[2]
@@ -91,13 +89,13 @@ impl ReedAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         let mut dmg_scale = if (self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 1.0)
             || ((self.unit.skill_index as f64) as f64) == 3.0

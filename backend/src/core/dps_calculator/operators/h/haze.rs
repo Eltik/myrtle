@@ -40,7 +40,6 @@ impl Haze {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// resignore = 10 if self.module == 1 else 0
     /// newres = np.fmax(0, res-resignore) * (1 + self.talent1_params[1])
     /// atkbuff = self.skill_params[0] * self.skill if self.skill < 2 else self.skill_params[1]

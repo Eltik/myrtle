@@ -41,13 +41,11 @@ impl Bibeak {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[0] * self.talent1_params[1] if self.talent_dmg else 0
     /// atkbuff = 0.01 * (self.module_lvl-1) * self.talent1_params[1] if self.talent_dmg and self.module == 1 and self.module_lvl > 1 else 0
     /// dmg_multiplier = 1.1 if self.module == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// skillhitdmg = np.fmax(final_atk * skill_scale - defense, final_atk * skill_scale * 0.05) * dmg_multiplier
@@ -86,14 +84,14 @@ impl Bibeak {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skillartsdmg: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if self.unit.talent_damage {

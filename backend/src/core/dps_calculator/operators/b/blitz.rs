@@ -41,7 +41,6 @@ impl Blitz {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1 if self.skill < 2 and not self.talent_dmg else self.talent1_params[0]
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -78,11 +77,11 @@ impl Blitz {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         atk_scale = if ((self.unit.skill_index as f64) as f64) < 2.0 && !self.unit.talent_damage {
             1.0

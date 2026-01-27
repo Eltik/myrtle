@@ -41,7 +41,6 @@ impl Ela {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.elite > 1:
     /// if self.talent2_params[0] > 1:
     /// cdmg = self.talent2_params[0]
@@ -54,14 +53,12 @@ impl Ela {
     /// else:
     /// crate = 0
     /// cdmg = 1
-    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// critdmg = np.fmax(final_atk * cdmg - defense, final_atk * cdmg * 0.05)
     /// avgdmg = crate * critdmg + (1-crate) * hitdmg
     /// dps = avgdmg/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// defshred = self.skill_params[3]
     /// newdef = np.fmax(0, defense - defshred)
@@ -70,7 +67,6 @@ impl Ela {
     /// critdmg = np.fmax(final_atk * cdmg - newdef, final_atk * cdmg * 0.05)
     /// avgdmg = crate * critdmg + (1-crate) * hitdmg
     /// dps = avgdmg/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 3:
     /// fragile = self.skill_params[3]
     /// if not self.talent2_dmg: fragile = 0
@@ -80,7 +76,6 @@ impl Ela {
     /// critdmg = np.fmax(final_atk * cdmg - defense, final_atk * cdmg * 0.05) * (1+fragile)
     /// avgdmg = crate * critdmg + (1-crate) * hitdmg
     /// dps = avgdmg/0.5 * self.attack_speed/100 /(1+self.buff_fragile)
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -106,14 +101,14 @@ impl Ela {
         let mut res = enemy.res;
 
         let mut critdmg: f64 = 0.0;
-        let mut crit_rate: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut crit_rate: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.elite as f64) > 1.0 {
             if self.unit.talent2_parameters[0] > 1.0 {
@@ -170,7 +165,6 @@ impl Ela {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// return(self.skill_dps(defense,res) * 40 * (0.5/(self.attack_speed/100)))
     /// else:
@@ -201,10 +195,10 @@ impl Ela {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 40 * (0.5/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * 40 * (0.5/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }
