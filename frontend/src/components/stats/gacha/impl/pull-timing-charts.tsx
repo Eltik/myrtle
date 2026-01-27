@@ -1,5 +1,5 @@
 import { Calendar, Clock } from "lucide-react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/shadcn/chart";
@@ -28,7 +28,7 @@ export function PullTimingCharts({ hourlyData, dailyData }: PullTimingChartsProp
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 *:min-w-0 md:grid-cols-2">
             {/* Hourly Distribution */}
             <InView
                 once
@@ -56,14 +56,12 @@ export function PullTimingCharts({ hourlyData, dailyData }: PullTimingChartsProp
                                 },
                             }}
                         >
-                            <ResponsiveContainer height="100%" width="100%">
-                                <BarChart data={hourlyData}>
-                                    <XAxis dataKey="hour" interval={2} stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={40} />
-                                    <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
-                                    <Bar dataKey="pulls" fill={CHART_COLORS.hourly} radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <BarChart data={hourlyData}>
+                                <XAxis dataKey="hour" interval={2} stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} />
+                                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={40} />
+                                <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+                                <Bar dataKey="pulls" fill={CHART_COLORS.hourly} radius={[4, 4, 0, 0]} />
+                            </BarChart>
                         </ChartContainer>
                     </CardContent>
                 </Card>
@@ -96,14 +94,12 @@ export function PullTimingCharts({ hourlyData, dailyData }: PullTimingChartsProp
                                 },
                             }}
                         >
-                            <ResponsiveContainer height="100%" width="100%">
-                                <BarChart data={dailyData}>
-                                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickLine={false} />
-                                    <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={40} />
-                                    <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
-                                    <Bar dataKey="pulls" fill={CHART_COLORS.daily} radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <BarChart data={dailyData}>
+                                <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} tickLine={false} />
+                                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} tickLine={false} width={40} />
+                                <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+                                <Bar dataKey="pulls" fill={CHART_COLORS.daily} radius={[4, 4, 0, 0]} />
+                            </BarChart>
                         </ChartContainer>
                     </CardContent>
                 </Card>

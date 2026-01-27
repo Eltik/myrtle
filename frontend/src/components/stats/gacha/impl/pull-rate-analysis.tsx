@@ -37,7 +37,7 @@ export function PullRateAnalysis({ pullRates, averagePullsToSixStar, averagePull
                         <div className="flex items-center justify-between">
                             <span className="font-semibold">6-Star Rate</span>
                             <div className="flex items-center gap-2">
-                                <span className={`font-bold ${pullRates.sixStarRate >= EXPECTED_RATES[6] ? "text-green-500" : "text-yellow-500"}`}>{formatRate(pullRates.sixStarRate)}</span>
+                                <span className={`hidden font-bold sm:block ${pullRates.sixStarRate >= EXPECTED_RATES[6] ? "text-green-500" : "text-yellow-500"}`}>{formatRate(pullRates.sixStarRate)}</span>
                                 <span className="text-muted-foreground text-sm">(Expected: {formatRate(EXPECTED_RATES[6])})</span>
                             </div>
                         </div>
@@ -61,7 +61,7 @@ export function PullRateAnalysis({ pullRates, averagePullsToSixStar, averagePull
                         <div className="flex items-center justify-between">
                             <span className="font-semibold">5-Star Rate</span>
                             <div className="flex items-center gap-2">
-                                <span className={`font-bold ${pullRates.fiveStarRate >= EXPECTED_RATES[5] ? "text-green-500" : "text-yellow-500"}`}>{formatRate(pullRates.fiveStarRate)}</span>
+                                <span className={`hidden font-bold sm:block ${pullRates.fiveStarRate >= EXPECTED_RATES[5] ? "text-green-500" : "text-yellow-500"}`}>{formatRate(pullRates.fiveStarRate)}</span>
                                 <span className="text-muted-foreground text-sm">(Expected: {formatRate(EXPECTED_RATES[5])})</span>
                             </div>
                         </div>
