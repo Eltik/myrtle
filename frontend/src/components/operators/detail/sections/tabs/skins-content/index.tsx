@@ -6,7 +6,6 @@ import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
-import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/shadcn/dialog";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
@@ -16,6 +15,7 @@ import type { ChibiCharacter } from "~/types/api/impl/chibi";
 import { DynamicChibiViewer } from "../chibi-viewer/dynamic";
 import { ColorTagText } from "./impl/color-tag-parser";
 import { formatSkinsForOperator } from "./impl/helpers";
+import { SkinViewerDialog } from "./impl/skin-viewer-dialog";
 import type { UISkin } from "./impl/types";
 
 interface SkinsContentProps {
@@ -236,18 +236,11 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                                         <Image alt={selectedSkinData?.name ?? "Skin"} className={cn("object-contain transition-opacity duration-300", imageLoading ? "opacity-0" : "opacity-100")} fill onLoad={() => setImageLoading(false)} priority src={selectedSkinData?.image ?? ""} />
 
                                         {/* Fullscreen button */}
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button className="absolute top-3 right-3" size="icon" variant="secondary">
-                                                    <Maximize2 className="h-4 w-4" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-h-[90vh] max-w-[90vw] p-0">
-                                                <div className="relative h-[80vh] w-full">
-                                                    <Image alt={selectedSkinData?.name ?? "Skin"} className="object-contain" fill src={selectedSkinData?.image ?? ""} />
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
+                                        <SkinViewerDialog imageSrc={selectedSkinData?.image ?? ""} skinName={selectedSkinData?.name ?? "Skin"}>
+                                            <Button className="absolute top-3 right-3" size="icon" variant="secondary">
+                                                <Maximize2 className="h-4 w-4" />
+                                            </Button>
+                                        </SkinViewerDialog>
                                     </motion.div>
                                 </AnimatePresence>
                             </div>
