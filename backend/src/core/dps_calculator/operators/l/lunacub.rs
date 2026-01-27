@@ -40,7 +40,6 @@ impl Lunacub {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_shorter = 0.15 if self.elite == 2 else 0
     /// if self.module == 2: atk_shorter += 0.05 * (self.module_lvl - 1)
     /// if self.skill == 0: atk_shorter = 0

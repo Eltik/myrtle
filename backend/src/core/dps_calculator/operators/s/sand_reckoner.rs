@@ -43,7 +43,6 @@ impl SandReckoner {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drones = 2 if self.talent2_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// dmg = 1.1 + min(0.1, 0.1 * self.elite) if self.talent_dmg else 1

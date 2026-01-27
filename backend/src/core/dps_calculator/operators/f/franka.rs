@@ -41,7 +41,6 @@ impl Franka {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module_dmg and self.module == 1 else 1
     /// crate = self.talent1_params[0] if self.elite > 0 else 0
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * min(self.skill,1)) + self.buff_atk_flat

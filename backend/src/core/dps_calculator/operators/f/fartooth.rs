@@ -44,11 +44,9 @@ impl Fartooth {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// aspd = 0
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
-    /// #talent/module buffs
     /// atkbuff += self.talent1_params[0]
     /// try:
     /// aspd += self.talent1_params[2]
@@ -97,14 +95,14 @@ impl Fartooth {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dmgscale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
+        let mut dmgscale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atkbuff = 0.0;
         aspd = 0.0;
@@ -113,11 +111,10 @@ impl Fartooth {
         } else {
             1.0
         };
-        // talent/module buffs
         atkbuff += self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
-        // UNTRANSLATED: try:
+        // TODO: not translated: try:
         aspd += self.unit.talent1_parameters.get(2).copied().unwrap_or(0.0);
-        // UNTRANSLATED: pass
+        // TODO: not translated: pass
         if (self.unit.skill_index as f64) == 1.0 {
             atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
             aspd += self.unit.skill_parameters.get(1).copied().unwrap_or(0.0);

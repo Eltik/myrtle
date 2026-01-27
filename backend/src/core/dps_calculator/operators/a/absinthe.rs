@@ -41,7 +41,6 @@ impl Absinthe {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = self.talent1_params[1] if self.talent_dmg and self.elite > 0 else 1
     /// newres = np.fmax(0,res-10) if self.module == 1 else res
     /// final_atk = self.atk * (1 + self.skill_params[0] + self.buff_atk) + self.buff_atk_flat if self.skill == 1 else self.atk * (1 + self.buff_atk) + self.buff_atk_flat

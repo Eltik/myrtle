@@ -43,7 +43,6 @@ impl Astesia {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg = 1.1 if self.module == 2 and self.module_dmg else 1
     /// aspd = self.talent1_params[0] * self.talent1_params[2] if self.talent_dmg else 0
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0

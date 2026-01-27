@@ -41,7 +41,6 @@ impl Sideroca {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg = 1.1 if self.module == 2 and self.module_dmg else 1
     /// aspd = self.talent1_params[1] if self.talent_dmg and self.elite == 2 else 0
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0

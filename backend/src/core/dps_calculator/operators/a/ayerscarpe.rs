@@ -41,12 +41,10 @@ impl Ayerscarpe {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 0.8 if not self.trait_dmg and self.skill == 1 else 1
     /// bonus = 0.1 if self.module == 1 else 0
     /// aspd = self.talent1_params[0] if self.elite > 0 else 0
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// targets = self.skill_params[2] if self.skill == 1 else 1
@@ -87,16 +85,16 @@ impl Ayerscarpe {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut avgdmg: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skilldmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
         atk_scale = if !self.unit.trait_damage && ((self.unit.skill_index as f64) as f64) == 1.0 {
             0.8

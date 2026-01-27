@@ -52,11 +52,9 @@ impl Magallan {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// drones = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: drones = 0
     /// bonusaspd = 3 if self.module == 2 and self.module_lvl == 3 else 0
-    ///
     /// if self.skill == 1:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
@@ -65,7 +63,6 @@ impl Magallan {
     /// aspd = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// final_drone = self.drone_atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// hitdmgdrone = np.fmax(final_drone * (1-res/100), final_drone * 0.05)
     /// dps = hitdmg/self.atk_interval * (self.attack_speed + aspd)/100 + hitdmgdrone/self.drone_atk_interval* (self.attack_speed+aspd+bonusaspd)/100 * drones * self.targets
@@ -99,13 +96,13 @@ impl Magallan {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_drone: f64 = 0.0;
-        let mut hitdmgdrone: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
+        let mut final_drone: f64 = 0.0;
+        let mut hitdmgdrone: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut drones = if self.unit.talent_damage { 2.0 } else { 1.0 };
         if !self.unit.trait_damage {

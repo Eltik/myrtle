@@ -47,8 +47,7 @@ impl TogawaSakiko {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
-    /// atk_scale = 1 #if self.trait_dmg else 0.8
+    /// atk_scale = 1
     /// atkbuff = self.skill_params[1] if self.skill == 2 and not self.skill_dmg else 0
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// aspd = self.talent2_params[1]
@@ -64,7 +63,6 @@ impl TogawaSakiko {
     /// if self.shreds[0] < 1 and self.shreds[0] > 0:
     /// defense = defense / self.shreds[0]
     /// newdef = defense * (1-defshred)
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0] if self.skill_dmg else self.skill_params[7]
     /// hitdmg = np.fmax(final_atk * atk_scale - newdef, final_atk * atk_scale * 0.05)
@@ -73,7 +71,6 @@ impl TogawaSakiko {
     /// dps += skill_dmg / self.atk_interval * (self.attack_speed + aspd) / 100 / self.skill_cost
     /// if self.talent2_dmg:
     /// dps = skill_dmg / self.atk_interval * (self.attack_speed + aspd) / 100
-    ///
     /// if self.skill == 2:
     /// hits = 2 if self.talent2_dmg else 1
     /// hitdmg = np.fmax(final_atk * atk_scale - newdef, final_atk * atk_scale * 0.05) * hits
@@ -82,13 +79,11 @@ impl TogawaSakiko {
     /// dps = hitdmgarts / self.atk_interval * (self.attack_speed + aspd + self.skill_params[0]) / 100
     /// else:
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd) / 100 * self.targets
-    ///
     /// if self.skill == 3:
     /// skill_scale = self.skill_params[1]
     /// hitdmg = np.fmax(final_atk * atk_scale * skill_scale - newdef, final_atk * atk_scale * skill_scale * 0.05)
     /// hitdmgarts = np.fmax(final_atk * atk_scale * skill_scale * (1-newres/100), final_atk * atk_scale * skill_scale * 0.05)
     /// dps = 2*(hitdmg+hitdmgarts) / self.atk_interval * (self.attack_speed + aspd) / 100
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -113,17 +108,17 @@ impl TogawaSakiko {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmgarts: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut defshred: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
 
         atk_scale = 1.0;
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 && !self.unit.skill_damage {

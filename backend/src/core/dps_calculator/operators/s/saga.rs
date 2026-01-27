@@ -43,7 +43,6 @@ impl Saga {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0.08 if self.module_dmg and self.module == 1 else 0
     /// dmg = self.module_lvl * 0.05 if self.module == 1 and self.module_lvl > 1 else 0
     /// if self.skill < 2:
@@ -86,14 +85,14 @@ impl Saga {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atkbuff = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 1.0 {
             0.08

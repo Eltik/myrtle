@@ -41,7 +41,6 @@ impl Vigna {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// crate = 0 if self.elite == 0 else self.talent1_params[2]
     /// if self.skill == 0 and self.elite > 0: crate = self.talent1_params[1]
     /// cdmg = self.talent1_params[0]

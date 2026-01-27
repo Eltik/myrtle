@@ -43,7 +43,6 @@ impl Mlynar {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// atk_scale = 1
     /// if self.elite > 0: atk_scale = self.talent1_params[2] if self.talent_dmg or self.targets > 2 else self.talent1_params[0]
@@ -66,14 +65,13 @@ impl Mlynar {
     /// atkbuff += stacks * 0.05
     /// atk_scale *= self.skill_params[0]
     /// final_atk = self.atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
-    /// truedmg = final_atk * self.skill_params[1] * np.fmax(1,-defense) #this defense part has to be included
+    /// truedmg = final_atk * self.skill_params[1] * np.fmax(1,-defense)
     /// finaldmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// dps = (finaldmg + truedmg)/self.atk_interval * self.attack_speed/100
     /// dps = dps * min(self.targets, 5)
     /// if self.hits > 0 and self.elite == 2:
     /// truescaling = self.talent2_params[1]
-    /// dps += final_atk * truescaling * self.hits * np.fmax(1,-defense) #this defense part has to be included
-    ///
+    /// dps += final_atk * truescaling * self.hits * np.fmax(1,-defense)
     /// return dps
     #[allow(
         unused_variables,
@@ -98,12 +96,12 @@ impl Mlynar {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut finaldmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut finaldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
 
         atkbuff = 0.0;
         atk_scale = 1.0;

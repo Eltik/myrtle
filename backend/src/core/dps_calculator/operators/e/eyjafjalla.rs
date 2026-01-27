@@ -44,7 +44,6 @@ impl Eyjafjalla {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] if self.elite > 0 else 0
     /// resignore = 10 if self.module == 1 else 0
     /// newres = np.fmax(0, res - resignore)
@@ -52,7 +51,6 @@ impl Eyjafjalla {
     /// if self.module == 2 and self.module_lvl == 3:
     /// if self.talent_dmg: aspd = 16
     /// else: aspd = 6
-    ///
     /// if self.skill < 2:
     /// aspd += self.skill_params[0] if self.skill == 1 else 0
     /// if self.skill_dmg and self.skill == 1: atkbuff += self.skill_params[2]
@@ -68,7 +66,7 @@ impl Eyjafjalla {
     /// skilldmg = np.fmax(final_atk * atk_scale * (1-newres2/100), final_atk* atk_scale * 0.05)
     /// aoeskilldmg = np.fmax(0.5 * final_atk * atk_scale * (1-newres/100), 0.5 * final_atk* atk_scale * 0.05)
     /// extra_boost = 1/(self.atk_interval)*(self.attack_speed+aspd)/100 if self.module == 2 and self.module_dmg else 0
-    /// sp_cost = self.skill_cost/(1+self.sp_boost + extra_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost + extra_boost) + 1.2
     /// atkcycle = self.atk_interval/((self.attack_speed+aspd)/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg + (self.targets - 1) * aoeskilldmg
@@ -78,7 +76,6 @@ impl Eyjafjalla {
     /// else:
     /// avghit = (skilldmg + (self.targets - 1) * aoeskilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 3:
     /// self.atk_interval = 0.5
     /// atkbuff += self.skill_params[0]
@@ -86,7 +83,6 @@ impl Eyjafjalla {
     /// hitdmgarts = np.fmax(final_atk *(1-newres/100), final_atk * 0.05)
     /// maxtargets = self.skill_params[2]
     /// dps = hitdmgarts/self.atk_interval * (self.attack_speed+aspd)/100 * min(self.targets, maxtargets)
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -111,18 +107,18 @@ impl Eyjafjalla {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut newres: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skilldmg: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)

@@ -41,7 +41,6 @@ impl TerraResearchCommission {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// cdmg = self.talent1_params[4] if self.talent_dmg else 1
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)

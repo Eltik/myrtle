@@ -45,14 +45,12 @@ impl Ebenholz {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 30 if self.module_dmg and self.module == 2 else 0
     /// atk_scale = self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 1
     /// eledmg = 0
     /// bonus_scale = self.talent2_params[0] if self.targets == 1 and self.elite == 2 else 0
     /// eledmg = self.module_lvl * 0.1 /(1+self.buff_fragile) if self.module == 3 and self.module_lvl > 1 and self.talent2_dmg else 0
     /// extra_scale = self.talent2_params[3] if self.module == 2 and self.module_lvl > 1 else 0
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[1] if self.skill == 1 else 1
     /// atk_interval = self.atk_interval * self.skill_params[0] if self.skill == 1 else self.atk_interval
@@ -71,7 +69,6 @@ impl Ebenholz {
     /// dps += bonusdmg/(atk_interval/((self.attack_speed + aspd)/100))
     /// if self.targets > 1 and self.module == 2:
     /// dps += extradmg/(atk_interval/((self.attack_speed + aspd)/100)) * (self.targets -1)
-    ///
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[1]
     /// if self.talent_dmg:
@@ -81,7 +78,6 @@ impl Ebenholz {
     /// hitdmg = np.fmax(final_atk * atk_scale * (1-res/100), final_atk * atk_scale * 0.05)
     /// bonusdmg = np.fmax(final_atk * bonus_scale * (1-res/100), final_atk * bonus_scale * 0.05)
     /// extradmg = np.fmax(final_atk * extra_scale * (1-res/100), final_atk * extra_scale * 0.05)
-    ///
     /// dps = hitdmg/(self.atk_interval/((self.attack_speed + aspd)/100))
     /// if self.module == 3:
     /// ele_gauge = 1000 if self.module_dmg else 2000
@@ -117,19 +113,19 @@ impl Ebenholz {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut eledmg: f64 = 0.0;
-        let mut fallouttime: f64 = 0.0;
-        let mut ele_gauge: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
         let mut bonusdmg: f64 = 0.0;
-        let mut eledps: f64 = 0.0;
+        let mut ele_gauge: f64 = 0.0;
+        let mut eledmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut fallouttime: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut eledps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
 
         aspd = if self.unit.module_damage && ((self.unit.module_index as f64) as f64) == 2.0 {

@@ -41,7 +41,6 @@ impl ThornsAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = min(self.talent1_params)
     /// extra_duration = max(self.talent1_params)
     /// aspd = self.talent2_params[0] if self.elite > 2 else 0
@@ -49,7 +48,6 @@ impl ThornsAlter {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg / self.atk_interval * (self.attack_speed + aspd) / 100
     /// if self.skill != 0 and not self.trait_dmg: dps *= 0
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[4]
     /// hitdmgarts = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
@@ -92,15 +90,15 @@ impl ThornsAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut newres: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = self
             .unit

@@ -41,17 +41,14 @@ impl Snegurochka {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[0] if self.elite > 0 and self.talent_dmg else 0
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[1] if self.skill == 1 else 1
     /// hitdmg_skill = np.fmax(final_atk * skill_scale - defense, final_atk * skill_scale * 0.05)
     /// avghit = (hitdmg * self.skill_cost + hitdmg_skill)/(self.skill_cost + 1)
     /// dps = avghit / self.atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 2:
     /// aspd += self.skill_params[0]
     /// dps = hitdmg / self.atk_interval * (self.attack_speed+aspd)/100
@@ -82,10 +79,10 @@ impl Snegurochka {
         let mut skill_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)

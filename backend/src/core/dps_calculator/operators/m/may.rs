@@ -41,7 +41,6 @@ impl May {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = min(self.talent1_params)
     /// aspd = max(self.talent1_params)
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
@@ -81,15 +80,15 @@ impl May {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atk_scale: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
 
         atkbuff = self
             .unit

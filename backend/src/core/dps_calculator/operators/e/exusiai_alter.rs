@@ -41,11 +41,9 @@ impl ExusiaiAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 2 * self.talent2_params[0] if self.elite > 1 else 0
     /// explosion_prob = min(self.talent1_params[1:])
     /// explosion_scale = max(self.talent1_params)
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -90,14 +88,14 @@ impl ExusiaiAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
-        let mut explosionhit: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut explosionhit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
 
         atkbuff = if ((self.unit.elite as f64) as f64) > 1.0 {
             2.0 * self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)
@@ -165,7 +163,6 @@ impl ExusiaiAlter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 1:
     /// return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100)))
     /// elif self.skill == 2:
@@ -203,18 +200,18 @@ impl ExusiaiAlter {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         if (self.unit.skill_index as f64) == 1.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * 8 * (self.atk_interval/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else if (self.unit.skill_index as f64) == 2.0 {
             aspd = if self.unit.skill_damage { 70.0 } else { 0.0 };
             let mut ammo = if self.unit.skill_damage { 40.0 } else { 35.0 };
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (0.6/((self.attack_speed+aspd)/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * ammo * (0.6/((self.attack_speed+aspd)/100))) - requires manual implementation
             0.0 // placeholder
         } else if (self.unit.skill_index as f64) == 3.0 {
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * 10 * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * 10 * (self.atk_interval/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

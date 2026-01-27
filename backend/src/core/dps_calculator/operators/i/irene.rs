@@ -44,7 +44,6 @@ impl Irene {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent2_params[0]
     /// atkbuff = self.talent2_params[1] if self.module == 2 and self.module_lvl > 1 else 0
     /// if self.talent2_dmg:
@@ -56,7 +55,6 @@ impl Irene {
     /// if self.elite > 0:
     /// defshred = self.talent1_params[0]
     /// newdef2 = newdef1 * (1-defshred)
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1+atkbuff+ self.buff_atk) + self.buff_atk_flat
@@ -67,7 +65,6 @@ impl Irene {
     /// sp_cost = self.skill_cost
     /// avgdmg = ((hitdmg1+hitdmg2) * sp_cost + 2 * skill_dmg)/(sp_cost + 1)
     /// dps = avgdmg / self.atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 3:
     /// skill_scale1 = self.skill_params[0]
     /// hits = self.skill_params[3]
@@ -110,19 +107,19 @@ impl Irene {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg1: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut sp_cost: f64 = 0.0;
         let mut flyinghits: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut levduration: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmg2: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg1: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
 
         aspd = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
@@ -191,7 +188,7 @@ impl Irene {
             if !self.unit.talent_damage {
                 return (dps + hits * (0.5 * hitdmg1 + 0.5 * hitdmg2));
             }
-            // UNTRANSLATED ELSE (no matching if): else:
+            // TODO: unmatched else block
             if !self.unit.skill_damage {
                 levduration = levduration / 2.0;
             }

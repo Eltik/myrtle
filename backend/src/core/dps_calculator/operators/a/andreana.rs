@@ -41,7 +41,6 @@ impl Andreana {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * min(self.skill,1)) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk *atk_scale - defense, final_atk* atk_scale * 0.05)

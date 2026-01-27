@@ -41,7 +41,6 @@ impl Click {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[0]
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// drone_dmg = 1.2 if self.module == 2 else 1.1

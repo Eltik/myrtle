@@ -41,14 +41,12 @@ impl GavialAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// block = 5 if self.skill == 3 else 3
     /// if self.elite < 2: block = 2
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
     /// dmg = 0.95 + self.module_lvl * 0.05 if self.module == 2 else 1
     /// atkbuff = self.talent1_params[0]
     /// if self.talent_dmg and self.elite > 0: atkbuff += self.talent1_params[2] * min(self.targets,block)
-    ///
     /// atkbuff += self.skill_params[0] * min(self.skill,1)
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// aspd = self.skill_params[1] if self.skill == 3 else 0

@@ -40,7 +40,6 @@ impl Mint {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 0: return res * 0
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat

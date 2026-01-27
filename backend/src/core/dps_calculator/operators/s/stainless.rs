@@ -41,7 +41,6 @@ impl Stainless {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -86,11 +85,11 @@ impl Stainless {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 1.0 {
             skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
@@ -127,8 +126,8 @@ impl Stainless {
             if !self.unit.skill_damage {
                 dps = 0.0;
             }
-            let mut turret_scale = 1.0 /* self.params - needs manual implementation */;
-            let mut turret_aoe = 1.0 /* self.params2 - needs manual implementation */;
+            let mut turret_scale = 1.0 /* self.params - not implemented */;
+            let mut turret_aoe = 1.0 /* self.params2 - not implemented */;
             let mut turrethitdmg = ((final_atk * turret_scale - defense) as f64)
                 .max((final_atk * turret_scale * 0.05) as f64);
             let mut turretaoedmg = ((final_atk * turret_aoe - defense) as f64)

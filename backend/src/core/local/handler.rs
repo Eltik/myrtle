@@ -330,8 +330,7 @@ pub fn init_game_data(
     };
 
     // ============ Load Roguelike Game Data ============
-    // The roguelike_topic_table.json has a complex nested structure that doesn't
-    // easily map to per-theme data. Use hardcoded known values instead.
+    // Roguelike data uses pre-defined values rather than parsed table data
     let roguelike = RoguelikeGameData::with_known_values();
 
     // ============ Load Chibi Data ============

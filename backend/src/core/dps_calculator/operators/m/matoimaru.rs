@@ -41,7 +41,6 @@ impl Matoimaru {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 30 if self.module_dmg and self.module == 2 else 0
     /// atkbuff = self.skill_params[0] if self.skill == 2 else 0
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat

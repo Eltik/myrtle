@@ -44,7 +44,6 @@ impl Tragodia {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// nerv_factor = self.talent1_params[0]
     /// nerv_aoe = self.talent1_params[1]
     /// mod_factor = 1.18 if self.module == 1 and (not self.trait_dmg or self.module_dmg) else 1
@@ -52,22 +51,18 @@ impl Tragodia {
     /// atkbuff = self.skill_params[0] if self.skill == 3 else 0
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
-    ///
     /// if self.skill == 0:
     /// ele_dps = 6000/(10 + (ele_gauge / (final_atk * nerv_factor * mod_factor / self.atk_interval * self.attack_speed / 100)))
     /// dps = hitdmg / self.atk_interval * self.attack_speed / 100 + ele_dps
-    ///
     /// if self.skill == 1:
     /// skilldmg = np.fmax(final_atk * self.skill_params[0] * (1-res/100), final_atk * self.skill_params[0] * 0.05) * 2
     /// nerv_dps = (final_atk * nerv_factor * mod_factor * self.skill_cost + 2 * final_atk * nerv_factor * mod_factor * self.skill_params[1])/(self.skill_cost+1)/ self.atk_interval * self.attack_speed  / 100
     /// ele_dps = 6000/(10+ele_gauge/nerv_dps)
     /// dps = (skilldmg + hitdmg * self.skill_cost)/(self.skill_cost+1)/ self.atk_interval * self.attack_speed / 100 + ele_dps
-    ///
     /// if self.skill == 2:
     /// skill_factor = self.skill_params[0]
     /// artsdmg = np.fmax(final_atk * skill_factor * (1-res/100), final_atk * skill_factor * 0.05)
     /// dps = 12 * artsdmg / 25
-    ///
     /// if self.skill_dmg:
     /// ele_dps = 6000/(10 + (ele_gauge / (final_atk * nerv_factor * mod_factor / self.atk_interval * (self.attack_speed+self.skill_params[7]) / 100)))
     /// dps += hitdmg / self.atk_interval * (self.attack_speed+self.skill_params[7]) / 100 + ele_dps
@@ -76,7 +71,6 @@ impl Tragodia {
     /// dps += 3000 / 25
     /// else:
     /// dps += 6000 / 25
-    ///
     /// if self.skill == 3:
     /// ele_dps = 6000/(6.666 + (ele_gauge / (final_atk * nerv_factor * mod_factor / self.atk_interval * self.attack_speed / 100 + final_atk * 0.1 * mod_factor)))
     /// dps = hitdmg / self.atk_interval * self.attack_speed / 100 + ele_dps
@@ -104,13 +98,13 @@ impl Tragodia {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut ele_dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut ele_dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
 
         let mut nerv_factor = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
         let mut nerv_aoe = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);

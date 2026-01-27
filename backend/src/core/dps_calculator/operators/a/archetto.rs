@@ -44,13 +44,11 @@ impl Archetto {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 8 if self.module == 2 and self.module_dmg else 0
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
     /// recovery_interval = max(self.talent1_params) if self.elite > 0 else 10000000
     /// if self.module == 1 and self.talent_dmg and self.module_lvl > 1:
     /// recovery_interval -= 0.3 if self.module_lvl == 2 else 0.4
-    ///
     /// if self.skill == 1:
     /// skill_scale = self.skill_params[0]
     /// skill_scale2= self.skill_params[1]
@@ -59,18 +57,15 @@ impl Archetto {
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale * atk_scale - defense, final_atk * skill_scale * atk_scale * 0.05)
     /// aoedmg = np.fmax(final_atk * skill_scale2 * atk_scale - defense, final_atk * skill_scale2 * atk_scale * 0.05)
-    ///
-    /// #figuring out the chance of the talent to activate during downtime
     /// base_cycle_time = (sp_cost+1)/((self.attack_speed+aspd)/100)
     /// talents_per_base_cycle = base_cycle_time / recovery_interval
-    /// failure_rate = 1.8 / (sp_cost + 1)  #1 over sp cost because thats the time the skill would technically be ready, the bonus is for sp lockout. (basis is a video where each attack had 14 frames, but it was 25 frames blocked)
+    /// failure_rate = 1.8 / (sp_cost + 1)
     /// talents_per_base_cycle *= 1-failure_rate
     /// new_spcost = np.fmax(1,sp_cost - talents_per_base_cycle)
     /// hitdps = hitdmg/(self.atk_interval/((self.attack_speed+aspd)/100)) * (new_spcost-1)/new_spcost
     /// skilldps = skilldmg/(self.atk_interval/((self.attack_speed+aspd)/100)) /new_spcost
     /// aoedps = aoedmg/(self.atk_interval/((self.attack_speed+aspd)/100)) /new_spcost *(min(self.targets,4)-1)
     /// dps = hitdps + skilldps + aoedps
-    ///
     /// if self.skill == 2:
     /// sprecovery = 1/recovery_interval + (self.attack_speed+aspd)/100
     /// skill_scale = self.skill_params[0]
@@ -80,7 +75,6 @@ impl Archetto {
     /// targets = min(5, self.targets)
     /// totalhits = [5,9,12,14,15]
     /// dps = hitdmg/(self.atk_interval/((self.attack_speed+aspd)/100)) + sprecovery/self.skill_cost * skilldmg * totalhits[targets-1]
-    ///
     /// if self.skill in [0,3]:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]*self.skill/3) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05) * (1 + self.skill * 2 / 3)
@@ -111,14 +105,14 @@ impl Archetto {
         let mut res = enemy.res;
 
         let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             8.0
@@ -160,7 +154,6 @@ impl Archetto {
                 .max((final_atk * skill_scale * atk_scale * 0.05) as f64);
             let mut aoedmg = ((final_atk * skill_scale2 * atk_scale - defense) as f64)
                 .max((final_atk * skill_scale2 * atk_scale * 0.05) as f64);
-            // figuring out the chance of the talent to activate during downtime
             let mut base_cycle_time = (sp_cost + 1.0) / ((self.unit.attack_speed + aspd) / 100.0);
             let mut talents_per_base_cycle = base_cycle_time / recovery_interval;
             let mut failure_rate = 1.8 / (sp_cost + 1.0);

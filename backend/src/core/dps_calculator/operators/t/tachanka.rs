@@ -40,7 +40,6 @@ impl Tachanka {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = 1.1 if self.module == 1 and self.module_dmg else 1
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// if self.skill == 0:
@@ -82,14 +81,14 @@ impl Tachanka {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         let mut dmg_scale =
             if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {

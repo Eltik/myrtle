@@ -40,7 +40,6 @@ impl Mon3tr {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent2_params[1] if self.elite > 1 else 0
     /// if self.skill < 3: return res * 0
     /// if self.skill == 3:
@@ -71,10 +70,10 @@ impl Mon3tr {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         aspd = if ((self.unit.elite as f64) as f64) > 1.0 {
             self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)

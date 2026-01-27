@@ -43,14 +43,12 @@ impl TexasAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent2_params[0] if self.elite == 2 and self.talent2_dmg else 0
     /// atkbuff = self.talent1_params[0] if self.elite > 0 else 0
     /// atkbuff += self.skill_params[0] if self.skill != 3 else 0
     /// if self.skill == 0: atkbuff = 0
     /// if self.module == 2 and not self.module_dmg: atkbuff += 0.1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// artsdmg = self.skill_params[2] if self.skill == 1 else 0
@@ -89,14 +87,14 @@ impl TexasAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut hitdmg: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut newres: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if ((self.unit.elite as f64) as f64) == 2.0 && self.unit.talent2_damage {
             self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)

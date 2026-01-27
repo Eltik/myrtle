@@ -44,7 +44,6 @@ impl Vina {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// value = 0.1 if self.module == 2 and self.module_dmg else 0
     /// fragile = max(value, self.buff_fragile)
     /// dmg_scale = 1 + 0.05 * self.module_lvl if self.module == 2 and self.module_lvl > 1 and self.talent2_dmg else 1
@@ -57,14 +56,13 @@ impl Vina {
     /// hitdmgarts = np.fmax(final_atk *(1-res/100), final_atk * 0.05)
     /// skilldmgarts = np.fmax(final_atk * skill_scale *(1-res/100), final_atk * skill_scale * 1)
     /// if self.skill == 0: skilldmgarts = hitdmgarts
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/((self.attack_speed)/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmgarts
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmgarts + int(atks_per_skillactivation) * hitdmgarts) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/(self.atk_interval/((self.attack_speed+aspd)/100))
-    ///
     /// if self.skill == 2:
     /// atkbuff += self.skill_params[1]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -102,16 +100,16 @@ impl Vina {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avghit: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
 
         let mut value =
             if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
@@ -128,7 +126,7 @@ impl Vina {
         } else {
             1.0
         };
-        atkbuff = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 1.0 /* self.count - needs manual implementation */;
+        atkbuff = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 1.0 /* self.count - not implemented */;
         aspd = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             8.0
         } else {
@@ -180,7 +178,7 @@ impl Vina {
                 * ((self.unit.targets as f64) as f64).min((maxtargets) as f64)
                 + hitdmg_lion / (self.unit.drone_atk_interval as f64)
                     * ((self.unit.targets as f64) as f64)
-                        .min((1.0/* self.count - needs manual implementation */) as f64);
+                        .min((1.0/* self.count - not implemented */) as f64);
         }
         return dps * dmg_scale * (1.0 + fragile) / (1.0 + self.unit.buff_fragile);
     }

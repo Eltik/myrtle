@@ -41,7 +41,6 @@ impl Doc {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.2 if self.trait_dmg else 1
     /// newdef = np.fmax(0, defense-self.talent1_params[1])
     /// atk_interval = self.atk_interval + self.skill_params[3] if self.skill == 1 else self.atk_interval

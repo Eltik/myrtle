@@ -43,12 +43,10 @@ impl Chongyue {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 10 if self.module == 2 and self.module_dmg else 0
     /// crate = self.talent1_params[0] if self.elite > 0 else 0
     /// dmg = self.talent1_params[1] if self.elite > 0 else 1
     /// duration = self.talent1_params[2] if self.elite > 0 else 0
-    ///
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -59,11 +57,10 @@ impl Chongyue {
     /// crit_chance = 1 - (1-crate) ** relevant_hits
     /// hitdmg *= (1-crit_chance) + dmg * crit_chance
     /// dps = (hitdmg + skilldmg/self.skill_cost * self.skill) / self.atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 3:
     /// hits = self.skill_cost // 2 + self.skill_cost % 2
     /// relevant_hits = int(duration/(self.atk_interval /(self.attack_speed+aspd)*100)) * 2 + 2
-    /// relevant_hits *= hits/(hits+1) #skill hits cant trigger crit and therefore technically have a lower crit rate than normal attacks, but ehh
+    /// relevant_hits *= hits/(hits+1)
     /// crit_chance = 1 - (1-crate) ** relevant_hits
     /// skilldmg *= self.targets
     /// avghit = 2 * (hits * hitdmg + skilldmg) /(hits + 1) * ((1-crit_chance) + dmg * crit_chance)
@@ -92,15 +89,15 @@ impl Chongyue {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut crit_chance: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut relevant_hits: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut relevant_hits: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {

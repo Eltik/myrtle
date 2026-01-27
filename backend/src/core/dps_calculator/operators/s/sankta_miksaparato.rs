@@ -41,7 +41,6 @@ impl SanktaMiksaparato {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[1] * 3 if self.elite > 0 and self.talent_dmg else 0
     /// if self.skill < 2:
     /// final_atk = self.atk * (1+ self.buff_atk) + self.buff_atk_flat
@@ -82,12 +81,12 @@ impl SanktaMiksaparato {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut avgphys: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         aspd = if ((self.unit.elite as f64) as f64) > 0.0 && self.unit.talent_damage {
             self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 3.0

@@ -40,7 +40,6 @@ impl JessicaAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill < 2:
     /// final_atk = self.atk * (1+ self.buff_atk + self.skill_params[1] * self.skill) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -79,9 +78,9 @@ impl JessicaAlter {
         let mut res = enemy.res;
 
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         if (self.unit.skill_index as f64) < 2.0 {
             final_atk = self.unit.atk

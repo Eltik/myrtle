@@ -43,11 +43,9 @@ impl Dobermann {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 0
     /// if self.module == 2 and self.talent_dmg and self.module_lvl > 1: aspd = 5 * self.module_lvl
     /// atk_scale = 1.2 if self.trait_dmg else 1
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -85,15 +83,15 @@ impl Dobermann {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut avgphys: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         aspd = 0.0;
         if (self.unit.module_index as f64) == 2.0

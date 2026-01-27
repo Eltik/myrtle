@@ -40,7 +40,6 @@ impl Suzuran {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3: return res * 0
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// try: atkbuff += self.talent1_params[1]

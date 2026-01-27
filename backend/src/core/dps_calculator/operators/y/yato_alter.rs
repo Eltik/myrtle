@@ -41,13 +41,11 @@ impl YatoAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// extra_arts = self.talent1_params[0]
     /// atkbuff = self.talent2_params[0] if self.elite == 2 and (self.skill != 0 or self.talent2_dmg) else 0
     /// try: atkbuff += self.talent2_params[2]
     /// except: pass
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// aspd = self.skill_params[0]
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
@@ -89,15 +87,15 @@ impl YatoAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atkbuff: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atk_scale: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut extra_arts = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
         atkbuff = if ((self.unit.elite as f64) as f64) == 2.0

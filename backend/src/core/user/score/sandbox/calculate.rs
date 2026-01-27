@@ -55,7 +55,7 @@ pub fn calculate_sandbox_score(user: &User) -> SandboxScore {
 
         // Calculate nodes for this area (nodes don't have area prefixes, so we count all)
         // We'll calculate nodes globally, not per-area
-        let nodes_completed = 0; // Placeholder for area-specific if needed
+        let nodes_completed = 0;
 
         let places_score = (places_completed as f32 * points::PLACE_COMPLETED)
             + (places_discovered as f32 * points::PLACE_DISCOVERED);

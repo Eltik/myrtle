@@ -43,7 +43,6 @@ impl Carnelian {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 2 and self.module_dmg else 1
     /// if self.skill == 0: return (defense * 0)
     /// if self.skill == 1:
@@ -59,7 +58,7 @@ impl Carnelian {
     /// if self.skill == 3:
     /// maxatkbuff = self.skill_params[0]
     /// duration = 21
-    /// totalatks = 1 + int(duration / (self.atk_interval/(self.attack_speed/100))) # +1 because the first attack is already at 0
+    /// totalatks = 1 + int(duration / (self.atk_interval/(self.attack_speed/100)))
     /// totalduration = totalatks * (self.atk_interval/(self.attack_speed/100))
     /// damage = 0
     /// bonusscaling = 5 if self.skill_dmg else 0
@@ -91,12 +90,12 @@ impl Carnelian {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15

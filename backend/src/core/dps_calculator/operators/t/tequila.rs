@@ -43,7 +43,6 @@ impl Tequila {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 2 if self.trait_dmg else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// if self.skill == 0:
@@ -84,11 +83,11 @@ impl Tequila {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
 
@@ -98,7 +97,7 @@ impl Tequila {
             if 0.0 /* self.hits - defaults to 0 */ == 0.0 || (self.unit.elite as f64) == 0.0 {
                 return res * 0.0;
             }
-            // UNTRANSLATED ELSE (no matching if): else:
+            // TODO: unmatched else block
             dps = 0.0 /* self.hits - defaults to 0 */ * ((final_atk * self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0) *(1.0 -res/ 100.0)) as f64).max((final_atk * self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0) * 0.05) as f64);
         }
         if (self.unit.skill_index as f64) == 1.0 {

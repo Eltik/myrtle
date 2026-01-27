@@ -44,13 +44,11 @@ impl Ceobe {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// newres= np.fmax(0, res-10) if self.module == 1 else res
     /// bonus_arts_scaling = self.talent1_params[0] if self.elite > 0 else 0
     /// if self.module == 1 and self.module_lvl > 1 and self.talent_dmg: bonus_arts_scaling = self.talent1_params[2]
     /// atkbuff = self.talent2_params[0] if self.elite == 2 and self.talent2_dmg else 0
     /// aspd = self.talent2_params[1] if self.elite == 2 and self.talent2_dmg else 0
-    ///
     /// if self.skill < 2:
     /// sp_cost = self.skill_cost
     /// skill_scale = self.skill_params[0]
@@ -61,9 +59,9 @@ impl Ceobe {
     /// defbonusdmg = np.fmax(defense * bonus_arts_scaling *(1-newres/100), defense * bonus_arts_scaling * 0.05)
     /// atkcycle = self.atk_interval/(self.attack_speed+aspd)*100
     /// if self.module == 2 and self.module_dmg:
-    /// sp_cost = sp_cost / (1 + 1/atkcycle + self.sp_boost) + 1.2 #bonus sp recovery vs elite mobs + sp lockout
+    /// sp_cost = sp_cost / (1 + 1/atkcycle + self.sp_boost) + 1.2
     /// else:
-    /// sp_cost = sp_cost /(1 + self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = sp_cost /(1 + self.sp_boost) + 1.2
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmgarts
     /// if atks_per_skillactivation > 1 and self.skill == 1:
@@ -108,19 +106,19 @@ impl Ceobe {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atkbuff: f64 = 0.0;
-        let mut newres: f64 = 0.0;
+        let mut atks_per_skillactivation: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
+        let mut defbonusdmg: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atks_per_skillactivation: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut defbonusdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         newres = if ((self.unit.module_index as f64) as f64) == 1.0 {
             ((0) as f64).max((res - 10.0) as f64)

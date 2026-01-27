@@ -43,7 +43,6 @@ impl Leto {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 0.8 if self.skill < 2 and not self.trait_dmg else 1
     /// aspd = 12 if self.module == 2 and (self.targets > 1 or self.module_dmg) else 0
     /// aspd += self.talent1_params[0]

@@ -43,7 +43,6 @@ impl Eunectes {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = self.talent1_params[2] if self.talent_dmg and self.elite > 0 else 1
     /// atkbuff = 0.15 if self.module_dmg and self.module == 2 else 0
     /// final_atk = self.atk *(1+ self.buff_atk + atkbuff + self.skill_params[0] * min(self.skill,1)) + self.buff_atk_flat

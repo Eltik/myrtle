@@ -41,9 +41,7 @@ impl Entelechia {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// arts_dps = np.fmax(self.talent1_params[3] * (1-res/100), self.talent1_params[3] * 0.05) * self.targets if self.elite > 0 else 0
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -65,7 +63,6 @@ impl Entelechia {
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05) * self.targets
     /// hitdmg_candle = np.fmax(final_atk - defense, final_atk * 0.35) * min(self.targets, 3)
     /// dps = (hitdmg+hitdmg_candle)/self.atk_interval * (self.attack_speed + aspd)/100
-    ///
     /// return dps + arts_dps
     #[allow(
         unused_variables,
@@ -90,15 +87,15 @@ impl Entelechia {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut avgphys: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut arts_dps = if ((self.unit.elite as f64) as f64) > 0.0 {
             ((self.unit.talent1_parameters.get(3).copied().unwrap_or(0.0) * (1.0 - res / 100.0))

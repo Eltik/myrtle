@@ -59,18 +59,14 @@ impl Ling {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// talentbuff = self.talent2_params[0] * self.talent2_params[2] if self.talent2_dmg else 0
     /// dragons = 2 if self.talent_dmg else 1
     /// if not self.trait_dmg: dragons = 0
-    ///
     /// if self.skill == 1:
     /// atkbuff = self.skill_params[0]
     /// aspd = self.skill_params[1]
-    ///
     /// final_atk = self.atk * (1+atkbuff + talentbuff + self.buff_atk) + self.buff_atk_flat
     /// final_dragon = self.drone_atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
-    ///
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// hitdmgdrag = np.fmax(final_dragon * (1-res/100), final_dragon * 0.05)
     /// dps = hitdmg/(self.atk_interval/((self.attack_speed+aspd)/100)) + hitdmgdrag/(self.drone_atk_interval/((self.attack_speed + aspd)/100)) * dragons
@@ -82,7 +78,7 @@ impl Ling {
     /// hitdmgdrag = np.fmax(final_dragon * (1-res/100), final_dragon * 0.05)
     /// skilldmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05)
     /// skilldmgdrag = np.fmax(final_dragon * skill_scale * (1-res/100), final_dragon * skill_scale * 0.05)
-    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
     /// dpsskill = (skilldmg + dragons * skilldmgdrag) * min(self.targets,2) / sp_cost
     /// dps = hitdmg/(self.atk_interval/(self.attack_speed/100)) + hitdmgdrag/(self.drone_atk_interval/(self.attack_speed/100)) * dragons + dpsskill
     /// if self.skill in [0,3]:
@@ -95,7 +91,6 @@ impl Ling {
     /// block = 4 if self.skill_dmg else 2
     /// hitdmgdrag = np.fmax(final_dragon - defense, final_dragon * 0.05) * min(self.targets, block)
     /// skilldmg = hitdmg * 0.2
-    ///
     /// dps = hitdmg/(self.atk_interval/(self.attack_speed/100)) + hitdmgdrag/(dragoninterval/(self.attack_speed/100)) * dragons + skilldmg * 2 * dragons * self.targets
     /// return dps
     #[allow(
@@ -121,17 +116,17 @@ impl Ling {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skilldmg: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut final_dragon: f64 = 0.0;
-        let mut hitdmgdrag: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_dragon: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmgdrag: f64 = 0.0;
 
         let mut talentbuff = if self.unit.talent2_damage {
             self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)

@@ -40,11 +40,9 @@ impl Degenbrecher {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// newdef = defense * (1 - self.talent2_params[0]) if self.elite == 2 else defense
     /// dmg = 1.1 if self.module == 1 else 1
     /// atk_scale = self.talent1_params[1] if self.elite > 0 else 1
-    ///
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
@@ -55,14 +53,13 @@ impl Degenbrecher {
     /// skilldmg_crit = np.fmax(final_atk * skill_scale * atk_scale - newdef, final_atk * skill_scale * atk_scale * 0.05) * dmg * 2
     /// skilldmg_tremble = np.fmax(final_atk * skill_scale - newdef, final_atk * skill_scale * 0.05) * dmg * 2
     /// crate = 0 if self.elite == 0 else self.talent1_params[0]
-    /// relevant_attack_count = int(5/(self.atk_interval / self.attack_speed * 100)) * 2 #tremble lasts 5 seconds
+    /// relevant_attack_count = int(5/(self.atk_interval / self.attack_speed * 100)) * 2
     /// chance_that_no_crit_occured = (1-crate) ** relevant_attack_count
     /// avghit = hitdmg_crit * crate + hitdmg * (1-crate) * chance_that_no_crit_occured + hitdmg_tremble * (1-crate) * (1 - chance_that_no_crit_occured)
     /// avgskill = skilldmg_crit * crate + skilldmg * (1-crate) * chance_that_no_crit_occured + skilldmg_tremble * (1-crate) * (1 - chance_that_no_crit_occured) * min(self.targets,self.skill_params[1])
     /// if self.skill == 0: avgskill = avghit
     /// average = (self.skill_cost * avghit + avgskill)/(self.skill_cost + 1)
     /// dps = average/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 3:
     /// skill_scale = self.skill_params[2]
     /// last_scale = self.skill_params[6]
@@ -93,14 +90,14 @@ impl Degenbrecher {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
 
         let mut newdef = if ((self.unit.elite as f64) as f64) == 2.0 {
             defense * (1.0 - self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0))

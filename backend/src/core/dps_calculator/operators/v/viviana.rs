@@ -46,7 +46,6 @@ impl Viviana {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg_scale = 1 + self.talent1_params[1] * 2 if self.talent_dmg else 1 + self.talent1_params[1]
     /// if self.elite == 0: dmg_scale = 1
     /// burn_res = np.fmax(0,res-20)
@@ -56,11 +55,10 @@ impl Viviana {
     /// if self.talent_dmg: ele_appli *= 2
     /// ele_gauge = 1000
     /// if not self.talent2_dmg: ele_gauge = 2000
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2
     /// hitdmgarts = np.fmax(final_atk * (1-res/100), final_atk * 0.05) * dmg_scale
     /// skilldmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * dmg_scale * 2
     /// hitdmgarts2 = np.fmax(final_atk * (1-burn_res/100), final_atk * 0.05) * dmg_scale
@@ -80,7 +78,6 @@ impl Viviana {
     /// time_to_trigger = ele_gauge / (dps*ele_appli)
     /// fallout_dps = (avghit2 + ele_scale * final_atk)/self.atk_interval * self.attack_speed/100
     /// dps = (dps * time_to_trigger + fallout_dps * 10 + fallout_dmg) / (time_to_trigger + 10)
-    ///
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[0]
     /// aspd = self.skill_params[6] if self.skill_dmg else 0
@@ -133,26 +130,26 @@ impl Viviana {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atks_per_skillactivation: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut time_to_trigger: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
-        let mut hitdmgarts2: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut avghit2: f64 = 0.0;
-        let mut atkcycle: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atkcycle: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut time_to_trigger: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut atks_per_skillactivation: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut hitdmgarts2: f64 = 0.0;
+        let mut avghit2: f64 = 0.0;
         let mut ele_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avgdmg: f64 = 0.0;
 
         let mut dmg_scale = if self.unit.talent_damage {
             1.0 + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 2.0

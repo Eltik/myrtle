@@ -43,11 +43,9 @@ impl LaPluma {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// aspd = self.talent1_params[0] * self.talent1_params[1] if self.talent_dmg else 0
     /// if self.talent_dmg and self.module == 1 and self.module_lvl > 1: atkbuff = self.talent1_params[2]
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -64,7 +62,6 @@ impl LaPluma {
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - defense, final_atk * 0.05)
     /// dps = hitdmg/atk_interval * (self.attack_speed+aspd)/100
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -90,14 +87,14 @@ impl LaPluma {
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
 
         atkbuff = 0.0;
         aspd = if self.unit.talent_damage {

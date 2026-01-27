@@ -41,20 +41,17 @@ impl ChenAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dps = 0
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
-    /// aspd = 8 if self.elite == 2 else 0 #im not going to include the water buff for now
+    /// aspd = 8 if self.elite == 2 else 0
     /// if self.module == 2:
     /// if self.module_lvl == 2: atkbuff += 0.1
     /// if self.module_lvl == 3:
     /// atkbuff += 0.28
     /// aspd = 20
-    ///
     /// atk_scale = 1.6 if self.module == 1 else 1.5
     /// if self.skill == 0 and not self.trait_dmg: atk_scale = 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk* atk_scale * 0.05)
     /// dps = hitdmg/self.atk_interval * (self.attack_speed+aspd)/100 * self.targets
@@ -66,7 +63,6 @@ impl ChenAlter {
     /// if self.shreds[0] < 1 and self.shreds[0] > 0:
     /// newdefense *= self.shreds[0]
     /// hitdmg = np.fmax(final_atk * atk_scale - newdefense, final_atk* atk_scale * 0.05)
-    ///
     /// dps = 2 * hitdmg/self.atk_interval * (self.attack_speed+aspd)/100 * self.targets
     /// return dps
     #[allow(
@@ -92,13 +88,13 @@ impl ChenAlter {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
         let mut newdefense: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         dps = 0.0;
@@ -159,7 +155,6 @@ impl ChenAlter {
     /// Calculates total damage (overridden from base)
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 3:
     /// ammo = 16
     /// save_rate = self.talent1_params[0]
@@ -196,10 +191,10 @@ impl ChenAlter {
             let mut ammo = 16.0;
             let mut save_rate = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);
             ammo = ammo / (1.0 - save_rate);
-            // UNTRANSLATED: return(self.skill_dps(defense,res) * ammo * (self.atk_interval/(self.attack_speed/100))) - method calls need manual implementation
+            // TODO: return(self.skill_dps(defense,res) * ammo * (self.atk_interval/(self.attack_speed/100))) - requires manual implementation
             0.0 // placeholder
         } else {
-            // UNTRANSLATED: return(super().total_dmg(defense,res)) - method calls need manual implementation
+            // TODO: return(super().total_dmg(defense,res)) - requires manual implementation
             0.0 // placeholder
         }
     }

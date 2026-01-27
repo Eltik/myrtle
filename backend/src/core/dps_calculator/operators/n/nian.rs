@@ -41,11 +41,9 @@ impl Nian {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = 0
     /// if self.module == 1 and self.module_dmg and self.module_lvl > 1:
     /// atkbuff += 3 * 0.05 if self.module_lvl == 2 else 3 * 0.07
-    ///
     /// if self.skill == 1:
     /// atkbuff += self.skill_params[0]
     /// final_atk = self.atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -85,12 +83,12 @@ impl Nian {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
 
         atkbuff = 0.0;
         if (self.unit.module_index as f64) == 1.0

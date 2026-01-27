@@ -40,7 +40,6 @@ impl Aak {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// cdmg = max(self.talent1_params)
     /// crate = 0.25
     /// if self.module == 1 and self.module_lvl > 1: crate = 0.25 + 0.75 * 0.2 if self.module_lvl == 2 else 0.25 + 0.75 * 0.3

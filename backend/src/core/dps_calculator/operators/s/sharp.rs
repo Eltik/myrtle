@@ -40,7 +40,6 @@ impl Sharp {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// final_atk = self.atk * (1 + self.buff_atk + self.talent1_params[0]) + self.buff_atk_flat
     /// skill_scale = self.skill_params[1] if self.skill == 1 else 1
     /// hitdmg = np.fmax(final_atk * skill_scale - defense, final_atk * skill_scale * 0.05)

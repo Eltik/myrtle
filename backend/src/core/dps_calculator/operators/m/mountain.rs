@@ -41,11 +41,9 @@ impl Mountain {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// crate = self.talent1_params[1]
     /// cdmg = self.talent1_params[0]
     /// aspd = 10 if self.module == 2 and self.module_dmg else 0
-    ///
     /// if self.skill == 1:
     /// atk_scale = self.skill_params[0]
     /// hits = self.skill_cost
@@ -98,16 +96,16 @@ impl Mountain {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut aspd: f64 = 0.0;
-        let mut cdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut normalhitdmg: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut crithitdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut cdmg: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avghit: f64 = 0.0;
+        let mut normalhitdmg: f64 = 0.0;
+        let mut crithitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         let mut crit_rate = self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0);
         cdmg = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0);

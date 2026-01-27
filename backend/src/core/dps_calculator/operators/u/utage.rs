@@ -41,7 +41,6 @@ impl Utage {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill == 1: return 0 * res
     /// aspd = self.talent1_params[0] if self.talent_dmg else 0
     /// atkbuff = 0.01 + 0.01 * self.module_lvl if self.module == 1 and self.module_lvl > 1 and self.talent_dmg else 0
@@ -77,12 +76,12 @@ impl Utage {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         if (self.unit.skill_index as f64) == 1.0 {
             return 0.0 * res;

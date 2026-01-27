@@ -41,7 +41,6 @@ impl Coldshot {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// ammo = 4 + 2 * self.elite
     /// atkbuff = self.skill_params[0] if self.skill > 0 else 0
     /// atk_scale = 1.2
@@ -50,9 +49,8 @@ impl Coldshot {
     /// reload_time = 2.4 if self.skill == 2 else 1.6
     /// hitdmg = np.fmax(final_atk * atk_scale - defense, final_atk * atk_scale * 0.05)
     /// hitdmg2 = np.fmax(final_atk * atk_scale * talent_scale - defense, final_atk * atk_scale * talent_scale * 0.05)
-    /// if self.atk_interval/self.attack_speed*100 >= 2: hitdmg = hitdmg2 #if attacks are so slow that the talent actually activates
-    ///
-    /// if self.trait_dmg: #full clip
+    /// if self.atk_interval/self.attack_speed*100 >= 2: hitdmg = hitdmg2
+    /// if self.trait_dmg:
     /// if self.talent_dmg or self.atk_interval/self.attack_speed*100 >= 2:
     /// dps = (hitdmg * (ammo -1) + hitdmg2) / ammo / self.atk_interval * self.attack_speed/100
     /// else:
@@ -119,7 +117,6 @@ impl Coldshot {
             hitdmg = hitdmg2;
         }
         if self.unit.trait_damage {
-            // full clip
             if self.unit.talent_damage
                 || (self.unit.attack_interval as f64) / self.unit.attack_speed * 100.0 >= 2.0
             {

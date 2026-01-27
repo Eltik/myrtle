@@ -41,7 +41,6 @@ impl Aciddrop {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.elite == 0: mindmg = 0.05
     /// elif self.talent_dmg: mindmg = self.talent1_params[1]
     /// else: mindmg = self.talent1_params[0]

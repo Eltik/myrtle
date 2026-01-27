@@ -44,7 +44,6 @@ impl Skalter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// if self.skill != 3: return res * 0
     /// atkbuff = 0.08 if self.module == 1 and self.module_dmg else 0
     /// if self.talent2_dmg: atkbuff += self.talent2_params[0]

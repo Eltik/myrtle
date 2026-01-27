@@ -41,11 +41,9 @@ impl Bagpipe {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 2 and self.module_dmg else 1
     /// crate = self.talent1_params[1] if self.elite > 0 else 0
     /// cdmg = self.talent1_params[0] if self.elite > 0 else 1
-    ///
     /// if self.skill < 2:
     /// atkbuff = self.skill_params[0] * self.skill
     /// aspd = self.skill_params[1] * self.skill
@@ -54,7 +52,6 @@ impl Bagpipe {
     /// critdmg = np.fmax(final_atk * atk_scale * cdmg - defense, final_atk * atk_scale * cdmg * 0.05)
     /// avgdmg = crate * critdmg * min(2, self.targets) + (1-crate) * hitdmg
     /// dps = avgdmg/self.atk_interval * (self.attack_speed + aspd)/100
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -65,18 +62,16 @@ impl Bagpipe {
     /// avgdmg = crate * critdmg * min(2, self.targets) + (1-crate) * hitdmg
     /// avgskill = crate * skillcrit * min(2, self.targets) + (1-crate) * skillhit
     /// avgskill *= 2
-    /// sp_cost = self.skill_cost / (1 + self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = self.skill_cost / (1 + self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = avgskill
-    ///
     /// if atks_per_skillactivation > 1:
     /// if self.skill_params[1] > 1:
     /// avghit = (avgskill + (atks_per_skillactivation - 1) * avgdmg) / atks_per_skillactivation
     /// else:
     /// avghit = (avgskill + int(atks_per_skillactivation) * avgdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 3:
     /// atkbuff = self.skill_params[0]
     /// self.atk_interval = 1.7
@@ -109,19 +104,19 @@ impl Bagpipe {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut sp_cost: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avgdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut critdmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
+        let mut avgdmg: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             1.15

@@ -51,7 +51,6 @@ impl Diamante {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// burst_scale = 1.1 if self.module == 1 else 1
     /// if self.skill in [0,2]:
     /// atkbuff = self.talent1_params[0] if self.talent_dmg and self.skill_dmg and self.skill == 2 else 0
@@ -60,7 +59,6 @@ impl Diamante {
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// eledmg =  np.fmax(final_atk * 0 * (1-res/100), final_atk * skill_scale) /(1+self.buff_fragile) * burst_scale
     /// dps = (hitdmg+eledmg) / self.atk_interval * (self.attack_speed + self.skill_params[0]) / 100 * min(self.targets,2)
-    ///
     /// if self.skill == 1:
     /// atkbuff = self.skill_params[0]
     /// ele_application = self.skill_params[1]
@@ -71,18 +69,15 @@ impl Diamante {
     /// elemental_health = 2000 if not self.talent_dmg and not self.skill_dmg else 1000
     /// time_to_apply_necrosis = elemental_health / (final_atk * ele_application / self.atk_interval * (self.attack_speed) / 100)
     /// fallout_dps = 12000 / (time_to_apply_necrosis + 15) /(1+self.buff_fragile)
-    ///
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
     /// hitdmg_necro = np.fmax(final_atk_necro * (1-res/100), final_atk_necro * 0.05)
     /// eledmg_necro =  np.fmax(final_atk_necro * 0 * (1-res/100), final_atk_necro * skill_scale) /(1+self.buff_fragile)
     /// avg_hitdmg = hitdmg * time_to_apply_necrosis / (time_to_apply_necrosis + 15) + hitdmg_necro * 15 / (time_to_apply_necrosis + 15)
     /// avg_eledmg = eledmg_necro * 15 / (time_to_apply_necrosis + 15)
-    ///
     /// if not self.trait_dmg: dps = (hitdmg) / self.atk_interval * (self.attack_speed) / 100
     /// elif not self.talent_dmg and not self.skill_dmg: dps = fallout_dps + (avg_hitdmg + avg_eledmg * burst_scale) / self.atk_interval * (self.attack_speed) / 100
     /// elif self.talent_dmg ^ self.skill_dmg: dps = fallout_dps + (avg_hitdmg + avg_eledmg * burst_scale) / self.atk_interval * (self.attack_speed) / 100
     /// else: dps = (hitdmg_necro + eledmg_necro) * burst_scale / self.atk_interval * (self.attack_speed) / 100
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -107,13 +102,13 @@ impl Diamante {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut burst_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmg: f64 = 0.0;
         let mut eledmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut burst_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atkbuff: f64 = 0.0;
 
         burst_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {

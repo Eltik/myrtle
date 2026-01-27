@@ -43,7 +43,6 @@ impl Vigil {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1
     /// defignore = 0
     /// wolves = 0
@@ -54,7 +53,6 @@ impl Vigil {
     /// defignore = self.talent2_params[0] if self.elite == 2 else 0
     /// newdef = np.fmax(0, defense - defignore)
     /// wolfdef = np.fmax(0, defense - self.talent2_params[0]) if self.elite == 2 else defense
-    /// ####the actual skills
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// final_wolf  = self.drone_atk * (1 + self.buff_atk) + self.buff_atk_flat
     /// if self.skill < 2:
@@ -62,11 +60,9 @@ impl Vigil {
     /// hitdmgwolf = np.fmax(final_wolf - wolfdef, final_wolf * 0.05)
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
     /// if self.talent_dmg: dps += hitdmgwolf/self.drone_atk_interval * self.attack_speed/100 * wolves
-    ///
     /// if self.skill == 2:
     /// skill_scale = self.skill_params[1]
-    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2 #lockout
-    ///
+    /// sp_cost = self.skill_cost/(1 + self.sp_boost) + 1.2
     /// hitdmg = np.fmax(final_atk * atk_scale - newdef, final_atk * atk_scale * 0.05)
     /// hitdmgwolf = np.fmax(final_wolf - wolfdef, final_wolf * 0.05)
     /// hitdmgwolfskill = np.fmax(final_wolf * skill_scale - wolfdef, final_wolf * skill_scale * 0.05)
@@ -77,7 +73,6 @@ impl Vigil {
     /// avghit = (hitdmgwolfskill + (atks_per_skillactivation - 1) * hitdmgwolf) / atks_per_skillactivation
     /// dps = hitdmg/self.atk_interval * self.attack_speed/100
     /// if self.talent_dmg: dps += avghit/self.drone_atk_interval * self.attack_speed/100 * wolves
-    ///
     /// if self.skill == 3:
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -93,7 +88,6 @@ impl Vigil {
     /// if self.trait_dmg:
     /// artdps += 3 * hitdmgarts/self.atk_interval * self.attack_speed/100
     /// dps = hitdps + artdps
-    ///
     /// return dps
     #[allow(
         unused_variables,
@@ -118,18 +112,18 @@ impl Vigil {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut defignore: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmgwolf: f64 = 0.0;
         let mut artdps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut defignore: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atk_scale = 1.0;
         defignore = 0.0;
@@ -156,7 +150,6 @@ impl Vigil {
         } else {
             defense
         };
-        // ###the actual skills
         final_atk = self.unit.atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;
         let mut final_wolf =
             self.unit.drone_atk * (1.0 + self.unit.buff_atk) + self.unit.buff_atk_flat;

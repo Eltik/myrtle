@@ -560,7 +560,7 @@ fn calculate_dormitory_scores(
 
         let comfort_score =
             points::DORM_BASE + level_score + comfort_score_value + max_comfort_bonus;
-        let morale_recovery_score = 0.0; // Simplified for now
+        let morale_recovery_score = 0.0;
 
         let total_score = comfort_score + morale_recovery_score;
 

@@ -41,7 +41,6 @@ impl Caper {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.1 if self.module == 1 and self.trait_dmg else 1
     /// crate = self.talent1_params[0] if self.elite > 0 else 0
     /// cdmg = self.talent1_params[1] if self.elite > 0 else 1
@@ -57,7 +56,7 @@ impl Caper {
     /// if self.skill == 0: skillhitdmg = hitdmg
     /// sp_cost = self.skill_cost
     /// avgphys = (sp_cost * hitdmg + skillhitdmg) / (sp_cost + 1)
-    /// interval = 20/13.6 if not self.trait_dmg else (self.atk_interval/(self.attack_speed/100)) #source: dr silvergun vid
+    /// interval = 20/13.6 if not self.trait_dmg else (self.atk_interval/(self.attack_speed/100))
     /// dps = avgphys/interval
     /// if self.skill == 2:
     /// atkbuff = self.skill_params[0]
@@ -91,17 +90,17 @@ impl Caper {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut critdmg: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut sp_cost: f64 = 0.0;
-        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut critdmg: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
         let mut interval: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut avgphys: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.trait_damage {

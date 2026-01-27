@@ -40,7 +40,6 @@ impl JusticeKnight {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// fragile = self.talent1_params[1] - 1
     /// if not self.talent2_dmg: fragile = 0
     /// fragile = max(fragile, self.buff_fragile)

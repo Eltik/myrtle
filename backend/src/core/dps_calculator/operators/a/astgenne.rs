@@ -41,12 +41,10 @@ impl Astgenne {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = self.talent1_params[0] * self.talent1_params[2] if self.talent_dmg and self.elite > 0 else 0
     /// targetscaling = [0,1,2,3,4] if self.module == 2 else [0, 1, 1.85, 1.85+0.85**2, 1.85+0.85**2+0.85**3]
     /// if self.elite < 2: targetscaling = [0, 1, 1.85, 1.85+0.85**2, 1.85+0.85**2]
     /// targets = min(4, self.targets)
-    /// ####the actual skills
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// sp_cost = self.skill_cost
@@ -55,7 +53,7 @@ impl Astgenne {
     /// skill_targetscaling = [0,1,4,6,8] if self.module == 2 else [0, 1, 2 * 1.85, 2*(1.85+0.85**2), 2*(1.85+0.85**2+0.85**3)]
     /// skilldmg = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * skill_targetscaling[targets]
     /// if self.skill == 0: skilldmg = hitdmg
-    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2 #sp lockout
+    /// sp_cost = sp_cost/(1+self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/((self.attack_speed+aspd)/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmg
@@ -65,7 +63,6 @@ impl Astgenne {
     /// else:
     /// avghit = (skilldmg + int(atks_per_skillactivation) * hitdmg) / (int(atks_per_skillactivation)+1)
     /// dps = avghit/self.atk_interval*(self.attack_speed+aspd)/100
-    ///
     /// if self.skill == 2:
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0]) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk * (1-res/100), final_atk * 0.05)
@@ -97,14 +94,14 @@ impl Astgenne {
         let mut res = enemy.res;
 
         let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut avghit: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         aspd = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
             self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
@@ -133,7 +130,6 @@ impl Astgenne {
             ];
         }
         let mut targets = ((4) as f64).min((self.unit.targets as f64) as f64);
-        // ###the actual skills
         if (self.unit.skill_index as f64) < 2.0 {
             skill_scale = self.unit.skill_parameters.get(0).copied().unwrap_or(0.0);
             sp_cost = (self.unit.skill_cost as f64);

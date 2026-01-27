@@ -43,7 +43,6 @@ impl AmiyaGuard {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.talent1_params[0] * (1 + min(1, self.skill))
     /// aspd = 8 if self.module == 1 and self.module_dmg else 0
     /// if self.skill < 2:
@@ -55,7 +54,7 @@ impl AmiyaGuard {
     /// if self.skill_dmg:
     /// atkbuff += 3 * self.skill_params[3]
     /// final_atk = self.atk * (1+atkbuff + self.buff_atk) + self.buff_atk_flat
-    /// dps = final_atk/(self.atk_interval/((self.attack_speed+aspd)/100)) * np.fmax(1,-defense) #this defense part has to be included
+    /// dps = final_atk/(self.atk_interval/((self.attack_speed+aspd)/100)) * np.fmax(1,-defense)
     /// return dps
     #[allow(
         unused_variables,
@@ -80,12 +79,12 @@ impl AmiyaGuard {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         atkbuff = self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
             * (1.0 + ((1) as f64).min((self.unit.skill_index as f64) as f64));

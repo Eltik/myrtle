@@ -43,19 +43,15 @@ impl Ifrit {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.1 if self.module == 1 and self.module_dmg else 1
     /// resshred = self.talent1_params[0]
     /// ele_gauge = 1000 if self.module_dmg else 2000
     /// burnres = np.fmax(0,res-20)
-    ///
     /// recovery_interval = self.talent2_params[1]
     /// sp_recovered = self.talent2_params[0] if self.elite == 2 else 0
     /// if self.module == 1:
     /// if self.module_lvl == 2: sp_recovered = 3
     /// if self.module_lvl == 3: sp_recovered = 2 + 0.3 * 5
-    ///
-    /// ####the actual skills
     /// if self.skill < 2:
     /// atkbuff = self.skill_params[1] if self.skill == 1 else 0
     /// aspd = self.skill_params[0] if self.skill == 1 else 0
@@ -70,7 +66,6 @@ impl Ifrit {
     /// ele_hit = final_atk * (0.2*0.1*self.module_lvl)/(1+self.buff_fragile) if self.module_lvl > 1 else 0
     /// fallout_dps = (hitdmgarts + ele_hit)/self.atk_interval * (self.attack_speed+aspd)/100 * self.targets
     /// dps = (dps * time_to_proc + 10 * fallout_dps + 7000/(1+self.buff_fragile))/(time_to_proc+10)
-    ///
     /// if self.skill == 2:
     /// sp_cost = self.skill_cost
     /// skill_scale = self.skill_params[0]
@@ -80,14 +75,13 @@ impl Ifrit {
     /// hitdmgarts = np.fmax(final_atk * atk_scale *(1-newres/100), final_atk * atk_scale * 0.05)
     /// skilldmgarts = np.fmax(final_atk * atk_scale * skill_scale * (1-newres/100), final_atk * atk_scale * skill_scale * 0.05)
     /// burndmg = np.fmax(final_atk * burn_scale *(1-newres/100), final_atk * burn_scale * 0.05)
-    /// sp_cost = sp_cost / (1+sp_recovered/recovery_interval + self.sp_boost) + 1.2 #talent bonus recovery + sp lockout
+    /// sp_cost = sp_cost / (1+sp_recovered/recovery_interval + self.sp_boost) + 1.2
     /// atkcycle = self.atk_interval/(self.attack_speed/100)
     /// atks_per_skillactivation = sp_cost / atkcycle
     /// avghit = skilldmgarts + burndmg
     /// if atks_per_skillactivation > 1:
     /// avghit = (skilldmgarts + burndmg + (atks_per_skillactivation - 1) * hitdmgarts) / atks_per_skillactivation
     /// dps = avghit/self.atk_interval * self.attack_speed/100 * self.targets
-    ///
     /// if self.module == 3 and self.talent_dmg and self.module_lvl > 1:
     /// time_to_proc = ele_gauge * self.targets / (dps*0.08)
     /// newres2 = burnres * (1 + resshred)
@@ -100,7 +94,6 @@ impl Ifrit {
     /// avghit = (skilldmgarts + burndmg + (atks_per_skillactivation - 1) * hitdmgarts + ele_hit) / atks_per_skillactivation
     /// fallout_dps = (avghit + ele_hit)/self.atk_interval * self.attack_speed/100 * self.targets
     /// dps = (dps * time_to_proc + 10 * fallout_dps + 7000/(1+self.buff_fragile))/(time_to_proc+10)
-    ///
     /// if self.skill == 3:
     /// atk_scale *= self.skill_params[0]
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -113,7 +106,6 @@ impl Ifrit {
     /// newres *= self.shreds[2]
     /// hitdmgarts = np.fmax(final_atk *atk_scale *(1-newres/100), final_atk * atk_scale * 0.05)
     /// dps = hitdmgarts * self.targets
-    ///
     /// if self.module == 3 and self.talent_dmg and self.module_lvl > 1:
     /// time_to_proc = ele_gauge * self.targets / (dps*0.08)
     /// if self.shreds[2] < 1 and self.shreds[2] > 0:
@@ -150,23 +142,23 @@ impl Ifrit {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut avghit: f64 = 0.0;
+        let mut time_to_proc: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut newres2: f64 = 0.0;
-        let mut ele_hit: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
-        let mut newres: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmgarts: f64 = 0.0;
+        let mut newres: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
         let mut skilldmgarts: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut burndmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut time_to_proc: f64 = 0.0;
+        let mut ele_hit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut sp_cost: f64 = 0.0;
+        let mut burndmg: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.1
@@ -193,7 +185,6 @@ impl Ifrit {
             if (self.unit.module_level as f64) == 3.0 {
                 sp_recovered = 2.0 + 0.3 * 5.0;
             }
-            // ###the actual skills
         }
         if (self.unit.skill_index as f64) < 2.0 {
             atkbuff = if ((self.unit.skill_index as f64) as f64) == 1.0 {

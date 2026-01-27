@@ -45,12 +45,10 @@ impl Lessing {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// atkbuff = self.talent2_params[0] if self.talent2_dmg else 0
     /// aspd = 30 if self.module == 2 and self.module_dmg else 0
     /// newdef = defense * (1 - 0.04 * self.module_lvl) if self.module == 2 and self.module_lvl > 1 and self.talent_dmg else defense
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0] if self.skill == 1 else 1
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
@@ -92,16 +90,16 @@ impl Lessing {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut skill_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut atkbuff: f64 = 0.0;
 
         atk_scale = if ((self.unit.module_index as f64) as f64) == 1.0 && self.unit.module_damage {
             1.15

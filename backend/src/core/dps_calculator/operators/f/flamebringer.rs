@@ -41,7 +41,6 @@ impl Flamebringer {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// aspd = 30 if self.module == 2 and self.module_dmg else 0
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
@@ -80,13 +79,13 @@ impl Flamebringer {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut aspd: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut aspd: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
 
         aspd = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
             30.0

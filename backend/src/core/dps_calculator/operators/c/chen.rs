@@ -40,13 +40,11 @@ impl Chen {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// dmg = 1.1 if self.module == 1 else 1
     /// atkbuff = self.talent2_params[0] if self.elite == 2 else 0
     /// newdef = np.fmax(0, defense - 70) if self.module == 2 else defense
     /// sp_gain = self.talent1_params[1] / self.talent1_params[0] if self.elite > 0 else 0
     /// if self.module == 1 and self.module_lvl == 3: sp_gain *= 2
-    ///
     /// skill_scale = self.skill_params[0]
     /// final_atk = self.atk * (1 + atkbuff + self.buff_atk) + self.buff_atk_flat
     /// hitdmg = np.fmax(final_atk - newdef, final_atk * 0.05) * 2
@@ -56,14 +54,12 @@ impl Chen {
     /// sp_cost = self.skill_cost/(1/(self.atk_interval*self.attack_speed/100) + sp_gain)
     /// avghit = ( int(sp_cost / (1/(self.atk_interval*self.attack_speed/100))) * hitdmg + skilldmg)/(int(sp_cost / (1/(self.atk_interval*self.attack_speed/100)))+1)
     /// dps = avghit / self.atk_interval * self.attack_speed/100
-    ///
     /// if self.skill == 2:
     /// hitdmgphys = np.fmax(final_atk * skill_scale - newdef, final_atk * skill_scale * 0.05) * dmg
     /// hitdmgarts = np.fmax(final_atk * skill_scale * (1-res/100), final_atk * skill_scale * 0.05) * dmg
     /// skilldmg = hitdmgphys + hitdmgarts
     /// sp_cost = self.skill_cost/(1/(self.atk_interval*self.attack_speed/100) + sp_gain)
     /// dps = hitdmg / self.atk_interval * self.attack_speed/100 + skilldmg/sp_cost * min(self.targets, self.skill_params[1])
-    ///
     /// if self.skill == 3:
     /// hitdmg = np.fmax(final_atk * skill_scale - newdef, final_atk * skill_scale * 0.05) * dmg
     /// dps = 10 * hitdmg
@@ -91,15 +87,15 @@ impl Chen {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
+        let mut hitdmgarts: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut skilldmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut sp_cost: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
         let mut avghit: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut skilldmg: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
         let mut dmg = if ((self.unit.module_index as f64) as f64) == 1.0 {

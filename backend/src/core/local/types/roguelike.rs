@@ -85,8 +85,7 @@ pub struct RoguelikeDifficultyEntry {
 impl RoguelikeGameData {
     /// Create roguelike game data with known max values
     ///
-    /// The roguelike JSON files have a complex nested structure that doesn't
-    /// easily map to per-theme data. These values are based on game data analysis.
+    /// Pre-defined max values for each roguelike theme, derived from game data.
     pub fn with_known_values() -> Self {
         let mut data = RoguelikeGameData::default();
 
@@ -183,10 +182,10 @@ impl RoguelikeGameData {
         data
     }
 
-    /// Process raw roguelike table data into indexed structures (legacy, unused)
+    /// Process raw roguelike table data (unused; pre-defined values are used instead)
     #[allow(dead_code)]
     pub fn from_table(_table: RoguelikeTopicTableFile) -> Self {
-        // The JSON structure doesn't match what we need, use hardcoded values instead
+        // Table structure is incompatible; delegates to pre-defined values
         Self::with_known_values()
     }
 

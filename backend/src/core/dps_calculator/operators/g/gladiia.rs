@@ -41,10 +41,8 @@ impl Gladiia {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = min(self.talent2_params) if self.elite == 2 and self.talent2_dmg else 1
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
-    ///
     /// if self.skill < 2:
     /// skill_scale = self.skill_params[0]
     /// sp_cost = self.skill_cost/(1+self.sp_boost) + 1.2
@@ -91,15 +89,15 @@ impl Gladiia {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut hitdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut avghit: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
 
         atk_scale = if ((self.unit.elite as f64) as f64) == 2.0 && self.unit.talent2_damage {
             self.unit

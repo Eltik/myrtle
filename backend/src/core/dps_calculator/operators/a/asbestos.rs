@@ -40,7 +40,6 @@ impl Asbestos {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// extra_scale = 0.1 if self.module == 1 else 0
     /// if self.skill == 0:
     /// final_atk = self.atk * (1 + self.buff_atk) + self.buff_atk_flat
@@ -78,10 +77,10 @@ impl Asbestos {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut dps: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
 
         let mut extra_scale = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1

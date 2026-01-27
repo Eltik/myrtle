@@ -46,7 +46,6 @@ impl Tecno {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[0] if self.skill == 1 else 0
     /// if self.trait_dmg and self.module == 2 and self.module_lvl == 3: atkbuff += 0.15
     /// aspd = self.skill_params[0] if self.skill == 2 else 0

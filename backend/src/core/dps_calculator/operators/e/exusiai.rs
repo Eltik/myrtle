@@ -44,8 +44,7 @@ impl Exusiai {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
-    /// atkbuff = min(self.talent2_params) #they changed the order in the module ffs
+    /// atkbuff = min(self.talent2_params)
     /// aspd = self.talent1_params[0]
     /// if self.module == 2 and self.module_dmg: aspd += 8
     /// newdef = np.fmax(defense - self.talent1_params[1]*self.talent1_params[2],0) if self.module == 2 and self.module_lvl > 1 and self.talent_dmg else defense
@@ -89,14 +88,14 @@ impl Exusiai {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
+        let mut final_atk: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
 
         atkbuff = self

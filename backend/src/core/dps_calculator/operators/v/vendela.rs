@@ -40,7 +40,6 @@ impl Vendela {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atkbuff = self.skill_params[2] if self.skill == 2 else 0
     /// aspd = self.skill_params[0] if self.skill == 1 else 0
     /// final_atk = self.atk * (1 + atkbuff+ self.buff_atk) + self.buff_atk_flat
@@ -74,12 +73,12 @@ impl Vendela {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
 
         atkbuff = if ((self.unit.skill_index as f64) as f64) == 2.0 {
             self.unit.skill_parameters.get(2).copied().unwrap_or(0.0)

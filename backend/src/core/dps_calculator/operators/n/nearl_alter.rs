@@ -40,7 +40,6 @@ impl NearlAlter {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// atk_scale = 1.15 if self.module == 1 and self.module_dmg else 1
     /// aspd = 30 if self.module == 2 and self.module_dmg else 0
     /// def_shred = self.talent2_params[0] if self.elite == 2 else 0

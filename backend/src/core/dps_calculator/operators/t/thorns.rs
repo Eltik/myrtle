@@ -45,13 +45,11 @@ impl Thorns {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    ///
     /// bonus = 0.1 if self.module == 1 else 0
     /// arts_dot = 0 if self.elite < 2 else max(self.talent1_params)
     /// if not self.talent_dmg: arts_dot *= 0.5
     /// stacks = self.talent1_params[3] if self.module == 1 and self.module_lvl > 1 else 1
     /// arts_dot_dps = np.fmax(arts_dot *(1-res/100) , arts_dot * 0.05) * stacks
-    ///
     /// if self.skill < 2:
     /// atk_scale = 1 if self.trait_dmg else 0.8
     /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] * self.skill) + self.buff_atk_flat
@@ -126,14 +124,14 @@ impl Thorns {
         let mut res = enemy.res;
 
         let mut atk_scale: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut fallout_dps: f64 = 0.0;
-        let mut cooldown: f64 = 0.0;
-        let mut bonusdmg: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
-        let mut time_to_fallout: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut cooldown: f64 = 0.0;
+        let mut time_to_fallout: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut bonusdmg: f64 = 0.0;
 
         let mut bonus = if ((self.unit.module_index as f64) as f64) == 1.0 {
             0.1
@@ -185,7 +183,7 @@ impl Thorns {
                 if (self.unit.module_level as f64) == 1.0 {
                     dps += 6000.0 / (time_to_fallout + 10.0);
                 }
-                // UNTRANSLATED ELSE (no matching if): else:
+                // TODO: unmatched else block
                 fallout_dps = dps - arts_dot_dps + arts_dot;
                 dps = (fallout_dps * 10.0 + dps * time_to_fallout + 6000.0)
                     / (10.0 + time_to_fallout);
@@ -203,7 +201,7 @@ impl Thorns {
                 .max((final_atk * atk_scale * 0.05) as f64);
             bonusdmg = ((final_atk * bonus * (1.0 - res / 100.0)) as f64)
                 .max((final_atk * bonus * 0.05) as f64);
-            // UNTRANSLATED: if(1/self.hits < cooldown):
+            // TODO: not translated: if(1/self.hits < cooldown):
             dps = (hitdmg / cooldown + arts_dot_dps + bonusdmg / cooldown)
                 * ((self.unit.targets as f64) as f64).min((4) as f64);
             if (self.unit.module_index as f64) == 3.0 {
@@ -215,14 +213,14 @@ impl Thorns {
                 if (self.unit.module_level as f64) == 1.0 {
                     dps += 6000.0 / (time_to_fallout + 10.0);
                 }
-                // UNTRANSLATED ELSE (no matching if): else:
+                // TODO: unmatched else block
                 fallout_dps = dps
                     - (arts_dot_dps + arts_dot)
                         * ((self.unit.targets as f64) as f64).min((4) as f64);
                 dps = (fallout_dps * 10.0 + dps * time_to_fallout + 6000.0)
                     / (10.0 + time_to_fallout);
             }
-            // UNTRANSLATED ELSE (no matching if): else:
+            // TODO: unmatched else block
             cooldown = 1.0 /0.0 /* self.hits - defaults to 0 */;
             dps = (hitdmg / cooldown + arts_dot_dps)
                 * ((self.unit.targets as f64) as f64).min((4) as f64);
@@ -235,7 +233,7 @@ impl Thorns {
                 if (self.unit.module_level as f64) == 1.0 {
                     dps += 6000.0 / (time_to_fallout + 10.0);
                 }
-                // UNTRANSLATED ELSE (no matching if): else:
+                // TODO: unmatched else block
                 fallout_dps = dps
                     - (arts_dot_dps + arts_dot)
                         * ((self.unit.targets as f64) as f64).min((4) as f64);
@@ -269,7 +267,7 @@ impl Thorns {
                 if (self.unit.module_level as f64) == 1.0 {
                     dps += 6000.0 / (time_to_fallout + 10.0);
                 }
-                // UNTRANSLATED ELSE (no matching if): else:
+                // TODO: unmatched else block
                 fallout_dps = dps - arts_dot_dps + arts_dot;
                 dps = (fallout_dps * 10.0 + dps * time_to_fallout + 6000.0)
                     / (10.0 + time_to_fallout);
