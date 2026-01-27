@@ -62,7 +62,7 @@ unicode-normalization = "0.1"
 subtle = "2"
 
 # S3-compatible storage support
-rust-s3 = "0.34"
+rust-s3 = "0.37"
 futures = "0.3"
 anyhow = "1.0"
 log = "0.4"
