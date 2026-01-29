@@ -273,15 +273,14 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             }
         }
 
-        // Fetch operator data only for operators in the tier list (reduces ~5MB to ~500KB)
+        // Fetch operator data for all operators in the tier list
         const operatorsData: Record<string, OperatorFromList> = {};
 
         if (operatorIds.size > 0) {
             const operatorsBase = `${backendURL}/static/operators`;
             const params = new URLSearchParams({
-                limit: String(operatorIds.size + 10), // Only fetch what we need + small buffer
+                limit: "1000",
                 fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait"].join(","),
-                ids: Array.from(operatorIds).join(","), // Filter to only tier list operators
             });
 
             const operatorsResponse = await fetch(`${operatorsBase}?${params.toString()}`, {
