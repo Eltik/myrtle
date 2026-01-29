@@ -132,7 +132,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
+            <div className="flex min-h-100 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
@@ -140,7 +140,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
 
     if (error) {
         return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-100 flex-col items-center justify-center text-center">
                 <p className="text-destructive">Failed to load characters</p>
                 <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
             </div>
@@ -149,7 +149,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
 
     if (!characters || Object.keys(characters).length === 0) {
         return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-100 flex-col items-center justify-center text-center">
                 <p className="text-muted-foreground">No characters found</p>
             </div>
         );

@@ -18,7 +18,7 @@ export function ScoreView({ userId }: ScoreViewProps) {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
+            <div className="flex min-h-100 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
@@ -26,7 +26,7 @@ export function ScoreView({ userId }: ScoreViewProps) {
 
     if (error) {
         return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-100 flex-col items-center justify-center text-center">
                 <p className="text-destructive">Failed to load score data</p>
                 <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
             </div>
