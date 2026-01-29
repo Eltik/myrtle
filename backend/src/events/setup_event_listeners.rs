@@ -307,6 +307,13 @@ fn log_game_data_stats(stats: &GameDataStats) {
         stats.stages.to_string().cyan(),
     );
 
+    println!(
+        "{} {} {}",
+        "│".dimmed(),
+        "Enemies".dimmed(),
+        stats.enemies.to_string().cyan(),
+    );
+
     log::success("Game data loaded successfully");
 }
 

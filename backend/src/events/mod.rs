@@ -34,6 +34,7 @@ pub struct GameDataStats {
     pub voices: usize,
     pub zones: usize,
     pub stages: usize,
+    pub enemies: usize,
 }
 
 /// Chibi data statistics

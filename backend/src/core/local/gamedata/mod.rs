@@ -1,4 +1,5 @@
 pub mod chibi;
+pub mod enemies;
 pub mod handbook;
 pub mod materials;
 pub mod modules;

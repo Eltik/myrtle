@@ -288,6 +288,7 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
             voices: game_data.voices.char_words.len(),
             zones: game_data.zones.len(),
             stages: game_data.stages.len(),
+            enemies: game_data.enemies.enemy_data.len(),
         }));
     } else {
         events.emit(ConfigEvent::GameDataEmpty);

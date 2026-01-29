@@ -11,6 +11,7 @@ use crate::core::local::gamedata::operators::{enrich_all_operators, extract_all_
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
 use crate::core::local::gamedata::voice::enrich_all_voices;
+use crate::core::local::types::enemy::{EnemyHandbook, EnemyHandbookTableFile};
 use crate::core::local::types::gacha::{GachaData, GachaTableFile};
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
@@ -305,6 +306,19 @@ pub fn init_game_data(
         }
     };
 
+    // ============ Load Enemy Handbook Table ============
+    let enemy_handbook: EnemyHandbook =
+        match handler.load_table::<EnemyHandbookTableFile>("enemy_handbook_table") {
+            Ok(enemy_table) => EnemyHandbook::from(enemy_table),
+            Err(e) => {
+                events.emit(ConfigEvent::GameDataTableWarning {
+                    table: "enemy_handbook_table".to_string(),
+                    error: e.to_string(),
+                });
+                EnemyHandbook::default()
+            }
+        };
+
     // ============ Load Stage Table ============
     let stages: HashMap<String, Stage> = match handler.load_table::<StageTableFile>("stage_table") {
         Ok(stage_table) => stage_table.stages,
@@ -460,6 +474,7 @@ pub fn init_game_data(
         medals,
         roguelike,
         asset_mappings,
+        enemies: enemy_handbook,
     })
 }
 
