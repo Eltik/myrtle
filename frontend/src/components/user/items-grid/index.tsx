@@ -71,7 +71,7 @@ export function ItemsGrid({ userId }: ItemsGridProps) {
 
     if (isLoading) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
+            <div className="flex min-h-100 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
@@ -79,7 +79,7 @@ export function ItemsGrid({ userId }: ItemsGridProps) {
 
     if (error) {
         return (
-            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-100 flex-col items-center justify-center text-center">
                 <p className="text-destructive">Failed to load items</p>
                 <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
             </div>
@@ -104,7 +104,7 @@ export function ItemsGrid({ userId }: ItemsGridProps) {
 
             {/* Items Table */}
             <Card className="overflow-hidden border-border/50 py-0">
-                <ScrollArea className="h-[520px]">
+                <ScrollArea className="h-130">
                     <div className="min-w-full">
                         {/* Table Header */}
                         <div className="sticky top-0 z-10 grid grid-cols-[56px_1fr_100px] gap-4 border-border/50 border-b bg-card/95 px-4 py-3 backdrop-blur-sm">

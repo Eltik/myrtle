@@ -80,6 +80,7 @@ export function TierListIndex({ tierLists }: TierListIndexProps) {
                         {filteredTierLists.map((tierList, index) => (
                             <motion.div
                                 animate={{ opacity: 1, y: 0 }}
+                                className="h-full"
                                 initial={{ opacity: 0, y: 8 }}
                                 key={tierList.id}
                                 transition={{
@@ -114,7 +115,7 @@ function TierListCard({ tierList }: { tierList: TierListPreview }) {
     });
 
     return (
-        <Link className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition-all duration-200 hover:border-primary/50 hover:bg-card" href={`/operators/tier-list?slug=${tierList.slug}`}>
+        <Link className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/50 transition-all duration-200 hover:border-primary/50 hover:bg-card" href={`/operators/tier-list?slug=${tierList.slug}`}>
             {/* Preview Header - Operator portraits */}
             <div className="relative h-28 overflow-hidden bg-linear-to-b from-muted/50 to-transparent">
                 {tierList.topOperators.length > 0 ? (
