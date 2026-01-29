@@ -1,4 +1,5 @@
 pub mod chibis;
+pub mod enemies;
 pub mod gacha;
 pub mod handbook;
 pub mod materials;

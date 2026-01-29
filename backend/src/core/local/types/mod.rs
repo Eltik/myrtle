@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use crate::core::local::{
     asset_mapping::AssetMappings,
     types::{
-        chibi::ChibiData, gacha::GachaData, handbook::Handbook, material::Materials,
-        medal::MedalData, module::Modules, operator::Operator, range::Ranges,
+        chibi::ChibiData, enemy::EnemyHandbook, gacha::GachaData, handbook::Handbook,
+        material::Materials, medal::MedalData, module::Modules, operator::Operator, range::Ranges,
         roguelike::RoguelikeGameData, skill::Skill, skin::SkinData, stage::Stage, trust::Favor,
         voice::Voices, zone::Zone,
     },
@@ -46,6 +46,7 @@ pub struct GameData {
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub asset_mappings: AssetMappings,
+    pub enemies: EnemyHandbook,
 }
 
 impl GameData {

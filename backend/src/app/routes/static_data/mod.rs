@@ -103,5 +103,10 @@ pub fn router() -> Router<AppState> {
             "/stages/zone/{zone_id}",
             get(endpoints::stages::get_stages_by_zone),
         )
+        // Enemies
+        .route("/enemies", get(endpoints::enemies::get_all_enemies))
+        .route("/enemies/races", get(endpoints::enemies::get_all_races))
+        .route("/enemies/levels", get(endpoints::enemies::get_level_info))
+        .route("/enemies/{id}", get(endpoints::enemies::get_enemy_by_id))
         .layer(CompressionLayer::new())
 }
