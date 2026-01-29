@@ -8,23 +8,40 @@ import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { getSecretaryAvatarURL } from "~/lib/utils";
-import type { User } from "~/types/api/impl/user";
 import { Stat } from "./impl/stat";
 
-interface UserHeaderProps {
-    data: User;
+interface UserProfile {
+    nickName: string;
+    nickNumber: string;
+    level: number;
+    resume: string;
+    avatarId: string;
+    secretary: string;
+    secretarySkinId: string;
+    gold: number;
+    diamondShard: number;
+    payDiamond: number;
+    freeDiamond: number;
+    friendNumLimit: number;
 }
 
-export function UserHeader({ data }: UserHeaderProps) {
+interface UserHeaderProps {
+    profile: UserProfile;
+}
+
+export function UserHeader({ profile }: UserHeaderProps) {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopyUsername = () => {
-        const username = `${data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}#${data.status.nickNumber}`;
+        const username = `${profile.nickName && profile.nickName.length > 0 ? profile.nickName : "Unknown"}#${profile.nickNumber}`;
         void navigator.clipboard.writeText(username);
         toast.success("Copied username to clipboard!");
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
+
+    // Create a compatible object for getSecretaryAvatarURL
+    const avatarData = { status: { secretary: profile.secretary, secretarySkinId: profile.secretarySkinId } };
 
     return (
         <InView
@@ -39,15 +56,15 @@ export function UserHeader({ data }: UserHeaderProps) {
                 <CardHeader>
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage alt={data.status?.nickName ?? "User"} src={getSecretaryAvatarURL(data)} />
-                            <AvatarFallback>{data.status?.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
+                            <AvatarImage alt={profile.nickName ?? "User"} src={getSecretaryAvatarURL(avatarData)} />
+                            <AvatarFallback>{profile.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
                         <div>
                             <CardTitle className="text-2xl">
                                 <div className="flex flex-row gap-4">
                                     <div>
-                                        {data.status.nickName && data.status.nickName.length > 0 ? data.status.nickName : "Unknown"}
-                                        <span className="text-muted-foreground">#{data.status.nickNumber}</span>
+                                        {profile.nickName && profile.nickName.length > 0 ? profile.nickName : "Unknown"}
+                                        <span className="text-muted-foreground">#{profile.nickNumber}</span>
                                     </div>
                                     <motion.button
                                         animate={{ scale: isCopied ? [1, 0.85, 1] : 1 }}
@@ -74,8 +91,8 @@ export function UserHeader({ data }: UserHeaderProps) {
                             </CardTitle>
                             <CardDescription>
                                 <div className="flex flex-col">
-                                    <span>Level {data.status.level}</span>
-                                    <span>{data.status.resume}</span>
+                                    <span>Level {profile.level}</span>
+                                    <span>{profile.resume}</span>
                                 </div>
                             </CardDescription>
                         </div>
@@ -83,10 +100,10 @@ export function UserHeader({ data }: UserHeaderProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                        <Stat label="LMD" value={data.status.gold} />
-                        <Stat label="Orundum" value={data.status.diamondShard} />
-                        <Stat label="Originium" value={data.status.payDiamond + data.status.freeDiamond} />
-                        <Stat label="Friend Limit" value={data.status.friendNumLimit} />
+                        <Stat label="LMD" value={profile.gold} />
+                        <Stat label="Orundum" value={profile.diamondShard} />
+                        <Stat label="Originium" value={profile.payDiamond + profile.freeDiamond} />
+                        <Stat label="Friend Limit" value={profile.friendNumLimit} />
                     </div>
                 </CardContent>
             </Card>

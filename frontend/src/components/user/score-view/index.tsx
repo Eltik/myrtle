@@ -1,6 +1,8 @@
 "use client";
+
+import { Loader2 } from "lucide-react";
 import { InView } from "~/components/ui/motion-primitives/in-view";
-import type { StoredUserScore } from "~/types/api/impl/user";
+import { useUserScore } from "~/hooks/use-user-score";
 import { ActivityMetricsCard } from "./impl/activity-metrics-card";
 import { EngagementMetricsCard } from "./impl/engagement-metrics-card";
 import { HeroGradeDisplay } from "./impl/hero-grade-display";
@@ -8,10 +10,29 @@ import { ScoreBreakdownGrid } from "./impl/score-breakdown-grid";
 import { ScoreOverviewCard } from "./impl/score-overview-card";
 
 interface ScoreViewProps {
-    scoreData: StoredUserScore | null;
+    userId: string;
 }
 
-export function ScoreView({ scoreData }: ScoreViewProps) {
+export function ScoreView({ userId }: ScoreViewProps) {
+    const { score: scoreData, isLoading, error } = useUserScore(userId);
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+                <p className="text-destructive">Failed to load score data</p>
+                <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
+            </div>
+        );
+    }
+
     if (!scoreData) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
