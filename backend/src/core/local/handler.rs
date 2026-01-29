@@ -7,11 +7,12 @@ use serde::de::DeserializeOwned;
 
 use crate::core::local::asset_mapping::AssetMappings;
 use crate::core::local::gamedata::chibi::init_chibi_data;
+use crate::core::local::gamedata::enemies::enrich_enemies_with_stats;
 use crate::core::local::gamedata::operators::{enrich_all_operators, extract_all_drones};
 use crate::core::local::gamedata::skills::enrich_all_skills;
 use crate::core::local::gamedata::skins::enrich_all_skins;
 use crate::core::local::gamedata::voice::enrich_all_voices;
-use crate::core::local::types::enemy::{EnemyHandbook, EnemyHandbookTableFile};
+use crate::core::local::types::enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile};
 use crate::core::local::types::gacha::{GachaData, GachaTableFile};
 use crate::core::local::types::handbook::{Handbook, HandbookTableFile};
 use crate::core::local::types::material::{ItemTableFile, Materials};
@@ -307,17 +308,46 @@ pub fn init_game_data(
     };
 
     // ============ Load Enemy Handbook Table ============
-    let enemy_handbook: EnemyHandbook =
-        match handler.load_table::<EnemyHandbookTableFile>("enemy_handbook_table") {
-            Ok(enemy_table) => EnemyHandbook::from(enemy_table),
-            Err(e) => {
-                events.emit(ConfigEvent::GameDataTableWarning {
-                    table: "enemy_handbook_table".to_string(),
-                    error: e.to_string(),
-                });
-                EnemyHandbook::default()
+    let enemy_handbook: EnemyHandbook = match handler
+        .load_table::<EnemyHandbookTableFile>("enemy_handbook_table")
+    {
+        Ok(enemy_table) => {
+            // Load enemy database from assets for stats enrichment
+            let enemy_db_path =
+                assets_dir.join("decoded/gamedata/levels/enemydata/enemy_database.json");
+            match std::fs::File::open(&enemy_db_path) {
+                Ok(file) => {
+                    let reader = std::io::BufReader::new(file);
+                    match serde_json::from_reader::<_, EnemyDatabaseFile>(reader) {
+                        Ok(enemy_database) => {
+                            enrich_enemies_with_stats(enemy_table, &enemy_database, &asset_mappings)
+                        }
+                        Err(e) => {
+                            events.emit(ConfigEvent::GameDataTableWarning {
+                                table: "enemy_database".to_string(),
+                                error: e.to_string(),
+                            });
+                            EnemyHandbook::from(enemy_table)
+                        }
+                    }
+                }
+                Err(e) => {
+                    events.emit(ConfigEvent::GameDataTableWarning {
+                        table: "enemy_database".to_string(),
+                        error: e.to_string(),
+                    });
+                    EnemyHandbook::from(enemy_table)
+                }
             }
-        };
+        }
+        Err(e) => {
+            events.emit(ConfigEvent::GameDataTableWarning {
+                table: "enemy_handbook_table".to_string(),
+                error: e.to_string(),
+            });
+            EnemyHandbook::default()
+        }
+    };
 
     // ============ Load Stage Table ============
     let stages: HashMap<String, Stage> = match handler.load_table::<StageTableFile>("stage_table") {
