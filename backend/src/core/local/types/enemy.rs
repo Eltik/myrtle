@@ -28,6 +28,27 @@ pub enum DamageType {
     Heal,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum EnemyApplyWay {
+    #[default]
+    Melee,
+    Ranged,
+    None,
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum EnemyMotion {
+    #[default]
+    Walk,
+    Fly,
+    #[serde(other)]
+    Unknown,
+}
+
 // ============================================================================
 // Nested Structs
 // ============================================================================
@@ -85,6 +106,179 @@ pub struct AbilityInfo {
 }
 
 // ============================================================================
+// Enemy Stats (from enemy_database.json)
+// ============================================================================
+
+/// Wrapper for optional values in enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MaybeValue<T: Default> {
+    #[serde(rename = "M_defined")]
+    pub defined: bool,
+    #[serde(rename = "M_value", default)]
+    pub value: T,
+}
+
+impl<T: Default> MaybeValue<T> {
+    pub fn get(&self) -> Option<&T> {
+        if self.defined {
+            Some(&self.value)
+        } else {
+            None
+        }
+    }
+
+    pub fn into_option(self) -> Option<T> {
+        if self.defined { Some(self.value) } else { None }
+    }
+}
+
+/// Enemy attributes from enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RawEnemyAttributes {
+    pub max_hp: MaybeValue<i32>,
+    pub atk: MaybeValue<i32>,
+    pub def: MaybeValue<i32>,
+    pub magic_resistance: MaybeValue<f64>,
+    pub move_speed: MaybeValue<f64>,
+    pub attack_speed: MaybeValue<f64>,
+    pub base_attack_time: MaybeValue<f64>,
+    pub mass_level: MaybeValue<i32>,
+    pub hp_recovery_per_sec: MaybeValue<f64>,
+    pub stun_immune: MaybeValue<bool>,
+    pub silence_immune: MaybeValue<bool>,
+    pub sleep_immune: MaybeValue<bool>,
+    pub frozen_immune: MaybeValue<bool>,
+    pub levitate_immune: MaybeValue<bool>,
+    pub palsy_immune: MaybeValue<bool>,
+    pub feared_immune: MaybeValue<bool>,
+    pub ep_damage_resistance: MaybeValue<f64>,
+    pub ep_resistance: MaybeValue<f64>,
+}
+
+/// Skill blackboard entry
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillBlackboardEntry {
+    #[serde(default)]
+    pub key: String,
+    #[serde(default)]
+    pub value: f64,
+    #[serde(default)]
+    pub value_str: Option<String>,
+}
+
+/// Enemy skill from enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RawEnemySkill {
+    pub prefab_key: String,
+    pub priority: i32,
+    pub cooldown: f64,
+    pub init_cooldown: f64,
+    pub sp_cost: i32,
+    #[serde(default)]
+    pub blackboard: Vec<SkillBlackboardEntry>,
+}
+
+/// Enemy data entry from enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RawEnemyData {
+    pub name: MaybeValue<String>,
+    pub description: MaybeValue<String>,
+    pub prefab_key: MaybeValue<String>,
+    pub attributes: RawEnemyAttributes,
+    pub apply_way: MaybeValue<String>,
+    pub motion: MaybeValue<String>,
+    pub level_type: MaybeValue<String>,
+    pub range_radius: MaybeValue<f64>,
+    pub life_point_reduce: MaybeValue<i32>,
+    #[serde(default)]
+    pub skills: Vec<RawEnemySkill>,
+}
+
+/// Level entry in enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RawEnemyLevelEntry {
+    pub level: i32,
+    pub enemy_data: RawEnemyData,
+}
+
+/// Enemy entry in enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RawEnemyDatabaseEntry {
+    pub key: String,
+    pub value: Vec<RawEnemyLevelEntry>,
+}
+
+/// Root structure for enemy_database.json
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct EnemyDatabaseFile {
+    pub enemies: Vec<RawEnemyDatabaseEntry>,
+}
+
+// ============================================================================
+// Enriched Enemy Stats (output format)
+// ============================================================================
+
+/// Processed enemy attributes for API output
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnemyAttributes {
+    pub max_hp: i32,
+    pub atk: i32,
+    pub def: i32,
+    pub magic_resistance: f64,
+    pub move_speed: f64,
+    pub attack_speed: f64,
+    pub base_attack_time: f64,
+    pub mass_level: i32,
+    pub hp_recovery_per_sec: f64,
+    pub stun_immune: bool,
+    pub silence_immune: bool,
+    pub sleep_immune: bool,
+    pub frozen_immune: bool,
+    pub levitate_immune: bool,
+}
+
+/// Processed enemy skill for API output
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnemySkill {
+    pub prefab_key: String,
+    pub priority: i32,
+    pub cooldown: f64,
+    pub init_cooldown: f64,
+    pub sp_cost: i32,
+    pub blackboard: Vec<SkillBlackboardEntry>,
+}
+
+/// Per-level stats for an enemy
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnemyLevelStats {
+    pub level: i32,
+    pub attributes: EnemyAttributes,
+    pub apply_way: Option<String>,
+    pub motion: Option<String>,
+    pub range_radius: Option<f64>,
+    pub life_point_reduce: i32,
+    pub skills: Vec<EnemySkill>,
+}
+
+/// All stats for an enemy (all levels)
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EnemyStats {
+    pub levels: Vec<EnemyLevelStats>,
+}
+
+// ============================================================================
 // Enemy
 // ============================================================================
 
@@ -125,6 +319,12 @@ pub struct Enemy {
     pub damage_type: Vec<DamageType>,
     #[serde(alias = "InvisibleDetail")]
     pub invisible_detail: bool,
+    /// Enriched stats from enemy_database.json
+    #[serde(default, skip_deserializing)]
+    pub stats: Option<EnemyStats>,
+    /// Enemy portrait/icon path
+    #[serde(default, skip_deserializing)]
+    pub portrait: Option<String>,
 }
 
 // ============================================================================

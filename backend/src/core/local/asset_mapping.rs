@@ -22,6 +22,8 @@ pub struct AssetMappings {
     pub chararts: HashMap<String, (bool, bool)>,
     /// Item icons: icon_id.png -> directory path (spritepack or arts/items/icons)
     pub item_icons: HashMap<String, String>,
+    /// Enemy icons: enemy_xxx_yyy.png -> icon_enemies_N
+    pub enemy_icons: HashMap<String, String>,
 }
 
 /// Result of building asset mappings, includes stats for logging
@@ -268,6 +270,27 @@ impl AssetMappings {
         }
         stats.item_icons_arts = mappings.item_icons.len() - item_arts_count_before;
 
+        // Scan enemy icon directories (6 dirs: icon_enemies_0 through icon_enemies_5)
+        for i in 0..10 {
+            let dir_name = format!("icon_enemies_{i}");
+            let dir_path = spritepack.join(&dir_name);
+            if dir_path.exists()
+                && let Ok(entries) = std::fs::read_dir(&dir_path)
+            {
+                for entry in entries.flatten() {
+                    if let Some(file_name) = entry.file_name().to_str()
+                        && file_name.ends_with(".png")
+                    {
+                        let base_name = file_name.trim_end_matches(".png");
+                        mappings
+                            .enemy_icons
+                            .insert(base_name.to_string(), dir_name.clone());
+                    }
+                }
+            }
+        }
+        stats.enemy_icons = mappings.enemy_icons.len();
+
         AssetMappingResult { mappings, stats }
     }
 
@@ -401,5 +424,14 @@ impl AssetMappings {
             // Fallback to default items directory
             format!("/upk/arts/items/icons/{icon_id}.png")
         }
+    }
+
+    /// Get enemy icon path by enemy_id
+    /// Enemy icons are in icon_enemies_N directories
+    /// Returns the base icon (without _2, _3 suffix) if found
+    pub fn get_enemy_icon_path(&self, enemy_id: &str) -> Option<String> {
+        self.enemy_icons
+            .get(enemy_id)
+            .map(|dir| format!("/upk/spritepack/{dir}/{enemy_id}.png"))
     }
 }

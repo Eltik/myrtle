@@ -74,7 +74,7 @@ export default function AdminPage() {
     if (loading || authorized === null || authorized === false) {
         return (
             <>
-                <SEO description="Admin panel for myrtle.moe" noIndex path="/admin" title="Admin" />
+                <SEO description="myrtle.moe" noIndex path="/admin" title="Admin" />
                 <div className="flex min-h-[50vh] items-center justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 </div>

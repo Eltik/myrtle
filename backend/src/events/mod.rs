@@ -17,6 +17,7 @@ pub struct AssetStats {
     pub chararts: usize,
     pub item_icons: usize,
     pub item_icons_arts: usize,
+    pub enemy_icons: usize,
 }
 
 /// Game data statistics for logging
