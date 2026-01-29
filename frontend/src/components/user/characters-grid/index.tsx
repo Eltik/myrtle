@@ -1,8 +1,10 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
-import type { CharacterData, User } from "~/types/api/impl/user";
+import { useUserCharacters } from "~/hooks/use-user-characters";
+import type { CharacterData } from "~/types/api/impl/user";
 import type { RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
 import { CharacterCard } from "../character-card";
 import { CompactCharacterCard } from "../character-card/compact-card";
@@ -66,10 +68,11 @@ const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, last
 });
 
 interface CharactersGridProps {
-    data: User;
+    userId: string;
 }
 
-export function CharactersGrid({ data }: CharactersGridProps) {
+export function CharactersGrid({ userId }: CharactersGridProps) {
+    const { characters, isLoading, error } = useUserCharacters(userId);
     const [sortBy, setSortBy] = useState<SortBy>("level");
     const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
     const [filterRarity, setFilterRarity] = useState<RarityFilter>("all");
@@ -78,6 +81,7 @@ export function CharactersGrid({ data }: CharactersGridProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("detailed");
     const { prefetch } = useCDNPrefetch();
     const hasPreloadedStaticIcons = useRef(false);
+    const observer = useRef<IntersectionObserver | null>(null);
 
     // Preload static UI icons after initial render
     useEffect(() => {
@@ -93,15 +97,11 @@ export function CharactersGrid({ data }: CharactersGridProps) {
     }, [prefetch]);
 
     const sortedAndFilteredCharacters = useMemo(() => {
-        const chars = Object.values(data.troop.chars) as (CharacterData & { static?: { name?: string; rarity?: string } })[];
+        if (!characters) return [];
+        const chars = Object.values(characters) as (CharacterData & { static?: { name?: string; rarity?: string } })[];
         return filterAndSortCharacters(chars, sortBy, sortOrder, filterRarity, searchTerm);
-    }, [data.troop.chars, sortBy, sortOrder, filterRarity, searchTerm]);
+    }, [characters, sortBy, sortOrder, filterRarity, searchTerm]);
 
-    const toggleSortOrder = () => {
-        setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    };
-
-    const observer = useRef<IntersectionObserver | null>(null);
     const lastCharacterRef = useCallback(
         (node: HTMLDivElement) => {
             if (observer.current) observer.current.disconnect();
@@ -125,6 +125,35 @@ export function CharactersGrid({ data }: CharactersGridProps) {
         const initialCount = viewMode === "compact" ? 48 : 24;
         setDisplayCount(Math.min(initialCount, totalCount));
     }, [totalCount, viewMode]);
+
+    const toggleSortOrder = () => {
+        setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+                <p className="text-destructive">Failed to load characters</p>
+                <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
+            </div>
+        );
+    }
+
+    if (!characters || Object.keys(characters).length === 0) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+                <p className="text-muted-foreground">No characters found</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex w-full flex-col space-y-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Package, Search, X } from "lucide-react";
+import { Loader2, Package, Search, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MorphingDialog, MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
@@ -8,17 +8,18 @@ import { Button } from "~/components/ui/shadcn/button";
 import { Card } from "~/components/ui/shadcn/card";
 import { Input } from "~/components/ui/shadcn/input";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import type { InventoryItem, User } from "~/types/api/impl/user";
+import { useUserItems } from "~/hooks/use-user-items";
 import { ItemDetailCard } from "./impl/item-detail-card";
 import { ItemIcon } from "./impl/item-icon";
 import { SortIcon } from "./impl/sort-icon";
 import type { ItemWithData } from "./impl/types";
 
 interface ItemsGridProps {
-    data: User;
+    userId: string;
 }
 
-export function ItemsGrid({ data }: ItemsGridProps) {
+export function ItemsGrid({ userId }: ItemsGridProps) {
+    const { inventory, isLoading, error } = useUserItems(userId);
     const [searchTerm, setSearchTerm] = useState("");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [sortBy, setSortBy] = useState<"name" | "amount">("amount");
@@ -32,7 +33,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
     }, []);
 
     const items = useMemo((): ItemWithData[] => {
-        const inventory = data.inventory as Record<string, InventoryItem>;
+        if (!inventory) return [];
 
         return Object.entries(inventory)
             .map(([id, item]): ItemWithData => {
@@ -57,7 +58,7 @@ export function ItemsGrid({ data }: ItemsGridProps) {
                 const comparison = sortBy === "name" ? aName.localeCompare(bName) : a.displayAmount - b.displayAmount;
                 return sortOrder === "asc" ? comparison : -comparison;
             });
-    }, [data.inventory, searchTerm, sortBy, sortOrder]);
+    }, [inventory, searchTerm, sortBy, sortOrder]);
 
     const toggleSort = (field: "name" | "amount") => {
         if (sortBy === field) {
@@ -67,6 +68,23 @@ export function ItemsGrid({ data }: ItemsGridProps) {
             setSortOrder("desc");
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[400px] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+                <p className="text-destructive">Failed to load items</p>
+                <p className="mt-1 text-muted-foreground/70 text-sm">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4">

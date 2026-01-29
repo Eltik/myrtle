@@ -9,15 +9,33 @@ import { UserHeader } from "~/components/user/user-header";
 import { env } from "~/env";
 import type { StoredUser } from "~/types/api/impl/user";
 
+/**
+ * Minimal profile data for SSR - reduces payload from 2-5MB to ~30KB
+ */
+interface UserProfile {
+    nickName: string;
+    nickNumber: string;
+    level: number;
+    resume: string;
+    avatarId: string;
+    secretary: string;
+    secretarySkinId: string;
+    gold: number;
+    diamondShard: number;
+    payDiamond: number;
+    freeDiamond: number;
+    friendNumLimit: number;
+}
+
 interface UserPageProps {
-    userData: StoredUser | null;
+    profile: UserProfile | null;
     userId: string;
     baseUrl: string;
     error?: string;
 }
 
-export default function UserPage({ userData, userId, baseUrl, error }: UserPageProps) {
-    if (error || !userData || !userData.data) {
+export default function UserPage({ profile, userId, baseUrl, error }: UserPageProps) {
+    if (error || !profile) {
         return (
             <>
                 <SEO description="User profile not found on myrtle.moe." noIndex path={`/user/${userId}`} title="User Not Found" />
@@ -31,8 +49,7 @@ export default function UserPage({ userData, userId, baseUrl, error }: UserPageP
         );
     }
 
-    const data = userData.data;
-    const nickName = data.status?.nickName ?? "Unknown";
+    const nickName = profile.nickName ?? "Unknown";
     const possessive = nickName.endsWith("s") ? `${nickName}'` : `${nickName}'s`;
 
     return (
@@ -46,7 +63,7 @@ export default function UserPage({ userData, userId, baseUrl, error }: UserPageP
                 type="profile"
             />
             <div className="container mx-auto p-4">
-                <UserHeader data={data} />
+                <UserHeader profile={profile} />
 
                 <InView
                     once
@@ -65,17 +82,17 @@ export default function UserPage({ userData, userId, baseUrl, error }: UserPageP
 
                         <TabsContent className="space-y-4" value="characters">
                             <h2 className="font-bold text-2xl">Characters</h2>
-                            <CharactersGrid data={data} />
+                            <CharactersGrid userId={userId} />
                         </TabsContent>
 
                         <TabsContent className="space-y-4" value="items">
                             <h2 className="font-bold text-2xl">Items</h2>
-                            <ItemsGrid data={data} />
+                            <ItemsGrid userId={userId} />
                         </TabsContent>
 
                         <TabsContent className="space-y-4" value="score">
                             <h2 className="font-bold text-2xl">Score & Grade</h2>
-                            <ScoreView scoreData={userData.score} />
+                            <ScoreView userId={userId} />
                         </TabsContent>
                     </Tabs>
                 </InView>
@@ -110,7 +127,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             if (response.status === 404) {
                 return {
                     props: {
-                        userData: null,
+                        profile: null,
                         userId: id,
                         baseUrl,
                         error: "User not found",
@@ -121,7 +138,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             console.error(`Backend get-user failed: ${response.status} - ${errorText}`);
             return {
                 props: {
-                    userData: null,
+                    profile: null,
                     userId: id,
                     baseUrl,
                     error: "Failed to fetch user data",
@@ -134,7 +151,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
         if (!userData || !userData.data || !userData.data.status) {
             return {
                 props: {
-                    userData: null,
+                    profile: null,
                     userId: id,
                     baseUrl,
                     error: "Invalid user data received",
@@ -142,9 +159,26 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             };
         }
 
+        // Extract only essential profile data for SSR (reduces payload from 2-5MB to ~30KB)
+        const status = userData.data.status;
+        const profile: UserProfile = {
+            nickName: status.nickName,
+            nickNumber: status.nickNumber,
+            level: status.level,
+            resume: status.resume,
+            avatarId: status.avatarId,
+            secretary: status.secretary,
+            secretarySkinId: status.secretarySkinId,
+            gold: status.gold,
+            diamondShard: status.diamondShard,
+            payDiamond: status.payDiamond,
+            freeDiamond: status.freeDiamond,
+            friendNumLimit: status.friendNumLimit,
+        };
+
         return {
             props: {
-                userData,
+                profile,
                 userId: id,
                 baseUrl,
             },
@@ -153,7 +187,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
         console.error("Error fetching user data:", error);
         return {
             props: {
-                userData: null,
+                profile: null,
                 userId: id,
                 baseUrl,
                 error: error instanceof Error ? error.message : "Failed to fetch user data",
