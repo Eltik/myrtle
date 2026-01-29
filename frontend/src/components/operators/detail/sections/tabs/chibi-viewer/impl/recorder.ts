@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, EXPORT_BG_COLOR, EXPORT_GIF_FPS, EXPORT_HEIGHT, EXPORT_MP4_FPS, EXPORT_WIDTH } from "./constants";
+import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type ExportSettings } from "./constants";
 
 export type ExportFormat = "gif" | "mp4";
 
@@ -8,6 +8,7 @@ export interface RecordingOptions {
     spine: import("pixi-spine").Spine;
     animationName: string;
     format: ExportFormat;
+    settings?: Partial<ExportSettings>;
     onProgress?: (progress: number) => void;
     signal?: AbortSignal;
 }
@@ -31,55 +32,69 @@ function positionSpine(spine: import("pixi-spine").Spine, width: number, height:
     spine.scale.set(scale);
 }
 
-function createOffscreenApp(transparent: boolean): PIXI.Application {
+function createOffscreenApp(transparent: boolean, scale: number): PIXI.Application {
+    const width = Math.round(EXPORT_WIDTH * scale);
+    const height = Math.round(EXPORT_HEIGHT * scale);
     return new PIXI.Application({
-        width: EXPORT_WIDTH,
-        height: EXPORT_HEIGHT,
+        width,
+        height,
         backgroundColor: transparent ? 0x000000 : EXPORT_BG_COLOR,
         backgroundAlpha: transparent ? 0 : 1,
         antialias: true,
         resolution: 1,
         autoDensity: false,
-        // Required for canvas.captureStream() and extract to work with WebGL
         preserveDrawingBuffer: true,
         forceCanvas: false,
     });
 }
 
 function resetAnimation(spine: import("pixi-spine").Spine, animationName: string) {
+    spine.state.clearListeners();
     spine.state.setAnimation(0, animationName, false);
     const track = spine.state.tracks[0];
     if (track) {
         track.trackTime = 0;
     }
-    // Clear any listeners from the live viewer
-    spine.state.clearListeners();
+    spine.state.apply(spine.skeleton);
+    spine.skeleton.updateWorldTransform();
 }
 
 export async function recordAsGif(options: RecordingOptions): Promise<RecordingResult> {
-    const { liveApp, spine, animationName, onProgress, signal } = options;
+    const { liveApp, spine, animationName, settings, onProgress, signal } = options;
     const { GIFEncoder, quantize, applyPalette } = await import("gifenc");
+
+    const mergedSettings = { ...DEFAULT_EXPORT_SETTINGS, ...settings };
+    const { scale, fps, transparentBg } = mergedSettings;
+
+    const exportWidth = Math.round(EXPORT_WIDTH * scale);
+    const exportHeight = Math.round(EXPORT_HEIGHT * scale);
 
     const rawDuration = getAnimationDuration(spine, animationName);
     const effectiveDuration = rawDuration / ANIMATION_SPEED;
-    const totalFrames = Math.ceil(effectiveDuration * EXPORT_GIF_FPS);
-    const frameDelta = 1 / EXPORT_GIF_FPS;
-    const delay = Math.round(1000 / EXPORT_GIF_FPS);
+    const totalFrames = Math.ceil(effectiveDuration * fps);
+    const frameDelta = 1 / fps;
+    const delay = Math.round(1000 / fps);
 
-    const offscreenApp = createOffscreenApp(true);
+    const offscreenApp = createOffscreenApp(transparentBg, scale);
+
+    // Create a separate 2D canvas for pixel extraction (avoid WebGL extract issues)
+    const extractCanvas = document.createElement("canvas");
+    extractCanvas.width = exportWidth;
+    extractCanvas.height = exportHeight;
+    const extractCtx = extractCanvas.getContext("2d");
+    if (!extractCtx) throw new Error("Failed to create 2D context for extraction");
 
     try {
-        // Re-parent spine to offscreen app
         liveApp.stage.removeChild(spine);
         offscreenApp.stage.addChild(spine);
-        positionSpine(spine, EXPORT_WIDTH, EXPORT_HEIGHT);
+        positionSpine(spine, exportWidth, exportHeight);
 
-        // Reset animation
         const savedTimeScale = spine.state.timeScale;
         spine.state.timeScale = ANIMATION_SPEED;
         resetAnimation(spine, animationName);
 
         const encoder = GIFEncoder();
+        const pixiCanvas = offscreenApp.view as HTMLCanvasElement;
 
         for (let frame = 0; frame < totalFrames; frame++) {
             if (signal?.aborted) {
@@ -92,19 +107,20 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
 
             offscreenApp.renderer.render(offscreenApp.stage);
 
-            // Extract pixels
-            const extractedCanvas = offscreenApp.renderer.extract.canvas(offscreenApp.stage) as HTMLCanvasElement;
-            const ctx2d = extractedCanvas.getContext("2d");
-            if (!ctx2d) throw new Error("Failed to get 2D context for frame extraction");
-            const imageData = ctx2d.getImageData(0, 0, extractedCanvas.width, extractedCanvas.height);
+            // Copy from WebGL canvas to 2D canvas for reliable pixel extraction
+            extractCtx.clearRect(0, 0, exportWidth, exportHeight);
+            extractCtx.drawImage(pixiCanvas, 0, 0);
+            const imageData = extractCtx.getImageData(0, 0, exportWidth, exportHeight);
             const rgba = imageData.data;
 
-            // Check if the frame has any transparent pixels
+            // Check for transparency
             let hasTransparency = false;
-            for (let i = 3; i < rgba.length; i += 4) {
-                if ((rgba[i] ?? 255) < 128) {
-                    hasTransparency = true;
-                    break;
+            if (transparentBg) {
+                for (let i = 3; i < rgba.length; i += 4) {
+                    if ((rgba[i] ?? 255) < 128) {
+                        hasTransparency = true;
+                        break;
+                    }
                 }
             }
 
@@ -112,7 +128,6 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
             const indexedPixels = applyPalette(rgba, palette);
 
             if (hasTransparency) {
-                // Find the darkest palette entry to use as the transparent index
                 let transparentIndex = 0;
                 let minBrightness = Number.POSITIVE_INFINITY;
                 for (let i = 0; i < palette.length; i++) {
@@ -125,22 +140,21 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
                     }
                 }
 
-                // Map transparent pixels to the transparent index
                 for (let i = 0; i < rgba.length; i += 4) {
                     if ((rgba[i + 3] ?? 255) < 128) {
                         indexedPixels[i / 4] = transparentIndex;
                     }
                 }
 
-                encoder.writeFrame(indexedPixels, extractedCanvas.width, extractedCanvas.height, {
+                encoder.writeFrame(indexedPixels, exportWidth, exportHeight, {
                     palette,
                     delay,
                     transparent: true,
                     transparentIndex,
-                    dispose: 2, // Restore to background (important for transparency)
+                    dispose: 2,
                 });
             } else {
-                encoder.writeFrame(indexedPixels, extractedCanvas.width, extractedCanvas.height, {
+                encoder.writeFrame(indexedPixels, exportWidth, exportHeight, {
                     palette,
                     delay,
                 });
@@ -148,7 +162,6 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
 
             onProgress?.(((frame + 1) / totalFrames) * 100);
 
-            // Yield to main thread every 5 frames
             if (frame % 5 === 0) {
                 await new Promise<void>((r) => setTimeout(r, 0));
             }
@@ -156,7 +169,6 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
 
         encoder.finish();
 
-        // Restore spine to live app
         spine.state.timeScale = savedTimeScale;
         offscreenApp.stage.removeChild(spine);
         liveApp.stage.addChild(spine);
@@ -169,7 +181,6 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
             mimeType: "image/gif",
         };
     } catch (err) {
-        // Ensure spine is re-parented even on error
         if (!liveApp.stage.children.includes(spine)) {
             try {
                 offscreenApp.stage.removeChild(spine);
@@ -196,20 +207,26 @@ function getSupportedMimeType(): string {
 }
 
 export async function recordAsVideo(options: RecordingOptions): Promise<RecordingResult> {
-    const { liveApp, spine, animationName, onProgress, signal } = options;
+    const { liveApp, spine, animationName, settings, onProgress, signal } = options;
+
+    const mergedSettings = { ...DEFAULT_EXPORT_SETTINGS, ...settings };
+    const { scale, fps } = mergedSettings;
+
+    const exportWidth = Math.round(EXPORT_WIDTH * scale);
+    const exportHeight = Math.round(EXPORT_HEIGHT * scale);
 
     const rawDuration = getAnimationDuration(spine, animationName);
     const effectiveDuration = rawDuration / ANIMATION_SPEED;
-    const totalFrames = Math.ceil(effectiveDuration * EXPORT_MP4_FPS);
-    const frameDelta = 1 / EXPORT_MP4_FPS;
+    const totalFrames = Math.ceil(effectiveDuration * fps);
+    const frameDelta = 1 / fps;
+    const frameInterval = 1000 / fps; // ms between frames for proper timing
 
-    const offscreenApp = createOffscreenApp(false);
+    const offscreenApp = createOffscreenApp(false, scale);
 
     try {
-        // Re-parent spine
         liveApp.stage.removeChild(spine);
         offscreenApp.stage.addChild(spine);
-        positionSpine(spine, EXPORT_WIDTH, EXPORT_HEIGHT);
+        positionSpine(spine, exportWidth, exportHeight);
 
         const savedTimeScale = spine.state.timeScale;
         spine.state.timeScale = ANIMATION_SPEED;
@@ -220,10 +237,8 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
         const isMP4 = mimeType.includes("mp4");
         const extension = isMP4 ? "mp4" : "webm";
 
-        // Create capture stream - 0 means manual frame control
-        const stream = canvas.captureStream(0);
-        const videoTrack = stream.getVideoTracks()[0];
-        const canRequestFrame = videoTrack && "requestFrame" in videoTrack;
+        // Use auto-capture at desired FPS for proper frame timing in output
+        const stream = canvas.captureStream(fps);
 
         const chunks: Blob[] = [];
         const recorder = new MediaRecorder(stream, {
@@ -241,94 +256,28 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
 
         recorder.start();
 
-        if (canRequestFrame) {
-            // Frame-by-frame mode (Chrome, Edge, Safari)
-            for (let frame = 0; frame < totalFrames; frame++) {
-                if (signal?.aborted) {
-                    recorder.stop();
-                    await stopPromise;
-                    throw new DOMException("Recording cancelled", "AbortError");
-                }
-
-                if (frame > 0) {
-                    spine.update(frameDelta);
-                }
-
-                offscreenApp.renderer.render(offscreenApp.stage);
-                (videoTrack as unknown as { requestFrame: () => void }).requestFrame();
-
-                onProgress?.(((frame + 1) / totalFrames) * 100);
-
-                // Allow encoder to process
-                await new Promise<void>((r) => setTimeout(r, 0));
-            }
-        } else {
-            // Real-time fallback (Firefox)
-            const frameInterval = 1000 / EXPORT_MP4_FPS;
-
-            // Re-create with auto-capture since we can't use requestFrame
-            const fallbackStream = canvas.captureStream(EXPORT_MP4_FPS);
-            // We need to stop the old recorder and start a new one with the auto-capture stream
-            recorder.stop();
-            await stopPromise;
-            chunks.length = 0;
-
-            const fallbackRecorder = new MediaRecorder(fallbackStream, {
-                mimeType,
-                videoBitsPerSecond: 5_000_000,
-            });
-
-            const fallbackChunks: Blob[] = [];
-            fallbackRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) fallbackChunks.push(e.data);
-            };
-
-            const fallbackStopPromise = new Promise<void>((resolve) => {
-                fallbackRecorder.onstop = () => resolve();
-            });
-
-            // Reset animation for the fallback path
-            resetAnimation(spine, animationName);
-            fallbackRecorder.start();
-
-            for (let frame = 0; frame < totalFrames; frame++) {
-                if (signal?.aborted) {
-                    fallbackRecorder.stop();
-                    await fallbackStopPromise;
-                    throw new DOMException("Recording cancelled", "AbortError");
-                }
-
-                if (frame > 0) {
-                    spine.update(frameDelta);
-                }
-
-                offscreenApp.renderer.render(offscreenApp.stage);
-                onProgress?.(((frame + 1) / totalFrames) * 100);
-
-                await new Promise<void>((r) => setTimeout(r, frameInterval));
+        // Record in real-time to ensure proper frame timing
+        for (let frame = 0; frame < totalFrames; frame++) {
+            if (signal?.aborted) {
+                recorder.stop();
+                await stopPromise;
+                throw new DOMException("Recording cancelled", "AbortError");
             }
 
-            fallbackRecorder.stop();
-            await fallbackStopPromise;
+            if (frame > 0) {
+                spine.update(frameDelta);
+            }
 
-            // Restore spine
-            spine.state.timeScale = savedTimeScale;
-            offscreenApp.stage.removeChild(spine);
-            liveApp.stage.addChild(spine);
-            positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-            spine.state.setAnimation(0, animationName, true);
+            offscreenApp.renderer.render(offscreenApp.stage);
+            onProgress?.(((frame + 1) / totalFrames) * 100);
 
-            return {
-                blob: new Blob(fallbackChunks, { type: mimeType }),
-                filename: `chibi-${animationName}-${Date.now()}.${extension}`,
-                mimeType,
-            };
+            // Wait for the frame interval to ensure proper timing
+            await new Promise<void>((r) => setTimeout(r, frameInterval));
         }
 
         recorder.stop();
         await stopPromise;
 
-        // Restore spine to live app
         spine.state.timeScale = savedTimeScale;
         offscreenApp.stage.removeChild(spine);
         liveApp.stage.addChild(spine);
@@ -341,7 +290,6 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
             mimeType,
         };
     } catch (err) {
-        // Ensure spine is re-parented even on error
         if (!liveApp.stage.children.includes(spine)) {
             try {
                 offscreenApp.stage.removeChild(spine);

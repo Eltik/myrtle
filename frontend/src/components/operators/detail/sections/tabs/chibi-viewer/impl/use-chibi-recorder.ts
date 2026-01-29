@@ -1,5 +1,6 @@
 import type * as PIXI from "pixi.js";
 import { useCallback, useRef, useState } from "react";
+import type { ExportSettings } from "./constants";
 import type { ExportFormat } from "./recorder";
 
 interface UseChibiRecorderOptions {
@@ -12,7 +13,7 @@ interface UseChibiRecorderOptions {
 interface UseChibiRecorderReturn {
     isRecording: boolean;
     progress: number;
-    startRecording: (format: ExportFormat) => Promise<void>;
+    startRecording: (format: ExportFormat, settings?: Partial<ExportSettings>) => Promise<void>;
     cancelRecording: () => void;
 }
 
@@ -22,7 +23,7 @@ export function useChibiRecorder({ appRef, spineRef, selectedAnimation, recordin
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const startRecording = useCallback(
-        async (format: ExportFormat) => {
+        async (format: ExportFormat, settings?: Partial<ExportSettings>) => {
             const app = appRef.current;
             const spine = spineRef.current;
             if (!app || !spine || !selectedAnimation) return;
@@ -43,6 +44,7 @@ export function useChibiRecorder({ appRef, spineRef, selectedAnimation, recordin
                     spine,
                     animationName: selectedAnimation,
                     format,
+                    settings,
                     onProgress: setProgress,
                     signal: controller.signal,
                 });

@@ -70,7 +70,7 @@ export function ChartSettingsPopover({ onExportPng, onExportCsv, isExporting = f
                         </TabsTrigger>
                     </TabsList>
 
-                    <div className="max-h-[400px] overflow-y-auto p-3">
+                    <div className="max-h-100 overflow-y-auto p-3">
                         <TabsContent className="mt-0" value="visual">
                             <VisualSettingsSection />
                         </TabsContent>
