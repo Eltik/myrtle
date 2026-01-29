@@ -82,7 +82,10 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
     extractCanvas.width = exportWidth;
     extractCanvas.height = exportHeight;
     const extractCtx = extractCanvas.getContext("2d");
-    if (!extractCtx) throw new Error("Failed to create 2D context for extraction");
+    if (!extractCtx) {
+        offscreenApp.destroy(true, { children: false, texture: false });
+        throw new Error("Failed to create 2D context for extraction");
+    }
 
     try {
         liveApp.stage.removeChild(spine);
@@ -175,11 +178,18 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
         positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
         spine.state.setAnimation(0, animationName, true);
 
-        return {
+        // Create blob from encoder bytes
+        const result = {
             blob: new Blob([encoder.bytes().buffer as ArrayBuffer], { type: "image/gif" }),
             filename: `chibi-${animationName}-${Date.now()}.gif`,
             mimeType: "image/gif",
         };
+
+        // Clean up extraction canvas
+        extractCanvas.width = 0;
+        extractCanvas.height = 0;
+
+        return result;
     } catch (err) {
         if (!liveApp.stage.children.includes(spine)) {
             try {
@@ -194,6 +204,9 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
         }
         throw err;
     } finally {
+        // Clean up extraction canvas on error path too
+        extractCanvas.width = 0;
+        extractCanvas.height = 0;
         offscreenApp.destroy(true, { children: false, texture: false });
     }
 }
@@ -219,9 +232,23 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
     const effectiveDuration = rawDuration / ANIMATION_SPEED;
     const totalFrames = Math.ceil(effectiveDuration * fps);
     const frameDelta = 1 / fps;
-    const frameInterval = 1000 / fps; // ms between frames for proper timing
+    const frameInterval = 1000 / fps;
 
     const offscreenApp = createOffscreenApp(false, scale);
+
+    // Create a 2D canvas for frame extraction and playback
+    const playbackCanvas = document.createElement("canvas");
+    playbackCanvas.width = exportWidth;
+    playbackCanvas.height = exportHeight;
+    const playbackCtx = playbackCanvas.getContext("2d");
+    if (!playbackCtx) {
+        offscreenApp.destroy(true, { children: false, texture: false });
+        throw new Error("Failed to create 2D context for video encoding");
+    }
+
+    // Track resources for cleanup
+    let stream: MediaStream | null = null;
+    const frames: ImageData[] = [];
 
     try {
         liveApp.stage.removeChild(spine);
@@ -232,14 +259,47 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
         spine.state.timeScale = ANIMATION_SPEED;
         resetAnimation(spine, animationName);
 
-        const canvas = offscreenApp.view as HTMLCanvasElement;
+        const pixiCanvas = offscreenApp.view as HTMLCanvasElement;
+
+        // Phase 1: Capture all frames as fast as possible (non-realtime)
+        for (let frame = 0; frame < totalFrames; frame++) {
+            if (signal?.aborted) {
+                throw new DOMException("Recording cancelled", "AbortError");
+            }
+
+            if (frame > 0) {
+                spine.update(frameDelta);
+            }
+
+            offscreenApp.renderer.render(offscreenApp.stage);
+
+            // Copy frame to 2D canvas and capture ImageData
+            playbackCtx.clearRect(0, 0, exportWidth, exportHeight);
+            playbackCtx.drawImage(pixiCanvas, 0, 0);
+            frames.push(playbackCtx.getImageData(0, 0, exportWidth, exportHeight));
+
+            // Report progress (0-50% for frame capture)
+            onProgress?.(((frame + 1) / totalFrames) * 50);
+
+            // Yield every 10 frames to keep UI responsive
+            if (frame % 10 === 0) {
+                await new Promise<void>((r) => setTimeout(r, 0));
+            }
+        }
+
+        // Restore spine immediately after capture
+        spine.state.timeScale = savedTimeScale;
+        offscreenApp.stage.removeChild(spine);
+        liveApp.stage.addChild(spine);
+        positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
+        spine.state.setAnimation(0, animationName, true);
+
+        // Phase 2: Encode frames to video with proper timing
         const mimeType = getSupportedMimeType();
         const isMP4 = mimeType.includes("mp4");
         const extension = isMP4 ? "mp4" : "webm";
 
-        // Use auto-capture at desired FPS for proper frame timing in output
-        const stream = canvas.captureStream(fps);
-
+        stream = playbackCanvas.captureStream(fps);
         const chunks: Blob[] = [];
         const recorder = new MediaRecorder(stream, {
             mimeType,
@@ -256,33 +316,40 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
 
         recorder.start();
 
-        // Record in real-time to ensure proper frame timing
-        for (let frame = 0; frame < totalFrames; frame++) {
+        // Play back frames at correct timing for encoding
+        for (let frame = 0; frame < frames.length; frame++) {
             if (signal?.aborted) {
                 recorder.stop();
                 await stopPromise;
                 throw new DOMException("Recording cancelled", "AbortError");
             }
 
-            if (frame > 0) {
-                spine.update(frameDelta);
+            const frameData = frames[frame];
+            if (frameData) {
+                playbackCtx.putImageData(frameData, 0, 0);
             }
 
-            offscreenApp.renderer.render(offscreenApp.stage);
-            onProgress?.(((frame + 1) / totalFrames) * 100);
+            // Report progress (50-100% for encoding)
+            onProgress?.(50 + ((frame + 1) / frames.length) * 50);
 
-            // Wait for the frame interval to ensure proper timing
+            // Wait for frame interval to ensure proper timing in output
             await new Promise<void>((r) => setTimeout(r, frameInterval));
         }
 
         recorder.stop();
         await stopPromise;
 
-        spine.state.timeScale = savedTimeScale;
-        offscreenApp.stage.removeChild(spine);
-        liveApp.stage.addChild(spine);
-        positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-        spine.state.setAnimation(0, animationName, true);
+        // Stop media stream tracks
+        for (const track of stream.getTracks()) {
+            track.stop();
+        }
+
+        // Clear frames array to free memory
+        frames.length = 0;
+
+        // Clean up playback canvas
+        playbackCanvas.width = 0;
+        playbackCanvas.height = 0;
 
         return {
             blob: new Blob(chunks, { type: mimeType }),
@@ -303,6 +370,15 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
         }
         throw err;
     } finally {
+        // Clean up resources
+        frames.length = 0;
+        if (stream) {
+            for (const track of stream.getTracks()) {
+                track.stop();
+            }
+        }
+        playbackCanvas.width = 0;
+        playbackCanvas.height = 0;
         offscreenApp.destroy(true, { children: false, texture: false });
     }
 }
