@@ -20,7 +20,8 @@ export const getServerSideProps = async () => {
 
     const params = new URLSearchParams({
         limit: "1000",
-        fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait", "phases", "handbook"].join(","),
+        // Fetch only fields needed for list view - removes 'handbook' which is large and unused
+        fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait", "phases"].join(","),
     });
 
     const data = (await (

@@ -1,4 +1,4 @@
-import { range } from "lodash-es";
+import { range } from "~/lib/utils";
 import type { AttributeData, Module, Operator } from "~/types/api";
 
 /**

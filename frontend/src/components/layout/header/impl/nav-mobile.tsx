@@ -56,6 +56,7 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                                     href={dropdownItem.href}
                                                     key={dropdownItem.label}
                                                     onClick={() => setMobileMenuOpen(false)}
+                                                    prefetch={false}
                                                 >
                                                     <span className="flex items-center gap-1.5 font-medium text-sm">
                                                         {dropdownItem.label}
@@ -74,6 +75,7 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                 href={item.href}
                                 key={typeof item.label === "string" ? item.label : index}
                                 onClick={() => setMobileMenuOpen(false)}
+                                prefetch={false}
                             >
                                 {item.label}
                             </Link>
@@ -93,17 +95,17 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                                     <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 overflow-hidden">
-                                    <Link className="truncate font-medium text-sm hover:underline" href={`/user/${user.status.uid}`}>
+                                    <Link className="truncate font-medium text-sm hover:underline" href={`/user/${user.status.uid}`} prefetch={false}>
                                         {user.status.nickName}
                                     </Link>
                                     <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
                                 </div>
                             </div>
-                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/tier-lists" onClick={() => setMobileMenuOpen(false)}>
+                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/tier-lists" onClick={() => setMobileMenuOpen(false)} prefetch={false}>
                                 <LayoutList className="mr-2 h-4 w-4" />
                                 My Tier Lists
                             </Link>
-                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/settings" onClick={() => setMobileMenuOpen(false)}>
+                            <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/settings" onClick={() => setMobileMenuOpen(false)} prefetch={false}>
                                 <Cog className="mr-2 h-4 w-4" />
                                 Settings
                             </Link>

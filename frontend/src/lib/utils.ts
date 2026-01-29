@@ -7,6 +7,23 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Creates an array of numbers from start (inclusive) to end (exclusive).
+ * Native replacement for lodash range function.
+ *
+ * @example
+ * range(4) // => [0, 1, 2, 3]
+ * range(1, 5) // => [1, 2, 3, 4]
+ */
+export function range(start: number, end?: number): number[] {
+    if (end === undefined) {
+        end = start;
+        start = 0;
+    }
+    const length = Math.max(end - start, 0);
+    return Array.from({ length }, (_, i) => start + i);
+}
+
+/**
  * Calculates the relative luminance of a hex color.
  * Uses the WCAG formula for calculating luminance.
  * @param hex - A hex color string (with or without #)

@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { PagesTopLoader } from "nextjs-toploader/pages";
 import { Layout } from "~/components/layout/layout";
+import { ErrorBoundary } from "~/components/ui/error-boundary";
 import { Toaster } from "~/components/ui/shadcn/sonner";
 import { AccentColorProvider } from "~/context/accent-color-context";
 
@@ -20,7 +21,9 @@ const MyApp: AppType = ({ Component, pageProps }) => {
                     <PagesTopLoader color="var(--primary)" height={4} showSpinner={false} />
                     <Layout>
                         <Toaster />
-                        <Component {...pageProps} />
+                        <ErrorBoundary>
+                            <Component {...pageProps} />
+                        </ErrorBoundary>
                     </Layout>
                 </div>
             </AccentColorProvider>

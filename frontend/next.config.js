@@ -17,6 +17,12 @@ const config = {
         locales: ["en"],
         defaultLocale: "en",
     },
+
+    // Optimize package imports to reduce bundle size
+    experimental: {
+        optimizePackageImports: ["lucide-react", "@radix-ui/react-icons", "motion/react", "recharts"],
+    },
+
     images: {
         remotePatterns: [
             {
