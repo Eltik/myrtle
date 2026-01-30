@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { env } from "~/env";
 import { backendFetch } from "~/lib/backend-fetch";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
+import type { Enemy, EnemyInfoList, RaceData } from "~/types/api/impl/enemy";
 import type { Item } from "~/types/api/impl/material";
 import type { Module, ModuleData, Modules } from "~/types/api/impl/module";
 import type { Operator } from "~/types/api/impl/operator";
@@ -148,7 +149,7 @@ const fetchData = async <T>(endpoint: string, cacheKey?: string): Promise<T> => 
 
 // Request body type definition
 interface RequestBody {
-    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "gacha" | "chibis";
+    type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "gacha" | "chibis" | "enemies" | "enemy" | "enemyRaces" | "enemyLevelInfo";
     id?: string;
     method?: string;
     trust?: number;
@@ -156,6 +157,8 @@ interface RequestBody {
     tags?: string[];
     recruitment?: string;
     limit?: number;
+    cursor?: string;
+    level?: number;
 }
 
 // Use NextApiRequest and NextApiResponse for Pages Router
@@ -375,6 +378,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-chibis-${body.id ?? "all"}`;
                 const chibis = await fetchData<{ chibi?: ChibiCharacter; chibis?: ChibiCharacter[] }>(endpoint, cacheKey);
                 return res.status(200).json(chibis);
+            }
+            case "enemies": {
+                // GET /static/enemies with optional query params
+                const queryParams: string[] = [];
+                if (body.cursor) queryParams.push(`cursor=${encodeURIComponent(body.cursor)}`);
+                if (body.limit) queryParams.push(`limit=${body.limit}`);
+                if (body.fields && body.fields.length > 0) queryParams.push(`fields=${encodeURIComponent(body.fields.join(","))}`);
+                if (body.level !== undefined) queryParams.push(`level=${body.level}`);
+
+                const endpoint = queryParams.length > 0 ? `/static/enemies?${queryParams.join("&")}` : "/static/enemies";
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies-${body.cursor ?? "start"}-${body.limit ?? "default"}-${body.level ?? "all"}`;
+                const enemies = await fetchData<{ enemies: Enemy[]; hasMore: boolean; nextCursor: string | null; total: number }>(endpoint, cacheKey);
+                return res.status(200).json(enemies);
+            }
+            case "enemy": {
+                // GET /static/enemies/{id}
+                if (!body.id) {
+                    return res.status(400).json({ error: "Missing 'id' for enemy request." });
+                }
+                const endpoint = `/static/enemies/${body.id}`;
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-${body.id}`;
+                const enemy = await fetchData<{ enemy: Enemy }>(endpoint, cacheKey);
+                return res.status(200).json(enemy);
+            }
+            case "enemyRaces": {
+                // GET /static/enemies/races
+                const endpoint = "/static/enemies/races";
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-races`;
+                const races = await fetchData<{ races: Record<string, RaceData> }>(endpoint, cacheKey);
+                return res.status(200).json(races);
+            }
+            case "enemyLevelInfo": {
+                // GET /static/enemies/levels
+                const endpoint = "/static/enemies/levels";
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-level-info`;
+                const levelInfo = await fetchData<{ levels: EnemyInfoList[] }>(endpoint, cacheKey);
+                return res.status(200).json(levelInfo);
             }
             default: {
                 const unknownType = body.type as string;

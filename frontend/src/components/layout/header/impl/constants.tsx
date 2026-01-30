@@ -18,6 +18,7 @@ export const navItems: NavItem[] = [
             { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
             { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
             { label: "Randomizer", href: "/tools/randomizer", description: "Randomize squads and stages" },
+            { label: "Enemy Database", href: "/tools/enemies", description: "Browse all enemy data and stats" },
         ],
     },
     {
