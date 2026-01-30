@@ -4,20 +4,12 @@ import { EnemiesDatabase } from "~/components/tools/enemies-database";
 import { env } from "~/env";
 import type { EnemiesResponse, Enemy, EnemyInfoList, LevelInfoResponse, RaceData, RacesResponse } from "~/types/api/impl/enemy";
 
-// ============================================================================
-// Props Interface
-// ============================================================================
-
 interface EnemiesPageProps {
     enemies: Enemy[];
     races: Record<string, RaceData>;
     levelInfo: EnemyInfoList[];
     total: number;
 }
-
-// ============================================================================
-// Data Fetching Utilities
-// ============================================================================
 
 /**
  * Fetch all enemies with pagination support
@@ -145,9 +137,14 @@ async function fetchAllEnemiesPaginated(
     return { enemies: allEnemies, total };
 }
 
-// ============================================================================
-// Server-Side Data Fetching
-// ============================================================================
+const EnemiesPage: NextPage<EnemiesPageProps> = ({ enemies, races, levelInfo, total }) => {
+    return (
+        <>
+            <SEO description="Browse and search enemies from Arknights with detailed stats and abilities. Filter by enemy level, damage type, and more." path="/tools/enemies" title="Enemy Database" />
+            <EnemiesDatabase enemies={enemies} levelInfo={levelInfo} races={races} total={total} />
+        </>
+    );
+};
 
 export const getServerSideProps: GetServerSideProps<EnemiesPageProps> = async () => {
     const backendURL = env.BACKEND_URL;
@@ -175,19 +172,6 @@ export const getServerSideProps: GetServerSideProps<EnemiesPageProps> = async ()
         console.error("Failed to fetch enemy data:", error);
         return { notFound: true };
     }
-};
-
-// ============================================================================
-// Page Component
-// ============================================================================
-
-const EnemiesPage: NextPage<EnemiesPageProps> = ({ enemies, races, levelInfo, total }) => {
-    return (
-        <>
-            <SEO description="Browse and search enemies from Arknights with detailed stats and abilities. Filter by enemy level, damage type, and more." path="/tools/enemies" title="Enemy Database" />
-            <EnemiesDatabase enemies={enemies} levelInfo={levelInfo} races={races} total={total} />
-        </>
-    );
 };
 
 export default EnemiesPage;
