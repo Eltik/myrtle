@@ -1,8 +1,16 @@
 // Enemy types
 
+// ============================================================================
+// Enums
+// ============================================================================
+
 export type EnemyLevel = "NORMAL" | "ELITE" | "BOSS";
 
-export type DamageType = "PHYSIC" | "MAGIC" | "NO_DAMAGE";
+export type DamageType = "PHYSIC" | "MAGIC" | "NO_DAMAGE" | "HEAL";
+
+// ============================================================================
+// Base Types
+// ============================================================================
 
 export interface StatRange {
     min: number;
@@ -32,6 +40,60 @@ export interface AbilityInfo {
     textFormat: string;
 }
 
+// ============================================================================
+// Enriched Stats Types (from enemy_database.json)
+// ============================================================================
+
+export interface SkillBlackboardEntry {
+    key: string;
+    value: number;
+    valueStr: string | null;
+}
+
+export interface EnemySkill {
+    prefabKey: string;
+    priority: number;
+    cooldown: number;
+    initCooldown: number;
+    spCost: number;
+    blackboard: SkillBlackboardEntry[];
+}
+
+export interface EnemyAttributes {
+    maxHp: number;
+    atk: number;
+    def: number;
+    magicResistance: number;
+    moveSpeed: number;
+    attackSpeed: number;
+    baseAttackTime: number;
+    massLevel: number;
+    hpRecoveryPerSec: number;
+    stunImmune: boolean;
+    silenceImmune: boolean;
+    sleepImmune: boolean;
+    frozenImmune: boolean;
+    levitateImmune: boolean;
+}
+
+export interface EnemyLevelStats {
+    level: number;
+    attributes: EnemyAttributes;
+    applyWay: string | null;
+    motion: string | null;
+    rangeRadius: number | null;
+    lifePointReduce: number;
+    skills: EnemySkill[];
+}
+
+export interface EnemyStats {
+    levels: EnemyLevelStats[];
+}
+
+// ============================================================================
+// Main Enemy Type
+// ============================================================================
+
 export interface Enemy {
     enemyId: string;
     enemyIndex: string;
@@ -50,10 +112,41 @@ export interface Enemy {
     linkEnemies: string[];
     damageType: DamageType[];
     invisibleDetail: boolean;
+    // Enriched fields from enemy_database.json
+    stats: EnemyStats | null;
+    // Enemy portrait/icon path
+    portrait: string | null;
 }
+
+// ============================================================================
+// Container Types
+// ============================================================================
 
 export interface EnemyHandbook {
     levelInfoList: EnemyInfoList[];
     enemyData: Record<string, Enemy>;
     raceData: Record<string, RaceData>;
+}
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+export interface EnemiesResponse {
+    enemies: Enemy[];
+    hasMore: boolean;
+    nextCursor: string | null;
+    total: number;
+}
+
+export interface EnemyResponse {
+    enemy: Enemy;
+}
+
+export interface RacesResponse {
+    races: Record<string, RaceData>;
+}
+
+export interface LevelInfoResponse {
+    levels: EnemyInfoList[];
 }
