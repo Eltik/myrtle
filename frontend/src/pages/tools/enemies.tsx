@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { SEO } from "~/components/seo";
-import { EnemiesDatabase } from "~/components/tools/enemies-database";
+import { EnemyDatabase } from "~/components/tools/enemy-database";
 import { env } from "~/env";
 import type { EnemiesResponse, Enemy, EnemyInfoList, LevelInfoResponse, RaceData, RacesResponse } from "~/types/api/impl/enemy";
 
@@ -141,7 +141,7 @@ const EnemiesPage: NextPage<EnemiesPageProps> = ({ enemies, races, levelInfo, to
     return (
         <>
             <SEO description="Browse and search enemies from Arknights with detailed stats and abilities. Filter by enemy level, damage type, and more." path="/tools/enemies" title="Enemy Database" />
-            <EnemiesDatabase enemies={enemies} levelInfo={levelInfo} races={races} total={total} />
+            <EnemyDatabase enemies={enemies} levelInfo={levelInfo} races={races} total={total} />
         </>
     );
 };

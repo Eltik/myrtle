@@ -6,30 +6,32 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
-import type { OperatorFromList } from "~/types/api";
-import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES, SORT_OPTIONS } from "../constants";
-import { useOperatorFilters } from "../hooks";
-import type { SortOption } from "../hooks/impl/use-operator-filters";
-import { OperatorCard } from "../operator-card";
-import { OperatorFilters } from "../operator-filters";
-import { Pagination } from "../ui/impl/pagination";
-import { ResponsiveFilterContainer } from "../ui/impl/responsive-filter-container";
+import type { Enemy, EnemyInfoList, RaceData } from "~/types/api";
+import { ITEMS_PER_PAGE, SORT_OPTIONS } from "../constants";
+import { EnemyCard } from "../enemy-card";
+import { EnemyFilters } from "../enemy-filters";
+import { type SortOption, useEnemyFilters } from "../hooks";
+import { Pagination, ResponsiveFilterContainer } from "../ui";
 import { CONTAINER_TRANSITION, TOGGLE_TRANSITION } from "./impl/constants";
 import { getInitialListColumns, getInitialViewMode } from "./impl/helpers";
 
-export function OperatorsList({ data }: { data: OperatorFromList[] }) {
-    // UI state - default to list view on mobile
+interface EnemiesDatabaseProps {
+    enemies: Enemy[];
+    races: Record<string, RaceData>;
+    levelInfo: EnemyInfoList[];
+    total: number;
+}
+
+export function EnemyDatabase({ enemies, races, levelInfo, total }: EnemiesDatabaseProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [listColumns, setListColumns] = useState(2);
 
-    // Set initial view mode and list columns based on screen size (runs once on mount)
     useEffect(() => {
         setViewMode(getInitialViewMode());
         setListColumns(getInitialListColumns());
     }, []);
 
-    // Persist list columns to localStorage
     const handleListColumnsChange = useCallback((value: string) => {
         const cols = Number.parseInt(value, 10);
         setListColumns(cols);
@@ -37,34 +39,13 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     }, []);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [hoveredOperator, setHoveredOperator] = useState<string | null>(null);
+    const [hoveredEnemy, setHoveredEnemy] = useState<string | null>(null);
     const [isGrayscaleActive, setIsGrayscaleActive] = useState(false);
 
-    // Filter state from custom hook
-    const {
-        filters,
-        filterOptions,
-        filteredOperators,
-        setSearchQuery,
-        setSelectedClasses,
-        setSelectedSubclasses,
-        setSelectedRarities,
-        setSelectedBirthPlaces,
-        setSelectedNations,
-        setSelectedFactions,
-        setSelectedGenders,
-        setSelectedRaces,
-        setSelectedArtists,
-        setSortBy,
-        setSortOrder,
-        clearFilters,
-        activeFilterCount,
-        hasActiveFilters,
-    } = useOperatorFilters(data);
+    const { filters, filterOptions, filteredEnemies, setSearchQuery, setSelectedEnemyLevels, setSelectedDamageTypes, setSelectedEnemyTypes, setSortBy, setSortOrder, clearFilters, activeFilterCount, hasActiveFilters } = useEnemyFilters(enemies);
 
-    // Pagination
-    const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
-    const paginatedOperators = filteredOperators.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredEnemies.length / ITEMS_PER_PAGE);
+    const paginatedEnemies = filteredEnemies.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -86,42 +67,40 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
     const hoverHandlers = useMemo(() => {
         const handlers = new Map<string, (isOpen: boolean) => void>();
-        for (const operator of paginatedOperators) {
-            const operatorId = operator.id ?? "";
-            handlers.set(operatorId, (isOpen: boolean) => {
+        for (const enemy of paginatedEnemies) {
+            const enemyId = enemy.enemyId ?? "";
+            handlers.set(enemyId, (isOpen: boolean) => {
                 if (isOpen) {
-                    setHoveredOperator(operatorId);
+                    setHoveredEnemy(enemyId);
                     setIsGrayscaleActive(true);
                 } else {
-                    setHoveredOperator((current) => (current === operatorId ? null : current));
+                    setHoveredEnemy((current) => (current === enemyId ? null : current));
                     setIsGrayscaleActive(false);
                 }
             });
         }
         return handlers;
-    }, [paginatedOperators]);
+    }, [paginatedEnemies]);
 
     return (
         <div className="min-w-0 space-y-6">
             {/* Header */}
             <div className="space-y-2">
-                <h1 className="font-bold text-3xl text-foreground md:text-4xl">Operators</h1>
-                <p className="text-muted-foreground">View all the Operators in Arknights</p>
+                <h1 className="font-bold text-3xl text-foreground md:text-4xl">Enemy Database</h1>
+                <p className="text-muted-foreground">View all the enemies in Arknights</p>
             </div>
 
-            {/* Search and Controls */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative max-w-md flex-1">
                     <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <input
                         className="h-10 w-full rounded-lg border border-border bg-secondary/50 pr-4 pl-10 text-foreground text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        placeholder="Search operators..."
+                        placeholder="Search enemies..."
                         type="text"
                         value={filters.searchQuery}
                     />
                 </div>
-
                 <div className="flex items-center gap-2">
                     {/* View Toggle with animated sliding indicator */}
                     <motion.div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
@@ -144,7 +123,6 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         </AnimatedBackground>
                     </motion.div>
 
-                    {/* List Columns Selector (desktop only, when in list view) */}
                     <AnimatePresence mode="popLayout">
                         {viewMode === "list" && (
                             <motion.div animate={{ opacity: 1, scale: 1 }} className="hidden h-10 items-center rounded-lg border border-border bg-secondary/50 px-2.5 md:block" exit={{ opacity: 0, scale: 0.95 }} initial={{ opacity: 0, scale: 0.95 }} layout transition={TOGGLE_TRANSITION}>
@@ -162,7 +140,6 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         )}
                     </AnimatePresence>
 
-                    {/* Sort Controls - Always visible next to view toggle */}
                     <motion.div className="flex h-10 items-center gap-1 rounded-lg border border-border bg-secondary/50 px-1" layout transition={TOGGLE_TRANSITION}>
                         <Select onValueChange={(value) => setSortBy(value as SortOption)} value={filters.sortBy}>
                             <SelectTrigger className="h-8 w-22 border-0 bg-transparent px-2.5 text-sm shadow-none focus:ring-0 focus-visible:ring-0">
@@ -183,64 +160,42 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
 
                     {/* Filter Toggle - Responsive: Dialog on mobile, Popover on desktop */}
                     <ResponsiveFilterContainer activeFilterCount={activeFilterCount} hasActiveFilters={hasActiveFilters} onClearFilters={handleClearFilters} onOpenChange={setShowFilters} open={showFilters}>
-                        <OperatorFilters
-                            artists={filterOptions.artists}
-                            birthPlaces={filterOptions.birthPlaces}
-                            classes={[...CLASSES]}
-                            factions={filterOptions.factions}
-                            genders={[...GENDERS]}
-                            nations={filterOptions.nations}
-                            onArtistChange={setSelectedArtists}
-                            onBirthPlaceChange={setSelectedBirthPlaces}
-                            onClassChange={setSelectedClasses}
+                        <EnemyFilters
+                            damageTypes={filterOptions.damageTypes}
+                            enemyLevels={filterOptions.enemyLevels}
+                            enemyTypes={filterOptions.enemyTypes}
                             onClearFilters={handleClearFilters}
-                            onFactionChange={setSelectedFactions}
-                            onGenderChange={setSelectedGenders}
-                            onNationChange={setSelectedNations}
-                            onRaceChange={setSelectedRaces}
-                            onRarityChange={setSelectedRarities}
-                            onSubclassChange={setSelectedSubclasses}
-                            races={filterOptions.races}
-                            rarities={[...RARITIES]}
-                            selectedArtists={filters.selectedArtists}
-                            selectedBirthPlaces={filters.selectedBirthPlaces}
-                            selectedClasses={filters.selectedClasses}
-                            selectedFactions={filters.selectedFactions}
-                            selectedGenders={filters.selectedGenders}
-                            selectedNations={filters.selectedNations}
-                            selectedRaces={filters.selectedRaces}
-                            selectedRarities={filters.selectedRarities}
-                            selectedSubclasses={filters.selectedSubclasses}
-                            subclasses={filterOptions.subclasses}
+                            onDamageTypeChange={setSelectedDamageTypes}
+                            onEnemyLevelChange={setSelectedEnemyLevels}
+                            onEnemyTypeChange={setSelectedEnemyTypes}
+                            selectedDamageTypes={filters.selectedDamageTypes}
+                            selectedEnemyLevels={filters.selectedEnemyLevels}
+                            selectedEnemyTypes={filters.selectedEnemyTypes}
                         />
                     </ResponsiveFilterContainer>
                 </div>
             </div>
-
-            {/* Results Count */}
             <div className="flex items-center justify-between text-muted-foreground text-sm">
                 <span>
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredOperators.length)} of {filteredOperators.length} operators
+                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredEnemies.length)} of {filteredEnemies.length} enemies
                 </span>
             </div>
 
-            {/* List View Header - only show for single column layout */}
             <AnimatePresence mode="wait">
-                {viewMode === "list" && paginatedOperators.length > 0 && listColumns === 1 && (
+                {viewMode === "list" && paginatedEnemies.length > 0 && listColumns === 1 && (
                     <motion.div animate={{ opacity: 1, y: 0 }} className="hidden items-center gap-3 border-border/50 border-b px-3 pb-2 text-muted-foreground text-xs uppercase tracking-wider md:flex" exit={{ opacity: 0, y: -8 }} initial={{ opacity: 0, y: -8 }} transition={CONTAINER_TRANSITION}>
                         <div className="w-12 shrink-0" />
                         <div className="min-w-0 flex-1">Name</div>
-                        <div className="w-24 shrink-0">Rarity</div>
-                        <div className="w-32 shrink-0">Class</div>
-                        <div className="hidden w-40 shrink-0 lg:block">Archetype</div>
-                        <div className="hidden w-8 shrink-0 text-center xl:block">Faction</div>
+                        <div className="w-24 shrink-0">Level</div>
+                        <div className="w-32 shrink-0">Damage Type</div>
+                        <div className="hidden w-40 shrink-0 lg:block">Attack Type</div>
+                        <div className="hidden w-8 shrink-0 text-center xl:block">HP</div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Operators Grid/List */}
             <AnimatePresence initial={false} mode="wait">
-                {paginatedOperators.length > 0 ? (
+                {paginatedEnemies.length > 0 ? (
                     <motion.div
                         animate={{ opacity: 1, scale: 1 }}
                         className={cn(
@@ -252,9 +207,9 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         key={`${viewMode}-${listColumns}`}
                         transition={CONTAINER_TRANSITION}
                     >
-                        {paginatedOperators.map((operator, index) => {
-                            const operatorId = operator.id ?? "";
-                            const isCurrentlyHovered = hoveredOperator === operatorId;
+                        {paginatedEnemies.map((enemy, index) => {
+                            const enemyId = enemy.enemyId ?? "";
+                            const isCurrentlyHovered = hoveredEnemy === enemyId;
                             const shouldGrayscale = isGrayscaleActive && !isCurrentlyHovered;
                             // Only animate first 6 items for performance - rest appear instantly
                             const shouldAnimate = index < 6;
@@ -264,7 +219,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                     animate={{ opacity: 1, y: 0 }}
                                     className="contain-content"
                                     initial={shouldAnimate ? { opacity: 0, y: 8 } : false}
-                                    key={operatorId}
+                                    key={enemyId}
                                     transition={
                                         shouldAnimate
                                             ? {
@@ -275,7 +230,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                                             : { duration: 0 }
                                     }
                                 >
-                                    <OperatorCard isHovered={isCurrentlyHovered} listColumns={listColumns} onHoverChange={hoverHandlers.get(operatorId)} operator={operator} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />
+                                    <EnemyCard enemy={enemy} isHovered={isCurrentlyHovered} listColumns={listColumns} onHoverChange={hoverHandlers.get(enemyId)} shouldGrayscale={shouldGrayscale} viewMode={viewMode} />
                                 </motion.div>
                             );
                         })}
@@ -285,7 +240,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
                             <Search className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <h3 className="mb-2 font-semibold text-foreground text-lg">No operators found</h3>
+                        <h3 className="mb-2 font-semibold text-foreground text-lg">No enemies found</h3>
                         <p className="mb-4 max-w-sm text-muted-foreground text-sm">Try adjusting your search or filter criteria to find what you're looking for.</p>
                         <button className="text-primary text-sm hover:underline" onClick={handleClearFilters} type="button">
                             Clear all filters

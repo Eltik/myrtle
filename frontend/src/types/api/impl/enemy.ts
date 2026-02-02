@@ -76,10 +76,12 @@ export interface EnemyAttributes {
     levitateImmune: boolean;
 }
 
+export type ApplyWay = "MELEE" | "RANGED" | "NONE" | null;
+
 export interface EnemyLevelStats {
     level: number;
     attributes: EnemyAttributes;
-    applyWay: string | null;
+    applyWay: ApplyWay;
     motion: string | null;
     rangeRadius: number | null;
     lifePointReduce: number;
