@@ -8,6 +8,7 @@
 #![allow(clippy::search_is_some)]
 #![allow(clippy::uninlined_format_args)]
 
+pub mod atlas_slicer;
 pub mod collect_models;
 pub mod collect_voice;
 pub mod combine_rgb;

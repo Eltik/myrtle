@@ -3203,3 +3203,199 @@ pub fn extract_sprite_packer(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) 
 
     Ok(saved_count)
 }
+
+/// Extract individual sprites from Unity Sprite objects in an asset bundle
+///
+/// Unlike extract_sprite_packer() which handles Arknights' custom SpritePacker format,
+/// this handles Unity's native Sprite/SpriteAtlas system used by UI elements.
+///
+/// This function extracts:
+/// 1. Standalone Sprite objects (saved as {sprite_name}.png)
+/// 2. Sprites packed in SpriteAtlas objects (saved as {atlas_name}${index}.png)
+///
+/// # Arguments
+/// * `env_rc` - Reference to the Unity Environment containing the loaded asset bundle
+/// * `destdir` - Output directory for extracted sprite PNG files
+///
+/// # Returns
+/// Number of successfully extracted sprites
+pub fn extract_sprites(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Result<usize> {
+    use std::collections::HashMap;
+    use unity_rs::classes::generated::SpriteAtlas;
+    use unity_rs::export::sprite_helper::get_image_from_sprite;
+
+    let mut saved_count = 0;
+
+    // First, print summary of object types for debugging
+    {
+        let env = env_rc.borrow();
+        let mut type_counts: HashMap<String, usize> = HashMap::new();
+        for obj in env.objects() {
+            *type_counts.entry(format!("{:?}", obj.obj_type)).or_insert(0) += 1;
+        }
+        log::info!("Object types in bundle: {:?}", type_counts);
+    }
+
+    // 1. Extract standalone Sprite objects
+    {
+        let env = env_rc.borrow();
+        let mut texture_cache: HashMap<(i64, i64), RgbaImage> = HashMap::new();
+
+        for mut obj in env.objects() {
+            if obj.obj_type != ClassIDType::Sprite {
+                continue;
+            }
+
+            // Read sprite data
+            let data = match obj.read(false) {
+                Ok(d) => d,
+                Err(e) => {
+                    log::debug!("Failed to read sprite object: {}", e);
+                    continue;
+                }
+            };
+
+            // Get sprite name
+            let sprite_name = data
+                .get("m_Name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
+                .to_string();
+
+            // Parse as Sprite struct
+            let sprite: unity_rs::generated::Sprite = match serde_json::from_value(data.clone()) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::debug!("Failed to parse sprite '{}': {}", sprite_name, e);
+                    continue;
+                }
+            };
+
+            // Get the SerializedFile for this sprite
+            let assets_file = match obj.assets_file.as_ref().and_then(|w| w.upgrade()) {
+                Some(sf) => sf,
+                None => {
+                    log::debug!("No assets_file for sprite '{}'", sprite_name);
+                    continue;
+                }
+            };
+
+            // Extract sprite image using the sprite_helper
+            let image = match get_image_from_sprite(&sprite, &assets_file, &mut texture_cache) {
+                Ok(img) => img,
+                Err(e) => {
+                    log::warn!("Failed to extract sprite '{}': {}", sprite_name, e);
+                    continue;
+                }
+            };
+
+            // Save sprite
+            let output_path = destdir.join(format!("{}.png", sprite_name));
+
+            // Ensure parent directory exists
+            if let Some(parent) = output_path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+
+            if let Err(e) = image.save(&output_path) {
+                log::warn!("Failed to save sprite '{}': {}", sprite_name, e);
+            } else {
+                saved_count += 1;
+            }
+        }
+    }
+
+    // 2. Extract sprites from SpriteAtlas objects
+    {
+        let env = env_rc.borrow();
+        let mut texture_cache: HashMap<(i64, i64), RgbaImage> = HashMap::new();
+
+        for mut obj in env.objects() {
+            if obj.obj_type != ClassIDType::SpriteAtlas {
+                continue;
+            }
+
+            let data = match obj.read(false) {
+                Ok(d) => d,
+                Err(e) => {
+                    log::debug!("Failed to read SpriteAtlas: {}", e);
+                    continue;
+                }
+            };
+
+            let sprite_atlas: SpriteAtlas = match serde_json::from_value(data) {
+                Ok(sa) => sa,
+                Err(e) => {
+                    log::debug!("Failed to parse SpriteAtlas: {}", e);
+                    continue;
+                }
+            };
+
+            let atlas_name = sprite_atlas.m_Name.as_deref().unwrap_or("SpriteAtlas");
+            log::info!("Found SpriteAtlas: {}", atlas_name);
+
+            // Get the assets file
+            let assets_file = match obj.assets_file.as_ref().and_then(|w| w.upgrade()) {
+                Some(sf) => sf,
+                None => continue,
+            };
+
+            // Extract from packed sprites if available
+            if let Some(packed_sprites) = &sprite_atlas.m_PackedSprites {
+                log::info!(
+                    "SpriteAtlas '{}' has {} packed sprites",
+                    atlas_name,
+                    packed_sprites.len()
+                );
+
+                for (index, sprite_ptr) in packed_sprites.iter().enumerate() {
+                    if sprite_ptr.m_path_id == 0 {
+                        continue;
+                    }
+
+                    let sprite = match {
+                        let assets_file_ref = assets_file.borrow();
+                        sprite_ptr.read(&assets_file_ref)
+                    } {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::debug!("Failed to read packed sprite {}: {}", index, e);
+                            continue;
+                        }
+                    };
+
+                    // Get sprite name if available, otherwise use index
+                    let sprite_name = sprite
+                        .m_Name
+                        .as_deref()
+                        .filter(|n| !n.is_empty())
+                        .map(|n| n.to_string())
+                        .unwrap_or_else(|| format!("{}${}", atlas_name, index));
+
+                    match get_image_from_sprite(&sprite, &assets_file, &mut texture_cache) {
+                        Ok(img) => {
+                            let output_path = destdir.join(format!("{}.png", sprite_name));
+                            if let Some(parent) = output_path.parent() {
+                                std::fs::create_dir_all(parent)?;
+                            }
+                            if img.save(&output_path).is_ok() {
+                                saved_count += 1;
+                            }
+                        }
+                        Err(e) => {
+                            log::debug!(
+                                "Failed to extract packed sprite '{}': {}",
+                                sprite_name,
+                                e
+                            );
+                        }
+                    }
+                }
+            } else {
+                log::info!("SpriteAtlas '{}' has no packed sprites", atlas_name);
+            }
+        }
+    }
+
+    Ok(saved_count)
+}
