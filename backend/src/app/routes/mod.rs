@@ -7,5 +7,6 @@ pub mod leaderboard;
 pub mod portrait;
 pub mod search;
 pub mod static_data;
+pub mod stats;
 pub mod tier_lists;
 pub mod yostar;

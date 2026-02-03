@@ -21,6 +21,7 @@ use crate::app::routes::leaderboard::get_leaderboard;
 use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::search::search_users;
 use crate::app::routes::static_data;
+use crate::app::routes::stats;
 use crate::app::routes::tier_lists;
 use crate::app::routes::yostar::gacha::{
     get_all_gacha, get_enhanced_stats, get_gacha_by_type, get_gacha_settings, get_global_stats,
@@ -68,6 +69,7 @@ fn create_router(state: AppState, rate_store: RateLimitStore) -> Router {
         .route("/get-user", get(get_user_by_query))
         .route("/get-user/{uid}", get(get_user_by_path))
         .route("/leaderboard", get(get_leaderboard))
+        .route("/stats", get(stats::handler::get_stats))
         .route("/search", get(search_users))
         .route("/send-code", post(send_code_by_query))
         .route("/send-code/{email}", post(send_code_by_email))
