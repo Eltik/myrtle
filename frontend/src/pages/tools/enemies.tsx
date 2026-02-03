@@ -11,6 +11,16 @@ interface EnemiesPageProps {
     total: number;
 }
 
+// Raw API response type (handles both snake_case and camelCase)
+interface RawEnemiesResponse {
+    enemies: Enemy[];
+    hasMore?: boolean;
+    has_more?: boolean;
+    nextCursor?: string | null;
+    next_cursor?: string | null;
+    total: number;
+}
+
 /**
  * Fetch all enemies with pagination support
  * @param backendURL - The backend API URL
@@ -44,7 +54,15 @@ async function fetchAllEnemies(
         throw new Error(`Failed to fetch enemies: ${response.status}`);
     }
 
-    return response.json() as Promise<EnemiesResponse>;
+    const raw = (await response.json()) as RawEnemiesResponse;
+
+    // Normalize response to handle both snake_case and camelCase
+    return {
+        enemies: raw.enemies,
+        hasMore: raw.hasMore ?? raw.has_more ?? false,
+        nextCursor: raw.nextCursor ?? raw.next_cursor ?? null,
+        total: raw.total,
+    };
 }
 
 /**
@@ -103,8 +121,8 @@ async function fetchEnemyLevelInfo(backendURL: string): Promise<EnemyInfoList[]>
 }
 
 /**
- * Fetch all enemies with automatic pagination
- * Fetches all pages until hasMore is false
+ * Fetch all enemies with cursor-based pagination
+ * Uses large batch size for efficiency and continues until all enemies are fetched
  * @param backendURL - The backend API URL
  * @param options - Optional parameters for filtering
  */
@@ -116,12 +134,14 @@ async function fetchAllEnemiesPaginated(
         batchSize?: number;
     },
 ): Promise<{ enemies: Enemy[]; total: number }> {
-    const batchSize = options?.batchSize ?? 500;
+    // Use large batch size to minimize number of requests
+    const batchSize = options?.batchSize ?? 1000;
     const allEnemies: Enemy[] = [];
     let cursor: string | undefined;
     let total = 0;
 
-    do {
+    // Keep fetching until no more enemies are returned
+    while (true) {
         const response = await fetchAllEnemies(backendURL, {
             cursor,
             limit: batchSize,
@@ -132,8 +152,12 @@ async function fetchAllEnemiesPaginated(
         allEnemies.push(...response.enemies);
         total = response.total;
         cursor = response.nextCursor ?? undefined;
-    } while (cursor);
 
+        // Stop if hasMore is false, no cursor, or no enemies returned
+        if (!response.hasMore || !cursor || response.enemies.length === 0) {
+            break;
+        }
+    }
     return { enemies: allEnemies, total };
 }
 
@@ -152,8 +176,8 @@ export const getServerSideProps: GetServerSideProps<EnemiesPageProps> = async ()
     try {
         // Fetch all data in parallel
         const [enemiesData, races, levelInfo] = await Promise.all([
-            // Fetch all enemies (paginated automatically)
-            fetchAllEnemiesPaginated(backendURL, { batchSize: 500 }),
+            // Fetch all enemies with large batch size to minimize requests
+            fetchAllEnemiesPaginated(backendURL, { batchSize: 1000 }),
             // Fetch enemy races
             fetchEnemyRaces(backendURL),
             // Fetch level info

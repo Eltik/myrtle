@@ -10,6 +10,7 @@ import type { Enemy } from "~/types/api";
 import { HOVER_DELAY, LEVEL_BAR_COLORS, LEVEL_BLUR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLORS_LIGHT } from "../../constants";
 import { EnemyDetailDialog } from "./enemy-detail-dialog";
 import { EnemyLevelLogo } from "./enemy-level-logo";
+import { formatDamageType } from "../../enemy-list/impl/helpers";
 
 interface EnemyCardGridProps {
     enemy: Enemy;
@@ -81,7 +82,7 @@ export const EnemyCardGrid = memo(function EnemyCardGrid({ enemy, isHovered = fa
                                 </p>
                                 {/* Damage type and index */}
                                 <div className="flex space-x-2 pt-1 text-muted-foreground text-xs">
-                                    <span>{enemy.damageType.length > 0 ? enemy.damageType.map((damageType) => capitalize(damageType)).join(", ") : "Unknown"}</span>
+                                    <span>{enemy.damageType.length > 0 ? enemy.damageType.map((damageType) => formatDamageType(damageType)).join(", ") : "Unknown"}</span>
                                     <span>•</span>
                                     <span>{enemy.enemyIndex}</span>
                                 </div>

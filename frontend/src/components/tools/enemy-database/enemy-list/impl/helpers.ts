@@ -1,4 +1,19 @@
-import type { EnemyLevel } from "~/types/api";
+import type { DamageType, EnemyLevel } from "~/types/api";
+
+export const formatDamageType = (damageType: DamageType) => {
+    switch (damageType) {
+        case "HEAL":
+            return "Healing";
+        case "MAGIC":
+            return "Arts";
+        case "NO_DAMAGE":
+            return "None";
+        case "PHYSIC":
+            return "Physical";
+        default:
+            return "Unknown";
+    }
+};
 
 export const enemyLevelToNumber = (level: EnemyLevel) => {
     switch (level) {
