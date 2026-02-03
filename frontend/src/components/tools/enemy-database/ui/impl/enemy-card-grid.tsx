@@ -8,6 +8,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/s
 import { capitalize, cn } from "~/lib/utils";
 import type { Enemy } from "~/types/api";
 import { HOVER_DELAY, LEVEL_BAR_COLORS, LEVEL_BLUR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLORS_LIGHT } from "../../constants";
+import { EnemyDetailDialog } from "./enemy-detail-dialog";
 import { EnemyLevelLogo } from "./enemy-level-logo";
 
 interface EnemyCardGridProps {
@@ -91,8 +92,7 @@ export const EnemyCardGrid = memo(function EnemyCardGrid({ enemy, isHovered = fa
             </MorphingDialogTrigger>
             <MorphingDialogContainer>
                 <MorphingDialogContent>
-                    {/* Dialog content goes here */}
-                    <div />
+                    <EnemyDetailDialog enemy={enemy} />
                 </MorphingDialogContent>
             </MorphingDialogContainer>
         </MorphingDialog>

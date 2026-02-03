@@ -17,6 +17,7 @@ export const DESCRIPTION_COLORS = {
     reminder: "#da9a46",
     potential: "#49b3ff",
     keyword: "#49b3ff",
+    skillTooltip: "#49b3ff",
 };
 
 /**
@@ -88,7 +89,7 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
                                 break;
                             default:
                                 if (tagName?.startsWith("$")) {
-                                    color = "skill-tooltip";
+                                    color = `color: ${DESCRIPTION_COLORS.skillTooltip};`;
                                     break;
                                 }
                                 console.warn(`Unrecognized tag: ${tagName}`);
