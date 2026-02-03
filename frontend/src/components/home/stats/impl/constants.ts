@@ -1,27 +1,54 @@
-export const STATS = [
+export interface StatConfig {
+    key: string;
+    label: string;
+    description: string;
+    suffix: string;
+    fallbackValue: number;
+    formatValue?: (value: number) => { value: number; suffix: string };
+}
+
+/**
+ * Format large numbers with K/M suffix
+ */
+export function formatLargeNumber(value: number): { value: number; suffix: string } {
+    if (value >= 1_000_000) {
+        return { value: Math.floor(value / 100_000) / 10, suffix: "M+" };
+    }
+    if (value >= 1_000) {
+        return { value: Math.floor(value / 100) / 10, suffix: "K+" };
+    }
+    return { value, suffix: "+" };
+}
+
+export const STAT_CONFIGS: StatConfig[] = [
     {
-        value: 300,
-        suffix: "+",
+        key: "operators",
         label: "Operators",
         description: "Complete database",
+        suffix: "+",
+        fallbackValue: 300,
     },
     {
-        value: 50,
-        suffix: "K+",
-        label: "Active Users",
+        key: "users",
+        label: "Registered Users",
         description: "Global community",
+        suffix: "+",
+        fallbackValue: 50000,
+        formatValue: formatLargeNumber,
     },
     {
-        value: 1,
-        suffix: "M+",
-        label: "Calculations",
-        description: "Per month",
+        key: "gachaPulls",
+        label: "Gacha Pulls",
+        description: "Community tracked",
+        suffix: "+",
+        fallbackValue: 1000000,
+        formatValue: formatLargeNumber,
     },
     {
-        value: 99.9,
-        suffix: "%",
-        label: "Uptime",
-        description: "Reliable service",
-        decimals: 1,
+        key: "tierLists",
+        label: "Tier Lists",
+        description: "Community created",
+        suffix: "+",
+        fallbackValue: 10,
     },
-] as const;
+];
