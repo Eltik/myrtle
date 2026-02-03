@@ -13,6 +13,7 @@ export * from "./impl/score";
 export * from "./impl/search";
 export * from "./impl/skill";
 export * from "./impl/skin";
+export * from "./impl/stats";
 export * from "./impl/tier-list";
 export * from "./impl/trust";
 export * from "./impl/user";

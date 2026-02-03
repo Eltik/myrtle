@@ -2,11 +2,37 @@
 import { useState } from "react";
 import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { InView } from "~/components/ui/motion-primitives/in-view";
-import { STATS } from "./impl/constants";
+import { Skeleton } from "~/components/ui/shadcn/skeleton";
+import { type DisplayStat, useStats } from "./impl/use-stats";
 
-function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number }) {
+function StatCardSkeleton({ index }: { index: number }) {
+    return (
+        <InView
+            once
+            transition={{
+                duration: 0.5,
+                ease: "easeOut",
+                delay: index * 0.1,
+            }}
+            variants={{
+                hidden: { opacity: 0, scale: 0.8 },
+                visible: { opacity: 1, scale: 1 },
+            }}
+        >
+            <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-8 text-center">
+                <div className="relative">
+                    <Skeleton className="mx-auto mb-2 h-12 w-24" />
+                    <Skeleton className="mx-auto mb-1 h-6 w-20" />
+                    <Skeleton className="mx-auto h-4 w-28" />
+                </div>
+            </div>
+        </InView>
+    );
+}
+
+function StatCard({ stat, index }: { stat: DisplayStat; index: number }) {
     const [isInView, setIsInView] = useState(false);
-    const decimals = "decimals" in stat ? stat.decimals : 0;
+    const decimals = stat.decimals ?? 0;
 
     return (
         <InView
@@ -38,6 +64,8 @@ function StatCard({ stat, index }: { stat: (typeof STATS)[number]; index: number
 }
 
 export function StatsSection() {
+    const { stats, isLoading } = useStats();
+
     return (
         <section className="py-20 md:py-32">
             <div className="container mx-auto px-4">
@@ -56,11 +84,7 @@ export function StatsSection() {
                 </InView>
 
                 <div className="mx-auto max-w-5xl">
-                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                        {STATS.map((stat, index) => (
-                            <StatCard index={index} key={stat.label} stat={stat} />
-                        ))}
-                    </div>
+                    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">{isLoading ? (["a", "b", "c", "d"] as const).map((id, index) => <StatCardSkeleton index={index} key={id} />) : stats.map((stat, index) => <StatCard index={index} key={stat.label} stat={stat} />)}</div>
                 </div>
             </div>
         </section>
