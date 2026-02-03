@@ -22,7 +22,7 @@ interface EnemiesDatabaseProps {
     total: number;
 }
 
-export function EnemyDatabase({ enemies, races, levelInfo, total }: EnemiesDatabaseProps) {
+export function EnemyDatabase({ enemies, races: _races, levelInfo: _levelInfo, total: _total }: EnemiesDatabaseProps) {
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [listColumns, setListColumns] = useState(2);

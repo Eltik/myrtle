@@ -8,9 +8,9 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/s
 import { capitalize, cn } from "~/lib/utils";
 import type { Enemy } from "~/types/api";
 import { HOVER_DELAY, LEVEL_BAR_COLORS, LEVEL_BLUR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLORS_LIGHT } from "../../constants";
+import { formatDamageType } from "../../enemy-list/impl/helpers";
 import { EnemyDetailDialog } from "./enemy-detail-dialog";
 import { EnemyLevelLogo } from "./enemy-level-logo";
-import { formatDamageType } from "../../enemy-list/impl/helpers";
 
 interface EnemyCardGridProps {
     enemy: Enemy;
