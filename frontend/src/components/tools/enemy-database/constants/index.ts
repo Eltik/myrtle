@@ -68,6 +68,20 @@ export const LEVEL_BLUR_COLORS: Record<EnemyLevel, string> = {
     BOSS: "#f87171", // red-400
 };
 
+// Text color mappings for enemy levels (dark mode)
+export const LEVEL_TEXT_COLORS: Record<EnemyLevel, string> = {
+    NORMAL: "#a1a1aa", // zinc-400
+    ELITE: "#fbbf24", // amber-400
+    BOSS: "#f87171", // red-400
+};
+
+// Text color mappings for enemy levels (light mode - darker for readability)
+export const LEVEL_TEXT_COLORS_LIGHT: Record<EnemyLevel, string> = {
+    NORMAL: "#52525b", // zinc-600
+    ELITE: "#d97706", // amber-600
+    BOSS: "#dc2626", // red-600
+};
+
 // Display name mappings for damage types
 export const DAMAGE_TYPE_DISPLAY: Record<DamageType, string> = {
     PHYSIC: "Physical",

@@ -439,11 +439,7 @@ fn main() -> Result<()> {
                 WalkDir::new(&input)
                     .into_iter()
                     .filter_map(|e| e.ok())
-                    .filter(|e| {
-                        e.path()
-                            .extension()
-                            .map_or(false, |ext| ext == "ab")
-                    })
+                    .filter(|e| e.path().extension().is_some_and(|ext| ext == "ab"))
                     .map(|e| e.path().to_path_buf())
                     .collect()
             };
@@ -493,13 +489,8 @@ fn main() -> Result<()> {
 
             println!("Slicing atlas: {}", input.display());
 
-            match atlas_slicer::slice_atlas(
-                &input,
-                &output,
-                threshold,
-                min_size,
-                prefix.as_deref(),
-            ) {
+            match atlas_slicer::slice_atlas(&input, &output, threshold, min_size, prefix.as_deref())
+            {
                 Ok(count) => {
                     println!("\nExtracted {} sprites to {}", count, output.display());
                 }

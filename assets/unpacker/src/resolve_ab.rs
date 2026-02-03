@@ -3231,7 +3231,9 @@ pub fn extract_sprites(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Res
         let env = env_rc.borrow();
         let mut type_counts: HashMap<String, usize> = HashMap::new();
         for obj in env.objects() {
-            *type_counts.entry(format!("{:?}", obj.obj_type)).or_insert(0) += 1;
+            *type_counts
+                .entry(format!("{:?}", obj.obj_type))
+                .or_insert(0) += 1;
         }
         log::info!("Object types in bundle: {:?}", type_counts);
     }
@@ -3353,10 +3355,11 @@ pub fn extract_sprites(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Res
                         continue;
                     }
 
-                    let sprite = match {
+                    let sprite_result = {
                         let assets_file_ref = assets_file.borrow();
                         sprite_ptr.read(&assets_file_ref)
-                    } {
+                    };
+                    let sprite = match sprite_result {
                         Ok(s) => s,
                         Err(e) => {
                             log::debug!("Failed to read packed sprite {}: {}", index, e);
@@ -3383,11 +3386,7 @@ pub fn extract_sprites(env_rc: &Rc<RefCell<Environment>>, destdir: &Path) -> Res
                             }
                         }
                         Err(e) => {
-                            log::debug!(
-                                "Failed to extract packed sprite '{}': {}",
-                                sprite_name,
-                                e
-                            );
+                            log::debug!("Failed to extract packed sprite '{}': {}", sprite_name, e);
                         }
                     }
                 }
