@@ -184,10 +184,19 @@ function MorphingDialogContent({ children, className, style }: MorphingDialogCon
         // Ignore clicks inside Radix UI portals (Select, DropdownMenu, Popover, etc.)
         const target = event.target as HTMLElement;
 
+        // Check if any Radix Select/Popover/Menu is currently open anywhere in the document
+        // This handles the case where the portal content might not be the direct target
+        const hasOpenRadixComponent = document.querySelector("[data-radix-select-content][data-state='open'], " + "[data-radix-popper-content-wrapper], " + "[data-radix-menu-content][data-state='open'], " + "[data-radix-popover-content][data-state='open']");
+
+        if (hasOpenRadixComponent) {
+            return;
+        }
+
         // Check for Radix UI portal content (various data attributes and roles)
         const isInsideRadixPortal =
             target.closest("[data-radix-popper-content-wrapper]") ||
             target.closest("[data-radix-select-viewport]") ||
+            target.closest("[data-radix-select-content]") ||
             target.closest("[data-radix-menu-content]") ||
             target.closest("[data-radix-dialog-content]") ||
             target.closest("[data-radix-popover-content]") ||
@@ -196,6 +205,9 @@ function MorphingDialogContent({ children, className, style }: MorphingDialogCon
             target.closest("[data-slot='dropdown-menu-content']") ||
             target.closest("[data-slot='dropdown-menu-checkbox-item']") ||
             target.closest("[data-slot='select-content']") ||
+            target.closest("[data-slot='select-item']") ||
+            target.closest("[data-slot='select-scroll-up-button']") ||
+            target.closest("[data-slot='select-scroll-down-button']") ||
             target.closest("[role='listbox']") ||
             target.closest("[role='dialog']") ||
             target.closest("[role='menu']") ||
