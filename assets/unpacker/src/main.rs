@@ -136,6 +136,44 @@ enum Commands {
         delete: bool,
     },
 
+    /// Extract individual sprites from Unity SpriteAtlas bundles (UI elements, etc.)
+    Sprites {
+        /// Input AB file or directory containing sprite atlas bundles
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// Output directory for extracted sprites
+        #[arg(short, long)]
+        output: PathBuf,
+
+        /// Delete existing output directory
+        #[arg(short, long, default_value = "false")]
+        delete: bool,
+    },
+
+    /// Auto-detect and extract sprites from texture atlases without metadata
+    SliceAtlas {
+        /// Input PNG atlas file (will auto-detect alpha file if exists)
+        #[arg(short, long)]
+        input: PathBuf,
+
+        /// Output directory for extracted sprites
+        #[arg(short, long)]
+        output: PathBuf,
+
+        /// Alpha threshold (0-255) - pixels below this are considered transparent
+        #[arg(long, default_value = "1")]
+        threshold: u8,
+
+        /// Minimum sprite size in pixels (skip tiny regions)
+        #[arg(long, default_value = "4")]
+        min_size: u32,
+
+        /// Prefix for output filenames (default: "sprite")
+        #[arg(long)]
+        prefix: Option<String>,
+    },
+
     /// Reorganize extracted files from hash folders to proper game paths
     Reorganize {
         /// Source directory (containing anon/ folder with hash-based subfolders)
@@ -375,6 +413,101 @@ fn main() -> Result<()> {
             }
 
             println!("\nTotal portraits extracted: {}", total_extracted);
+        }
+        Commands::Sprites {
+            input,
+            output,
+            delete,
+        } => {
+            use std::cell::RefCell;
+            use std::rc::Rc;
+            use unity_rs::helpers::import_helper::FileSource;
+            use unity_rs::Environment;
+            use walkdir::WalkDir;
+
+            if delete && output.exists() {
+                std::fs::remove_dir_all(&output)?;
+            }
+            std::fs::create_dir_all(&output)?;
+
+            let mut total_extracted = 0usize;
+
+            // Find all AB files in the input directory
+            let files: Vec<_> = if input.is_file() {
+                vec![input.clone()]
+            } else {
+                WalkDir::new(&input)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| {
+                        e.path()
+                            .extension()
+                            .map_or(false, |ext| ext == "ab")
+                    })
+                    .map(|e| e.path().to_path_buf())
+                    .collect()
+            };
+
+            println!("Found {} AB files to process", files.len());
+
+            for file in files {
+                println!("Processing: {}", file.display());
+
+                let mut env = Environment::new();
+                env.load_file(
+                    FileSource::Path(file.to_string_lossy().to_string()),
+                    None,
+                    false,
+                );
+
+                let env_rc = Rc::new(RefCell::new(env));
+                if Environment::set_environment_references(&env_rc).is_err() {
+                    log::warn!(
+                        "Failed to set environment references for {}",
+                        file.display()
+                    );
+                    continue;
+                }
+
+                match assets_unpacker::resolve_ab::extract_sprites(&env_rc, &output) {
+                    Ok(count) => {
+                        println!("  Extracted {} sprites", count);
+                        total_extracted += count;
+                    }
+                    Err(e) => {
+                        log::warn!("Failed to extract from {}: {}", file.display(), e);
+                    }
+                }
+            }
+
+            println!("\nTotal sprites extracted: {}", total_extracted);
+        }
+        Commands::SliceAtlas {
+            input,
+            output,
+            threshold,
+            min_size,
+            prefix,
+        } => {
+            use assets_unpacker::atlas_slicer;
+
+            println!("Slicing atlas: {}", input.display());
+
+            match atlas_slicer::slice_atlas(
+                &input,
+                &output,
+                threshold,
+                min_size,
+                prefix.as_deref(),
+            ) {
+                Ok(count) => {
+                    println!("\nExtracted {} sprites to {}", count, output.display());
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Commands::Reorganize {
             input,
