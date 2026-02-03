@@ -182,7 +182,7 @@ export function FilterPanel({ settings, setSettings, hasProfile, onFiltersChange
                 <div className="flex items-center justify-between rounded-xl border border-border/30 bg-linear-to-br from-secondary/50 to-secondary/30 p-4 shadow-sm backdrop-blur-sm">
                     <div className="space-y-0.5">
                         <Label className="font-semibold text-foreground text-sm" htmlFor="allow-duplicates">
-                            Allow Unpalyable Operators
+                            Allow Unplayable Operators
                         </Label>
                         <p className="text-muted-foreground text-xs">Include Reserve Operators and unplayable operators in randomized squads</p>
                     </div>

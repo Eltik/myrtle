@@ -1,16 +1,16 @@
 "use client";
 
+import { Check, Shield, Swords, X } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { memo, useMemo, useState } from "react";
-import { Check, Shield, Swords, X } from "lucide-react";
 import { MorphingDialogClose, MorphingDialogDescription, MorphingDialogTitle } from "~/components/ui/motion-primitives/morphing-dialog";
-import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Badge } from "~/components/ui/shadcn/badge";
-import { cn } from "~/lib/utils";
+import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { descriptionToHtml } from "~/lib/description-parser";
+import { cn } from "~/lib/utils";
 import type { AbilityInfo, Enemy } from "~/types/api";
 import { APPLY_WAY_DISPLAY, DAMAGE_TYPE_DISPLAY, ENEMY_LEVEL_DISPLAY, LEVEL_BAR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLORS_LIGHT } from "../../constants";
 import { EnemyLevelLogo } from "./enemy-level-logo";
@@ -93,12 +93,12 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                     {/* Damage Types */}
                     <div className="mt-1 flex flex-wrap gap-1.5">
                         {enemy.damageType.map((type) => (
-                            <Badge key={type} variant="secondary" className="text-xs">
+                            <Badge className="text-xs" key={type} variant="secondary">
                                 {DAMAGE_TYPE_DISPLAY[type]}
                             </Badge>
                         ))}
                         {enemy.attackType && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs" variant="outline">
                                 {enemy.attackType}
                             </Badge>
                         )}
@@ -107,7 +107,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
             </div>
 
             {/* Content with Tabs */}
-            <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
+            <Tabs className="flex min-h-0 flex-1 flex-col" defaultValue="overview">
                 <TabsList className="mx-4 mt-3 w-fit">
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="stats">Stats</TabsTrigger>
@@ -116,7 +116,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
 
                 <div className="min-h-0 flex-1">
                     {/* Overview Tab */}
-                    <TabsContent value="overview" className="h-full">
+                    <TabsContent className="h-full" value="overview">
                         <ScrollArea className="h-full">
                             <div className="space-y-4 p-4">
                                 {/* Description */}
@@ -135,15 +135,16 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                         <h3 className="mb-2 font-semibold text-muted-foreground text-sm">Traits</h3>
                                         <div className="space-y-3">
                                             {groupedAbilities.map((group, groupIndex) => (
-                                                <div key={groupIndex}>
+                                                <div key={group.title ?? `group-${groupIndex}`}>
                                                     {group.title && <h4 className="mb-1.5 font-semibold text-red-500 text-sm">{group.title}</h4>}
                                                     {group.items.length > 0 && (
                                                         <ul className="space-y-1.5">
-                                                            {group.items.map((ability, index) => (
-                                                                <li key={index} className="flex gap-2 text-sm">
+                                                            {group.items.map((ability) => (
+                                                                <li className="flex gap-2 text-sm" key={ability.text}>
                                                                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
                                                                     <span
                                                                         className={cn("leading-relaxed", ability.textFormat === "SILENCE" && "text-muted-foreground")}
+                                                                        // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized game description text
                                                                         dangerouslySetInnerHTML={{
                                                                             __html: descriptionToHtml(ability.text, []),
                                                                         }}
@@ -164,7 +165,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                         <h3 className="mb-2 font-semibold text-muted-foreground text-sm">Tags</h3>
                                         <div className="flex flex-wrap gap-1.5">
                                             {enemy.enemyTags.map((tag) => (
-                                                <Badge key={tag} variant="outline" className="text-xs">
+                                                <Badge className="text-xs" key={tag} variant="outline">
                                                     {tag}
                                                 </Badge>
                                             ))}
@@ -178,7 +179,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                         <h3 className="mb-2 font-semibold text-muted-foreground text-sm">Related Enemies</h3>
                                         <div className="flex flex-wrap gap-1.5">
                                             {enemy.linkEnemies.map((linkedId) => (
-                                                <Badge key={linkedId} variant="secondary" className="text-xs">
+                                                <Badge className="text-xs" key={linkedId} variant="secondary">
                                                     {linkedId}
                                                 </Badge>
                                             ))}
@@ -203,7 +204,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                     </TabsContent>
 
                     {/* Stats Tab */}
-                    <TabsContent value="stats" className="h-full">
+                    <TabsContent className="h-full" value="stats">
                         <ScrollArea className="h-full">
                             <div className="space-y-4 p-4">
                                 {levels.length > 0 ? (
@@ -212,13 +213,15 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                         {levels.length > 1 && (
                                             <div className="flex items-center gap-2">
                                                 <span className="font-medium text-sm">Level:</span>
-                                                <div onMouseDown={(e) => e.stopPropagation()}>
-                                                    <Select value={String(selectedLevel)} onValueChange={(value) => setSelectedLevel(Number(value))}>
+                                                {/* biome-ignore lint/a11y/noStaticElementInteractions: Prevents dialog drag on select interaction */}
+                                                <div onMouseDown={(e) => e.stopPropagation()} role="presentation">
+                                                    <Select onValueChange={(value) => setSelectedLevel(Number(value))} value={String(selectedLevel)}>
                                                         <SelectTrigger className="w-32">
                                                             <SelectValue />
                                                         </SelectTrigger>
-                                                        <SelectContent position="popper" sideOffset={4} className="z-[200]">
+                                                        <SelectContent className="z-[200]" position="popper" sideOffset={4}>
                                                             {levels.map((_, index) => (
+                                                                // biome-ignore lint/suspicious/noArrayIndexKey: Level index is the stable identifier
                                                                 <SelectItem key={index} value={String(index)}>
                                                                     Level {index}
                                                                 </SelectItem>
@@ -235,8 +238,8 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                 <section>
                                                     <h3 className="mb-3 font-semibold text-muted-foreground text-sm">Combat Stats</h3>
                                                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                                                        <StatCard label="HP" value={currentLevelStats.attributes.maxHp} icon={<Shield className="h-4 w-4" />} />
-                                                        <StatCard label="ATK" value={currentLevelStats.attributes.atk} icon={<Swords className="h-4 w-4" />} />
+                                                        <StatCard icon={<Shield className="h-4 w-4" />} label="HP" value={currentLevelStats.attributes.maxHp} />
+                                                        <StatCard icon={<Swords className="h-4 w-4" />} label="ATK" value={currentLevelStats.attributes.atk} />
                                                         <StatCard label="DEF" value={currentLevelStats.attributes.def} />
                                                         <StatCard label="RES" value={`${currentLevelStats.attributes.magicResistance}%`} />
                                                         <StatCard label="Move Speed" value={currentLevelStats.attributes.moveSpeed.toFixed(2)} />
@@ -262,11 +265,11 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                 <section>
                                                     <h3 className="mb-3 font-semibold text-muted-foreground text-sm">Immunities</h3>
                                                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
-                                                        <ImmunityBadge label="Stun" immune={currentLevelStats.attributes.stunImmune} />
-                                                        <ImmunityBadge label="Silence" immune={currentLevelStats.attributes.silenceImmune} />
-                                                        <ImmunityBadge label="Sleep" immune={currentLevelStats.attributes.sleepImmune} />
-                                                        <ImmunityBadge label="Frozen" immune={currentLevelStats.attributes.frozenImmune} />
-                                                        <ImmunityBadge label="Levitate" immune={currentLevelStats.attributes.levitateImmune} />
+                                                        <ImmunityBadge immune={currentLevelStats.attributes.stunImmune} label="Stun" />
+                                                        <ImmunityBadge immune={currentLevelStats.attributes.silenceImmune} label="Silence" />
+                                                        <ImmunityBadge immune={currentLevelStats.attributes.sleepImmune} label="Sleep" />
+                                                        <ImmunityBadge immune={currentLevelStats.attributes.frozenImmune} label="Frozen" />
+                                                        <ImmunityBadge immune={currentLevelStats.attributes.levitateImmune} label="Levitate" />
                                                     </div>
                                                 </section>
                                             </>
@@ -280,19 +283,21 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                     </TabsContent>
 
                     {/* Skills Tab */}
-                    <TabsContent value="skills" className="h-full">
+                    <TabsContent className="h-full" value="skills">
                         <ScrollArea className="h-full">
                             <div className="space-y-4 p-4">
                                 {levels.length > 1 && (
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium text-sm">Level:</span>
-                                        <div onMouseDown={(e) => e.stopPropagation()}>
-                                            <Select value={String(selectedLevel)} onValueChange={(value) => setSelectedLevel(Number(value))}>
+                                        {/* biome-ignore lint/a11y/noStaticElementInteractions: Prevents dialog drag on select interaction */}
+                                        <div onMouseDown={(e) => e.stopPropagation()} role="presentation">
+                                            <Select onValueChange={(value) => setSelectedLevel(Number(value))} value={String(selectedLevel)}>
                                                 <SelectTrigger className="w-32">
                                                     <SelectValue />
                                                 </SelectTrigger>
-                                                <SelectContent position="popper" sideOffset={4} className="z-[200]">
+                                                <SelectContent className="z-[200]" position="popper" sideOffset={4}>
                                                     {levels.map((_, index) => (
+                                                        // biome-ignore lint/suspicious/noArrayIndexKey: Level index is the stable identifier
                                                         <SelectItem key={index} value={String(index)}>
                                                             Level {index}
                                                         </SelectItem>
@@ -306,10 +311,10 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                 {currentLevelStats?.skills.length ? (
                                     <div className="space-y-3">
                                         {currentLevelStats.skills.map((skill, index) => (
-                                            <div key={`${skill.prefabKey}-${index}`} className="rounded-lg border border-border bg-muted/30 p-4">
+                                            <div className="rounded-lg border border-border bg-muted/30 p-4" key={`${skill.prefabKey}-${index}`}>
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <h4 className="font-semibold text-sm">{skill.prefabKey}</h4>
-                                                    <Badge variant="outline" className="text-xs">
+                                                    <Badge className="text-xs" variant="outline">
                                                         Priority: {skill.priority}
                                                     </Badge>
                                                 </div>
@@ -339,7 +344,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                         <span className="mb-2 block font-medium text-muted-foreground text-xs">Parameters</span>
                                                         <div className="grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2">
                                                             {skill.blackboard.map((entry) => (
-                                                                <div key={entry.key} className="flex items-center justify-between gap-2 rounded bg-background/50 px-2 py-1.5">
+                                                                <div className="flex items-center justify-between gap-2 rounded bg-background/50 px-2 py-1.5" key={entry.key}>
                                                                     <span className="min-w-0 truncate text-muted-foreground" title={entry.key}>
                                                                         {entry.key}
                                                                     </span>
