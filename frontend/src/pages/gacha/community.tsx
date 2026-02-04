@@ -15,7 +15,7 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
     if (error || !stats) {
         return (
             <>
-                <SEO description="Community-wide Arknights gacha statistics and pull rates." path="/stats/gacha" title="Global Gacha Statistics" />
+                <SEO description="Community-wide Arknights gacha statistics and pull rates." path="/gacha/community" title="Community Stats" />
                 <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
                     <div className="text-center">
                         <h1 className="mb-4 font-bold text-4xl">Statistics Unavailable</h1>
@@ -32,12 +32,7 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
 
     return (
         <>
-            <SEO
-                description={`Community gacha statistics from ${stats.collectiveStats.totalUsers.toLocaleString()} players and ${stats.collectiveStats.totalPulls.toLocaleString()} pulls.`}
-                keywords={["gacha statistics", "pull rates", "6-star rate", "Arknights gacha"]}
-                path="/stats/gacha"
-                title="Global Gacha Statistics"
-            />
+            <SEO description={`Community gacha statistics from ${stats.collectiveStats.totalUsers.toLocaleString()} players and ${stats.collectiveStats.totalPulls.toLocaleString()} pulls.`} keywords={["gacha statistics", "pull rates", "6-star rate", "Arknights gacha"]} path="/gacha/community" title="Community Stats" />
             <div className="container mx-auto space-y-8 p-4 py-8">
                 {/* Header */}
                 <StatsHeader cached={stats.cached} computedAt={stats.computedAt} totalUsers={stats.collectiveStats.totalUsers} />

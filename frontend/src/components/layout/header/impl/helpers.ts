@@ -11,10 +11,13 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
         return true;
     }
 
+    // Special case: Collection tab should match operator detail pages
+    if (item.label === "Collection" && pathname.startsWith("/collection/operators")) {
+        return true;
+    }
+
     // For dropdown items, check if current path matches any dropdown href
-    // Also check if pathname matches the base path (e.g., /operators for /operators?id=...)
     return item.dropdown.some((dropdownItem) => {
-        const basePath = dropdownItem.href.split("/").slice(0, 2).join("/"); // e.g., "/operators" from "/operators/list"
-        return pathname === dropdownItem.href || pathname.startsWith(`${dropdownItem.href}/`) || pathname === basePath;
+        return pathname === dropdownItem.href || pathname.startsWith(`${dropdownItem.href}/`) || pathname.startsWith(`${dropdownItem.href}?`);
     });
 }

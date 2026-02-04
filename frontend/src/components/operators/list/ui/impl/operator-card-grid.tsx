@@ -27,7 +27,7 @@ export const OperatorCardGrid = memo(function OperatorCardGrid({ operator, isHov
     const operatorId = operator.id ?? "";
 
     const cardContent = (
-        <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
+        <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/collection/operators?id=${operatorId}`}>
             {/* Faction background */}
             <div className="absolute -translate-x-8 -translate-y-4">
                 <FactionLogo className="opacity-5 opacity-transition group-hover:opacity-10" nationId={operator.nationId} size={360} teamId={operator.teamId} />

@@ -38,12 +38,7 @@ const TierListPage: NextPage<TierListPageProps> = (props) => {
     if (props.mode === "index") {
         return (
             <>
-                <SEO
-                    description="Browse all Arknights operator tier lists and rankings. Find the best operators for your team with community-curated rankings."
-                    keywords={["tier list", "operator rankings", "best operators", "meta operators"]}
-                    path="/operators/tier-list"
-                    title="Tier Lists - Arknights Operator Rankings"
-                />
+                <SEO description="Browse all Arknights operator tier lists and rankings. Find the best operators for your team with community-curated rankings." keywords={["tier list", "operator rankings", "best operators", "meta operators"]} path="/tools/tier-list" title="Tier Lists - Arknights Operator Rankings" />
                 <TierListIndex tierLists={props.tierLists} />
             </>
         );
@@ -54,7 +49,7 @@ const TierListPage: NextPage<TierListPageProps> = (props) => {
             <SEO
                 description={props.tierListData.tier_list.description ?? "View operator rankings and tier list for Arknights."}
                 keywords={["tier list", props.tierListData.tier_list.name, "operator rankings"]}
-                path={`/operators/tier-list?slug=${props.tierListData.tier_list.slug}`}
+                path={`/tools/tier-list?slug=${props.tierListData.tier_list.slug}`}
                 title={`${props.tierListData.tier_list.name} - Operator Tier List`}
             />
             <TierListView operatorsData={props.operatorsData} tierListData={props.tierListData} versions={props.versions} />

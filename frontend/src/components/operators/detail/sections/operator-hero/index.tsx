@@ -69,7 +69,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                         <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-2" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
                             <ol className="flex items-center gap-2 text-muted-foreground text-xs">
                                 <li>
-                                    <Link className="transition-colors hover:text-foreground" href="/operators/list">
+                                    <Link className="transition-colors hover:text-foreground" href="/collection/operators">
                                         Operators
                                     </Link>
                                 </li>
@@ -138,7 +138,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                         <motion.nav animate={{ opacity: 1, y: 0 }} className="mb-3" initial={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
                             <ol className="flex items-center gap-2 text-muted-foreground text-sm">
                                 <li>
-                                    <Link className="transition-colors hover:text-foreground" href="/operators/list">
+                                    <Link className="transition-colors hover:text-foreground" href="/collection/operators">
                                         Operators
                                     </Link>
                                 </li>

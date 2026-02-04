@@ -4,11 +4,11 @@ import type { NavItem } from "./types";
 export const navItems: NavItem[] = [
     { label: "Home", href: "/" },
     {
-        label: "Operators",
+        label: "Collection",
         href: "#",
         dropdown: [
-            { label: "Collection", href: "/operators/list", description: "List of all released operators" },
-            { label: "Tier List", href: "/operators/tier-list", description: "Operator rankings by class" },
+            { label: "Operators", href: "/collection/operators", description: "List of all released operators" },
+            { label: "Enemies", href: "/collection/enemies", description: "Browse all enemy data and stats" },
         ],
     },
     {
@@ -18,15 +18,15 @@ export const navItems: NavItem[] = [
             { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
             { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
             { label: "Randomizer", href: "/tools/randomizer", description: "Randomize squads and stages" },
-            { label: "Enemy Database", href: "/tools/enemies", description: "Browse all enemy data and stats" },
+            { label: "Tier List", href: "/tools/tier-list", description: "Operator rankings by class" },
         ],
     },
     {
         label: "Gacha",
         href: "#",
         dropdown: [
-            { label: "My History", href: "/my/gacha", description: "View your personal pull history" },
-            { label: "Global Statistics", href: "/stats/gacha", description: "Community-wide gacha statistics" },
+            { label: "My History", href: "/gacha/history", description: "View your personal pull history" },
+            { label: "Community Stats", href: "/gacha/community", description: "Community-wide gacha statistics" },
         ],
     },
     {

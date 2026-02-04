@@ -164,7 +164,7 @@ async function fetchAllEnemiesPaginated(
 const EnemiesPage: NextPage<EnemiesPageProps> = ({ enemies, races, levelInfo, total }) => {
     return (
         <>
-            <SEO description="Browse and search enemies from Arknights with detailed stats and abilities. Filter by enemy level, damage type, and more." path="/tools/enemies" title="Enemy Database" />
+            <SEO description="Browse and search enemies from Arknights with detailed stats and abilities. Filter by enemy level, damage type, and more." path="/collection/enemies" title="Enemy Database" />
             <EnemyDatabase enemies={enemies} levelInfo={levelInfo} races={races} total={total} />
         </>
     );
