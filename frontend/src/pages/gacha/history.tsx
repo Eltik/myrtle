@@ -4,6 +4,7 @@ import { AlertCircle, History, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import ProtectedPageLayout from "~/components/layout/protected-page-layout";
 import { BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/my/gacha";
 import { SEO } from "~/components/seo";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/shadcn/alert";
@@ -16,7 +17,7 @@ import type { GachaHistoryParams, GachaType } from "~/types/api";
 
 const DEFAULT_PAGE_SIZE = 25;
 
-export default function GachaPage() {
+function GachaHistoryPageContent() {
     const { user, loading: authLoading } = useAuth();
     const { storedRecords, loading: loadingRecords, loadingStoredRecords, error: recordsError, fetchAllRecords, fetchStoredRecords, history, loadingHistory, fetchHistory, settings, fetchSettings } = useGacha();
 
@@ -135,35 +136,6 @@ export default function GachaPage() {
             setIsRefreshing(false);
         }
     }, [fetchAllRecords, fetchStoredRecords, fetchHistory, filters, activeTab]);
-
-    // Loading auth state
-    if (authLoading) {
-        return (
-            <>
-                <SEO description="View your Arknights gacha pull history." noIndex path="/gacha/history" title="Gacha History" />
-                <div className="flex min-h-[50vh] items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            </>
-        );
-    }
-
-    // Not authenticated
-    if (!user?.status) {
-        return (
-            <>
-                <SEO description="View your Arknights gacha pull history." noIndex path="/gacha/history" title="Gacha History" />
-                <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
-                    <Card className="max-w-md">
-                        <CardHeader>
-                            <CardTitle>Authentication Required</CardTitle>
-                            <CardDescription>Please log in to view your gacha history.</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </div>
-            </>
-        );
-    }
 
     // Check if storage is disabled
     const storageDisabled = settings && !settings.store_records;
@@ -288,5 +260,12 @@ export default function GachaPage() {
                 )}
             </div>
         </>
+    );
+}
+export default function GachaPage() {
+    return (
+        <ProtectedPageLayout>
+            <GachaHistoryPageContent />
+        </ProtectedPageLayout>
     );
 }

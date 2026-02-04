@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import type { GetServerSideProps } from "next";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import ProtectedPageLayout from "~/components/layout/protected-page-layout";
 import { SEO } from "~/components/seo";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
@@ -21,8 +22,8 @@ interface GachaSettings {
     five_star_count: number;
 }
 
-export default function SettingsPage() {
-    const { user, loading, refreshProfile } = useAuth();
+function SettingsPageContent() {
+    const { user, refreshProfile } = useAuth();
     const [publicProfile, setPublicProfile] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -151,34 +152,6 @@ export default function SettingsPage() {
             setIsRefreshing(false);
         }
     };
-
-    if (loading) {
-        return (
-            <>
-                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
-                <div className="flex min-h-[50vh] items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-            </>
-        );
-    }
-
-    if (!user?.status) {
-        return (
-            <>
-                <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
-                <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-4">
-                    <Card className="max-w-md">
-                        <CardHeader>
-                            <CardTitle>Authentication Required</CardTitle>
-                            <CardDescription>Please log in to access your settings.</CardDescription>
-                        </CardHeader>
-                    </Card>
-                </div>
-            </>
-        );
-    }
-
     return (
         <>
             <SEO description="Manage your myrtle.moe profile settings, privacy preferences, and account options." noIndex path="/my/settings" title="Settings" />
@@ -402,6 +375,13 @@ export default function SettingsPage() {
     );
 }
 
+export default function SettingsPage() {
+    return (
+        <ProtectedPageLayout>
+            <SettingsPageContent />
+        </ProtectedPageLayout>
+    );
+}
 // Server-side props - optional, can be used for future enhancements
 export const getServerSideProps: GetServerSideProps = async () => {
     return {
