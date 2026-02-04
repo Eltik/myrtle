@@ -1,4 +1,3 @@
-import GIFEncoder from "gif-encoder-2";
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 import * as PIXI from "pixi.js";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type ExportSettings } from "./constants";
@@ -39,148 +38,7 @@ function getAnimationDuration(spine: import("pixi-spine").Spine, animationName: 
 }
 
 // ============ GIF RECORDING ============
-
-export async function recordAsGif(options: RecordingOptions): Promise<RecordingResult> {
-    const { spine, animationName, onProgress, signal } = options;
-    const settings = resolveSettings(options.settings);
-
-    const width = Math.round(EXPORT_WIDTH * settings.scale);
-    const height = Math.round(EXPORT_HEIGHT * settings.scale);
-    const singleLoopDuration = getAnimationDuration(spine, animationName);
-    const totalFrames = Math.ceil(singleLoopDuration * settings.fps);
-    const frameDelta = 1 / settings.fps;
-    const frameDelayMs = Math.round(1000 / settings.fps);
-
-    // Save original state
-    const originalTimeScale = spine.state.timeScale;
-    const originalX = spine.x;
-    const originalY = spine.y;
-    const originalScaleX = spine.scale.x;
-    const originalScaleY = spine.scale.y;
-
-    let offscreenApp: PIXI.Application | null = null;
-    let tempCanvas: HTMLCanvasElement | null = null;
-
-    try {
-        checkAborted(signal);
-
-        // Create offscreen PIXI application
-        offscreenApp = new PIXI.Application({
-            width,
-            height,
-            backgroundColor: settings.transparentBg ? 0x000000 : EXPORT_BG_COLOR,
-            backgroundAlpha: settings.transparentBg ? 0 : 1,
-            antialias: true,
-            preserveDrawingBuffer: true,
-            resolution: 1,
-            autoDensity: false,
-        });
-
-        // Configure spine for export
-        spine.state.timeScale = 1;
-        spine.x = width * CHIBI_OFFSET_X;
-        spine.y = height * CHIBI_OFFSET_Y;
-        const scale = Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * 0.75;
-        spine.scale.set(scale);
-
-        // Move spine to offscreen app
-        if (spine.parent) {
-            spine.parent.removeChild(spine);
-        }
-        offscreenApp.stage.addChild(spine);
-
-        // Create temp canvas for frame extraction
-        tempCanvas = document.createElement("canvas");
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
-        if (!tempCtx) {
-            throw new Error("Failed to create 2D context");
-        }
-
-        // Setup GIF encoder
-        // Use "neuquant" algorithm for better color accuracy, enable optimizer
-        const encoder = new GIFEncoder(width, height, "neuquant", true, totalFrames);
-        encoder.setDelay(frameDelayMs);
-        encoder.setQuality(10); // 1-20, lower is better quality but slower
-        encoder.setRepeat(0); // 0 = loop forever, -1 = no repeat
-        encoder.start();
-
-        // Reset animation
-        spine.state.clearTracks();
-        spine.skeleton.setToSetupPose();
-        spine.state.setAnimation(0, animationName, true);
-        spine.state.apply(spine.skeleton);
-        spine.skeleton.updateWorldTransform();
-
-        // Capture frames
-        for (let frame = 0; frame < totalFrames; frame++) {
-            checkAborted(signal);
-
-            if (frame > 0) {
-                spine.state.update(frameDelta);
-                spine.state.apply(spine.skeleton);
-                spine.skeleton.updateWorldTransform();
-            }
-            spine.updateTransform();
-            offscreenApp.renderer.render(offscreenApp.stage);
-
-            // Extract frame to canvas
-            const webglCanvas = offscreenApp.view as HTMLCanvasElement;
-            tempCtx.clearRect(0, 0, width, height);
-            tempCtx.drawImage(webglCanvas, 0, 0);
-
-            // Add frame to encoder
-            encoder.addFrame(tempCtx);
-
-            onProgress?.(((frame + 1) / totalFrames) * 90); // 0-90% for capture
-
-            // Yield to UI
-            if (frame % 5 === 0) {
-                await new Promise((resolve) => setTimeout(resolve, 0));
-            }
-        }
-
-        // Finalize GIF
-        encoder.finish();
-
-        onProgress?.(100);
-
-        // Get the final GIF data
-        const data = encoder.out.getData();
-        // Create a copy with a guaranteed ArrayBuffer type
-        const blob = new Blob([new Uint8Array(data)], { type: "image/gif" });
-
-        return {
-            blob,
-            filename: `${animationName}.gif`,
-            mimeType: "image/gif",
-        };
-    } finally {
-        // Restore spine to original app
-        if (spine.parent) {
-            spine.parent.removeChild(spine);
-        }
-        if (options.liveApp?.stage) {
-            options.liveApp.stage.addChild(spine);
-        }
-
-        // Restore original state
-        spine.state.timeScale = originalTimeScale;
-        spine.x = originalX;
-        spine.y = originalY;
-        spine.scale.set(originalScaleX, originalScaleY);
-        spine.state.setAnimation(0, animationName, true);
-
-        if (offscreenApp) {
-            offscreenApp.destroy(true, { children: false, texture: false });
-        }
-        if (tempCanvas) {
-            tempCanvas.width = 0;
-            tempCanvas.height = 0;
-        }
-    }
-}
+export async function recordAsGif(_options: RecordingOptions): Promise<RecordingResult> {}
 
 // ============ MP4 RECORDING ============
 
@@ -207,6 +65,7 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
     let tempCanvas: HTMLCanvasElement | null = null;
     let muxer: Muxer<ArrayBufferTarget> | null = null;
     let videoEncoder: VideoEncoder | null = null;
+    let encoderError: Error | null = null;
 
     try {
         checkAborted(signal);
@@ -256,7 +115,7 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
             fastStart: "in-memory",
         });
 
-        // Setup video encoder
+        // Setup video encoder with proper error tracking
         const encodedChunks: { chunk: EncodedVideoChunk; meta?: EncodedVideoChunkMetadata }[] = [];
 
         videoEncoder = new VideoEncoder({
@@ -264,12 +123,25 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
                 encodedChunks.push({ chunk, meta });
             },
             error: (e) => {
-                throw e;
+                encoderError = e;
             },
         });
 
+        // Select appropriate AVC level based on resolution
+        // Level 3.1 (1f): max 1280x720 (921,600 pixels)
+        // Level 4.0 (28): max 2048x1024 (2,097,152 pixels)
+        // Level 5.1 (33): max 4096x2048 (8,388,608 pixels)
+        const pixels = width * height;
+        let codecLevel = "1f"; // Level 3.1 default
+        if (pixels > 921600) {
+            codecLevel = "28"; // Level 4.0 for larger resolutions
+        }
+        if (pixels > 2097152) {
+            codecLevel = "33"; // Level 5.1 for very large resolutions
+        }
+
         videoEncoder.configure({
-            codec: "avc1.42001f", // H.264 Baseline
+            codec: `avc1.4200${codecLevel}`, // H.264 Baseline with dynamic level
             width,
             height,
             bitrate: 5_000_000,
@@ -288,6 +160,16 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
 
         for (let frame = 0; frame < totalFrames; frame++) {
             checkAborted(signal);
+
+            // Check for encoder errors before each frame
+            if (encoderError) {
+                throw encoderError;
+            }
+
+            // Check encoder state
+            if (videoEncoder.state === "closed") {
+                throw new Error("Video encoder was unexpectedly closed");
+            }
 
             if (frame > 0) {
                 spine.state.update(frameDelta);
@@ -314,14 +196,25 @@ export async function recordAsVideo(options: RecordingOptions): Promise<Recordin
 
             onProgress?.(((frame + 1) / totalFrames) * 90); // 0-90% for capture
 
-            // Yield to UI
-            if (frame % 5 === 0) {
+            // Yield to UI and let encoder process - more frequently for high res
+            // This gives the encoder time to process frames without blocking
+            if (frame % 2 === 0) {
                 await new Promise((resolve) => setTimeout(resolve, 0));
             }
         }
 
-        // Flush encoder
+        // Check for any final errors before flushing
+        if (encoderError) {
+            throw encoderError;
+        }
+
+        // Flush encoder - wait for all pending frames to be encoded
         await videoEncoder.flush();
+
+        // Check for errors after flush
+        if (encoderError) {
+            throw encoderError;
+        }
 
         // Add all chunks to muxer
         for (const { chunk, meta } of encodedChunks) {
