@@ -73,6 +73,53 @@ function getAnimationDuration(spine: import("pixi-spine").Spine, animationName: 
     return animation?.duration ?? 1;
 }
 
+// Compare two ImageData objects and return a similarity score (lower = more similar)
+function compareFrames(frame1: ImageData, frame2: ImageData): number {
+    const data1 = frame1.data;
+    const data2 = frame2.data;
+    let diff = 0;
+    // Sample every 4th pixel for performance (RGBA = 4 bytes per pixel)
+    for (let i = 0; i < data1.length; i += 16) {
+        const r1 = data1[i] ?? 0;
+        const r2 = data2[i] ?? 0;
+        const g1 = data1[i + 1] ?? 0;
+        const g2 = data2[i + 1] ?? 0;
+        const b1 = data1[i + 2] ?? 0;
+        const b2 = data2[i + 2] ?? 0;
+        diff += Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+    }
+    return diff / ((data1.length / 16) * 3);
+}
+
+// Find the frame index where the animation visually loops back to the start
+function findVisualLoopPoint(frames: ImageData[], minFrameIndex: number = 10): number {
+    if (frames.length <= minFrameIndex) return frames.length;
+
+    const firstFrame = frames[0];
+    if (!firstFrame) return frames.length;
+
+    let bestMatchIndex = frames.length;
+    let bestMatchScore = Infinity;
+
+    // Look for a frame similar to the first frame (after minimum frames to avoid false matches)
+    for (let i = minFrameIndex; i < frames.length; i++) {
+        const frame = frames[i];
+        if (!frame) continue;
+        const score = compareFrames(firstFrame, frame);
+        if (score < bestMatchScore) {
+            bestMatchScore = score;
+            bestMatchIndex = i;
+        }
+    }
+
+    // Only use the detected loop point if it's significantly similar (threshold)
+    // If no good match found, use all frames
+    if (bestMatchScore < 15) {
+        return bestMatchIndex;
+    }
+    return frames.length;
+}
+
 // ============ GIF RECORDING ============
 
 export async function recordAsGif(options: RecordingOptions): Promise<RecordingResult> {
@@ -82,9 +129,15 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
     const width = Math.round(EXPORT_WIDTH * settings.scale);
     const height = Math.round(EXPORT_HEIGHT * settings.scale);
     const singleLoopDuration = getAnimationDuration(spine, animationName);
-    const totalFrames = Math.ceil(singleLoopDuration * settings.fps);
-    const frameDelta = 1 / settings.fps;
-    const frameDelayMs = Math.round(1000 / settings.fps);
+
+    // GIF delays are quantized to 10ms (min 20ms for browser compatibility)
+    // CRITICAL: frameDelta must match frameDelayMs for consistent timing
+    // Otherwise the animation plays at wrong speed and loop timing is off
+    const frameDelayMs = Math.max(20, Math.round(1000 / settings.fps / 10) * 10);
+    const frameDelta = frameDelayMs / 1000;
+
+    // Calculate frames to cover exactly one loop
+    const totalFrames = Math.max(1, Math.round(singleLoopDuration / frameDelta));
 
     // Save original state
     const originalTimeScale = spine.state.timeScale;
@@ -137,19 +190,20 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
             throw new Error("Failed to create 2D context");
         }
 
-        // Reset animation
+        // Reset animation (same as MP4)
         spine.state.clearTracks();
         spine.skeleton.setToSetupPose();
         spine.state.setAnimation(0, animationName, true);
         spine.state.apply(spine.skeleton);
         spine.skeleton.updateWorldTransform();
 
-        // Capture all frames first
+        // Capture all frames first (matching MP4 approach exactly)
         const frames: ImageData[] = [];
 
         for (let frame = 0; frame < totalFrames; frame++) {
             checkAborted(signal);
 
+            // Same as MP4: update only after frame 0
             if (frame > 0) {
                 spine.state.update(frameDelta);
                 spine.state.apply(spine.skeleton);
@@ -157,6 +211,9 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
             }
             spine.updateTransform();
             offscreenApp.renderer.render(offscreenApp.stage);
+
+            // Clear temp canvas before drawing to avoid artifacts
+            tempCtx.clearRect(0, 0, width, height);
 
             // Extract frame to canvas
             const webglCanvas = offscreenApp.view as HTMLCanvasElement;
@@ -195,14 +252,21 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
         };
         signal?.addEventListener("abort", abortHandler);
 
-        // Add frames to GIF
-        for (const frameData of frames) {
+        // Find the visual loop point - where the animation returns to a pose similar to frame 0
+        // This handles animations that have a "hold" period at the end
+        const visualLoopPoint = findVisualLoopPoint(frames);
+        const loopFrames = frames.slice(0, visualLoopPoint);
+
+        // Add frames to GIF with uniform delay
+        // dispose: 2 = restore to background (works better for transparency)
+        loopFrames.forEach((frameData) => {
             checkAborted(signal);
-            gif.addFrame(frameData, {
+            gif?.addFrame(frameData, {
                 delay: frameDelayMs,
                 copy: true,
+                dispose: 2,
             });
-        }
+        });
 
         // Render GIF and wait for completion
         const result = await new Promise<RecordingResult>((resolve, reject) => {
