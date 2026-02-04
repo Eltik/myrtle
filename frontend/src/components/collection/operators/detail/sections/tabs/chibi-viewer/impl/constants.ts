@@ -15,12 +15,14 @@ export interface ExportSettings {
     scale: number; // 0.5, 1, 1.5, 2
     fps: number; // 10, 15, 20, 30, 60
     transparentBg: boolean; // GIF only
+    loopCount: number; // Minimum number of loops for video export
 }
 
 export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
     scale: 1,
     fps: 20,
     transparentBg: true,
+    loopCount: 3,
 };
 
 export const EXPORT_SCALE_OPTIONS = [
@@ -31,3 +33,5 @@ export const EXPORT_SCALE_OPTIONS = [
 ] as const;
 
 export const EXPORT_FPS_OPTIONS = [10, 15, 20, 30, 60] as const;
+
+export const EXPORT_LOOP_OPTIONS = [1, 2, 3, 5, 10] as const;

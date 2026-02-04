@@ -9,7 +9,7 @@ import { Progress } from "~/components/ui/shadcn/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { Switch } from "~/components/ui/shadcn/switch";
-import { DEFAULT_EXPORT_SETTINGS, EXPORT_FPS_OPTIONS, EXPORT_SCALE_OPTIONS, type ExportSettings } from "./constants";
+import { DEFAULT_EXPORT_SETTINGS, EXPORT_FPS_OPTIONS, EXPORT_LOOP_OPTIONS, EXPORT_SCALE_OPTIONS, type ExportSettings } from "./constants";
 import type { ExportFormat } from "./recorder";
 
 interface DownloadButtonProps {
@@ -106,6 +106,30 @@ export function DownloadButton({ isRecording, progress, disabled, onDownload, on
                                 Transparent Background
                             </Label>
                             <Switch checked={settings.transparentBg} id="transparent" onCheckedChange={(checked) => setSettings((s) => ({ ...s, transparentBg: checked }))} />
+                        </div>
+
+                        <Separator />
+
+                        <div className="text-muted-foreground text-xs">MP4 Options</div>
+
+                        <div className="grid gap-1.5">
+                            <Label className="text-xs" htmlFor="loops">
+                                Loop Count
+                            </Label>
+                            <Select onValueChange={(v) => setSettings((s) => ({ ...s, loopCount: Number.parseInt(v, 10) }))} value={String(settings.loopCount)}>
+                                <SelectTrigger className="h-8 text-xs" id="loops">
+                                    <SelectValue>
+                                        {settings.loopCount} {settings.loopCount === 1 ? "loop" : "loops"}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {EXPORT_LOOP_OPTIONS.map((count) => (
+                                        <SelectItem key={count} value={String(count)}>
+                                            {count} {count === 1 ? "loop" : "loops"}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
