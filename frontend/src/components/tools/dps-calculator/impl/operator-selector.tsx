@@ -3,7 +3,7 @@
 import { ArrowDownAZ, ArrowUpAZ, ChevronDown, Search, SortAsc, SortDesc, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useMemo, useState } from "react";
-import { CLASS_DISPLAY, CLASS_SORT_ORDER, CLASSES, RARITIES, RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/operators/list/constants";
+import { CLASS_DISPLAY, CLASS_SORT_ORDER, CLASSES, RARITIES, RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/collection/operators/list/constants";
 import { Button } from "~/components/ui/shadcn/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "~/components/ui/shadcn/dropdown-menu";
 import { Input } from "~/components/ui/shadcn/input";

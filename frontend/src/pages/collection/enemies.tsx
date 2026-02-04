@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
+import { EnemyDatabase } from "~/components/collection/enemies";
 import { SEO } from "~/components/seo";
-import { EnemyDatabase } from "~/components/tools/enemy-database";
 import { env } from "~/env";
 import type { EnemiesResponse, Enemy, EnemyInfoList, LevelInfoResponse, RaceData, RacesResponse } from "~/types/api/impl/enemy";
 

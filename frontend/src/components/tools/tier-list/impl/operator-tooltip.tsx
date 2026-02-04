@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { memo, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/collection/operators/list/constants";
+import { FactionLogo } from "~/components/collection/operators/list/ui/impl/faction-logo";
 import { capitalize, formatSubProfession, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api";
-import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "../../list/constants";
-import { FactionLogo } from "../../list/ui/impl/faction-logo";
 
 interface OperatorTooltipProps {
     operator: OperatorFromList;

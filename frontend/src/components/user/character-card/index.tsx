@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RARITY_COLORS } from "~/components/operators/list/constants";
+import { RARITY_COLORS } from "~/components/collection/operators/list/constants";
 import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialog, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/shadcn/accordion";
