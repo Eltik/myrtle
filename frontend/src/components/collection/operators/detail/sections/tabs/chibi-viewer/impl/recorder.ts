@@ -1,4 +1,4 @@
-import { applyPalette, GIFEncoder, nearestColorIndex, quantize } from "gifenc";
+import GIFEncoder from "gif-encoder-2";
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 import * as PIXI from "pixi.js";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type ExportSettings } from "./constants";
@@ -46,17 +46,10 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
 
     const width = Math.round(EXPORT_WIDTH * settings.scale);
     const height = Math.round(EXPORT_HEIGHT * settings.scale);
-    const duration = getAnimationDuration(spine, animationName);
-
-    // GIF frame rate is limited by browser interpretation of delays
-    // Many browsers interpret delays < 2cs as 10cs (100ms = 10fps)
-    // Use minimum delay of 4cs (40ms = 25fps max) for reliable playback
-    const maxGifFps = 25;
-    const effectiveFps = Math.min(settings.fps, maxGifFps);
-    const totalFrames = Math.ceil(duration * effectiveFps);
-    const frameDelta = 1 / effectiveFps;
-    // GIF delay in centiseconds (1/100th second)
-    const frameDelayCs = Math.round(100 / effectiveFps);
+    const singleLoopDuration = getAnimationDuration(spine, animationName);
+    const totalFrames = Math.ceil(singleLoopDuration * settings.fps);
+    const frameDelta = 1 / settings.fps;
+    const frameDelayMs = Math.round(1000 / settings.fps);
 
     // Save original state
     const originalTimeScale = spine.state.timeScale;
@@ -96,72 +89,31 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
         }
         offscreenApp.stage.addChild(spine);
 
-        // Create temp canvas for pixel extraction
+        // Create temp canvas for frame extraction
         tempCanvas = document.createElement("canvas");
         tempCanvas.width = width;
         tempCanvas.height = height;
         const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
         if (!tempCtx) {
-            throw new Error("Failed to create 2D context for pixel extraction");
+            throw new Error("Failed to create 2D context");
         }
 
-        // Phase 1: Sample frames to build a global color palette
-        const sampleFrames: Uint8ClampedArray[] = [];
-        const sampleCount = Math.min(8, totalFrames);
-        const sampleInterval = Math.max(1, Math.floor(totalFrames / sampleCount));
+        // Setup GIF encoder
+        // Use "neuquant" algorithm for better color accuracy, enable optimizer
+        const encoder = new GIFEncoder(width, height, "neuquant", true, totalFrames);
+        encoder.setDelay(frameDelayMs);
+        encoder.setQuality(10); // 1-20, lower is better quality but slower
+        encoder.setRepeat(0); // 0 = loop forever, -1 = no repeat
+        encoder.start();
 
-        // Reset for sampling
+        // Reset animation
         spine.state.clearTracks();
         spine.skeleton.setToSetupPose();
-        spine.state.setAnimation(0, animationName, false);
+        spine.state.setAnimation(0, animationName, true);
         spine.state.apply(spine.skeleton);
         spine.skeleton.updateWorldTransform();
 
-        for (let i = 0; i < totalFrames; i++) {
-            if (i > 0) {
-                spine.state.update(frameDelta);
-                spine.state.apply(spine.skeleton);
-                spine.skeleton.updateWorldTransform();
-            }
-
-            if (i % sampleInterval === 0) {
-                spine.updateTransform();
-                offscreenApp.renderer.render(offscreenApp.stage);
-                const webglCanvas = offscreenApp.view as HTMLCanvasElement;
-                tempCtx.clearRect(0, 0, width, height);
-                tempCtx.drawImage(webglCanvas, 0, 0);
-                const imageData = tempCtx.getImageData(0, 0, width, height);
-                sampleFrames.push(new Uint8ClampedArray(imageData.data));
-            }
-        }
-
-        // Build global palette from sampled pixels
-        const combinedLength = sampleFrames.reduce((acc, f) => acc + f.length, 0);
-        const combinedPixels = new Uint8ClampedArray(combinedLength);
-        let offset = 0;
-        for (const frame of sampleFrames) {
-            combinedPixels.set(frame, offset);
-            offset += frame.length;
-        }
-
-        const globalPalette = quantize(combinedPixels, 256);
-
-        // Find transparent color index if needed
-        let transparentIndex: number | undefined;
-        if (settings.transparentBg) {
-            transparentIndex = nearestColorIndex(globalPalette, [0, 0, 0]);
-        }
-
-        // Phase 2: Capture all frames with global palette
-        const encoder = GIFEncoder();
-
-        // Reset animation for actual capture
-        spine.state.clearTracks();
-        spine.skeleton.setToSetupPose();
-        spine.state.setAnimation(0, animationName, false);
-        spine.state.apply(spine.skeleton);
-        spine.skeleton.updateWorldTransform();
-
+        // Capture frames
         for (let frame = 0; frame < totalFrames; frame++) {
             checkAborted(signal);
 
@@ -173,35 +125,31 @@ export async function recordAsGif(options: RecordingOptions): Promise<RecordingR
             spine.updateTransform();
             offscreenApp.renderer.render(offscreenApp.stage);
 
-            // Extract pixels
+            // Extract frame to canvas
             const webglCanvas = offscreenApp.view as HTMLCanvasElement;
             tempCtx.clearRect(0, 0, width, height);
             tempCtx.drawImage(webglCanvas, 0, 0);
-            const imageData = tempCtx.getImageData(0, 0, width, height);
 
-            // Apply global palette
-            const indexedPixels = applyPalette(imageData.data, globalPalette);
+            // Add frame to encoder
+            encoder.addFrame(tempCtx);
 
-            // Write frame
-            encoder.writeFrame(indexedPixels, width, height, {
-                palette: globalPalette,
-                delay: frameDelayCs,
-                transparent: settings.transparentBg,
-                transparentIndex: settings.transparentBg ? transparentIndex : undefined,
-                dispose: settings.transparentBg ? 2 : 0,
-            });
-
-            onProgress?.(((frame + 1) / totalFrames) * 100);
+            onProgress?.(((frame + 1) / totalFrames) * 90); // 0-90% for capture
 
             // Yield to UI
-            if (frame % 3 === 0) {
+            if (frame % 5 === 0) {
                 await new Promise((resolve) => setTimeout(resolve, 0));
             }
         }
 
+        // Finalize GIF
         encoder.finish();
-        const bytes = encoder.bytes();
-        const blob = new Blob([new Uint8Array(bytes)], { type: "image/gif" });
+
+        onProgress?.(100);
+
+        // Get the final GIF data
+        const data = encoder.out.getData();
+        // Create a copy with a guaranteed ArrayBuffer type
+        const blob = new Blob([new Uint8Array(data)], { type: "image/gif" });
 
         return {
             blob,
