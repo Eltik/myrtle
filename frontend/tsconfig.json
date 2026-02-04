@@ -31,5 +31,5 @@
         }
     },
     "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js", ".next/types/**/*.ts"],
-    "exclude": ["node_modules", "generated", "old"]
+    "exclude": ["node_modules", "generated", "old", "public"]
 }
