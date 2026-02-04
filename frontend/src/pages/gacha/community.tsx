@@ -1,7 +1,7 @@
 import { BarChart3, Sparkles, Star, Users } from "lucide-react";
 import type { GetServerSideProps, NextPage } from "next";
+import { calculateDerivedData, DataSourceNotice, getLuckStatus, MostCommonOperators, PityStatistics, PullActivityChart, PullRateAnalysis, PullTimingCharts, RarityDistribution, StatCard, StatsHeader } from "~/components/gacha/community";
 import { SEO } from "~/components/seo";
-import { calculateDerivedData, DataSourceNotice, getLuckStatus, MostCommonOperators, PityStatistics, PullActivityChart, PullRateAnalysis, PullTimingCharts, RarityDistribution, StatCard, StatsHeader } from "~/components/stats/gacha";
 import { formatRate } from "~/lib/gacha-utils";
 import type { GachaEnhancedStats } from "~/types/api";
 

@@ -2,7 +2,7 @@
 
 import { Shuffle, Users } from "lucide-react";
 import Image from "next/image";
-import { CLASS_DISPLAY, CLASS_ICON, RARITY_BLUR_COLORS, RARITY_COLORS } from "~/components/operators/list/constants";
+import { CLASS_DISPLAY, CLASS_ICON, RARITY_BLUR_COLORS, RARITY_COLORS } from "~/components/collection/operators/list/constants";
 import { Button } from "~/components/ui/shadcn/button";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 import type { RandomizerOperator } from "../index";

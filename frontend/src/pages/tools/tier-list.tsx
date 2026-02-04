@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext, NextPage } from "next";
-import { TierListView } from "~/components/operators/tier-list";
-import { TierListIndex } from "~/components/operators/tier-list/impl/tier-list-index";
 import { SEO } from "~/components/seo";
+import { TierListView } from "~/components/tools/tier-list";
+import { TierListIndex } from "~/components/tools/tier-list/impl/tier-list-index";
 import { env } from "~/env";
 import type { Operator, OperatorFromList } from "~/types/api";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";

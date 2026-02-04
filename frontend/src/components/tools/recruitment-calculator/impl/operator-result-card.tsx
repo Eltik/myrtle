@@ -2,8 +2,8 @@
 
 import { motion } from "motion/react";
 import Image from "next/image";
-import { CLASS_DISPLAY, CLASS_ICON, RARITY_COLORS } from "~/components/operators/list/constants";
-import { RarityStars } from "~/components/operators/list/ui/impl/rarity-stars";
+import { CLASS_DISPLAY, CLASS_ICON, RARITY_COLORS } from "~/components/collection/operators/list/constants";
+import { RarityStars } from "~/components/collection/operators/list/ui/impl/rarity-stars";
 import { cn } from "~/lib/utils";
 import type { RecruitableOperator } from "~/types/frontend/impl/tools/recruitment";
 

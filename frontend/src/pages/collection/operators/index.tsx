@@ -1,6 +1,6 @@
 import type { GetServerSideProps, NextPage } from "next";
-import { OperatorDetail } from "~/components/operators/detail/operator-detail";
-import { OperatorsList } from "~/components/operators/list/operators-list";
+import { OperatorDetail } from "~/components/collection/operators/detail/operator-detail";
+import { OperatorsList } from "~/components/collection/operators/list/operators-list";
 import { SEO } from "~/components/seo";
 import { env } from "~/env.js";
 import type { Operator, OperatorFromList } from "~/types/api";

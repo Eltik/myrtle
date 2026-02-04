@@ -2,7 +2,7 @@
 
 import { Filter } from "lucide-react";
 import Image from "next/image";
-import { CLASS_DISPLAY, CLASS_ICON, CLASSES, RARITIES } from "~/components/operators/list/constants";
+import { CLASS_DISPLAY, CLASS_ICON, CLASSES, RARITIES } from "~/components/collection/operators/list/constants";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Label } from "~/components/ui/shadcn/label";
 import { Slider } from "~/components/ui/shadcn/slider";

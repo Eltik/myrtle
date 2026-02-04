@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
+import { RARITY_BLUR_COLORS, RARITY_COLORS } from "~/components/collection/operators/list/constants";
 import { cn, rarityToNumber } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api";
-import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../../list/constants";
 import { OperatorTooltip } from "./operator-tooltip";
 
 interface TierOperatorCardProps {

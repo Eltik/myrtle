@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { RARITY_COLORS } from "~/components/operators/list/constants";
-import { Pagination } from "~/components/operators/list/ui/impl/pagination";
+import { RARITY_COLORS } from "~/components/collection/operators/list/constants";
+import { Pagination } from "~/components/collection/operators/list/ui/impl/pagination";
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/shadcn/collapsible";
 import { Skeleton } from "~/components/ui/shadcn/skeleton";

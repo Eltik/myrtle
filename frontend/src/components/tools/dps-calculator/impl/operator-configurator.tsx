@@ -4,7 +4,7 @@ import { ChevronDown, Heart, Settings2, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useState } from "react";
-import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/operators/list/constants";
+import { RARITY_COLORS, RARITY_COLORS_LIGHT } from "~/components/collection/operators/list/constants";
 import { Disclosure, DisclosureContent, DisclosureTrigger } from "~/components/ui/motion-primitives/disclosure";
 import { Button } from "~/components/ui/shadcn/button";
 import { Input } from "~/components/ui/shadcn/input";
