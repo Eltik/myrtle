@@ -23,7 +23,10 @@ export const OperatorCardList = memo(function OperatorCardList({ operator, listC
     const operatorId = operator.id ?? "";
 
     return (
-        <Link className={cn("group card-hover-transition relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 grayscale-transition contain-layout hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")} href={`/operators?id=${operatorId}`}>
+        <Link
+            className={cn("group card-hover-transition relative flex items-center gap-3 rounded-lg border border-transparent bg-card/50 px-3 py-2.5 grayscale-transition contain-layout hover:border-border hover:bg-card", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}
+            href={`/collection/operators?id=${operatorId}`}
+        >
             {/* Rarity indicator line on left */}
             <div className="absolute top-1/2 left-0 h-8 w-0.5 -translate-y-1/2 rounded-full opacity-60 opacity-transition group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
 

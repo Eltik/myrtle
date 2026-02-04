@@ -22,7 +22,7 @@ export const TierOperatorCard = memo(function TierOperatorCard({ operator, isHov
     const operatorId = operator.id ?? "";
 
     const cardContent = (
-        <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-3/4 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/operators?id=${operatorId}`}>
+        <Link aria-label={`View details for ${operator.name}`} className="group card-hover-transition relative flex aspect-3/4 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg" href={`/collection/operators?id=${operatorId}`}>
             {/* Portrait */}
             <div className={cn("absolute inset-0 origin-center transform-gpu transition-all duration-200 ease-out group-hover:scale-110", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}>
                 <Image alt={`${operator.name} Portrait`} className="h-full w-full rounded-lg object-cover object-top" decoding="async" fill loading="lazy" src={`/api/cdn${operator.portrait}`} />

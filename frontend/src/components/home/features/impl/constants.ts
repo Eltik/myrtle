@@ -5,13 +5,13 @@ export const FEATURES = [
         icon: Users,
         title: "Operator Database",
         description: "Browse and analyze all Arknights operators with detailed stats, skills, and artwork.",
-        href: "/operators/list",
+        href: "/collection/operators",
     },
     {
         icon: TrendingUp,
         title: "Tier Lists",
         description: "Community-driven tier lists to help you build the strongest team compositions.",
-        href: "/operators/tier-list",
+        href: "/tools/tier-list",
     },
     {
         icon: Calculator,

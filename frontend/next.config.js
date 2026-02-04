@@ -65,6 +65,43 @@ const config = {
                 destination: "https://github.com/Eltik/myrtle",
                 permanent: false,
             },
+            // Route migration redirects
+            {
+                source: "/operators/list",
+                destination: "/collection/operators",
+                permanent: true,
+            },
+            {
+                source: "/operators",
+                has: [{ type: "query", key: "id" }],
+                destination: "/collection/operators",
+                permanent: true,
+            },
+            {
+                source: "/operators",
+                destination: "/collection/operators",
+                permanent: true,
+            },
+            {
+                source: "/operators/tier-list",
+                destination: "/tools/tier-list",
+                permanent: true,
+            },
+            {
+                source: "/tools/enemies",
+                destination: "/collection/enemies",
+                permanent: true,
+            },
+            {
+                source: "/my/gacha",
+                destination: "/gacha/history",
+                permanent: true,
+            },
+            {
+                source: "/stats/gacha",
+                destination: "/gacha/community",
+                permanent: true,
+            },
         ];
     },
 };

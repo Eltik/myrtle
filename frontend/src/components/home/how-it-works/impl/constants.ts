@@ -13,7 +13,7 @@ export const STEPS = [
         description: "Browse the complete operator database, view detailed stats, and explore tier lists curated by the community.",
         action: {
             label: "Browse Operators",
-            href: "/operators/list",
+            href: "/collection/operators",
         },
     },
     {
