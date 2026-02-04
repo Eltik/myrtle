@@ -20,6 +20,42 @@ export interface RecordingResult {
     mimeType: string;
 }
 
+// ============ GIF.JS TYPE DEFINITIONS ============
+
+interface GIFOptions {
+    workers?: number;
+    quality?: number;
+    repeat?: number;
+    background?: string;
+    width?: number | null;
+    height?: number | null;
+    transparent?: number | null;
+    dither?: boolean | string;
+    debug?: boolean;
+    workerScript?: string;
+}
+
+interface GIFFrameOptions {
+    delay?: number;
+    copy?: boolean;
+    dispose?: number;
+}
+
+interface GIFInstance {
+    addFrame(image: CanvasRenderingContext2D | ImageData | HTMLCanvasElement | HTMLImageElement, options?: GIFFrameOptions): void;
+    on(event: "start", callback: () => void): void;
+    on(event: "progress", callback: (progress: number) => void): void;
+    on(event: "finished", callback: (blob: Blob, data: Uint8Array) => void): void;
+    on(event: "abort", callback: () => void): void;
+    render(): void;
+    abort(): void;
+    running: boolean;
+}
+
+interface GIFConstructor {
+    new (options?: GIFOptions): GIFInstance;
+}
+
 // ============ HELPER FUNCTIONS ============
 
 function resolveSettings(settings?: Partial<ExportSettings>): ExportSettings {
@@ -38,7 +74,191 @@ function getAnimationDuration(spine: import("pixi-spine").Spine, animationName: 
 }
 
 // ============ GIF RECORDING ============
-export async function recordAsGif(_options: RecordingOptions): Promise<RecordingResult> {}
+
+export async function recordAsGif(options: RecordingOptions): Promise<RecordingResult> {
+    const { spine, animationName, onProgress, signal } = options;
+    const settings = resolveSettings(options.settings);
+
+    const width = Math.round(EXPORT_WIDTH * settings.scale);
+    const height = Math.round(EXPORT_HEIGHT * settings.scale);
+    const singleLoopDuration = getAnimationDuration(spine, animationName);
+    const totalFrames = Math.ceil(singleLoopDuration * settings.fps);
+    const frameDelta = 1 / settings.fps;
+    const frameDelayMs = Math.round(1000 / settings.fps);
+
+    // Save original state
+    const originalTimeScale = spine.state.timeScale;
+    const originalX = spine.x;
+    const originalY = spine.y;
+    const originalScaleX = spine.scale.x;
+    const originalScaleY = spine.scale.y;
+
+    let offscreenApp: PIXI.Application | null = null;
+    let tempCanvas: HTMLCanvasElement | null = null;
+    let gif: GIFInstance | null = null;
+
+    try {
+        checkAborted(signal);
+
+        // Dynamically import gif.js (browser-only)
+        const GIF = (await import("gif.js")).default as GIFConstructor;
+
+        // Create offscreen PIXI application
+        offscreenApp = new PIXI.Application({
+            width,
+            height,
+            backgroundColor: settings.transparentBg ? 0x000000 : EXPORT_BG_COLOR,
+            backgroundAlpha: settings.transparentBg ? 0 : 1,
+            antialias: true,
+            preserveDrawingBuffer: true,
+            resolution: 1,
+            autoDensity: false,
+        });
+
+        // Configure spine for export
+        spine.state.timeScale = 1;
+        spine.x = width * CHIBI_OFFSET_X;
+        spine.y = height * CHIBI_OFFSET_Y;
+        const scale = Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * 0.75;
+        spine.scale.set(scale);
+
+        // Move spine to offscreen app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
+        offscreenApp.stage.addChild(spine);
+
+        // Create temp canvas for frame extraction
+        tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+        if (!tempCtx) {
+            throw new Error("Failed to create 2D context");
+        }
+
+        // Reset animation
+        spine.state.clearTracks();
+        spine.skeleton.setToSetupPose();
+        spine.state.setAnimation(0, animationName, true);
+        spine.state.apply(spine.skeleton);
+        spine.skeleton.updateWorldTransform();
+
+        // Capture all frames first
+        const frames: ImageData[] = [];
+
+        for (let frame = 0; frame < totalFrames; frame++) {
+            checkAborted(signal);
+
+            if (frame > 0) {
+                spine.state.update(frameDelta);
+                spine.state.apply(spine.skeleton);
+                spine.skeleton.updateWorldTransform();
+            }
+            spine.updateTransform();
+            offscreenApp.renderer.render(offscreenApp.stage);
+
+            // Extract frame to canvas
+            const webglCanvas = offscreenApp.view as HTMLCanvasElement;
+            tempCtx.drawImage(webglCanvas, 0, 0);
+
+            // Get image data for gif.js
+            const imageData = tempCtx.getImageData(0, 0, width, height);
+            frames.push(imageData);
+
+            onProgress?.(((frame + 1) / totalFrames) * 50); // 0-50% for capture
+
+            // Yield to UI every few frames
+            if (frame % 5 === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
+            }
+        }
+
+        checkAborted(signal);
+
+        // Create GIF encoder
+        gif = new GIF({
+            workers: 4,
+            quality: 10,
+            width,
+            height,
+            workerScript: "/gif.worker.js",
+            repeat: 0, // Loop forever
+            transparent: settings.transparentBg ? 0x000000 : null,
+            dither: false,
+            debug: false,
+        });
+
+        // Add abort listener
+        const abortHandler = () => {
+            gif?.abort();
+        };
+        signal?.addEventListener("abort", abortHandler);
+
+        // Add frames to GIF
+        for (const frameData of frames) {
+            checkAborted(signal);
+            gif.addFrame(frameData, {
+                delay: frameDelayMs,
+                copy: true,
+            });
+        }
+
+        // Render GIF and wait for completion
+        const result = await new Promise<RecordingResult>((resolve, reject) => {
+            if (!gif) {
+                reject(new Error("GIF encoder not initialized"));
+                return;
+            }
+
+            gif.on("progress", (progress) => {
+                onProgress?.(50 + progress * 50); // 50-100% for encoding
+            });
+
+            gif.on("finished", (blob) => {
+                signal?.removeEventListener("abort", abortHandler);
+                resolve({
+                    blob,
+                    filename: `${animationName}.gif`,
+                    mimeType: "image/gif",
+                });
+            });
+
+            gif.on("abort", () => {
+                signal?.removeEventListener("abort", abortHandler);
+                reject(new DOMException("Recording was cancelled", "AbortError"));
+            });
+
+            gif.render();
+        });
+
+        onProgress?.(100);
+        return result;
+    } finally {
+        // Restore spine to original app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
+        if (options.liveApp?.stage) {
+            options.liveApp.stage.addChild(spine);
+        }
+
+        // Restore original state
+        spine.state.timeScale = originalTimeScale;
+        spine.x = originalX;
+        spine.y = originalY;
+        spine.scale.set(originalScaleX, originalScaleY);
+        spine.state.setAnimation(0, animationName, true);
+
+        if (offscreenApp) {
+            offscreenApp.destroy(true, { children: false, texture: false });
+        }
+        if (tempCanvas) {
+            tempCanvas.width = 0;
+            tempCanvas.height = 0;
+        }
+    }
+}
 
 // ============ MP4 RECORDING ============
 
