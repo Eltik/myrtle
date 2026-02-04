@@ -1,5 +1,7 @@
+import { applyPalette, GIFEncoder, nearestColorIndex, quantize } from "gifenc";
+import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 import * as PIXI from "pixi.js";
-import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type ExportSettings } from "./constants";
+import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, DEFAULT_EXPORT_SETTINGS, EXPORT_BG_COLOR, EXPORT_HEIGHT, EXPORT_WIDTH, type ExportSettings } from "./constants";
 
 export type ExportFormat = "gif" | "mp4";
 
@@ -19,366 +21,406 @@ export interface RecordingResult {
     mimeType: string;
 }
 
-function getAnimationDuration(spine: import("pixi-spine").Spine, animationName: string): number {
-    const anim = spine.spineData.animations.find((a: { name: string }) => a.name === animationName);
-    if (!anim) throw new Error(`Animation "${animationName}" not found`);
-    return (anim as unknown as { duration: number }).duration;
+// ============ HELPER FUNCTIONS ============
+
+function resolveSettings(settings?: Partial<ExportSettings>): ExportSettings {
+    return { ...DEFAULT_EXPORT_SETTINGS, ...settings };
 }
 
-function positionSpine(spine: import("pixi-spine").Spine, width: number, height: number) {
-    spine.x = width * CHIBI_OFFSET_X;
-    spine.y = height * CHIBI_OFFSET_Y;
-    const scale = Math.min(width / 600, height / 400) * CHIBI_SCALE;
-    spine.scale.set(scale);
-}
-
-function createOffscreenApp(transparent: boolean, scale: number): PIXI.Application {
-    const width = Math.round(EXPORT_WIDTH * scale);
-    const height = Math.round(EXPORT_HEIGHT * scale);
-    return new PIXI.Application({
-        width,
-        height,
-        backgroundColor: transparent ? 0x000000 : EXPORT_BG_COLOR,
-        backgroundAlpha: transparent ? 0 : 1,
-        antialias: true,
-        resolution: 1,
-        autoDensity: false,
-        preserveDrawingBuffer: true,
-        forceCanvas: false,
-    });
-}
-
-function resetAnimation(spine: import("pixi-spine").Spine, animationName: string) {
-    spine.state.clearListeners();
-    spine.state.setAnimation(0, animationName, false);
-    const track = spine.state.tracks[0];
-    if (track) {
-        track.trackTime = 0;
+function checkAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) {
+        throw new DOMException("Recording was cancelled", "AbortError");
     }
-    spine.state.apply(spine.skeleton);
-    spine.skeleton.updateWorldTransform();
 }
+
+function getAnimationDuration(spine: import("pixi-spine").Spine, animationName: string): number {
+    const animation = spine.spineData.findAnimation(animationName);
+    return animation?.duration ?? 1;
+}
+
+// ============ GIF RECORDING ============
 
 export async function recordAsGif(options: RecordingOptions): Promise<RecordingResult> {
-    const { liveApp, spine, animationName, settings, onProgress, signal } = options;
-    const { GIFEncoder, quantize, applyPalette } = await import("gifenc");
+    const { spine, animationName, onProgress, signal } = options;
+    const settings = resolveSettings(options.settings);
 
-    const mergedSettings = { ...DEFAULT_EXPORT_SETTINGS, ...settings };
-    const { scale, fps, transparentBg } = mergedSettings;
+    const width = Math.round(EXPORT_WIDTH * settings.scale);
+    const height = Math.round(EXPORT_HEIGHT * settings.scale);
+    const duration = getAnimationDuration(spine, animationName);
 
-    const exportWidth = Math.round(EXPORT_WIDTH * scale);
-    const exportHeight = Math.round(EXPORT_HEIGHT * scale);
+    // GIF frame rate is limited by browser interpretation of delays
+    // Many browsers interpret delays < 2cs as 10cs (100ms = 10fps)
+    // Use minimum delay of 4cs (40ms = 25fps max) for reliable playback
+    const maxGifFps = 25;
+    const effectiveFps = Math.min(settings.fps, maxGifFps);
+    const totalFrames = Math.ceil(duration * effectiveFps);
+    const frameDelta = 1 / effectiveFps;
+    // GIF delay in centiseconds (1/100th second)
+    const frameDelayCs = Math.round(100 / effectiveFps);
 
-    const rawDuration = getAnimationDuration(spine, animationName);
-    const effectiveDuration = rawDuration / ANIMATION_SPEED;
-    const totalFrames = Math.ceil(effectiveDuration * fps);
-    const frameDelta = 1 / fps;
-    const delay = Math.round(1000 / fps);
+    // Save original state
+    const originalTimeScale = spine.state.timeScale;
+    const originalX = spine.x;
+    const originalY = spine.y;
+    const originalScaleX = spine.scale.x;
+    const originalScaleY = spine.scale.y;
 
-    const offscreenApp = createOffscreenApp(transparentBg, scale);
-
-    // Create a separate 2D canvas for pixel extraction (avoid WebGL extract issues)
-    const extractCanvas = document.createElement("canvas");
-    extractCanvas.width = exportWidth;
-    extractCanvas.height = exportHeight;
-    const extractCtx = extractCanvas.getContext("2d");
-    if (!extractCtx) {
-        offscreenApp.destroy(true, { children: false, texture: false });
-        throw new Error("Failed to create 2D context for extraction");
-    }
+    let offscreenApp: PIXI.Application | null = null;
+    let tempCanvas: HTMLCanvasElement | null = null;
 
     try {
-        liveApp.stage.removeChild(spine);
+        checkAborted(signal);
+
+        // Create offscreen PIXI application
+        offscreenApp = new PIXI.Application({
+            width,
+            height,
+            backgroundColor: settings.transparentBg ? 0x000000 : EXPORT_BG_COLOR,
+            backgroundAlpha: settings.transparentBg ? 0 : 1,
+            antialias: true,
+            preserveDrawingBuffer: true,
+            resolution: 1,
+            autoDensity: false,
+        });
+
+        // Configure spine for export
+        spine.state.timeScale = 1;
+        spine.x = width * CHIBI_OFFSET_X;
+        spine.y = height * CHIBI_OFFSET_Y;
+        const scale = Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * 0.75;
+        spine.scale.set(scale);
+
+        // Move spine to offscreen app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
         offscreenApp.stage.addChild(spine);
-        positionSpine(spine, exportWidth, exportHeight);
 
-        const savedTimeScale = spine.state.timeScale;
-        spine.state.timeScale = ANIMATION_SPEED;
-        resetAnimation(spine, animationName);
+        // Create temp canvas for pixel extraction
+        tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+        if (!tempCtx) {
+            throw new Error("Failed to create 2D context for pixel extraction");
+        }
 
+        // Phase 1: Sample frames to build a global color palette
+        const sampleFrames: Uint8ClampedArray[] = [];
+        const sampleCount = Math.min(8, totalFrames);
+        const sampleInterval = Math.max(1, Math.floor(totalFrames / sampleCount));
+
+        // Reset for sampling
+        spine.state.clearTracks();
+        spine.skeleton.setToSetupPose();
+        spine.state.setAnimation(0, animationName, false);
+        spine.state.apply(spine.skeleton);
+        spine.skeleton.updateWorldTransform();
+
+        for (let i = 0; i < totalFrames; i++) {
+            if (i > 0) {
+                spine.state.update(frameDelta);
+                spine.state.apply(spine.skeleton);
+                spine.skeleton.updateWorldTransform();
+            }
+
+            if (i % sampleInterval === 0) {
+                spine.updateTransform();
+                offscreenApp.renderer.render(offscreenApp.stage);
+                const webglCanvas = offscreenApp.view as HTMLCanvasElement;
+                tempCtx.clearRect(0, 0, width, height);
+                tempCtx.drawImage(webglCanvas, 0, 0);
+                const imageData = tempCtx.getImageData(0, 0, width, height);
+                sampleFrames.push(new Uint8ClampedArray(imageData.data));
+            }
+        }
+
+        // Build global palette from sampled pixels
+        const combinedLength = sampleFrames.reduce((acc, f) => acc + f.length, 0);
+        const combinedPixels = new Uint8ClampedArray(combinedLength);
+        let offset = 0;
+        for (const frame of sampleFrames) {
+            combinedPixels.set(frame, offset);
+            offset += frame.length;
+        }
+
+        const globalPalette = quantize(combinedPixels, 256);
+
+        // Find transparent color index if needed
+        let transparentIndex: number | undefined;
+        if (settings.transparentBg) {
+            transparentIndex = nearestColorIndex(globalPalette, [0, 0, 0]);
+        }
+
+        // Phase 2: Capture all frames with global palette
         const encoder = GIFEncoder();
-        const pixiCanvas = offscreenApp.view as HTMLCanvasElement;
+
+        // Reset animation for actual capture
+        spine.state.clearTracks();
+        spine.skeleton.setToSetupPose();
+        spine.state.setAnimation(0, animationName, false);
+        spine.state.apply(spine.skeleton);
+        spine.skeleton.updateWorldTransform();
 
         for (let frame = 0; frame < totalFrames; frame++) {
-            if (signal?.aborted) {
-                throw new DOMException("Recording cancelled", "AbortError");
-            }
+            checkAborted(signal);
 
             if (frame > 0) {
-                spine.update(frameDelta);
+                spine.state.update(frameDelta);
+                spine.state.apply(spine.skeleton);
+                spine.skeleton.updateWorldTransform();
             }
-
+            spine.updateTransform();
             offscreenApp.renderer.render(offscreenApp.stage);
 
-            // Copy from WebGL canvas to 2D canvas for reliable pixel extraction
-            extractCtx.clearRect(0, 0, exportWidth, exportHeight);
-            extractCtx.drawImage(pixiCanvas, 0, 0);
-            const imageData = extractCtx.getImageData(0, 0, exportWidth, exportHeight);
-            const rgba = imageData.data;
+            // Extract pixels
+            const webglCanvas = offscreenApp.view as HTMLCanvasElement;
+            tempCtx.clearRect(0, 0, width, height);
+            tempCtx.drawImage(webglCanvas, 0, 0);
+            const imageData = tempCtx.getImageData(0, 0, width, height);
 
-            // Check for transparency
-            let hasTransparency = false;
-            if (transparentBg) {
-                for (let i = 3; i < rgba.length; i += 4) {
-                    if ((rgba[i] ?? 255) < 128) {
-                        hasTransparency = true;
-                        break;
-                    }
-                }
-            }
+            // Apply global palette
+            const indexedPixels = applyPalette(imageData.data, globalPalette);
 
-            const palette = quantize(rgba, 256);
-            const indexedPixels = applyPalette(rgba, palette);
-
-            if (hasTransparency) {
-                let transparentIndex = 0;
-                let minBrightness = Number.POSITIVE_INFINITY;
-                for (let i = 0; i < palette.length; i++) {
-                    const entry = palette[i];
-                    if (!entry) continue;
-                    const brightness = (entry[0] ?? 0) + (entry[1] ?? 0) + (entry[2] ?? 0);
-                    if (brightness < minBrightness) {
-                        minBrightness = brightness;
-                        transparentIndex = i;
-                    }
-                }
-
-                for (let i = 0; i < rgba.length; i += 4) {
-                    if ((rgba[i + 3] ?? 255) < 128) {
-                        indexedPixels[i / 4] = transparentIndex;
-                    }
-                }
-
-                encoder.writeFrame(indexedPixels, exportWidth, exportHeight, {
-                    palette,
-                    delay,
-                    transparent: true,
-                    transparentIndex,
-                    dispose: 2,
-                });
-            } else {
-                encoder.writeFrame(indexedPixels, exportWidth, exportHeight, {
-                    palette,
-                    delay,
-                });
-            }
+            // Write frame
+            encoder.writeFrame(indexedPixels, width, height, {
+                palette: globalPalette,
+                delay: frameDelayCs,
+                transparent: settings.transparentBg,
+                transparentIndex: settings.transparentBg ? transparentIndex : undefined,
+                dispose: settings.transparentBg ? 2 : 0,
+            });
 
             onProgress?.(((frame + 1) / totalFrames) * 100);
 
-            if (frame % 5 === 0) {
-                await new Promise<void>((r) => setTimeout(r, 0));
+            // Yield to UI
+            if (frame % 3 === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
             }
         }
 
         encoder.finish();
-
-        spine.state.timeScale = savedTimeScale;
-        offscreenApp.stage.removeChild(spine);
-        liveApp.stage.addChild(spine);
-        positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-        spine.state.setAnimation(0, animationName, true);
-
-        // Create blob from encoder bytes
-        const result = {
-            blob: new Blob([encoder.bytes().buffer as ArrayBuffer], { type: "image/gif" }),
-            filename: `chibi-${animationName}-${Date.now()}.gif`,
-            mimeType: "image/gif",
-        };
-
-        // Clean up extraction canvas
-        extractCanvas.width = 0;
-        extractCanvas.height = 0;
-
-        return result;
-    } catch (err) {
-        if (!liveApp.stage.children.includes(spine)) {
-            try {
-                offscreenApp.stage.removeChild(spine);
-            } catch {
-                // Spine might already be removed
-            }
-            liveApp.stage.addChild(spine);
-            positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-            spine.state.timeScale = ANIMATION_SPEED;
-            spine.state.setAnimation(0, animationName, true);
-        }
-        throw err;
-    } finally {
-        // Clean up extraction canvas on error path too
-        extractCanvas.width = 0;
-        extractCanvas.height = 0;
-        offscreenApp.destroy(true, { children: false, texture: false });
-    }
-}
-
-function getSupportedMimeType(): string {
-    const candidates = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
-    for (const type of candidates) {
-        if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(type)) return type;
-    }
-    return "video/webm";
-}
-
-export async function recordAsVideo(options: RecordingOptions): Promise<RecordingResult> {
-    const { liveApp, spine, animationName, settings, onProgress, signal } = options;
-
-    const mergedSettings = { ...DEFAULT_EXPORT_SETTINGS, ...settings };
-    const { scale, fps } = mergedSettings;
-
-    const exportWidth = Math.round(EXPORT_WIDTH * scale);
-    const exportHeight = Math.round(EXPORT_HEIGHT * scale);
-
-    const rawDuration = getAnimationDuration(spine, animationName);
-    const effectiveDuration = rawDuration / ANIMATION_SPEED;
-    const totalFrames = Math.ceil(effectiveDuration * fps);
-    const frameDelta = 1 / fps;
-    const frameInterval = 1000 / fps;
-
-    const offscreenApp = createOffscreenApp(false, scale);
-
-    // Create a 2D canvas for frame extraction and playback
-    const playbackCanvas = document.createElement("canvas");
-    playbackCanvas.width = exportWidth;
-    playbackCanvas.height = exportHeight;
-    const playbackCtx = playbackCanvas.getContext("2d");
-    if (!playbackCtx) {
-        offscreenApp.destroy(true, { children: false, texture: false });
-        throw new Error("Failed to create 2D context for video encoding");
-    }
-
-    // Track resources for cleanup
-    let stream: MediaStream | null = null;
-    const frames: ImageData[] = [];
-
-    try {
-        liveApp.stage.removeChild(spine);
-        offscreenApp.stage.addChild(spine);
-        positionSpine(spine, exportWidth, exportHeight);
-
-        const savedTimeScale = spine.state.timeScale;
-        spine.state.timeScale = ANIMATION_SPEED;
-        resetAnimation(spine, animationName);
-
-        const pixiCanvas = offscreenApp.view as HTMLCanvasElement;
-
-        // Phase 1: Capture all frames as fast as possible (non-realtime)
-        for (let frame = 0; frame < totalFrames; frame++) {
-            if (signal?.aborted) {
-                throw new DOMException("Recording cancelled", "AbortError");
-            }
-
-            if (frame > 0) {
-                spine.update(frameDelta);
-            }
-
-            offscreenApp.renderer.render(offscreenApp.stage);
-
-            // Copy frame to 2D canvas and capture ImageData
-            playbackCtx.clearRect(0, 0, exportWidth, exportHeight);
-            playbackCtx.drawImage(pixiCanvas, 0, 0);
-            frames.push(playbackCtx.getImageData(0, 0, exportWidth, exportHeight));
-
-            // Report progress (0-50% for frame capture)
-            onProgress?.(((frame + 1) / totalFrames) * 50);
-
-            // Yield every 10 frames to keep UI responsive
-            if (frame % 10 === 0) {
-                await new Promise<void>((r) => setTimeout(r, 0));
-            }
-        }
-
-        // Restore spine immediately after capture
-        spine.state.timeScale = savedTimeScale;
-        offscreenApp.stage.removeChild(spine);
-        liveApp.stage.addChild(spine);
-        positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-        spine.state.setAnimation(0, animationName, true);
-
-        // Phase 2: Encode frames to video with proper timing
-        const mimeType = getSupportedMimeType();
-        const isMP4 = mimeType.includes("mp4");
-        const extension = isMP4 ? "mp4" : "webm";
-
-        stream = playbackCanvas.captureStream(fps);
-        const chunks: Blob[] = [];
-        const recorder = new MediaRecorder(stream, {
-            mimeType,
-            videoBitsPerSecond: 5_000_000,
-        });
-
-        recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) chunks.push(e.data);
-        };
-
-        const stopPromise = new Promise<void>((resolve) => {
-            recorder.onstop = () => resolve();
-        });
-
-        recorder.start();
-
-        // Play back frames at correct timing for encoding
-        for (let frame = 0; frame < frames.length; frame++) {
-            if (signal?.aborted) {
-                recorder.stop();
-                await stopPromise;
-                throw new DOMException("Recording cancelled", "AbortError");
-            }
-
-            const frameData = frames[frame];
-            if (frameData) {
-                playbackCtx.putImageData(frameData, 0, 0);
-            }
-
-            // Report progress (50-100% for encoding)
-            onProgress?.(50 + ((frame + 1) / frames.length) * 50);
-
-            // Wait for frame interval to ensure proper timing in output
-            await new Promise<void>((r) => setTimeout(r, frameInterval));
-        }
-
-        recorder.stop();
-        await stopPromise;
-
-        // Stop media stream tracks
-        for (const track of stream.getTracks()) {
-            track.stop();
-        }
-
-        // Clear frames array to free memory
-        frames.length = 0;
-
-        // Clean up playback canvas
-        playbackCanvas.width = 0;
-        playbackCanvas.height = 0;
+        const bytes = encoder.bytes();
+        const blob = new Blob([new Uint8Array(bytes)], { type: "image/gif" });
 
         return {
-            blob: new Blob(chunks, { type: mimeType }),
-            filename: `chibi-${animationName}-${Date.now()}.${extension}`,
-            mimeType,
+            blob,
+            filename: `${animationName}.gif`,
+            mimeType: "image/gif",
         };
-    } catch (err) {
-        if (!liveApp.stage.children.includes(spine)) {
-            try {
-                offscreenApp.stage.removeChild(spine);
-            } catch {
-                // Spine might already be removed
-            }
-            liveApp.stage.addChild(spine);
-            positionSpine(spine, liveApp.screen.width, liveApp.screen.height);
-            spine.state.timeScale = ANIMATION_SPEED;
-            spine.state.setAnimation(0, animationName, true);
-        }
-        throw err;
     } finally {
-        // Clean up resources
-        frames.length = 0;
-        if (stream) {
-            for (const track of stream.getTracks()) {
-                track.stop();
+        // Restore spine to original app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
+        if (options.liveApp?.stage) {
+            options.liveApp.stage.addChild(spine);
+        }
+
+        // Restore original state
+        spine.state.timeScale = originalTimeScale;
+        spine.x = originalX;
+        spine.y = originalY;
+        spine.scale.set(originalScaleX, originalScaleY);
+        spine.state.setAnimation(0, animationName, true);
+
+        if (offscreenApp) {
+            offscreenApp.destroy(true, { children: false, texture: false });
+        }
+        if (tempCanvas) {
+            tempCanvas.width = 0;
+            tempCanvas.height = 0;
+        }
+    }
+}
+
+// ============ MP4 RECORDING ============
+
+export async function recordAsVideo(options: RecordingOptions): Promise<RecordingResult> {
+    const { spine, animationName, onProgress, signal } = options;
+    const settings = resolveSettings(options.settings);
+
+    const width = Math.round(EXPORT_WIDTH * settings.scale);
+    const height = Math.round(EXPORT_HEIGHT * settings.scale);
+    const singleLoopDuration = getAnimationDuration(spine, animationName);
+    const loopCount = settings.loopCount;
+    const totalDuration = singleLoopDuration * loopCount;
+    const totalFrames = Math.ceil(totalDuration * settings.fps);
+    const frameDelta = 1 / settings.fps;
+
+    // Save original state
+    const originalTimeScale = spine.state.timeScale;
+    const originalX = spine.x;
+    const originalY = spine.y;
+    const originalScaleX = spine.scale.x;
+    const originalScaleY = spine.scale.y;
+
+    let offscreenApp: PIXI.Application | null = null;
+    let tempCanvas: HTMLCanvasElement | null = null;
+    let muxer: Muxer<ArrayBufferTarget> | null = null;
+    let videoEncoder: VideoEncoder | null = null;
+
+    try {
+        checkAborted(signal);
+
+        // Create offscreen PIXI application
+        offscreenApp = new PIXI.Application({
+            width,
+            height,
+            backgroundColor: EXPORT_BG_COLOR,
+            backgroundAlpha: 1,
+            antialias: true,
+            preserveDrawingBuffer: true,
+            resolution: 1,
+            autoDensity: false,
+        });
+
+        // Configure spine for export
+        spine.state.timeScale = 1;
+        spine.x = width * CHIBI_OFFSET_X;
+        spine.y = height * CHIBI_OFFSET_Y;
+        const scale = Math.min(width / EXPORT_WIDTH, height / EXPORT_HEIGHT) * 0.75;
+        spine.scale.set(scale);
+
+        // Move spine to offscreen app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
+        offscreenApp.stage.addChild(spine);
+
+        // Create temp canvas for frame extraction
+        tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext("2d", { willReadFrequently: true });
+        if (!tempCtx) {
+            throw new Error("Failed to create 2D context");
+        }
+
+        // Setup MP4 muxer
+        muxer = new Muxer({
+            target: new ArrayBufferTarget(),
+            video: {
+                codec: "avc",
+                width,
+                height,
+            },
+            fastStart: "in-memory",
+        });
+
+        // Setup video encoder
+        const encodedChunks: { chunk: EncodedVideoChunk; meta?: EncodedVideoChunkMetadata }[] = [];
+
+        videoEncoder = new VideoEncoder({
+            output: (chunk, meta) => {
+                encodedChunks.push({ chunk, meta });
+            },
+            error: (e) => {
+                throw e;
+            },
+        });
+
+        videoEncoder.configure({
+            codec: "avc1.42001f", // H.264 Baseline
+            width,
+            height,
+            bitrate: 5_000_000,
+            framerate: settings.fps,
+        });
+
+        // Reset animation
+        spine.state.clearTracks();
+        spine.skeleton.setToSetupPose();
+        spine.state.setAnimation(0, animationName, true); // Loop enabled
+        spine.state.apply(spine.skeleton);
+        spine.skeleton.updateWorldTransform();
+
+        // Capture frames
+        const microsecondsPerFrame = 1_000_000 / settings.fps;
+
+        for (let frame = 0; frame < totalFrames; frame++) {
+            checkAborted(signal);
+
+            if (frame > 0) {
+                spine.state.update(frameDelta);
+                spine.state.apply(spine.skeleton);
+                spine.skeleton.updateWorldTransform();
+            }
+            spine.updateTransform();
+            offscreenApp.renderer.render(offscreenApp.stage);
+
+            // Extract frame to canvas
+            const webglCanvas = offscreenApp.view as HTMLCanvasElement;
+            tempCtx.drawImage(webglCanvas, 0, 0);
+
+            // Create video frame
+            const videoFrame = new VideoFrame(tempCanvas, {
+                timestamp: frame * microsecondsPerFrame,
+                duration: microsecondsPerFrame,
+            });
+
+            // Encode frame (keyframe every 30 frames)
+            const isKeyframe = frame % 30 === 0;
+            videoEncoder.encode(videoFrame, { keyFrame: isKeyframe });
+            videoFrame.close();
+
+            onProgress?.(((frame + 1) / totalFrames) * 90); // 0-90% for capture
+
+            // Yield to UI
+            if (frame % 5 === 0) {
+                await new Promise((resolve) => setTimeout(resolve, 0));
             }
         }
-        playbackCanvas.width = 0;
-        playbackCanvas.height = 0;
-        offscreenApp.destroy(true, { children: false, texture: false });
+
+        // Flush encoder
+        await videoEncoder.flush();
+
+        // Add all chunks to muxer
+        for (const { chunk, meta } of encodedChunks) {
+            muxer.addVideoChunk(chunk, meta);
+        }
+
+        // Finalize muxer
+        muxer.finalize();
+
+        onProgress?.(100);
+
+        // Get the final MP4 data
+        const { buffer } = muxer.target;
+        const blob = new Blob([buffer], { type: "video/mp4" });
+
+        return {
+            blob,
+            filename: `${animationName}.mp4`,
+            mimeType: "video/mp4",
+        };
+    } finally {
+        // Close encoder
+        if (videoEncoder && videoEncoder.state !== "closed") {
+            videoEncoder.close();
+        }
+
+        // Restore spine to original app
+        if (spine.parent) {
+            spine.parent.removeChild(spine);
+        }
+        if (options.liveApp?.stage) {
+            options.liveApp.stage.addChild(spine);
+        }
+
+        // Restore original state
+        spine.state.timeScale = originalTimeScale;
+        spine.x = originalX;
+        spine.y = originalY;
+        spine.scale.set(originalScaleX, originalScaleY);
+        spine.state.setAnimation(0, animationName, true);
+
+        if (offscreenApp) {
+            offscreenApp.destroy(true, { children: false, texture: false });
+        }
+        if (tempCanvas) {
+            tempCanvas.width = 0;
+            tempCanvas.height = 0;
+        }
     }
 }
