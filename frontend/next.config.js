@@ -84,7 +84,12 @@ const config = {
             },
             {
                 source: "/operators/tier-list",
-                destination: "/tools/tier-list",
+                destination: "/tier-list",
+                permanent: true,
+            },
+            {
+                source: "/tools/tier-list",
+                destination: "/tier-list",
                 permanent: true,
             },
             {

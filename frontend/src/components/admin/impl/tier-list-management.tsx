@@ -104,7 +104,7 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
     );
 
     const handleView = useCallback((tierList: TierListSummary) => {
-        window.open(`/tools/tier-list?slug=${tierList.slug}`, "_blank");
+        window.open(`/tier-list?slug=${tierList.slug}`, "_blank");
     }, []);
 
     const handleDelete = useCallback((tierList: TierListSummary) => {

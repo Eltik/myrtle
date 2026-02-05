@@ -36,7 +36,7 @@ export function PityStatistics({ averagePullsToSixStar, averagePullsToFiveStar }
                                     <Dices className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-2.5 text-muted-foreground uppercase tracking-wider sm:text-xs">6-Star Pity</p>
+                                    <p className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wider sm:text-xs">6-Star Pity</p>
                                     <p className="font-bold text-orange-500 text-xl tracking-tight sm:text-2xl">
                                         <AnimatedNumber decimals={1} springOptions={{ bounce: 0, duration: 2000 }} value={averagePullsToSixStar} />
                                         <span className="ml-1 font-normal text-muted-foreground text-sm sm:text-base">pulls</span>
@@ -80,7 +80,7 @@ export function PityStatistics({ averagePullsToSixStar, averagePullsToFiveStar }
                                     <Sparkles className="h-5 w-5 text-yellow-500 sm:h-6 sm:w-6" />
                                 </div>
                                 <div>
-                                    <p className="font-medium text-2.5 text-muted-foreground uppercase tracking-wider sm:text-xs">5-Star Pity</p>
+                                    <p className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wider sm:text-xs">5-Star Pity</p>
                                     <p className="font-bold text-xl text-yellow-500 tracking-tight sm:text-2xl">
                                         <AnimatedNumber decimals={1} springOptions={{ bounce: 0, duration: 2000 }} value={averagePullsToFiveStar} />
                                         <span className="ml-1 font-normal text-muted-foreground text-sm sm:text-base">pulls</span>

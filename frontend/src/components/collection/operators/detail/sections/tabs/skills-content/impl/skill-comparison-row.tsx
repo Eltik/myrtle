@@ -109,15 +109,15 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
 
             <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-4.5 py-1.5 transition-all duration-200", diff.spCostChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-2.5 text-muted-foreground uppercase tracking-wide">SP</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">SP</div>
                     <div className={cn("mt-0.5 font-mono font-semibold text-base", "text-foreground")}>{levelData.spData?.spCost ?? "-"}</div>
                 </div>
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-4.5 py-1.5 transition-all duration-200", diff.initSpChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-2.5 text-muted-foreground uppercase tracking-wide">Init</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Init</div>
                     <div className={cn("mt-0.5 font-mono font-semibold text-base", "text-foreground")}>{levelData.spData?.initSp ?? "-"}</div>
                 </div>
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-4.5 py-1.5 transition-all duration-200", diff.durationChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-2.5 text-muted-foreground uppercase tracking-wide">Dur</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Dur</div>
                     <div className={cn("mt-0.5 font-mono font-semibold text-base", "text-foreground")}>{levelData.duration && levelData.duration > 0 ? `${levelData.duration}s` : "-"}</div>
                 </div>
             </div>

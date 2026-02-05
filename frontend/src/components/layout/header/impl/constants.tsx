@@ -11,6 +11,7 @@ export const navItems: NavItem[] = [
             { label: "Enemies", href: "/collection/enemies", description: "Browse all enemy data and stats" },
         ],
     },
+    { label: "Tier List", href: "/tier-list" },
     {
         label: "Tools",
         href: "#",
@@ -18,7 +19,6 @@ export const navItems: NavItem[] = [
             { label: "Recruitment Calculator", href: "/tools/recruitment", description: "Calculate recruitment probabilities" },
             { label: "DPS Charts", href: "/tools/dps", description: "Display DPS to compare multiple operators" },
             { label: "Randomizer", href: "/tools/randomizer", description: "Randomize squads and stages" },
-            { label: "Tier List", href: "/tools/tier-list", description: "Operator rankings by class" },
         ],
     },
     {

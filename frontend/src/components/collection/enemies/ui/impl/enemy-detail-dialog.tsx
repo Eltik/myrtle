@@ -14,6 +14,7 @@ import { cn } from "~/lib/utils";
 import type { AbilityInfo, Enemy } from "~/types/api";
 import { APPLY_WAY_DISPLAY, DAMAGE_TYPE_DISPLAY, ENEMY_LEVEL_DISPLAY, LEVEL_BAR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLORS_LIGHT } from "../../constants";
 import { EnemyLevelLogo } from "./enemy-level-logo";
+import { EnemyPlaceholder } from "./enemy-placeholder";
 
 interface EnemyDetailDialogProps {
     enemy: Enemy;
@@ -51,6 +52,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
     const levelColor = LEVEL_BAR_COLORS[enemy.enemyLevel] ?? "#71717a";
     const levelTextColor = (resolvedTheme === "light" ? LEVEL_TEXT_COLORS_LIGHT : LEVEL_TEXT_COLORS)[enemy.enemyLevel] ?? "#a1a1aa";
 
+    const [imgError, setImgError] = useState(false);
     const levels = enemy.stats?.levels ?? [];
     const [selectedLevel, setSelectedLevel] = useState<number>(levels.length > 0 ? levels.length - 1 : 0);
     const currentLevelStats = levels[selectedLevel];
@@ -66,7 +68,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
             <div className="relative flex shrink-0 gap-4 border-border border-b bg-muted/30 p-4">
                 {/* Portrait */}
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-background">
-                    <Image alt={`${enemy.name} Portrait`} className="object-contain" fill src={`/api/cdn${enemy.portrait}`} />
+                    {imgError || !enemy.portrait ? <EnemyPlaceholder className="h-full w-full p-2" /> : <Image alt={`${enemy.name} Portrait`} className="object-contain" fill onError={() => setImgError(true)} src={`/api/cdn${enemy.portrait}`} />}
                     {/* Level color bar */}
                     <div className="absolute inset-x-0 bottom-0 h-1" style={{ backgroundColor: levelColor }} />
                 </div>

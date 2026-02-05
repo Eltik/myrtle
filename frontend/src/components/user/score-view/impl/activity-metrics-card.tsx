@@ -99,7 +99,7 @@ export function ActivityMetricsCard({ grade, className }: ActivityMetricsCardPro
                             <TooltipContent className="max-w-50" sideOffset={5} variant="dark">
                                 <p className="font-medium">{metric.tooltipTitle}</p>
                                 <p className="text-muted-foreground">{metric.tooltipContent}</p>
-                                <p className="mt-1 text-2.5 text-muted-foreground/70">{metric.tooltipDetail}</p>
+                                <p className="mt-1 text-[0.625rem] text-muted-foreground/70">{metric.tooltipDetail}</p>
                             </TooltipContent>
                         </Tooltip>
                     ))}

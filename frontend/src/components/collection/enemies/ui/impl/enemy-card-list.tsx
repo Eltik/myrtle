@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { MorphingDialog, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { capitalize, cn } from "~/lib/utils";
 import type { Enemy } from "~/types/api";
@@ -10,6 +10,7 @@ import { APPLY_WAY_DISPLAY, LEVEL_BAR_COLORS, LEVEL_TEXT_COLORS, LEVEL_TEXT_COLO
 import { formatDamageType } from "../../enemy-list/impl/helpers";
 import { EnemyDetailDialog } from "./enemy-detail-dialog";
 import { EnemyLevelLogo } from "./enemy-level-logo";
+import { EnemyPlaceholder } from "./enemy-placeholder";
 
 interface EnemyCardListProps {
     enemy: Enemy;
@@ -20,6 +21,7 @@ interface EnemyCardListProps {
 
 export const EnemyCardList = memo(function EnemyCardList({ enemy, listColumns = 1, isHovered = false, shouldGrayscale = false }: EnemyCardListProps) {
     const { resolvedTheme } = useTheme();
+    const [imgError, setImgError] = useState(false);
     const useCompactLayout = listColumns > 1;
 
     // Color calculations
@@ -41,7 +43,7 @@ export const EnemyCardList = memo(function EnemyCardList({ enemy, listColumns = 
             {/* Portrait */}
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
                 <div className="absolute inset-0 transform-gpu transition-transform duration-200 ease-out group-hover:scale-110">
-                    <Image alt={enemy.name} className="object-contain" fill src={`/api/cdn${enemy.portrait}`} />
+                    {imgError || !enemy.portrait ? <EnemyPlaceholder className="h-full w-full" /> : <Image alt={enemy.name} className="object-contain" fill onError={() => setImgError(true)} src={`/api/cdn${enemy.portrait}`} />}
                 </div>
             </div>
 
