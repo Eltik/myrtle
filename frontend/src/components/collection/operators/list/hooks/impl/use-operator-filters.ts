@@ -58,7 +58,6 @@ export interface UseOperatorFiltersReturn {
 }
 
 export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFiltersReturn {
-    // Filter state
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
     const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
@@ -72,7 +71,6 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
     const [sortBy, setSortBy] = useState<SortOption>("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-    // Compute available filter options from data
     const filterOptions = useMemo(() => {
         const subclasses = new Set<string>();
         const birthPlaces = new Set<string>();
@@ -139,7 +137,6 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists],
     );
 
-    // Apply filters and sorting
     const filteredOperators = useMemo(() => {
         let result: OperatorFromList[];
 
@@ -195,14 +192,12 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
             });
         }
 
-        // Helper to get max-level stats from an operator
         const getMaxStats = (op: OperatorFromList) => {
             const lastPhase = op.phases?.[op.phases.length - 1];
             const lastFrame = lastPhase?.AttributesKeyFrames?.[lastPhase.AttributesKeyFrames.length - 1];
             return lastFrame?.Data;
         };
 
-        // Sorting
         result.sort((a, b) => {
             let comparison = 0;
 
@@ -215,7 +210,6 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
                     const aClassOrder = CLASS_SORT_ORDER[a.profession] ?? 99;
                     const bClassOrder = CLASS_SORT_ORDER[b.profession] ?? 99;
                     comparison = aClassOrder - bClassOrder;
-                    // Secondary: name
                     if (comparison === 0) {
                         return a.name.localeCompare(b.name);
                     }
@@ -272,14 +266,11 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
                 }
 
                 default: {
-                    // "rarity" and fallback
-                    // Primary sort: Rarity
                     const aRarity = rarityToNumber(a.rarity);
                     const bRarity = rarityToNumber(b.rarity);
                     comparison = bRarity - aRarity;
 
                     if (comparison === 0) {
-                        // Secondary sort: Class (when rarity is the same)
                         const aClassOrder = CLASS_SORT_ORDER[a.profession] ?? 99;
                         const bClassOrder = CLASS_SORT_ORDER[b.profession] ?? 99;
                         const classComparison = aClassOrder - bClassOrder;
@@ -288,14 +279,12 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
                             return classComparison;
                         }
 
-                        // Tertiary sort: Name (when rarity and class are the same)
                         return a.name.localeCompare(b.name);
                     }
                     break;
                 }
             }
 
-            // Apply sort order
             return sortOrder === "asc" ? -comparison : comparison;
         });
 

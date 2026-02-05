@@ -33,7 +33,6 @@ const ZONE_TYPES = [
     { value: "ACTIVITY", label: "Side Stories & Events", description: "Side stories, intermezzis, and events" },
 ];
 
-// Natural sort function for stage codes (e.g., "1-1" < "1-2" < "1-10")
 function naturalSortCompare(a: string, b: string): number {
     const aParts = a.split(/(\d+)/);
     const bParts = b.split(/(\d+)/);
@@ -56,7 +55,6 @@ function naturalSortCompare(a: string, b: string): number {
     return 0;
 }
 
-// Get display name for a stage (adds CM suffix for challenge mode)
 function getStageDisplayName(stage: Stage): string {
     if (stage.difficulty === "FOUR_STAR") {
         return `${stage.code} CM`;
@@ -64,8 +62,6 @@ function getStageDisplayName(stage: Stage): string {
     return stage.code;
 }
 
-// Extract chapter number from main zone ID for sorting
-// e.g., "main_10" -> 10
 function getMainZoneSortNumber(zoneId: string): number {
     const mainMatch = zoneId.match(/^main_(\d+)/);
     if (mainMatch?.[1]) {
@@ -74,9 +70,8 @@ function getMainZoneSortNumber(zoneId: string): number {
     return 0;
 }
 
-// Grouped event data structure for ACTIVITY zones
 interface GroupedEvent {
-    activityId: string; // For permanent events, this is the retroId
+    activityId: string;
     eventName: string;
     startTime: number;
     endTime: number;
@@ -100,7 +95,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
     const [openEventId, setOpenEventId] = useState<string | null>(null);
     const [openZoneId, setOpenZoneId] = useState<string | null>(null);
 
-    // Group stages by zone type, then by zone
     const stagesByZoneType = useMemo(() => {
         const result = new Map<string, Map<string, Stage[]>>();
 
@@ -112,7 +106,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
             const zone = zones.find((z) => z.zoneId === stage.zoneId);
             if (!zone) continue;
 
-            // Filter by completion status if enabled
             if (onlyCompletedStages && user) {
                 const stageData = user.dungeon.stages[stage.stageId];
                 if (!stageData || stageData.completeTimes <= 0) continue;
@@ -126,7 +119,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
             zoneTypeMap.set(stage.zoneId, existing);
         }
 
-        // Sort stages within each zone by code
         for (const [, zoneTypeMap] of result.entries()) {
             for (const [zoneId, zoneStages] of zoneTypeMap.entries()) {
                 zoneTypeMap.set(
@@ -139,7 +131,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
         return result;
     }, [stages, zones, onlyCompletedStages, user]);
 
-    // Get sorted zones for MAINLINE zone type
     const getSortedMainlineZones = () => {
         const zoneTypeMap = stagesByZoneType.get("MAINLINE");
         if (!zoneTypeMap) return [];
@@ -158,12 +149,10 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
             });
     };
 
-    // Get grouped events for ACTIVITY zone type (sorted by open status first, then recency)
     const getGroupedEvents = (): GroupedEvent[] => {
         const zoneTypeMap = stagesByZoneType.get("ACTIVITY");
         if (!zoneTypeMap) return [];
 
-        // Group zones by activity ID (or retroId for permanent events)
         const eventMap = new Map<string, GroupedEvent>();
 
         for (const [zoneId, zoneStages] of zoneTypeMap.entries()) {
@@ -173,14 +162,11 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
             const zone = zones.find((z) => z.zoneId === zoneId);
             if (!zone) continue;
 
-            // Check if this is a permanent event
             const permanentInfo = getPermanentEventInfo(activityId);
             const isRerun = isRerunActivity(zoneId);
 
-            // Skip reruns that are NOT part of permanent side stories
             if (isRerun && !permanentInfo) continue;
 
-            // For permanent events, group by retroId; otherwise by activityId
             const groupKey = permanentInfo?.retroId ?? activityId;
             const eventName = permanentInfo?.name ?? ACTIVITY_NAMES[activityId] ?? activityId;
             const zoneName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zoneId;
@@ -189,7 +175,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                 const times = getActivityEventTimes(activityId);
                 const startTime = times?.start ?? getActivityStartTime(activityId);
                 const endTime = times?.end ?? 0;
-                // Permanent events are always "open" (available)
                 const isOpen = permanentInfo ? true : isActivityCurrentlyOpen(activityId);
                 const dateRange = permanentInfo ? "" : times ? `${formatEventDate(times.start)} - ${formatEventDate(times.end)}` : "";
 
@@ -218,38 +203,28 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
             event.totalStages += zoneStages.length;
         }
 
-        // Sort zones within each event by zone index
         for (const event of eventMap.values()) {
             event.zones.sort((a, b) => (a.zone?.zoneIndex ?? 0) - (b.zone?.zoneIndex ?? 0));
         }
 
-        // Filter to only available events if setting is enabled
         let events = Array.from(eventMap.values());
         if (onlyAvailableStages) {
             events = events.filter((event) => event.isOpen || event.isPermanent);
         }
 
-        // Sort events:
-        // 1. Currently open (non-permanent) first
-        // 2. Then permanent events (always available)
-        // 3. Then by start time (newest first)
         return events.sort((a, b) => {
-            // Non-permanent open events come first
             const aOpenNonPerm = a.isOpen && !a.isPermanent;
             const bOpenNonPerm = b.isOpen && !b.isPermanent;
             if (aOpenNonPerm !== bOpenNonPerm) {
                 return aOpenNonPerm ? -1 : 1;
             }
-            // Then permanent events
             if (a.isPermanent !== b.isPermanent) {
                 return a.isPermanent ? -1 : 1;
             }
-            // Then sort by start time (newest first)
             return b.startTime - a.startTime;
         });
     };
 
-    // Count stages for a zone type
     const getStageCountForType = (zoneType: string) => {
         const zoneTypeMap = stagesByZoneType.get(zoneType);
         if (!zoneTypeMap) return 0;
@@ -260,7 +235,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
         return count;
     };
 
-    // Count selected stages for a zone type
     const getSelectedCountForType = (zoneType: string) => {
         const zoneTypeMap = stagesByZoneType.get(zoneType);
         if (!zoneTypeMap) return 0;
@@ -273,7 +247,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
 
     const toggleZoneType = (type: string) => {
         if (safeAllowedZoneTypes.includes(type)) {
-            // Don't allow deselecting if it's the last one
             if (safeAllowedZoneTypes.length > 1) {
                 setAllowedZoneTypes(safeAllowedZoneTypes.filter((t) => t !== type));
             }
@@ -458,7 +431,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                 </AccordionTrigger>
                                                                 <AccordionContent className="overflow-hidden">
                                                                     {hasMultipleZones ? (
-                                                                        // Multiple zones within event - show nested structure
                                                                         <Accordion className="w-full pl-2" expandedValue={openZoneId} onValueChange={(value) => setOpenZoneId(value as string | null)} transition={{ duration: 0.2, ease: "easeInOut" }}>
                                                                             {event.zones.map((zoneData) => {
                                                                                 const zoneSelectedCount = zoneData.stages.filter((s) => safeSelectedStages.includes(s.stageId)).length;
@@ -500,7 +472,6 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                             })}
                                                                         </Accordion>
                                                                     ) : (
-                                                                        // Single zone - show stages directly
                                                                         <div className="max-h-48 space-y-1 overflow-y-auto pr-2 pb-2">
                                                                             {event.zones[0]?.stages.map((stage) => {
                                                                                 const isSelected = safeSelectedStages.includes(stage.stageId);

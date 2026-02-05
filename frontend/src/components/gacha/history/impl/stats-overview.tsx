@@ -34,32 +34,24 @@ export function StatsOverview({ records, loading }: StatsOverviewProps) {
     const allRecords = getAllRecords(records);
     const stats = calculateStats(allRecords);
 
-    // Expected rates for comparison
-    const expectedSixStarRate = 0.02; // 2%
-    const expectedFiveStarRate = 0.08; // 8%
+    const expectedSixStarRate = 0.02;
+    const expectedFiveStarRate = 0.08;
 
-    // Calculate average pulls per 6-star
     const avgPullsPerSixStar = calculateAvgPullsPerSixStar(stats.totalPulls, stats.sixStarCount);
-
-    // Count 6-stars obtained in soft pity
     const softPitySixStars = countSixStarsInSoftPity(allRecords);
 
-    // Calculate per-banner pity
     const limitedPity = calculatePity(records.limited.records);
     const regularPity = calculatePity(records.regular.records);
     const specialPity = calculatePity(records.special.records);
 
-    // Calculate per-banner 6-star counts
     const limitedSixStarCount = records.limited.records.filter((r) => parseRarity(r.star) === 6).length;
     const regularSixStarCount = records.regular.records.filter((r) => parseRarity(r.star) === 6).length;
     const specialSixStarCount = records.special.records.filter((r) => parseRarity(r.star) === 6).length;
 
-    // Calculate per-banner averages
     const limitedAvg = limitedSixStarCount > 0 ? records.limited.total / limitedSixStarCount : 0;
     const regularAvg = regularSixStarCount > 0 ? records.regular.total / regularSixStarCount : 0;
     const specialAvg = specialSixStarCount > 0 ? records.special.total / specialSixStarCount : 0;
 
-    // Get most common operators by rarity
     const mostCommonOperators = getMostCommonOperatorsByRarity(allRecords, 3);
 
     return (

@@ -83,7 +83,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
     }
 
-    // Server-side role verification
     const { valid, role, userId } = await verifyUserRole(siteToken);
     if (!valid) {
         return res.status(401).json({
@@ -93,7 +92,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        // Fetch the tier list to check type and ownership
         const tierListResponse = await backendFetch(`/tier-lists/${slug}`, {
             method: "GET",
             headers: {
@@ -112,7 +110,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const tierListType = (tierListData.tier_list_type || "official") as TierListType;
         const createdBy = tierListData.created_by;
 
-        // Authorization: community tier lists require ownership, official require admin
         if (tierListType === "community") {
             if (createdBy !== userId) {
                 return res.status(403).json({
@@ -121,7 +118,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
         } else {
-            // Official tier lists require admin role
             if (!isAdminRole(role ?? undefined)) {
                 return res.status(403).json({
                     success: false,
@@ -138,7 +134,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        // First, get the current state of the tier list
         const currentResponse = await backendFetch(`/tier-lists/${slug}`, {
             method: "GET",
             headers: {
@@ -156,7 +151,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const currentData = await currentResponse.json();
         const currentTiers = currentData.tiers || [];
 
-        // Track what needs to be created, updated, or deleted
         const tiersToCreate: TierData[] = [];
         const tiersToUpdate: TierData[] = [];
         const tierIdsToKeep = new Set<string>();
@@ -170,7 +164,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Delete tiers that are no longer present
         for (const currentTier of currentTiers) {
             if (!tierIdsToKeep.has(currentTier.id)) {
                 await backendFetch(`/tier-lists/${slug}/tiers/${currentTier.id}`, {
@@ -183,8 +176,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Create new tiers
-        const tierIdMap = new Map<string, string>(); // old temp id -> new real id
+        const tierIdMap = new Map<string, string>();
         for (const tier of tiersToCreate) {
             const createResponse = await backendFetch(`/tier-lists/${slug}/tiers`, {
                 method: "POST",
@@ -206,7 +198,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     tierIdMap.set(tier.id, createData.tier.id);
                 }
 
-                // Add placements to the new tier
                 for (const placement of tier.placements) {
                     await backendFetch(`/tier-lists/${slug}/placements`, {
                         method: "POST",
@@ -225,7 +216,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Build a map of all current placements by operator_id to detect cross-tier moves
         const currentPlacementsByOperator = new Map<string, { id: string; tier_id: string }>();
         for (const tier of currentTiers) {
             for (const op of tier.operators || []) {
@@ -233,15 +223,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Collect placement operations
         const placementsToCreate: Array<{ tierId: string; placement: PlacementData }> = [];
         const placementsToMove: Array<{ placementId: string; newTierId: string; placement: PlacementData }> = [];
         const placementsToUpdate: Array<{ placementId: string; placement: PlacementData }> = [];
-        const placementIdsHandled = new Set<string>(); // Track placements we're keeping or moving
+        const placementIdsHandled = new Set<string>();
 
-        // Update existing tiers and collect placement operations
         for (const tier of tiersToUpdate) {
-            // Update tier metadata (excluding display_order - handled by reorder endpoint)
             const tierUpdateResponse = await backendFetch(`/tier-lists/${slug}/tiers/${tier.id}`, {
                 method: "PUT",
                 headers: {
@@ -261,10 +248,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
             for (const placement of tier.placements) {
                 if (!placement.id || placement.id.startsWith("new-")) {
-                    // Check if this operator already exists elsewhere in the tier list (cross-tier move)
                     const existingPlacement = currentPlacementsByOperator.get(placement.operator_id);
                     if (existingPlacement && existingPlacement.tier_id !== tier.id) {
-                        // This is a cross-tier move - use move endpoint
                         console.log(`Moving operator ${placement.operator_id} from tier ${existingPlacement.tier_id} to ${tier.id}`);
                         placementsToMove.push({
                             placementId: existingPlacement.id,
@@ -273,19 +258,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                         });
                         placementIdsHandled.add(existingPlacement.id);
                     } else if (!existingPlacement) {
-                        // Genuinely new placement
                         placementsToCreate.push({ tierId: tier.id ?? "", placement });
                     }
-                    // If existingPlacement.tier_id === tier.id, operator is already in this tier, skip
                 } else {
                     placementIdsHandled.add(placement.id);
-                    // Queue for update
                     placementsToUpdate.push({ placementId: placement.id, placement });
                 }
             }
         }
 
-        // Find placements to delete (not handled and not being moved)
         const placementsToDelete: string[] = [];
         for (const tier of currentTiers) {
             for (const op of tier.operators || []) {
@@ -295,9 +276,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Execute placement operations
-
-        // 1. Move placements to different tiers (must happen first)
+        // Moves must happen before creates to avoid duplicate operator_id conflicts
         for (const { placementId, newTierId, placement } of placementsToMove) {
             console.log(`Moving placement ${placementId} to tier ${newTierId}`);
             const moveResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}/move`, {
@@ -318,7 +297,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // 2. Create genuinely new placements
         for (const { tierId, placement } of placementsToCreate) {
             console.log(`Creating placement for operator ${placement.operator_id} in tier ${tierId}`);
             const createResponse = await backendFetch(`/tier-lists/${slug}/placements`, {
@@ -341,7 +319,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // 3. Update existing placements (sub_order, notes)
         for (const { placementId, placement } of placementsToUpdate) {
             const updateResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}`, {
                 method: "PUT",
@@ -360,7 +337,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // 4. Delete removed placements
         for (const placementId of placementsToDelete) {
             console.log(`Deleting placement ${placementId}`);
             const deleteResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}`, {
@@ -376,7 +352,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Reorder all tiers to ensure correct display_order
         const reorderPayload = tiers.map((tier, index) => ({
             tier_id: tier.id?.startsWith("new-") ? tierIdMap.get(tier.id) || tier.id : tier.id,
             display_order: index,

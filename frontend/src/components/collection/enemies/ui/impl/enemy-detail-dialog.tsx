@@ -219,7 +219,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                         <SelectTrigger className="w-32">
                                                             <SelectValue />
                                                         </SelectTrigger>
-                                                        <SelectContent className="z-[200]" position="popper" sideOffset={4}>
+                                                        <SelectContent className="z-200" position="popper" sideOffset={4}>
                                                             {levels.map((_, index) => (
                                                                 // biome-ignore lint/suspicious/noArrayIndexKey: Level index is the stable identifier
                                                                 <SelectItem key={index} value={String(index)}>
@@ -243,7 +243,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                         <StatCard label="DEF" value={currentLevelStats.attributes.def} />
                                                         <StatCard label="RES" value={`${currentLevelStats.attributes.magicResistance}%`} />
                                                         <StatCard label="Move Speed" value={currentLevelStats.attributes.moveSpeed.toFixed(2)} />
-                                                        <StatCard label="ATK Speed" value={currentLevelStats.attributes.attackSpeed.toFixed(2)} />
+                                                        <StatCard label="ASPD" value={currentLevelStats.attributes.attackSpeed.toFixed(2)} />
                                                         <StatCard label="Base ATK Time" value={currentLevelStats.attributes.baseAttackTime.toFixed(2)} />
                                                         <StatCard label="Weight" value={currentLevelStats.attributes.massLevel} />
                                                         {currentLevelStats.attributes.hpRecoveryPerSec > 0 && <StatCard label="HP Regen" value={`${currentLevelStats.attributes.hpRecoveryPerSec}/s`} />}
@@ -295,7 +295,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
                                                 <SelectTrigger className="w-32">
                                                     <SelectValue />
                                                 </SelectTrigger>
-                                                <SelectContent className="z-[200]" position="popper" sideOffset={4}>
+                                                <SelectContent className="z-200" position="popper" sideOffset={4}>
                                                     {levels.map((_, index) => (
                                                         // biome-ignore lint/suspicious/noArrayIndexKey: Level index is the stable identifier
                                                         <SelectItem key={index} value={String(index)}>

@@ -77,7 +77,7 @@ export const OperatorTooltip = memo(function OperatorTooltip({ operator, childre
 
     const tooltipContent = isVisible && typeof window !== "undefined" && (
         <div
-            className="fade-in-0 zoom-in-95 pointer-events-none fixed z-[9999] w-80 animate-in rounded-lg border border-border bg-popover p-3 shadow-xl duration-100"
+            className="fade-in-0 zoom-in-95 pointer-events-none fixed z-9999 w-80 animate-in rounded-lg border border-border bg-popover p-3 shadow-xl duration-100"
             style={{
                 left: position.x,
                 top: position.y,

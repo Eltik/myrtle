@@ -30,22 +30,18 @@ export function range(start: number, end?: number): number[] {
  * @returns A number between 0 (black) and 1 (white)
  */
 export function getLuminance(hex: string): number {
-    // Remove # if present
     const color = hex.replace("#", "");
 
-    // Parse RGB values
     const r = Number.parseInt(color.substring(0, 2), 16) / 255;
     const g = Number.parseInt(color.substring(2, 4), 16) / 255;
     const b = Number.parseInt(color.substring(4, 6), 16) / 255;
 
-    // Apply gamma correction (sRGB to linear)
     const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 
     const rLinear = toLinear(r);
     const gLinear = toLinear(g);
     const bLinear = toLinear(b);
 
-    // Calculate luminance using WCAG formula
     return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
 }
 
@@ -399,7 +395,6 @@ export function getAvatarById(charId: string): string {
  * Uses the dynamic avatar route which looks up the correct directory.
  */
 export function getAvatarSkinId(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
-    // Use getSecretaryAvatarURL which handles all the complexity
     return getSecretaryAvatarURL(user);
 }
 
@@ -437,27 +432,20 @@ export function getProfessionIconName(profession: string): string {
 export function getOperatorImageURL(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
     let skinId = skin;
 
-    // Check if using a template (for operators with alternate forms like Amiya)
     if (currentTmpl && tmpl && tmpl[currentTmpl]) {
         skinId = tmpl[currentTmpl].skinId;
     }
 
-    // If no skin ID, use default based on evolve phase
     if (!skinId) {
         const suffix = evolvePhase >= 2 ? "_2" : "_1";
         return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
     }
 
-    // Custom skins (containing @) are in skinpack folder
-    // Skinpack files keep # in filename (e.g., char_4036_forcer_epoque#20.png)
     if (skinId.includes("@")) {
-        // Replace @ with _, URL-encode # as %23 (skinpack files use # in names)
         const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
     }
 
-    // Default/E2 skins are in chararts folder
-    // Chararts files use _ instead of # (e.g., char_4015_spuria_2.png)
     const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
     return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
 }
@@ -474,15 +462,9 @@ export function getSecretaryAvatarURL(user: { status?: { secretary: string; secr
     const secretaryId = user.status.secretary;
     const secretarySkinId = user.status.secretarySkinId;
 
-    // If secretarySkinId doesn't contain @ and ends with #1, use base character ID
     const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
 
-    // Normalize skin ID for avatar lookup:
-    // - Replace @ with _ (files use underscore)
-    // - Keep # as-is for custom skins (backend handles URL decoding)
-    // - Replace # with _ for base skins
     const normalizedSkinId = skinId.includes("@") ? skinId.replaceAll("@", "_").replaceAll("#", "%23") : skinId.replaceAll("@", "_").replaceAll("#", "_");
 
-    // Use dynamic avatar route - backend looks up correct directory
     return `/api/cdn/avatar/${normalizedSkinId}`;
 }

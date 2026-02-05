@@ -12,7 +12,6 @@ import type { Skill } from "~/types/api/impl/skill";
 import type { Skin, SkinData } from "~/types/api/impl/skin";
 import type { Voice, Voices } from "~/types/api/impl/voice";
 
-// Define specific module response structures
 interface ModulesListResponse {
     modules: Module[];
 }
@@ -44,14 +43,12 @@ interface OperatorOutcome {
     tags: string[];
 }
 
-// Backend gacha tag structure
 interface BackendGachaTag {
     tagId: number;
     tagName: string;
     tagGroup: number;
 }
 
-// Backend recruitment response structure
 interface BackendRecruitmentResponse {
     recruitment: {
         tags: BackendGachaTag[];
@@ -62,15 +59,13 @@ interface BackendRecruitmentResponse {
     };
 }
 
-// Map tagGroup to type string
 const TAG_GROUP_TYPE_MAP: Record<number, string> = {
-    0: "Qualification", // Robot, Starter, Senior Operator, Top Operator
-    1: "Position", // Melee, Ranged
-    2: "Class", // Guard, Sniper, Defender, Medic, Supporter, Caster, Specialist, Vanguard
-    3: "Affix", // Other tags like DP-Recovery, Shift, Debuff, etc.
+    0: "Qualification",
+    1: "Position",
+    2: "Class",
+    3: "Affix",
 };
 
-// Map rarity tier string to number
 const RARITY_TIER_MAP: Record<string, number> = {
     TIER_6: 6,
     TIER_5: 5,
@@ -80,17 +75,15 @@ const RARITY_TIER_MAP: Record<string, number> = {
     TIER_1: 1,
 };
 
-// Backend operator structure (from recruitment calculate)
 interface BackendOperator {
     id: string;
     name: string;
-    rarity: string; // e.g., "TIER_6"
+    rarity: string;
     profession: string;
     position: string;
     tag_list?: string[];
 }
 
-// Backend calculate response structure
 interface BackendCalculateResponse {
     recruitment: Array<{
         label: string[];
@@ -98,14 +91,11 @@ interface BackendCalculateResponse {
     }>;
 }
 
-// Cache configuration
 const CACHE_TAG = "static-api";
-const CACHE_TTL = 3600; // Cache lifetime in seconds (1 hour)
+const CACHE_TTL = 3600;
 
-// Determine if we're in development mode
 const isDevelopment = env.NODE_ENV === "development";
 
-// Function to fetch data from backend using GET requests
 const fetchWithoutCache = async <T>(endpoint: string): Promise<T> => {
     if (isDevelopment) {
         console.log(`[DEV MODE] Fetching GET ${env.BACKEND_URL}${endpoint}`);
@@ -128,26 +118,21 @@ const fetchWithoutCache = async <T>(endpoint: string): Promise<T> => {
     return response.json() as Promise<T>;
 };
 
-// Function that decides whether to use cache or not based on environment
 const fetchData = async <T>(endpoint: string, cacheKey?: string): Promise<T> => {
-    // In development mode, always bypass cache
     if (isDevelopment) {
         return fetchWithoutCache<T>(endpoint);
     }
 
-    // In production, use cache if a cache key is provided
     if (cacheKey) {
         console.log(`[PROD MODE] Attempting fetch with cache key: ${cacheKey}`);
         const cachedFetch = unstable_cache(async () => fetchWithoutCache<T>(endpoint), [cacheKey], { tags: [CACHE_TAG, cacheKey], revalidate: CACHE_TTL });
         return cachedFetch();
     }
 
-    // Default fallback to non-cached fetch if no cache key specified in production
     console.log(`[PROD MODE] Fetching ${endpoint} without cache (no key)`);
     return fetchWithoutCache<T>(endpoint);
 };
 
-// Request body type definition
 interface RequestBody {
     type: "materials" | "modules" | "operators" | "ranges" | "skills" | "trust" | "handbook" | "skins" | "voices" | "gacha" | "chibis" | "enemies" | "enemy" | "enemyRaces" | "enemyLevelInfo";
     id?: string;
@@ -161,7 +146,6 @@ interface RequestBody {
     level?: number;
 }
 
-// Use NextApiRequest and NextApiResponse for Pages Router
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
         res.setHeader("Allow", ["POST"]);
@@ -169,7 +153,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        // Body is already parsed by Next.js in Pages Router
         const body = req.body as RequestBody;
 
         switch (body.type) {
@@ -178,20 +161,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-materials-${body.id ?? "all"}`;
                 const materials = await fetchData<{ materials?: Item[]; material?: Item }>(endpoint, cacheKey);
 
-                // Handle both single material and list responses
                 const data = materials.material ? materials.material : materials.materials;
                 return res.status(200).json({ data });
             }
             case "modules": {
                 let endpoint: string;
                 if (body.method === "details" && body.id) {
-                    // GET /static/modules/details/{id}
                     endpoint = `/static/modules/details/${body.id}`;
                 } else if (body.id) {
-                    // GET /static/modules/{id}
                     endpoint = `/static/modules/${body.id}`;
                 } else {
-                    // GET /static/modules
                     endpoint = "/static/modules";
                 }
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-modules-${body.id ?? "all"}-${body.method ?? "default"}`;
@@ -203,11 +182,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 let endpoint = body.id ? `/static/operators/${body.id}` : "/static/operators";
                 const queryParams: string[] = [];
 
-                // Add limit query parameter (default to 1000 for fetching all operators)
                 const limit = body.limit ?? 1000;
                 queryParams.push(`limit=${limit}`);
 
-                // Add fields query parameter if specified
                 if (body.fields && body.fields.length > 0) {
                     const fieldsParam = body.fields.join(",");
                     queryParams.push(`fields=${encodeURIComponent(fieldsParam)}`);
@@ -221,7 +198,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators-${body.id ?? "all"}-fields-${fieldsKey}-limit-${limit}`;
                 const operators = await fetchData<{ operators?: Partial<Operator>[]; operator?: Partial<Operator> }>(endpoint, cacheKey);
 
-                // Handle both single operator and list responses
                 const data = operators.operator ? operators.operator : operators.operators;
                 return res.status(200).json({ data });
             }
@@ -230,7 +206,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-ranges-${body.id ?? "all"}`;
                 const ranges = await fetchData<{ range?: Ranges; ranges?: Ranges[] }>(endpoint, cacheKey);
 
-                // Handle both single range and list responses
                 const data = ranges.range ? ranges.range : ranges.ranges;
                 return res.status(200).json({ data });
             }
@@ -239,7 +214,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skills-${body.id ?? "all"}`;
                 const skills = await fetchData<{ skills?: Skill[]; skill?: Skill }>(endpoint, cacheKey);
 
-                // Handle both single skill and list responses
                 const data = skills.skill ? skills.skill : skills.skills;
                 return res.status(200).json({ data });
             }
@@ -251,7 +225,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const cacheKey = body.trust === undefined && !isDevelopment ? `${CACHE_TAG}-trust-base` : undefined;
                 const trust = await fetchData<{ trust?: number; level?: number; favor?: unknown }>(endpoint, cacheKey);
 
-                // For calculate endpoint, return the level; for base endpoint, return favor data
                 const _data = trust.level !== undefined ? trust.level : trust.favor;
                 return res.status(200).json({ data: trust });
             }
@@ -264,7 +237,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case "skins": {
                 let endpoint: string;
                 if (body.id) {
-                    // Check if this looks like a character ID (starts with char_)
                     if (body.id.startsWith("char_")) {
                         endpoint = `/static/skins/char/${body.id}`;
                     } else {
@@ -281,7 +253,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case "voices": {
                 let endpoint: string;
                 if (body.id) {
-                    // Check if this looks like a character ID (starts with char_)
                     if (body.id.startsWith("char_")) {
                         endpoint = `/static/voices/char/${body.id}`;
                     } else {
@@ -295,7 +266,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
             case "gacha": {
                 if (body.method === "recruitment") {
-                    // GET /static/gacha/recruitment
                     const endpoint = "/static/gacha/recruitment";
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-recruitment-tags`;
 
@@ -306,7 +276,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         throw new Error("Could not retrieve recruitment tags from backend.");
                     }
 
-                    // Transform backend tags to frontend format
                     const tagsArray: RecruitmentTag[] = gachaData.recruitment.tags.map((tag) => ({
                         id: String(tag.tagId),
                         name: tag.tagName,
@@ -320,7 +289,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
 
                     const recruitmentString = [...body.tags].sort().join(",");
-                    // GET /static/gacha/calculate?recruitment={tags}
                     const endpoint = `/static/gacha/calculate?recruitment=${encodeURIComponent(recruitmentString)}`;
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-calculate-${recruitmentString}`;
                     const calcResult = await fetchData<BackendCalculateResponse>(endpoint, cacheKey);
@@ -330,20 +298,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         throw new Error("Could not retrieve calculation results from backend.");
                     }
 
-                    // Transform backend response to frontend OperatorOutcome format
                     const operatorOutcomes: OperatorOutcome[] = [];
 
                     for (const group of calcResult.recruitment) {
-                        // Check if this combination has a guaranteed high-rarity result
-                        // (e.g., Top Operator guarantees 6★, Senior Operator guarantees 5★)
                         const hasTopOperator = group.label.includes("Top Operator");
                         const hasSeniorOperator = group.label.includes("Senior Operator");
                         const _minRarity = hasTopOperator ? 6 : hasSeniorOperator ? 5 : 3;
 
                         for (const op of group.operators) {
                             const rarity = RARITY_TIER_MAP[op.rarity] ?? 1;
-                            // An operator is "guaranteed" if all operators in the group are >= minRarity
-                            // Check if this is a guaranteed result based on minimum rarity
                             const allHighRarity = group.operators.every((o) => (RARITY_TIER_MAP[o.rarity] ?? 1) >= 4);
 
                             operatorOutcomes.push({
@@ -353,7 +316,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 profession: op.profession,
                                 position: op.position,
                                 guaranteed: hasTopOperator || hasSeniorOperator || allHighRarity,
-                                tags: body.tags, // Use the selected tag IDs
+                                tags: body.tags,
                             });
                         }
                     }
@@ -366,7 +329,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case "chibis": {
                 let endpoint: string;
                 if (body.id) {
-                    // Check if this looks like a character ID (starts with char_)
                     if (body.id.startsWith("char_")) {
                         endpoint = `/static/chibis/${body.id}`;
                     } else {
@@ -380,7 +342,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(200).json(chibis);
             }
             case "enemies": {
-                // GET /static/enemies with optional query params
                 const queryParams: string[] = [];
                 if (body.cursor) queryParams.push(`cursor=${encodeURIComponent(body.cursor)}`);
                 if (body.limit) queryParams.push(`limit=${body.limit}`);
@@ -393,7 +354,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(200).json(enemies);
             }
             case "enemy": {
-                // GET /static/enemies/{id}
                 if (!body.id) {
                     return res.status(400).json({ error: "Missing 'id' for enemy request." });
                 }
@@ -403,14 +363,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(200).json(enemy);
             }
             case "enemyRaces": {
-                // GET /static/enemies/races
                 const endpoint = "/static/enemies/races";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-races`;
                 const races = await fetchData<{ races: Record<string, RaceData> }>(endpoint, cacheKey);
                 return res.status(200).json(races);
             }
             case "enemyLevelInfo": {
-                // GET /static/enemies/levels
                 const endpoint = "/static/enemies/levels";
                 const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-level-info`;
                 const levelInfo = await fetchData<{ levels: EnemyInfoList[] }>(endpoint, cacheKey);

@@ -12,15 +12,10 @@ import { checkIsMaxed } from "../character-card/impl/helpers";
 import { CharacterFilters } from "./impl/character-filters";
 import { filterAndSortCharacters } from "./impl/helpers";
 
-// Static UI icons that appear in every dialog
 const STATIC_ICONS = [
-    // Rarity stars (0-5)
     ...Array.from({ length: 6 }, (_, i) => `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${i}.png`),
-    // Elite badges (0-2)
     ...Array.from({ length: 3 }, (_, i) => `/api/cdn/upk/arts/elite_hub/elite_${i}.png`),
-    // Potential icons (0-5)
     ...Array.from({ length: 6 }, (_, i) => `/api/cdn/upk/arts/potential_hub/potential_${i}.png`),
-    // Mastery icons (1-3)
     ...Array.from({ length: 3 }, (_, i) => `/api/cdn/upk/arts/specialized_hub/specialized_${i + 1}.png`),
 ];
 
@@ -34,12 +29,10 @@ const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, la
             style={
                 isMaxed
                     ? {
-                          // For maxed cards: disable contentVisibility to allow glow to escape containment
                           position: "relative",
                           zIndex: 10,
                       }
                     : {
-                          // For non-maxed cards: use contentVisibility for performance
                           contentVisibility: "auto",
                           containIntrinsicSize: "auto 420px",
                       }
@@ -57,7 +50,6 @@ const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, last
         <div
             ref={isLast ? lastRef : null}
             style={{
-                // Lift maxed cards above neighbors so glow is visible
                 position: isMaxed ? "relative" : undefined,
                 zIndex: isMaxed ? 10 : undefined,
             }}
@@ -77,18 +69,16 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
     const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
     const [filterRarity, setFilterRarity] = useState<RarityFilter>("all");
     const [searchTerm, setSearchTerm] = useState("");
-    const [displayCount, setDisplayCount] = useState(24); // Start smaller for faster initial render
+    const [displayCount, setDisplayCount] = useState(24);
     const [viewMode, setViewMode] = useState<ViewMode>("detailed");
     const { prefetch } = useCDNPrefetch();
     const hasPreloadedStaticIcons = useRef(false);
     const observer = useRef<IntersectionObserver | null>(null);
 
-    // Preload static UI icons after initial render
     useEffect(() => {
         if (hasPreloadedStaticIcons.current) return;
         hasPreloadedStaticIcons.current = true;
 
-        // Delay prefetch to not compete with initial render
         const timeoutId = setTimeout(() => {
             prefetch(STATIC_ICONS, "low");
         }, 1500);
@@ -108,18 +98,16 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
             observer.current = new IntersectionObserver(
                 (entries) => {
                     if (entries[0]?.isIntersecting && displayCount < sortedAndFilteredCharacters.length) {
-                        // Load in smaller batches for smoother scrolling
                         setDisplayCount((prevCount) => Math.min(prevCount + 24, sortedAndFilteredCharacters.length));
                     }
                 },
-                { rootMargin: "200px" }, // Start loading before reaching the end
+                { rootMargin: "200px" },
             );
             if (node) observer.current.observe(node);
         },
         [displayCount, sortedAndFilteredCharacters.length],
     );
 
-    // Reset display count when filtered list length or view mode changes
     const totalCount = sortedAndFilteredCharacters.length;
     useEffect(() => {
         const initialCount = viewMode === "compact" ? 48 : 24;

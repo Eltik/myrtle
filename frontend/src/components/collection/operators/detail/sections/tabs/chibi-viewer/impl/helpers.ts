@@ -13,13 +13,10 @@ export function encodeAssetPath(path: string): string {
         .join("/");
 }
 
-// Custom texture loader that properly encodes URLs with # characters
 export async function loadSpineWithEncodedUrls(skelUrl: string, atlasUrl: string, pngUrl: string): Promise<import("pixi-spine").Spine> {
-    // Import required classes - Arknights uses Spine 3.8 format
     const { Spine, TextureAtlas } = await import("pixi-spine");
     const { AtlasAttachmentLoader, SkeletonBinary } = await import("@pixi-spine/runtime-3.8");
 
-    // Load all files in parallel
     const [skelResponse, atlasResponse] = await Promise.all([fetch(skelUrl), fetch(atlasUrl)]);
 
     if (!skelResponse.ok) throw new Error(`Failed to load skeleton: ${skelResponse.status}`);
@@ -27,18 +24,14 @@ export async function loadSpineWithEncodedUrls(skelUrl: string, atlasUrl: string
 
     const [skelData, atlasText] = await Promise.all([skelResponse.arrayBuffer(), atlasResponse.text()]);
 
-    // Load the texture
     const texture = await PIXI.Assets.load(pngUrl);
 
-    // Create a simple texture callback for the atlas
     const textureCallback = (_path: string, callback: (tex: PIXI.BaseTexture) => void) => {
         callback(texture.baseTexture);
     };
 
-    // Parse the atlas with our texture
     const atlas = new TextureAtlas(atlasText, textureCallback);
 
-    // Create the skeleton
     const attachmentLoader = new AtlasAttachmentLoader(atlas);
     const binaryLoader = new SkeletonBinary(attachmentLoader);
     const skeletonData = binaryLoader.readSkeletonData(new Uint8Array(skelData));

@@ -31,7 +31,7 @@ export const AUTH_COOKIE_OPTIONS: SerializeOptions = {
     secure: env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
+    maxAge: 60 * 60 * 24 * 7,
 };
 
 /**
@@ -85,7 +85,7 @@ export function setAuthCookies(
         serialize("site_token", siteToken, AUTH_COOKIE_OPTIONS),
         serialize("auth_indicator", "1", {
             ...AUTH_COOKIE_OPTIONS,
-            httpOnly: false, // Client-side readable to check if session exists
+            httpOnly: false,
         }),
     ]);
 }

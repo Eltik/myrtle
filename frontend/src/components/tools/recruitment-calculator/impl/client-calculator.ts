@@ -40,11 +40,9 @@ function sortOperators(operators: RecruitableOperator[], mode: OperatorSortMode)
     return [...operators].sort((a, b) => {
         if (mode === "common-first") {
             const priorityDiff = getCommonFirstPriority(a.rarity) - getCommonFirstPriority(b.rarity);
-            // Secondary sort by rarity within same priority group (for clarity)
             if (priorityDiff !== 0) return priorityDiff;
             return b.rarity - a.rarity;
         }
-        // Default: highest rarity first
         return b.rarity - a.rarity;
     });
 }
@@ -56,12 +54,10 @@ function operatorMatchesTag(op: RecruitableOperatorWithTags, tagId: number, tagN
     const rarity = rarityToNumber(op.rarity);
 
     switch (tagId) {
-        // Position tags
         case 9:
             return op.position === "MELEE";
         case 10:
             return op.position === "RANGED";
-        // Class tags - match backend profession enum values
         case 1:
             return op.profession === "WARRIOR"; // Guard
         case 2:
@@ -78,7 +74,6 @@ function operatorMatchesTag(op: RecruitableOperatorWithTags, tagId: number, tagN
             return op.profession === "SPECIAL"; // Specialist
         case 8:
             return op.profession === "PIONEER"; // Vanguard
-        // Rarity tags
         case 11:
             return rarity === 6; // Top Operator
         case 14:
@@ -87,7 +82,6 @@ function operatorMatchesTag(op: RecruitableOperatorWithTags, tagId: number, tagN
             return rarity === 2; // Starter
         case 28:
             return rarity === 1; // Robot
-        // Affix tags - check tagList
         default:
             return op.tagList.includes(tagName);
     }
@@ -127,28 +121,22 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
 
     if (selectedTags.length === 0) return [];
 
-    // Check if Top Operator tag is selected (allows 6-star operators)
     const hasTopOperator = selectedTags.some((t) => t.id === TOP_OPERATOR_TAG_ID);
 
-    // Generate all combinations of selected tags
     const combinations = getCombinations(selectedTags, selectedTags.length);
     const results: TagCombinationResult[] = [];
 
     for (const combo of combinations) {
-        // Filter operators that match ALL tags in this combination
         const matching = allOperators.filter((op) => {
             const rarity = rarityToNumber(op.rarity);
 
-            // Unless Top Operator tag is selected, exclude 6-star operators
             if (!hasTopOperator && rarity === 6) return false;
 
-            // Must match ALL tags in this combination
             return combo.every((tag) => operatorMatchesTag(op, tag.id, tag.name));
         });
 
         if (matching.length === 0) continue;
 
-        // Convert to frontend format with numeric rarity
         let filteredOps: RecruitableOperator[] = matching.map((op) => ({
             id: op.id,
             name: op.name,
@@ -157,12 +145,10 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
             position: op.position,
         }));
 
-        // Filter out robots if requested (robots are 1-star)
         if (!includeRobots) {
             filteredOps = filteredOps.filter((op) => op.rarity !== 1);
         }
 
-        // Filter out low rarity if requested (keep 3+ star or robots if included)
         if (!showLowRarity) {
             filteredOps = filteredOps.filter((op) => op.rarity >= 3 || op.rarity === 1);
         }
@@ -172,7 +158,6 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         const minRarity = Math.min(...filteredOps.map((op) => op.rarity));
         const maxRarity = Math.max(...filteredOps.map((op) => op.rarity));
 
-        // Calculate guaranteed rarity based on special tags
         const tagIds = combo.map((t) => t.id);
         let guaranteedRarity = minRarity;
 
@@ -192,7 +177,6 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         });
     }
 
-    // Sort results by guaranteed rarity (desc), then by number of operators (asc), then by max rarity (desc)
     return results.sort((a, b) => {
         if (b.guaranteedRarity !== a.guaranteedRarity) {
             return b.guaranteedRarity - a.guaranteedRarity;

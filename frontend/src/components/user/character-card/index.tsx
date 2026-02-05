@@ -63,23 +63,14 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const operatorRarity = operator?.rarity ?? "TIER_1";
     const starCount = getRarityStarCount(operatorRarity);
 
-    // Preload all dialog images when hovering
     const preloadDialogImages = useCallback(() => {
         if (hasPreloadedRef.current) return;
         hasPreloadedRef.current = true;
 
         const operatorImage = getOperatorImageURL(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
 
-        const imagesToPreload: string[] = [
-            // Main character art
-            operatorImage,
-            // UI icons
-            `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`,
-            `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`,
-            `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`,
-        ];
+        const imagesToPreload: string[] = [operatorImage, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`];
 
-        // Skill icons and mastery badges
         for (const skill of data.skills) {
             const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
             const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
@@ -90,7 +81,6 @@ export function CharacterCard({ data }: CharacterCardProps) {
             }
         }
 
-        // Module images (only unlocked ones)
         if (operator?.modules) {
             for (const module of operator.modules) {
                 const equipData = data.equip[module.uniEquipId];
@@ -109,7 +99,6 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
     const handleMouseEnter = useCallback(() => {
         setIsHovered(true);
-        // Start preloading after 150ms of hovering (debounce accidental hovers)
         hoverTimeoutRef.current = setTimeout(preloadDialogImages, 150);
     }, [preloadDialogImages]);
 
@@ -121,22 +110,16 @@ export function CharacterCard({ data }: CharacterCardProps) {
         }
     }, []);
 
-    // Check if operator is fully maxed
     const isMaxed = (() => {
-        // Max potential is 5 (0-indexed, represents potential 6)
         const isMaxPotential = data.potentialRank === 5;
 
-        // Max level depends on rarity - need to be at highest elite phase with max level
         const maxElitePhase = (operator?.phases?.length ?? 1) - 1;
         const isAtMaxElite = data.evolvePhase === maxElitePhase;
         const maxLevelForPhase = operator?.phases?.[maxElitePhase]?.MaxLevel ?? 1;
         const isMaxLevel = isAtMaxElite && data.level === maxLevelForPhase;
 
-        // Max skills: M3 on all skills for 4+ stars, or skill level 7 for 3-stars
         const isThreeStar = starCount <= 3;
-        const isMaxSkills = isThreeStar
-            ? data.mainSkillLvl === 7 // 3-stars just need skill level 7
-            : data.skills.length > 0 && data.skills.every((skill) => skill.specializeLevel === 3);
+        const isMaxSkills = isThreeStar ? data.mainSkillLvl === 7 : data.skills.length > 0 && data.skills.every((skill) => skill.specializeLevel === 3);
 
         return isMaxPotential && isMaxLevel && isMaxSkills;
     })();

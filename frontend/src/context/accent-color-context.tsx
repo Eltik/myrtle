@@ -27,7 +27,6 @@ export function AccentColorProvider({ children }: AccentColorProviderProps) {
     const [isDefault, setIsDefault] = useState(true);
     const [mounted, setMounted] = useState(false);
 
-    // Load stored hue on mount
     useEffect(() => {
         setMounted(true);
         const stored = getStoredAccentHue();
@@ -37,7 +36,6 @@ export function AccentColorProvider({ children }: AccentColorProviderProps) {
         }
     }, []);
 
-    // Apply CSS variables when hue or theme changes
     useEffect(() => {
         if (!mounted) return;
 
@@ -49,7 +47,6 @@ export function AccentColorProvider({ children }: AccentColorProviderProps) {
 
         const root = document.documentElement;
 
-        // Set primary color variables
         root.style.setProperty("--primary", themeColors.primary);
         root.style.setProperty("--primary-foreground", themeColors.primaryForeground);
         root.style.setProperty("--ring", themeColors.ring);
@@ -60,11 +57,9 @@ export function AccentColorProvider({ children }: AccentColorProviderProps) {
         root.style.setProperty("--glow-primary", themeColors.glowPrimary);
         root.style.setProperty("--glow-primary-intense", themeColors.glowPrimaryIntense);
 
-        // Set nav pill hover gradient colors (used by dynamic CSS)
         root.style.setProperty("--nav-pill-hover-start", isDark ? navColors.dark : navColors.light);
         root.style.setProperty("--nav-pill-hover-end", isDark ? navColors.darkEnd : navColors.lightEnd);
 
-        // Set glow effect variables (for header and nav components)
         root.style.setProperty("--glow-header-border", glowColors.headerBorder);
         root.style.setProperty("--glow-header-border-secondary", glowColors.headerBorderSecondary);
         root.style.setProperty("--glow-header", glowColors.headerGlow);

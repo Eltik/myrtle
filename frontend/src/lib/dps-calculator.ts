@@ -7,7 +7,6 @@
 
 import type { DpsCalculateRequest, DpsCalculateResponse, DpsEnemyStats, DpsListOperatorsResponse, DpsOperatorParams, DpsRangeParams } from "~/types/api/impl/dps-calculator";
 
-// Re-export types for convenience
 export type {
     DpsBuffs,
     DpsCalculateRequest,
@@ -147,7 +146,7 @@ export async function calculateDpsRange(operatorId: string, params?: DpsOperator
     return calculateDps(
         operatorId,
         params,
-        undefined, // No single enemy stats for range calc
+        undefined,
         rangeConfig ?? {
             minDef: 0,
             maxDef: 3000,

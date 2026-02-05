@@ -4,7 +4,6 @@ import { motion, type SpringOptions, useMotionValue, useSpring, useTransform } f
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
-// Check if user prefers reduced motion
 function usePrefersReducedMotion() {
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -20,7 +19,6 @@ function usePrefersReducedMotion() {
     return prefersReducedMotion;
 }
 
-// Check if device is mobile (touch device or narrow viewport)
 function useIsMobile() {
     const [isMobile, setIsMobile] = useState(false);
 
@@ -51,7 +49,6 @@ const DEFAULT_SPRING_OPTIONS: SpringOptions = {
     mass: 1,
 };
 
-// Orb constants
 const ORB1_BASE_X = 85;
 const ORB1_BASE_Y = -5;
 const ORB1_SIZE = 280;
@@ -64,7 +61,6 @@ const ORB2_SIZE = 280;
 const ORB2_AUTO_RADIUS = 30;
 const ORB2_AUTO_SPEED = 0.0006;
 
-// Speed multiplier when cursor is influencing (0 = stopped, 1 = full speed)
 const HOVER_SPEED_MULTIPLIER = 0.25;
 
 export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, springOptions = DEFAULT_SPRING_OPTIONS }: AnimatedGradientOrbsProps) {
@@ -73,36 +69,29 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const animationFrameRef = useRef<number>(0);
 
-    // Performance optimizations
     const prefersReducedMotion = usePrefersReducedMotion();
     const isMobile = useIsMobile();
     const [isVisible, setIsVisible] = useState(true);
     const frameCountRef = useRef(0);
 
-    // On mobile, only render every 3rd frame (~20fps instead of 60fps)
     const frameSkip = isMobile ? 3 : 1;
 
-    // Track hover state and virtual time for variable-speed animation
     const isHoveredRef = useRef(false);
     const virtualTimeRef = useRef(0);
     const lastTimestampRef = useRef(0);
     const currentSpeedRef = useRef(1);
 
-    // Mouse position relative to center (normalized -1 to 1)
     const mouseXRaw = useMotionValue(0);
     const mouseYRaw = useMotionValue(0);
 
-    // Smoothed mouse position with spring
     const mouseX = useSpring(mouseXRaw, springOptions);
     const mouseY = useSpring(mouseYRaw, springOptions);
 
-    // Auto-animation offset values
     const autoOffsetX1 = useMotionValue(0);
     const autoOffsetY1 = useMotionValue(0);
     const autoOffsetX2 = useMotionValue(0);
     const autoOffsetY2 = useMotionValue(0);
 
-    // Visibility detection - pause animation when off-screen
     useEffect(() => {
         if (!containerRef.current) return;
 
@@ -119,7 +108,6 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         return () => observer.disconnect();
     }, []);
 
-    // Setup parent element reference and dimensions
     useEffect(() => {
         if (containerRef.current) {
             const parent = containerRef.current.parentElement;
@@ -143,7 +131,6 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         }
     }, []);
 
-    // Mouse movement handler
     const handleMouseMove = useCallback(
         (event: MouseEvent) => {
             if (!parentElement) return;
@@ -151,7 +138,6 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
 
-            // Normalize to -1 to 1 range
             const normalizedX = (event.clientX - centerX) / (rect.width / 2);
             const normalizedY = (event.clientY - centerY) / (rect.height / 2);
 
@@ -167,12 +153,10 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
 
     const handleMouseLeave = useCallback(() => {
         isHoveredRef.current = false;
-        // Smoothly return to center
         mouseXRaw.set(0);
         mouseYRaw.set(0);
     }, [mouseXRaw, mouseYRaw]);
 
-    // Mouse event listeners
     useEffect(() => {
         if (!parentElement) return;
 
@@ -191,46 +175,37 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         return () => abortController.abort();
     }, [parentElement, handleMouseMove, handleMouseEnter, handleMouseLeave]);
 
-    // Auto-animation loop with variable speed
     useEffect(() => {
-        // Don't run animation if user prefers reduced motion or component not visible
         if (prefersReducedMotion) return;
 
         const animate = (timestamp: number) => {
-            // Skip animation when not visible (performance optimization)
             if (!isVisible) {
                 animationFrameRef.current = requestAnimationFrame(animate);
                 return;
             }
 
-            // Frame skipping for mobile devices (render every Nth frame)
             frameCountRef.current++;
             if (frameCountRef.current % frameSkip !== 0) {
                 animationFrameRef.current = requestAnimationFrame(animate);
                 return;
             }
 
-            // Calculate delta time
             if (lastTimestampRef.current === 0) {
                 lastTimestampRef.current = timestamp;
             }
             const deltaTime = timestamp - lastTimestampRef.current;
             lastTimestampRef.current = timestamp;
 
-            // Smoothly interpolate speed multiplier
             const targetSpeed = isHoveredRef.current ? HOVER_SPEED_MULTIPLIER : 1;
             currentSpeedRef.current += (targetSpeed - currentSpeedRef.current) * 0.05;
 
-            // Accumulate virtual time at variable rate
             virtualTimeRef.current += deltaTime * currentSpeedRef.current;
             const vTime = virtualTimeRef.current;
 
-            // Orb 1 - figure-8 pattern
             const t1 = vTime * ORB1_AUTO_SPEED;
             autoOffsetX1.set(Math.sin(t1) * ORB1_AUTO_RADIUS);
             autoOffsetY1.set(Math.sin(t1 * 2) * ORB1_AUTO_RADIUS * 0.5);
 
-            // Orb 2 - circular pattern with slight variation (offset by PI)
             const t2 = vTime * ORB2_AUTO_SPEED + Math.PI;
             autoOffsetX2.set(Math.cos(t2) * ORB2_AUTO_RADIUS);
             autoOffsetY2.set(Math.sin(t2 * 1.5) * ORB2_AUTO_RADIUS * 0.7);
@@ -242,11 +217,9 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         return () => cancelAnimationFrame(animationFrameRef.current);
     }, [autoOffsetX1, autoOffsetY1, autoOffsetX2, autoOffsetY2, prefersReducedMotion, isVisible, frameSkip]);
 
-    // Calculate cursor influence on each orb
     const cursorInfluenceX = dimensions.width * cursorInfluence;
     const cursorInfluenceY = dimensions.height * cursorInfluence;
 
-    // Transform functions for final positions
     const orb1Left = useTransform([mouseX, autoOffsetX1], (values: number[]) => {
         const mouse = values[0] ?? 0;
         const auto = values[1] ?? 0;
@@ -271,7 +244,6 @@ export function AnimatedGradientOrbs({ className, cursorInfluence = 0.15, spring
         return `calc(${ORB2_BASE_Y}% + ${auto + mouse * cursorInfluenceY * 0.7}px)`;
     });
 
-    // Static fallback for reduced motion preference
     if (prefersReducedMotion) {
         return (
             <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} ref={containerRef}>

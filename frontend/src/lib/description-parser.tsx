@@ -26,13 +26,11 @@ export const DESCRIPTION_COLORS = {
  * @returns The preprocessed description with balanced tags
  */
 const preprocessDescription = (description: string): string => {
-    // Count opening and closing tags
     const openingTagsMatch = description.match(new RegExp(descriptionTagLeftDelim, "g")) ?? [];
     const closingTagsMatch = description.match(new RegExp(descriptionTagRightDelim, "g")) ?? [];
 
     let processedDescription = description;
 
-    // If there are more opening tags than closing tags, add closing tags at the end
     if (openingTagsMatch.length > closingTagsMatch.length) {
         const missingClosingTags = openingTagsMatch.length - closingTagsMatch.length;
         for (let i = 0; i < missingClosingTags; i++) {
@@ -40,11 +38,7 @@ const preprocessDescription = (description: string): string => {
         }
     }
 
-    // Handle the case where there might be a closing tag without an opening tag
-    // by simply removing those closing tags
     if (closingTagsMatch.length > openingTagsMatch.length) {
-        // This is a more complex case. For simplicity, we'll escape all tags
-        // to prevent parsing errors
         processedDescription = description.replace(/<(?:@ba.|\\$)[^>]+>/g, (match) => `&lt;${match.slice(1, -1)}&gt;`).replace(/<\/>/g, "&lt;/&gt;");
     }
 
@@ -52,7 +46,6 @@ const preprocessDescription = (description: string): string => {
 };
 
 export const descriptionToHtml = (description: string, interpolation: InterpolatedValue[]): string => {
-    // Preprocess the description to balance tags
     let htmlDescription = preprocessDescription(description.slice());
     let recursiveMatch: MatchRecursiveValueNameMatch[] | null = null;
     let match: RegExpMatchArray | null = null;
@@ -107,13 +100,10 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
             }
         } while (recursiveMatch.length > 0);
     } catch (error) {
-        // Handle unbalanced delimiters by escaping all tags
         console.warn("Error parsing description tags:", error);
-        // Escape all tags to prevent HTML injection and return the original text
         return description.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     }
 
-    // replace any newlines with <br> tags to get past HTML whitespace collapsing
     htmlDescription = htmlDescription
         .replace(/\n/g, "<br>")
         .replace(/<\/br>/g, "<br>")
@@ -127,7 +117,6 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
                 const value = interpolation.find((value) => value.key?.toLowerCase() === key)?.value;
                 if (!value) {
                     console.warn(`Couldn't find matching interpolation key: ${key}`);
-                    // Replace with placeholder instead of throwing error
                     htmlDescription = htmlDescription.replace(descriptionInterpolationRegex, `[${key}]`);
                     continue;
                 }
@@ -137,10 +126,8 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
                 if (typeof formatString === "undefined") {
                     interpolated = `${value}`;
                 } else if (formatString === "0%") {
-                    // convert to percentage and suffix with "%"
                     interpolated = `${Math.round(value * 100)}%`;
                 } else if (formatString === "0.0") {
-                    // return as-is to one-decimal place
                     interpolated = `${value.toFixed(1)}`;
                 } else {
                     console.warn(`Unrecognized format string: ${match.groups.formatString}`);
@@ -151,7 +138,6 @@ export const descriptionToHtml = (description: string, interpolation: Interpolat
         } while (match);
     } catch (error) {
         console.warn("Error processing interpolation:", error);
-        // If interpolation fails, return the HTML description without interpolation
     }
 
     return htmlDescription;

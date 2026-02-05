@@ -34,21 +34,13 @@ export function checkIsMaxed(data: CharacterData): boolean {
     const maxElite = MAX_ELITE_BY_RARITY[starCount] ?? 2;
     const maxLevel = MAX_LEVEL_BY_RARITY[starCount]?.[maxElite] ?? 90;
 
-    // Must be at max elite phase
     if (data.evolvePhase !== maxElite) return false;
-
-    // Must be at max level for that elite phase
     if (data.level !== maxLevel) return false;
-
-    // For 3+ star operators, must have skill level 7
     if (starCount > 2 && data.mainSkillLvl !== 7) return false;
 
-    // For E2 operators, check masteries and modules
     if (maxElite === 2) {
-        // All skills must be M3
         if (!data.skills.every((skill) => skill.specializeLevel === 3)) return false;
 
-        // Check modules (all unlocked must be level 3)
         const unlockedModules =
             operator?.modules?.filter((mod) => {
                 const equipData = data.equip[mod.uniEquipId];
@@ -57,25 +49,22 @@ export function checkIsMaxed(data: CharacterData): boolean {
         if (unlockedModules.length > 0 && !unlockedModules.every((mod) => data.equip[mod.uniEquipId]?.level === 3)) return false;
     }
 
-    // Must have max potential (potential rank 5 = displayed as +5, representing Pot 6)
     if (data.potentialRank !== 5) return false;
 
     return true;
 }
 
-// Linear interpolation helper
 export function linearInterpolateByLevel(level: number, maxLevel: number, baseValue: number, maxValue: number): number {
     if (maxLevel === 1) return baseValue;
     return Math.round(baseValue + ((level - 1) * (maxValue - baseValue)) / (maxLevel - 1));
 }
 
-// Get trust bonus stats (trust only affects HP, ATK, and DEF - not magic resistance)
 export function getStatIncreaseAtTrust(favorKeyFrames: UserFavorKeyFrame[] | undefined, rawTrust: number): { maxHp: number; atk: number; def: number } {
     if (!favorKeyFrames || favorKeyFrames.length === 0) {
         return { maxHp: 0, atk: 0, def: 0 };
     }
 
-    // Trust is capped at 100 for stat calculations (even though favor points go to 200)
+    // Trust caps at 100 for stats even though favor points go to 200
     const trust = Math.min(100, Math.floor(rawTrust / 2));
     const maxTrustFrame = favorKeyFrames[favorKeyFrames.length - 1]?.Data;
 
@@ -86,8 +75,6 @@ export function getStatIncreaseAtTrust(favorKeyFrames: UserFavorKeyFrame[] | und
     };
 }
 
-// Get potential bonus stats
-// Handles both camelCase (actual API response) and PascalCase (TypeScript types) property access
 export function getStatIncreaseAtPotential(
     potentialRanks: UserPotentialRank[] | undefined,
     potential: number,
@@ -114,16 +101,13 @@ export function getStatIncreaseAtPotential(
         return statChanges;
     }
 
-    // Aggregate bonuses from potential ranks 1 through current potential
     for (let p = 1; p <= potential; p++) {
         const pot = potentialRanks[p - 1];
         if (!pot) continue;
 
-        // Access using both camelCase (actual API) and PascalCase (TypeScript types)
         // biome-ignore lint/suspicious/noExplicitAny: API may return camelCase but types are PascalCase
         const potAny = pot as any;
 
-        // Try camelCase first (actual API), then PascalCase (TypeScript types)
         const buff = potAny.buff ?? pot.Buff;
         if (!buff) continue;
 
@@ -139,7 +123,6 @@ export function getStatIncreaseAtPotential(
         const attribType = modifier.attributeType ?? modifier.AttributeType;
         const attribChange = modifier.value ?? modifier.Value ?? 0;
 
-        // AttributeType is a string like "MAX_HP", "ATK", "DEF", etc.
         switch (attribType) {
             case "MAX_HP":
                 statChanges.health += attribChange;
@@ -160,7 +143,6 @@ export function getStatIncreaseAtPotential(
                 statChanges.attackSpeed += attribChange;
                 break;
             case "RESPAWN_TIME":
-                // Redeploy time reduction (e.g., -4 seconds)
                 break;
             case "BLOCK_CNT":
                 statChanges.blockCnt += attribChange;
@@ -171,7 +153,6 @@ export function getStatIncreaseAtPotential(
     return statChanges;
 }
 
-// Get module bonus stats
 export function getModuleStatIncrease(
     modules: UserCharacterModule[] | undefined,
     currentEquip: string | null,
@@ -209,7 +190,6 @@ export function getModuleStatIncrease(
         return statChanges;
     }
 
-    // Module phases are 0-indexed, level 1 = phase[0], level 2 = phase[1], etc.
     const modulePhase = equippedModule.data.phases[moduleLevel - 1];
     if (!modulePhase?.attributeBlackboard) {
         return statChanges;
@@ -244,7 +224,6 @@ export function getModuleStatIncrease(
     return statChanges;
 }
 
-// Calculate operator stats based on level, phase, trust, potential, and modules
 export function getAttributeStats(data: CharacterData, operator: CharacterStatic | null) {
     const phase = operator?.phases?.[data.evolvePhase];
     const keyFrames = phase?.AttributesKeyFrames;
@@ -258,7 +237,6 @@ export function getAttributeStats(data: CharacterData, operator: CharacterStatic
 
     const maxLevel = phase.MaxLevel;
 
-    // Base stats from keyframes
     const baseMaxHp = firstFrame.Data.MaxHp;
     const baseAtk = firstFrame.Data.Atk;
     const baseDef = firstFrame.Data.Def;
@@ -271,16 +249,10 @@ export function getAttributeStats(data: CharacterData, operator: CharacterStatic
     const finalDef = lastFrame.Data.Def;
     const finalRes = lastFrame.Data.MagicResistance;
 
-    // Get trust bonuses
     const trustBonuses = getStatIncreaseAtTrust(operator?.favorKeyFrames, data.favorPoint);
-
-    // Get potential bonuses
     const potBonuses = getStatIncreaseAtPotential(operator?.potentialRanks, data.potentialRank);
-
-    // Get module bonuses (only at E2)
     const modBonuses = data.evolvePhase === 2 ? getModuleStatIncrease(operator?.modules, data.currentEquip, data.equip) : { maxHp: 0, atk: 0, def: 0, magicResistance: 0, cost: 0, attackSpeed: 0, blockCnt: 0 };
 
-    // Calculate final stats with all bonuses
     const maxHp = linearInterpolateByLevel(data.level, maxLevel, baseMaxHp, finalMaxHp) + trustBonuses.maxHp + potBonuses.health + modBonuses.maxHp;
     const atk = linearInterpolateByLevel(data.level, maxLevel, baseAtk, finalAtk) + trustBonuses.atk + potBonuses.attackPower + modBonuses.atk;
     const def = linearInterpolateByLevel(data.level, maxLevel, baseDef, finalDef) + trustBonuses.def + potBonuses.defense + modBonuses.def;

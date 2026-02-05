@@ -33,49 +33,38 @@ export const SkillsContent = memo(function SkillsContent({ operator }: SkillsCon
     const selectedSkill = operator.skills[selectedSkillIndex];
     const skillData = selectedSkill?.static?.Levels?.[skillLevel];
 
-    // Get all available levels for this skill
     const allSkillLevels = useMemo(() => {
         const levels = selectedSkill?.static?.Levels ?? [];
         return levels.map((level, idx) => ({ index: idx, data: level }));
     }, [selectedSkill?.static?.Levels]);
 
-    // Get default comparison levels (SL7-M3 if available, otherwise last 4 levels)
     const defaultComparisonLevels = useMemo(() => {
         const totalLevels = selectedSkill?.static?.Levels?.length ?? 0;
         if (totalLevels >= 10) {
-            // Has mastery: default to SL7, M1, M2, M3
             return ["6", "7", "8", "9"];
         }
         if (totalLevels >= 4) {
-            // No mastery but has enough levels: show last 4
             return Array.from({ length: 4 }, (_, i) => String(totalLevels - 4 + i));
         }
-        // Few levels: show all
         return Array.from({ length: totalLevels }, (_, i) => String(i));
     }, [selectedSkill?.static?.Levels?.length]);
 
-    // Initialize selected levels when skill changes or comparison mode is enabled
     const effectiveComparisonLevels = useMemo(() => {
         if (selectedComparisonLevels.length === 0) {
             return defaultComparisonLevels;
         }
-        // Filter out any levels that don't exist for this skill
         const maxLevel = (selectedSkill?.static?.Levels?.length ?? 1) - 1;
         const validLevels = selectedComparisonLevels.filter((l) => Number.parseInt(l, 10) <= maxLevel);
         return validLevels.length > 0 ? validLevels : defaultComparisonLevels;
     }, [selectedComparisonLevels, defaultComparisonLevels, selectedSkill?.static?.Levels?.length]);
 
-    // Get the levels to display in comparison view based on selection
     const comparisonLevels = useMemo(() => {
         return allSkillLevels.filter((level) => effectiveComparisonLevels.includes(String(level.index))).sort((a, b) => a.index - b.index);
     }, [allSkillLevels, effectiveComparisonLevels]);
 
-    // Check if skill has mastery levels (more than 7 levels)
     const hasMasteryLevels = (selectedSkill?.static?.Levels?.length ?? 0) > 7;
 
-    // Handle comparison level selection
     const handleComparisonLevelChange = useCallback((values: string[]) => {
-        // Ensure at least one level is always selected
         if (values.length > 0) {
             setSelectedComparisonLevels(values);
         }

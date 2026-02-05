@@ -37,26 +37,21 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
     const backendURL = env.BACKEND_URL;
 
     try {
-        // Build operator query with minimal fields for randomization
         const operatorFields = ["id", "name", "rarity", "profession", "subProfessionId", "position", "portrait"].join(",");
         const operatorParams = new URLSearchParams({
             limit: "1000",
             fields: operatorFields,
         });
 
-        // Fetch all data in parallel
         const [zonesResponse, stagesResponse, operatorsResponse] = await Promise.all([
-            // Fetch zones (MAINLINE and ACTIVITY - stages only reference activity zone IDs)
             fetch(`${backendURL}/static/zones?types=MAINLINE,ACTIVITY&limit=1000`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
             }),
-            // Fetch stages (exclude GUIDE type only)
             fetch(`${backendURL}/static/stages?excludeTypes=GUIDE&limit=5000`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
             }),
-            // Fetch operators with minimal fields
             fetch(`${backendURL}/static/operators?${operatorParams.toString()}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
@@ -95,11 +90,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
             return { notFound: true };
         }
 
-        // Filter stages to only include those in permanent zones
         const permanentZoneIds = new Set(zonesData.zones.map((z) => z.zoneId));
         const filteredStages = stagesData.stages.filter((s) => permanentZoneIds.has(s.zoneId));
 
-        // Filter out TOKEN and TRAP operators (summons, not playable)
         const playableOperators = operatorsData.operators.filter((op) => op.profession !== "TOKEN" && op.profession !== "TRAP");
 
         return {

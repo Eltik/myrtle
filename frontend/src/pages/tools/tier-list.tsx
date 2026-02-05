@@ -62,9 +62,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
     const tierListSlug = context.query.slug as string | undefined;
 
     try {
-        // If no slug provided, show the index page with all tier lists
         if (!tierListSlug) {
-            // Fetch all tier lists
             const tierListsResponse = await fetch(`${backendURL}/tier-lists`, {
                 method: "GET",
                 headers: {
@@ -95,7 +93,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 }>;
             };
 
-            // Fetch operator data for previews
             const operatorsBase = `${backendURL}/static/operators`;
             const operatorParams = new URLSearchParams({
                 limit: "1000",
@@ -120,7 +117,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 }
             }
 
-            // Fetch details for each tier list to get operator counts and top operators
             const tierListsWithDetails: TierListPreview[] = await Promise.all(
                 tierListsData.tier_lists.map(async (tierList) => {
                     try {
@@ -150,7 +146,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                         const detailData = await detailResponse.json();
                         const tiers = detailData.tiers || [];
 
-                        // Count operators and tiers
                         let operatorCount = 0;
                         const topOperatorIds: string[] = [];
 
@@ -158,7 +153,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             const tierOperators = tier.operators || [];
                             operatorCount += tierOperators.length;
 
-                            // Get top operators from highest tiers (first few tiers by display_order)
                             if (topOperatorIds.length < 6) {
                                 for (const op of tierOperators) {
                                     if (topOperatorIds.length < 6) {
@@ -168,7 +162,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             }
                         }
 
-                        // Get operator data for top operators
                         const topOperators = topOperatorIds.map((id) => operatorsMap[id]).filter((op): op is OperatorFromList => op !== undefined);
 
                         return {
@@ -210,7 +203,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             };
         }
 
-        // Slug provided - show the specific tier list detail view
         const tierListResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}`, {
             method: "GET",
             headers: {
@@ -226,9 +218,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
 
         const rawData = await tierListResponse.json();
 
-        // Transform backend response to match frontend TierListResponse format
-        // Backend returns tier.operators, frontend expects tier.placements
-        // Note: Convert undefined to null for Next.js serialization
+        // Backend returns tier.operators; remap to tier.placements and coerce undefined to null for serialization
         const tierListData: TierListResponse = {
             tier_list: {
                 id: rawData.id,
@@ -260,7 +250,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             })),
         };
 
-        // Get all unique operator IDs from placements
         const operatorIds = new Set<string>();
         for (const tier of tierListData.tiers) {
             for (const placement of tier.placements) {
@@ -268,7 +257,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             }
         }
 
-        // Fetch operator data for all operators in the tier list
         const operatorsData: Record<string, OperatorFromList> = {};
 
         if (operatorIds.size > 0) {
@@ -291,7 +279,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 operators: Operator[];
             };
 
-            // Create a map of operator ID to operator data
             for (const operator of operatorsJson.operators) {
                 if (operator.id && operatorIds.has(operator.id)) {
                     operatorsData[operator.id] = operator as OperatorFromList;
@@ -299,7 +286,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             }
         }
 
-        // Fetch versions for changelog (don't fail if this errors)
         let versions: TierListVersionSummary[] = [];
         try {
             const versionsResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}/versions?limit=20`, {
@@ -319,7 +305,6 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             }
         } catch (versionsError) {
             console.error("Error fetching versions:", versionsError);
-            // Continue without versions
         }
 
         return {

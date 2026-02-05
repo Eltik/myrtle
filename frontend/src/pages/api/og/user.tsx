@@ -5,7 +5,6 @@ export const config = {
     runtime: "edge",
 };
 
-// Site color scheme (dark mode) - converted from oklch to hex
 const COLORS = {
     background: "#121214",
     card: "#1c1c1f",
@@ -17,7 +16,6 @@ const COLORS = {
     gold: "#FFD440",
 };
 
-// Rarity colors
 const RARITY_COLORS: Record<number, string> = {
     1: "#9e9e9e",
     2: "#dce537",
@@ -49,34 +47,28 @@ function getCharartUrl(baseUrl: string, charId: string, skinId: string, evolvePh
 }
 
 function getAvatarUrl(baseUrl: string, charId: string, skinId: string | null): string {
-    // No skin provided - use charId (backend resolves the correct file)
     if (!skinId) {
         return `${baseUrl}/api/cdn/avatar/${charId}`;
     }
 
-    // Custom skins with @: Replace @ with _, encode # as %23
     if (skinId.includes("@")) {
         const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return `${baseUrl}/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Default skin (ends with #1 or _1): Use just charId (backend resolves correct file)
     if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
         return `${baseUrl}/api/cdn/avatar/${charId}`;
     }
 
-    // E2 skin (ends with #2 or _2): Normalize and use
     if (skinId.endsWith("#2") || skinId.endsWith("_2")) {
         const normalizedSkinId = skinId.replaceAll("#", "_");
         return `${baseUrl}/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Other skins: Replace # with _
     const normalizedSkinId = skinId.replaceAll("#", "_");
     return `${baseUrl}/api/cdn/avatar/${normalizedSkinId}`;
 }
 
-// Icon URL patterns from /operators page analysis
 function getEliteIconUrl(baseUrl: string, phase: number): string {
     return `${baseUrl}/api/cdn/upk/arts/elite_hub/elite_${phase}.png`;
 }
@@ -115,8 +107,8 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
 
 interface SkillData {
     skillId: string;
-    specializeLevel: number; // mastery (0-3)
-    skillLevel: number; // main skill level (1-7)
+    specializeLevel: number;
+    skillLevel: number;
     iconBase64: string | null;
     masteryIconBase64: string | null;
 }
@@ -124,8 +116,8 @@ interface SkillData {
 interface ModuleData {
     uniEquipId: string;
     uniEquipIcon: string;
-    level: number; // 0 = not unlocked, 1-3 = upgrade level
-    locked: boolean; // true if locked (locked === 1 from API)
+    level: number;
+    locked: boolean;
     iconBase64: string | null;
 }
 
@@ -136,12 +128,9 @@ interface SupportUnit {
     avatarBase64: string | null;
     rarity: number;
     evolvePhase: number;
-    // Pre-fetched icon base64
     eliteIconBase64: string | null;
     potentialIconBase64: string | null;
-    // All skills for the operator
     skills: SkillData[];
-    // All available modules for the operator (up to 3)
     modules: ModuleData[];
 }
 
@@ -170,7 +159,6 @@ export default async function handler(req: NextRequest) {
     const userId = searchParams.get("id");
     const baseUrl = getBaseUrl(req);
 
-    // Load fonts
     let fontData: ArrayBuffer | undefined;
     let fontBoldData: ArrayBuffer | undefined;
 
@@ -184,9 +172,7 @@ export default async function handler(req: NextRequest) {
                 const signature = String.fromCharCode(...view);
                 if (signature.startsWith("<!DO") || signature.startsWith("<htm")) continue;
                 return buffer;
-            } catch {
-                // Try next URL
-            }
+            } catch {}
         }
         return undefined;
     };
@@ -195,9 +181,7 @@ export default async function handler(req: NextRequest) {
         const regularUrls = ["https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.woff", "https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Regular.woff"];
         const boldUrls = ["https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Bold.woff", "https://raw.githubusercontent.com/rsms/inter/master/docs/font-files/Inter-Bold.woff"];
         [fontData, fontBoldData] = await Promise.all([fetchFont(regularUrls), fetchFont(boldUrls)]);
-    } catch {
-        // Continue without custom font
-    }
+    } catch {}
 
     if (!userId) {
         return generateFallbackImage();
@@ -253,11 +237,9 @@ export default async function handler(req: NextRequest) {
         const secretaryChar = charsArray.find((c) => c.charId === secretary);
         const evolvePhase = secretaryChar?.evolvePhase ?? 2;
 
-        // Fetch artwork
         const artworkUrl = getCharartUrl(baseUrl, secretary, secretarySkinId, evolvePhase);
         const artworkBase64 = await fetchImageAsBase64(artworkUrl);
 
-        // Get support units with icons
         const assistCharList = data.social?.assistCharList || [];
         const supportUnits: SupportUnit[] = await Promise.all(
             assistCharList
@@ -271,29 +253,24 @@ export default async function handler(req: NextRequest) {
                     const name = charData.static?.name || charId.replace("char_", "").split("_").pop() || "Unknown";
                     const rarity = parseRarity(charData.static?.rarity || "TIER_1");
                     const charLevel = charData.level || 1;
-                    const potentialRank = charData.potentialRank || 0; // 0-indexed for URL (0-5)
-                    const potential = potentialRank + 1; // 1-indexed for display (1-6)
+                    const potentialRank = charData.potentialRank || 0;
+                    const potential = potentialRank + 1;
                     const charEvolvePhase = charData.evolvePhase || 0;
                     const mainSkillLvl = (charData as { mainSkillLvl?: number }).mainSkillLvl || 7;
 
-                    // Get all available modules (excluding ORIGINAL type)
                     const availableModules = charData.static?.modules?.filter((m) => m.typeName1 !== "ORIGINAL") || [];
 
-                    // Fetch base images in parallel
                     const [avatarBase64, eliteIconBase64, potentialIconBase64] = await Promise.all([
                         fetchImageAsBase64(getAvatarUrl(baseUrl, charId, charData.skin)),
                         charEvolvePhase >= 2 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 2)) : charEvolvePhase === 1 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 1)) : Promise.resolve(null),
-                        fetchImageAsBase64(getPotentialIconUrl(baseUrl, potentialRank)), // Use 0-indexed for URL
+                        fetchImageAsBase64(getPotentialIconUrl(baseUrl, potentialRank)),
                     ]);
 
-                    // Fetch all skill icons and mastery icons
                     const skillsData: SkillData[] = await Promise.all(
                         (charData.skills || []).map(async (skill) => {
-                            // Use iconId from static data, fallback to skillId
                             const skillIconId = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
                             const skillImagePath = skill.static?.image;
 
-                            // Use image field as primary source, fallback to skill icon URL
                             const iconUrl = skillImagePath ? `${baseUrl}/api/cdn${skillImagePath}` : getSkillIconUrl(baseUrl, skillIconId);
 
                             const [iconBase64, masteryIconBase64] = await Promise.all([fetchImageAsBase64(iconUrl), skill.specializeLevel > 0 ? fetchImageAsBase64(getMasteryIconUrl(baseUrl, skill.specializeLevel)) : Promise.resolve(null)]);
@@ -308,7 +285,6 @@ export default async function handler(req: NextRequest) {
                         }),
                     );
 
-                    // Fetch all available modules (keep level 0 for placeholder display)
                     const modulesData: ModuleData[] = await Promise.all(
                         availableModules.slice(0, 3).map(async (module) => {
                             const equipData = charData.equip?.[module.uniEquipId];
@@ -316,7 +292,6 @@ export default async function handler(req: NextRequest) {
                             const locked = equipData?.locked === 1;
                             const isUnlocked = level > 0 && !locked;
 
-                            // Only fetch icon if module is actually unlocked
                             let iconBase64: string | null = null;
                             if (isUnlocked) {
                                 const iconUrl = module.image ? `${baseUrl}/api/cdn${module.image}` : module.uniEquipIcon ? getModuleIconUrl(baseUrl, module.uniEquipIcon) : null;
@@ -350,7 +325,6 @@ export default async function handler(req: NextRequest) {
 
         const validSupportUnits = supportUnits.filter((u): u is SupportUnit => u !== null);
 
-        // Calculate rarity distribution
         const rarityCount: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
         for (const char of charsArray) {
             const rarity = parseRarity((char as { static?: { rarity: string } }).static?.rarity || "TIER_1");
@@ -360,7 +334,6 @@ export default async function handler(req: NextRequest) {
         }
         const totalChars = Object.values(rarityCount).reduce((a, b) => a + b, 0);
 
-        // Build fonts
         type FontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
         const fonts: { name: string; data: ArrayBuffer; weight: FontWeight; style: "normal" }[] = [];
         if (fontData) fonts.push({ name: "Inter", data: fontData, weight: 400 as FontWeight, style: "normal" });

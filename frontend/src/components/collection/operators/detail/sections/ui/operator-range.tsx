@@ -43,7 +43,6 @@ function normalizeRange(range: Range): { rows: number; cols: number; grid: GridC
         return { rows: 1, cols: 1, grid: [[GridCell.Operator]] };
     }
 
-    // Find min and max row/col
     let minRow = 0;
     let maxRow = 0;
     let minCol = 0;
@@ -56,7 +55,6 @@ function normalizeRange(range: Range): { rows: number; cols: number; grid: GridC
         maxCol = Math.max(maxCol, g.col);
     });
 
-    // Normalize to include operator position (0,0)
     minRow = Math.min(minRow, 0);
     maxRow = Math.max(maxRow, 0);
     minCol = Math.min(minCol, 0);
@@ -65,10 +63,8 @@ function normalizeRange(range: Range): { rows: number; cols: number; grid: GridC
     const rows = maxRow - minRow + 1;
     const cols = maxCol - minCol + 1;
 
-    // Initialize grid
     const grid: GridCell[][] = Array.from({ length: rows }, () => Array.from({ length: cols }, () => GridCell.empty));
 
-    // Place active cells
     range.grids.forEach((g) => {
         const row = g.row - minRow;
         const col = g.col - minCol;
@@ -77,7 +73,6 @@ function normalizeRange(range: Range): { rows: number; cols: number; grid: GridC
         }
     });
 
-    // Place operator at (0,0) normalized
     const operatorRow = 0 - minRow;
     const operatorCol = 0 - minCol;
     if (grid[operatorRow]) {

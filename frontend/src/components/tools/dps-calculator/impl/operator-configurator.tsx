@@ -17,7 +17,6 @@ import { cn } from "~/lib/utils";
 import type { DpsBuffs, DpsConditionalInfo, DpsConditionals, DpsConditionalType, DpsShred } from "~/types/api/impl/dps-calculator";
 import type { OperatorConfiguration } from "./types";
 
-// Map conditional type to DpsConditionals key
 const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, keyof DpsConditionals> = {
     trait: "traitDamage",
     talent: "talentDamage",
@@ -26,7 +25,6 @@ const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, keyof DpsConditionals>
     module: "moduleDamage",
 };
 
-// Fallback display names for conditional types
 const CONDITIONAL_TYPE_LABELS: Record<DpsConditionalType, string> = {
     trait: "Trait",
     talent: "Talent 1",
@@ -97,29 +95,24 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
         });
     };
 
-    // Helper to check if a conditional is applicable based on current configuration
     const isConditionalApplicable = (conditional: DpsConditionalInfo): boolean => {
         const currentSkill = operator.params.skillIndex ?? operator.availableSkills[0] ?? 1;
         const currentModule = operator.params.moduleIndex ?? 0;
         const currentElite = operator.params.promotion ?? operator.maxPromotion;
         const currentModuleLevel = operator.params.moduleLevel ?? 3;
 
-        // Check skill applicability (empty array = applies to all skills)
         if (conditional.applicableSkills.length > 0 && !conditional.applicableSkills.includes(currentSkill)) {
             return false;
         }
 
-        // Check module applicability (empty array = applies to all modules)
         if (conditional.applicableModules.length > 0 && !conditional.applicableModules.includes(currentModule)) {
             return false;
         }
 
-        // Check elite level requirement
         if (currentElite < conditional.minElite) {
             return false;
         }
 
-        // Check module level requirement (only relevant if a module is selected)
         if (currentModule > 0 && currentModuleLevel < conditional.minModuleLevel) {
             return false;
         }
@@ -127,7 +120,6 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
         return true;
     };
 
-    // Get applicable conditionals for current configuration
     const getApplicableConditionals = (): DpsConditionalInfo[] => {
         if (!operator.conditionalData || operator.conditionalData.length === 0) {
             return [];
@@ -137,13 +129,11 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
 
     const applicableConditionals = getApplicableConditionals();
 
-    // Helper to get max level for current promotion
     const getMaxLevel = () => {
         const promotion = operator.params.promotion ?? operator.maxPromotion;
         if (operator.phaseLevels?.[promotion]) {
             return operator.phaseLevels[promotion];
         }
-        // Fallback based on rarity (standard max levels)
         const fallbackLevels: Record<number, number[]> = {
             6: [50, 80, 90],
             5: [50, 70, 80],
@@ -309,8 +299,6 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                 <TooltipProvider delayDuration={200}>
                                     <div className="flex flex-wrap items-center gap-1.5">
                                         {Array.from({ length: 6 }, (_, idx) => {
-                                            // potentialRanks array has 5 items (indices 0-4) for potentials 2-6
-                                            // Potential 1 (idx=0) has no bonus, so no description
                                             const potentialDescription = idx > 0 ? operator.potentialRanks?.[idx - 1]?.Description : undefined;
                                             return (
                                                 // biome-ignore lint/suspicious/noArrayIndexKey: Static array of potentials
@@ -343,7 +331,6 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                         <SelectValue>
                                             {(() => {
                                                 const currentPot = operator.params.potential ?? 1;
-                                                // potentialRanks[0] = Pot 2, potentialRanks[4] = Pot 6
                                                 const description = currentPot > 1 ? operator.potentialRanks?.[currentPot - 2]?.Description : undefined;
                                                 return (
                                                     <div className="flex items-center gap-2">
@@ -359,7 +346,6 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                     </SelectTrigger>
                                     <SelectContent>
                                         {Array.from({ length: 6 }, (_, idx) => {
-                                            // potentialRanks[0] = Pot 2, so for idx (0-5), description is at idx-1 for idx > 0
                                             const potentialDescription = idx > 0 ? operator.potentialRanks?.[idx - 1]?.Description : undefined;
                                             return (
                                                 // biome-ignore lint/suspicious/noArrayIndexKey: Static array of potentials
@@ -550,11 +536,8 @@ export function OperatorConfigurator({ operator, onUpdate, onRemove }: OperatorC
                                                     const typeLabel = CONDITIONAL_TYPE_LABELS[conditional.conditionalType];
                                                     const uniqueId = `${operator.id}-${conditional.conditionalType}-${idx}`;
 
-                                                    // For inverted conditionals, the name describes what happens when OFF
-                                                    // Show the custom name if available, otherwise show the type label
                                                     const displayName = conditional.name || typeLabel;
 
-                                                    // Build tooltip with context info
                                                     const tooltipParts: string[] = [`${typeLabel} conditional`];
                                                     if (conditional.inverted) {
                                                         tooltipParts.push(`Label "${displayName}" applies when disabled`);

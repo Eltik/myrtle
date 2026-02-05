@@ -11,7 +11,6 @@ interface EnemiesPageProps {
     total: number;
 }
 
-// Raw API response type (handles both snake_case and camelCase)
 interface RawEnemiesResponse {
     enemies: Enemy[];
     hasMore?: boolean;
@@ -56,7 +55,6 @@ async function fetchAllEnemies(
 
     const raw = (await response.json()) as RawEnemiesResponse;
 
-    // Normalize response to handle both snake_case and camelCase
     return {
         enemies: raw.enemies,
         hasMore: raw.hasMore ?? raw.has_more ?? false,
@@ -134,13 +132,11 @@ async function fetchAllEnemiesPaginated(
         batchSize?: number;
     },
 ): Promise<{ enemies: Enemy[]; total: number }> {
-    // Use large batch size to minimize number of requests
     const batchSize = options?.batchSize ?? 1000;
     const allEnemies: Enemy[] = [];
     let cursor: string | undefined;
     let total = 0;
 
-    // Keep fetching until no more enemies are returned
     while (true) {
         const response = await fetchAllEnemies(backendURL, {
             cursor,
@@ -153,7 +149,6 @@ async function fetchAllEnemiesPaginated(
         total = response.total;
         cursor = response.nextCursor ?? undefined;
 
-        // Stop if hasMore is false, no cursor, or no enemies returned
         if (!response.hasMore || !cursor || response.enemies.length === 0) {
             break;
         }
@@ -174,15 +169,7 @@ export const getServerSideProps: GetServerSideProps<EnemiesPageProps> = async ()
     const backendURL = env.BACKEND_URL;
 
     try {
-        // Fetch all data in parallel
-        const [enemiesData, races, levelInfo] = await Promise.all([
-            // Fetch all enemies with large batch size to minimize requests
-            fetchAllEnemiesPaginated(backendURL, { batchSize: 1000 }),
-            // Fetch enemy races
-            fetchEnemyRaces(backendURL),
-            // Fetch level info
-            fetchEnemyLevelInfo(backendURL),
-        ]);
+        const [enemiesData, races, levelInfo] = await Promise.all([fetchAllEnemiesPaginated(backendURL, { batchSize: 1000 }), fetchEnemyRaces(backendURL), fetchEnemyLevelInfo(backendURL)]);
 
         return {
             props: {
