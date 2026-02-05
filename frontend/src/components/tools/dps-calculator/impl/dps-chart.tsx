@@ -115,6 +115,8 @@ export interface DpsChartHandle {
 interface DpsChartProps {
     operators: OperatorConfiguration[];
     mode: "defense" | "resistance";
+    /** Ref passed as prop for dynamic import compatibility */
+    chartRef?: React.RefObject<DpsChartHandle | null>;
 }
 
 // Custom tooltip component
@@ -149,7 +151,7 @@ function CustomLabel({ x, y, value, formatLabel, index, interval, color }: { x?:
     );
 }
 
-export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsChart({ operators, mode }, ref) {
+export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsChart({ operators, mode, chartRef }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
     const [loading, setLoading] = useState(false);
@@ -158,6 +160,14 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
 
     // Expose methods via ref for export functionality
     useImperativeHandle(ref, () => ({
+        getChartElement: () => containerRef.current,
+        getChartData: () => chartData,
+        getOperators: () => operators,
+    }));
+
+    // Also support chartRef prop for dynamic import compatibility
+    // This is needed because Next.js dynamic() doesn't forward refs
+    useImperativeHandle(chartRef, () => ({
         getChartElement: () => containerRef.current,
         getChartData: () => chartData,
         getOperators: () => operators,
