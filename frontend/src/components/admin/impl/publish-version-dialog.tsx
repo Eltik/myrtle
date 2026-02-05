@@ -54,7 +54,7 @@ export function PublishVersionDialog({ open, onOpenChange, onPublish, tierListNa
 
     return (
         <Dialog onOpenChange={handleClose} open={open}>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="sm:max-w-137.5">
                 <DialogHeader>
                     <DialogTitle>Publish New Version</DialogTitle>
                     <DialogDescription>

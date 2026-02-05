@@ -38,7 +38,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
         <div className="relative w-full overflow-hidden contain-layout" ref={containerRef}>
             {/* Mobile Layout: Similar to desktop with gradient fade */}
             <div className="md:hidden">
-                <div className="relative h-[360px] w-full overflow-hidden sm:h-[400px]">
+                <div className="relative h-90 w-full overflow-hidden sm:h-100">
                     {/* Background Image with parallax */}
                     <motion.div
                         className="backface-hidden absolute inset-x-0 top-0 transition-transform duration-75 ease-out will-change-transform contain-paint"
@@ -48,7 +48,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                         }}
                     >
                         <div className="flex items-start justify-center pt-0">
-                            <div className="relative h-[480px] w-[85vw] max-w-[380px] sm:h-[540px] sm:w-[440px] sm:max-w-none">
+                            <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">
                                 <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 640px) 85vw, 440px" src={heroImageUrl} />
                             </div>
                         </div>
@@ -108,7 +108,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
 
             {/* Desktop Layout: Original design */}
             <div className="hidden md:block">
-                <div className="relative h-[380px] w-full overflow-hidden lg:h-[420px]">
+                <div className="relative h-95 w-full overflow-hidden lg:h-105">
                     {/* Background Image */}
                     <motion.div
                         className="backface-hidden absolute inset-x-0 top-0 transition-transform duration-75 ease-out will-change-transform contain-paint"
@@ -118,7 +118,7 @@ export function OperatorHero({ operator }: OperatorHeroProps) {
                         }}
                     >
                         <div className="flex items-start justify-end pr-[5%] lg:pr-[10%]">
-                            <div className="relative h-[620px] w-[520px] lg:h-[720px] lg:w-[600px]">
+                            <div className="relative h-155 w-130 lg:h-180 lg:w-150">
                                 <Image alt={operator.name} className={cn("object-contain object-top", rarityGlow)} fill priority sizes="(max-width: 1024px) 520px, 600px" src={heroImageUrl} />
                             </div>
                         </div>

@@ -417,13 +417,13 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                 <AccordionTrigger className="flex w-full items-center justify-between py-2 text-sm">
                                                                     <div className="flex flex-col items-start gap-0.5 text-left">
                                                                         <span className="text-foreground">{event.eventName}</span>
-                                                                        {event.dateRange && <span className="text-[10px] text-muted-foreground">{event.dateRange}</span>}
+                                                                        {event.dateRange && <span className="text-2.5 text-muted-foreground">{event.dateRange}</span>}
                                                                     </div>
                                                                     <div className="flex shrink-0 items-center gap-2">
                                                                         {event.isPermanent ? (
-                                                                            <span className="whitespace-nowrap rounded-full bg-blue-500/20 px-1.5 py-0.5 font-medium text-[10px] text-blue-500">{event.permanentType === "BRANCHLINE" ? "INTERMEZZO" : "SIDE STORY"}</span>
+                                                                            <span className="whitespace-nowrap rounded-full bg-blue-500/20 px-1.5 py-0.5 font-medium text-2.5 text-blue-500">{event.permanentType === "BRANCHLINE" ? "INTERMEZZO" : "SIDE STORY"}</span>
                                                                         ) : event.isOpen ? (
-                                                                            <span className="whitespace-nowrap rounded-full bg-green-500/20 px-1.5 py-0.5 font-medium text-[10px] text-green-500">OPEN</span>
+                                                                            <span className="whitespace-nowrap rounded-full bg-green-500/20 px-1.5 py-0.5 font-medium text-2.5 text-green-500">OPEN</span>
                                                                         ) : null}
                                                                         <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">{eventSelectedCount > 0 ? `${eventSelectedCount} / ${event.totalStages}` : event.totalStages}</span>
                                                                         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${openEventId === event.activityId ? "rotate-180" : ""}`} />
@@ -458,7 +458,7 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                                                             <div className="flex items-center justify-between gap-2">
                                                                                                                 <span className="flex items-center gap-1.5 truncate">
                                                                                                                     {getStageDisplayName(stage)}
-                                                                                                                    {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                                                    {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-2.5 text-amber-500">CM</span>}
                                                                                                                 </span>
                                                                                                                 {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
                                                                                                             </div>
@@ -486,7 +486,7 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                                         <div className="flex items-center justify-between gap-2">
                                                                                             <span className="flex items-center gap-1.5 truncate">
                                                                                                 {getStageDisplayName(stage)}
-                                                                                                {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                                {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-2.5 text-amber-500">CM</span>}
                                                                                             </span>
                                                                                             {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
                                                                                         </div>
@@ -533,7 +533,7 @@ export function ZoneFilterPanel({ allowedZoneTypes, setAllowedZoneTypes, hasProf
                                                                                     <div className="flex items-center justify-between gap-2">
                                                                                         <span className="flex items-center gap-1.5 truncate">
                                                                                             {getStageDisplayName(stage)}
-                                                                                            {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-[10px] text-amber-500">CM</span>}
+                                                                                            {isChallengeMode && <span className="rounded bg-amber-500/20 px-1 py-0.5 font-medium text-2.5 text-amber-500">CM</span>}
                                                                                         </span>
                                                                                         {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
                                                                                     </div>

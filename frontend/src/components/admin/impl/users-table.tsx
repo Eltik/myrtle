@@ -152,7 +152,7 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                         {/* Search */}
                         <div className="relative">
                             <Search className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                            <Input className="h-8 w-[200px] border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users..." value={searchQuery} />
+                            <Input className="h-8 w-50 border-border/50 bg-muted/50 pl-8 text-sm" onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search users..." value={searchQuery} />
                         </div>
 
                         {/* Filter Dropdown */}
@@ -291,13 +291,13 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/30 hover:bg-muted/30">
-                            <TableHead className="w-[200px]">
+                            <TableHead className="w-50">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("nickname")} type="button">
                                     <span>User</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[120px]">
+                            <TableHead className="w-30">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("uid")} type="button">
                                     <span>UID</span>
                                     <ArrowUpDown className="h-3 w-3" />
@@ -315,13 +315,13 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[140px]">
+                            <TableHead className="w-35">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("role")} type="button">
                                     <span>Role</span>
                                     <ArrowUpDown className="h-3 w-3" />
                                 </button>
                             </TableHead>
-                            <TableHead className="w-[140px]">
+                            <TableHead className="w-35">
                                 <button className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => toggleSort("createdAt")} type="button">
                                     <span>Created</span>
                                     <ArrowUpDown className="h-3 w-3" />
@@ -380,7 +380,7 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
                         <div className="flex items-center gap-2">
                             <span className="hidden sm:inline">Show</span>
                             <Select onValueChange={(v) => setItemsPerPage(Number(v))} value={itemsPerPage.toString()}>
-                                <SelectTrigger className="h-8 w-[70px] bg-muted/50">
+                                <SelectTrigger className="h-8 w-17.5 bg-muted/50">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

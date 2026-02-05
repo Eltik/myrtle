@@ -34,7 +34,7 @@ export function DownloadButton({ isRecording, progress, disabled, onDownload, on
     if (isRecording) {
         return (
             <div className="flex items-center gap-2">
-                <div className="flex min-w-[120px] items-center gap-2">
+                <div className="flex min-w-30 items-center gap-2">
                     <Progress className="h-2 w-full" value={progress} />
                     <span className="text-muted-foreground text-xs tabular-nums">{Math.round(progress)}%</span>
                 </div>

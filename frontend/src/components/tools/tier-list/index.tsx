@@ -140,19 +140,19 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
                                         <div className="space-y-1.5">
                                             <div className="rounded border border-border/50 bg-muted/30 p-2">
                                                 <p className="font-medium text-foreground text-xs">Combat Performance</p>
-                                                <p className="text-[10px]">DPS, survivability, CC, skill cycling</p>
+                                                <p className="text-2.5">DPS, survivability, CC, skill cycling</p>
                                             </div>
                                             <div className="rounded border border-border/50 bg-muted/30 p-2">
                                                 <p className="font-medium text-foreground text-xs">Versatility</p>
-                                                <p className="text-[10px]">Effectiveness across stages and teams</p>
+                                                <p className="text-2.5">Effectiveness across stages and teams</p>
                                             </div>
                                             <div className="rounded border border-border/50 bg-muted/30 p-2">
                                                 <p className="font-medium text-foreground text-xs">Ease of Use</p>
-                                                <p className="text-[10px]">Cost, timing, positioning flexibility</p>
+                                                <p className="text-2.5">Cost, timing, positioning flexibility</p>
                                             </div>
                                             <div className="rounded border border-border/50 bg-muted/30 p-2">
                                                 <p className="font-medium text-foreground text-xs">Investment Value</p>
-                                                <p className="text-[10px]">Performance vs resources spent</p>
+                                                <p className="text-2.5">Performance vs resources spent</p>
                                             </div>
                                         </div>
                                     </TabsContent>

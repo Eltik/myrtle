@@ -61,7 +61,7 @@ export function ScoreOverviewCard({ scoreData, className }: ScoreOverviewCardPro
                             <TooltipTrigger asChild>
                                 <Info className="h-3 w-3 cursor-help text-muted-foreground/50" />
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-[220px]" sideOffset={5} variant="dark">
+                            <TooltipContent className="max-w-55" sideOffset={5} variant="dark">
                                 <p className="font-medium">Contribution to Total</p>
                                 <p className="text-muted-foreground">Bars show each category's share of your total score, not progress toward max.</p>
                             </TooltipContent>
@@ -90,10 +90,10 @@ export function ScoreOverviewCard({ scoreData, className }: ScoreOverviewCardPro
                                             </div>
                                         </motion.div>
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-[200px]" sideOffset={5} variant="dark">
+                                    <TooltipContent className="max-w-50" sideOffset={5} variant="dark">
                                         <p className="font-medium">{cat.config?.label}</p>
                                         <p className="text-muted-foreground">{cat.percentage.toFixed(1)}% of total score</p>
-                                        <p className="mt-1 text-[10px] text-muted-foreground/70">See Score Breakdown for full details</p>
+                                        <p className="mt-1 text-2.5 text-muted-foreground/70">See Score Breakdown for full details</p>
                                     </TooltipContent>
                                 </Tooltip>
                             );

@@ -73,7 +73,7 @@ export function VersionDetailDialog({ open, onOpenChange, version, tierListSlug 
                 </DialogHeader>
 
                 {loading ? (
-                    <div className="flex min-h-[200px] items-center justify-center">
+                    <div className="flex min-h-50 items-center justify-center">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                     </div>
                 ) : error ? (
@@ -107,7 +107,7 @@ export function VersionDetailDialog({ open, onOpenChange, version, tierListSlug 
                         <Separator />
                         <div className="space-y-2">
                             <h4 className="font-medium text-foreground text-sm">Changelog</h4>
-                            <div className="max-h-[300px] overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-4">
+                            <div className="max-h-75 overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-4">
                                 <pre className="whitespace-pre-wrap font-sans text-muted-foreground text-sm leading-relaxed">{details.changelog}</pre>
                             </div>
                         </div>

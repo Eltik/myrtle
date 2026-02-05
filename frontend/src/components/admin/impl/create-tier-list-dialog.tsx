@@ -83,7 +83,7 @@ export function CreateTierListDialog({ open, onOpenChange, onCreate }: CreateTie
 
     return (
         <Dialog onOpenChange={handleClose} open={open}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-125">
                 <DialogHeader>
                     <DialogTitle>Create New Tier List</DialogTitle>
                     <DialogDescription>Create a new tier list for ranking operators. You can configure tiers and add operators after creation.</DialogDescription>

@@ -82,7 +82,7 @@ export function ReportTierListDialog({ open, onOpenChange, tierListName, onRepor
 
     return (
         <Dialog onOpenChange={handleClose} open={open}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-125">
                 <DialogHeader>
                     <DialogTitle>Report Tier List</DialogTitle>
                     <DialogDescription>

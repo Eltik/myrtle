@@ -58,7 +58,7 @@ export const EnemyDetailDialog = memo(function EnemyDetailDialog({ enemy }: Enem
     const groupedAbilities = useMemo(() => groupAbilities(enemy.abilityList), [enemy.abilityList]);
 
     return (
-        <div className="relative flex h-[85vh] max-h-[700px] w-[95vw] max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
+        <div className="relative flex h-[85vh] max-h-175 w-[95vw] max-w-3xl flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
             {/* Close button */}
             <MorphingDialogClose className="absolute top-3 right-3 z-10 rounded-full bg-background/80 p-1.5 backdrop-blur-sm hover:bg-background" />
 
