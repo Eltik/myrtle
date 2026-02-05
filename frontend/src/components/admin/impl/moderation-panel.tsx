@@ -247,7 +247,7 @@ export function ModerationPanel() {
                                                 <DropdownMenuContent align="end">
                                                     {report.tier_list_slug && (
                                                         <DropdownMenuItem asChild>
-                                                            <Link href={`/tools/tier-list?slug=${report.tier_list_slug}`} target="_blank">
+                                                            <Link href={`/tier-list?slug=${report.tier_list_slug}`} target="_blank">
                                                                 <Eye className="mr-2 h-4 w-4" />
                                                                 View Tier List
                                                                 <ExternalLink className="ml-auto h-3 w-3" />

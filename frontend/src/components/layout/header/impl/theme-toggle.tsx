@@ -67,7 +67,7 @@ export function ThemeToggle() {
                         Accent Color
                     </span>
                     {!isDefault && (
-                        <Button className="h-4 gap-1 px-1.5 text-2.5" onClick={resetToDefault} size="sm" variant="ghost">
+                        <Button className="h-4 gap-1 px-1.5 text-[0.625rem]" onClick={resetToDefault} size="sm" variant="ghost">
                             <RotateCcw className="h-3 w-3" />
                             Reset
                         </Button>

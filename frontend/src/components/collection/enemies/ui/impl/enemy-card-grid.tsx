@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { MorphingDialog, MorphingDialogContainer, MorphingDialogContent, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/shadcn/hover-card";
 import { capitalize, cn } from "~/lib/utils";
@@ -11,6 +11,7 @@ import { HOVER_DELAY, LEVEL_BAR_COLORS, LEVEL_BLUR_COLORS, LEVEL_TEXT_COLORS, LE
 import { formatDamageType } from "../../enemy-list/impl/helpers";
 import { EnemyDetailDialog } from "./enemy-detail-dialog";
 import { EnemyLevelLogo } from "./enemy-level-logo";
+import { EnemyPlaceholder } from "./enemy-placeholder";
 
 interface EnemyCardGridProps {
     enemy: Enemy;
@@ -21,6 +22,7 @@ interface EnemyCardGridProps {
 
 export const EnemyCardGrid = memo(function EnemyCardGrid({ enemy, isHovered = false, shouldGrayscale = false, onHoverChange }: EnemyCardGridProps) {
     const { resolvedTheme } = useTheme();
+    const [imgError, setImgError] = useState(false);
     const levelColor = LEVEL_BAR_COLORS[enemy.enemyLevel] ?? "#71717a";
     const levelBlurColor = LEVEL_BLUR_COLORS[enemy.enemyLevel] ?? "#a1a1aa";
     const levelTextColor = (resolvedTheme === "light" ? LEVEL_TEXT_COLORS_LIGHT : LEVEL_TEXT_COLORS)[enemy.enemyLevel] ?? "#a1a1aa";
@@ -29,7 +31,7 @@ export const EnemyCardGrid = memo(function EnemyCardGrid({ enemy, isHovered = fa
         <div className="group card-hover-transition relative flex aspect-square overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg">
             {/* Enemy image */}
             <div className={cn("absolute inset-0 origin-center transform-gpu transition-all duration-200 ease-out group-hover:scale-105", shouldGrayscale && "grayscale", isHovered && "grayscale-0")}>
-                <Image alt={`${enemy.name} Portrait`} className="h-full w-full rounded-lg object-contain" decoding="async" fill loading="lazy" src={`/api/cdn${enemy.portrait}`} />
+                {imgError || !enemy.portrait ? <EnemyPlaceholder className="h-full w-full p-4" /> : <Image alt={`${enemy.name} Portrait`} className="h-full w-full rounded-lg object-contain" decoding="async" fill loading="lazy" onError={() => setImgError(true)} src={`/api/cdn${enemy.portrait}`} />}
             </div>
 
             {/* Bottom info bar */}
@@ -67,9 +69,7 @@ export const EnemyCardGrid = memo(function EnemyCardGrid({ enemy, isHovered = fa
                     <HoverCardContent className="w-80 p-4" side="top">
                         <div className="flex items-start space-x-4">
                             {/* Avatar */}
-                            <div className="relative h-16 w-16 shrink-0">
-                                <Image alt={`${enemy.name} Avatar`} className="rounded-md object-cover" fill src={`/api/cdn${enemy.portrait}`} />
-                            </div>
+                            <div className="relative h-16 w-16 shrink-0">{imgError || !enemy.portrait ? <EnemyPlaceholder className="h-full w-full" /> : <Image alt={`${enemy.name} Avatar`} className="rounded-md object-cover" fill src={`/api/cdn${enemy.portrait}`} />}</div>
                             <div className="grow space-y-1">
                                 {/* Name and level */}
                                 <div className="flex items-center justify-between">

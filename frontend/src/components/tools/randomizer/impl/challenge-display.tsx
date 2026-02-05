@@ -26,7 +26,7 @@ export function ChallengeDisplay({ challenge, onRandomize }: ChallengeDisplayPro
                             </div>
                             <div>
                                 <h2 className="font-semibold text-foreground text-sm">Your Challenge</h2>
-                                <p className="text-2.5 text-muted-foreground">Additional modifier for extra difficulty</p>
+                                <p className="text-[0.625rem] text-muted-foreground">Additional modifier for extra difficulty</p>
                             </div>
                         </div>
                         <Button className="h-7 gap-1.5 bg-transparent px-2 text-xs shadow-sm transition-all hover:scale-105" onClick={onRandomize} variant="outline">
@@ -40,7 +40,7 @@ export function ChallengeDisplay({ challenge, onRandomize }: ChallengeDisplayPro
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-bold text-foreground text-sm">{challenge.title}</h3>
-                                    <Badge className="h-5 px-1.5 text-2.5 capitalize shadow-sm" variant={badgeVariant}>
+                                    <Badge className="h-5 px-1.5 text-[0.625rem] capitalize shadow-sm" variant={badgeVariant}>
                                         {challenge.type}
                                     </Badge>
                                 </div>

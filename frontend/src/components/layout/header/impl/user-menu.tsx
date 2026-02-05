@@ -31,7 +31,7 @@ export function UserMenu({ user, loading, logout }: UserMenuProps) {
                     <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-2 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
                         <Avatar className="h-5 w-5">
                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
-                            <AvatarFallback className="text-2.5">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
+                            <AvatarFallback className="text-[0.625rem]">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
                         <span className="max-w-24 truncate font-medium">{user.status.nickName}</span>
                         <ChevronDown className="h-3 w-3" />

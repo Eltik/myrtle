@@ -27,7 +27,7 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
     }
 
     // Calculate all derived data
-    const { luckScore, rateComparisonData, operatorsByRarity, hourlyData, dailyData, dateData, rarityData } = calculateDerivedData(stats);
+    const { actualRates, luckScore, rateComparisonData, operatorsByRarity, hourlyData, dailyData, dateData, rarityData } = calculateDerivedData(stats);
     const luckStatus = getLuckStatus(luckScore);
 
     return (
@@ -41,12 +41,12 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatCard delay={0.1} description="Across all participating users" icon={BarChart3} title="Total Pulls" value={stats.collectiveStats.totalPulls} />
                     <StatCard delay={0.2} description="Anonymous data contributors" icon={Users} title="Contributing Players" value={stats.collectiveStats.totalUsers} />
-                    <StatCard delay={0.3} description={`${formatRate(stats.pullRates.sixStarRate)} pull rate`} icon={Sparkles} iconClassName="text-orange-500" title="6-Star Operators" value={stats.collectiveStats.totalSixStars} valueClassName="text-orange-500" />
-                    <StatCard delay={0.4} description={`${formatRate(stats.pullRates.fiveStarRate)} pull rate`} icon={Star} iconClassName="text-yellow-500" title="5-Star Operators" value={stats.collectiveStats.totalFiveStars} valueClassName="text-yellow-500" />
+                    <StatCard delay={0.3} description={`${formatRate(actualRates[6])} pull rate`} icon={Sparkles} iconClassName="text-orange-500" title="6-Star Operators" value={stats.collectiveStats.totalSixStars} valueClassName="text-orange-500" />
+                    <StatCard delay={0.4} description={`${formatRate(actualRates[5])} pull rate`} icon={Star} iconClassName="text-yellow-500" title="5-Star Operators" value={stats.collectiveStats.totalFiveStars} valueClassName="text-yellow-500" />
                 </div>
 
                 {/* Pull Rate Analysis */}
-                <PullRateAnalysis averagePullsToFiveStar={stats.averagePullsToFiveStar} averagePullsToSixStar={stats.averagePullsToSixStar} pullRates={stats.pullRates} />
+                <PullRateAnalysis actualRates={actualRates} averagePullsToFiveStar={stats.averagePullsToFiveStar} averagePullsToSixStar={stats.averagePullsToSixStar} />
 
                 {/* Pity Statistics */}
                 <PityStatistics averagePullsToFiveStar={stats.averagePullsToFiveStar} averagePullsToSixStar={stats.averagePullsToSixStar} />

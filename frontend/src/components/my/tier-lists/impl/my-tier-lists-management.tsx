@@ -189,7 +189,7 @@ function TierListCard({ tierList, onDelete }: { tierList: CommunityTierList; onD
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                                <Link href={`/tools/tier-list?slug=${tierList.slug}`}>
+                                <Link href={`/tier-list?slug=${tierList.slug}`}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     View
                                 </Link>

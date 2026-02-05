@@ -98,14 +98,14 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                             <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
-                            <span className="text-2.5 text-muted-foreground sm:text-xs">Lvl</span>
+                            <span className="text-[0.625rem] text-muted-foreground sm:text-xs">Lvl</span>
                             <span className="font-medium text-sm tabular-nums">{data.level}</span>
                         </div>
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
                             <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
-                            <span className="text-2.5 text-muted-foreground sm:text-xs">Trust</span>
+                            <span className="text-[0.625rem] text-muted-foreground sm:text-xs">Trust</span>
                             <span className="font-medium text-sm tabular-nums">{operator?.trust ?? 0}%</span>
                         </div>
                     </div>

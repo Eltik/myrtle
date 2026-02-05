@@ -11,7 +11,7 @@ export const FEATURES = [
         icon: TrendingUp,
         title: "Tier Lists",
         description: "Community-driven tier lists to help you build the strongest team compositions.",
-        href: "/tools/tier-list",
+        href: "/tier-list",
     },
     {
         icon: Calculator,

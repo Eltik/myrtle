@@ -221,7 +221,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                     >
                         {/* Operator Name - Top */}
                         <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                            {subtitle && <span className="text-1.75 text-foreground leading-1.5 sm:text-2.25 sm:leading-2">{subtitle}</span>}
+                            {subtitle && <span className="text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
                             <span
                                 className="text-foreground"
                                 style={{
@@ -276,7 +276,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                                             borderColor: isAtMaxLevel ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
                                         }}
                                     >
-                                        <abbr className="hidden text-2.25 leading-1 no-underline sm:flex" title="Level">
+                                        <abbr className="hidden text-[0.5625rem] leading-none no-underline sm:flex" title="Level">
                                             LV
                                         </abbr>
                                         {data.level}
@@ -297,7 +297,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                                             {hasM ? (
                                                 <Image alt={`M${skill.specializeLevel}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={24} />
                                             ) : (
-                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-2.5 text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
+                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.625rem] text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
                                             )}
                                         </div>
                                     );
@@ -315,7 +315,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                                     return (
                                         <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
                                             <Image alt={module.typeName1 ?? "Module"} className="h-full w-full object-contain" height={32} src={module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`} unoptimized width={32} />
-                                            <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-2.25 leading-none sm:text-2.5">
+                                            <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-[0.5625rem] leading-none sm:text-[0.625rem]">
                                                 {typeLetter}
                                                 {moduleLevel}
                                             </span>

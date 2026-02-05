@@ -26,7 +26,7 @@ export function StageDisplay({ stage, getZoneName, onRandomize }: StageDisplayPr
                             </div>
                             <div>
                                 <h2 className="font-semibold text-foreground text-sm">Your Stage</h2>
-                                <p className="text-2.5 text-muted-foreground">Complete this stage with your squad</p>
+                                <p className="text-[0.625rem] text-muted-foreground">Complete this stage with your squad</p>
                             </div>
                         </div>
                         <Button className="h-7 gap-1.5 bg-transparent px-2 text-xs shadow-sm transition-all hover:scale-105" onClick={onRandomize} variant="outline">
@@ -53,16 +53,16 @@ export function StageDisplay({ stage, getZoneName, onRandomize }: StageDisplayPr
 
                             <div className="flex flex-wrap gap-1.5">
                                 {stage.bossMark && (
-                                    <Badge className="h-6 gap-1 px-2 text-2.5 shadow-sm" variant="destructive">
+                                    <Badge className="h-6 gap-1 px-2 text-[0.625rem] shadow-sm" variant="destructive">
                                         <Zap className="h-3 w-3" />
                                         Boss
                                     </Badge>
                                 )}
-                                <Badge className="h-6 bg-background/60 px-2 font-semibold text-2.5 shadow-sm backdrop-blur-sm" variant="outline">
+                                <Badge className="h-6 bg-background/60 px-2 font-semibold text-[0.625rem] shadow-sm backdrop-blur-sm" variant="outline">
                                     {stage.apCost} AP
                                 </Badge>
                                 {stage.dangerLevel && (
-                                    <Badge className="h-6 bg-background/60 px-2 font-semibold text-2.5 shadow-sm backdrop-blur-sm" variant="outline">
+                                    <Badge className="h-6 bg-background/60 px-2 font-semibold text-[0.625rem] shadow-sm backdrop-blur-sm" variant="outline">
                                         Lvl {stage.dangerLevel}
                                     </Badge>
                                 )}

@@ -104,7 +104,7 @@ export function EnemyFilters({ enemyLevels, damageTypes, enemyTypes, selectedEne
                     <div className="space-y-4">
                         <button className="flex w-full items-center gap-2 transition-colors hover:opacity-80" onClick={() => setIsAdvancedOpen(!isAdvancedOpen)} type="button">
                             <span className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Advanced</span>
-                            {hasAdvancedFilters && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2.5 text-primary-foreground">{advancedFilterCount}</span>}
+                            {hasAdvancedFilters && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] text-primary-foreground">{advancedFilterCount}</span>}
                             <div className="h-px flex-1 bg-border" />
                             <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", isAdvancedOpen && "rotate-180")} />
                         </button>

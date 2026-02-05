@@ -36,7 +36,7 @@ export function OperatorResultCard({ operator }: OperatorResultCardProps) {
 
                         <div className="flex items-center justify-between">
                             {/* Rarity stars */}
-                            <RarityStars className="flex" rarity={operator.rarity} starClassName="text-2.5" />
+                            <RarityStars className="flex" rarity={operator.rarity} starClassName="text-[0.625rem]" />
 
                             {/* Class icon */}
                             <div className="h-5 w-5">
