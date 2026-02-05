@@ -90,7 +90,7 @@ export function RosterPanel({ operators, roster, setRoster, onImportProfile, has
                     />
                 </div>
 
-                <div className="max-h-80 space-y-1.5 overflow-y-auto rounded-xl border border-border/30 bg-secondary/20 p-2 shadow-inner backdrop-blur-sm sm:max-h-96 lg:max-h-[520px]">
+                <div className="max-h-80 space-y-1.5 overflow-y-auto rounded-xl border border-border/30 bg-secondary/20 p-2 shadow-inner backdrop-blur-sm sm:max-h-96 lg:max-h-130">
                     {filteredOperators.map((operator) => {
                         const operatorId = operator.id;
                         if (!operatorId) return null;
@@ -100,7 +100,7 @@ export function RosterPanel({ operators, roster, setRoster, onImportProfile, has
                         const className = CLASS_DISPLAY[operator.profession] ?? operator.profession;
 
                         return (
-                            <button className="flex w-full items-center gap-3 rounded-lg p-2.5 transition-all duration-200 hover:scale-[1.02] hover:bg-accent/60 hover:shadow-md" key={operatorId} onClick={() => handleToggle(operatorId)} type="button">
+                            <button className="flex w-full items-center gap-3 rounded-lg p-2.5 transition-all duration-200 hover:scale-102 hover:bg-accent/60 hover:shadow-md" key={operatorId} onClick={() => handleToggle(operatorId)} type="button">
                                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border/40 shadow-sm">
                                     <Image alt={operator.name} className="h-full w-full object-cover" height={48} src={`/api/cdn${operator.portrait || "/placeholder.svg"}`} width={48} />
                                 </div>

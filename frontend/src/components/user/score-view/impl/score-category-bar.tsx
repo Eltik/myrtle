@@ -43,7 +43,7 @@ export function ScoreCategoryBar({ label, description, score, icon: Icon, color,
                         </div>
                         <div className="flex flex-col items-end gap-0.5">
                             <AnimatedNumber className={cn("font-semibold text-sm tabular-nums", color)} decimals={2} springOptions={{ stiffness: 100, damping: 20 }} value={score} />
-                            {completionInfo && <span className="text-[10px] text-muted-foreground">{completionInfo.label}</span>}
+                            {completionInfo && <span className="text-2.5 text-muted-foreground">{completionInfo.label}</span>}
                         </div>
                     </div>
 
@@ -55,10 +55,10 @@ export function ScoreCategoryBar({ label, description, score, icon: Icon, color,
                     )}
                 </motion.div>
             </TooltipTrigger>
-            <TooltipContent className="max-w-[220px]" sideOffset={5} variant="dark">
+            <TooltipContent className="max-w-55" sideOffset={5} variant="dark">
                 <p className="font-medium">{label}</p>
                 <p className="text-muted-foreground">{description}</p>
-                {hasCompletionData && <p className="mt-1 text-[10px] text-muted-foreground/70">{percentage.toFixed(1)}% completion</p>}
+                {hasCompletionData && <p className="mt-1 text-2.5 text-muted-foreground/70">{percentage.toFixed(1)}% completion</p>}
             </TooltipContent>
         </Tooltip>
     );

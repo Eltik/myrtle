@@ -125,10 +125,10 @@ export function EngagementMetricsCard({ grade, className }: EngagementMetricsCar
                                         </div>
                                     </motion.div>
                                 </TooltipTrigger>
-                                <TooltipContent className="max-w-[220px]" sideOffset={5} variant="dark">
+                                <TooltipContent className="max-w-55" sideOffset={5} variant="dark">
                                     <p className="font-medium">{metric.tooltipTitle}</p>
                                     <p className="text-muted-foreground">{metric.tooltipContent}</p>
-                                    <p className="mt-1 text-[10px] text-muted-foreground/70">{metric.tooltipDetail}</p>
+                                    <p className="mt-1 text-2.5 text-muted-foreground/70">{metric.tooltipDetail}</p>
                                 </TooltipContent>
                             </Tooltip>
                         );

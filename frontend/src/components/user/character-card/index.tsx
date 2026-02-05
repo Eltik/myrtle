@@ -144,7 +144,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
 
                             {/* Operator Info Overlay */}
                             <div className="absolute right-0 bottom-0 left-0 p-4">
-                                <h3 className={`mt-2 max-w-[75%] text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
+                                <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>{operatorName}</h3>
                                 <div className={`flex items-center justify-between transition-all duration-300 ${isHovered ? "translate-y-0" : "translate-y-1"}`}>
                                     <div className="flex items-center gap-2">
                                         <Image alt={`${starCount} Star`} className="h-4.5 w-auto object-contain" height={18} src={`/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`} unoptimized width={60} />

@@ -26,9 +26,9 @@ export function CharacterFilters({ searchTerm, setSearchTerm, sortBy, setSortBy,
     return (
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                <Input className="w-full sm:w-[280px]" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
+                <Input className="w-full sm:w-70" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
                 <Select onValueChange={(value: SortBy) => setSortBy(value)} value={sortBy}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectTrigger className="w-full sm:w-45">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -65,7 +65,7 @@ export function CharacterFilters({ searchTerm, setSearchTerm, sortBy, setSortBy,
                         <TooltipTrigger asChild>
                             <motion.button
                                 animate={{ scale: 1 }}
-                                className={`relative flex size-[34px] cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary ${viewMode === "detailed" ? "bg-secondary" : ""}`}
+                                className={`relative flex size-8.5 cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary ${viewMode === "detailed" ? "bg-secondary" : ""}`}
                                 onClick={() => setViewMode("detailed")}
                                 onKeyDown={(e) => e.key === "Enter" && setViewMode("detailed")}
                                 tabIndex={0}
@@ -86,7 +86,7 @@ export function CharacterFilters({ searchTerm, setSearchTerm, sortBy, setSortBy,
                         <TooltipTrigger asChild>
                             <motion.button
                                 animate={{ scale: 1 }}
-                                className={`relative flex size-[34px] cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary ${viewMode === "compact" ? "bg-secondary" : ""}`}
+                                className={`relative flex size-8.5 cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary ${viewMode === "compact" ? "bg-secondary" : ""}`}
                                 onClick={() => setViewMode("compact")}
                                 onKeyDown={(e) => e.key === "Enter" && setViewMode("compact")}
                                 tabIndex={0}

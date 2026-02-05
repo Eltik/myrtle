@@ -33,7 +33,7 @@ export function CTASection() {
                             <p className="mx-auto mb-8 max-w-2xl text-balance text-lg text-muted-foreground md:text-xl">Join thousands of Doctors who have already enhanced their Arknights experience with our comprehensive toolkit.</p>
 
                             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                                <Button asChild className="group relative h-12 overflow-hidden rounded-lg bg-primary px-8 font-semibold text-lg text-primary-foreground shadow-[0_8px_24px_var(--glow-primary)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_32px_var(--glow-primary)]" size="lg">
+                                <Button asChild className="group relative h-12 overflow-hidden rounded-lg bg-primary px-8 font-semibold text-lg text-primary-foreground shadow-[0_8px_24px_var(--glow-primary)] transition-all duration-300 hover:scale-102 hover:shadow-[0_12px_32px_var(--glow-primary)]" size="lg">
                                     <Link href="/collection/operators">
                                         <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/25 to-transparent" />
                                         <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/20 to-transparent" />

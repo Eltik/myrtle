@@ -105,7 +105,7 @@ function SortableOperatorCard({ placement, operator, onRemove }: SortableOperato
             </Button>
 
             {/* Operator name */}
-            <div className="absolute inset-x-0 bottom-1.5 z-20 flex justify-center px-0.5 text-center font-medium text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-1.5 z-20 flex justify-center px-0.5 text-center font-medium text-2.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="truncate">{operator.name}</span>
             </div>
 
@@ -778,7 +778,7 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                                                 {isPlaced && (
                                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70">
                                                         <Check className="h-5 w-5 text-green-500" />
-                                                        <span className="mt-0.5 px-1 text-center font-medium text-[9px] text-muted-foreground">{placementInfo.tierName}</span>
+                                                        <span className="mt-0.5 px-1 text-center font-medium text-2.25 text-muted-foreground">{placementInfo.tierName}</span>
                                                     </div>
                                                 )}
                                                 {!isPlaced && (

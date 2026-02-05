@@ -40,7 +40,7 @@ export function FeaturesSection() {
                                 }}
                             >
                                 <Link className="group block h-full" href={feature.href}>
-                                    <Card className="h-full border-border/50 transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+                                    <Card className="h-full border-border/50 transition-all duration-300 hover:scale-102 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
                                         <CardHeader>
                                             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
                                                 <Icon className="h-6 w-6 text-primary" />

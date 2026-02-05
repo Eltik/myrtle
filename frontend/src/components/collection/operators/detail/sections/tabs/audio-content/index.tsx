@@ -283,7 +283,7 @@ export function AudioContent({ operator }: AudioContentProps) {
                     {/* Category Content */}
                     {voiceCategories.map((category) => (
                         <TabsContent className="mt-0" key={category.id} value={category.id}>
-                            <ScrollArea className="h-[450px]">
+                            <ScrollArea className="h-112.5">
                                 <div className="space-y-2 pr-4">
                                     {category.lines.map((voice) => (
                                         <div className={cn("group relative overflow-hidden rounded-lg border border-border transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>

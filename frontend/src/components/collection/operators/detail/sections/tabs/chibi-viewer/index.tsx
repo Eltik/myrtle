@@ -224,7 +224,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
 
             <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Select disabled={isLoading || availableViewTypes.length <= 1 || isRecording} onValueChange={handleViewTypeChange} value={viewType}>
-                    <SelectTrigger className="h-8 w-[90px] text-xs">
+                    <SelectTrigger className="h-8 w-22.5 text-xs">
                         <SelectValue placeholder="View" />
                     </SelectTrigger>
                     <SelectContent>
@@ -235,7 +235,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                 </Select>
 
                 <Select disabled={isLoading || availableAnimations.length === 0 || isRecording} onValueChange={handleAnimationChange} value={selectedAnimation}>
-                    <SelectTrigger className="h-8 min-w-[100px] flex-1 text-xs">
+                    <SelectTrigger className="h-8 min-w-25 flex-1 text-xs">
                         <SelectValue placeholder="Animation" />
                     </SelectTrigger>
                     <SelectContent className="max-h-48">
@@ -250,7 +250,7 @@ export const ChibiViewer = memo(function ChibiViewer({ chibi, skinName }: ChibiV
                 <DownloadButton disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
             </div>
 
-            <div className="relative h-[180px] w-full overflow-hidden rounded-md bg-[#111014]">
+            <div className="relative h-45 w-full overflow-hidden rounded-md bg-[#111014]">
                 <div className="h-full w-full" ref={canvasContainerRef} />
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center">

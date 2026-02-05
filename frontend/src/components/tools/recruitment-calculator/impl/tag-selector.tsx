@@ -45,7 +45,7 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                                 scale: isDisabled ? 0.95 : 1,
                                             }}
                                             className={cn(
-                                                "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px] transition-colors",
+                                                "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-3.25 transition-colors",
                                                 !isSelected && !isDisabled && !isHighPriority && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
                                                 isSelected && !isHighPriority && "bg-primary/15 text-primary ring-1 ring-primary/30",
                                                 tag.id === TOP_OPERATOR_TAG_ID && !isSelected && !isDisabled && "bg-orange-500/15 text-orange-700 hover:bg-orange-500/25 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300",

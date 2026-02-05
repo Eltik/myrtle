@@ -210,7 +210,7 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                         const rarityColor = rarityColors[operator.rarity] ?? "#ffffff";
 
                         return (
-                            <Button className="h-auto justify-start gap-3 px-3 py-2 text-left transition-all duration-150 hover:scale-[1.02]" key={operator.id} onClick={() => onSelectOperator(operator)} variant="outline">
+                            <Button className="h-auto justify-start gap-3 px-3 py-2 text-left transition-all duration-150 hover:scale-102" key={operator.id} onClick={() => onSelectOperator(operator)} variant="outline">
                                 <div className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: rarityColor }} />
                                 <div className="flex-1 overflow-hidden">
                                     <div className="truncate font-semibold text-sm">{operator.name}</div>
