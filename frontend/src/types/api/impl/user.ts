@@ -1,31 +1,24 @@
-// User types - Converted from backend Rust types
-// Includes types from ak-roster (https://github.com/neeia/ak-roster)
-
 import type { ActivityMetrics, EngagementMetrics } from "./leaderboard";
 import type { CompletionSummary, RoguelikeScore, RoguelikeThemeScore, ScoreBreakdown } from "./score";
 
-// Server type aliases
 export type ApiServer = "en" | "jp" | "cn" | "kr";
 export type YostarServer = "en" | "jp" | "kr";
 export type AKServer = "en" | "jp" | "kr" | "cn" | "bili" | "tw";
 export type ArknightsServer = AKServer; // Alias for compatibility
 export type Distributor = "yostar" | "hypergryph" | "bilibili";
 
-// Channel IDs for different distributors
 export const channelIds: { [distributor in Distributor]: string } = {
     hypergryph: "1",
     bilibili: "2",
     yostar: "3",
 };
 
-// Yostar API domains by server region
 export const yostarDomains: Record<YostarServer, string> = {
     en: "https://en-sdk-api.yostarplat.com",
     jp: "https://jp-sdk-api.yostarplat.com",
     kr: "https://jp-sdk-api.yostarplat.com",
 };
 
-// Network configuration URLs for all servers
 export const networkConfigUrls: { [server in AKServer]: string } = {
     en: "https://ak-conf.arknights.global/config/prod/official/network_config",
     jp: "https://ak-conf.arknights.jp/config/prod/official/network_config",
@@ -35,7 +28,6 @@ export const networkConfigUrls: { [server in AKServer]: string } = {
     tw: "https://ak-conf.txwy.tw/config/prod/official/network_config",
 };
 
-// Yostar authentication response
 export interface YostarAuthData {
     result: number;
     yostar_uid: string;
@@ -43,59 +35,51 @@ export interface YostarAuthData {
     yostar_account: string;
 }
 
-// Yostar token response
 export interface YostarToken {
     result: number;
     uid: string;
     token: string;
 }
 
-// Access token response
 export interface AccessToken {
     result: number;
     accessToken: string;
 }
 
-// U8 token response
 export interface U8Token {
     result: number;
     uid: string;
     token: string;
 }
 
-// Login secret response
 export interface LoginSecret {
     result: number;
     uid: string;
     secret: string;
 }
 
-// Game version information
 export interface VersionInfo {
     resVersion: string;
     clientVersion: string;
 }
 
-// Device/authentication token data
 export interface TokenData {
     deviceId: string;
     token: YostarToken;
 }
 
-// Database model for stored user (wrapper around game data)
 export interface StoredUser {
     id: string; // UUID
     uid: string;
     server: string;
-    data: User; // The actual game User data
+    data: User;
     settings: Record<string, unknown>;
     role: string;
-    score: StoredUserScore | null; // Score data calculated by backend
+    score: StoredUserScore | null;
     createdAt: string; // ISO date string
     updatedAt: string; // ISO date string
 }
 
-// Score data stored in database (matches backend UserScore)
 export interface StoredUserScore {
     totalScore: number;
     operatorScore: number;
@@ -119,7 +103,6 @@ export interface StoredUserScore {
     baseDetails?: unknown;
 }
 
-// Grade information (matches backend UserGrade)
 export interface StoredUserGrade {
     grade: "S" | "A" | "B" | "C" | "D" | "F";
     compositeScore: number;
@@ -155,7 +138,7 @@ export interface User {
     building: Building;
     dexNav: DexNav;
     crisis: Crisis;
-    crisisV2?: unknown; // From ak-roster
+    crisisV2?: unknown;
     tshop: Record<string, TShopEntry>;
     gacha: Gacha;
     backflow: Backflow;
@@ -169,7 +152,7 @@ export interface User {
     siracusaMap: SiracusaMap;
     storyreview: StoryReview;
     medal: Medal;
-    nameCardStyle?: unknown; // From ak-roster
+    nameCardStyle?: unknown;
     aprilFool: Record<string, AprilFoolEntry>;
     retro: Retro;
     charm: Charm;
@@ -184,7 +167,6 @@ export interface User {
     inventory: Record<string, InventoryItem>;
     limitedBuff: LimitedBuff;
     ticket: unknown;
-    // Additional fields from ak-roster
     tokenData?: TokenData;
     sandboxPerm?: unknown;
     trainingGround?: unknown;
@@ -259,7 +241,7 @@ export interface UserStatus {
     tipMonthlyCardExpireTs: number;
     secretary: string;
     secretarySkinId: string;
-    globalVoiceLan?: string; // From ak-roster - global voice language setting
+    globalVoiceLan?: string;
 }
 
 export interface Avatar {
@@ -274,7 +256,7 @@ export interface Troop {
     chars: Record<string, CharacterData>;
     charGroup: Record<string, CharGroup>;
     charMission: Record<string, Record<string, number>>;
-    addon?: unknown; // From ak-roster
+    addon?: unknown;
 }
 
 export interface Squad {
@@ -307,8 +289,8 @@ export interface CharacterData {
     voiceLan: string;
     currentEquip: string | null;
     equip: Record<string, EquipData>;
-    starMark?: number; // From ak-roster - star mark/favorite indicator
-    static?: CharacterStatic | null; // Added by formatUser - operator metadata
+    starMark?: number;
+    static?: CharacterStatic | null;
 }
 
 export interface CharacterTemplate {
@@ -325,7 +307,7 @@ export interface CharacterSkill {
     state: number;
     specializeLevel: number;
     completeUpgradeTime: number;
-    static?: UserSkillStatic | null; // Added by formatUser - skill metadata
+    static?: UserSkillStatic | null;
 }
 
 export interface EquipData {
@@ -497,8 +479,8 @@ export interface Social {
     assistCharList: (AssistChar | null)[];
     yesterdayReward: YesterdayReward;
     yCrisisSs: string; // Fixed typo from yCrissSs
-    yCrisisV2Ss?: unknown; // From ak-roster
-    medalBoard?: MedalBoard; // From ak-roster
+    yCrisisV2Ss?: unknown;
+    medalBoard?: MedalBoard;
 }
 
 export interface MedalBoard {
@@ -1110,7 +1092,7 @@ export interface InventoryItem {
     stageDropList?: StageDropEntry[];
     usage?: string;
     voucherRelateList?: unknown[] | null;
-    image?: string; // Added by backend formatting
+    image?: string;
 }
 
 export interface BuildingProductEntry {
@@ -1332,7 +1314,6 @@ export interface StoryReviewStory {
 }
 
 // ==================== Character Static Types ====================
-// These types represent the static operator data added by backend formatUser
 // Prefixed with "User" to avoid conflicts with game data table types in operator.ts, skill.ts, etc.
 
 /** Static operator data added by backend formatUser */

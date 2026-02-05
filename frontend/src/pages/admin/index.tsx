@@ -17,7 +17,6 @@ export default function AdminPage() {
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [statsLoading, setStatsLoading] = useState(true);
 
-    // Fetch admin stats
     const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         try {
@@ -56,21 +55,18 @@ export default function AdminPage() {
         }
     }, [user, loading, verify]);
 
-    // Fetch stats once authorized
     useEffect(() => {
         if (authorized === true) {
             fetchStats();
         }
     }, [authorized, fetchStats]);
 
-    // Redirect to 404 if not authorized
     useEffect(() => {
         if (authorized === false) {
             router.replace("/404");
         }
     }, [authorized, router]);
 
-    // Loading state (show while checking auth or redirecting)
     if (loading || authorized === null || authorized === false) {
         return (
             <>
@@ -82,12 +78,10 @@ export default function AdminPage() {
         );
     }
 
-    // Safety check - should never happen given the auth flow above
     if (!user) {
         return null;
     }
 
-    // Authorized admin view
     return (
         <>
             <SEO description="Admin panel for myrtle.moe" noIndex path="/admin" title="Admin" />

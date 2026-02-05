@@ -11,17 +11,13 @@ import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { cn } from "~/lib/utils";
 import type { DpsOperatorListEntry } from "~/types/api/impl/dps-calculator";
 
-// Reverse mapping: display name -> internal name (e.g., "Guard" -> "WARRIOR")
 const DISPLAY_TO_CLASS: Record<string, string> = Object.fromEntries(Object.entries(CLASS_DISPLAY).map(([internal, display]) => [display.toUpperCase(), internal]));
 
-// Normalize any profession string to internal class name
 function normalizeClass(profession: string): string {
     const upper = profession.toUpperCase();
-    // Check if it's already an internal name
     if (CLASSES.includes(upper as (typeof CLASSES)[number])) {
         return upper;
     }
-    // Otherwise try to map from display name
     return DISPLAY_TO_CLASS[upper] ?? upper;
 }
 
@@ -83,23 +79,19 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
     const filteredAndSortedOperators = useMemo(() => {
         let result = [...operators];
 
-        // Filter by search query
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             result = result.filter((op) => op.name.toLowerCase().includes(query) || op.id.toLowerCase().includes(query) || op.profession.toLowerCase().includes(query) || (CLASS_DISPLAY[op.profession]?.toLowerCase().includes(query) ?? false));
         }
 
-        // Filter by rarity
         if (selectedRarities.size > 0) {
             result = result.filter((op) => selectedRarities.has(op.rarity));
         }
 
-        // Filter by class
         if (selectedClasses.size > 0) {
             result = result.filter((op) => selectedClasses.has(normalizeClass(op.profession)));
         }
 
-        // Sort
         result.sort((a, b) => {
             switch (sortOption) {
                 case "name-asc":
@@ -108,7 +100,6 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                     return b.name.localeCompare(a.name);
                 case "rarity-desc": {
                     if (b.rarity !== a.rarity) return b.rarity - a.rarity;
-                    // Secondary sort by class
                     const classOrderA = CLASS_SORT_ORDER[a.profession] ?? 99;
                     const classOrderB = CLASS_SORT_ORDER[b.profession] ?? 99;
                     if (classOrderA !== classOrderB) return classOrderA - classOrderB;
@@ -116,7 +107,6 @@ export function OperatorSelector({ operators, onSelectOperator }: OperatorSelect
                 }
                 case "rarity-asc": {
                     if (a.rarity !== b.rarity) return a.rarity - b.rarity;
-                    // Secondary sort by class
                     const classOrderA = CLASS_SORT_ORDER[a.profession] ?? 99;
                     const classOrderB = CLASS_SORT_ORDER[b.profession] ?? 99;
                     if (classOrderA !== classOrderB) return classOrderA - classOrderB;

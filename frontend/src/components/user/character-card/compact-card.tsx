@@ -42,34 +42,28 @@ const MAX_ELITE_BY_RARITY: Record<number, number> = {
 function getOperatorAvatarUrl(charId: string, skin: string, _evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
     let skinId = skin;
 
-    // Check if using a template (for operators with alternate forms like Amiya)
     if (currentTmpl && tmpl && tmpl[currentTmpl]) {
         skinId = tmpl[currentTmpl].skinId;
     }
 
-    // If no skin ID, use just charId (backend resolves correct file)
     if (!skinId) {
         return `/api/cdn/avatar/${charId}`;
     }
 
-    // Custom skins with @: Replace @ with _, encode # as %23
     if (skinId.includes("@")) {
         const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return `/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Default skin (ends with #1 or _1): Use just charId (backend resolves correct file)
     if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
         return `/api/cdn/avatar/${charId}`;
     }
 
-    // E2 skin (ends with #2 or _2): Normalize and use
     if (skinId.endsWith("#2") || skinId.endsWith("_2")) {
         const normalizedSkinId = skinId.replaceAll("#", "_");
         return `/api/cdn/avatar/${normalizedSkinId}`;
     }
 
-    // Other skins: Replace # with _
     const normalizedSkinId = skinId.replaceAll("#", "_");
     return `/api/cdn/avatar/${normalizedSkinId}`;
 }
@@ -112,23 +106,14 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
     const stats = getAttributeStats(data, operator);
 
-    // Preload all dialog images when hovering
     const preloadDialogImages = useCallback(() => {
         if (hasPreloadedRef.current) return;
         hasPreloadedRef.current = true;
 
         const portraitUrl = getOperatorPortraitUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
 
-        const imagesToPreload: string[] = [
-            // Main character art
-            portraitUrl,
-            // UI icons
-            `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`,
-            `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`,
-            `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`,
-        ];
+        const imagesToPreload: string[] = [portraitUrl, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`];
 
-        // Skill icons and mastery badges
         for (const skill of data.skills) {
             const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
             const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
@@ -139,7 +124,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
             }
         }
 
-        // Module images (only unlocked ones)
         if (operator?.modules) {
             for (const module of operator.modules) {
                 const equipData = data.equip[module.uniEquipId];
@@ -157,7 +141,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
     }, [data, operator, starCount, prefetch]);
 
     const handleMouseEnter = useCallback(() => {
-        // Start preloading after 150ms of hovering (debounce accidental hovers)
         hoverTimeoutRef.current = setTimeout(preloadDialogImages, 150);
     }, [preloadDialogImages]);
 
@@ -168,7 +151,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
         }
     }, []);
 
-    // Attach hover event listeners via ref to avoid lint issues
     useEffect(() => {
         const element = cardWrapperRef.current;
         if (!element) return;
@@ -182,14 +164,12 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
         };
     }, [handleMouseEnter, handleMouseLeave]);
 
-    // Parse name like Krooster does (handle "the" and parentheses)
     const reg = /( the )|\(/gi;
     const splitName = operatorName.replace(/\)$/, "").split(reg);
     const displayName = splitName[0] ?? operatorName;
     const subtitle = splitName[2] ?? null;
     const nameIsLong = displayName.split(" ").length > 1 && displayName.length >= 16;
 
-    // Check if operator is fully maxed (matching Krooster's logic)
     const isMaxed = (() => {
         const maxElite = MAX_ELITE_BY_RARITY[starCount] ?? 2;
         const maxLevel = MAX_LEVEL_BY_RARITY[starCount]?.[maxElite] ?? 90;
@@ -198,10 +178,8 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
         if (data.level !== maxLevel) return false;
         if (starCount > 2 && data.mainSkillLvl !== 7) return false;
 
-        // For E2 operators, check masteries and modules
         if (maxElite === 2) {
             if (!data.skills.every((skill) => skill.specializeLevel === 3)) return false;
-            // Check modules (all must be level 3)
             const unlockedModules =
                 operator?.modules?.filter((mod) => {
                     const equipData = data.equip[mod.uniEquipId];
@@ -217,7 +195,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
     const avatarUrl = getOperatorAvatarUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
     const portraitUrl = getOperatorPortraitUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
 
-    // Get unlocked modules
     const unlockedModules =
         operator?.modules?.filter((module) => {
             const equipData = data.equip[module.uniEquipId];
@@ -226,7 +203,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
             return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
         }) ?? [];
 
-    // Check if at max level for current elite phase
     const maxLevelForPhase = MAX_LEVEL_BY_RARITY[starCount]?.[data.evolvePhase] ?? 90;
     const isAtMaxLevel = data.level === maxLevelForPhase;
 
@@ -313,7 +289,6 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                         {!isMaxed && data.mainSkillLvl > 1 && (
                             <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
                                 {data.skills.map((skill, idx) => {
-                                    // Only show skill if elite phase allows it
                                     if (data.evolvePhase < idx) return null;
 
                                     const hasM = skill.specializeLevel > 0;

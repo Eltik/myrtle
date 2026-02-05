@@ -33,7 +33,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
     const [filtersOpen, setFiltersOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
-    // All search state managed locally (initialized from router.query for SSR)
     const [nickname, setNickname] = useState((router.query.nickname as string) || "");
     const [uid, setUid] = useState((router.query.uid as string) || "");
     const [currentServer, setCurrentServer] = useState<SearchServer | "all">((router.query.server as SearchServer | "all") || "all");
@@ -53,7 +52,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
     const updateSearch = useCallback(async (newParams: Record<string, string | undefined>, resetOffset = true) => {
         setIsLoading(true);
 
-        // Read current params from URL directly to avoid stale router.query
         const currentURL = new URL(window.location.href);
         const currentParams: Record<string, string | undefined> = {};
         currentURL.searchParams.forEach((value, key) => {
@@ -65,12 +63,10 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
             ...newParams,
         };
 
-        // Reset offset when filters change
         if (resetOffset) {
             query.offset = "0";
         }
 
-        // Clean up empty/default values
         for (const key of Object.keys(query)) {
             if (query[key] === undefined || query[key] === null || query[key] === "" || (key === "server" && query[key] === "all") || (key === "grade" && query[key] === "all")) {
                 delete query[key];
@@ -80,8 +76,7 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
         try {
             const controller = getSearchAbortController();
 
-            // Build search params
-            // Note: Do NOT request fields=data here - it includes the entire game profile JSONB
+            // Do NOT request fields=data -- it includes the entire game profile JSONB
             // which is very large. Hover cards lazy-load data on demand instead.
             const searchQuery: SearchQuery = {
                 nickname: query.nickname,
@@ -94,7 +89,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
                 offset: Number(query.offset) || 0,
             };
 
-            // Handle level range
             if (query.levelMin || query.levelMax) {
                 searchQuery.level = `${query.levelMin || ""},${query.levelMax || ""}`;
             }
@@ -103,7 +97,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
             setData(result);
             clearSearchAbortController();
 
-            // Update URL silently after successful fetch (no React re-render)
             const newSearchParams = new URLSearchParams();
             for (const [key, value] of Object.entries(query)) {
                 if (value !== undefined) {
@@ -121,7 +114,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
         }
     }, []);
 
-    // Debounced search for text inputs
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSearchInput = useCallback(
@@ -132,7 +124,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
                 setUid(value);
             }
 
-            // Debounce the actual search
             if (searchTimeoutRef.current) {
                 clearTimeout(searchTimeoutRef.current);
             }
@@ -199,7 +190,6 @@ export function SearchPageContent({ initialData }: SearchPageContentProps) {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    // Keyboard shortcut for search
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "k") {

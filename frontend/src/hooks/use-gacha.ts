@@ -50,7 +50,6 @@ export interface UseGachaReturn {
  * Provides functions for fetching records, settings, and global stats.
  */
 export function useGacha(): UseGachaReturn {
-    // Data state
     const [records, setRecords] = useState<GachaRecords | null>(null);
     const [settings, setSettings] = useState<GachaSettings | null>(null);
     const [globalStats, setGlobalStats] = useState<GachaGlobalStats | null>(null);
@@ -58,7 +57,6 @@ export function useGacha(): UseGachaReturn {
     const [history, setHistory] = useState<GachaHistoryResponse | null>(null);
     const [enhancedStats, setEnhancedStats] = useState<GachaEnhancedStats | null>(null);
 
-    // Loading states
     const [loading, setLoading] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(false);
     const [loadingStats, setLoadingStats] = useState(false);
@@ -66,7 +64,6 @@ export function useGacha(): UseGachaReturn {
     const [loadingEnhancedStats, setLoadingEnhancedStats] = useState(false);
     const [loadingStoredRecords, setLoadingStoredRecords] = useState(false);
 
-    // Error state
     const [error, setError] = useState<string | null>(null);
 
     /**
@@ -297,7 +294,6 @@ export function useGacha(): UseGachaReturn {
         setLoadingStoredRecords(true);
 
         try {
-            // Fetch with high limit to get all records for stats
             const response = await fetch("/api/gacha/history?limit=5000&offset=0&order=desc");
             const data = await response.json();
 
@@ -325,7 +321,6 @@ export function useGacha(): UseGachaReturn {
     }, []);
 
     return {
-        // Data
         records,
         settings,
         globalStats,
@@ -333,7 +328,6 @@ export function useGacha(): UseGachaReturn {
         enhancedStats,
         storedRecords,
 
-        // Loading states
         loading,
         loadingSettings,
         loadingStats,
@@ -341,10 +335,8 @@ export function useGacha(): UseGachaReturn {
         loadingEnhancedStats,
         loadingStoredRecords,
 
-        // Error
         error,
 
-        // Functions
         fetchAllRecords,
         refetch,
         fetchSettings,

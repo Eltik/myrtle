@@ -18,7 +18,6 @@ import { OperatorConfigurator } from "./impl/operator-configurator";
 import { OperatorSelector } from "./impl/operator-selector";
 import type { ChartDataPoint, OperatorConfiguration } from "./impl/types";
 
-// Snappy animation variants
 const fadeInUp = {
     initial: { opacity: 0, y: 12 },
     animate: { opacity: 1, y: 0 },
@@ -33,7 +32,6 @@ interface DpsCalculatorProps {
     operators: DpsOperatorListEntry[];
 }
 
-// Color palette for chart lines
 const CHART_COLORS = [
     "#3b82f6", // blue
     "#ef4444", // red
@@ -45,12 +43,10 @@ const CHART_COLORS = [
     "#f97316", // orange
 ];
 
-// Helper to get default max level based on rarity and promotion
 function getDefaultMaxLevel(rarity: number, promotion: number, phaseLevels?: number[]): number {
     if (phaseLevels?.[promotion]) {
         return phaseLevels[promotion];
     }
-    // Fallback based on rarity (standard max levels)
     const levels: Record<number, number[]> = {
         6: [50, 80, 90],
         5: [50, 70, 80],
@@ -62,7 +58,6 @@ function getDefaultMaxLevel(rarity: number, promotion: number, phaseLevels?: num
     return levels[rarity]?.[promotion] ?? 1;
 }
 
-// Inner component that uses the context
 function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
     const [selectedOperators, setSelectedOperators] = useState<OperatorConfiguration[]>([]);
     const [chartMode, setChartMode] = useState<"defense" | "resistance">("defense");
@@ -75,7 +70,6 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
         (operator: DpsOperatorListEntry) => {
             const colorIndex = selectedOperators.length % CHART_COLORS.length;
 
-            // Use operator's default values from backend metadata
             const defaultSkill = operator.defaultSkillIndex || (operator.availableSkills[0] ?? 1);
             const defaultModule = operator.defaultModuleIndex || 0;
             const defaultPotential = operator.defaultPotential || 1;
@@ -101,7 +95,6 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                 availableSkills: operator.availableSkills,
                 availableModules: operator.availableModules,
                 maxPromotion: operator.maxPromotion,
-                // Pass enriched data if available
                 skillData: operator.skillData,
                 moduleData: operator.moduleData,
                 phaseLevels: operator.phaseLevels,
@@ -136,22 +129,18 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
 
         setIsExporting(true);
         try {
-            // Dynamic import - only load html-to-image when actually needed
             const { toPng } = await import("html-to-image");
 
-            // Get computed background color for themed export
             const bgColor = settings.export.exportBackground === "themed" ? getComputedStyle(document.body).getPropertyValue("background-color") || "#ffffff" : "transparent";
 
             const dataUrl = await toPng(chartElement, {
                 pixelRatio: settings.export.exportScale,
                 backgroundColor: bgColor === "transparent" ? undefined : bgColor,
                 filter: (node) => {
-                    // Filter out elements that shouldn't be in export
                     return !node.classList?.contains("no-export");
                 },
             });
 
-            // Trigger download
             const link = document.createElement("a");
             link.download = `dps-chart-${chartMode}-${Date.now()}.png`;
             link.href = dataUrl;
@@ -176,17 +165,14 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
         }
 
         try {
-            // Build CSV headers
             const headers = [chartMode === "defense" ? "DEF" : "RES", ...ops.map((op) => op.operatorName)];
 
-            // Build CSV rows
             const rows = chartData.map((point: ChartDataPoint) => {
                 return [point.value, ...ops.map((op) => point[op.id] ?? "")].join(",");
             });
 
             const csv = [headers.join(","), ...rows].join("\n");
 
-            // Create and trigger download
             const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
             const url = URL.createObjectURL(blob);
 
@@ -313,7 +299,6 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
     );
 }
 
-// Export the wrapped component
 export function DpsCalculator({ operators }: DpsCalculatorProps) {
     return (
         <DpsChartSettingsProvider>

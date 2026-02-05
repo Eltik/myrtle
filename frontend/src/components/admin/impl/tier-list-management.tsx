@@ -40,12 +40,10 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
     const [deleting, setDeleting] = useState(false);
     const [operatorsLoading, setOperatorsLoading] = useState(true);
 
-    // Fetch all operators once on mount
     useEffect(() => {
         async function fetchOperators() {
             setOperatorsLoading(true);
             try {
-                // Fetch all operators with required fields for tier list editor
                 const response = await fetch("/api/static", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -56,7 +54,6 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
                     }),
                 });
                 const json = await response.json();
-                // Handle both { data: operators } and { operators } response formats
                 const operators = json.data || json.operators;
                 if (operators && Array.isArray(operators)) {
                     console.log(`Loaded ${operators.length} operators for tier list editor`);
@@ -81,7 +78,6 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
     const fetchTierListData = useCallback(async (slug: string) => {
         setEditorLoading(true);
         try {
-            // Add cache-busting timestamp for admin fetches
             const response = await fetch(`/api/tier-lists/${slug}?_t=${Date.now()}`, {
                 cache: "no-store",
             });
@@ -168,7 +164,6 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
     const handleSave = useCallback(
         async (data: TierListResponse) => {
             try {
-                // Update tier list metadata
                 const metaResponse = await fetch(`/api/tier-lists/${data.tier_list.slug}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
@@ -183,9 +178,6 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
                     throw new Error("Failed to update tier list metadata");
                 }
 
-                // Update tiers and placements
-                // For simplicity, we'll send the full tier structure
-                // The backend should handle creating/updating/deleting as needed
                 const syncPayload = {
                     tiers: data.tiers.map((tier) => ({
                         id: tier.id.startsWith("new-") ? null : tier.id,
@@ -218,7 +210,6 @@ export function TierListManagement({ tierLists, loading = false, onRefresh, role
 
                 toast.success("Tier list saved successfully");
 
-                // Refetch the tier list to get fresh data from backend and verify save worked
                 await fetchTierListData(data.tier_list.slug);
 
                 onRefresh?.();

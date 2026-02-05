@@ -27,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        // Step 1: Extract token from cookies
         const cookies = parse(req.headers.cookie ?? "");
         const siteToken = cookies.site_token;
 
@@ -38,7 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        // Step 2: Verify token and check role with backend
         const verifyResponse = await backendFetch("/auth/verify", {
             method: "POST",
             body: JSON.stringify({ token: siteToken }),
@@ -60,7 +58,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        // Step 3: Check admin role
         if (!isAdminRole(verifyData.role)) {
             return res.status(403).json({
                 success: false,
@@ -70,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const userRole = verifyData.role;
 
-        // Step 4: Fetch admin stats from backend (requires backend /admin/stats endpoint)
         const statsResponse = await backendFetch("/admin/stats", {
             method: "GET",
             headers: {
@@ -79,11 +75,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
 
         if (!statsResponse.ok) {
-            // If backend endpoint doesn't exist yet or user lacks backend permission,
-            // return placeholder data (tier_list_editor may not have backend /admin/stats access)
-            // Note: Backend returns 400 for permission errors (BadRequest), so we handle that too
+            // Non-super_admin roles may lack /admin/stats access; fall back to fetching tier lists directly
             if (statsResponse.status === 404 || statsResponse.status === 403 || statsResponse.status === 400) {
-                // For tier_list_editor, fetch tier lists separately so they can still manage them
                 let tierListsData: AdminStats["tierLists"] = {
                     total: 0,
                     active: 0,
@@ -118,9 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                             })),
                         };
                     }
-                } catch {
-                    // If fetching tier lists fails, continue with empty list
-                }
+                } catch {}
 
                 return res.status(200).json({
                     success: true,
@@ -140,7 +131,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const statsData: AdminStats = await statsResponse.json();
 
-        // Filter out user data for non-super_admin roles
         if (userRole !== "super_admin") {
             return res.status(200).json({
                 success: true,

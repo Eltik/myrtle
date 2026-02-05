@@ -33,7 +33,6 @@ function GachaHistoryPageContent() {
     const [isTabSwitching, setIsTabSwitching] = useState(false);
     const initialFetchDone = useRef(false);
 
-    // Update filters when page size changes
     const handlePageSizeChange = useCallback(
         (newSize: number) => {
             setPageSize(newSize);
@@ -50,18 +49,16 @@ function GachaHistoryPageContent() {
         [filters, activeTab, fetchHistory],
     );
 
-    // Fetch initial data only once when user authenticates
     useEffect(() => {
         if (user?.status && !authLoading && !initialFetchDone.current) {
             initialFetchDone.current = true;
             fetchAllRecords();
             fetchSettings();
             fetchHistory({ limit: pageSize, offset: 0, order: "desc" });
-            fetchStoredRecords(); // Fetch all stored records for statistics
+            fetchStoredRecords();
         }
     }, [user?.status, authLoading, fetchAllRecords, fetchHistory, fetchSettings, fetchStoredRecords, pageSize]);
 
-    // Handle tab change
     const handleTabChange = useCallback(
         async (tab: string) => {
             setIsTabSwitching(true);
@@ -79,7 +76,6 @@ function GachaHistoryPageContent() {
         [filters, fetchHistory],
     );
 
-    // Handle filter apply
     const handleApplyFilters = useCallback(() => {
         setCurrentPage(1);
         const newFilters = {
@@ -92,7 +88,6 @@ function GachaHistoryPageContent() {
         toast.success("Filters applied");
     }, [filters, activeTab, fetchHistory]);
 
-    // Handle filter reset
     const handleResetFilters = useCallback(() => {
         setCurrentPage(1);
         const newFilters: GachaHistoryParams = {
@@ -106,7 +101,6 @@ function GachaHistoryPageContent() {
         toast.success("Filters reset");
     }, [pageSize, activeTab, fetchHistory]);
 
-    // Handle page change
     const handlePageChange = useCallback(
         (page: number) => {
             setCurrentPage(page);
@@ -121,12 +115,11 @@ function GachaHistoryPageContent() {
         [filters, pageSize, activeTab, fetchHistory],
     );
 
-    // Handle refresh
     const handleRefresh = useCallback(async () => {
         setIsRefreshing(true);
         try {
             await fetchAllRecords();
-            await fetchStoredRecords(); // Refresh stored records for statistics
+            await fetchStoredRecords();
             await fetchHistory({ ...filters, gachaType: activeTab === "all" ? undefined : activeTab });
             toast.success("Gacha data refreshed");
         } catch (error) {
@@ -137,10 +130,8 @@ function GachaHistoryPageContent() {
         }
     }, [fetchAllRecords, fetchStoredRecords, fetchHistory, filters, activeTab]);
 
-    // Check if storage is disabled
     const storageDisabled = settings && !settings.store_records;
 
-    // Authenticated - render content
     return (
         <>
             <SEO description="View your Arknights gacha pull history and statistics." noIndex path="/gacha/history" title="Gacha History" />
@@ -197,15 +188,15 @@ function GachaHistoryPageContent() {
                     </div>
                 )}
 
-                {/* Main Content - Use storedRecords (from database) for statistics */}
+                {/* Main Content */}
                 {!loadingStoredRecords && storedRecords && !storageDisabled && (
                     <>
-                        {/* Statistics Overview - uses stored database records */}
+                        {/* Statistics Overview */}
                         <StatsOverview loading={loadingStoredRecords} records={storedRecords} />
 
                         <Separator />
 
-                        {/* Banner Tabs and History - uses stored records for tab counters */}
+                        {/* Banner Tabs and History */}
                         <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={storedRecords}>
                             <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr_300px]">
                                 {/* Pull History List */}

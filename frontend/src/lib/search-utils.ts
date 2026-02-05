@@ -85,7 +85,6 @@ const MAX_CACHE_SIZE = 50; // Maximum number of cached entries
  * Generates a cache key from search params
  */
 function getCacheKey(params: URLSearchParams): string {
-    // Sort params for consistent cache keys
     const sorted = new URLSearchParams([...params.entries()].sort());
     return sorted.toString();
 }
@@ -96,14 +95,12 @@ function getCacheKey(params: URLSearchParams): string {
 function cleanupCache(): void {
     const now = Date.now();
 
-    // Remove expired entries
     for (const [key, entry] of searchCache.entries()) {
         if (now - entry.timestamp > CACHE_TTL_MS) {
             searchCache.delete(key);
         }
     }
 
-    // Enforce size limit by removing oldest entries
     if (searchCache.size > MAX_CACHE_SIZE) {
         const entries = [...searchCache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
         const toRemove = entries.slice(0, searchCache.size - MAX_CACHE_SIZE);
@@ -124,7 +121,6 @@ export function getCachedSearch(params: URLSearchParams): SearchResponse | null 
         return cached.data;
     }
 
-    // Clean up expired entry
     if (cached) {
         searchCache.delete(key);
     }
@@ -152,7 +148,6 @@ let currentAbortController: AbortController | null = null;
  * canceling any previous pending request
  */
 export function getSearchAbortController(): AbortController {
-    // Cancel previous request if still pending
     if (currentAbortController) {
         currentAbortController.abort();
     }
@@ -177,7 +172,6 @@ export function clearSearchAbortController(): void {
 export async function fetchSearchResultsCached(params: SearchQuery, options?: { signal?: AbortSignal; skipCache?: boolean }): Promise<SearchResponse> {
     const searchParams = buildSearchParams(params);
 
-    // Check cache first (unless explicitly skipped)
     if (!options?.skipCache) {
         const cached = getCachedSearch(searchParams);
         if (cached) {
@@ -190,22 +184,18 @@ export async function fetchSearchResultsCached(params: SearchQuery, options?: { 
     });
 
     if (!response.ok) {
-        // Try to get error details from response
         let errorMessage = `Failed to fetch search results (${response.status})`;
         try {
             const errorData = (await response.json()) as { error?: string };
             if (errorData.error) {
                 errorMessage = `${errorMessage}: ${errorData.error}`;
             }
-        } catch {
-            // Ignore JSON parse errors
-        }
+        } catch {}
         throw new Error(errorMessage);
     }
 
     const data = (await response.json()) as SearchResponse;
 
-    // Store in cache
     setCachedSearch(searchParams, data);
 
     return data;

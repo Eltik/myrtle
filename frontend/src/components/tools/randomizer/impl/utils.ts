@@ -15,19 +15,16 @@ const HEART_OF_SURGING_FLAME_PERMANENT_PREFIX = "permanent_sidestory_2";
  * This event is exempt from the 0 AP cost filter
  */
 function isHeartOfSurgingFlameStage(zoneId: string): boolean {
-    // Check permanent zone prefix
     const permanentPrefix = getPermanentZonePrefix(zoneId);
     if (permanentPrefix === HEART_OF_SURGING_FLAME_PERMANENT_PREFIX) {
         return true;
     }
 
-    // Check activity ID
     const activityId = getActivityIdFromZoneId(zoneId);
     if (activityId && HEART_OF_SURGING_FLAME_IDS.has(activityId)) {
         return true;
     }
 
-    // Check if this activity maps to Heart of Surging Flame permanent event
     if (activityId) {
         const permanentInfo = PERMANENT_EVENTS[activityId];
         if (permanentInfo?.retroId.includes("Heart_Of_Surging_Flame")) {
@@ -43,16 +40,12 @@ function isHeartOfSurgingFlameStage(zoneId: string): boolean {
  * Excludes stages with 0 AP cost, except for Heart of Surging Flame playable stages
  */
 function shouldIncludeBySanityCost(stage: Stage): boolean {
-    // Stages that cost sanity are always included
     if (stage.apCost > 0) {
         return true;
     }
 
-    // Heart of Surging Flame stages are exempt from the 0 AP filter,
-    // but still exclude story (ST) and tutorial (TR) stages within the event
     if (isHeartOfSurgingFlameStage(stage.zoneId)) {
         const code = stage.code.toUpperCase();
-        // Exclude stages with ST (story) or TR (tutorial) in their code
         if (code.includes("ST") || code.includes("TR")) {
             return false;
         }
@@ -62,7 +55,6 @@ function shouldIncludeBySanityCost(stage: Stage): boolean {
     return false;
 }
 
-// Challenge pool based on common Arknights challenge run types
 const CHALLENGES: Challenge[] = [
     // Restrictions
     { type: "restriction", title: "No Guards", description: "Cannot deploy any Guard operators" },
@@ -94,15 +86,7 @@ const CHALLENGES: Challenge[] = [
     { type: "objective", title: "Trust Farm", description: "Fill unused slots with operators for trust farming" },
 ];
 
-export function selectRandomStage(
-    stages: Stage[],
-    zones: Zone[],
-    allowedZoneTypes: string[] = [],
-    user?: User | null,
-    onlyCompleted = false,
-    selectedStages: string[] = [],
-    onlyAvailableStages = false, // Added onlyAvailableStages parameter
-): Stage | null {
+export function selectRandomStage(stages: Stage[], zones: Zone[], allowedZoneTypes: string[] = [], user?: User | null, onlyCompleted = false, selectedStages: string[] = [], onlyAvailableStages = false): Stage | null {
     if (stages.length === 0) return null;
 
     let filteredStages = stages;
@@ -130,22 +114,17 @@ export function selectRandomStage(
             const zone = zones.find((z) => z.zoneId === stage.zoneId);
             if (!zone) return false;
 
-            // Main story stages are always available
             if (zone.type === "MAINLINE") return true;
 
-            // Check if this is a permanent zone (e.g., permanent_sidestory_1_zone1)
             const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
             if (permanentPrefix) return true;
 
-            // For activity zones, check if event is open or has become permanent
             const activityId = getActivityIdFromZoneId(stage.zoneId);
             if (!activityId) return false;
 
-            // Check if this activity is now a permanent side story/intermezzo
             const permanentInfo = getPermanentEventInfo(activityId);
             if (permanentInfo) return true;
 
-            // Check if the event is currently running
             return isActivityCurrentlyOpen(activityId);
         });
     }
@@ -165,7 +144,6 @@ export function generateRandomSquad(operators: RandomizerOperator[], squadSize: 
     for (let i = 0; i < squadSize; i++) {
         if (availablePool.length === 0) {
             if (allowDuplicates && operators.length > 0) {
-                // Reset pool if duplicates allowed
                 availablePool.push(...operators);
             } else {
                 break;

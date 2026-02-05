@@ -27,7 +27,6 @@ interface InfoContentProps {
 }
 
 export const InfoContent = memo(function InfoContent({ operator }: InfoContentProps) {
-    // State for operator configuration
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.MaxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
@@ -36,24 +35,19 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
     const [showProfile, setShowProfile] = useState(true);
     const [showModuleDetails, setShowModuleDetails] = useState(true);
 
-    // Module state - use "none" as sentinel for user explicitly choosing no module
     const [currentModuleId, setCurrentModuleId] = useState<string>("");
     const [currentModuleLevel, setCurrentModuleLevel] = useState<number>(0);
-    // Track if user has made an explicit module selection (to prevent auto-select from overriding)
     const userHasSelectedModule = useRef(false);
 
-    // Get modules that are available
     const availableModules = useMemo(() => {
         return operator.modules.filter((m) => m.type !== "INITIAL");
     }, [operator.modules]);
 
-    // Get current module data
     const currentModule = useMemo(() => {
         if (!currentModuleId) return null;
         return availableModules.find((m) => m.uniEquipId === currentModuleId) ?? null;
     }, [availableModules, currentModuleId]);
 
-    // Range state
     const [ranges, setRanges] = useState<Record<string, Range>>({});
     const currentPhase = operator.phases[phaseIndex];
     const currentRangeId = currentPhase?.RangeId ?? "";
@@ -97,7 +91,6 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         fetchRanges();
     }, [rangeIds]);
 
-    // Calculate stats using the utility function from operator-stats.ts
     const attributeStats = useMemo(() => {
         return getOperatorAttributeStats(
             operator,
@@ -112,21 +105,17 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         );
     }, [operator, phaseIndex, level, trustLevel, potentialRank, currentModuleId, currentModuleLevel]);
 
-    // Update level when phase changes
     useEffect(() => {
         const maxLevel = operator.phases[phaseIndex]?.MaxLevel ?? 1;
         setLevel(maxLevel);
     }, [phaseIndex, operator.phases]);
 
-    // Handle module selection when phase changes
     useEffect(() => {
         if (phaseIndex !== 2) {
-            // Reset module selection when not at E2
             setCurrentModuleId("");
             setCurrentModuleLevel(0);
             userHasSelectedModule.current = false;
         } else if (availableModules.length > 0 && !currentModuleId && !userHasSelectedModule.current) {
-            // Auto-select first module when reaching E2, only if user hasn't explicitly chosen
             const firstModule = availableModules[0];
             if (firstModule) {
                 setCurrentModuleId(firstModule.uniEquipId);
@@ -136,10 +125,9 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         }
     }, [phaseIndex, availableModules, currentModuleId]);
 
-    // Handle module change
     const handleModuleChange = useCallback(
         (moduleId: string) => {
-            userHasSelectedModule.current = true; // Mark that user has made an explicit selection
+            userHasSelectedModule.current = true;
             if (moduleId === "none") {
                 setCurrentModuleId("");
                 setCurrentModuleLevel(0);
@@ -155,7 +143,6 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
         [availableModules],
     );
 
-    // Handle module level change
     const handleModuleLevelChange = useCallback((levelStr: string) => {
         const newLevel = Number.parseInt(levelStr, 10);
         if (!Number.isNaN(newLevel)) {
@@ -165,11 +152,7 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
 
     const currentRange = ranges[currentRangeId];
 
-    // Get blackboard values for description interpolation
-    // The blackboard contains values like {atk}, {max_stack_cnt} that need to be substituted
-    // Check trait first, then fall back to talents if trait blackboard is empty
     const descriptionBlackboard: Blackboard[] = useMemo(() => {
-        // Try trait blackboard first
         const traitCandidate = operator.trait?.Candidates?.[operator.trait.Candidates.length - 1];
         const traitBlackboard = traitCandidate?.Blackboard ?? [];
 
@@ -177,7 +160,6 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
             return traitBlackboard;
         }
 
-        // Fall back to combining all talent blackboards
         const talentBlackboards: Blackboard[] = [];
         for (const talent of operator.talents ?? []) {
             const candidate = talent.Candidates?.[talent.Candidates.length - 1];
@@ -193,14 +175,12 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
 
     const handleLevelChange = useCallback((val: number[]) => {
         const raw = val[0] ?? 1;
-        // Round to nearest 10, but ensure minimum of 1
         const rounded = Math.max(1, Math.round(raw / 10) * 10);
         setLevel(rounded);
     }, []);
 
     const handleTrustChange = useCallback((val: number[]) => {
         const raw = val[0] ?? 100;
-        // Round to nearest 20
         const rounded = Math.round(raw / 20) * 20;
         setTrustLevel(rounded);
     }, []);

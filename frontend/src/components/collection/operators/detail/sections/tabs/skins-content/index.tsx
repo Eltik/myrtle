@@ -111,7 +111,6 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
         const fetchData = async () => {
             setIsLoading(true);
 
-            // Fetch skins and chibi data in parallel
             const skinsPromise = fetch("/api/static", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -142,7 +141,6 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
                 }
             } catch (error) {
                 console.error("Failed to fetch skins:", error);
-                // Create default skin entry - prefer full art (skin) over portrait
                 const skinPath = operatorSkin ? `/api/cdn${operatorSkin}` : null;
                 const portraitPath = operatorPortrait ? `/api/cdn${operatorPortrait}` : null;
                 const basePath = skinPath ?? portraitPath;
@@ -167,17 +165,13 @@ export const SkinsContent = memo(function SkinsContent({ operator }: SkinsConten
 
     const selectedSkinData = useMemo(() => skins.find((s) => s.id === selectedSkin), [skins, selectedSkin]);
 
-    // Derive the chibi skin name from the selected skin
     const chibiSkinName = useMemo(() => {
         if (!selectedSkin) return "default";
 
-        // For default/E2 skins, use "default"
         if (selectedSkin.endsWith("_default") || selectedSkin.endsWith("_e2")) {
             return "default";
         }
 
-        // For custom skins, extract the skin name from the skin ID
-        // Format: char_xxx_name@skingroup#version -> skingroup#version
         const atIndex = selectedSkin.indexOf("@");
         if (atIndex !== -1) {
             return selectedSkin.slice(atIndex + 1);

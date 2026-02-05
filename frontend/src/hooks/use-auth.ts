@@ -94,23 +94,19 @@ export function useAuth() {
     }, []);
 
     useEffect(() => {
-        // Step 1: Check if auth indicator cookie exists
         if (!hasAuthIndicator()) {
-            // No session cookie - skip API call entirely
             setCachedUser(null);
             setUser(null);
             setLoading(false);
             return;
         }
 
-        // Step 2: Use cached user for instant display (if available)
         const cached = getCachedUser();
         if (cached) {
             setUser(cached);
             setLoading(false);
         }
 
-        // Step 3: Fetch user data in background to validate session
         fetchUser().then((fetchedUser) => {
             if (fetchedUser) {
                 setUser(fetchedUser);
@@ -137,7 +133,6 @@ export function useAuth() {
         const data = await res.json();
 
         if (data.success && data.user) {
-            // Login response includes user data (refreshed during login)
             setUser(data.user);
             setCachedUser(data.user);
         }
@@ -165,14 +160,12 @@ export function useAuth() {
         }
     }, []);
 
-    // Refresh profile from game servers and update local state
     const refreshProfile = useCallback(async (): Promise<{ success: boolean; message?: string }> => {
         try {
             const res = await fetch("/api/settings/refresh-profile", { method: "POST" });
             const data = await res.json();
 
             if (data.success && data.user) {
-                // Update local state with refreshed user data
                 setUser(data.user);
                 setCachedUser(data.user);
             }

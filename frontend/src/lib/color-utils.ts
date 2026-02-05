@@ -31,7 +31,6 @@ export const COLOR_PRESETS = [
  * Returns an object with all primary-related color variables.
  */
 export function generatePrimaryColors(hue: number) {
-    // Secondary accent hue for gradient effects (slightly warmer)
     const secondaryHue = (hue + 15) % 360;
 
     return {
@@ -94,17 +93,13 @@ export function generatePrimaryColors(hue: number) {
  * Used for displaying a color swatch preview.
  */
 export function hueToPreviewColor(hue: number): string {
-    // Convert OKLch to approximate RGB for preview
-    // Using a simplified conversion at L=0.65, C=0.18
     const h = hue * (Math.PI / 180);
     const L = 0.7;
     const C = 0.15;
 
-    // OKLab a and b from chroma and hue
     const a = C * Math.cos(h);
     const b = C * Math.sin(h);
 
-    // OKLab to linear sRGB (approximate)
     const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
     const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
     const s_ = L - 0.0894841775 * a - 1.291485548 * b;
@@ -117,7 +112,6 @@ export function hueToPreviewColor(hue: number): string {
     const g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
     const B = -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s;
 
-    // Clamp and convert to hex
     const toHex = (c: number) => {
         const clamped = Math.max(0, Math.min(1, c));
         const srgb = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;

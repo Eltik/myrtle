@@ -42,17 +42,13 @@ export function getOperatorAttributeStats(
 
     const { MaxHp: finalMaxHp, Atk: finalMaxAtk, Def: finalMaxDef, MagicResistance: finalMaxRes } = finalKeyFrame.Data;
 
-    // Trust bonuses (always apply)
     const trustBonuses = getStatIncreaseAtTrust(operator, trust);
 
-    // Potential bonuses (always apply)
     const potBonuses = getStatIncreaseAtPotential(operator, potential);
 
-    // Module bonuses (only at E2 phase and if module is selected)
     const selectedModule = metadata.moduleId ? operator.modules.find((m) => m.uniEquipId === metadata.moduleId) : null;
     const moduleBonuses = metadata.phaseIndex === 2 && selectedModule ? getModuleStatIncrease(selectedModule, metadata.moduleLevel) : { atk: 0, maxHp: 0, def: 0, attackSpeed: 0, magicResistance: 0, cost: 0, respawnTime: 0, blockCnt: 0 };
 
-    // Calculate final stats
     const health = linearInterpolateByLevel(level, maxLevel, maxHp, finalMaxHp) + trustBonuses.maxHp + potBonuses.health + moduleBonuses.maxHp;
     const attackPower = linearInterpolateByLevel(level, maxLevel, atk, finalMaxAtk) + trustBonuses.atk + potBonuses.attackPower + moduleBonuses.atk;
     const defense = linearInterpolateByLevel(level, maxLevel, def, finalMaxDef) + trustBonuses.def + potBonuses.defense + moduleBonuses.def;
@@ -62,7 +58,6 @@ export function getOperatorAttributeStats(
     const dpCost = dp + potBonuses.dpCost + moduleBonuses.cost;
     const blockCount = blockCnt + moduleBonuses.blockCnt;
 
-    // ASPD calculation (include module attack speed bonus)
     const totalAspdBonus = 100 + potBonuses.attackSpeed + moduleBonuses.attackSpeed;
     const secondsPerAttack = calculateSecondsPerAttack(baseAttackTime, totalAspdBonus);
 
@@ -273,14 +268,11 @@ function getPotentialStatIncrease(
         return statChanges;
     }
 
-    // Access using camelCase (actual API response format) with fallback to PascalCase (TypeScript types)
     // biome-ignore lint/suspicious/noExplicitAny: API returns camelCase but types are PascalCase
     const potAny = pot as any;
 
-    // Get description for fallback value parsing
     const description = potAny.description ?? pot.Description ?? "";
 
-    // Try camelCase first (actual API), then PascalCase (TypeScript types)
     const buff = potAny.buff ?? pot.Buff;
     if (!buff) {
         return statChanges;
@@ -302,7 +294,6 @@ function getPotentialStatIncrease(
     }
 
     const attribType = modifier.attributeType ?? modifier.AttributeType;
-    // Try to get value from API, fallback to parsing from description if value is 0 or missing
     let attribChange = modifier.value ?? modifier.Value ?? 0;
     if (attribChange === 0 && description) {
         attribChange = parseValueFromDescription(description);

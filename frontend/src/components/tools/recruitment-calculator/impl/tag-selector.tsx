@@ -46,19 +46,12 @@ export function TagSelector({ tags, selectedTags, onTagToggle, maxTags }: TagSel
                                             }}
                                             className={cn(
                                                 "group relative inline-flex items-center rounded-lg px-2.5 py-1.5 font-medium text-[13px] transition-colors",
-                                                // Base unselected state
                                                 !isSelected && !isDisabled && !isHighPriority && "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
-                                                // Selected state
                                                 isSelected && !isHighPriority && "bg-primary/15 text-primary ring-1 ring-primary/30",
-                                                // Top Operator (6*) unselected
                                                 tag.id === TOP_OPERATOR_TAG_ID && !isSelected && !isDisabled && "bg-orange-500/15 text-orange-700 hover:bg-orange-500/25 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300",
-                                                // Top Operator (6*) selected
                                                 tag.id === TOP_OPERATOR_TAG_ID && isSelected && "bg-orange-500/25 text-orange-700 ring-1 ring-orange-500/50 dark:text-orange-400",
-                                                // Senior Operator (5*) unselected
                                                 tag.id === SENIOR_OPERATOR_TAG_ID && !isSelected && !isDisabled && "bg-yellow-500/15 text-yellow-700 hover:bg-yellow-500/25 hover:text-yellow-600 dark:text-yellow-400 dark:hover:text-yellow-300",
-                                                // Senior Operator (5*) selected
                                                 tag.id === SENIOR_OPERATOR_TAG_ID && isSelected && "bg-yellow-500/25 text-yellow-700 ring-1 ring-yellow-500/40 dark:text-yellow-400",
-                                                // Disabled state
                                                 isDisabled && "cursor-not-allowed bg-muted/30 text-muted-foreground/50",
                                             )}
                                             disabled={isDisabled}

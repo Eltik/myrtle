@@ -72,7 +72,6 @@ export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
     return result;
 }
 
-// API response type for calculate endpoint
 interface CalculateApiResponse {
     data: Array<{
         id: string;
@@ -112,7 +111,6 @@ export async function fetchOperatorsForTags(tagIds: number[]): Promise<Recruitab
         return [];
     }
 
-    // Deduplicate operators by ID
     const operatorMap = new Map<string, RecruitableOperator>();
     for (const op of data.data) {
         if (!operatorMap.has(op.id)) {
@@ -147,7 +145,6 @@ export async function calculateRecruitmentResults(
     const combinations = getCombinations(selectedTags, selectedTags.length);
     const results: TagCombinationResult[] = [];
 
-    // Fetch operators for all combinations in parallel
     const fetchPromises = combinations.map(async (combo) => {
         const tagIds = combo.map((t) => t.id);
         const operators = await fetchOperatorsForTags(tagIds);
@@ -159,15 +156,12 @@ export async function calculateRecruitmentResults(
     for (const { combo, operators } of fetchResults) {
         if (operators.length === 0) continue;
 
-        // Filter based on options
         let filteredOps = operators;
 
-        // Filter out robots if requested (robots are 1-star)
         if (!includeRobots) {
             filteredOps = filteredOps.filter((op) => op.rarity !== 1);
         }
 
-        // Filter out low rarity if requested (keep 3+ star or robots)
         if (!showLowRarity) {
             filteredOps = filteredOps.filter((op) => op.rarity >= 3 || op.rarity === 1);
         }
@@ -177,7 +171,6 @@ export async function calculateRecruitmentResults(
         const minRarity = Math.min(...filteredOps.map((op) => op.rarity));
         const maxRarity = Math.max(...filteredOps.map((op) => op.rarity));
 
-        // Calculate guaranteed rarity
         const tagIds = combo.map((t) => t.id);
         let guaranteedRarity = minRarity;
         if (tagIds.includes(TOP_OPERATOR_TAG_ID)) {
@@ -196,7 +189,6 @@ export async function calculateRecruitmentResults(
         });
     }
 
-    // Sort results by guaranteed rarity (desc), then by number of operators (asc)
     return results.sort((a, b) => {
         if (b.guaranteedRarity !== a.guaranteedRarity) {
             return b.guaranteedRarity - a.guaranteedRarity;

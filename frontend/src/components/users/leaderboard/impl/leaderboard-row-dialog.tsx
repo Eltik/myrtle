@@ -167,7 +167,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                                     </div>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent className="z-[9999]" side="top" variant="dark">
+                            <TooltipContent className="z-9999" side="top" variant="dark">
                                 <p className="font-medium">Progression Score</p>
                                 <p className="text-muted-foreground text-xs">Performance relative to account age</p>
                             </TooltipContent>
@@ -187,7 +187,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                                     </div>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
+                            <TooltipContent className="z-9999 max-w-xs" side="top" variant="dark">
                                 <p className="mb-1 font-medium">Activity Score Breakdown</p>
                                 <div className="space-y-0.5 text-xs">
                                     <div className="flex justify-between gap-4">
@@ -226,7 +226,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                                     </div>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent className="z-[9999] max-w-xs" side="top" variant="dark">
+                            <TooltipContent className="z-9999 max-w-xs" side="top" variant="dark">
                                 <p className="mb-1 font-medium">Engagement Score Breakdown</p>
                                 <div className="space-y-0.5 text-xs">
                                     <div className="flex justify-between gap-4">
@@ -272,7 +272,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                                             <span className="font-mono text-sm">{score.value.toLocaleString()}</span>
                                         </div>
                                     </TooltipTrigger>
-                                    <TooltipContent className="z-[9999]" side="top" variant="dark">
+                                    <TooltipContent className="z-9999" side="top" variant="dark">
                                         {category?.description}
                                     </TooltipContent>
                                 </Tooltip>
@@ -290,7 +290,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                                 <span className="font-bold font-mono">{(entry.compositeScore ?? 0).toLocaleString()}</span>
                             </div>
                         </TooltipTrigger>
-                        <TooltipContent className="z-[9999]" side="top" variant="dark">
+                        <TooltipContent className="z-9999" side="top" variant="dark">
                             {SCORE_CATEGORIES.find((c) => c.key === "compositeScore")?.description}
                         </TooltipContent>
                     </Tooltip>

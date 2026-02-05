@@ -10,7 +10,6 @@ import { formatChartNumber, getGridStrokeDasharray } from "~/lib/dps-chart-setti
 import type { DpsConditionalType } from "~/types/api/impl/dps-calculator";
 import type { ChartDataPoint, OperatorConfiguration } from "./types";
 
-// Map conditional type to DpsConditionals key
 const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, string> = {
     trait: "traitDamage",
     talent: "talentDamage",
@@ -26,20 +25,16 @@ const CONDITIONAL_TYPE_TO_KEY: Record<DpsConditionalType, string> = {
 function buildOperatorLabel(op: OperatorConfiguration): string {
     const parts: string[] = [];
 
-    // Operator name
     parts.push(op.operatorName);
 
-    // Potential (P1-P6)
     const potential = op.params.potential ?? 1;
     parts.push(`P${potential}`);
 
-    // Skill and mastery
     const skillIdx = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
     const mastery = op.params.masteryLevel ?? 3;
     const masteryLabel = op.maxPromotion >= 2 ? (mastery === 0 ? " Lv7" : ` M${mastery}`) : "";
     parts.push(`S${skillIdx}${masteryLabel}`);
 
-    // Module (if selected)
     const moduleIdx = op.params.moduleIndex ?? 0;
     if (moduleIdx > 0) {
         const moduleData = op.moduleData?.find((m) => m.index === moduleIdx);
@@ -48,13 +43,11 @@ function buildOperatorLabel(op: OperatorConfiguration): string {
         parts.push(`Mod${moduleType}${moduleLevel}`);
     }
 
-    // Targets (only show if more than 1)
     const targets = op.params.targets ?? 1;
     if (targets > 1) {
         parts.push(`${targets}T`);
     }
 
-    // Active conditionals (only if allCond is true or undefined)
     const allCond = op.params.allCond ?? true;
     if (allCond && op.conditionalData && op.conditionalData.length > 0) {
         const activeConditionals: string[] = [];
@@ -62,7 +55,6 @@ function buildOperatorLabel(op: OperatorConfiguration): string {
             const paramKey = CONDITIONAL_TYPE_TO_KEY[cond.conditionalType];
             const isEnabled = op.params.conditionals?.[paramKey as keyof typeof op.params.conditionals] ?? true;
 
-            // Check if this conditional is applicable to current config
             const currentSkill = op.params.skillIndex ?? op.availableSkills[0] ?? 1;
             const currentModule = op.params.moduleIndex ?? 0;
             const currentElite = op.params.promotion ?? op.maxPromotion;
@@ -83,7 +75,6 @@ function buildOperatorLabel(op: OperatorConfiguration): string {
         }
     }
 
-    // Buffs
     const buffs: string[] = [];
     const atkBuff = op.params.buffs?.atk;
     const flatAtkBuff = op.params.buffs?.flatAtk;
@@ -119,11 +110,9 @@ interface DpsChartProps {
     chartRef?: React.RefObject<DpsChartHandle | null>;
 }
 
-// Custom tooltip component
 function CustomTooltip({ active, payload, label, mode, formatLabel }: { active?: boolean; payload?: Array<{ dataKey: string; value: number; color: string; name: string }>; label?: number; mode: string; formatLabel: (v: number) => string }) {
     if (!active || !payload || payload.length === 0) return null;
 
-    // Deduplicate entries by dataKey (prevents duplicates when area fill + line are both present)
     const uniqueEntries = payload.filter((entry, index, self) => self.findIndex((e) => e.dataKey === entry.dataKey) === index);
 
     return (
@@ -140,7 +129,6 @@ function CustomTooltip({ active, payload, label, mode, formatLabel }: { active?:
     );
 }
 
-// Custom label component for data points
 function CustomLabel({ x, y, value, formatLabel, index, interval, color }: { x?: number; y?: number; value?: number; formatLabel: (v: number) => string; index?: number; interval: number; color?: string }) {
     if (index === undefined || index % interval !== 0 || value === undefined) return null;
 
@@ -158,15 +146,13 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
     const [error, setError] = useState<string | null>(null);
     const { settings } = useDpsChartSettings();
 
-    // Expose methods via ref for export functionality
     useImperativeHandle(ref, () => ({
         getChartElement: () => containerRef.current,
         getChartData: () => chartData,
         getOperators: () => operators,
     }));
 
-    // Also support chartRef prop for dynamic import compatibility
-    // This is needed because Next.js dynamic() doesn't forward refs
+    // Next.js dynamic() doesn't forward refs, so support chartRef as a prop
     useImperativeHandle(chartRef, () => ({
         getChartElement: () => containerRef.current,
         getChartData: () => chartData,
@@ -184,7 +170,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
             setError(null);
 
             try {
-                // Fetch DPS data for all operators in parallel using settings.range
                 const results = await Promise.all(
                     operators.map(async (op) => {
                         try {
@@ -212,7 +197,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
                     }),
                 );
 
-                // Filter out failed requests
                 const validResults = results.filter((r) => r !== null);
 
                 if (validResults.length === 0) {
@@ -221,7 +205,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
                     return;
                 }
 
-                // Merge data points by value (defense or resistance)
                 const dataMap = new Map<number, ChartDataPoint>();
 
                 for (const result of validResults) {
@@ -249,7 +232,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
         void fetchDpsData();
     }, [operators, mode, settings.range]);
 
-    // Build chart config from operators with detailed labels
     const chartConfig = useMemo(
         () =>
             operators.reduce(
@@ -265,12 +247,10 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
         [operators],
     );
 
-    // Custom label formatter for data labels
     const formatLabel = useMemo(() => {
         return (value: number) => formatChartNumber(value, settings.dataDisplay.numberFormat, settings.dataDisplay.decimalPlaces);
     }, [settings.dataDisplay.numberFormat, settings.dataDisplay.decimalPlaces]);
 
-    // Determine legend layout props based on position
     const legendProps = useMemo(() => {
         const legendPosition = settings.visual.legendPosition;
         if (legendPosition === "top") {
@@ -282,7 +262,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
         if (legendPosition === "right") {
             return { verticalAlign: "middle" as const, align: "right" as const, layout: "vertical" as const, wrapperStyle: { paddingLeft: "20px" } };
         }
-        // "bottom" and default
         return { verticalAlign: "bottom" as const, align: "center" as const, wrapperStyle: { paddingTop: "20px" } };
     }, [settings.visual]);
 
@@ -313,7 +292,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
 
     const { visual, dataDisplay } = settings;
 
-    // Render chart elements based on chart type
     const renderChartElements = () => {
         const elements: React.ReactNode[] = [];
 
@@ -342,8 +320,6 @@ export const DpsChart = forwardRef<DpsChartHandle, DpsChartProps>(function DpsCh
                     />,
                 );
             } else {
-                // "line" chart type (default)
-                // Optionally add area fill underneath (legendType="none" prevents duplicate legend entries)
                 if (visual.showAreaFill) {
                     elements.push(<Area dataKey={op.id} fill={op.color} fillOpacity={visual.areaFillOpacity} isAnimationActive={visual.enableAnimation} key={`area-${op.id}`} legendType="none" name={chartConfig[op.id]?.label || op.operatorName} stroke="none" type={visual.lineType} />);
                 }

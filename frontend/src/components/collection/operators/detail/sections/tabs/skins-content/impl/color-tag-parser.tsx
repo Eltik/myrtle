@@ -9,8 +9,6 @@ import type React from "react";
  */
 export function parseColorTags(text: string): React.ReactNode[] {
     const result: React.ReactNode[] = [];
-    // Use [\s\S]*? to match any character including newlines (non-greedy)
-    // Support both name=#hex and name=#hex formats
     const regex = /<color\s+name=(#[0-9a-fA-F]{3,8})>([\s\S]*?)<\/color>/gi;
 
     let lastIndex = 0;
@@ -18,12 +16,10 @@ export function parseColorTags(text: string): React.ReactNode[] {
     let match = regex.exec(text);
 
     while (match !== null) {
-        // Add text before the match
         if (match.index > lastIndex) {
             result.push(text.slice(lastIndex, match.index));
         }
 
-        // Add the colored span
         const [, color, content] = match;
         result.push(
             <span key={`color-${keyIndex++}`} style={{ color }}>
@@ -35,12 +31,10 @@ export function parseColorTags(text: string): React.ReactNode[] {
         match = regex.exec(text);
     }
 
-    // Add remaining text after last match
     if (lastIndex < text.length) {
         result.push(text.slice(lastIndex));
     }
 
-    // If no matches found, return original text
     if (result.length === 0) {
         return [text];
     }

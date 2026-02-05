@@ -49,11 +49,9 @@ export function AudioContent({ operator }: AudioContentProps) {
         }
     }, []);
 
-    // Derive available languages from voice data
     const availableLanguages = useMemo(() => {
         if (voices.length === 0) return [];
 
-        // Collect all unique languages from all voice lines
         const langSet = new Set<LangType>();
         for (const voice of voices) {
             if (voice.languages) {
@@ -63,12 +61,10 @@ export function AudioContent({ operator }: AudioContentProps) {
             }
         }
 
-        // Sort languages in a sensible order
         const order: LangType[] = ["JP", "CN_MANDARIN", "EN", "KR", "CN_TOPOLECT", "GER", "ITA", "RUS", "FRE", "LINKAGE"];
         return order.filter((lang) => langSet.has(lang));
     }, [voices]);
 
-    // Group voices by category
     const voiceCategories = useMemo(() => {
         if (voices.length === 0) return [];
 
@@ -84,7 +80,6 @@ export function AudioContent({ operator }: AudioContentProps) {
             categoriesMap.get(categoryId)?.push(voice);
         }
 
-        // Convert to array and sort by category order
         const categories: VoiceCategory[] = [];
         for (const [id, lines] of categoriesMap) {
             const name = CATEGORY_ORDER.find((c) => c.toLowerCase().replace(/\s+/g, "-") === id) ?? id;
@@ -100,18 +95,15 @@ export function AudioContent({ operator }: AudioContentProps) {
         return categories;
     }, [voices]);
 
-    // Set initial active category when categories are loaded
     useEffect(() => {
         if (voiceCategories.length > 0 && !voiceCategories.some((c) => c.id === activeCategory)) {
             setActiveCategory(voiceCategories[0]?.id ?? "greetings");
         }
     }, [voiceCategories, activeCategory]);
 
-    // Get the voice actor name for the selected language
     const voiceActorName = useMemo(() => {
         if (voices.length === 0) return null;
 
-        // Find the first voice line that has data for the selected language
         for (const voice of voices) {
             const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
             if (voiceData?.cvName && voiceData.cvName.length > 0) {
@@ -121,7 +113,6 @@ export function AudioContent({ operator }: AudioContentProps) {
         return null;
     }, [voices, selectedLanguage]);
 
-    // Set default language when available languages change
     useEffect(() => {
         const firstLang = availableLanguages[0];
         if (firstLang && !availableLanguages.includes(selectedLanguage)) {
@@ -129,7 +120,6 @@ export function AudioContent({ operator }: AudioContentProps) {
         }
     }, [availableLanguages, selectedLanguage]);
 
-    // Stop audio when language changes
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run when selectedLanguage changes
     useEffect(() => {
         if (audioRef.current) {
@@ -141,7 +131,6 @@ export function AudioContent({ operator }: AudioContentProps) {
         setProgress(0);
     }, [selectedLanguage, stopProgressAnimation]);
 
-    // Fetch voice data
     useEffect(() => {
         const fetchVoices = async () => {
             setIsLoading(true);
@@ -170,7 +159,6 @@ export function AudioContent({ operator }: AudioContentProps) {
 
     const playVoice = (voice: VoiceLine) => {
         if (playingId === voice.id) {
-            // Pause current
             audioRef.current?.pause();
             stopProgressAnimation();
             setPlayingId(null);
@@ -178,7 +166,6 @@ export function AudioContent({ operator }: AudioContentProps) {
             return;
         }
 
-        // Play new
         if (audioRef.current) {
             audioRef.current.pause();
         }

@@ -8,17 +8,14 @@ import { cn } from "~/lib/utils";
  * Handles different content types: headers, technical content, lists, quotes, emphasis, and statistics.
  */
 export function renderParagraph(paragraph: string, index: number): React.ReactNode {
-    // Skip empty paragraphs
     const trimmed = paragraph.trim();
     if (!trimmed) return null;
 
-    // Handle section headers with [HeaderName] format (e.g., [Race] Vouivre)
     if (trimmed.startsWith("[") && trimmed.includes("]")) {
         const closingBracket = trimmed.indexOf("]");
         const headerText = trimmed.substring(1, closingBracket).trim();
         const contentText = trimmed.substring(closingBracket + 1).trim();
 
-        // Headers related to stats or measurements use monospace styling
         const statHeaders = [
             "Race",
             "Place of Birth",
@@ -49,7 +46,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Handle technical/scientific content (contains specific keywords and is relatively short)
     const technicalKeywords = /\b(Originium|Arts|Cell|Oripathy|Protocol|System|Algorithm|Version|Module|Device|Catalyst|Infection|Crystal|Density|Assimilation)\b/i;
     if (technicalKeywords.test(trimmed) && trimmed.length < 150) {
         return (
@@ -59,7 +55,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Handle lists (lines starting with "-", "•", or "·")
     if (/^[-•·]/.test(trimmed)) {
         return (
             <div className="flex gap-3 py-1 pl-2" key={index}>
@@ -69,7 +64,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Handle numbered lists (e.g., "1.", "2.", etc.)
     if (/^\d+[.)]\s/.test(trimmed)) {
         const match = trimmed.match(/^(\d+[.)])\s*(.*)$/);
         if (match) {
@@ -82,7 +76,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         }
     }
 
-    // Handle quotes (wrapped in quotes or starting with >)
     if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'")) || trimmed.startsWith(">") || trimmed.startsWith("「") || trimmed.startsWith("『")) {
         let quoteContent = trimmed;
         if (trimmed.startsWith(">")) {
@@ -98,7 +91,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Handle emphasized paragraphs (ALL CAPS sections longer than 10 chars)
     if (trimmed.toUpperCase() === trimmed && trimmed.length > 10 && /[A-Z]/.test(trimmed)) {
         return (
             <p className="my-3 font-semibold text-amber-600 text-sm tracking-wide dark:text-amber-400" key={index}>
@@ -107,12 +99,10 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Handle paragraphs with numeric data or statistics (percentages, decimals)
     const hasNumericData = /\b([0-9]+\.?[0-9]*%|[0-9]+[.,][0-9]+)\b/.test(trimmed);
     if (hasNumericData && trimmed.length < 200) {
         const parts = trimmed.split(/(\b[0-9]+\.?[0-9]*%|\b[0-9]+[.,][0-9]+\b)/g);
 
-        // Create unique keys by tracking occurrences of each part
         const keyCount: Record<string, number> = {};
         const getUniqueKey = (part: string) => {
             keyCount[part] = (keyCount[part] || 0) + 1;
@@ -135,7 +125,6 @@ export function renderParagraph(paragraph: string, index: number): React.ReactNo
         );
     }
 
-    // Regular paragraph with good typography
     return (
         <p className="my-2 text-muted-foreground text-sm leading-relaxed" key={index}>
             {trimmed}

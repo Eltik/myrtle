@@ -61,7 +61,6 @@ interface EditableTier extends TierWithPlacements {
     isModified?: boolean;
 }
 
-// Sortable operator card component
 interface SortableOperatorCardProps {
     placement: TierPlacement;
     operator: OperatorFromList;
@@ -118,7 +117,6 @@ function SortableOperatorCard({ placement, operator, onRemove }: SortableOperato
     );
 }
 
-// Drag overlay component (shown while dragging)
 interface DragOverlayCardProps {
     operator: OperatorFromList;
 }
@@ -135,7 +133,6 @@ function DragOverlayCard({ operator }: DragOverlayCardProps) {
     );
 }
 
-// Sortable tier row component - uses prefixed ID to distinguish from operator placements
 interface SortableTierRowProps {
     tier: EditableTier;
     children: (dragHandleProps: React.HTMLAttributes<HTMLDivElement>) => React.ReactNode;
@@ -159,7 +156,6 @@ function SortableTierRow({ tier, children }: SortableTierRowProps) {
     );
 }
 
-// Droppable tier zone for cross-tier dragging
 interface DroppableTierZoneProps {
     tierId: string;
     isOver: boolean;
@@ -186,7 +182,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
     const [isActive, setIsActive] = useState(tierListData.tier_list.is_active);
     const [saving, setSaving] = useState(false);
 
-    // Track original tier IDs to detect deletions
     const originalTierIds = useMemo(() => new Set(tierListData.tiers.map((t) => t.id)), [tierListData.tiers]);
     const [addOperatorDialogOpen, setAddOperatorDialogOpen] = useState(false);
     const [selectedTierForAdd, setSelectedTierForAdd] = useState<string | null>(null);
@@ -196,7 +191,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
     const [activeDragType, setActiveDragType] = useState<"operator" | "tier" | null>(null);
     const [overTierId, setOverTierId] = useState<string | null>(null);
 
-    // Drag and drop sensors
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -208,7 +202,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         }),
     );
 
-    // Get operators already in the tier list with their tier info
     const placedOperators = useMemo(() => {
         const map = new Map<string, { tierId: string; tierName: string }>();
         for (const tier of tiers) {
@@ -219,7 +212,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         return map;
     }, [tiers]);
 
-    // Map placement IDs to their tier IDs for quick lookup during drag
     const placementToTierMap = useMemo(() => {
         const map = new Map<string, string>();
         for (const tier of tiers) {
@@ -230,7 +222,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         return map;
     }, [tiers]);
 
-    // Filter operators for dialog (show all, mark placed ones)
     const filteredOperators = useMemo(() => {
         return allOperators
             .filter((op) => operatorSearch === "" || op.name.toLowerCase().includes(operatorSearch.toLowerCase()))
@@ -323,7 +314,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         );
     };
 
-    // Unified drag handlers for single DndContext
     const handleDragStart = (event: DragStartEvent) => {
         const id = event.active.id as string;
         setActiveDragId(id);
@@ -338,7 +328,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
     const handleDragOver = (event: DragOverEvent) => {
         const { over } = event;
 
-        // Only track tier hover for operator drags
         if (activeDragType !== "operator") {
             setOverTierId(null);
             return;
@@ -351,12 +340,10 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
 
         const overId = over.id as string;
 
-        // Check if hovering over a tier drop zone
         if (overId.startsWith("tier-drop-")) {
             const tierId = overId.replace("tier-drop-", "");
             setOverTierId(tierId);
         } else if (!overId.startsWith("tier-row-")) {
-            // Hovering over another placement - find its tier
             const tierId = placementToTierMap.get(overId);
             setOverTierId(tierId ?? null);
         } else {
@@ -377,7 +364,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         const activeId = active.id as string;
         const overId = over.id as string;
 
-        // Handle tier row reordering
         if (dragType === "tier") {
             if (activeId === overId) return;
 
@@ -399,18 +385,15 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
             return;
         }
 
-        // Handle operator placement reordering/moving
         const sourceTierId = placementToTierMap.get(activeId);
         if (!sourceTierId) return;
 
-        // Determine target tier
         let targetTierId: string | null = null;
         let targetPlacementId: string | null = null;
 
         if (overId.startsWith("tier-drop-")) {
             targetTierId = overId.replace("tier-drop-", "");
         } else if (overId.startsWith("tier-row-")) {
-            // Dropped on tier row - ignore
             return;
         } else {
             targetTierId = placementToTierMap.get(overId) ?? null;
@@ -419,7 +402,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
 
         if (!targetTierId) return;
 
-        // Same tier - reorder within tier
         if (sourceTierId === targetTierId) {
             if (activeId === overId) return;
 
@@ -443,7 +425,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                 }),
             );
         } else {
-            // Cross-tier move
             setTiers(
                 tiers.map((tier) => {
                     if (tier.id === sourceTierId) {
@@ -504,7 +485,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
                 tiers: tiers.map((tier, index) => ({
                     ...tier,
                     display_order: index,
-                    // Sort placements by sub_order and re-index to ensure correct order is saved
                     placements: [...tier.placements]
                         .sort((a, b) => a.sub_order - b.sub_order)
                         .map((p, pIndex) => ({
@@ -523,7 +503,6 @@ export function TierListEditor({ tierListData, operatorsData, allOperators, oper
         if (tierListName !== tierListData.tier_list.name) return true;
         if (tierListDescription !== (tierListData.tier_list.description ?? "")) return true;
         if (isActive !== tierListData.tier_list.is_active) return true;
-        // Check if any tiers were deleted
         const currentTierIds = new Set(tiers.map((t) => t.id));
         for (const originalId of originalTierIds) {
             if (!currentTierIds.has(originalId)) return true;
