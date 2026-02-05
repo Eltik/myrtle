@@ -2,6 +2,7 @@
 
 import { BarChart3, Plus, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/shadcn/button";
@@ -216,16 +217,23 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                         </div>
                     </div>
                     <p className="max-w-2xl text-muted-foreground">Calculate and compare operator damage output against varying enemy defense and resistance values. Add multiple operators to create comparison charts.</p>
+                    <p className="max-w-xl">
+                        <b>Note:</b> All calculations go to the credit of{" "}
+                        <Link className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank">
+                            WhoAteMyCQQkie's
+                        </Link>{" "}
+                        GitHub repository.
+                    </p>
                 </div>
             </motion.div>
 
             {/* Chart Section */}
             <motion.div {...fadeInUp} transition={{ ...snappyTransition, delay: 0.05 }}>
-                <Card className="border-border bg-card/30 p-4 backdrop-blur-sm sm:p-6">
+                <Card className="border-border bg-card/30 p-4 backdrop-blur-sm sm:p-6 sm:pt-4">
                     <div className="space-y-4">
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                             <div className="flex items-center gap-2">
-                                <h2 className="font-semibold text-foreground">DPS Graph</h2>
+                                <h2 className="pl-2 font-semibold text-foreground sm:pl-0">DPS Graph</h2>
                                 {selectedOperators.length > 0 && (
                                     <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground text-xs">
                                         {selectedOperators.length} operator{selectedOperators.length !== 1 ? "s" : ""}
@@ -247,7 +255,7 @@ function DpsCalculatorInner({ operators }: DpsCalculatorProps) {
                                 <p className="text-muted-foreground">Add operators below to generate DPS comparison charts</p>
                             </div>
                         ) : (
-                            <DynamicDpsChart mode={chartMode} operators={selectedOperators} ref={chartRef} />
+                            <DynamicDpsChart chartRef={chartRef} mode={chartMode} operators={selectedOperators} />
                         )}
                     </div>
                 </Card>
