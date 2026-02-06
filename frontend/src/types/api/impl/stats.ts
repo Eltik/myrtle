@@ -86,12 +86,14 @@ export interface UserStatsResponse {
         /** Total non-INITIAL modules available across all owned operators */
         totalAvailable: number;
     };
-    /** Skin collection stats (from score breakdown) */
+    /** Skin collection stats */
     skins: {
-        /** Total skins owned */
+        /** Total non-default skins owned by the user */
         totalOwned: number;
-        /** Operators with complete skin collection */
-        fullCollectionCount: number;
+        /** Total non-default skins available in the game */
+        totalAvailable: number;
+        /** Completion percentage (0-100) */
+        percentage: number;
     };
     /** Total operators owned */
     totalOwned: number;

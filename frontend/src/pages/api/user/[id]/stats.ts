@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { CLASS_DISPLAY, CLASS_SORT_ORDER, CLASSES } from "~/components/collection/operators/list/constants";
 import { backendFetch } from "~/lib/backend-fetch";
+import type { Skin } from "~/types/api/impl/skin";
 import type { ProfessionStat, UserStatsResponse } from "~/types/api/impl/stats";
 import type { StoredUser } from "~/types/api/impl/user";
 
@@ -29,8 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        // Parallel fetch: user data + static operators for per-profession totals
-        const [userResponse, operatorsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,isNotObtainable")]);
+        // Parallel fetch: user data + static operators + static skins
+        const [userResponse, operatorsResponse, skinsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,isNotObtainable"), backendFetch("/static/skins?limit=5000")]);
 
         if (!userResponse.ok) {
             if (userResponse.status === 404) {
@@ -136,8 +137,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             })
             .sort((a, b) => (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99));
 
-        // Skin stats from score breakdown
-        const breakdown = userData.score?.breakdown;
+        // Skin stats: count non-default skins from static data + user's owned skins
+        // Default skins (e.g. char_002_amiya#1) don't contain "@"
+        // Non-default skins (e.g. char_002_amiya@winter#1) always contain "@"
+        let totalSkinsAvailable = 0;
+        if (skinsResponse.ok) {
+            const skinsJson = (await skinsResponse.json()) as { skins?: Skin[] };
+            const allSkins = skinsJson.skins ?? [];
+            for (const skin of allSkins) {
+                if (!skin.skinId.includes("@")) continue;
+                totalSkinsAvailable++;
+            }
+        }
+
+        const userSkins = userData.data?.skin?.characterSkins ?? {};
+        let userSkinsOwned = 0;
+        for (const skinId of Object.keys(userSkins)) {
+            if (!skinId.includes("@")) continue;
+            userSkinsOwned++;
+        }
+
+        const skinPercentage = totalSkinsAvailable > 0 ? (userSkinsOwned / totalSkinsAvailable) * 100 : 0;
 
         const stats: UserStatsResponse = {
             professions,
@@ -145,8 +165,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             masteries: { m3Count, m6Count, m9Count, totalMasteryLevels, maxPossibleMasteryLevels },
             modules: { unlocked: modulesUnlocked, atMax: modulesAtMax, totalAvailable: totalModulesAvailable },
             skins: {
-                totalOwned: breakdown?.totalSkinsOwned ?? 0,
-                fullCollectionCount: breakdown?.fullSkinCollectionCount ?? 0,
+                totalOwned: userSkinsOwned,
+                totalAvailable: totalSkinsAvailable,
+                percentage: skinPercentage,
             },
             totalOwned,
             totalAvailable,
