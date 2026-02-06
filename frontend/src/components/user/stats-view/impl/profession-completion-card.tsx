@@ -24,7 +24,6 @@ const PROFESSION_COLORS: Record<string, { color: string; bgColor: string; progre
     SPECIAL: { color: "text-amber-400", bgColor: "bg-amber-500/10", progressColor: "bg-amber-500" },
 };
 
-// Local sort order for Class Breakdown: Medic above Supporter
 const BREAKDOWN_SORT_ORDER: Record<string, number> = {
     PIONEER: 0,
     WARRIOR: 1,
@@ -38,6 +37,16 @@ const BREAKDOWN_SORT_ORDER: Record<string, number> = {
 
 export function ProfessionCompletionCard({ professions }: ProfessionCompletionCardProps) {
     const sorted = useMemo(() => [...professions].sort((a, b) => (BREAKDOWN_SORT_ORDER[a.profession] ?? 99) - (BREAKDOWN_SORT_ORDER[b.profession] ?? 99)), [professions]);
+    const maxSubNameLen = useMemo(() => {
+        let max = 0;
+        for (const prof of professions) {
+            for (const sub of prof.subProfessions) {
+                const name = sub.displayName.replace(/\s+\S+$/, "");
+                if (name.length > max) max = name.length;
+            }
+        }
+        return max;
+    }, [professions]);
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
     const toggle = useCallback((profession: string) => {
@@ -109,30 +118,23 @@ export function ProfessionCompletionCard({ professions }: ProfessionCompletionCa
                             {hasSubProfessions && (
                                 <div className="grid transition-[grid-template-rows] duration-300 ease-in-out" style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}>
                                     <div className="min-h-0 overflow-hidden">
-                                        <div className="ml-[2.875rem] flex flex-col py-1">
+                                        <div className="ml-4 grid py-1" style={{ gridTemplateColumns: "auto auto 1fr auto", "--sub-name-w": `${maxSubNameLen}ch` } as React.CSSProperties}>
                                             {prof.subProfessions.map((sub, subIndex) => {
                                                 const isLast = subIndex === prof.subProfessions.length - 1;
                                                 return (
-                                                    <div className="relative flex" key={sub.subProfessionId}>
-                                                        {/* Vertical line */}
+                                                    <div className="group/row relative col-span-4 grid grid-cols-subgrid items-center gap-x-2 rounded-md py-1.5 pr-2 transition-colors hover:bg-muted/20" key={sub.subProfessionId}>
                                                         <div className={`absolute left-0 w-px bg-muted-foreground/20 ${isLast ? "top-0 h-1/2" : "top-0 h-full"}`} />
-                                                        {/* Horizontal branch */}
                                                         <div className="absolute top-1/2 left-0 h-px w-6 bg-muted-foreground/20" />
-                                                        {/* Content */}
-                                                        <div className="ml-6 flex flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/20">
-                                                            <div className="flex shrink-0 items-center gap-2">
-                                                                <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
-                                                                <span className="whitespace-nowrap text-foreground/70 text-xs">{sub.displayName.replace(/\s+\S+$/, "")}</span>
-                                                            </div>
-                                                            <div className="flex min-w-0 flex-1 items-center gap-2">
-                                                                <div className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted/40">
-                                                                    <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
-                                                                </div>
-                                                                <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>
-                                                                    {sub.owned}/{sub.total}
-                                                                </span>
-                                                            </div>
+                                                        <div className="ml-6">
+                                                            <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
                                                         </div>
+                                                        <span className="max-w-20 truncate text-foreground/70 text-xs sm:min-w-[var(--sub-name-w)] sm:max-w-none">{sub.displayName.replace(/\s+\S+$/, "")}</span>
+                                                        <div className="relative h-1.5 min-w-0 overflow-hidden rounded-full bg-muted/40">
+                                                            <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                                                        </div>
+                                                        <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>
+                                                            {sub.owned}/{sub.total}
+                                                        </span>
                                                     </div>
                                                 );
                                             })}
