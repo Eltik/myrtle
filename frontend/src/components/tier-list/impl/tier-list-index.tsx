@@ -4,10 +4,8 @@ import { ArrowRight, Calendar, LayoutList, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { TierListTypeBadge } from "~/components/tier-lists";
 import { Badge } from "~/components/ui/shadcn/badge";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api";
 import type { TierListType } from "~/types/api/impl/tier-list";
@@ -30,8 +28,6 @@ interface TierListIndexProps {
     tierLists: TierListPreview[];
 }
 
-type FilterType = "all" | "official" | "community";
-
 const CONTAINER_TRANSITION = {
     type: "spring" as const,
     stiffness: 500,
@@ -39,70 +35,92 @@ const CONTAINER_TRANSITION = {
 };
 
 export function TierListIndex({ tierLists }: TierListIndexProps) {
-    const [filter, setFilter] = useState<FilterType>("all");
-
     const activeTierLists = tierLists.filter((tl) => tl.is_active);
-    const filteredTierLists = activeTierLists.filter((tl) => {
-        if (filter === "all") return true;
-        return tl.tier_list_type === filter;
-    });
 
-    const officialCount = activeTierLists.filter((tl) => tl.tier_list_type === "official").length;
-    const communityCount = activeTierLists.filter((tl) => tl.tier_list_type === "community").length;
+    const officialTierLists = activeTierLists.filter((tl) => tl.tier_list_type === "official");
+    const communityTierLists = activeTierLists.filter((tl) => tl.tier_list_type === "community");
 
     return (
-        <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-8">
             {/* Header */}
             <div className="space-y-2">
                 <h1 className="font-bold text-3xl text-foreground md:text-4xl">Tier Lists</h1>
                 <p className="text-muted-foreground">Browse operator tier lists and rankings</p>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Tabs defaultValue="all" onValueChange={(v) => setFilter(v as FilterType)} value={filter}>
-                    <TabsList>
-                        <TabsTrigger value="all">All ({activeTierLists.length})</TabsTrigger>
-                        <TabsTrigger value="official">Official ({officialCount})</TabsTrigger>
-                        <TabsTrigger value="community">Community ({communityCount})</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-                <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                    <LayoutList className="h-4 w-4" />
-                    <span>{filteredTierLists.length} tier lists</span>
-                </div>
-            </div>
-
-            {/* Tier Lists Grid */}
-            <AnimatePresence mode="wait">
-                {filteredTierLists.length > 0 ? (
-                    <motion.div animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" exit={{ opacity: 0, y: 8 }} initial={{ opacity: 0, y: 8 }} key={filter} transition={CONTAINER_TRANSITION}>
-                        {filteredTierLists.map((tierList, index) => (
-                            <motion.div
-                                animate={{ opacity: 1, y: 0 }}
-                                className="h-full"
-                                initial={{ opacity: 0, y: 8 }}
-                                key={tierList.id}
-                                transition={{
-                                    duration: 0.2,
-                                    delay: Math.min(index * 0.05, 0.2),
-                                    ease: [0.4, 0, 0.2, 1],
-                                }}
-                            >
-                                <TierListCard tierList={tierList} />
-                            </motion.div>
-                        ))}
-                    </motion.div>
-                ) : (
-                    <motion.div animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center" exit={{ opacity: 0, scale: 0.98 }} initial={{ opacity: 0, scale: 0.98 }} key={`empty-${filter}`} transition={CONTAINER_TRANSITION}>
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-                            <LayoutList className="h-8 w-8 text-muted-foreground" />
+            {/* Official Tier Lists */}
+            {officialTierLists.length > 0 && (
+                <section className="space-y-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="font-bold text-2xl text-foreground">Official Tier Lists</h2>
+                        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                            <LayoutList className="h-4 w-4" />
+                            <span>{officialTierLists.length} tier lists</span>
                         </div>
-                        <h3 className="mb-2 font-semibold text-foreground text-lg">No tier lists available</h3>
-                        <p className="max-w-sm text-muted-foreground text-sm">{filter === "community" ? "No community tier lists have been created yet." : filter === "official" ? "No official tier lists are available." : "Check back later for operator tier lists and rankings."}</p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                    <AnimatePresence mode="wait">
+                        <motion.div animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" exit={{ opacity: 0, y: 8 }} initial={{ opacity: 0, y: 8 }} key="official-tier-lists" transition={CONTAINER_TRANSITION}>
+                            {officialTierLists.map((tierList, index) => (
+                                <motion.div
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="h-full"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    key={tierList.id}
+                                    transition={{
+                                        duration: 0.2,
+                                        delay: Math.min(index * 0.05, 0.2),
+                                        ease: [0.4, 0, 0.2, 1],
+                                    }}
+                                >
+                                    <TierListCard tierList={tierList} />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </AnimatePresence>
+                </section>
+            )}
+
+            {/* Community Tier Lists */}
+            {communityTierLists.length > 0 && (
+                <section className="space-y-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="font-bold text-2xl text-foreground">Community Tier Lists</h2>
+                        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                            <LayoutList className="h-4 w-4" />
+                            <span>{communityTierLists.length} tier lists</span>
+                        </div>
+                    </div>
+                    <AnimatePresence mode="wait">
+                        <motion.div animate={{ opacity: 1, y: 0 }} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" exit={{ opacity: 0, y: 8 }} initial={{ opacity: 0, y: 8 }} key="community-tier-lists" transition={CONTAINER_TRANSITION}>
+                            {communityTierLists.map((tierList, index) => (
+                                <motion.div
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="h-full"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    key={tierList.id}
+                                    transition={{
+                                        duration: 0.2,
+                                        delay: Math.min(index * 0.05, 0.2),
+                                        ease: [0.4, 0, 0.2, 1],
+                                    }}
+                                >
+                                    <TierListCard tierList={tierList} />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </AnimatePresence>
+                </section>
+            )}
+
+            {officialTierLists.length === 0 && communityTierLists.length === 0 && (
+                <motion.div animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-16 text-center" exit={{ opacity: 0, scale: 0.98 }} initial={{ opacity: 0, scale: 0.98 }} key="empty-all" transition={CONTAINER_TRANSITION}>
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                        <LayoutList className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="mb-2 font-semibold text-foreground text-lg">No tier lists available</h3>
+                    <p className="max-w-sm text-muted-foreground text-sm">Check back later for operator tier lists and rankings.</p>
+                </motion.div>
+            )}
         </div>
     );
 }
