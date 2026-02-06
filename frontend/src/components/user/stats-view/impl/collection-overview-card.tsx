@@ -34,7 +34,9 @@ export function CollectionOverviewCard({ totalOwned, totalAvailable, collectionP
                 <motion.div animate={{ opacity: 1 }} className="space-y-2" initial={{ opacity: 0 }} transition={{ delay: 0.2 }}>
                     <div className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">Completion</span>
-                        <AnimatedNumber className="font-medium text-emerald-400 tabular-nums" decimals={1} springOptions={{ stiffness: 100, damping: 20 }} value={collectionPercentage} />
+                        <span className="text-emerald-400">
+                            <AnimatedNumber className="font-medium text-emerald-400 tabular-nums" decimals={1} springOptions={{ stiffness: 100, damping: 20 }} value={collectionPercentage} />%
+                        </span>
                     </div>
                     <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted/50">
                         <motion.div animate={{ width: `${collectionPercentage}%` }} className="h-full rounded-full bg-emerald-500" initial={{ width: 0 }} transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }} />

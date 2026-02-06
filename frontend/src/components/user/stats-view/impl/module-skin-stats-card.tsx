@@ -15,7 +15,8 @@ interface ModuleSkinStatsCardProps {
     };
     skins: {
         totalOwned: number;
-        fullCollectionCount: number;
+        totalAvailable: number;
+        percentage: number;
     };
     className?: string;
 }
@@ -81,33 +82,30 @@ export function ModuleSkinStatsCard({ modules, skins, className }: ModuleSkinSta
                         <span className="font-medium text-sm">Skins</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <motion.div animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2.5" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.35, duration: 0.4 }}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <motion.div animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2.5" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.35, duration: 0.4 }}>
+                                <div className="flex items-baseline gap-1">
                                     <AnimatedNumber className="font-bold text-pink-400 text-xl tabular-nums" springOptions={{ stiffness: 80, damping: 20 }} value={skins.totalOwned} />
-                                    <span className="text-muted-foreground text-xs">Owned</span>
-                                </motion.div>
-                            </TooltipTrigger>
-                            <TooltipContent sideOffset={5} variant="dark">
-                                <p className="font-medium">Skins Owned</p>
-                                <p className="text-muted-foreground">Total operator skins collected</p>
-                            </TooltipContent>
-                        </Tooltip>
+                                    <span className="text-muted-foreground/60 text-sm">/ {skins.totalAvailable}</span>
+                                </div>
+                                <span className="text-muted-foreground text-xs">Skins Collected</span>
+                            </motion.div>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={5} variant="dark">
+                            <p className="font-medium">Skins Collected</p>
+                            <p className="text-muted-foreground">
+                                {skins.totalOwned} of {skins.totalAvailable} non-default skins
+                            </p>
+                        </TooltipContent>
+                    </Tooltip>
 
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <motion.div animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center gap-1 rounded-lg bg-muted/30 p-2.5" initial={{ y: 10, opacity: 0 }} transition={{ delay: 0.45, duration: 0.4 }}>
-                                    <AnimatedNumber className="font-bold text-pink-400 text-xl tabular-nums" springOptions={{ stiffness: 80, damping: 20 }} value={skins.fullCollectionCount} />
-                                    <span className="text-center text-muted-foreground text-xs">Full Collection</span>
-                                </motion.div>
-                            </TooltipTrigger>
-                            <TooltipContent sideOffset={5} variant="dark">
-                                <p className="font-medium">Full Skin Collection</p>
-                                <p className="text-muted-foreground">Operators with every available skin owned</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
+                    <motion.div animate={{ opacity: 1 }} initial={{ opacity: 0 }} transition={{ delay: 0.4 }}>
+                        <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+                            <motion.div animate={{ width: `${skins.percentage}%` }} className="h-full rounded-full bg-pink-500" initial={{ width: 0 }} transition={{ delay: 0.45, duration: 0.6, ease: "easeOut" }} />
+                        </div>
+                        <p className="mt-1 text-center text-[0.625rem] text-muted-foreground/70">{skins.percentage.toFixed(1)}% collected</p>
+                    </motion.div>
                 </div>
             </CardContent>
         </Card>
