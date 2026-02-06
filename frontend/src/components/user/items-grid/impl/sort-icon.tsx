@@ -4,8 +4,8 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 interface SortIconProps {
-    field: "name" | "amount";
-    sortBy: "name" | "amount";
+    field: "name" | "amount" | "rarity";
+    sortBy: "name" | "amount" | "rarity";
     sortOrder: "asc" | "desc";
 }
 
@@ -21,7 +21,7 @@ export function SortIcon({ field, sortBy, sortOrder }: SortIconProps) {
                         <ArrowUpDown className="h-3.5 w-3.5" />
                     </motion.div>
                 ) : (
-                    <motion.div animate={{ opacity: 1, rotate: 0 }} className="absolute inset-0" exit={{ opacity: 0, rotate: isAscending ? -180 : 180 }} initial={{ opacity: 0, rotate: isAscending ? 180 : -180 }} key={isAscending ? "asc" : "desc"} transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}>
+                    <motion.div animate={{ opacity: 1, scaleY: 1 }} className="absolute inset-0" exit={{ opacity: 0, scaleY: -1 }} initial={{ opacity: 0, scaleY: -1 }} key={`${field}-${isAscending ? "asc" : "desc"}`} transition={{ duration: 0.15, ease: "easeOut" }}>
                         {isAscending ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
                     </motion.div>
                 )}

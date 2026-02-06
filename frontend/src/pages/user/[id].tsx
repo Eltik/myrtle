@@ -25,7 +25,7 @@ interface UserProfile {
     diamondShard: number;
     payDiamond: number;
     freeDiamond: number;
-    friendNumLimit: number;
+    registerTs: number;
 }
 
 interface UserPageProps {
@@ -180,7 +180,7 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             diamondShard: status.diamondShard,
             payDiamond: status.payDiamond,
             freeDiamond: status.freeDiamond,
-            friendNumLimit: status.friendNumLimit,
+            registerTs: status.registerTs,
         };
 
         return {
