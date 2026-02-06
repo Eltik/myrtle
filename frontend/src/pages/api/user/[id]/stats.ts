@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { CLASS_DISPLAY, CLASS_SORT_ORDER, CLASSES } from "~/components/collection/operators/list/constants";
 import { backendFetch } from "~/lib/backend-fetch";
+import { formatSubProfession } from "~/lib/utils";
 import type { Skin } from "~/types/api/impl/skin";
-import type { ProfessionStat, UserStatsResponse } from "~/types/api/impl/stats";
+import type { ProfessionStat, SubProfessionStat, UserStatsResponse } from "~/types/api/impl/stats";
 import type { StoredUser } from "~/types/api/impl/user";
 
 const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
@@ -10,6 +11,7 @@ const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
 interface StaticOperator {
     id: string;
     profession: string;
+    subProfessionId?: string;
     isNotObtainable?: boolean;
 }
 
@@ -31,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         // Parallel fetch: user data + static operators + static skins
-        const [userResponse, operatorsResponse, skinsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,isNotObtainable"), backendFetch("/static/skins?limit=5000")]);
+        const [userResponse, operatorsResponse, skinsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,subProfessionId,isNotObtainable"), backendFetch("/static/skins?limit=5000")]);
 
         if (!userResponse.ok) {
             if (userResponse.status === 404) {
@@ -47,8 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(404).json({ error: "Character data not found" });
         }
 
-        // Build per-profession totals from static operators
+        // Build per-profession and per-sub-profession totals from static operators
         const totalByProfession: Record<string, number> = {};
+        // Map: profession -> subProfessionId -> total count
+        const totalBySubProfession: Record<string, Record<string, number>> = {};
         let totalAvailable = 0;
 
         if (operatorsResponse.ok) {
@@ -60,11 +64,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 if (op.isNotObtainable) continue;
                 totalByProfession[op.profession] = (totalByProfession[op.profession] ?? 0) + 1;
                 totalAvailable++;
+
+                if (op.subProfessionId) {
+                    let profSubs = totalBySubProfession[op.profession];
+                    if (!profSubs) {
+                        profSubs = {};
+                        totalBySubProfession[op.profession] = profSubs;
+                    }
+                    profSubs[op.subProfessionId] = (profSubs[op.subProfessionId] ?? 0) + 1;
+                }
             }
         }
 
         // Process user's characters
         const ownedByProfession: Record<string, number> = {};
+        // Map: profession -> subProfessionId -> owned count
+        const ownedBySubProfession: Record<string, Record<string, number>> = {};
         let e0 = 0;
         let e1 = 0;
         let e2 = 0;
@@ -84,6 +99,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             totalOwned++;
             ownedByProfession[profession] = (ownedByProfession[profession] ?? 0) + 1;
+
+            const subProfId = char.static?.subProfessionId;
+            if (subProfId) {
+                let profSubs = ownedBySubProfession[profession];
+                if (!profSubs) {
+                    profSubs = {};
+                    ownedBySubProfession[profession] = profSubs;
+                }
+                profSubs[subProfId] = (profSubs[subProfId] ?? 0) + 1;
+            }
 
             // Elite breakdown
             if (char.evolvePhase === 2) e2++;
@@ -127,12 +152,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             .map((prof) => {
                 const owned = ownedByProfession[prof] ?? 0;
                 const total = totalByProfession[prof] ?? 0;
+
+                // Build sub-profession stats for this profession
+                const subProfTotals = totalBySubProfession[prof] ?? {};
+                const subProfOwned = ownedBySubProfession[prof] ?? {};
+                const allSubProfIds = new Set([...Object.keys(subProfTotals), ...Object.keys(subProfOwned)]);
+
+                const subProfessions: SubProfessionStat[] = Array.from(allSubProfIds)
+                    .map((subId) => {
+                        const subOwned = subProfOwned[subId] ?? 0;
+                        const subTotal = subProfTotals[subId] ?? 0;
+                        return {
+                            subProfessionId: subId,
+                            displayName: formatSubProfession(subId),
+                            owned: subOwned,
+                            total: subTotal,
+                            percentage: subTotal > 0 ? (subOwned / subTotal) * 100 : 0,
+                        };
+                    })
+                    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
                 return {
                     profession: prof,
                     displayName: CLASS_DISPLAY[prof] ?? prof,
                     owned,
                     total,
                     percentage: total > 0 ? (owned / total) * 100 : 0,
+                    subProfessions,
                 };
             })
             .sort((a, b) => (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99));

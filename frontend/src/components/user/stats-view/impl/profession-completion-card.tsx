@@ -1,12 +1,12 @@
 "use client";
 
-import { BarChart3 } from "lucide-react";
+import { BarChart3, ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ClassIcon } from "~/components/collection/operators/list/ui/impl/class-icon";
+import { SubClassIcon } from "~/components/collection/operators/list/ui/impl/sub-class-icon";
 import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import type { ProfessionStat } from "~/types/api/impl/stats";
 
 interface ProfessionCompletionCardProps {
@@ -38,6 +38,19 @@ const BREAKDOWN_SORT_ORDER: Record<string, number> = {
 
 export function ProfessionCompletionCard({ professions }: ProfessionCompletionCardProps) {
     const sorted = useMemo(() => [...professions].sort((a, b) => (BREAKDOWN_SORT_ORDER[a.profession] ?? 99) - (BREAKDOWN_SORT_ORDER[b.profession] ?? 99)), [professions]);
+    const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+    const toggle = useCallback((profession: string) => {
+        setExpanded((prev) => {
+            const next = new Set(prev);
+            if (next.has(profession)) {
+                next.delete(profession);
+            } else {
+                next.add(profession);
+            }
+            return next;
+        });
+    }, []);
 
     return (
         <Card className="border-border/50 bg-linear-to-b from-card/60 to-card/40 backdrop-blur-sm">
@@ -47,45 +60,77 @@ export function ProfessionCompletionCard({ professions }: ProfessionCompletionCa
                     Class Breakdown
                 </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
+            <CardContent className="flex flex-col gap-1">
                 {sorted.map((prof, index) => {
                     const colors = PROFESSION_COLORS[prof.profession] ?? {
                         color: "text-muted-foreground",
                         bgColor: "bg-muted/10",
                         progressColor: "bg-muted",
                     };
+                    const isExpanded = expanded.has(prof.profession);
+                    const hasSubProfessions = prof.subProfessions && prof.subProfessions.length > 0;
 
                     return (
-                        <Tooltip key={prof.profession}>
-                            <TooltipTrigger asChild>
-                                <motion.div animate={{ x: 0, opacity: 1 }} className="group -mx-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted/40" initial={{ x: -20, opacity: 0 }} transition={{ delay: index * 0.08, duration: 0.4, ease: "easeOut" }}>
-                                    <div className="flex items-center gap-2.5">
-                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${colors.bgColor}`}>
-                                            <ClassIcon className="opacity-90" profession={prof.profession} size={24} />
-                                        </div>
-                                        <div className="flex w-full flex-col gap-1.5">
-                                            <div className="flex items-center justify-between">
+                        <div key={prof.profession}>
+                            <motion.button
+                                animate={{ x: 0, opacity: 1 }}
+                                className="group -mx-3 w-[calc(100%+1.5rem)] cursor-pointer rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
+                                initial={{ x: -20, opacity: 0 }}
+                                onClick={() => toggle(prof.profession)}
+                                transition={{ delay: index * 0.08, duration: 0.4, ease: "easeOut" }}
+                                type="button"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${colors.bgColor}`}>
+                                        <ClassIcon className="opacity-90" profession={prof.profession} size={24} />
+                                    </div>
+                                    <div className="flex w-full flex-col gap-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5">
                                                 <span className="font-medium text-sm">{prof.displayName}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <AnimatedNumber className={`font-semibold text-sm tabular-nums ${colors.color}`} springOptions={{ stiffness: 100, damping: 20 }} value={prof.owned} />
-                                                    <span className="text-muted-foreground/60 text-sm">/ {prof.total}</span>
-                                                </div>
+                                                {hasSubProfessions && (
+                                                    <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                                                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                                    </motion.div>
+                                                )}
                                             </div>
-                                            <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
-                                                <motion.div animate={{ width: `${prof.percentage}%` }} className={`h-full rounded-full ${colors.progressColor}`} initial={{ width: 0 }} transition={{ delay: index * 0.08 + 0.2, duration: 0.6, ease: "easeOut" }} />
+                                            <div className="flex items-center gap-1">
+                                                <AnimatedNumber className={`font-semibold text-sm tabular-nums ${colors.color}`} springOptions={{ stiffness: 100, damping: 20 }} value={prof.owned} />
+                                                <span className="text-muted-foreground/60 text-sm">/ {prof.total}</span>
                                             </div>
+                                        </div>
+                                        <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/50">
+                                            <motion.div animate={{ width: `${prof.percentage}%` }} className={`h-full rounded-full ${colors.progressColor}`} initial={{ width: 0 }} transition={{ delay: index * 0.08 + 0.2, duration: 0.6, ease: "easeOut" }} />
                                         </div>
                                     </div>
-                                </motion.div>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-55" sideOffset={5} variant="dark">
-                                <p className="font-medium">{prof.displayName}</p>
-                                <p className="text-muted-foreground">
-                                    {prof.owned} of {prof.total} operators collected
-                                </p>
-                                <p className="mt-1 text-[0.625rem] text-muted-foreground/70">{prof.percentage.toFixed(1)}% completion</p>
-                            </TooltipContent>
-                        </Tooltip>
+                                </div>
+                            </motion.button>
+
+                            {hasSubProfessions && (
+                                <div className="grid transition-[grid-template-rows] duration-300 ease-in-out" style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}>
+                                    <div className="min-h-0 overflow-hidden">
+                                        <div className="ml-[2.875rem] flex flex-col gap-0.5 border-muted/30 border-l py-1 pl-3">
+                                            {prof.subProfessions.map((sub) => (
+                                                <div className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/20" key={sub.subProfessionId}>
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
+                                                        <span className="truncate text-foreground/70 text-xs">{sub.displayName.replace(/\s+\S+$/, "")}</span>
+                                                    </div>
+                                                    <div className="flex shrink-0 items-center gap-2">
+                                                        <div className="relative h-1.5 w-28 overflow-hidden rounded-full bg-muted/40 sm:w-40">
+                                                            <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                                                        </div>
+                                                        <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>
+                                                            {sub.owned}/{sub.total}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     );
                 })}
             </CardContent>

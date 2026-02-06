@@ -39,6 +39,20 @@ export interface StatsResponse {
 
 // ==================== User Stats Types ====================
 
+/** Per-sub-profession completion data */
+export interface SubProfessionStat {
+    /** Internal sub-profession ID (e.g., "fastshot", "blastcaster") */
+    subProfessionId: string;
+    /** Display name (e.g., "Marksman Sniper", "Blast Caster") */
+    displayName: string;
+    /** Number of operators the user owns in this sub-profession */
+    owned: number;
+    /** Total obtainable operators in this sub-profession */
+    total: number;
+    /** Completion percentage (0-100) */
+    percentage: number;
+}
+
 /** Per-profession completion data */
 export interface ProfessionStat {
     /** Internal profession name (e.g., "WARRIOR", "SNIPER") */
@@ -51,6 +65,8 @@ export interface ProfessionStat {
     total: number;
     /** Completion percentage (0-100) */
     percentage: number;
+    /** Per-sub-profession breakdown, sorted alphabetically */
+    subProfessions: SubProfessionStat[];
 }
 
 /** Complete stats response for the Stats tab */
