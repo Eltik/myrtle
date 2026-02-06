@@ -54,18 +54,32 @@ export function UserHeader({ profile }: UserHeaderProps) {
         >
             <Card className="mx-auto mt-5 mb-8">
                 <CardHeader>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 overflow-hidden">
                         <Avatar className="h-20 w-20">
                             <AvatarImage alt={profile.nickName ?? "User"} src={getSecretaryAvatarURL(avatarData)} />
                             <AvatarFallback>{profile.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
-                        <div>
-                            <CardTitle className="text-2xl">
-                                <div className="flex flex-row gap-4">
-                                    <div>
+                        <div className="min-w-0 flex-1">
+                            <CardTitle className="min-w-0 text-2xl">
+                                <div className="flex min-w-0 flex-row gap-2 md:gap-4">
+                                    <button
+                                        className="cursor-pointer truncate active:opacity-70 md:cursor-default md:active:opacity-100"
+                                        onClick={() => {
+                                            if (window.matchMedia("(max-width: 767px)").matches) {
+                                                handleCopyUsername();
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && window.matchMedia("(max-width: 767px)").matches) {
+                                                handleCopyUsername();
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        type="button"
+                                    >
                                         {profile.nickName && profile.nickName.length > 0 ? profile.nickName : "Unknown"}
                                         <span className="text-muted-foreground">#{profile.nickNumber}</span>
-                                    </div>
+                                    </button>
                                     <motion.button
                                         animate={{ scale: isCopied ? [1, 0.85, 1] : 1 }}
                                         className="relative hidden size-8.5 cursor-pointer items-center justify-center rounded-md border transition-colors duration-150 hover:bg-secondary md:flex"

@@ -257,6 +257,21 @@ async fn import_postgres_transactional(
     })
 }
 
+/// Get column types for a table from information_schema
+async fn get_column_types(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    table_name: &str,
+) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
+    let rows = sqlx::query_as::<_, (String, String)>(
+        "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = $1",
+    )
+    .bind(table_name)
+    .fetch_all(&mut **tx)
+    .await?;
+
+    Ok(rows.into_iter().collect())
+}
+
 /// Import a single table's data
 async fn import_table(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
@@ -264,6 +279,7 @@ async fn import_table(
     rows: &[serde_json::Value],
     options: &ImportOptions,
 ) -> Result<i64, Box<dyn std::error::Error>> {
+    let column_types = get_column_types(tx, table_name).await?;
     let mut count = 0i64;
 
     for row in rows {
@@ -318,7 +334,8 @@ async fn import_table(
         let mut q = sqlx::query(&query);
         for col in &columns {
             let value = &obj[*col];
-            q = bind_json_value(q, value);
+            let data_type = column_types.get(*col).map(|s| s.as_str()).unwrap_or("text");
+            q = bind_json_value(q, value, data_type);
         }
 
         let result = q.execute(&mut **tx).await?;
@@ -328,13 +345,24 @@ async fn import_table(
     Ok(count)
 }
 
-/// Bind a JSON value to a SQLx query
+/// Bind a JSON value to a SQLx query, using the column's data type to correctly type NULL values
 fn bind_json_value<'q>(
     query: sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments>,
     value: &'q serde_json::Value,
+    data_type: &str,
 ) -> sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments> {
     match value {
-        serde_json::Value::Null => query.bind(None::<String>),
+        serde_json::Value::Null => match data_type {
+            "uuid" => query.bind(None::<uuid::Uuid>),
+            "boolean" => query.bind(None::<bool>),
+            "integer" | "bigint" | "smallint" => query.bind(None::<i64>),
+            "double precision" | "real" | "numeric" => query.bind(None::<f64>),
+            "timestamp with time zone" | "timestamp without time zone" => {
+                query.bind(None::<chrono::DateTime<chrono::Utc>>)
+            }
+            "jsonb" | "json" => query.bind(None::<serde_json::Value>),
+            _ => query.bind(None::<String>),
+        },
         serde_json::Value::Bool(b) => query.bind(*b),
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_i64() {
