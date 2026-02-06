@@ -109,23 +109,33 @@ export function ProfessionCompletionCard({ professions }: ProfessionCompletionCa
                             {hasSubProfessions && (
                                 <div className="grid transition-[grid-template-rows] duration-300 ease-in-out" style={{ gridTemplateRows: isExpanded ? "1fr" : "0fr" }}>
                                     <div className="min-h-0 overflow-hidden">
-                                        <div className="ml-[2.875rem] flex flex-col gap-0.5 border-muted/30 border-l py-1 pl-3">
-                                            {prof.subProfessions.map((sub) => (
-                                                <div className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/20" key={sub.subProfessionId}>
-                                                    <div className="flex items-center gap-2 overflow-hidden">
-                                                        <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
-                                                        <span className="truncate text-foreground/70 text-xs">{sub.displayName.replace(/\s+\S+$/, "")}</span>
-                                                    </div>
-                                                    <div className="flex shrink-0 items-center gap-2">
-                                                        <div className="relative h-1.5 w-28 overflow-hidden rounded-full bg-muted/40 sm:w-40">
-                                                            <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                                        <div className="ml-[2.875rem] flex flex-col py-1">
+                                            {prof.subProfessions.map((sub, subIndex) => {
+                                                const isLast = subIndex === prof.subProfessions.length - 1;
+                                                return (
+                                                    <div className="relative flex" key={sub.subProfessionId}>
+                                                        {/* Vertical line */}
+                                                        <div className={`absolute left-0 w-px bg-muted-foreground/20 ${isLast ? "top-0 h-1/2" : "top-0 h-full"}`} />
+                                                        {/* Horizontal branch */}
+                                                        <div className="absolute top-1/2 left-0 h-px w-6 bg-muted-foreground/20" />
+                                                        {/* Content */}
+                                                        <div className="ml-6 flex flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/20">
+                                                            <div className="flex shrink-0 items-center gap-2">
+                                                                <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
+                                                                <span className="whitespace-nowrap text-foreground/70 text-xs">{sub.displayName.replace(/\s+\S+$/, "")}</span>
+                                                            </div>
+                                                            <div className="flex min-w-0 flex-1 items-center gap-2">
+                                                                <div className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted/40">
+                                                                    <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
+                                                                </div>
+                                                                <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>
+                                                                    {sub.owned}/{sub.total}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>
-                                                            {sub.owned}/{sub.total}
-                                                        </span>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
