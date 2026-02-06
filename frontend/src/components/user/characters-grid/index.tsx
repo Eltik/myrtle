@@ -73,6 +73,15 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
     const [viewMode, setViewMode] = useState<ViewMode>("detailed");
     const { prefetch } = useCDNPrefetch();
     const hasPreloadedStaticIcons = useRef(false);
+
+    // Set responsive default: compact on mobile, detailed on desktop
+    const hasSetInitialViewMode = useRef(false);
+    useEffect(() => {
+        if (hasSetInitialViewMode.current) return;
+        hasSetInitialViewMode.current = true;
+        setViewMode(window.innerWidth < 768 ? "compact" : "detailed");
+    }, []);
+
     const observer = useRef<IntersectionObserver | null>(null);
 
     useEffect(() => {
