@@ -128,8 +128,8 @@ export function ProfessionCompletionCard({ professions }: ProfessionCompletionCa
                                                         <div className="ml-6">
                                                             <SubClassIcon className="shrink-0 opacity-70" size={16} subProfessionId={sub.subProfessionId} />
                                                         </div>
-                                                        <span className="max-w-20 truncate text-foreground/70 text-xs sm:min-w-[var(--sub-name-w)] sm:max-w-none">{sub.displayName.replace(/\s+\S+$/, "")}</span>
-                                                        <div className="relative h-1.5 min-w-0 overflow-hidden rounded-full bg-muted/40">
+                                                        <span className="max-w-20 truncate text-foreground/70 text-xs sm:min-w-(--sub-name-w) sm:max-w-none">{sub.displayName.replace(/\s+\S+$/, "")}</span>
+                                                        <div className="relative h-1.5 min-w-0 overflow-hidden rounded-full bg-muted-foreground/15">
                                                             <motion.div animate={{ width: `${sub.percentage}%` }} className={`h-full rounded-full ${colors.progressColor} opacity-70`} initial={{ width: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} />
                                                         </div>
                                                         <span className={`w-10 shrink-0 text-right text-xs tabular-nums ${colors.color} opacity-80`}>

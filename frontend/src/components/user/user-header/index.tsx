@@ -22,7 +22,7 @@ interface UserProfile {
     diamondShard: number;
     payDiamond: number;
     freeDiamond: number;
-    friendNumLimit: number;
+    registerTs: number;
 }
 
 interface UserHeaderProps {
@@ -117,7 +117,10 @@ export function UserHeader({ profile }: UserHeaderProps) {
                         <Stat label="LMD" value={profile.gold} />
                         <Stat label="Orundum" value={profile.diamondShard} />
                         <Stat label="Originium" value={profile.payDiamond + profile.freeDiamond} />
-                        <Stat label="Friend Limit" value={profile.friendNumLimit} />
+                        <div className="text-center">
+                            <div className="font-bold text-2xl">{profile.registerTs > 0 ? new Date(profile.registerTs * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown"}</div>
+                            <div className="text-muted-foreground text-sm">Registered</div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
