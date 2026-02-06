@@ -4,8 +4,8 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 interface SortIconProps {
-    field: "name" | "amount" | "rarity";
-    sortBy: "name" | "amount" | "rarity";
+    field: "name" | "amount" | "rarity" | "category";
+    sortBy: "name" | "amount" | "rarity" | "category";
     sortOrder: "asc" | "desc";
 }
 
