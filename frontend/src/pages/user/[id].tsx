@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn
 import { CharactersGrid } from "~/components/user/characters-grid";
 import { ItemsGrid } from "~/components/user/items-grid";
 import { ScoreView } from "~/components/user/score-view";
+import { StatsView } from "~/components/user/stats-view";
 import { UserHeader } from "~/components/user/user-header";
 import { env } from "~/env";
 import type { StoredUser } from "~/types/api/impl/user";
@@ -77,6 +78,7 @@ export default function UserPage({ profile, userId, baseUrl, error }: UserPagePr
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
                             <TabsTrigger value="items">Items</TabsTrigger>
+                            <TabsTrigger value="stats">Stats</TabsTrigger>
                             <TabsTrigger value="score">Score</TabsTrigger>
                         </TabsList>
 
@@ -88,6 +90,11 @@ export default function UserPage({ profile, userId, baseUrl, error }: UserPagePr
                         <TabsContent className="space-y-4" value="items">
                             <h2 className="font-bold text-2xl">Items</h2>
                             <ItemsGrid userId={userId} />
+                        </TabsContent>
+
+                        <TabsContent className="space-y-4" value="stats">
+                            <h2 className="font-bold text-2xl">Account Stats</h2>
+                            <StatsView userId={userId} />
                         </TabsContent>
 
                         <TabsContent className="space-y-4" value="score">
