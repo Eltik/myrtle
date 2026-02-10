@@ -1,4 +1,4 @@
-import type { GachaItem, GachaRecords } from "~/types/api";
+import type { GachaItem, GachaRecordEntry, GachaRecords } from "~/types/api";
 
 /**
  * Pity system constants
@@ -278,6 +278,69 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
  */
 export function isCollabBanner(poolId: string): boolean {
     return poolId.startsWith("LINKAGE_");
+}
+
+/**
+ * Map of operator rarity tier strings to numeric values.
+ * Game data uses "TIER_6" for 6-star, etc.
+ */
+export const RARITY_TIER_MAP: Record<string, number> = {
+    TIER_6: 6,
+    TIER_5: 5,
+    TIER_4: 4,
+    TIER_3: 3,
+    TIER_2: 2,
+    TIER_1: 1,
+};
+
+/** Operator lookup entry for enriching gacha records */
+export interface OperatorLookupEntry {
+    name: string;
+    rarity: number;
+    profession: string;
+}
+
+/** Build an operator lookup map from static operator data */
+export function buildOperatorLookup(operators: Array<{ id: string | null; name: string; rarity: string; profession: string }>): Map<string, OperatorLookupEntry> {
+    const map = new Map<string, OperatorLookupEntry>();
+    for (const op of operators) {
+        if (!op.id) continue;
+        map.set(op.id, {
+            name: op.name,
+            rarity: RARITY_TIER_MAP[op.rarity] ?? parseRarity(op.rarity),
+            profession: op.profession,
+        });
+    }
+    return map;
+}
+
+/** Enrich gacha record entries with correct rarity and name from operator data */
+export function enrichRecordEntries(records: GachaRecordEntry[], operatorMap: Map<string, OperatorLookupEntry>): GachaRecordEntry[] {
+    return records.map((record) => {
+        const op = operatorMap.get(record.charId);
+        if (op) {
+            return { ...record, rarity: op.rarity, charName: op.name };
+        }
+        return record;
+    });
+}
+
+/** Enrich GachaRecords with correct rarity and name from operator data */
+export function enrichGachaRecords(records: GachaRecords, operatorMap: Map<string, OperatorLookupEntry>): GachaRecords {
+    const enrichItems = (items: GachaItem[]) =>
+        items.map((item) => {
+            const op = operatorMap.get(item.charId);
+            if (op) {
+                return { ...item, star: String(op.rarity), charName: op.name };
+            }
+            return item;
+        });
+
+    return {
+        limited: { ...records.limited, records: enrichItems(records.limited.records) },
+        regular: { ...records.regular, records: enrichItems(records.regular.records) },
+        special: { ...records.special, records: enrichItems(records.special.records) },
+    };
 }
 
 /**
