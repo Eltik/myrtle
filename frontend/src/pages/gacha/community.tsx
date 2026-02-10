@@ -2,7 +2,7 @@ import { BarChart3, Sparkles, Star, Users } from "lucide-react";
 import type { GetServerSideProps, NextPage } from "next";
 import { calculateDerivedData, DataSourceNotice, getLuckStatus, MostCommonOperators, PityStatistics, PullActivityChart, PullRateAnalysis, PullTimingCharts, RarityDistribution, StatCard, StatsHeader } from "~/components/gacha/community";
 import { SEO } from "~/components/seo";
-import { formatRate } from "~/lib/gacha-utils";
+import { formatRate, RARITY_TIER_MAP } from "~/lib/gacha-utils";
 import type { GachaEnhancedStats } from "~/types/api";
 
 interface GlobalGachaStatsPageProps {
@@ -74,21 +74,24 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
     try {
         const { env } = await import("~/env");
 
-        // Fetch enhanced stats with timing data and top 20 operators
+        const headers = {
+            "Content-Type": "application/json",
+            "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
+        };
+
+        // Fetch enhanced stats and operator data in parallel
         const backendURL = new URL("/gacha/stats/enhanced", env.BACKEND_URL);
         backendURL.searchParams.set("top_n", "20");
         backendURL.searchParams.set("include_timing", "true");
 
-        const response = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
-            },
-        });
+        const operatorsURL = new URL("/static/operators", env.BACKEND_URL);
+        operatorsURL.searchParams.set("fields", "id,name,rarity,profession");
+        operatorsURL.searchParams.set("limit", "1000");
 
-        if (!response.ok) {
-            console.error(`Enhanced stats fetch failed: ${response.status}`);
+        const [statsResponse, operatorsResponse] = await Promise.all([fetch(backendURL.toString(), { method: "GET", headers }), fetch(operatorsURL.toString(), { method: "GET", headers }).catch(() => null)]);
+
+        if (!statsResponse.ok) {
+            console.error(`Enhanced stats fetch failed: ${statsResponse.status}`);
             return {
                 props: {
                     stats: null,
@@ -97,7 +100,34 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
             };
         }
 
-        const stats: GachaEnhancedStats = await response.json();
+        const stats: GachaEnhancedStats = await statsResponse.json();
+
+        // Enrich operator data with correct rarity/name from static game data
+        if (operatorsResponse?.ok) {
+            try {
+                const operatorData: { operators?: Array<{ id: string | null; name: string; rarity: string; profession: string }> } = await operatorsResponse.json();
+                if (operatorData.operators) {
+                    const lookup = new Map<string, { name: string; rarity: number }>();
+                    for (const op of operatorData.operators) {
+                        if (!op.id) continue;
+                        lookup.set(op.id, {
+                            name: op.name,
+                            rarity: RARITY_TIER_MAP[op.rarity] ?? 3,
+                        });
+                    }
+
+                    stats.mostCommonOperators = stats.mostCommonOperators.map((op) => {
+                        const staticOp = lookup.get(op.charId);
+                        if (staticOp) {
+                            return { ...op, rarity: staticOp.rarity, charName: staticOp.name };
+                        }
+                        return op;
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to parse operator data for enrichment:", err);
+            }
+        }
 
         return {
             props: {
