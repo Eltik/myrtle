@@ -2,7 +2,7 @@
 
 import { AlertCircle, History, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/gacha/history";
 import ProtectedPageLayout from "~/components/layout/protected-page-layout";
@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Separator } from "~/components/ui/shadcn/separator";
 import { useAuth } from "~/hooks/use-auth";
 import { useGacha } from "~/hooks/use-gacha";
+import { buildOperatorLookup, enrichGachaRecords, enrichRecordEntries, type OperatorLookupEntry } from "~/lib/gacha-utils";
 import type { GachaHistoryParams, GachaType } from "~/types/api";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -32,6 +33,37 @@ function GachaHistoryPageContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [isTabSwitching, setIsTabSwitching] = useState(false);
     const initialFetchDone = useRef(false);
+    const [operatorMap, setOperatorMap] = useState<Map<string, OperatorLookupEntry> | null>(null);
+
+    // Fetch operator data for enriching gacha records with correct rarity/name
+    useEffect(() => {
+        fetch("/api/static", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "operators", fields: ["id", "name", "rarity", "profession"], limit: 1000 }),
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.data && Array.isArray(data.data)) {
+                    setOperatorMap(buildOperatorLookup(data.data));
+                }
+            })
+            .catch((err) => console.error("Failed to fetch operator lookup data:", err));
+    }, []);
+
+    // Enrich history records with correct rarity/name from static game data
+    const enrichedHistoryRecords = useMemo(() => {
+        if (!history?.records) return [];
+        if (!operatorMap) return history.records;
+        return enrichRecordEntries(history.records, operatorMap);
+    }, [history?.records, operatorMap]);
+
+    // Enrich stored records (used for stats) with correct rarity/name
+    const enrichedStoredRecords = useMemo(() => {
+        if (!storedRecords) return null;
+        if (!operatorMap) return storedRecords;
+        return enrichGachaRecords(storedRecords, operatorMap);
+    }, [storedRecords, operatorMap]);
 
     const handlePageSizeChange = useCallback(
         (newSize: number) => {
@@ -179,7 +211,7 @@ function GachaHistoryPageContent() {
                 )}
 
                 {/* Loading State */}
-                {(loadingStoredRecords || loadingRecords) && !storedRecords && (
+                {(loadingStoredRecords || loadingRecords) && !enrichedStoredRecords && (
                     <div className="flex min-h-[30vh] items-center justify-center">
                         <div className="text-center">
                             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -189,15 +221,15 @@ function GachaHistoryPageContent() {
                 )}
 
                 {/* Main Content */}
-                {!loadingStoredRecords && storedRecords && !storageDisabled && (
+                {!loadingStoredRecords && enrichedStoredRecords && !storageDisabled && (
                     <>
                         {/* Statistics Overview */}
-                        <StatsOverview loading={loadingStoredRecords} records={storedRecords} />
+                        <StatsOverview loading={loadingStoredRecords} records={enrichedStoredRecords} />
 
                         <Separator />
 
                         {/* Banner Tabs and History */}
-                        <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={storedRecords}>
+                        <BannerTabs activeTab={activeTab} isLoading={isTabSwitching} onTabChange={handleTabChange} records={enrichedStoredRecords}>
                             <div className="grid min-w-0 gap-6 lg:grid-cols-[1fr_300px]">
                                 {/* Pull History List */}
                                 <div className="min-w-0 space-y-4">
@@ -206,8 +238,15 @@ function GachaHistoryPageContent() {
                                             <CardTitle>Pull History</CardTitle>
                                             <CardDescription>
                                                 {(() => {
-                                                    if (!storedRecords) return "No pulls recorded";
-                                                    const total = activeTab === "all" ? storedRecords.limited.total + storedRecords.regular.total + storedRecords.special.total : activeTab === "limited" ? storedRecords.limited.total : activeTab === "regular" ? storedRecords.regular.total : storedRecords.special.total;
+                                                    if (!enrichedStoredRecords) return "No pulls recorded";
+                                                    const total =
+                                                        activeTab === "all"
+                                                            ? enrichedStoredRecords.limited.total + enrichedStoredRecords.regular.total + enrichedStoredRecords.special.total
+                                                            : activeTab === "limited"
+                                                              ? enrichedStoredRecords.limited.total
+                                                              : activeTab === "regular"
+                                                                ? enrichedStoredRecords.regular.total
+                                                                : enrichedStoredRecords.special.total;
                                                     return total > 0 ? `${total.toLocaleString()} total pulls` : "No pulls recorded";
                                                 })()}
                                             </CardDescription>
@@ -219,7 +258,7 @@ function GachaHistoryPageContent() {
                                                 isPageLoading={loadingHistory && !!history}
                                                 loading={loadingHistory && !history}
                                                 onPageChange={handlePageChange}
-                                                records={history?.records ?? []}
+                                                records={enrichedHistoryRecords}
                                                 totalPages={history?.pagination.total ? Math.ceil(history.pagination.total / pageSize) : 1}
                                             />
                                         </CardContent>
@@ -236,7 +275,7 @@ function GachaHistoryPageContent() {
                 )}
 
                 {/* Empty State */}
-                {!loadingStoredRecords && storedRecords && !storageDisabled && history?.pagination.total === 0 && (
+                {!loadingStoredRecords && enrichedStoredRecords && !storageDisabled && history?.pagination.total === 0 && (
                     <Card>
                         <CardContent className="flex min-h-75 flex-col items-center justify-center py-12 text-center">
                             <History className="mb-4 h-12 w-12 text-muted-foreground" />
