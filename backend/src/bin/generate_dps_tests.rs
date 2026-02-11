@@ -410,6 +410,7 @@ fn make_test_key_baseline(operator: &str, skill: i32, module: i32, defense: f64,
 }}
 
 /// Creates test key from individual parts
+#[allow(clippy::too_many_arguments)]
 fn make_test_key_parts(
     operator: &str, skill: i32, module: i32, defense: f64, res: f64,
     fragile: f64, def_shred_mult: f64, def_shred_flat: f64, res_shred_mult: f64, res_shred_flat: f64
@@ -657,7 +658,7 @@ mod tests {{
             }};
 
             // Apply fragile AFTER getting DPS (matching Python's plot_graph approach)
-            rust_dps = rust_dps * (1.0 + tc.fragile);
+            rust_dps *= 1.0 + tc.fragile;
 
             tested += 1;
 

@@ -416,6 +416,7 @@ pub fn create_operator(
         "ThornsAlter" => Some(Box::new(ThornsAlter::new(operator_data, params))),
         "TinMan" => Some(Box::new(TinMan::new(operator_data, params))),
         "Tippi" => Some(Box::new(Tippi::new(operator_data, params))),
+        "Titi" => Some(Box::new(Titi::new(operator_data, params))),
         "Toddifons" => Some(Box::new(Toddifons::new(operator_data, params))),
         "TogawaSakiko" => Some(Box::new(TogawaSakiko::new(operator_data, params))),
         "Tomimi" => Some(Box::new(Tomimi::new(operator_data, params))),
@@ -682,6 +683,7 @@ pub fn get_supported_operator_names() -> &'static [&'static str] {
         "ThornsAlter",
         "TinMan",
         "Tippi",
+        "Titi",
         "Toddifons",
         "TogawaSakiko",
         "Tomimi",
@@ -1194,7 +1196,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Entelechia" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
-            available_modules: vec![1],
+            available_modules: vec![1, 2],
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
@@ -1482,7 +1484,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Hoederer" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
-            available_modules: vec![1],
+            available_modules: vec![1, 2],
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
@@ -1938,7 +1940,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Mon3tr" => Some(OperatorMetadata {
             available_skills: vec![3],
-            available_modules: vec![],
+            available_modules: vec![1],
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 0,
@@ -2202,7 +2204,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Ray" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
-            available_modules: vec![1],
+            available_modules: vec![1, 2],
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 1,
@@ -2226,7 +2228,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Rosa" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
-            available_modules: vec![1],
+            available_modules: vec![1, 2],
             default_skill_index: 2,
             default_potential: 1,
             default_module_index: 1,
@@ -2504,6 +2506,14 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
             default_module_index: 0,
             conditionals: parse_conditionals(Tippi::CONDITIONALS),
         }),
+        "Titi" => Some(OperatorMetadata {
+            available_skills: vec![1, 2, 3],
+            available_modules: vec![1],
+            default_skill_index: 3,
+            default_potential: 1,
+            default_module_index: 1,
+            conditionals: parse_conditionals(Titi::CONDITIONALS),
+        }),
         "Toddifons" => Some(OperatorMetadata {
             available_skills: vec![1, 2],
             available_modules: vec![1],
@@ -2642,7 +2652,7 @@ pub fn get_operator_metadata(name: &str) -> Option<OperatorMetadata> {
         }),
         "Viviana" => Some(OperatorMetadata {
             available_skills: vec![1, 2, 3],
-            available_modules: vec![3],
+            available_modules: vec![3, 2],
             default_skill_index: 3,
             default_potential: 1,
             default_module_index: 3,

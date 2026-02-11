@@ -107,19 +107,19 @@ impl Irene {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut flyinghits: f64 = 0.0;
-        let mut defshred: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut levduration: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut hitdmg2: f64 = 0.0;
+        let mut hitdmg1: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut flyinghits: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut avgdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut hitdmg1: f64 = 0.0;
-        let mut sp_cost: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut levduration: f64 = 0.0;
 
         aspd = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0

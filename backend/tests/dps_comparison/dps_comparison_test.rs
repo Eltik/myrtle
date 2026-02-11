@@ -239,6 +239,7 @@ use backend::core::dps_calculator::operators::Thorns;
 use backend::core::dps_calculator::operators::ThornsAlter;
 use backend::core::dps_calculator::operators::TinMan;
 use backend::core::dps_calculator::operators::Tippi;
+use backend::core::dps_calculator::operators::Titi;
 use backend::core::dps_calculator::operators::Toddifons;
 use backend::core::dps_calculator::operators::TogawaSakiko;
 use backend::core::dps_calculator::operators::Tomimi;
@@ -324,11 +325,11 @@ fn get_expected_dps() -> &'static HashMap<String, f64> {
 
         match std::fs::read_to_string(&expected_path) {
             Ok(content) => serde_json::from_str(&content).unwrap_or_else(|e| {
-                eprintln!("Failed to parse expected_dps.json: {e}");
+                eprintln!("Failed to parse expected_dps.json: {}", e);
                 HashMap::new()
             }),
             Err(e) => {
-                eprintln!("Expected DPS file not found at {expected_path}: {e}");
+                eprintln!("Expected DPS file not found at {}: {}", expected_path, e);
                 eprintln!("Run: python tests/dps_comparison/run_comparison.py --generate-expected");
                 HashMap::new()
             }
@@ -343,11 +344,11 @@ fn get_test_cases() -> &'static Vec<TestCase> {
 
         match std::fs::read_to_string(&config_path) {
             Ok(content) => serde_json::from_str(&content).unwrap_or_else(|e| {
-                eprintln!("Failed to parse test_config.json: {e}");
+                eprintln!("Failed to parse test_config.json: {}", e);
                 Vec::new()
             }),
             Err(e) => {
-                eprintln!("Test config not found at {config_path}: {e}");
+                eprintln!("Test config not found at {}: {}", config_path, e);
                 Vec::new()
             }
         }
@@ -369,7 +370,7 @@ fn get_game_data() -> Option<&'static GameData> {
             ) {
                 Ok(data) => Some(data),
                 Err(e) => {
-                    eprintln!("Failed to load game data: {e:?}");
+                    eprintln!("Failed to load game data: {:?}", e);
                     None
                 }
             }
@@ -420,7 +421,10 @@ fn make_test_key_parts(
     res_shred_mult: f64,
     res_shred_flat: f64,
 ) -> String {
-    let base = format!("{operator}_s{skill}_m{module}_{defense:.0}_{res:.0}");
+    let base = format!(
+        "{}_s{}_m{}_{:.0}_{:.0}",
+        operator, skill, module, defense, res
+    );
     // Add debuff suffix for non-baseline scenarios
     if fragile != 0.0
         || def_shred_mult != 1.0
@@ -1396,6 +1400,10 @@ fn calculate_operator_dps(
             let op = Tippi::new(operator_data, params);
             Some(op.skill_dps(&enemy))
         }
+        "titi" => {
+            let op = Titi::new(operator_data, params);
+            Some(op.skill_dps(&enemy))
+        }
         "toddifons" => {
             let op = Toddifons::new(operator_data, params);
             Some(op.skill_dps(&enemy))
@@ -1574,7 +1582,7 @@ mod tests {
             if !expected.contains_key(&key) {
                 missing += 1;
                 if missing <= 10 {
-                    eprintln!("Missing expected DPS for: {key}");
+                    eprintln!("Missing expected DPS for: {}", key);
                 }
             }
         }
@@ -1588,7 +1596,8 @@ mod tests {
         let max_missing = cases.len() / 100; // Allow up to 1% missing
         assert!(
             missing <= max_missing,
-            "Too many missing expected values: {missing}"
+            "Too many missing expected values: {}",
+            missing
         );
     }
 
@@ -1599,13 +1608,18 @@ mod tests {
 
         for (key, &dps) in expected.iter() {
             // DPS should be non-negative
-            assert!(dps >= 0.0, "DPS for {key} should be non-negative: {dps}");
+            assert!(
+                dps >= 0.0,
+                "DPS for {} should be non-negative: {}",
+                key,
+                dps
+            );
 
             // DPS should be reasonable (not infinity or NaN)
-            assert!(dps.is_finite(), "DPS for {key} should be finite: {dps}");
+            assert!(dps.is_finite(), "DPS for {} should be finite: {}", key, dps);
 
             // DPS shouldn't be unreasonably high (sanity check)
-            assert!(dps < 1_000_000.0, "DPS for {key} seems too high: {dps}");
+            assert!(dps < 1_000_000.0, "DPS for {} seems too high: {}", key, dps);
         }
     }
 
@@ -1618,21 +1632,21 @@ mod tests {
         let aak_key = make_test_key_baseline("Aak", 1, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&aak_key) {
             assert!(dps > 0.0, "Aak S1 should have positive DPS");
-            println!("Aak S1 (0/0): {dps:.2} DPS");
+            println!("Aak S1 (0/0): {:.2} DPS", dps);
         }
 
         // Test SilverAsh S3 at 0 def/res (module 0 = no module)
         let sa_key = make_test_key_baseline("SilverAsh", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&sa_key) {
             assert!(dps > 0.0, "SilverAsh S3 should have positive DPS");
-            println!("SilverAsh S3 (0/0): {dps:.2} DPS");
+            println!("SilverAsh S3 (0/0): {:.2} DPS", dps);
         }
 
         // Test Surtr S3 at 0 def/res - should be high (module 0 = no module)
         let surtr_key = make_test_key_baseline("Surtr", 3, 0, 0.0, 0.0);
         if let Some(&dps) = expected.get(&surtr_key) {
             assert!(dps > 1000.0, "Surtr S3 should have high DPS");
-            println!("Surtr S3 (0/0): {dps:.2} DPS");
+            println!("Surtr S3 (0/0): {:.2} DPS", dps);
         }
     }
 
@@ -1650,7 +1664,10 @@ mod tests {
                 dps_0 > dps_1000,
                 "Higher defense should reduce physical DPS"
             );
-            println!("SilverAsh S3: {dps_0:.2} DPS at 0 DEF -> {dps_1000:.2} DPS at 1000 DEF");
+            println!(
+                "SilverAsh S3: {:.2} DPS at 0 DEF -> {:.2} DPS at 1000 DEF",
+                dps_0, dps_1000
+            );
         }
     }
 
@@ -1665,7 +1682,10 @@ mod tests {
 
         if let (Some(&dps_0), Some(&dps_50)) = (eyja_0res, eyja_50res) {
             assert!(dps_0 > dps_50, "Higher resistance should reduce arts DPS");
-            println!("Eyjafjalla S3: {dps_0:.2} DPS at 0 RES -> {dps_50:.2} DPS at 50 RES");
+            println!(
+                "Eyjafjalla S3: {:.2} DPS at 0 RES -> {:.2} DPS at 50 RES",
+                dps_0, dps_50
+            );
         }
     }
 
@@ -1740,7 +1760,10 @@ mod tests {
 
         println!();
         println!("=== DPS Comparison Results ===");
-        println!("Tested: {tested}, Passed: {passed}, Failed: {failed}, Skipped: {skipped}");
+        println!(
+            "Tested: {}, Passed: {}, Failed: {}, Skipped: {}",
+            tested, passed, failed, skipped
+        );
         println!(
             "Pass rate: {:.1}%",
             if tested > 0 {
@@ -1754,7 +1777,7 @@ mod tests {
             println!();
             println!("First {} failures:", errors.len());
             for e in &errors {
-                eprintln!("  {e}");
+                eprintln!("  {}", e);
             }
         }
 
@@ -1763,7 +1786,9 @@ mod tests {
         let failure_threshold = tested / 2;
         assert!(
             failed <= failure_threshold,
-            "Too many DPS comparison failures: {failed} / {tested}"
+            "Too many DPS comparison failures: {} / {}",
+            failed,
+            tested
         );
     }
 }

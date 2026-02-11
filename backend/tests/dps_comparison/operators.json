@@ -849,7 +849,8 @@
       3
     ],
     "modules": [
-      1
+      1,
+      2
     ],
     "default_module": 1
   },
@@ -1369,7 +1370,8 @@
       3
     ],
     "modules": [
-      1
+      1,
+      2
     ],
     "default_module": 1
   },
@@ -2167,8 +2169,10 @@
     "skills": [
       3
     ],
-    "modules": [],
-    "default_module": -1
+    "modules": [
+      1
+    ],
+    "default_module": 1
   },
   {
     "class_name": "Morgan",
@@ -2646,7 +2650,8 @@
       3
     ],
     "modules": [
-      1
+      1,
+      2
     ],
     "default_module": 1
   },
@@ -2701,7 +2706,8 @@
       3
     ],
     "modules": [
-      1
+      1,
+      2
     ],
     "default_module": 1
   },
@@ -3190,6 +3196,21 @@
     "default_module": -1
   },
   {
+    "class_name": "Titi",
+    "display_name": "Titi",
+    "char_id": "char_4056_titi",
+    "rust_module": "titi",
+    "skills": [
+      1,
+      2,
+      3
+    ],
+    "modules": [
+      1
+    ],
+    "default_module": 1
+  },
+  {
     "class_name": "Toddifons",
     "display_name": "Toddifons",
     "char_id": "char_363_toddi",
@@ -3446,7 +3467,8 @@
       3
     ],
     "modules": [
-      3
+      3,
+      2
     ],
     "default_module": 3
   },

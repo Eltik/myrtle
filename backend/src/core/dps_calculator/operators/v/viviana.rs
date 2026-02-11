@@ -16,7 +16,7 @@ impl Viviana {
     pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 2, 3];
 
     /// Available modules for this operator
-    pub const AVAILABLE_MODULES: &'static [i32] = &[3];
+    pub const AVAILABLE_MODULES: &'static [i32] = &[3, 2];
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
@@ -25,6 +25,7 @@ impl Viviana {
         ("module", "(boss)", false, &[], &[3], 0, 2),
         ("skill", "afterSteal", false, &[2], &[], 0, 0),
         ("skill", "1stActivation", true, &[3], &[], 0, 0),
+        ("module", "blocking", false, &[], &[2], 0, 0),
         ("module", "avgBurn", false, &[], &[3], 0, 2),
     ];
 
@@ -46,6 +47,8 @@ impl Viviana {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
+    /// value = 0.1 if self.module == 2 and self.module_dmg else 0
+    /// fragile = max(value, self.buff_fragile)
     /// dmg_scale = 1 + self.talent1_params[1] * 2 if self.talent_dmg else 1 + self.talent1_params[1]
     /// if self.elite == 0: dmg_scale = 1
     /// burn_res = np.fmax(0,res-20)
@@ -106,7 +109,7 @@ impl Viviana {
     /// time_to_trigger = ele_gauge / (dps*ele_appli)
     /// fallout_dps = hits * (hitdmgarts2 + ele_scale * final_atk)/1.75 * self.attack_speed/100
     /// dps = (dps * time_to_trigger + fallout_dps * 10 + fallout_dmg) / (time_to_trigger + 10)
-    /// return dps
+    /// return dps * (1+fragile)/(1+self.buff_fragile)
     #[allow(
         unused_variables,
         unused_mut,
@@ -130,27 +133,34 @@ impl Viviana {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut sp_cost: f64 = 0.0;
-        let mut hitdmgarts: f64 = 0.0;
-        let mut aspd: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
-        let mut skilldmg2: f64 = 0.0;
-        let mut avghit: f64 = 0.0;
-        let mut atkcycle: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut time_to_trigger: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
         let mut cdmg: f64 = 0.0;
-        let mut atks_per_skillactivation: f64 = 0.0;
-        let mut fallout_dps: f64 = 0.0;
-        let mut hitdmgarts2: f64 = 0.0;
         let mut avghit2: f64 = 0.0;
-        let mut ele_scale: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut hitdmgarts: f64 = 0.0;
         let mut avgdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
+        let mut dps: f64 = 0.0;
+        let mut avghit: f64 = 0.0;
+        let mut time_to_trigger: f64 = 0.0;
+        let mut fallout_dps: f64 = 0.0;
+        let mut skilldmg2: f64 = 0.0;
+        let mut atkcycle: f64 = 0.0;
+        let mut atks_per_skillactivation: f64 = 0.0;
+        let mut sp_cost: f64 = 0.0;
+        let mut aspd: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmgarts2: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut ele_scale: f64 = 0.0;
 
+        let mut value =
+            if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
+                0.1
+            } else {
+                0.0
+            };
+        let mut fragile = ((value) as f64).max((self.unit.buff_fragile) as f64);
         let mut dmg_scale = if self.unit.talent_damage {
             1.0 + self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0) * 2.0
         } else {
@@ -287,7 +297,7 @@ impl Viviana {
                     / (time_to_trigger + 10.0);
             }
         }
-        return dps;
+        return dps * (1.0 + fragile) / (1.0 + self.unit.buff_fragile);
     }
 }
 
