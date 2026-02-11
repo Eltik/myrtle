@@ -23,6 +23,10 @@ path = "src/bin/db_backup.rs"
 name = "sync-scores"
 path = "src/bin/sync_scores.rs"
 
+[[bin]]
+name = "export-gacha"
+path = "src/bin/export_gacha.rs"
+
 [[test]]
 name = "dps_comparison_test"
 path = "tests/dps_comparison/dps_comparison_test.rs"
