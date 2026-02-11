@@ -16,12 +16,15 @@ impl Rosa {
     pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 2, 3];
 
     /// Available modules for this operator
-    pub const AVAILABLE_MODULES: &'static [i32] = &[1];
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] =
-        &[("talent", "vsLight", true, &[], &[], 0, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("talent", "vsLight", true, &[], &[], 0, 0),
+        ("module", "maxRange", false, &[], &[2], 0, 0),
+        ("talent2", "noTalentStacks", true, &[], &[2], 0, 3),
+    ];
 
     /// Creates a new Rosa operator
     #[allow(unused_parens)]
@@ -52,6 +55,10 @@ impl Rosa {
     /// if self.module_lvl == 2: additional_scale = 0.4
     /// if self.module_lvl == 3: additional_scale = 0.6
     /// newdef = defense * (1-defshred)
+    /// if self.module == 2 and self.module_dmg: atk_scale = 1.12
+    /// if self.module == 2 and self.module_lvl > 1:
+    /// if self.talent2_dmg: atkbuff += (0.07 + 0.04 * self.module_lvl) * 3
+    /// elif self.skill > 0: atkbuff += (0.07 + 0.04 * self.module_lvl)
     /// if self.skill < 2:
     /// atkbuff += self.skill_params[0] * self.skill
     /// final_atk = self.atk * (1 + self.buff_atk + atkbuff) + self.buff_atk_flat
@@ -95,13 +102,13 @@ impl Rosa {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut extradmg: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut defshred: f64 = 0.0;
         let mut hitdmg: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut dps: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut defshred: f64 = 0.0;
+        let mut extradmg: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
 
         atkbuff = self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0);
@@ -123,6 +130,16 @@ impl Rosa {
             }
         }
         let mut newdef = defense * (1.0 - defshred);
+        if (self.unit.module_index as f64) == 2.0 && self.unit.module_damage {
+            atk_scale = 1.12;
+        }
+        if (self.unit.module_index as f64) == 2.0 && (self.unit.module_level as f64) > 1.0 {
+            if self.unit.talent2_damage {
+                atkbuff += (0.07 + 0.04 * (self.unit.module_level as f64)) * 3.0;
+            } else if (self.unit.skill_index as f64) > 0.0 {
+                atkbuff += (0.07 + 0.04 * (self.unit.module_level as f64));
+            }
+        }
         if (self.unit.skill_index as f64) < 2.0 {
             atkbuff += self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
                 * (self.unit.skill_index as f64);

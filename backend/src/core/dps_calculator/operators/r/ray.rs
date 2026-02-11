@@ -16,14 +16,13 @@ impl Ray {
     pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 2, 3];
 
     /// Available modules for this operator
-    pub const AVAILABLE_MODULES: &'static [i32] = &[1];
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
     pub const CONDITIONALS: &'static [ConditionalTuple] = &[
         ("trait", "outOfAmmo", true, &[], &[], 0, 0),
         ("talent", "with pet", false, &[], &[], 1, 0),
-        ("talent2", "After3Hits", false, &[], &[], 2, 0),
     ];
 
     /// Creates a new Ray operator
@@ -44,7 +43,7 @@ impl Ray {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// atk_scale = 1.2
+    /// atk_scale = 1.33 if self.module == 2 else 1.2
     /// dmg_scale = 1 + self.talent1_params[0] if self.talent_dmg and self.elite > 0 else 1
     /// atkbuff = self.talent2_params[0] * self.talent2_params[1] if self.talent2_dmg and self.elite == 2 else 0
     /// if self.skill == 1:
@@ -97,16 +96,20 @@ impl Ray {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut dps: f64 = 0.0;
         let mut skilldmg: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut atk_scale: f64 = 0.0;
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
+        let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
 
-        atk_scale = 1.2;
+        atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 {
+            1.33
+        } else {
+            1.2
+        };
         let mut dmg_scale = if self.unit.talent_damage && ((self.unit.elite as f64) as f64) > 0.0 {
             1.0 + self.unit.talent1_parameters.get(0).copied().unwrap_or(0.0)
         } else {

@@ -76,11 +76,11 @@ impl Hoshiguma {
         let mut res = enemy.res;
 
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut atkbuff: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
         let mut dps: f64 = 0.0;
-        let mut final_atk: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
         let mut skill_scale: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
 
         atkbuff = if ((self.unit.module_index as f64) as f64) == 2.0
             && ((self.unit.module_level as f64) as f64) > 1.0

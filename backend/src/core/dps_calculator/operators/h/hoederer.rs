@@ -16,12 +16,14 @@ impl Hoederer {
     pub const AVAILABLE_SKILLS: &'static [i32] = &[1, 2, 3];
 
     /// Available modules for this operator
-    pub const AVAILABLE_MODULES: &'static [i32] = &[1];
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1, 2];
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] =
-        &[("talent", "vsStun/Bind", false, &[], &[], 1, 0)];
+    pub const CONDITIONALS: &'static [ConditionalTuple] = &[
+        ("talent", "vsStun/Bind", false, &[], &[], 1, 0),
+        ("module", "vsBlocked", false, &[], &[2], 0, 0),
+    ];
 
     /// Creates a new Hoederer operator
     #[allow(unused_parens)]
@@ -41,9 +43,9 @@ impl Hoederer {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
-    /// atk_scale = 1
+    /// atk_scale = 1.1 if self.module == 2 and self.module_dmg else 1
     /// if self.elite > 0:
-    /// atk_scale = max(self.talent1_params) if self.talent_dmg else min(self.talent1_params)
+    /// atk_scale *= max(self.talent1_params) if self.talent_dmg else min(self.talent1_params)
     /// dmg_bonus = 1
     /// if self.module == 1:
     /// if self.module_lvl == 2: dmg_bonus = 1.06
@@ -101,24 +103,28 @@ impl Hoederer {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut final_atk: f64 = 0.0;
-        let mut avgphys: f64 = 0.0;
-        let mut atkbuff: f64 = 0.0;
-        let mut atk_scale: f64 = 0.0;
-        let mut dps: f64 = 0.0;
-        let mut hitdmg: f64 = 0.0;
-        let mut chance_to_attack_stunned: f64 = 0.0;
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut stun_duration: f64 = 0.0;
-        let mut hitdmg2: f64 = 0.0;
+        let mut final_atk: f64 = 0.0;
+        let mut chance_to_attack_stunned: f64 = 0.0;
+        let mut hitdmg: f64 = 0.0;
+        let mut atk_scale: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut counting_hits: f64 = 0.0;
+        let mut avgphys: f64 = 0.0;
         let mut atk_cycle: f64 = 0.0;
-        let mut skill_scale: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut sp_cost: f64 = 0.0;
+        let mut hitdmg2: f64 = 0.0;
+        let mut skill_scale: f64 = 0.0;
 
-        atk_scale = 1.0;
+        atk_scale = if ((self.unit.module_index as f64) as f64) == 2.0 && self.unit.module_damage {
+            1.1
+        } else {
+            1.0
+        };
         if (self.unit.elite as f64) > 0.0 {
-            atk_scale = if self.unit.talent_damage {
+            atk_scale *= if self.unit.talent_damage {
                 self.unit
                     .talent1_parameters
                     .iter()

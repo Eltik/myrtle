@@ -16,11 +16,12 @@ impl Mon3tr {
     pub const AVAILABLE_SKILLS: &'static [i32] = &[3];
 
     /// Available modules for this operator
-    pub const AVAILABLE_MODULES: &'static [i32] = &[];
+    pub const AVAILABLE_MODULES: &'static [i32] = &[1];
 
     /// Conditionals for this operator
     /// Format: (type, name, inverted, skills, modules, min_elite, min_module_level)
-    pub const CONDITIONALS: &'static [ConditionalTuple] = &[];
+    pub const CONDITIONALS: &'static [ConditionalTuple] =
+        &[("talent", "+construct", false, &[], &[], 0, 0)];
 
     /// Creates a new Mon3tr operator
     #[allow(unused_parens)]
@@ -40,11 +41,12 @@ impl Mon3tr {
     /// Calculates DPS against an enemy
     ///
     /// Original Python implementation:
+    /// atkbuff = self.talent1_params[1] if self.talent_dmg else 0
     /// aspd = self.talent2_params[1] if self.elite > 1 else 0
     /// if self.skill < 3: return res * 0
     /// if self.skill == 3:
     /// atk_interval = self.atk_interval + self.skill_params[4]
-    /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] ) + self.buff_atk_flat
+    /// final_atk = self.atk * (1 + self.buff_atk + self.skill_params[0] + atkbuff) + self.buff_atk_flat
     /// dps = final_atk/(atk_interval / (self.attack_speed+aspd)*100) * np.fmax(-defense, 1) * min(self.targets, 3)
     /// return dps
     #[allow(
@@ -70,11 +72,17 @@ impl Mon3tr {
         let mut defense = enemy.defense;
         let mut res = enemy.res;
 
-        let mut atk_interval: f64 = self.unit.attack_interval as f64;
-        let mut dps: f64 = 0.0;
         let mut aspd: f64 = 0.0;
+        let mut dps: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
+        let mut atkbuff: f64 = 0.0;
+        let mut atk_interval: f64 = self.unit.attack_interval as f64;
 
+        atkbuff = if self.unit.talent_damage {
+            self.unit.talent1_parameters.get(1).copied().unwrap_or(0.0)
+        } else {
+            0.0
+        };
         aspd = if ((self.unit.elite as f64) as f64) > 1.0 {
             self.unit.talent2_parameters.get(1).copied().unwrap_or(0.0)
         } else {
@@ -89,7 +97,8 @@ impl Mon3tr {
             final_atk = self.unit.atk
                 * (1.0
                     + self.unit.buff_atk
-                    + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0))
+                    + self.unit.skill_parameters.get(0).copied().unwrap_or(0.0)
+                    + atkbuff)
                 + self.unit.buff_atk_flat;
             dps = final_atk / (atk_interval / (self.unit.attack_speed + aspd) * 100.0)
                 * ((-defense) as f64).max((1) as f64)

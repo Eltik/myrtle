@@ -88,10 +88,10 @@ impl Goldenglow {
         let mut atk_interval: f64 = self.unit.attack_interval as f64;
         let mut hitdmgarts: f64 = 0.0;
         let mut dps: f64 = 0.0;
+        let mut newres: f64 = 0.0;
         let mut final_atk: f64 = 0.0;
         let mut aspd: f64 = 0.0;
         let mut atkbuff: f64 = 0.0;
-        let mut newres: f64 = 0.0;
 
         newres = ((res - self.unit.talent2_parameters.get(0).copied().unwrap_or(0.0)) as f64)
             .max((0) as f64);

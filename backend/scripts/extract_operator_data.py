@@ -103,6 +103,13 @@ def parse_damage_formulas():
     return operators
 
 
+def to_upper_camel_case(name):
+    """Capitalize the first letter to match Rust struct naming (e.g., twelveF -> TwelveF)."""
+    if not name:
+        return name
+    return name[0].upper() + name[1:]
+
+
 def to_snake_case(name):
     """Convert PascalCase or camelCase to snake_case."""
     # Handle special cases
@@ -165,7 +172,7 @@ def main():
         default_module = op_data['modules'][0] if op_data['modules'] else -1
 
         result.append({
-            'class_name': class_name,
+            'class_name': to_upper_camel_case(class_name),
             'display_name': display_name,
             'char_id': char_id,
             'rust_module': to_snake_case(class_name),
