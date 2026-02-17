@@ -53,7 +53,7 @@ flatbuffers = { version = "25.12", features = ["serialize"] }
 base64 = "0.22.1"
 
 # S3-compatible storage support
-rust-s3 = "0.34"
+rust-s3 = "0.37"
 tokio = { version = "1.49", features = ["full"] }
 futures = "0.3"
 tempfile = "3.24"
