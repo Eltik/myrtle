@@ -251,6 +251,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(200).json(skins);
             }
             case "voices": {
+                if (body.method === "voice-actors") {
+                    const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-voice-actors-map`;
+                    const allVoices = await fetchData<{ voices: Voice[]; total: number; has_more: boolean }>("/static/voices?limit=20000", cacheKey);
+                    const voiceActors: Record<string, string[]> = {};
+                    for (const voice of allVoices.voices) {
+                        if (!voice.charId) continue;
+                        if (!voiceActors[voice.charId]) voiceActors[voice.charId] = [];
+                        const existing = new Set(voiceActors[voice.charId]);
+                        for (const d of voice.data ?? []) {
+                            for (const name of d.cvName ?? []) {
+                                if (name && !existing.has(name)) {
+                                    existing.add(name);
+                                    voiceActors[voice.charId]?.push(name);
+                                }
+                            }
+                        }
+                    }
+                    return res.status(200).json({ voiceActors });
+                }
+
                 let endpoint: string;
                 if (body.id) {
                     if (body.id.startsWith("char_")) {

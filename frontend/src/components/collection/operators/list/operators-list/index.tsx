@@ -17,11 +17,47 @@ import { ResponsiveFilterContainer } from "../ui/impl/responsive-filter-containe
 import { CONTAINER_TRANSITION, TOGGLE_TRANSITION } from "./impl/constants";
 import { getInitialListColumns, getInitialViewMode } from "./impl/helpers";
 
+// Module-level cache so voice actors are fetched only once across mounts
+let voiceActorCache: Record<string, string[]> | null = null;
+let voiceActorPromise: Promise<Record<string, string[]>> | null = null;
+
+function getVoiceActors(): Promise<Record<string, string[]>> {
+    if (voiceActorCache) return Promise.resolve(voiceActorCache);
+    if (voiceActorPromise) return voiceActorPromise;
+
+    voiceActorPromise = fetch("/api/static", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "voices", method: "voice-actors" }),
+    })
+        .then((res) => res.json())
+        .then((data) => {
+            voiceActorCache = (data.voiceActors as Record<string, string[]>) ?? {};
+            return voiceActorCache;
+        })
+        .catch((error) => {
+            console.error("Failed to fetch voice actor data:", error);
+            voiceActorPromise = null;
+            return {} as Record<string, string[]>;
+        });
+
+    return voiceActorPromise;
+}
+
 export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     // UI state - default to list view on mobile
     const [showFilters, setShowFilters] = useState(false);
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [listColumns, setListColumns] = useState(2);
+
+    // Voice actor data - fetched once and cached at module level
+    const [voiceActorMap, setVoiceActorMap] = useState<Record<string, string[]>>(voiceActorCache ?? {});
+
+    useEffect(() => {
+        if (!voiceActorCache) {
+            getVoiceActors().then(setVoiceActorMap);
+        }
+    }, []);
 
     // Set initial view mode and list columns based on screen size (runs once on mount)
     useEffect(() => {
@@ -55,12 +91,13 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
         setSelectedGenders,
         setSelectedRaces,
         setSelectedArtists,
+        setSelectedVoiceActors,
         setSortBy,
         setSortOrder,
         clearFilters,
         activeFilterCount,
         hasActiveFilters,
-    } = useOperatorFilters(data);
+    } = useOperatorFilters(data, voiceActorMap);
 
     // Pagination
     const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
@@ -200,6 +237,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             onRaceChange={setSelectedRaces}
                             onRarityChange={setSelectedRarities}
                             onSubclassChange={setSelectedSubclasses}
+                            onVoiceActorChange={setSelectedVoiceActors}
                             races={filterOptions.races}
                             rarities={[...RARITIES]}
                             selectedArtists={filters.selectedArtists}
@@ -211,7 +249,9 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             selectedRaces={filters.selectedRaces}
                             selectedRarities={filters.selectedRarities}
                             selectedSubclasses={filters.selectedSubclasses}
+                            selectedVoiceActors={filters.selectedVoiceActors}
                             subclasses={filterOptions.subclasses}
+                            voiceActors={filterOptions.voiceActors}
                         />
                     </ResponsiveFilterContainer>
                 </div>

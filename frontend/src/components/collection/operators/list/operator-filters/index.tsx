@@ -20,6 +20,7 @@ interface OperatorFiltersProps {
     factions: string[];
     races: string[];
     artists: string[];
+    voiceActors: string[];
     selectedClasses: string[];
     selectedSubclasses: string[];
     selectedRarities: number[];
@@ -29,6 +30,7 @@ interface OperatorFiltersProps {
     selectedFactions: string[];
     selectedRaces: string[];
     selectedArtists: string[];
+    selectedVoiceActors: string[];
     onClassChange: (classes: string[]) => void;
     onSubclassChange: (subclasses: string[]) => void;
     onRarityChange: (rarities: number[]) => void;
@@ -38,6 +40,7 @@ interface OperatorFiltersProps {
     onFactionChange: (factions: string[]) => void;
     onRaceChange: (races: string[]) => void;
     onArtistChange: (artists: string[]) => void;
+    onVoiceActorChange: (voiceActors: string[]) => void;
     onClearFilters: () => void;
     hideHeader?: boolean;
 }
@@ -52,6 +55,7 @@ export function OperatorFilters({
     factions,
     races,
     artists,
+    voiceActors,
     selectedClasses,
     selectedSubclasses,
     selectedRarities,
@@ -61,6 +65,7 @@ export function OperatorFilters({
     selectedFactions,
     selectedRaces,
     selectedArtists,
+    selectedVoiceActors,
     onClassChange,
     onSubclassChange,
     onRarityChange,
@@ -70,6 +75,7 @@ export function OperatorFilters({
     onFactionChange,
     onRaceChange,
     onArtistChange,
+    onVoiceActorChange,
     onClearFilters,
     hideHeader = false,
 }: OperatorFiltersProps) {
@@ -79,10 +85,11 @@ export function OperatorFilters({
     const toggleRarity = createToggle(selectedRarities, onRarityChange);
     const toggleGender = createToggle(selectedGenders, onGenderChange);
 
-    const hasFilters = selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0;
+    const hasFilters =
+        selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0 || selectedVoiceActors.length > 0;
 
-    const hasAdvancedFilters = selectedSubclasses.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0;
-    const advancedFilterCount = selectedSubclasses.length + selectedGenders.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedRaces.length + selectedArtists.length;
+    const hasAdvancedFilters = selectedSubclasses.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0 || selectedVoiceActors.length > 0;
+    const advancedFilterCount = selectedSubclasses.length + selectedGenders.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedRaces.length + selectedArtists.length + selectedVoiceActors.length;
 
     return (
         <div className="z-99 min-w-0 overflow-hidden rounded-lg text-foreground">
@@ -228,6 +235,9 @@ export function OperatorFilters({
 
                                         {/* Artist Filter - Dropdown */}
                                         <FilterDropdown label="Artist" onRemove={(a) => onArtistChange(selectedArtists.filter((x) => x !== a))} onToggle={createToggle(selectedArtists, onArtistChange)} options={artists} placeholder="Select artist" selectedOptions={selectedArtists} />
+
+                                        {/* Voice Actor Filter - Dropdown */}
+                                        <FilterDropdown label="Voice Actor" onRemove={(v) => onVoiceActorChange(selectedVoiceActors.filter((x) => x !== v))} onToggle={createToggle(selectedVoiceActors, onVoiceActorChange)} options={voiceActors} placeholder="Select voice actor" selectedOptions={selectedVoiceActors} />
                                     </div>
                                 </motion.div>
                             )}
