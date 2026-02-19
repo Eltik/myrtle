@@ -4,7 +4,7 @@ import { AlertCircle, History, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/gacha/history";
+import { BannerBreakdown, BannerTabs, GachaSettingsPopover, PullFilters, PullHistoryList, StatsOverview } from "~/components/gacha/history";
 import ProtectedPageLayout from "~/components/layout/protected-page-layout";
 import { SEO } from "~/components/seo";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/shadcn/alert";
@@ -225,6 +225,11 @@ function GachaHistoryPageContent() {
                     <>
                         {/* Statistics Overview */}
                         <StatsOverview loading={loadingStoredRecords} records={enrichedStoredRecords} />
+
+                        <Separator />
+
+                        {/* Banner Breakdown */}
+                        <BannerBreakdown loading={loadingStoredRecords} records={enrichedStoredRecords} />
 
                         <Separator />
 
