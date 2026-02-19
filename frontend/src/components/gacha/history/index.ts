@@ -1,3 +1,4 @@
+export { BannerBreakdown } from "./impl/banner-breakdown";
 export { BannerTabs } from "./impl/banner-tabs";
 export { GachaSettingsPopover } from "./impl/gacha-settings-popover";
 export { PullFilters } from "./impl/pull-filters";

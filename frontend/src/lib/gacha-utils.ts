@@ -273,6 +273,161 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
     return result;
 }
 
+/** Pity info for a single 6-star pull */
+export interface SixStarPityEntry {
+    charId: string;
+    charName: string;
+    pityCount: number;
+    timestamp: number;
+    inSoftPity: boolean;
+}
+
+/** Summary statistics for a single banner (pool) */
+export interface BannerBreakdownEntry {
+    poolId: string;
+    poolName: string;
+    gachaType: string;
+    totalPulls: number;
+    firstPullTimestamp: number;
+    lastPullTimestamp: number;
+    sixStarCount: number;
+    fiveStarCount: number;
+    fourStarCount: number;
+    threeStarCount: number;
+    notablePulls: Array<{ charId: string; charName: string; count: number }>;
+    /** All pulls on this banner sorted oldest first */
+    pulls: GachaItem[];
+    /** Pity count for each 6-star obtained on this banner */
+    pityHistory: SixStarPityEntry[];
+    /** Current pity (pulls since last 6-star on this banner) */
+    currentPity: number;
+}
+
+export type BannerSortMode = "recent" | "pullCount" | "sixStarRate";
+
+/**
+ * Build per-banner breakdown from gacha records.
+ * Groups by poolId, accumulates stats including full pull history and pity tracking.
+ * Returns sorted by most recent pull.
+ */
+export function buildBannerBreakdown(records: GachaItem[]): BannerBreakdownEntry[] {
+    const poolMap = new Map<
+        string,
+        {
+            poolName: string;
+            gachaType: string;
+            pulls: GachaItem[];
+            sixStars: Map<string, { charName: string; count: number }>;
+        }
+    >();
+
+    for (const record of records) {
+        let entry = poolMap.get(record.poolId);
+        if (!entry) {
+            entry = {
+                poolName: record.poolName,
+                gachaType: record.typeName,
+                pulls: [],
+                sixStars: new Map(),
+            };
+            poolMap.set(record.poolId, entry);
+        }
+
+        entry.pulls.push(record);
+
+        if (parseRarity(record.star) === 6) {
+            const existing = entry.sixStars.get(record.charId);
+            if (existing) existing.count++;
+            else entry.sixStars.set(record.charId, { charName: record.charName, count: 1 });
+        }
+    }
+
+    return Array.from(poolMap.entries())
+        .map(([poolId, data]) => {
+            // Sort pulls oldest first for pity calculation
+            const sortedPulls = [...data.pulls].sort((a, b) => a.at - b.at);
+
+            let sixStarCount = 0;
+            let fiveStarCount = 0;
+            let fourStarCount = 0;
+            let threeStarCount = 0;
+            let pullsSinceLast6 = 0;
+            const pityHistory: SixStarPityEntry[] = [];
+
+            for (const pull of sortedPulls) {
+                pullsSinceLast6++;
+                const rarity = parseRarity(pull.star);
+                switch (rarity) {
+                    case 6: {
+                        sixStarCount++;
+                        pityHistory.push({
+                            charId: pull.charId,
+                            charName: pull.charName,
+                            pityCount: pullsSinceLast6,
+                            timestamp: pull.at,
+                            inSoftPity: pullsSinceLast6 >= SOFT_PITY_START,
+                        });
+                        pullsSinceLast6 = 0;
+                        break;
+                    }
+                    case 5:
+                        fiveStarCount++;
+                        break;
+                    case 4:
+                        fourStarCount++;
+                        break;
+                    default:
+                        threeStarCount++;
+                        break;
+                }
+            }
+
+            const firstPull = sortedPulls[0]?.at ?? 0;
+            const lastPull = sortedPulls[sortedPulls.length - 1]?.at ?? 0;
+
+            return {
+                poolId,
+                poolName: data.poolName,
+                gachaType: data.gachaType,
+                totalPulls: sortedPulls.length,
+                firstPullTimestamp: firstPull,
+                lastPullTimestamp: lastPull,
+                sixStarCount,
+                fiveStarCount,
+                fourStarCount,
+                threeStarCount,
+                notablePulls: Array.from(data.sixStars.entries())
+                    .map(([charId, { charName, count }]) => ({ charId, charName, count }))
+                    .sort((a, b) => b.count - a.count),
+                pulls: sortedPulls,
+                pityHistory,
+                currentPity: pullsSinceLast6,
+            };
+        })
+        .sort((a, b) => b.lastPullTimestamp - a.lastPullTimestamp);
+}
+
+/**
+ * Sort banner breakdown entries by the given mode.
+ */
+export function sortBannerBreakdown(entries: BannerBreakdownEntry[], mode: BannerSortMode): BannerBreakdownEntry[] {
+    return [...entries].sort((a, b) => {
+        switch (mode) {
+            case "recent":
+                return b.lastPullTimestamp - a.lastPullTimestamp;
+            case "pullCount":
+                return b.totalPulls - a.totalPulls;
+            case "sixStarRate": {
+                const rateA = a.totalPulls > 0 ? a.sixStarCount / a.totalPulls : 0;
+                const rateB = b.totalPulls > 0 ? b.sixStarCount / b.totalPulls : 0;
+                return rateB - rateA;
+            }
+            default:
+                return 0;
+        }
+    });
+}
+
 /**
  * Check if a pool is a collab/linkage banner
  */
