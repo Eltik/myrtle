@@ -264,6 +264,13 @@ export interface GachaData {
     specialGachaPercentDict: Record<number, number>;
 }
 
+/** Response from /static/gacha/pools endpoint */
+export interface GachaPoolsResponse {
+    pools: GachaPoolClient[];
+    newbeePools: NewbeeGachaPoolClient[];
+    total: number;
+}
+
 export interface GachaTableFile {
     gachaPoolClient: GachaPoolClient[];
     newbeeGachaPoolClient: NewbeeGachaPoolClient[];

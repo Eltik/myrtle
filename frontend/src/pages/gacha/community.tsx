@@ -1,16 +1,18 @@
 import { BarChart3, Sparkles, Star, Users } from "lucide-react";
 import type { GetServerSideProps, NextPage } from "next";
-import { calculateDerivedData, DataSourceNotice, getLuckStatus, MostCommonOperators, PityStatistics, PullActivityChart, PullRateAnalysis, PullTimingCharts, RarityDistribution, StatCard, StatsHeader } from "~/components/gacha/community";
+import { BannerActivityChart, BannerExplorer, calculateDerivedData, DataSourceNotice, getLuckStatus, MostCommonOperators, PityStatistics, PullActivityChart, PullRateAnalysis, PullTimingCharts, RarityDistribution, StatCard, StatsHeader } from "~/components/gacha/community";
+import { buildBannerOverlays } from "~/components/gacha/community/impl/banner-helpers";
 import { SEO } from "~/components/seo";
 import { formatRate, RARITY_TIER_MAP } from "~/lib/gacha-utils";
-import type { GachaEnhancedStats } from "~/types/api";
+import type { GachaEnhancedStats, GachaPoolClient, GachaPoolsResponse } from "~/types/api";
 
 interface GlobalGachaStatsPageProps {
     stats: GachaEnhancedStats | null;
+    pools: GachaPoolClient[];
     error?: string;
 }
 
-const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, error }) => {
+const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, pools, error }) => {
     // Error state
     if (error || !stats) {
         return (
@@ -29,6 +31,7 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
     // Calculate all derived data
     const { actualRates, luckScore, rateComparisonData, operatorsByRarity, hourlyData, dailyData, dateData, rarityData } = calculateDerivedData(stats);
     const luckStatus = getLuckStatus(luckScore);
+    const bannerOverlays = buildBannerOverlays(pools, dateData);
 
     return (
         <>
@@ -58,7 +61,10 @@ const GlobalGachaStatsPage: NextPage<GlobalGachaStatsPageProps> = ({ stats, erro
                 {stats.pullTiming && <PullTimingCharts dailyData={dailyData} hourlyData={hourlyData} />}
 
                 {/* Pull Activity Over Time */}
-                <PullActivityChart dateData={dateData} />
+                {pools.length > 0 && bannerOverlays.length > 0 ? <BannerActivityChart bannerOverlays={bannerOverlays} dateData={dateData} /> : <PullActivityChart dateData={dateData} />}
+
+                {/* Banner Explorer */}
+                {pools.length > 0 && <BannerExplorer byDate={stats.pullTiming?.byDate} pools={pools} />}
 
                 {/* Most Common Operators */}
                 <MostCommonOperators operatorsByRarity={operatorsByRarity} />
@@ -79,7 +85,7 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
             "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
         };
 
-        // Fetch enhanced stats and operator data in parallel
+        // Fetch enhanced stats, operator data, and pool data in parallel
         const backendURL = new URL("/gacha/stats/enhanced", env.BACKEND_URL);
         backendURL.searchParams.set("top_n", "20");
         backendURL.searchParams.set("include_timing", "true");
@@ -88,13 +94,16 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
         operatorsURL.searchParams.set("fields", "id,name,rarity,profession");
         operatorsURL.searchParams.set("limit", "1000");
 
-        const [statsResponse, operatorsResponse] = await Promise.all([fetch(backendURL.toString(), { method: "GET", headers }), fetch(operatorsURL.toString(), { method: "GET", headers }).catch(() => null)]);
+        const poolsURL = new URL("/static/gacha/pools", env.BACKEND_URL);
+
+        const [statsResponse, operatorsResponse, poolsResponse] = await Promise.all([fetch(backendURL.toString(), { method: "GET", headers }), fetch(operatorsURL.toString(), { method: "GET", headers }).catch(() => null), fetch(poolsURL.toString(), { method: "GET", headers }).catch(() => null)]);
 
         if (!statsResponse.ok) {
             console.error(`Enhanced stats fetch failed: ${statsResponse.status}`);
             return {
                 props: {
                     stats: null,
+                    pools: [],
                     error: "Failed to fetch statistics",
                 },
             };
@@ -129,9 +138,21 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
             }
         }
 
+        // Parse pool data
+        let pools: GachaPoolClient[] = [];
+        if (poolsResponse?.ok) {
+            try {
+                const poolsData: GachaPoolsResponse = await poolsResponse.json();
+                pools = poolsData.pools ?? [];
+            } catch (err) {
+                console.error("Failed to parse pool data:", err);
+            }
+        }
+
         return {
             props: {
                 stats,
+                pools,
             },
         };
     } catch (error) {
@@ -139,6 +160,7 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
         return {
             props: {
                 stats: null,
+                pools: [],
                 error: error instanceof Error ? error.message : "An unexpected error occurred",
             },
         };
