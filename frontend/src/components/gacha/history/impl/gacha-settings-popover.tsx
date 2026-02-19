@@ -13,12 +13,13 @@ import { Switch } from "~/components/ui/shadcn/switch";
 interface GachaSettingsPopoverProps {
     pageSize: number;
     onPageSizeChange: (size: number) => void;
+    compactView: boolean;
+    onCompactViewChange: (compact: boolean) => void;
 }
 
-export function GachaSettingsPopover({ pageSize, onPageSizeChange }: GachaSettingsPopoverProps) {
+export function GachaSettingsPopover({ pageSize, onPageSizeChange, compactView, onCompactViewChange }: GachaSettingsPopoverProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [autoRefresh, setAutoRefresh] = useState(false);
-    const [compactView, setCompactView] = useState(false);
 
     const handlePageSizeChange = (value: string) => {
         const size = Number.parseInt(value, 10);
@@ -80,7 +81,7 @@ export function GachaSettingsPopover({ pageSize, onPageSizeChange }: GachaSettin
                             </Label>
                             <p className="text-muted-foreground text-xs">Show more items with less spacing</p>
                         </div>
-                        <Switch checked={compactView} id="compact-view" onCheckedChange={setCompactView} />
+                        <Switch checked={compactView} id="compact-view" onCheckedChange={onCompactViewChange} />
                     </div>
 
                     <Separator />

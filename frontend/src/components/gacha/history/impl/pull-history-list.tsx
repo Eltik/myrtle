@@ -18,17 +18,54 @@ interface PullHistoryListProps {
     totalPages: number;
     onPageChange: (page: number) => void;
     isPageLoading?: boolean;
+    compact?: boolean;
 }
 
-export function PullHistoryList({ records, loading, currentPage, totalPages, onPageChange, isPageLoading }: PullHistoryListProps) {
+function CompactPullRow({ record }: { record: GachaRecordEntry }) {
+    const rarityColor = RARITY_COLORS[record.rarity] ?? "#ffffff";
+
+    return (
+        <div className="group relative flex items-center gap-2 rounded-md px-2 py-1 hover:bg-card">
+            {/* Rarity indicator */}
+            <div className="absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-full opacity-50 group-hover:opacity-80" style={{ backgroundColor: rarityColor }} />
+
+            {/* Small avatar */}
+            <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded border border-border/50 bg-background">
+                <Image alt={record.charName} className="object-cover" fill sizes="28px" src={`/api/cdn/avatar/${encodeURIComponent(record.charId)}`} />
+            </div>
+
+            {/* Name + stars */}
+            <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate font-medium text-foreground text-xs uppercase tracking-wide">{record.charName}</span>
+                <div className="flex shrink-0 items-center">
+                    {Array.from({ length: record.rarity }).map((_, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: Static star icons
+                        <span className="text-[9px] leading-none" key={i} style={{ color: rarityColor }}>
+                            ★
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* Right-aligned metadata */}
+            <div className="ml-auto flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="hidden sm:inline">{record.gachaType}</span>
+                <span className="hidden text-muted-foreground/40 sm:inline">·</span>
+                <span>{formatPullDate(record.pullTimestamp)}</span>
+            </div>
+        </div>
+    );
+}
+
+export function PullHistoryList({ records, loading, currentPage, totalPages, onPageChange, isPageLoading, compact }: PullHistoryListProps) {
     const [expandedPull, setExpandedPull] = useState<string | null>(null);
 
     if (loading) {
         return (
-            <div className="space-y-1">
+            <div className={compact ? "space-y-0.5" : "space-y-1"}>
                 {Array.from({ length: 10 }).map((_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: Static skeleton placeholders
-                    <Skeleton className="h-16 w-full" key={i} />
+                    <Skeleton className={compact ? "h-9 w-full" : "h-16 w-full"} key={i} />
                 ))}
             </div>
         );
@@ -48,89 +85,91 @@ export function PullHistoryList({ records, loading, currentPage, totalPages, onP
     }
 
     return (
-        <div className="min-w-0 space-y-1">
-            {records.map((record) => {
-                const rarity = record.rarity;
-                const isExpanded = expandedPull === record.id;
-                const rarityColor = RARITY_COLORS[rarity] ?? "#ffffff";
+        <div className={cn("min-w-0", compact ? "space-y-0" : "space-y-1")}>
+            {compact
+                ? records.map((record) => <CompactPullRow key={record.id} record={record} />)
+                : records.map((record) => {
+                      const rarity = record.rarity;
+                      const isExpanded = expandedPull === record.id;
+                      const rarityColor = RARITY_COLORS[rarity] ?? "#ffffff";
 
-                return (
-                    <Collapsible key={record.id} onOpenChange={(open) => setExpandedPull(open ? record.id : null)} open={isExpanded}>
-                        <div className={cn("card-hover-transition group relative rounded-lg border border-transparent bg-card/50 contain-layout hover:border-border hover:bg-card", isExpanded && "border-border bg-card")}>
-                            <CollapsibleTrigger asChild>
-                                <div className="flex cursor-pointer items-center gap-3 px-3 py-2.5">
-                                    {/* Rarity indicator line on left */}
-                                    <div className="absolute top-1/2 left-0 h-10 w-0.5 -translate-y-1/2 rounded-full opacity-60 opacity-transition group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
+                      return (
+                          <Collapsible key={record.id} onOpenChange={(open) => setExpandedPull(open ? record.id : null)} open={isExpanded}>
+                              <div className={cn("card-hover-transition group relative rounded-lg border border-transparent bg-card/50 contain-layout hover:border-border hover:bg-card", isExpanded && "border-border bg-card")}>
+                                  <CollapsibleTrigger asChild>
+                                      <div className="flex cursor-pointer items-center gap-3 px-3 py-2.5">
+                                          {/* Rarity indicator line on left */}
+                                          <div className="absolute top-1/2 left-0 h-10 w-0.5 -translate-y-1/2 rounded-full opacity-60 opacity-transition group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
 
-                                    {/* Operator Portrait */}
-                                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
-                                        <div className="absolute inset-0 transform-gpu transition-transform duration-200 ease-out group-hover:scale-110">
-                                            <Image alt={record.charName} className="object-cover" fill sizes="48px" src={`/api/cdn/avatar/${encodeURIComponent(record.charId)}`} />
-                                        </div>
-                                    </div>
+                                          {/* Operator Portrait */}
+                                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+                                              <div className="absolute inset-0 transform-gpu transition-transform duration-200 ease-out group-hover:scale-110">
+                                                  <Image alt={record.charName} className="object-cover" fill sizes="48px" src={`/api/cdn/avatar/${encodeURIComponent(record.charId)}`} />
+                                              </div>
+                                          </div>
 
-                                    {/* Pull Info */}
-                                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                        {/* Name row with stars */}
-                                        <div className="flex items-center gap-2">
-                                            <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{record.charName}</span>
-                                            {/* Rarity Stars */}
-                                            <div className="flex shrink-0 items-center gap-0.5">
-                                                {Array.from({ length: rarity }).map((_, i) => (
-                                                    // biome-ignore lint/suspicious/noArrayIndexKey: Static star icons
-                                                    <span className="text-xs" key={i} style={{ color: rarityColor }}>
-                                                        ★
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
+                                          {/* Pull Info */}
+                                          <div className="flex min-w-0 flex-1 flex-col gap-1">
+                                              {/* Name row with stars */}
+                                              <div className="flex items-center gap-2">
+                                                  <span className="truncate font-semibold text-foreground text-sm uppercase tracking-wide">{record.charName}</span>
+                                                  {/* Rarity Stars */}
+                                                  <div className="flex shrink-0 items-center gap-0.5">
+                                                      {Array.from({ length: rarity }).map((_, i) => (
+                                                          // biome-ignore lint/suspicious/noArrayIndexKey: Static star icons
+                                                          <span className="text-xs" key={i} style={{ color: rarityColor }}>
+                                                              ★
+                                                          </span>
+                                                      ))}
+                                                  </div>
+                                              </div>
 
-                                        {/* Info row: Banner, Pool, Date */}
-                                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                                            <span className="shrink-0 text-muted-foreground">{record.gachaType}</span>
-                                            <span className="hidden text-muted-foreground/50 sm:inline">·</span>
-                                            <span className="hidden truncate text-muted-foreground sm:inline">{record.poolName}</span>
-                                            <span className="text-muted-foreground/50">·</span>
-                                            <span className="text-muted-foreground">{formatPullDate(record.pullTimestamp)}</span>
-                                        </div>
-                                    </div>
+                                              {/* Info row: Banner, Pool, Date */}
+                                              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                                                  <span className="shrink-0 text-muted-foreground">{record.gachaType}</span>
+                                                  <span className="hidden text-muted-foreground/50 sm:inline">·</span>
+                                                  <span className="hidden truncate text-muted-foreground sm:inline">{record.poolName}</span>
+                                                  <span className="text-muted-foreground/50">·</span>
+                                                  <span className="text-muted-foreground">{formatPullDate(record.pullTimestamp)}</span>
+                                              </div>
+                                          </div>
 
-                                    {/* Expand indicator */}
-                                    <div className="flex shrink-0 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
-                                        <svg aria-label="Expand details" className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-180")} fill="none" role="img" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                            <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </CollapsibleTrigger>
+                                          {/* Expand indicator */}
+                                          <div className="flex shrink-0 items-center justify-center opacity-40 transition-opacity group-hover:opacity-70">
+                                              <svg aria-label="Expand details" className={cn("h-5 w-5 transition-transform", isExpanded && "rotate-180")} fill="none" role="img" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                                  <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+                                              </svg>
+                                          </div>
+                                      </div>
+                                  </CollapsibleTrigger>
 
-                            {/* Expanded Details */}
-                            <CollapsibleContent>
-                                <div className="border-border border-t px-3 pt-2 pb-3">
-                                    <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Pool ID</p>
-                                            <p className="mt-0.5 font-mono">{record.poolId}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Character ID</p>
-                                            <p className="mt-0.5 font-mono">{record.charId}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Timestamp</p>
-                                            <p className="mt-0.5 font-mono">{record.pullTimestamp}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Rarity</p>
-                                            <p className="mt-0.5">{rarity}-Star</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CollapsibleContent>
-                        </div>
-                    </Collapsible>
-                );
-            })}
+                                  {/* Expanded Details */}
+                                  <CollapsibleContent>
+                                      <div className="border-border border-t px-3 pt-2 pb-3">
+                                          <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
+                                              <div>
+                                                  <p className="font-medium text-muted-foreground">Pool ID</p>
+                                                  <p className="mt-0.5 font-mono">{record.poolId}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="font-medium text-muted-foreground">Character ID</p>
+                                                  <p className="mt-0.5 font-mono">{record.charId}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="font-medium text-muted-foreground">Timestamp</p>
+                                                  <p className="mt-0.5 font-mono">{record.pullTimestamp}</p>
+                                              </div>
+                                              <div>
+                                                  <p className="font-medium text-muted-foreground">Rarity</p>
+                                                  <p className="mt-0.5">{rarity}-Star</p>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </CollapsibleContent>
+                              </div>
+                          </Collapsible>
+                      );
+                  })}
 
             {/* Pagination */}
             {totalPages > 1 && (

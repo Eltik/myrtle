@@ -16,6 +16,7 @@ export interface FilterState {
     selectedGenders: string[];
     selectedRaces: string[];
     selectedArtists: string[];
+    selectedVoiceActors: string[];
     sortBy: SortOption;
     sortOrder: "asc" | "desc";
 }
@@ -27,6 +28,7 @@ export interface FilterOptions {
     factions: string[];
     races: string[];
     artists: string[];
+    voiceActors: string[];
 }
 
 export interface UseOperatorFiltersReturn {
@@ -46,6 +48,7 @@ export interface UseOperatorFiltersReturn {
     setSelectedGenders: (genders: string[]) => void;
     setSelectedRaces: (races: string[]) => void;
     setSelectedArtists: (artists: string[]) => void;
+    setSelectedVoiceActors: (voiceActors: string[]) => void;
     setSortBy: (sortBy: SortOption) => void;
     setSortOrder: (order: "asc" | "desc") => void;
 
@@ -57,7 +60,7 @@ export interface UseOperatorFiltersReturn {
     hasActiveFilters: boolean;
 }
 
-export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFiltersReturn {
+export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Record<string, string[]>): UseOperatorFiltersReturn {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
     const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
@@ -68,6 +71,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
     const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
     const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
     const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
+    const [selectedVoiceActors, setSelectedVoiceActors] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -78,6 +82,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         const factions = new Set<string>();
         const races = new Set<string>();
         const artists = new Set<string>();
+        const voiceActors = new Set<string>();
 
         for (const op of data) {
             if (op.subProfessionId) {
@@ -103,6 +108,14 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
                     if (artist) artists.add(artist);
                 }
             }
+            if (voiceActorMap && op.id) {
+                const cvNames = voiceActorMap[op.id];
+                if (cvNames) {
+                    for (const name of cvNames) {
+                        voiceActors.add(name);
+                    }
+                }
+            }
         }
 
         return {
@@ -112,8 +125,9 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
             factions: Array.from(factions).sort(),
             races: Array.from(races).sort(),
             artists: Array.from(artists).sort(),
+            voiceActors: Array.from(voiceActors).sort(),
         };
-    }, [data]);
+    }, [data, voiceActorMap]);
 
     const filterSets = useMemo(
         () => ({
@@ -126,15 +140,27 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
             genders: new Set(selectedGenders),
             races: new Set(selectedRaces),
             artists: new Set(selectedArtists),
+            voiceActors: new Set(selectedVoiceActors),
         }),
-        [selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists],
+        [selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors],
     );
 
     const lowercaseQuery = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
 
     const hasFilters = useMemo(
-        () => searchQuery !== "" || selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedGenders.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0,
-        [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists],
+        () =>
+            searchQuery !== "" ||
+            selectedClasses.length > 0 ||
+            selectedSubclasses.length > 0 ||
+            selectedRarities.length > 0 ||
+            selectedBirthPlaces.length > 0 ||
+            selectedNations.length > 0 ||
+            selectedFactions.length > 0 ||
+            selectedGenders.length > 0 ||
+            selectedRaces.length > 0 ||
+            selectedArtists.length > 0 ||
+            selectedVoiceActors.length > 0,
+        [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors],
     );
 
     const filteredOperators = useMemo(() => {
@@ -186,6 +212,13 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
 
                 if (filterSets.artists.size > 0 && (!op.artists || !op.artists.some((artist) => filterSets.artists.has(artist)))) {
                     return false;
+                }
+
+                if (filterSets.voiceActors.size > 0) {
+                    const cvNames = op.id ? voiceActorMap?.[op.id] : undefined;
+                    if (!cvNames || !cvNames.some((name) => filterSets.voiceActors.has(name))) {
+                        return false;
+                    }
                 }
 
                 return true;
@@ -289,7 +322,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         });
 
         return result;
-    }, [data, hasFilters, lowercaseQuery, filterSets, sortBy, sortOrder]);
+    }, [data, hasFilters, lowercaseQuery, filterSets, sortBy, sortOrder, voiceActorMap]);
 
     const clearFilters = useCallback(() => {
         setSelectedClasses([]);
@@ -301,12 +334,13 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         setSelectedGenders([]);
         setSelectedRaces([]);
         setSelectedArtists([]);
+        setSelectedVoiceActors([]);
         setSearchQuery("");
     }, []);
 
     const activeFilterCount = useMemo(
-        () => selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + (searchQuery ? 1 : 0),
-        [selectedClasses.length, selectedSubclasses.length, selectedRarities.length, selectedBirthPlaces.length, selectedNations.length, selectedFactions.length, selectedGenders.length, selectedRaces.length, selectedArtists.length, searchQuery],
+        () => selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + selectedVoiceActors.length + (searchQuery ? 1 : 0),
+        [selectedClasses.length, selectedSubclasses.length, selectedRarities.length, selectedBirthPlaces.length, selectedNations.length, selectedFactions.length, selectedGenders.length, selectedRaces.length, selectedArtists.length, selectedVoiceActors.length, searchQuery],
     );
 
     const hasActiveFilters = hasFilters;
@@ -323,6 +357,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
             selectedGenders,
             selectedRaces,
             selectedArtists,
+            selectedVoiceActors,
             sortBy,
             sortOrder,
         },
@@ -338,6 +373,7 @@ export function useOperatorFilters(data: OperatorFromList[]): UseOperatorFilters
         setSelectedGenders,
         setSelectedRaces,
         setSelectedArtists,
+        setSelectedVoiceActors,
         setSortBy,
         setSortOrder,
         clearFilters,

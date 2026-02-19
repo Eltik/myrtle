@@ -29,6 +29,7 @@ function GachaHistoryPageContent() {
         offset: 0,
         order: "desc",
     });
+    const [compactView, setCompactView] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [isTabSwitching, setIsTabSwitching] = useState(false);
@@ -178,7 +179,7 @@ function GachaHistoryPageContent() {
                         <p className="text-muted-foreground">Track your pull statistics and history</p>
                     </div>
                     <div className="flex gap-2">
-                        <GachaSettingsPopover onPageSizeChange={handlePageSizeChange} pageSize={pageSize} />
+                        <GachaSettingsPopover compactView={compactView} onCompactViewChange={setCompactView} onPageSizeChange={handlePageSizeChange} pageSize={pageSize} />
                         <Button disabled={isRefreshing} onClick={handleRefresh} size="sm" variant="outline">
                             <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                             Refresh
@@ -259,6 +260,7 @@ function GachaHistoryPageContent() {
                                         </CardHeader>
                                         <CardContent>
                                             <PullHistoryList
+                                                compact={compactView}
                                                 currentPage={currentPage}
                                                 isPageLoading={loadingHistory && !!history}
                                                 loading={loadingHistory && !history}
