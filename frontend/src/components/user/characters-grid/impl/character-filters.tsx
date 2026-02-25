@@ -7,7 +7,7 @@ import { Input } from "~/components/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { capitalize } from "~/lib/utils";
-import type { RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
+import type { OwnershipFilter, RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
 
 interface CharacterFiltersProps {
     searchTerm: string;
@@ -20,22 +20,42 @@ interface CharacterFiltersProps {
     toggleSortOrder: () => void;
     viewMode: ViewMode;
     setViewMode: (value: ViewMode) => void;
+    ownershipFilter: OwnershipFilter;
+    setOwnershipFilter: (value: OwnershipFilter) => void;
 }
 
-export function CharacterFilters({ searchTerm, setSearchTerm, sortBy, setSortBy, filterRarity, setFilterRarity, sortOrder, toggleSortOrder, viewMode, setViewMode }: CharacterFiltersProps) {
+export function CharacterFilters({ searchTerm, setSearchTerm, sortBy, setSortBy, filterRarity, setFilterRarity, sortOrder, toggleSortOrder, viewMode, setViewMode, ownershipFilter, setOwnershipFilter }: CharacterFiltersProps) {
+    const isUnownedOnly = ownershipFilter === "unowned";
+
     return (
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
                 <Input className="w-full sm:w-70" onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search operators..." value={searchTerm} />
+                <Select onValueChange={(value: OwnershipFilter) => setOwnershipFilter(value)} value={ownershipFilter}>
+                    <SelectTrigger className="w-full sm:w-45">
+                        <SelectValue placeholder="Ownership" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="owned">Owned</SelectItem>
+                        <SelectItem value="unowned">Unowned</SelectItem>
+                        <SelectItem value="all">All Operators</SelectItem>
+                    </SelectContent>
+                </Select>
                 <Select onValueChange={(value: SortBy) => setSortBy(value)} value={sortBy}>
                     <SelectTrigger className="w-full sm:w-45">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="level">Sort by Level</SelectItem>
+                        <SelectItem disabled={isUnownedOnly} value="level">
+                            Sort by Level
+                        </SelectItem>
                         <SelectItem value="rarity">Sort by Rarity</SelectItem>
-                        <SelectItem value="obtained">Sort by Obtained</SelectItem>
-                        <SelectItem value="potential">Sort by Potential</SelectItem>
+                        <SelectItem disabled={isUnownedOnly} value="obtained">
+                            Sort by Obtained
+                        </SelectItem>
+                        <SelectItem disabled={isUnownedOnly} value="potential">
+                            Sort by Potential
+                        </SelectItem>
                     </SelectContent>
                 </Select>
                 <Select onValueChange={(value: RarityFilter) => setFilterRarity(value)} value={filterRarity}>

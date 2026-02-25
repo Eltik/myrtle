@@ -1664,3 +1664,16 @@ export interface UserSkillSpData {
     spCost?: number;
     spType?: string | number; // "INCREASE_WITH_TIME", "INCREASE_WHEN_ATTACK", etc.
 }
+
+export interface UnownedOperator {
+    charId: string;
+    name: string;
+    rarity: string;
+    profession: string;
+    subProfessionId: string;
+    portrait: string;
+    position: string;
+    isOwned: false;
+}
+
+export type DisplayCharacter = (CharacterData & { isOwned: true }) | UnownedOperator;
