@@ -1,5 +1,29 @@
-import type { PlaceType, Voice, Voices } from "~/types/api/impl/voice";
+import type { LangType, PlaceType, Voice, Voices } from "~/types/api/impl/voice";
+import { LANGUAGE_LABELS } from "./constants";
 import type { VoiceLine } from "./types";
+
+export function sanitizeFilename(name: string): string {
+    return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
+}
+
+export function generateVoiceFilename(operatorName: string, voiceTitle: string, language: LangType, voiceUrl: string): string {
+    const ext = voiceUrl.split(".").pop()?.split("?")[0] ?? "mp3";
+    const langLabel = LANGUAGE_LABELS[language] ?? language;
+    return `${sanitizeFilename(operatorName)}_${sanitizeFilename(voiceTitle)}_${sanitizeFilename(langLabel)}.${ext}`;
+}
+
+export async function downloadVoiceLine(audioUrl: string, filename: string): Promise<void> {
+    const response = await fetch(audioUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
 // Map PlaceType to category name
 export function getCategoryName(placeType: PlaceType): string {

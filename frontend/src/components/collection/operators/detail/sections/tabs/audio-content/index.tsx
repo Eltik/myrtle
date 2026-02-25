@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { Download, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "~/components/ui/shadcn/button";
 import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Skeleton } from "~/components/ui/shadcn/skeleton";
 import { Slider } from "~/components/ui/shadcn/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/shadcn/tooltip";
 import { cn } from "~/lib/utils";
 import type { Operator } from "~/types/api";
 import type { LangType } from "~/types/api/impl/voice";
 import { CATEGORY_ORDER, LANGUAGE_LABELS } from "./impl/constants";
-import { formatVoices, getCategoryName } from "./impl/helpers";
+import { downloadVoiceLine, formatVoices, generateVoiceFilename, getCategoryName } from "./impl/helpers";
 import type { VoiceCategory, VoiceLine } from "./impl/types";
 
 interface AudioContentProps {
@@ -25,6 +26,7 @@ export function AudioContent({ operator }: AudioContentProps) {
     const [selectedLanguage, setSelectedLanguage] = useState<LangType>("JP");
     const [activeCategory, setActiveCategory] = useState<string>("greetings");
     const [playingId, setPlayingId] = useState<string | null>(null);
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -208,6 +210,22 @@ export function AudioContent({ operator }: AudioContentProps) {
         setPlayingId(voice.id);
     };
 
+    const downloadVoice = async (voice: VoiceLine) => {
+        const voiceData = voice.data?.find((d) => d.language === selectedLanguage);
+        if (!voiceData?.voiceUrl) return;
+
+        setDownloadingId(voice.id);
+        try {
+            const audioUrl = `/api/cdn/upk${voiceData.voiceUrl}`;
+            const filename = generateVoiceFilename(operator.name ?? operator.id, voice.title, selectedLanguage, voiceData.voiceUrl);
+            await downloadVoiceLine(audioUrl, filename);
+        } catch (err) {
+            console.error("Failed to download voice line:", err);
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.volume = isMuted ? 0 : volume / 100;
@@ -288,9 +306,19 @@ export function AudioContent({ operator }: AudioContentProps) {
                                     {category.lines.map((voice) => (
                                         <div className={cn("group relative overflow-hidden rounded-lg border border-border transition-colors", playingId === voice.id ? "border-primary bg-primary/10" : "bg-card/30 hover:bg-secondary/30")} key={voice.id}>
                                             <div className="flex items-start gap-3 p-3">
-                                                <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
-                                                    {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                                                </Button>
+                                                <div className="flex shrink-0 gap-1">
+                                                    <Button className="shrink-0" onClick={() => playVoice(voice)} size="icon" variant={playingId === voice.id ? "default" : "secondary"}>
+                                                        {playingId === voice.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                                    </Button>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button className="shrink-0" disabled={!voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl || downloadingId === voice.id} onClick={() => downloadVoice(voice)} size="icon" variant="ghost">
+                                                                {downloadingId === voice.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Download</TooltipContent>
+                                                    </Tooltip>
+                                                </div>
                                                 <div className="min-w-0 flex-1">
                                                     <h4 className="mb-1 font-medium text-foreground text-sm">{voice.title}</h4>
                                                     <p className={cn("overflow-hidden text-muted-foreground text-xs duration-300 ease-out", playingId === voice.id ? "max-h-96" : "line-clamp-2 max-h-10")}>{voice.text}</p>
