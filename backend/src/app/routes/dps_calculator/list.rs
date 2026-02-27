@@ -51,7 +51,7 @@ pub struct SupportedOperator {
 }
 
 /// Lightweight potential rank info for API response
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PotentialRankInfo {
     /// Description of what this potential does (e.g., "Deploy Cost -1")
@@ -153,6 +153,75 @@ pub async fn list_operators(State(state): State<AppState>) -> Json<ListOperators
                 potential_ranks,
                 conditionals,
             });
+        }
+    }
+
+    // Handle multi-class operators: Amiya has guard and medic forms
+    // that share the same game data entry but have separate DPS calculator implementations
+    if let Some(amiya) = state.game_data.operators.get("char_002_amiya") {
+        let amiya_rarity = rarity_to_number(&amiya.rarity);
+        let amiya_max_promotion = rarity_to_max_promotion(amiya_rarity);
+        let amiya_potential_ranks: Vec<PotentialRankInfo> = amiya
+            .potential_ranks
+            .iter()
+            .map(|rank| PotentialRankInfo {
+                description: rank.description.clone(),
+            })
+            .collect();
+
+        for variant_name in &["AmiyaGuard", "AmiyaMedic"] {
+            if supported_names.contains(variant_name) {
+                let metadata = get_operator_metadata(variant_name);
+                let (
+                    available_skills,
+                    available_modules,
+                    default_skill_index,
+                    default_potential,
+                    default_module_index,
+                    conditionals,
+                ) = match metadata {
+                    Some(m) => {
+                        let conditionals: Vec<ConditionalInfoResponse> = m
+                            .conditionals
+                            .iter()
+                            .map(|c| ConditionalInfoResponse {
+                                conditional_type: c.conditional_type.as_str().to_string(),
+                                name: c.name.clone(),
+                                inverted: c.inverted,
+                                applicable_skills: c.availability.skills.clone(),
+                                applicable_modules: c.availability.modules.clone(),
+                                min_elite: c.availability.min_elite,
+                                min_module_level: c.availability.min_module_level,
+                            })
+                            .collect();
+                        (
+                            m.available_skills,
+                            m.available_modules,
+                            m.default_skill_index,
+                            m.default_potential,
+                            m.default_module_index,
+                            conditionals,
+                        )
+                    }
+                    None => (vec![], vec![], 0, 1, 0, vec![]),
+                };
+
+                operators.push(SupportedOperator {
+                    id: "char_002_amiya".to_string(),
+                    name: format!("Amiya ({})", &variant_name[5..]), // "Amiya (Guard)" / "Amiya (Medic)"
+                    calculator_name: variant_name.to_string(),
+                    rarity: amiya_rarity,
+                    profession: format!("{:?}", amiya.profession),
+                    available_skills,
+                    available_modules,
+                    default_skill_index,
+                    default_potential,
+                    default_module_index,
+                    max_promotion: amiya_max_promotion,
+                    potential_ranks: amiya_potential_ranks.clone(),
+                    conditionals,
+                });
+            }
         }
     }
 

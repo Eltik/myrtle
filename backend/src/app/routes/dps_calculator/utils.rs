@@ -39,6 +39,45 @@ pub fn normalize_operator_name(name: &str) -> String {
         return "SwireAlt".to_string();
     }
 
+    // Japanese operators — name order reversed in DPS calculator (family name first)
+    if name == "Sakiko Togawa" {
+        return "TogawaSakiko".to_string();
+    }
+    if name == "Mutsumi Wakaba" {
+        return "WakabaMutsumi".to_string();
+    }
+    if name == "Umiri Yahata" {
+        return "YahataUmiri".to_string();
+    }
+    if name.contains("Nyamu") && (name.contains("Yūtenji") || name.contains("Yutenji")) {
+        return "YutenjiNyamu".to_string();
+    }
+    if name == "Uika Misumi" {
+        return "MisumiUika".to_string();
+    }
+
+    // Non-standard alter name
+    if name.contains("Kirin R Yato") {
+        return "YatoAlter".to_string();
+    }
+
+    // Names where normalization produces wrong casing or extra characters
+    if name == "Dur-nar" {
+        return "Durnar".to_string();
+    }
+    if name == "Wild Mane" {
+        return "Wildmane".to_string();
+    }
+    if name == "Vina Victoria" {
+        return "Vina".to_string();
+    }
+    if name == "12F" {
+        return "TwelveF".to_string();
+    }
+    if name == "Lava" {
+        return "Lava3star".to_string();
+    }
+
     // Handle "Operator the Title" format for alter operators
     // e.g., "Ch'en the Holungday" → "ChenAlter", "Eyjafjalla the Hvít Aska" → "EyjafjallaAlter"
     let (base_name, is_alter) = if name.contains(" the ") {
@@ -109,7 +148,7 @@ mod tests {
         assert_eq!(normalize_operator_name("Blue Poison"), "BluePoison");
         assert_eq!(normalize_operator_name("Ch'en"), "Chen");
         assert_eq!(normalize_operator_name("SilverAsh"), "SilverAsh");
-        assert_eq!(normalize_operator_name("12F"), "12F");
+        assert_eq!(normalize_operator_name("12F"), "TwelveF");
         assert_eq!(normalize_operator_name("Projekt Red"), "ProjektRed");
     }
 
@@ -134,6 +173,25 @@ mod tests {
         assert_eq!(normalize_operator_name("Wiš'adel"), "Walter");
         assert_eq!(normalize_operator_name("Wis'adel"), "Walter");
         assert_eq!(normalize_operator_name("Wisadel"), "Walter");
+    }
+
+    #[test]
+    fn test_normalize_japanese_name_order() {
+        assert_eq!(normalize_operator_name("Sakiko Togawa"), "TogawaSakiko");
+        assert_eq!(normalize_operator_name("Mutsumi Wakaba"), "WakabaMutsumi");
+        assert_eq!(normalize_operator_name("Umiri Yahata"), "YahataUmiri");
+        assert_eq!(normalize_operator_name("Nyamu Yūtenji"), "YutenjiNyamu");
+        assert_eq!(normalize_operator_name("Uika Misumi"), "MisumiUika");
+    }
+
+    #[test]
+    fn test_normalize_special_cases() {
+        assert_eq!(normalize_operator_name("Kirin R Yato"), "YatoAlter");
+        assert_eq!(normalize_operator_name("Dur-nar"), "Durnar");
+        assert_eq!(normalize_operator_name("Wild Mane"), "Wildmane");
+        assert_eq!(normalize_operator_name("Vina Victoria"), "Vina");
+        assert_eq!(normalize_operator_name("12F"), "TwelveF");
+        assert_eq!(normalize_operator_name("Lava"), "Lava3star");
     }
 
     #[test]
