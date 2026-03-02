@@ -103,12 +103,12 @@ export function OperatorNotesEditor({ role }: OperatorNotesEditorProps) {
             // Check if we already have notes cached
             const cached = existingNotes[operatorId];
             if (cached) {
-                setSummary(cached.summary);
-                setPros(cached.pros);
-                setCons(cached.cons);
-                setNotes(cached.notes);
-                setTrivia(cached.trivia);
-                setTags(cached.tags);
+                setSummary(cached.summary ?? "");
+                setPros(cached.pros ?? "");
+                setCons(cached.cons ?? "");
+                setNotes(cached.notes ?? "");
+                setTrivia(cached.trivia ?? "");
+                setTags(cached.tags ?? []);
                 setLoadingNotes(false);
                 return;
             }
@@ -118,12 +118,12 @@ export function OperatorNotesEditor({ role }: OperatorNotesEditorProps) {
                 const response = await fetch(`/api/operator-notes/${operatorId}`);
                 if (response.ok) {
                     const data: OperatorNote = await response.json();
-                    setSummary(data.summary);
-                    setPros(data.pros);
-                    setCons(data.cons);
-                    setNotes(data.notes);
-                    setTrivia(data.trivia);
-                    setTags(data.tags);
+                    setSummary(data.summary ?? "");
+                    setPros(data.pros ?? "");
+                    setCons(data.cons ?? "");
+                    setNotes(data.notes ?? "");
+                    setTrivia(data.trivia ?? "");
+                    setTags(data.tags ?? []);
                 } else {
                     // No existing notes — clear form
                     setSummary("");
