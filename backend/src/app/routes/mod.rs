@@ -4,6 +4,7 @@ pub mod avatar;
 pub mod dps_calculator;
 pub mod get_user;
 pub mod leaderboard;
+pub mod operator_notes;
 pub mod portrait;
 pub mod search;
 pub mod static_data;

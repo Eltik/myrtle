@@ -18,6 +18,7 @@ use crate::app::routes::avatar::serve_avatar;
 use crate::app::routes::dps_calculator::{calculate_dps, list_operators};
 use crate::app::routes::get_user::{get_user_by_path, get_user_by_query};
 use crate::app::routes::leaderboard::get_leaderboard;
+use crate::app::routes::operator_notes;
 use crate::app::routes::portrait::serve_portrait;
 use crate::app::routes::search::search_users;
 use crate::app::routes::static_data;
@@ -36,6 +37,7 @@ use crate::app::state::{AppState, get_global_config, init_global_config};
 use crate::core::authentication::{config::GlobalConfig, loaders};
 use crate::core::local::handler::init_game_data_or_default;
 use crate::core::s3::AssetSource;
+use crate::database::models::operator_notes::OperatorNote;
 use crate::database::pool::{create_pool, init_tables};
 use crate::events::setup_event_listeners::setup_event_listeners;
 use crate::events::{ConfigEvent, EventEmitter, GameDataStats};
@@ -214,6 +216,28 @@ fn create_router(state: AppState, rate_store: RateLimitStore) -> Router {
             "/admin/tier-lists/{slug}/moderate",
             post(tier_lists::moderate::moderate_tier_list),
         )
+        // Operator notes
+        .route(
+            "/operator-notes",
+            get(operator_notes::get::list_operator_notes),
+        )
+        // audit/recent MUST come before /{operator_id} to avoid "audit" matching as operator_id
+        .route(
+            "/operator-notes/audit/recent",
+            get(operator_notes::audit::get_recent_audit),
+        )
+        .route(
+            "/operator-notes/{operator_id}",
+            get(operator_notes::get::get_operator_note),
+        )
+        .route(
+            "/operator-notes/{operator_id}",
+            put(operator_notes::update::update_operator_note),
+        )
+        .route(
+            "/operator-notes/{operator_id}/audit",
+            get(operator_notes::audit::get_operator_audit),
+        )
         .layer(middleware::from_fn_with_state(
             (rate_store.clone(), state.clone()),
             rate_limit,
@@ -294,6 +318,19 @@ pub async fn run() -> Result<(), Box<dyn std::error::Error>> {
         }));
     } else {
         events.emit(ConfigEvent::GameDataEmpty);
+    }
+
+    // Seed operator notes for all known operators
+    if game_data.is_loaded() {
+        let operator_ids: Vec<&str> = game_data.operators.keys().map(|s| s.as_str()).collect();
+        match OperatorNote::seed_operators(&db, &operator_ids).await {
+            Ok(inserted) => {
+                if inserted > 0 {
+                    eprintln!("[operator_notes] Seeded {inserted} new operator(s)");
+                }
+            }
+            Err(e) => eprintln!("[operator_notes] Warning: Failed to seed: {e}"),
+        }
     }
 
     events.emit(ConfigEvent::RedisConnecting);

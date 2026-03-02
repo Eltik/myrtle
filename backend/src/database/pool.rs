@@ -355,5 +355,56 @@ pub async fn init_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // =========================================================================
+    // Operator Notes Tables
+    // =========================================================================
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS operator_notes (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            operator_id VARCHAR(100) NOT NULL UNIQUE,
+            pros TEXT NOT NULL DEFAULT '',
+            cons TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            trivia TEXT NOT NULL DEFAULT '',
+            summary VARCHAR(500) NOT NULL DEFAULT '',
+            tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS operator_notes_audit_log (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            operator_id VARCHAR(100) NOT NULL,
+            field_name VARCHAR(50) NOT NULL,
+            old_value TEXT,
+            new_value TEXT,
+            changed_by UUID REFERENCES users(id),
+            changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_operator_notes_audit_operator ON operator_notes_audit_log(operator_id)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_operator_notes_audit_time ON operator_notes_audit_log(changed_at DESC)",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }

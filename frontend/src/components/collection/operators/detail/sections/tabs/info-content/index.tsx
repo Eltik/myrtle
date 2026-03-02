@@ -20,6 +20,7 @@ import type { Blackboard, Operator } from "~/types/api";
 import type { Range } from "~/types/api/impl/range";
 import { OperatorRange } from "../../ui/operator-range";
 import { StatCard } from "../../ui/stat-card";
+import { OperatorNotes } from "./impl/operator-notes";
 import { ProfileItem } from "./impl/profile-item";
 
 interface InfoContentProps {
@@ -237,6 +238,9 @@ export const InfoContent = memo(function InfoContent({ operator }: InfoContentPr
                     </div>
                 </DisclosureContent>
             </Disclosure>
+
+            {/* Operator Notes */}
+            <OperatorNotes operatorId={operator.id ?? null} />
 
             <Separator className="my-6" />
 
