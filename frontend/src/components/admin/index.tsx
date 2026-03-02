@@ -4,6 +4,7 @@ import type { AdminRole, AdminStats } from "~/types/frontend/impl/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/shadcn/card";
 import { Header } from "./impl/header";
 import { ModerationPanel } from "./impl/moderation-panel";
+import { OperatorNotesEditor } from "./impl/operator-notes-editor";
 import { StatsGrid } from "./impl/stats-grid";
 import { TierListManagement } from "./impl/tier-list-management";
 import { UsersTable } from "./impl/users-table";
@@ -37,6 +38,9 @@ export function AdminPanel({ user, role, stats, statsLoading, onRefresh }: Admin
 
             {/* Tier List Management */}
             <TierListManagement loading={statsLoading} onRefresh={onRefresh} role={role} tierLists={stats?.tierLists.tierLists ?? []} />
+
+            {/* Operator Notes Editor */}
+            <OperatorNotesEditor role={role} />
 
             {/* Content Moderation - visible to tier_list_admin and super_admin */}
             {canReviewReports(role) && <ModerationPanel />}
