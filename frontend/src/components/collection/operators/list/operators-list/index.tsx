@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Grid3X3, LayoutList, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, GalleryThumbnails, Grid3X3, LayoutList, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-background";
@@ -77,7 +77,7 @@ function getOperatorNotesMap(): Promise<Record<string, OperatorNotesInfo>> {
 export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     // UI state - default to list view on mobile
     const [showFilters, setShowFilters] = useState(false);
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [viewMode, setViewMode] = useState<"grid" | "list" | "compact">("grid");
     const [listColumns, setListColumns] = useState(2);
 
     // Voice actor data - fetched once and cached at module level
@@ -99,6 +99,14 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     useEffect(() => {
         setViewMode(getInitialViewMode());
         setListColumns(getInitialListColumns());
+    }, []);
+
+    // Persist view mode to localStorage
+    const handleViewModeChange = useCallback((value: string | null) => {
+        if (value === "grid" || value === "list" || value === "compact") {
+            setViewMode(value);
+            localStorage.setItem("viewMode", value);
+        }
     }, []);
 
     // Persist list columns to localStorage
@@ -200,18 +208,12 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                 <div className="flex items-center gap-2">
                     {/* View Toggle with animated sliding indicator */}
                     <motion.div className="flex items-center rounded-lg border border-border bg-secondary/50 p-1" layout transition={TOGGLE_TRANSITION}>
-                        <AnimatedBackground
-                            className="rounded-md bg-primary"
-                            defaultValue={viewMode}
-                            onValueChange={(value) => {
-                                if (value === "grid" || value === "list") {
-                                    setViewMode(value);
-                                }
-                            }}
-                            transition={TOGGLE_TRANSITION}
-                        >
+                        <AnimatedBackground className="rounded-md bg-primary" defaultValue={viewMode} onValueChange={handleViewModeChange} transition={TOGGLE_TRANSITION}>
                             <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "grid" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="grid" type="button">
                                 <Grid3X3 className="h-4 w-4" />
+                            </button>
+                            <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "compact" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="compact" type="button">
+                                <GalleryThumbnails className="h-4 w-4" />
                             </button>
                             <button className={cn("flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors duration-150", viewMode === "list" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground")} data-id="list" type="button">
                                 <LayoutList className="h-4 w-4" />
@@ -327,7 +329,11 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                     <motion.div
                         animate={{ opacity: 1, scale: 1 }}
                         className={cn(
-                            viewMode === "grid" ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:gap-4" : cn("grid gap-1", listColumns === 1 ? "grid-cols-1" : listColumns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"),
+                            viewMode === "grid"
+                                ? "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 lg:gap-3 xl:gap-4"
+                                : viewMode === "compact"
+                                  ? "grid grid-cols-3 gap-1 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8"
+                                  : cn("grid gap-1", listColumns === 1 ? "grid-cols-1" : listColumns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"),
                             "will-change-transform contain-layout",
                         )}
                         exit={{ opacity: 0, scale: 0.98 }}
