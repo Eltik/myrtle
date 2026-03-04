@@ -21,6 +21,7 @@ interface OperatorFiltersProps {
     races: string[];
     artists: string[];
     voiceActors: string[];
+    noteTags: string[];
     selectedClasses: string[];
     selectedSubclasses: string[];
     selectedRarities: number[];
@@ -31,6 +32,8 @@ interface OperatorFiltersProps {
     selectedRaces: string[];
     selectedArtists: string[];
     selectedVoiceActors: string[];
+    hasNotesFilter: boolean;
+    selectedNoteTags: string[];
     onClassChange: (classes: string[]) => void;
     onSubclassChange: (subclasses: string[]) => void;
     onRarityChange: (rarities: number[]) => void;
@@ -41,6 +44,8 @@ interface OperatorFiltersProps {
     onRaceChange: (races: string[]) => void;
     onArtistChange: (artists: string[]) => void;
     onVoiceActorChange: (voiceActors: string[]) => void;
+    onHasNotesChange: (hasNotes: boolean) => void;
+    onNoteTagChange: (tags: string[]) => void;
     onClearFilters: () => void;
     hideHeader?: boolean;
 }
@@ -56,6 +61,7 @@ export function OperatorFilters({
     races,
     artists,
     voiceActors,
+    noteTags,
     selectedClasses,
     selectedSubclasses,
     selectedRarities,
@@ -66,6 +72,8 @@ export function OperatorFilters({
     selectedRaces,
     selectedArtists,
     selectedVoiceActors,
+    hasNotesFilter,
+    selectedNoteTags,
     onClassChange,
     onSubclassChange,
     onRarityChange,
@@ -76,6 +84,8 @@ export function OperatorFilters({
     onRaceChange,
     onArtistChange,
     onVoiceActorChange,
+    onHasNotesChange,
+    onNoteTagChange,
     onClearFilters,
     hideHeader = false,
 }: OperatorFiltersProps) {
@@ -86,10 +96,22 @@ export function OperatorFilters({
     const toggleGender = createToggle(selectedGenders, onGenderChange);
 
     const hasFilters =
-        selectedClasses.length > 0 || selectedSubclasses.length > 0 || selectedRarities.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0 || selectedVoiceActors.length > 0;
+        selectedClasses.length > 0 ||
+        selectedSubclasses.length > 0 ||
+        selectedRarities.length > 0 ||
+        selectedGenders.length > 0 ||
+        selectedBirthPlaces.length > 0 ||
+        selectedNations.length > 0 ||
+        selectedFactions.length > 0 ||
+        selectedRaces.length > 0 ||
+        selectedArtists.length > 0 ||
+        selectedVoiceActors.length > 0 ||
+        hasNotesFilter ||
+        selectedNoteTags.length > 0;
 
-    const hasAdvancedFilters = selectedSubclasses.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0 || selectedVoiceActors.length > 0;
-    const advancedFilterCount = selectedSubclasses.length + selectedGenders.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedRaces.length + selectedArtists.length + selectedVoiceActors.length;
+    const hasAdvancedFilters =
+        selectedSubclasses.length > 0 || selectedGenders.length > 0 || selectedBirthPlaces.length > 0 || selectedNations.length > 0 || selectedFactions.length > 0 || selectedRaces.length > 0 || selectedArtists.length > 0 || selectedVoiceActors.length > 0 || hasNotesFilter || selectedNoteTags.length > 0;
+    const advancedFilterCount = selectedSubclasses.length + selectedGenders.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedRaces.length + selectedArtists.length + selectedVoiceActors.length + (hasNotesFilter ? 1 : 0) + selectedNoteTags.length;
 
     return (
         <div className="z-99 min-w-0 overflow-hidden rounded-lg text-foreground">
@@ -238,6 +260,23 @@ export function OperatorFilters({
 
                                         {/* Voice Actor Filter - Dropdown */}
                                         <FilterDropdown label="Voice Actor" onRemove={(v) => onVoiceActorChange(selectedVoiceActors.filter((x) => x !== v))} onToggle={createToggle(selectedVoiceActors, onVoiceActorChange)} options={voiceActors} placeholder="Select voice actor" selectedOptions={selectedVoiceActors} />
+
+                                        {/* Has Notes Filter - Toggle */}
+                                        <div className="space-y-3">
+                                            <span className="font-medium text-muted-foreground text-sm">Operator Notes</span>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    className={cn("rounded-lg border px-3 py-1.5 text-sm transition-all", hasNotesFilter ? "border-primary bg-primary/20 text-foreground" : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground")}
+                                                    onClick={() => onHasNotesChange(!hasNotesFilter)}
+                                                    type="button"
+                                                >
+                                                    Has Notes
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Note Tags Filter - Dropdown */}
+                                        {noteTags.length > 0 && <FilterDropdown label="Note Tags" onRemove={(t) => onNoteTagChange(selectedNoteTags.filter((x) => x !== t))} onToggle={createToggle(selectedNoteTags, onNoteTagChange)} options={noteTags} placeholder="Select note tag" selectedOptions={selectedNoteTags} />}
                                     </div>
                                 </motion.div>
                             )}

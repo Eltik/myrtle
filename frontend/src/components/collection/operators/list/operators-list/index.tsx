@@ -7,9 +7,10 @@ import { AnimatedBackground } from "~/components/ui/motion-primitives/animated-b
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { cn } from "~/lib/utils";
 import type { OperatorFromList } from "~/types/api";
+import type { OperatorNote } from "~/types/api/impl/operator-notes";
 import { CLASSES, GENDERS, ITEMS_PER_PAGE, RARITIES, SORT_OPTIONS } from "../constants";
 import { useOperatorFilters } from "../hooks";
-import type { SortOption } from "../hooks/impl/use-operator-filters";
+import type { OperatorNotesInfo, SortOption } from "../hooks/impl/use-operator-filters";
 import { OperatorCard } from "../operator-card";
 import { OperatorFilters } from "../operator-filters";
 import { Pagination } from "../ui/impl/pagination";
@@ -44,6 +45,35 @@ function getVoiceActors(): Promise<Record<string, string[]>> {
     return voiceActorPromise;
 }
 
+// Module-level cache so operator notes are fetched only once across mounts
+let notesCache: Record<string, OperatorNotesInfo> | null = null;
+let notesPromise: Promise<Record<string, OperatorNotesInfo>> | null = null;
+
+function getOperatorNotesMap(): Promise<Record<string, OperatorNotesInfo>> {
+    if (notesCache) return Promise.resolve(notesCache);
+    if (notesPromise) return notesPromise;
+
+    notesPromise = fetch("/api/operator-notes")
+        .then((res) => res.json())
+        .then((data: OperatorNote[]) => {
+            const map: Record<string, OperatorNotesInfo> = {};
+            if (Array.isArray(data)) {
+                for (const note of data) {
+                    map[note.operator_id] = { tags: note.tags ?? [] };
+                }
+            }
+            notesCache = map;
+            return notesCache;
+        })
+        .catch((error) => {
+            console.error("Failed to fetch operator notes data:", error);
+            notesPromise = null;
+            return {} as Record<string, OperatorNotesInfo>;
+        });
+
+    return notesPromise;
+}
+
 export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     // UI state - default to list view on mobile
     const [showFilters, setShowFilters] = useState(false);
@@ -53,9 +83,15 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
     // Voice actor data - fetched once and cached at module level
     const [voiceActorMap, setVoiceActorMap] = useState<Record<string, string[]>>(voiceActorCache ?? {});
 
+    // Operator notes data - fetched once and cached at module level
+    const [notesMap, setNotesMap] = useState<Record<string, OperatorNotesInfo>>(notesCache ?? {});
+
     useEffect(() => {
         if (!voiceActorCache) {
             getVoiceActors().then(setVoiceActorMap);
+        }
+        if (!notesCache) {
+            getOperatorNotesMap().then(setNotesMap);
         }
     }, []);
 
@@ -92,12 +128,14 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
         setSelectedRaces,
         setSelectedArtists,
         setSelectedVoiceActors,
+        setHasNotesFilter,
+        setSelectedNoteTags,
         setSortBy,
         setSortOrder,
         clearFilters,
         activeFilterCount,
         hasActiveFilters,
-    } = useOperatorFilters(data, voiceActorMap);
+    } = useOperatorFilters(data, voiceActorMap, notesMap);
 
     // Pagination
     const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
@@ -226,14 +264,18 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             classes={[...CLASSES]}
                             factions={filterOptions.factions}
                             genders={[...GENDERS]}
+                            hasNotesFilter={filters.hasNotesFilter}
                             nations={filterOptions.nations}
+                            noteTags={filterOptions.noteTags}
                             onArtistChange={setSelectedArtists}
                             onBirthPlaceChange={setSelectedBirthPlaces}
                             onClassChange={setSelectedClasses}
                             onClearFilters={handleClearFilters}
                             onFactionChange={setSelectedFactions}
                             onGenderChange={setSelectedGenders}
+                            onHasNotesChange={setHasNotesFilter}
                             onNationChange={setSelectedNations}
+                            onNoteTagChange={setSelectedNoteTags}
                             onRaceChange={setSelectedRaces}
                             onRarityChange={setSelectedRarities}
                             onSubclassChange={setSelectedSubclasses}
@@ -246,6 +288,7 @@ export function OperatorsList({ data }: { data: OperatorFromList[] }) {
                             selectedFactions={filters.selectedFactions}
                             selectedGenders={filters.selectedGenders}
                             selectedNations={filters.selectedNations}
+                            selectedNoteTags={filters.selectedNoteTags}
                             selectedRaces={filters.selectedRaces}
                             selectedRarities={filters.selectedRarities}
                             selectedSubclasses={filters.selectedSubclasses}
