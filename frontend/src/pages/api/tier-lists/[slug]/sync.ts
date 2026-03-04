@@ -111,13 +111,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const createdBy = tierListData.created_by;
 
         if (tierListType === "community") {
-            if (createdBy !== userId) {
+            // Community tier lists: owner can edit, tier_list_admin+ can bypass
+            const isAdmin = role === "tier_list_admin" || role === "super_admin";
+            if (createdBy !== userId && !isAdmin) {
                 return res.status(403).json({
                     success: false,
                     error: "You don't own this tier list",
                 });
             }
         } else {
+            // Official tier lists: any admin role can edit (backend handles fine-grained permissions)
             if (!isAdminRole(role ?? undefined)) {
                 return res.status(403).json({
                     success: false,
