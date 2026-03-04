@@ -66,6 +66,10 @@ pub struct TierListSummary {
     pub slug: String,
     #[serde(rename = "isActive")]
     pub is_active: bool,
+    #[serde(rename = "tierListType")]
+    pub tier_list_type: String,
+    #[serde(rename = "createdBy")]
+    pub created_by: Option<String>,
     #[serde(rename = "tierCount")]
     pub tier_count: i64,
     #[serde(rename = "operatorCount")]
@@ -238,6 +242,8 @@ struct TierListSummaryRow {
     name: String,
     slug: String,
     is_active: bool,
+    tier_list_type: String,
+    created_by: Option<Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
     tier_count: Option<i64>,
@@ -290,7 +296,7 @@ async fn fetch_tier_list_stats(state: &AppState) -> Result<TierListStats, ApiErr
     let rows: Vec<TierListSummaryRow> = sqlx::query_as(
         r#"
         SELECT
-            tl.id, tl.name, tl.slug, tl.is_active, tl.created_at, tl.updated_at,
+            tl.id, tl.name, tl.slug, tl.is_active, tl.tier_list_type, tl.created_by, tl.created_at, tl.updated_at,
             (SELECT COUNT(*) FROM tiers t WHERE t.tier_list_id = tl.id) as tier_count,
             (SELECT COUNT(*) FROM tier_placements tp
                 JOIN tiers t2 ON tp.tier_id = t2.id
@@ -315,6 +321,8 @@ async fn fetch_tier_list_stats(state: &AppState) -> Result<TierListStats, ApiErr
             name: row.name,
             slug: row.slug,
             is_active: row.is_active,
+            tier_list_type: row.tier_list_type,
+            created_by: row.created_by.map(|id| id.to_string()),
             tier_count: row.tier_count.unwrap_or(0),
             operator_count: row.operator_count.unwrap_or(0),
             version_count: row.version_count.unwrap_or(0),
