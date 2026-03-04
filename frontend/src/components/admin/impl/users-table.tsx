@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { RecentUser } from "~/types/frontend/impl/admin";
 import { Avatar, AvatarFallback } from "../../ui/shadcn/avatar";
 import { Badge } from "../../ui/shadcn/badge";
@@ -57,7 +57,9 @@ function ServerBadge({ server }: { server: string }) {
     );
 }
 
-export function UsersTable({ users, loading = false, onRefresh }: UsersTableProps) {
+export function UsersTable({ users: initialUsers, loading: externalLoading = false, onRefresh }: UsersTableProps) {
+    const [allUsers, setAllUsers] = useState<RecentUser[]>(initialUsers);
+    const [fetchLoading, setFetchLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState<string>("all");
     const [serverFilter, setServerFilter] = useState<string>("all");
@@ -66,8 +68,40 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
+    const loading = externalLoading || fetchLoading;
+
+    const fetchAllUsers = useCallback(async () => {
+        setFetchLoading(true);
+        try {
+            const res = await fetch("/api/admin/users?page=1&limit=10000");
+            const json = await res.json();
+            if (json.success && json.data) {
+                const users: RecentUser[] = Array.isArray(json.data) ? json.data : (json.data.users ?? json.data.recentUsers ?? []);
+                if (users.length > 0) {
+                    setAllUsers(users);
+                }
+            }
+        } catch {
+            // Fall back to initial users from props
+        } finally {
+            setFetchLoading(false);
+        }
+    }, []);
+
+    // Fetch all users on mount
+    useEffect(() => {
+        fetchAllUsers();
+    }, [fetchAllUsers]);
+
+    // Update from props if they change (e.g. after external refresh)
+    useEffect(() => {
+        if (initialUsers.length > allUsers.length) {
+            setAllUsers(initialUsers);
+        }
+    }, [initialUsers, allUsers.length]);
+
     const filteredAndSortedUsers = useMemo(() => {
-        const result = users.filter((user) => {
+        const result = allUsers.filter((user) => {
             const matchesSearch = searchQuery === "" || user.nickname.toLowerCase().includes(searchQuery.toLowerCase()) || user.uid.toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesRole = roleFilter === "all" || user.role === roleFilter;
@@ -102,7 +136,7 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
         });
 
         return result;
-    }, [users, searchQuery, roleFilter, serverFilter, sortField, sortOrder]);
+    }, [allUsers, searchQuery, roleFilter, serverFilter, sortField, sortOrder]);
 
     const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
     const paginatedUsers = useMemo(() => {
@@ -131,15 +165,20 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
         setCurrentPage(Math.max(1, Math.min(page, totalPages)));
     };
 
+    const handleRefresh = useCallback(() => {
+        fetchAllUsers();
+        onRefresh?.();
+    }, [fetchAllUsers, onRefresh]);
+
     // Get unique servers from users
     const availableServers = useMemo(() => {
-        return [...new Set(users.map((u) => u.server))].sort();
-    }, [users]);
+        return [...new Set(allUsers.map((u) => u.server))].sort();
+    }, [allUsers]);
 
     // Get unique roles from users
     const availableRoles = useMemo(() => {
-        return [...new Set(users.map((u) => u.role))].sort();
-    }, [users]);
+        return [...new Set(allUsers.map((u) => u.role))].sort();
+    }, [allUsers]);
 
     return (
         <div className="overflow-hidden rounded-xl border bg-card text-card-foreground">
@@ -215,12 +254,10 @@ export function UsersTable({ users, loading = false, onRefresh }: UsersTableProp
 
                 <div className="flex items-center gap-2">
                     <span className="text-muted-foreground text-sm">{filteredAndSortedUsers.length} users</span>
-                    {onRefresh && (
-                        <Button className="h-8 gap-1.5" disabled={loading} onClick={onRefresh} size="sm" variant="outline">
-                            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-                            <span className="hidden sm:inline">Refresh</span>
-                        </Button>
-                    )}
+                    <Button className="h-8 gap-1.5" disabled={loading} onClick={handleRefresh} size="sm" variant="outline">
+                        <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </Button>
                 </div>
             </div>
 
