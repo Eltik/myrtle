@@ -5,6 +5,10 @@ import { CLASS_SORT_ORDER } from "../../constants";
 
 export type SortOption = "name" | "rarity" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block" | "aspd";
 
+export interface OperatorNotesInfo {
+    tags: string[];
+}
+
 export interface FilterState {
     searchQuery: string;
     selectedClasses: string[];
@@ -17,6 +21,8 @@ export interface FilterState {
     selectedRaces: string[];
     selectedArtists: string[];
     selectedVoiceActors: string[];
+    hasNotesFilter: boolean;
+    selectedNoteTags: string[];
     sortBy: SortOption;
     sortOrder: "asc" | "desc";
 }
@@ -29,6 +35,7 @@ export interface FilterOptions {
     races: string[];
     artists: string[];
     voiceActors: string[];
+    noteTags: string[];
 }
 
 export interface UseOperatorFiltersReturn {
@@ -49,6 +56,8 @@ export interface UseOperatorFiltersReturn {
     setSelectedRaces: (races: string[]) => void;
     setSelectedArtists: (artists: string[]) => void;
     setSelectedVoiceActors: (voiceActors: string[]) => void;
+    setHasNotesFilter: (hasNotes: boolean) => void;
+    setSelectedNoteTags: (tags: string[]) => void;
     setSortBy: (sortBy: SortOption) => void;
     setSortOrder: (order: "asc" | "desc") => void;
 
@@ -60,7 +69,7 @@ export interface UseOperatorFiltersReturn {
     hasActiveFilters: boolean;
 }
 
-export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Record<string, string[]>): UseOperatorFiltersReturn {
+export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Record<string, string[]>, notesMap?: Record<string, OperatorNotesInfo>): UseOperatorFiltersReturn {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
     const [selectedSubclasses, setSelectedSubclasses] = useState<string[]>([]);
@@ -72,6 +81,8 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
     const [selectedRaces, setSelectedRaces] = useState<string[]>([]);
     const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
     const [selectedVoiceActors, setSelectedVoiceActors] = useState<string[]>([]);
+    const [hasNotesFilter, setHasNotesFilter] = useState(false);
+    const [selectedNoteTags, setSelectedNoteTags] = useState<string[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>("rarity");
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -83,6 +94,7 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
         const races = new Set<string>();
         const artists = new Set<string>();
         const voiceActors = new Set<string>();
+        const noteTags = new Set<string>();
 
         for (const op of data) {
             if (op.subProfessionId) {
@@ -116,6 +128,14 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
                     }
                 }
             }
+            if (notesMap && op.id) {
+                const noteInfo = notesMap[op.id];
+                if (noteInfo?.tags) {
+                    for (const tag of noteInfo.tags) {
+                        noteTags.add(tag);
+                    }
+                }
+            }
         }
 
         return {
@@ -126,8 +146,9 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
             races: Array.from(races).sort(),
             artists: Array.from(artists).sort(),
             voiceActors: Array.from(voiceActors).sort(),
+            noteTags: Array.from(noteTags).sort(),
         };
-    }, [data, voiceActorMap]);
+    }, [data, voiceActorMap, notesMap]);
 
     const filterSets = useMemo(
         () => ({
@@ -141,8 +162,9 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
             races: new Set(selectedRaces),
             artists: new Set(selectedArtists),
             voiceActors: new Set(selectedVoiceActors),
+            noteTags: new Set(selectedNoteTags),
         }),
-        [selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors],
+        [selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors, selectedNoteTags],
     );
 
     const lowercaseQuery = useMemo(() => searchQuery.toLowerCase(), [searchQuery]);
@@ -159,8 +181,10 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
             selectedGenders.length > 0 ||
             selectedRaces.length > 0 ||
             selectedArtists.length > 0 ||
-            selectedVoiceActors.length > 0,
-        [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors],
+            selectedVoiceActors.length > 0 ||
+            hasNotesFilter ||
+            selectedNoteTags.length > 0,
+        [searchQuery, selectedClasses, selectedSubclasses, selectedRarities, selectedBirthPlaces, selectedNations, selectedFactions, selectedGenders, selectedRaces, selectedArtists, selectedVoiceActors, hasNotesFilter, selectedNoteTags],
     );
 
     const filteredOperators = useMemo(() => {
@@ -217,6 +241,19 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
                 if (filterSets.voiceActors.size > 0) {
                     const cvNames = op.id ? voiceActorMap?.[op.id] : undefined;
                     if (!cvNames || !cvNames.some((name) => filterSets.voiceActors.has(name))) {
+                        return false;
+                    }
+                }
+
+                if (hasNotesFilter) {
+                    if (!op.id || !notesMap?.[op.id]) {
+                        return false;
+                    }
+                }
+
+                if (filterSets.noteTags.size > 0) {
+                    const noteInfo = op.id ? notesMap?.[op.id] : undefined;
+                    if (!noteInfo?.tags || !noteInfo.tags.some((tag) => filterSets.noteTags.has(tag))) {
                         return false;
                     }
                 }
@@ -322,7 +359,7 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
         });
 
         return result;
-    }, [data, hasFilters, lowercaseQuery, filterSets, sortBy, sortOrder, voiceActorMap]);
+    }, [data, hasFilters, lowercaseQuery, filterSets, sortBy, sortOrder, voiceActorMap, hasNotesFilter, notesMap]);
 
     const clearFilters = useCallback(() => {
         setSelectedClasses([]);
@@ -335,12 +372,27 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
         setSelectedRaces([]);
         setSelectedArtists([]);
         setSelectedVoiceActors([]);
+        setHasNotesFilter(false);
+        setSelectedNoteTags([]);
         setSearchQuery("");
     }, []);
 
     const activeFilterCount = useMemo(
-        () => selectedClasses.length + selectedSubclasses.length + selectedRarities.length + selectedBirthPlaces.length + selectedNations.length + selectedFactions.length + selectedGenders.length + selectedRaces.length + selectedArtists.length + selectedVoiceActors.length + (searchQuery ? 1 : 0),
-        [selectedClasses.length, selectedSubclasses.length, selectedRarities.length, selectedBirthPlaces.length, selectedNations.length, selectedFactions.length, selectedGenders.length, selectedRaces.length, selectedArtists.length, selectedVoiceActors.length, searchQuery],
+        () =>
+            selectedClasses.length +
+            selectedSubclasses.length +
+            selectedRarities.length +
+            selectedBirthPlaces.length +
+            selectedNations.length +
+            selectedFactions.length +
+            selectedGenders.length +
+            selectedRaces.length +
+            selectedArtists.length +
+            selectedVoiceActors.length +
+            (hasNotesFilter ? 1 : 0) +
+            selectedNoteTags.length +
+            (searchQuery ? 1 : 0),
+        [selectedClasses.length, selectedSubclasses.length, selectedRarities.length, selectedBirthPlaces.length, selectedNations.length, selectedFactions.length, selectedGenders.length, selectedRaces.length, selectedArtists.length, selectedVoiceActors.length, hasNotesFilter, selectedNoteTags.length, searchQuery],
     );
 
     const hasActiveFilters = hasFilters;
@@ -358,6 +410,8 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
             selectedRaces,
             selectedArtists,
             selectedVoiceActors,
+            hasNotesFilter,
+            selectedNoteTags,
             sortBy,
             sortOrder,
         },
@@ -374,6 +428,8 @@ export function useOperatorFilters(data: OperatorFromList[], voiceActorMap?: Rec
         setSelectedRaces,
         setSelectedArtists,
         setSelectedVoiceActors,
+        setHasNotesFilter,
+        setSelectedNoteTags,
         setSortBy,
         setSortOrder,
         clearFilters,
