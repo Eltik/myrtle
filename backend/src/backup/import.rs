@@ -26,6 +26,8 @@ pub const TABLE_IMPORT_ORDER: &[&str] = &[
     "tier_list_reports",
     "gacha_records",
     "user_gacha_settings",
+    "operator_notes",
+    "operator_notes_audit_log",
 ];
 
 /// Get the primary conflict target for a table.
@@ -50,6 +52,10 @@ fn get_primary_conflict_target(table_name: &str) -> &'static str {
         "gacha_records" => "user_id, pull_timestamp, char_id, pool_id",
         // For user_gacha_settings, primary key is user_id
         "user_gacha_settings" => "user_id",
+        // For operator_notes, operator_id is the unique key
+        "operator_notes" => "operator_id",
+        // For operator_notes_audit_log, use primary key
+        "operator_notes_audit_log" => "id",
         // Default to id for other tables
         _ => "id",
     }
