@@ -16,16 +16,18 @@ use std::path::Path;
 /// Table export order respecting foreign key dependencies.
 /// Tables are listed in order they should be exported (parents first).
 pub const TABLE_EXPORT_ORDER: &[&str] = &[
-    "users",                 // No FK dependencies
-    "tier_lists",            // FK: created_by -> users (nullable)
-    "tiers",                 // FK: tier_list_id -> tier_lists
-    "tier_placements",       // FK: tier_id -> tiers
-    "tier_list_versions",    // FK: tier_list_id -> tier_lists, published_by -> users
-    "tier_change_log",       // FK: tier_list_id, version_id, changed_by
-    "tier_list_permissions", // FK: tier_list_id, user_id, granted_by
-    "tier_list_reports",     // FK: tier_list_id, reporter_id, reviewed_by -> users
-    "gacha_records",         // FK: user_id -> users
-    "user_gacha_settings",   // FK: user_id -> users
+    "users",                    // No FK dependencies
+    "tier_lists",               // FK: created_by -> users (nullable)
+    "tiers",                    // FK: tier_list_id -> tier_lists
+    "tier_placements",          // FK: tier_id -> tiers
+    "tier_list_versions",       // FK: tier_list_id -> tier_lists, published_by -> users
+    "tier_change_log",          // FK: tier_list_id, version_id, changed_by
+    "tier_list_permissions",    // FK: tier_list_id, user_id, granted_by
+    "tier_list_reports",        // FK: tier_list_id, reporter_id, reviewed_by -> users
+    "gacha_records",            // FK: user_id -> users
+    "user_gacha_settings",      // FK: user_id -> users
+    "operator_notes",           // No FK dependencies
+    "operator_notes_audit_log", // FK: changed_by -> users
 ];
 
 /// Default Redis key patterns to export
