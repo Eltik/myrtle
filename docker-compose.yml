@@ -63,7 +63,7 @@ services:
       S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
       S3_PREFIX: ${S3_PREFIX}
     volumes:
-      - ./backend:/app
+      - ./backend:/src
       - ./assets/Unpacked:/data/Unpacked:ro
     ports:
       - "3060:3060"
@@ -83,7 +83,7 @@ services:
       BACKEND_URL: ${BACKEND_URL}
       INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
     volumes:
-      - ./frontend:/app
+      - ./frontend:/src
     ports:
       - "3000:3000"
     networks:

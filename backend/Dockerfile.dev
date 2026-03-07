@@ -4,6 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config libssl-dev libpq-dev
 RUN rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /src
 EXPOSE 3060
 CMD ["cargo", "run", "--bin", "backend"]
