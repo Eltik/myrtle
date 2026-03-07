@@ -221,17 +221,20 @@ impl AssetMappings {
         }
         stats.chararts = mappings.chararts.len();
 
-        // Scan item icon directories in spritepack
+        // Scan item icon directories in upk/arts
+        let arts_dir = assets_dir.join("upk/arts");
         let item_icon_dirs = [
-            "ui_item_icons_h1_0",
-            "ui_item_icons_h1_acticon_0",
-            "ui_item_icons_h1_apsupply_0",
-            "ui_item_icons_h1_classpotential_0",
-            "ui_item_icons_h1_potential_0",
+            "ui_item_icons_0",
+            "ui_item_icons_1",
+            "ui_item_icons_2",
+            "ui_item_icons_3",
+            "ui_item_icons_4",
+            "ui_item_icons_5",
+            "ui_item_icons_6",
         ];
         let item_count_before = mappings.item_icons.len();
         for dir_name in &item_icon_dirs {
-            let dir_path = spritepack.join(dir_name);
+            let dir_path = arts_dir.join(dir_name);
             if dir_path.exists()
                 && let Ok(entries) = std::fs::read_dir(&dir_path)
             {
@@ -243,7 +246,7 @@ impl AssetMappings {
                         mappings
                             .item_icons
                             .entry(base_name.to_string())
-                            .or_insert_with(|| format!("spritepack:{dir_name}"));
+                            .or_insert_with(|| format!("arts:{dir_name}"));
                     }
                 }
             }
@@ -412,8 +415,8 @@ impl AssetMappings {
     /// Returns the correct path based on where the icon was found during scanning
     pub fn get_item_icon_path(&self, icon_id: &str) -> String {
         if let Some(location) = self.item_icons.get(icon_id) {
-            if let Some(dir) = location.strip_prefix("spritepack:") {
-                format!("/upk/spritepack/{dir}/{icon_id}.png")
+            if let Some(dir) = location.strip_prefix("arts:") {
+                format!("/upk/arts/{dir}/{icon_id}.png")
             } else if location == "arts_items" {
                 format!("/upk/arts/items/icons/{icon_id}.png")
             } else {
