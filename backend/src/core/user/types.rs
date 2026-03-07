@@ -423,7 +423,7 @@ pub struct MissionData {
 #[serde(rename_all = "camelCase", default)]
 pub struct MissionProgress {
     pub target: i32,
-    pub value: i32,
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
