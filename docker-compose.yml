@@ -17,6 +17,8 @@ services:
       retries: 5
     networks:
       - myrtle
+    profiles:
+      - "${ENABLE_DB:-true}"
 
   redis:
     image: redis:7-alpine
@@ -33,19 +35,23 @@ services:
       retries: 5
     networks:
       - myrtle
+    profiles:
+      - "${ENABLE_CACHE:-true}"
 
   backend:
     build:
       context: ./backend
       platforms:
         - linux/amd64
-      dockerfile: ${BACKEND_DOCKERFILE:-Dockerfile}
+      dockerfile: ${DOCKERFILE:-Dockerfile}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+        required: false
       redis:
         condition: service_healthy
+        required: false
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
@@ -69,13 +75,15 @@ services:
       - "3060:3060"
     networks:
       - myrtle
+    profiles:
+      - "true"
 
   frontend:
     build:
       context: ./frontend
       platforms:
         - linux/amd64
-      dockerfile: ${FRONTEND_DOCKERFILE:-Dockerfile}
+      dockerfile: ${DOCKERFILE:-Dockerfile}
     restart: unless-stopped
     depends_on:
       - backend
@@ -88,6 +96,8 @@ services:
       - "3000:3000"
     networks:
       - myrtle
+    profiles:
+      - "true"
 
   asset-tools:
     build:
