@@ -1,0 +1,16 @@
+**/target/
+**/node_modules/
+**/.next/
+
+assets/ArkAssets/
+assets/Unpacked/
+
+.git/
+.github/
+.gitmodules
+
+**/.DS_Store
+**/Thumbs.db
+
+**/.env
+**/.env.local
