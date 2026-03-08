@@ -17,7 +17,7 @@ pub async fn run(
 
     let mut handles = Vec::new();
     for task in tasks {
-        let dl = Arc::clone(&downloader); // Downloader needs Clone (Arc internals)
+        let dl = Arc::clone(&downloader);
         let dir = savedir.clone();
         let handle = tokio::spawn(async move {
             let result = dl.download(&task).await;
@@ -29,11 +29,15 @@ pub async fn run(
     for handle in handles {
         let (task, dir, result) = handle.await?;
         match result {
-            Ok(data) => {
+            Ok(tmp_path) => {
                 let savedir = dir.clone();
-                let data_clone = data;
-                tokio::task::spawn_blocking(move || extract::extract_zip(&data_clone, &savedir))
-                    .await??;
+                tokio::task::spawn_blocking(move || {
+                    let res = extract::extract_zip(&tmp_path, &savedir);
+                    // Clean up temp file regardless of extraction result
+                    let _ = std::fs::remove_file(&tmp_path);
+                    res
+                })
+                .await??;
 
                 manifest.update(&task.filename, &task.md5);
                 manifest.save()?;
