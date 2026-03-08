@@ -278,70 +278,94 @@ async fn get_column_types(
     Ok(rows.into_iter().collect())
 }
 
-/// Import a single table's data
+/// Import a single table's data using batched multi-row inserts.
 async fn import_table(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     table_name: &str,
     rows: &[serde_json::Value],
     options: &ImportOptions,
 ) -> Result<i64, Box<dyn std::error::Error>> {
+    if rows.is_empty() {
+        return Ok(0);
+    }
+
     let column_types = get_column_types(tx, table_name).await?;
     let mut count = 0i64;
 
-    for row in rows {
-        let obj = row
-            .as_object()
-            .ok_or_else(|| format!("Row in {} is not a JSON object", table_name))?;
+    // Determine columns from the first row
+    let first_obj = rows[0]
+        .as_object()
+        .ok_or_else(|| format!("First row in {} is not a JSON object", table_name))?;
+    let columns: Vec<String> = first_obj.keys().cloned().collect();
+    let num_cols = columns.len();
 
-        if obj.is_empty() {
-            continue;
+    if num_cols == 0 {
+        return Ok(0);
+    }
+
+    // Build conflict clause once (reused for all batches)
+    let conflict_target = get_primary_conflict_target(table_name);
+    let conflict_columns: Vec<&str> = conflict_target.split(", ").collect();
+
+    let conflict_clause = match options.conflict_strategy {
+        ConflictStrategy::Truncate => String::new(),
+        ConflictStrategy::Merge => {
+            let updates: Vec<String> = columns
+                .iter()
+                .filter(|c| !conflict_columns.contains(&c.as_str()) && *c != "id")
+                .map(|c| format!("{} = EXCLUDED.{}", c, c))
+                .collect();
+            if updates.is_empty() {
+                format!(" ON CONFLICT ({}) DO NOTHING", conflict_target)
+            } else {
+                format!(
+                    " ON CONFLICT ({}) DO UPDATE SET {}",
+                    conflict_target,
+                    updates.join(", ")
+                )
+            }
+        }
+        ConflictStrategy::Skip => format!(" ON CONFLICT ({}) DO NOTHING", conflict_target),
+    };
+
+    // PostgreSQL has a limit of 65535 bind parameters per query.
+    // Calculate max rows per batch to stay under this limit.
+    let max_rows_per_batch = (65535 / num_cols).min(500);
+
+    for chunk in rows.chunks(max_rows_per_batch) {
+        // Build multi-row VALUES clause: ($1,$2,$3), ($4,$5,$6), ...
+        let mut placeholders = Vec::with_capacity(chunk.len());
+        for (row_idx, _) in chunk.iter().enumerate() {
+            let row_placeholders: Vec<String> = (0..num_cols)
+                .map(|col_idx| format!("${}", row_idx * num_cols + col_idx + 1))
+                .collect();
+            placeholders.push(format!("({})", row_placeholders.join(", ")));
         }
 
-        // Build column list and values
-        let columns: Vec<&str> = obj.keys().map(|s| s.as_str()).collect();
-        let placeholders: Vec<String> = (1..=columns.len()).map(|i| format!("${}", i)).collect();
-
-        // Build conflict clause based on strategy
-        let conflict_target = get_primary_conflict_target(table_name);
-        let conflict_columns: Vec<&str> = conflict_target.split(", ").collect();
-
-        let conflict_clause = match options.conflict_strategy {
-            ConflictStrategy::Truncate => String::new(),
-            ConflictStrategy::Merge => {
-                // Exclude conflict columns from updates
-                let updates: Vec<String> = columns
-                    .iter()
-                    .filter(|c| !conflict_columns.contains(c) && **c != "id")
-                    .map(|c| format!("{} = EXCLUDED.{}", c, c))
-                    .collect();
-                if updates.is_empty() {
-                    // If all columns are conflict columns, just do nothing on conflict
-                    format!(" ON CONFLICT ({}) DO NOTHING", conflict_target)
-                } else {
-                    format!(
-                        " ON CONFLICT ({}) DO UPDATE SET {}",
-                        conflict_target,
-                        updates.join(", ")
-                    )
-                }
-            }
-            ConflictStrategy::Skip => format!(" ON CONFLICT ({}) DO NOTHING", conflict_target),
-        };
-
         let query = format!(
-            "INSERT INTO {} ({}) VALUES ({}){}",
+            "INSERT INTO {} ({}) VALUES {}{}",
             table_name,
             columns.join(", "),
             placeholders.join(", "),
             conflict_clause
         );
 
-        // Build the query with bound parameters
         let mut q = sqlx::query(&query);
-        for col in &columns {
-            let value = &obj[*col];
-            let data_type = column_types.get(*col).map(|s| s.as_str()).unwrap_or("text");
-            q = bind_json_value(q, value, data_type);
+
+        // Bind all values in order: row0_col0, row0_col1, ..., row1_col0, ...
+        for row in chunk {
+            let obj = row
+                .as_object()
+                .ok_or_else(|| format!("Row in {} is not a JSON object", table_name))?;
+
+            for col in &columns {
+                let value = obj.get(col.as_str()).unwrap_or(&serde_json::Value::Null);
+                let data_type = column_types
+                    .get(col.as_str())
+                    .map(|s| s.as_str())
+                    .unwrap_or("text");
+                q = bind_json_value(q, value, data_type);
+            }
         }
 
         let result = q.execute(&mut **tx).await?;
