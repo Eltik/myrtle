@@ -4,13 +4,15 @@ use crate::backup::types::{
     ExportManifest, ExportOptions, PostgresExportInfo, RedisExportData, RedisExportInfo,
     RedisValue, TableExportInfo,
 };
-use crate::backup::verify::compute_sha256;
 use chrono::Utc;
+use futures::TryStreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use redis::AsyncCommands;
 use redis::aio::MultiplexedConnection;
+use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use std::io::Write;
 use std::path::Path;
 
 /// Table export order respecting foreign key dependencies.
@@ -93,35 +95,67 @@ pub async fn run_export(
     })
 }
 
-/// Export PostgreSQL tables to JSON files
+/// A writer wrapper that computes SHA-256 incrementally while writing.
+struct HashingWriter<W: Write> {
+    inner: W,
+    hasher: Sha256,
+}
+
+impl<W: Write> HashingWriter<W> {
+    fn new(inner: W) -> Self {
+        Self {
+            inner,
+            hasher: Sha256::new(),
+        }
+    }
+
+    fn finalize(self) -> (W, String) {
+        let hash = format!("{:x}", self.hasher.finalize());
+        (self.inner, hash)
+    }
+}
+
+impl<W: Write> Write for HashingWriter<W> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let n = self.inner.write(buf)?;
+        self.hasher.update(&buf[..n]);
+        Ok(n)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.inner.flush()
+    }
+}
+
+/// Export PostgreSQL tables to JSON files.
+/// Streams rows from the database and writes them incrementally to avoid
+/// loading entire tables into memory. Checksums are computed on-the-fly.
 async fn export_postgres(
     pool: &PgPool,
     export_dir: &Path,
     tables: &[&str],
     compress: bool,
 ) -> Result<PostgresExportInfo, Box<dyn std::error::Error>> {
-    let pb = ProgressBar::new(tables.len() as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{spinner:.green} [{bar:40.cyan/blue}] {pos}/{len} {msg}")
-            .unwrap()
-            .progress_chars("#>-"),
-    );
-
     let mut table_infos = Vec::new();
 
-    for table_name in tables {
-        pb.set_message(format!("Exporting {}...", table_name));
+    for (table_idx, table_name) in tables.iter().enumerate() {
+        // Query row count first so we can show meaningful progress
+        let total_rows: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {}", table_name))
+            .fetch_one(pool)
+            .await?;
 
-        // Export table to JSON using row_to_json
-        let query = format!("SELECT row_to_json(t) as data FROM {} t", table_name);
-        let rows: Vec<(serde_json::Value,)> = sqlx::query_as(&query).fetch_all(pool).await?;
-
-        let count = rows.len() as i64;
-        let data: Vec<serde_json::Value> = rows.into_iter().map(|(v,)| v).collect();
-
-        let json = serde_json::to_string_pretty(&data)?;
-        let checksum = compute_sha256(&json);
+        let pb = ProgressBar::new(total_rows as u64);
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template(&format!(
+                    "  [{{bar:40.cyan/blue}}] {{pos}}/{{len}} rows  ({}/{}) {{msg}}",
+                    table_idx + 1,
+                    tables.len()
+                ))
+                .unwrap()
+                .progress_chars("#>-"),
+        );
+        pb.set_message(table_name.to_string());
 
         let filename = if compress {
             format!("{}.json.gz", table_name)
@@ -130,18 +164,56 @@ async fn export_postgres(
         };
         let filepath = export_dir.join(&filename);
 
-        if compress {
+        // Stream rows from DB and write each one incrementally.
+        // HashingWriter computes the SHA-256 checksum of the uncompressed
+        // JSON as it passes through, so we never hold the full output in memory.
+        let query = format!("SELECT row_to_json(t) as data FROM {} t", table_name);
+        let mut stream = sqlx::query_as::<_, (serde_json::Value,)>(&query).fetch(pool);
+
+        let file = std::fs::File::create(&filepath)?;
+        let mut count: i64 = 0;
+
+        let checksum = if compress {
             use flate2::Compression;
             use flate2::write::GzEncoder;
-            use std::io::Write;
 
-            let file = std::fs::File::create(&filepath)?;
-            let mut encoder = GzEncoder::new(file, Compression::default());
-            encoder.write_all(json.as_bytes())?;
-            encoder.finish()?;
+            let encoder = GzEncoder::new(file, Compression::default());
+            let mut writer = HashingWriter::new(std::io::BufWriter::new(encoder));
+
+            writer.write_all(b"[\n")?;
+            while let Some((value,)) = stream.try_next().await? {
+                if count > 0 {
+                    writer.write_all(b",\n")?;
+                }
+                serde_json::to_writer_pretty(&mut writer, &value)?;
+                count += 1;
+                pb.set_position(count as u64);
+            }
+            writer.write_all(b"\n]")?;
+
+            let (buf_writer, checksum) = writer.finalize();
+            buf_writer.into_inner()?.finish()?;
+            checksum
         } else {
-            tokio::fs::write(&filepath, &json).await?;
-        }
+            let mut writer = HashingWriter::new(std::io::BufWriter::new(file));
+
+            writer.write_all(b"[\n")?;
+            while let Some((value,)) = stream.try_next().await? {
+                if count > 0 {
+                    writer.write_all(b",\n")?;
+                }
+                serde_json::to_writer_pretty(&mut writer, &value)?;
+                count += 1;
+                pb.set_position(count as u64);
+            }
+            writer.write_all(b"\n]")?;
+
+            let (mut buf_writer, checksum) = writer.finalize();
+            buf_writer.flush()?;
+            checksum
+        };
+
+        pb.finish_with_message(format!("{} done", table_name));
 
         table_infos.push(TableExportInfo {
             name: table_name.to_string(),
@@ -149,11 +221,9 @@ async fn export_postgres(
             file: filename,
             checksum,
         });
-
-        pb.inc(1);
     }
 
-    pb.finish_with_message("PostgreSQL export complete");
+    println!("  PostgreSQL export complete");
 
     Ok(PostgresExportInfo {
         tables: table_infos,
@@ -214,7 +284,7 @@ async fn export_redis(
     };
 
     let json = serde_json::to_string_pretty(&export_data)?;
-    let checksum = compute_sha256(&json);
+    let checksum = crate::backup::verify::compute_sha256(&json);
 
     let filename = if compress {
         "redis_cache.json.gz".to_string()
@@ -226,7 +296,6 @@ async fn export_redis(
     if compress {
         use flate2::Compression;
         use flate2::write::GzEncoder;
-        use std::io::Write;
 
         let file = std::fs::File::create(&filepath)?;
         let mut encoder = GzEncoder::new(file, Compression::default());
