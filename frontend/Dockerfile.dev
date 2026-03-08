@@ -1,0 +1,6 @@
+FROM oven/bun:1-debian
+
+WORKDIR /src
+ENV NODE_ENV=development
+EXPOSE 3000
+CMD ["sh", "-c", "bun install && bun run dev"]
