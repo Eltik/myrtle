@@ -7,16 +7,24 @@ RUN rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 COPY . .
 
-RUN cd downloader && cargo build --release
-RUN cd unpacker && cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/build/downloader/target \
+    cd downloader && cargo build --release && \
+    cp target/release/arknights-downloader /usr/local/bin/
 
-RUN cp downloader/target/release/arknights-downloader /usr/local/bin/
-RUN cp unpacker/target/release/assets-unpacker /usr/local/bin/
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/build/unpacker/target \
+    cd unpacker && cargo build --release && \
+    cp target/release/assets-unpacker /usr/local/bin/
+
+RUN cp download.sh unpack.sh /usr/local/bin/ 
+RUN chmod +x /usr/local/bin/download.sh /usr/local/bin/unpack.sh
+
 RUN cp unity-rs/src/resources/FMOD/libfmod.so /usr/local/lib/
 RUN cp unity-rs/src/resources/FMOD/libfmodstudio.so /usr/local/lib/
 RUN ldconfig
 
 RUN mkdir -p /data/ArkAssets /data/Unpacked
 VOLUME ["/data/ArkAssets", "/data/Unpacked"]
-
-CMD ["sh", "-c", "echo 'Run with: arknights-downloader --help  or  assets-unpacker --help'"]
+    
+CMD ["sh", "-c", "echo 'Run with: download.sh or unpack.sh'"]
