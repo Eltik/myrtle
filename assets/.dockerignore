@@ -1,0 +1,9 @@
+ArkAssets/
+Unpacked/
+
+**/target/
+**/.cargo/
+
+.git/
+.DS_Store
+Thumbs.db
