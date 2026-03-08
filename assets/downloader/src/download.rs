@@ -1,7 +1,9 @@
 use crate::server::Server;
 use crate::types::DownloadTask;
 use reqwest::Client;
+use std::path::PathBuf;
 use std::sync::Arc;
+use tokio::io::AsyncWriteExt;
 use tokio::sync::Semaphore;
 
 pub struct Downloader {
@@ -25,9 +27,7 @@ impl Downloader {
         }
     }
 
-    /// Transform filename to CDN URL
     fn build_url(&self, filename: &str) -> String {
-        // Replace last extension with .dat
         let dat_name = replace_last_ext(filename, "dat");
         let encoded = dat_name.replace('/', "_").replace('#', "__");
         format!(
@@ -38,17 +38,26 @@ impl Downloader {
         )
     }
 
-    pub async fn download(&self, task: &DownloadTask) -> anyhow::Result<Vec<u8>> {
+    pub async fn download(&self, task: &DownloadTask) -> anyhow::Result<PathBuf> {
         let _permit = self.semaphore.acquire().await?;
         let url = self.build_url(&task.filename);
-        let resp = self.client.get(&url).send().await?.error_for_status()?;
-        let bytes = resp.bytes().await?;
-        Ok(bytes.to_vec())
+
+        let mut resp = self.client.get(&url).send().await?.error_for_status()?;
+
+        let tmp = tempfile::NamedTempFile::new()?;
+        let path = tmp.into_temp_path().to_path_buf();
+        let mut file = tokio::fs::File::create(&path).await?;
+
+        while let Some(chunk) = resp.chunk().await? {
+            file.write_all(&chunk).await?;
+        }
+        file.flush().await?;
+
+        Ok(path)
     }
 }
 
 fn replace_last_ext(name: &str, new_ext: &str) -> String {
-    // Find last '.' that isn't part of directory separators
     match name.rfind('.') {
         Some(pos) => format!("{}.{}", &name[..pos], new_ext),
         None => format!("{}.{}", name, new_ext),
