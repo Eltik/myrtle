@@ -1,9 +1,0 @@
-/target
-*.claude
-
-test_data/results
-test_data/data
-*.bin
-
-# Test extraction output
-extracted_assets/
