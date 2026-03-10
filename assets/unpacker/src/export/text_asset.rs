@@ -7,8 +7,8 @@ use std::{fs, io, path::Path};
 
 type Aes128CbcDec = Decryptor<Aes128>;
 
-const AES_KEY: &[u8; 16] = b"UITpAi82pHAWwnzq";
-const AES_IV: &[u8; 16] = b"HRMCwPonJLIB3WCl";
+/// Arknights AES-CBC mask (chat_mask v2)
+const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
 
 pub fn export_text_asset(
     obj: &Value,
@@ -49,19 +49,26 @@ pub fn export_text_asset(
         return Ok(());
     }
 
-    // Try FlatBuffer decoding (gamedata tables have 128-byte RSA header + FlatBuffer)
-    if raw.len() > 128 {
-        let fb_data = &raw[128..];
-        if crate::flatbuffers_decode::is_flatbuffer(fb_data)
-            && let Ok(json) = crate::flatbuffers_decode::decode_flatbuffer(fb_data, name)
-        {
-            let path = output_dir.join(format!("{name}.json"));
-            fs::write(
-                &path,
-                serde_json::to_string_pretty(&json).unwrap().as_bytes(),
-            )?;
-            return Ok(());
-        }
+    // Try FlatBuffer decoding on raw data (128-byte RSA header + FlatBuffer)
+    if let Some(json) = try_flatbuffer_decode(&raw, name) {
+        let path = output_dir.join(format!("{name}.json"));
+        fs::write(
+            &path,
+            serde_json::to_string_pretty(&json).unwrap().as_bytes(),
+        )?;
+        return Ok(());
+    }
+
+    // Try FlatBuffer decoding on AES-decrypted data (some files are AES-encrypted FlatBuffers)
+    if decrypted.is_some()
+        && let Some(json) = try_flatbuffer_decode(bytes, name)
+    {
+        let path = output_dir.join(format!("{name}.json"));
+        fs::write(
+            &path,
+            serde_json::to_string_pretty(&json).unwrap().as_bytes(),
+        )?;
+        return Ok(());
     }
 
     // Save as text if valid UTF-8, otherwise raw bytes
@@ -76,28 +83,58 @@ pub fn export_text_asset(
     Ok(())
 }
 
-fn try_aes_decrypt(data: &[u8]) -> Option<Vec<u8>> {
-    // Some files have a 128-byte RSA header prefix
-    let offsets = [0, 128];
-
-    for &offset in &offsets {
+/// Try FlatBuffer decode at various offsets (raw, skip 128-byte RSA header)
+fn try_flatbuffer_decode(data: &[u8], name: &str) -> Option<Value> {
+    for &offset in &[128usize, 0] {
         if data.len() <= offset {
             continue;
         }
-        let encrypted = &data[offset..];
-        if !encrypted.len().is_multiple_of(16) {
+        let fb_data = &data[offset..];
+        if crate::flatbuffers_decode::is_flatbuffer(fb_data)
+            && let Ok(json) = crate::flatbuffers_decode::decode_flatbuffer(fb_data, name)
+        {
+            return Some(json);
+        }
+    }
+    None
+}
+
+/// Decrypt AES-CBC encrypted Arknights data.
+/// Format: [128-byte RSA header][16-byte IV seed][AES-CBC encrypted data]
+/// Key = MASK[0..16], IV = data[0..16] XOR MASK[16..32]
+fn try_aes_decrypt(data: &[u8]) -> Option<Vec<u8>> {
+    // Try with and without 128-byte RSA header
+    for &offset in &[128usize, 0] {
+        if data.len() <= offset + 16 {
+            continue;
+        }
+        let payload = &data[offset..];
+
+        // First 16 bytes are the IV seed
+        let iv: [u8; 16] = std::array::from_fn(|i| payload[i] ^ MASK[16 + i]);
+        let key = &MASK[..16];
+
+        let encrypted = &payload[16..];
+        if encrypted.is_empty() || !encrypted.len().is_multiple_of(16) {
             continue;
         }
 
         let mut buf = encrypted.to_vec();
         let result =
-            Aes128CbcDec::new(AES_KEY.into(), AES_IV.into()).decrypt_padded_mut::<Pkcs7>(&mut buf);
+            Aes128CbcDec::new(key.into(), &iv.into()).decrypt_padded_mut::<Pkcs7>(&mut buf);
 
         if let Ok(decrypted) = result
             && !decrypted.is_empty()
-            && (decrypted[0].is_ascii_graphic() || decrypted[0].is_ascii_whitespace())
         {
-            return Some(decrypted.to_vec());
+            // Verify decrypted data looks plausible
+            let check_len = decrypted.len().min(16);
+            let printable = decrypted[..check_len]
+                .iter()
+                .filter(|b| b.is_ascii_graphic() || b.is_ascii_whitespace())
+                .count();
+            if printable >= check_len * 3 / 4 {
+                return Some(decrypted.to_vec());
+            }
         }
     }
 
