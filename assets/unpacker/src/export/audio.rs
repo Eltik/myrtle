@@ -48,18 +48,34 @@ pub fn export_audio(
     }
 
     // Detect format by magic bytes
-    let ext = if bytes.len() >= 4 && &bytes[0..4] == b"OggS" {
-        "ogg"
+    if bytes.len() >= 4 && &bytes[0..4] == b"OggS" {
+        let path = output_dir.join(format!("{name}.ogg"));
+        std::fs::write(&path, &bytes)?;
     } else if bytes.len() >= 4 && &bytes[0..4] == b"RIFF" {
-        "wav"
+        let path = output_dir.join(format!("{name}.wav"));
+        std::fs::write(&path, &bytes)?;
     } else if bytes.len() >= 8 && &bytes[4..8] == b"ftyp" {
-        "m4a"
+        let path = output_dir.join(format!("{name}.m4a"));
+        std::fs::write(&path, &bytes)?;
+    } else if bytes.len() >= 4 && &bytes[0..4] == b"FSB5" {
+        // Decode FSB5 Vorbis to OGG
+        match super::fsb5::fsb5_to_ogg(&bytes) {
+            Ok(samples) => {
+                for (_, ogg_data) in samples {
+                    let path = output_dir.join(format!("{name}.ogg"));
+                    std::fs::write(&path, &ogg_data)?;
+                }
+            }
+            Err(_) => {
+                // Fallback: save raw FSB5
+                let path = output_dir.join(format!("{name}.fsb"));
+                std::fs::write(&path, &bytes)?;
+            }
+        }
     } else {
-        "bytes"
-    };
-
-    let path = output_dir.join(format!("{name}.{ext}"));
-    std::fs::write(&path, &bytes)?;
+        let path = output_dir.join(format!("{name}.bytes"));
+        std::fs::write(&path, &bytes)?;
+    }
 
     Ok(())
 }

@@ -1,4 +1,5 @@
 pub mod audio;
+pub mod fsb5;
 pub mod gamedata;
 pub mod manifest;
 pub mod text_asset;
