@@ -49,6 +49,21 @@ pub fn export_text_asset(
         return Ok(());
     }
 
+    // Try FlatBuffer decoding (gamedata tables have 128-byte RSA header + FlatBuffer)
+    if raw.len() > 128 {
+        let fb_data = &raw[128..];
+        if crate::flatbuffers_decode::is_flatbuffer(fb_data)
+            && let Ok(json) = crate::flatbuffers_decode::decode_flatbuffer(fb_data, name)
+        {
+            let path = output_dir.join(format!("{name}.json"));
+            fs::write(
+                &path,
+                serde_json::to_string_pretty(&json).unwrap().as_bytes(),
+            )?;
+            return Ok(());
+        }
+    }
+
     // Save as text if valid UTF-8, otherwise raw bytes
     if let Ok(text) = std::str::from_utf8(bytes) {
         let path = output_dir.join(format!("{name}.txt"));
