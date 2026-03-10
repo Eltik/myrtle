@@ -3,6 +3,10 @@ name = "unpacker"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "generate-fbs"
+path = "src/bin/generate_fbs.rs"
+
 [dependencies]
 aes = "0.8.4"
 base64 = "0.22.1"
