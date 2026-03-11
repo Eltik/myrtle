@@ -36,8 +36,14 @@ fn read_value(r: &mut EndianReader, node: &TypeTreeNode) -> Result<Value, io::Er
         "float" => json!(r.read_f32()?),
         "double" => json!(r.read_f64()?),
         "string" => {
-            let len = r.read_i32()? as usize;
-            let bytes = r.read_bytes(len)?;
+            let len = r.read_i32()?;
+            if len < 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("negative string length: {len}"),
+                ));
+            }
+            let bytes = r.read_bytes(len as usize)?;
             r.align(4);
             // If valid UTF-8, store as string; otherwise store as base64
             match String::from_utf8(bytes.clone()) {
@@ -49,8 +55,14 @@ fn read_value(r: &mut EndianReader, node: &TypeTreeNode) -> Result<Value, io::Er
             }
         }
         "TypelessData" => {
-            let size = r.read_i32()? as usize;
-            let bytes = r.read_bytes(size)?;
+            let size = r.read_i32()?;
+            if size < 0 {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("negative TypelessData size: {size}"),
+                ));
+            }
+            let bytes = r.read_bytes(size as usize)?;
             r.align(4);
             Value::String(base64::engine::general_purpose::STANDARD.encode(&bytes))
         }
@@ -79,11 +91,22 @@ fn read_value(r: &mut EndianReader, node: &TypeTreeNode) -> Result<Value, io::Er
 fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, io::Error> {
     // array_node.children[0] = "size" (int), children[1] = element type
     let size = r.read_i32()?;
+    if size < 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("negative array size: {size}"),
+        ));
+    }
+    let size = size as usize;
     let element_node = &array_node.children[1];
+
+    // Cap initial capacity to avoid huge allocations when size is valid but large;
+    // the loop will still read exactly `size` elements (failing on EOF if data is short).
+    const MAX_INITIAL_CAP: usize = 1024;
 
     // Check if this is a map (element type is "pair")
     if element_node.type_name == "pair" {
-        let mut map = serde_json::Map::new();
+        let mut map = serde_json::Map::with_capacity(size.min(MAX_INITIAL_CAP));
         for _ in 0..size {
             let key = read_value(r, &element_node.children[0])?;
             let val = read_value(r, &element_node.children[1])?;
@@ -95,7 +118,7 @@ fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, 
         }
         Ok(Value::Object(map))
     } else {
-        let mut arr = Vec::with_capacity(size as usize);
+        let mut arr = Vec::with_capacity(size.min(MAX_INITIAL_CAP));
         for _ in 0..size {
             arr.push(read_value(r, element_node)?);
         }
@@ -116,6 +139,73 @@ mod tests {
     use super::*;
     use crate::unity::bundle::BundleFile;
     use crate::unity::serialized_file::SerializedFile;
+
+    /// Bug: read_array with corrupted huge size (negative i32) causes capacity overflow panic
+    /// instead of returning an error.
+    #[test]
+    fn test_read_array_corrupted_size_no_panic() {
+        use crate::unity::endian_reader::EndianReader;
+        use crate::unity::type_tree::TypeTreeNode;
+
+        // Create a minimal type tree: root struct with one Array child containing int elements
+        let element_node = TypeTreeNode {
+            type_name: "int".to_string(),
+            name: "data".to_string(),
+            byte_size: 4,
+            version: 0,
+            level: 2,
+            type_flags: 0,
+            meta_flag: 0,
+            children: vec![],
+        };
+        let size_node = TypeTreeNode {
+            type_name: "int".to_string(),
+            name: "size".to_string(),
+            byte_size: 4,
+            version: 0,
+            level: 2,
+            type_flags: 0,
+            meta_flag: 0,
+            children: vec![],
+        };
+        let array_node = TypeTreeNode {
+            type_name: "Array".to_string(),
+            name: "Array".to_string(),
+            byte_size: -1,
+            version: 0,
+            level: 1,
+            type_flags: 0,
+            meta_flag: 0x4000,
+            children: vec![size_node, element_node],
+        };
+        let root = TypeTreeNode {
+            type_name: "vector".to_string(),
+            name: "m_Container".to_string(),
+            byte_size: -1,
+            version: 0,
+            level: 0,
+            type_flags: 0,
+            meta_flag: 0,
+            children: vec![array_node],
+        };
+
+        // Data contains array size = -1 (0xFFFFFFFF) — wraps to usize::MAX, should not panic
+        let mut data = vec![0xFF, 0xFF, 0xFF, 0xFF]; // i32 = -1 in LE
+        data.extend_from_slice(&[0u8; 64]); // some padding
+
+        let mut r = EndianReader::new(&data, false);
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            super::read_value(&mut r, &root)
+        }));
+        assert!(
+            result.is_ok(),
+            "read_value should not panic on huge array size"
+        );
+        assert!(
+            result.unwrap().is_err(),
+            "should return Err for corrupted array size"
+        );
+    }
 
     #[test]
     fn test_read_object() {

@@ -2,6 +2,7 @@
 name = "unpacker"
 version = "0.1.0"
 edition = "2024"
+default-run = "unpacker"
 
 [[bin]]
 name = "generate-fbs"
@@ -12,7 +13,7 @@ aes = "0.8.4"
 base64 = "0.22.1"
 cbc = "0.1.2"
 cipher = "0.4"
-clap = "4.5.60"
+clap = { version = "4.5.60", features = ["derive"] }
 flatbuffers = "25.12.19"
 hex-literal = "1.1.0"
 image = { version = "0.25.9", default-features = false, features = ["png"] }

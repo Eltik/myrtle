@@ -147,8 +147,14 @@ impl<'a> EndianReader<'a> {
     }
 
     pub fn read_string(&mut self) -> Result<String, io::Error> {
-        let len = self.read_i32()? as usize;
-        let bytes = self.read_bytes(len)?;
+        let len = self.read_i32()?;
+        if len < 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("negative string length: {len}"),
+            ));
+        }
+        let bytes = self.read_bytes(len as usize)?;
         String::from_utf8(bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
     }
 
@@ -167,7 +173,7 @@ impl<'a> EndianReader<'a> {
     }
 
     fn ensure(&self, count: usize) -> Result<(), io::Error> {
-        if self.pos + count > self.data.len() {
+        if self.data.len().saturating_sub(self.pos) < count {
             Err(io::Error::new(
                 io::ErrorKind::UnexpectedEof,
                 "read past end",
@@ -219,5 +225,23 @@ mod tests {
         let data = vec![0x01];
         let mut r = EndianReader::new(&data, true);
         assert!(r.read_u32().is_err());
+    }
+
+    /// Bug: read_string with negative i32 length wraps to huge usize, causing panic
+    /// instead of returning an error.
+    #[test]
+    fn test_read_string_negative_length_no_panic() {
+        // i32 = -1 in little-endian = 0xFFFFFFFF, wraps to usize::MAX
+        let data = vec![0xFF, 0xFF, 0xFF, 0xFF];
+        let mut r = EndianReader::new(&data, false);
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| r.read_string()));
+        assert!(
+            result.is_ok(),
+            "read_string should not panic on negative length"
+        );
+        assert!(
+            result.unwrap().is_err(),
+            "read_string should return Err for negative length"
+        );
     }
 }

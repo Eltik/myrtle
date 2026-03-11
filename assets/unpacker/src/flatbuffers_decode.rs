@@ -163,6 +163,8 @@ fn has_yostar_schema(schema_type: &str) -> bool {
 fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
     let data_clone = data.to_vec();
+    let prev_hook = panic::take_hook();
+    panic::set_hook(Box::new(|_| {}));
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
@@ -197,6 +199,7 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
             _ => Err(format!("No Yostar schema for {}", schema_type)),
         }
     }));
+    panic::set_hook(prev_hook);
     match decode_result {
         Ok(Ok(value)) => {
             if value.as_object().is_some_and(|o| o.is_empty()) {
@@ -221,6 +224,8 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
     let schema_type = guess_root_type(filename);
     let data_clone = data.to_vec();
 
+    let prev_hook = panic::take_hook();
+    panic::set_hook(Box::new(|_| {}));
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
@@ -546,6 +551,7 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
             _ => Err(format!("Unknown schema type: {}", schema_type)),
         }
     }));
+    panic::set_hook(prev_hook);
 
     match decode_result {
         Ok(Ok(value)) => {
