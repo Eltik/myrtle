@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[allow(dead_code)]
 struct Field {
     name: String,
     return_type: String,

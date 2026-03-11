@@ -18,12 +18,10 @@ pub fn export_texture(
         return Ok(());
     }
 
-    let image_bytes;
-
-    if !image_data.is_empty() {
-        image_bytes = base64::engine::general_purpose::STANDARD
+    let image_bytes = if !image_data.is_empty() {
+        base64::engine::general_purpose::STANDARD
             .decode(image_data)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
     } else {
         // Try m_StreamData (.resS)
         let stream = &obj["m_StreamData"];
@@ -46,8 +44,8 @@ pub fn export_texture(
         if offset + size > res_data.len() {
             return Ok(());
         }
-        image_bytes = res_data[offset..offset + size].to_vec();
-    }
+        res_data[offset..offset + size].to_vec()
+    };
 
     let mut buf = vec![0u32; (width * height) as usize];
     if decode_texture(&image_bytes, width, height, format, &mut buf).is_err() {

@@ -5,6 +5,7 @@ use crate::unity::{
     type_tree::{TypeTreeNode, read_type_tree_blob},
 };
 
+#[allow(dead_code)]
 pub struct SerializedFile {
     pub objects: Vec<ObjectInfo>,
     pub types: Vec<SerializedType>,

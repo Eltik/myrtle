@@ -354,10 +354,11 @@ mod tests {
     use crate::unity::object_reader::read_object;
     use crate::unity::serialized_file::SerializedFile;
 
+    type ObjectMap = HashMap<i64, (i32, Value)>;
+    type ResourceMap = HashMap<String, Vec<u8>>;
+
     /// Helper: parse a bundle and collect all objects indexed by path_id
-    fn load_all_objects(
-        bundle_path: &Path,
-    ) -> (HashMap<i64, (i32, Value)>, HashMap<String, Vec<u8>>) {
+    fn load_all_objects(bundle_path: &Path) -> (ObjectMap, ResourceMap) {
         let data = std::fs::read(bundle_path).expect("failed to read bundle");
         let bundle = BundleFile::parse(data).expect("failed to parse bundle");
 
