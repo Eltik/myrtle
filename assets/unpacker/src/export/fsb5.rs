@@ -83,9 +83,7 @@ fn write_ogg_page(
     let mut segments: Vec<u8> = Vec::new();
     for packet in packets {
         let len = packet.len();
-        for _ in 0..(len / 255) {
-            segments.push(255);
-        }
+        segments.extend(std::iter::repeat_n(255u8, len / 255));
         segments.push((len % 255) as u8);
     }
 

@@ -126,6 +126,7 @@ fn read_array(r: &mut EndianReader, array_node: &TypeTreeNode) -> Result<Value, 
     }
 }
 
+#[allow(dead_code)]
 pub fn read_objects_by_class(file: &SerializedFile, class_ids: &[i32]) -> Vec<(i64, Value)> {
     file.objects
         .iter()

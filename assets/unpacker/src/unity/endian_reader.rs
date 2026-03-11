@@ -27,6 +27,7 @@ impl<'a> EndianReader<'a> {
         self.pos = pos;
     }
 
+    #[allow(dead_code)]
     pub fn remaining(&self) -> usize {
         self.data.len().saturating_sub(self.pos)
     }
@@ -146,6 +147,7 @@ impl<'a> EndianReader<'a> {
         String::from_utf8(bytes.to_vec()).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
     }
 
+    #[allow(dead_code)]
     pub fn read_string(&mut self) -> Result<String, io::Error> {
         let len = self.read_i32()?;
         if len < 0 {

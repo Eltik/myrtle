@@ -17,6 +17,7 @@ struct BlockInfo {
     flags: u16,
 }
 
+#[allow(dead_code)]
 struct DirectoryEntry {
     offset: u64,
     size: u64,

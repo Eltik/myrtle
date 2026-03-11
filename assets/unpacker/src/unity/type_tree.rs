@@ -2,6 +2,7 @@ use std::io;
 
 use crate::unity::endian_reader::EndianReader;
 
+#[allow(dead_code)]
 pub struct TypeTreeNode {
     pub type_name: String,
     pub name: String,
