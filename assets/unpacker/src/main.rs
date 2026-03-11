@@ -10,7 +10,7 @@ pub mod flatbuffers_decode;
 pub mod generated_fbs;
 pub mod generated_fbs_yostar;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -21,6 +21,7 @@ use walkdir::WalkDir;
 
 use cli::{Cli, Command};
 use export::audio::export_audio;
+use export::spine;
 use export::text_asset::export_text_asset;
 use export::texture::export_texture;
 use unity::bundle::BundleFile;
@@ -37,7 +38,9 @@ fn main() {
 }
 
 fn cmd_extract(args: &cli::ExtractArgs) {
-    if args.gamedata {
+    let should_extract_gamedata = args.gamedata || args.extract_all();
+
+    if should_extract_gamedata {
         let idx_path = match &args.idx {
             Some(p) => p.clone(),
             None => match find_idx_file(&args.input) {
@@ -46,17 +49,26 @@ fn cmd_extract(args: &cli::ExtractArgs) {
                     p
                 }
                 None => {
-                    eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
-                    std::process::exit(1);
+                    if args.gamedata {
+                        // Only error if user explicitly requested gamedata
+                        eprintln!("error: no .idx manifest found; use --idx <manifest.idx>");
+                        std::process::exit(1);
+                    } else {
+                        // Silent skip when auto-extracting everything
+                        println!("No .idx manifest found, skipping gamedata extraction");
+                        std::path::PathBuf::new()
+                    }
                 }
             },
         };
-        std::fs::create_dir_all(&args.output).unwrap();
-        match export::gamedata::export_gamedata(&args.input, &idx_path, &args.output) {
-            Ok(count) => println!("Exported {count} gamedata files"),
-            Err(e) => eprintln!("error: {e}"),
+        if !idx_path.as_os_str().is_empty() {
+            std::fs::create_dir_all(&args.output).unwrap();
+            match export::gamedata::export_gamedata(&args.input, &idx_path, &args.output) {
+                Ok(count) => println!("Exported {count} gamedata files"),
+                Err(e) => eprintln!("error: {e}"),
+            }
         }
-        if !args.extract_all() && !args.image && !args.text && !args.audio {
+        if !args.extract_all() && !args.image && !args.text && !args.audio && !args.spine {
             return;
         }
     }
@@ -88,18 +100,22 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let extract_image = args.extract_all() || args.image;
     let extract_text = args.extract_all() || args.text;
     let extract_audio = args.extract_all() || args.audio;
+    let extract_spine = args.extract_all() || args.spine;
 
     let exported = AtomicUsize::new(0);
 
     std::fs::create_dir_all(&args.output).unwrap();
 
+    let input_dir = &args.input;
     files.par_iter().for_each(|file_path| {
         let count = process_bundle(
             file_path,
+            input_dir,
             &args.output,
             extract_image,
             extract_text,
             extract_audio,
+            extract_spine,
         );
         exported.fetch_add(count, Ordering::Relaxed);
         pb.inc(1);
@@ -126,12 +142,18 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
     None
 }
 
+/// Class IDs needed for spine MonoBehaviour reference chain:
+/// 114=MonoBehaviour, 49=TextAsset, 21=Material, 28=Texture2D
+const SPINE_CLASS_IDS: &[i32] = &[114, 49, 21, 28];
+
 fn process_bundle(
     file_path: &Path,
+    input_dir: &Path,
     output_dir: &Path,
     extract_image: bool,
     extract_text: bool,
     extract_audio: bool,
+    extract_spine: bool,
 ) -> usize {
     let data = match std::fs::read(file_path) {
         Ok(d) => d,
@@ -147,6 +169,12 @@ fn process_bundle(
         return 0;
     }
 
+    // Derive subdirectory from bundle's relative path (e.g., "chararts/char_002_amiya")
+    let bundle_subdir = file_path
+        .strip_prefix(input_dir)
+        .unwrap_or(file_path)
+        .with_extension("");
+
     // Build resource map from .resS / .resource entries
     let mut resources = HashMap::new();
     for entry in &bundle.files {
@@ -157,47 +185,104 @@ fn process_bundle(
     }
 
     let mut exported = 0;
+    let is_spine_bundle = extract_spine && spine::detect_spine_bundle(&bundle_subdir, input_dir);
+    let needs_phase2 = extract_image || extract_text || extract_audio;
 
-    for entry in &bundle.files {
-        if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
-            continue;
+    // Phase 1: Spine extraction (only read spine-relevant class_ids)
+    let spine_claimed_pids: HashSet<i64> = if is_spine_bundle {
+        let mut spine_objects = HashMap::new();
+
+        for entry in &bundle.files {
+            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+                continue;
+            }
+            let sf = match SerializedFile::parse(entry.data.clone()) {
+                Ok(sf) => sf,
+                Err(_) => continue,
+            };
+            for obj in &sf.objects {
+                // Only deserialize objects relevant to the spine reference chain
+                if !SPINE_CLASS_IDS.contains(&obj.class_id) {
+                    continue;
+                }
+                let val = match read_object(&sf, obj) {
+                    Ok(v) => v,
+                    Err(_) => continue,
+                };
+                spine_objects.insert(obj.path_id, (obj.class_id, val));
+            }
         }
 
-        let sf = match SerializedFile::parse(entry.data.clone()) {
-            Ok(sf) => sf,
-            Err(_) => continue,
-        };
+        let (spine_assets, claimed) = spine::collect_spine_assets(&spine_objects);
+        if !spine_assets.is_empty() {
+            let char_name = spine::char_name_from_bundle(&bundle_subdir);
+            let count =
+                spine::export_spine_assets(&spine_assets, output_dir, &char_name, &resources);
+            exported += count;
+        }
+        // Drop spine_objects before Phase 2 to free memory
+        drop(spine_objects);
+        claimed
+    } else {
+        HashSet::new()
+    };
 
-        for obj in &sf.objects {
-            let val = match read_object(&sf, obj) {
-                Ok(v) => v,
+    // Phase 2: Normal per-object export (skip spine-claimed assets by path_id)
+    if needs_phase2 {
+        for entry in &bundle.files {
+            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+                continue;
+            }
+
+            let sf = match SerializedFile::parse(entry.data.clone()) {
+                Ok(sf) => sf,
                 Err(_) => continue,
             };
 
-            let name = val["m_Name"].as_str().unwrap_or("unnamed");
+            for obj in &sf.objects {
+                // Skip assets claimed by spine extraction
+                if !spine_claimed_pids.is_empty() && spine_claimed_pids.contains(&obj.path_id) {
+                    continue;
+                }
 
-            let result = match obj.class_id {
-                28 if extract_image => {
-                    let dir = output_dir.join("textures");
-                    std::fs::create_dir_all(&dir).ok();
-                    export_texture(&val, &dir, &resources)
+                // Only deserialize objects we'll actually export
+                match obj.class_id {
+                    28 if extract_image => {}
+                    49 if extract_text => {}
+                    83 if extract_audio => {}
+                    _ => continue,
                 }
-                49 if extract_text => {
-                    let dir = output_dir.join("text");
-                    std::fs::create_dir_all(&dir).ok();
-                    export_text_asset(&val, &dir, None)
-                }
-                83 if extract_audio => {
-                    let dir = output_dir.join("audio");
-                    std::fs::create_dir_all(&dir).ok();
-                    export_audio(&val, &dir, &resources)
-                }
-                _ => continue,
-            };
 
-            match result {
-                Ok(()) => exported += 1,
-                Err(e) => eprintln!("  error exporting {name}: {e}"),
+                let val = match read_object(&sf, obj) {
+                    Ok(v) => v,
+                    Err(_) => continue,
+                };
+
+                let name = val["m_Name"].as_str().unwrap_or("unnamed");
+
+                let result = match obj.class_id {
+                    28 => {
+                        let dir = output_dir.join("textures").join(&bundle_subdir);
+                        std::fs::create_dir_all(&dir).ok();
+                        export_texture(&val, &dir, &resources)
+                    }
+                    49 => {
+                        let dir = output_dir.join("text").join(&bundle_subdir);
+                        std::fs::create_dir_all(&dir).ok();
+                        export_text_asset(&val, &dir, None)
+                    }
+                    83 => {
+                        let dir = output_dir.join("audio").join(&bundle_subdir);
+                        std::fs::create_dir_all(&dir).ok();
+                        export_audio(&val, &dir, &resources)
+                    }
+                    _ => unreachable!(),
+                };
+
+                match result {
+                    Ok(()) => exported += 1,
+                    Err(e) => eprintln!("  error exporting {name}: {e}"),
+                }
             }
         }
     }
