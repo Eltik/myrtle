@@ -5,6 +5,7 @@ use super::text_asset::export_text_asset;
 use crate::unity::bundle::BundleFile;
 use crate::unity::object_reader::read_object;
 use crate::unity::serialized_file::SerializedFile;
+use walkdir::WalkDir;
 
 pub fn export_gamedata(
     bundle_dir: &Path,
@@ -14,8 +15,11 @@ pub fn export_gamedata(
     let manifest = ResourceManifest::load(idx_path)?;
     let mut exported = 0;
 
-    for entry in std::fs::read_dir(bundle_dir)? {
-        let entry = entry?;
+    for entry in WalkDir::new(bundle_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
         let path = entry.path();
 
         // Only process .bin files
@@ -23,7 +27,7 @@ pub fn export_gamedata(
             continue;
         }
 
-        let data = std::fs::read(&path)?;
+        let data = std::fs::read(path)?;
         let bundle = match BundleFile::parse(data) {
             Ok(b) => b,
             Err(_) => continue,
