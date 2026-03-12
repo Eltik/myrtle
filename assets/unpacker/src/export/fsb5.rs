@@ -12,12 +12,12 @@ const FREQ_TABLE: [u32; 11] = [
 
 const VORBIS_HEADERS_BIN: &[u8] = include_bytes!("vorbis_headers.bin");
 
-struct VorbisSetup {
-    header_bytes: &'static [u8],
-    seek_bit: u32,
+pub struct VorbisSetup {
+    pub header_bytes: &'static [u8],
+    pub seek_bit: u32,
 }
 
-static VORBIS_HEADERS: LazyLock<HashMap<u32, VorbisSetup>> = LazyLock::new(|| {
+pub static VORBIS_HEADERS: LazyLock<HashMap<u32, VorbisSetup>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     let data = VORBIS_HEADERS_BIN;
     let mut pos = 0;
@@ -43,7 +43,7 @@ static VORBIS_HEADERS: LazyLock<HashMap<u32, VorbisSetup>> = LazyLock::new(|| {
     map
 });
 
-fn lookup_vorbis_setup(setup_id: u32) -> Option<&'static VorbisSetup> {
+pub fn lookup_vorbis_setup(setup_id: u32) -> Option<&'static VorbisSetup> {
     VORBIS_HEADERS.get(&setup_id)
 }
 
@@ -146,7 +146,7 @@ impl<'a> BitReader<'a> {
 }
 
 /// Extract mode block flags from a Vorbis setup header.
-fn extract_block_flags(header_bytes: &[u8], seek_bit: u32) -> Vec<bool> {
+pub fn extract_block_flags(header_bytes: &[u8], seek_bit: u32) -> Vec<bool> {
     let mut reader = BitReader::new(header_bytes);
     reader.seek(seek_bit as usize);
 
@@ -459,52 +459,4 @@ fn rebuild_ogg(
     }
 
     Ok(out)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_vorbis_headers_loaded() {
-        assert!(
-            !VORBIS_HEADERS.is_empty(),
-            "Vorbis headers table should not be empty"
-        );
-        println!("Loaded {} vorbis setup headers", VORBIS_HEADERS.len());
-        assert!(
-            lookup_vorbis_setup(3072374402).is_some(),
-            "Should find setup_id from CN_004"
-        );
-    }
-
-    #[test]
-    fn test_extract_block_flags() {
-        let setup = lookup_vorbis_setup(3072374402).unwrap();
-        let flags = extract_block_flags(setup.header_bytes, setup.seek_bit);
-        assert!(!flags.is_empty(), "Should extract at least one block flag");
-        println!("Block flags: {:?}", flags);
-    }
-
-    #[test]
-    fn test_fsb5_to_ogg() {
-        let data = match std::fs::read("test_output/audio/CN_004.bytes") {
-            Ok(d) => d,
-            Err(e) => {
-                eprintln!("skip: {e}");
-                return;
-            }
-        };
-
-        let results = fsb5_to_ogg(&data).unwrap();
-        assert!(!results.is_empty(), "Should extract at least one sample");
-
-        for (name, ogg) in &results {
-            println!("Sample {name}: {} bytes", ogg.len());
-            assert_eq!(&ogg[0..4], b"OggS", "Should start with OggS");
-            let path = format!("test_output/audio/CN_004_decoded_{name}.ogg");
-            std::fs::write(&path, ogg).unwrap();
-            println!("Wrote {path}");
-        }
-    }
 }

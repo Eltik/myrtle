@@ -116,24 +116,3 @@ impl BundleFile {
         Ok(BundleFile { files })
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_bundle() {
-        let data = match std::fs::read("../downloader/ArkAssets/ui/skin_groups.ab") {
-            Ok(d) => d,
-            Err(e) => {
-                eprintln!("skip: {e}");
-                return;
-            }
-        };
-        let bundle = BundleFile::parse(data).unwrap();
-        assert!(!bundle.files.is_empty());
-        for entry in &bundle.files {
-            println!("  {} ({} bytes)", entry.path, entry.data.len());
-        }
-    }
-}
