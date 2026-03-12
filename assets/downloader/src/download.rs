@@ -27,7 +27,7 @@ impl Downloader {
         }
     }
 
-    fn build_url(&self, filename: &str) -> String {
+    pub fn build_url(&self, filename: &str) -> String {
         let dat_name = replace_last_ext(filename, "dat");
         let encoded = dat_name.replace('/', "_").replace('#', "__");
         format!(
@@ -57,7 +57,7 @@ impl Downloader {
     }
 }
 
-fn replace_last_ext(name: &str, new_ext: &str) -> String {
+pub fn replace_last_ext(name: &str, new_ext: &str) -> String {
     match name.rfind('.') {
         Some(pos) => format!("{}.{}", &name[..pos], new_ext),
         None => format!("{}.{}", name, new_ext),

@@ -1,4 +1,3 @@
-use crate::server::Server;
 use crate::types::{HotFile, HotGroup};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -26,14 +25,10 @@ struct AbInfo {
 
 pub async fn fetch_hot_update_list(
     client: &reqwest::Client,
-    server: Server,
+    cdn_base_url: &str,
     res_version: &str,
 ) -> anyhow::Result<Vec<HotGroup>> {
-    let url = format!(
-        "{}/{}/hot_update_list.json",
-        server.cdn_base_url(),
-        res_version
-    );
+    let url = format!("{}/{}/hot_update_list.json", cdn_base_url, res_version);
     let resp: HotUpdateResponse = client.get(&url).send().await?.json().await?;
 
     let mut groups: HashMap<String, HotGroup> = HashMap::new();
