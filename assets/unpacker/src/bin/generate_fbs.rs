@@ -618,11 +618,17 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
             } else if vf.is_vector {
                 if vf.element_type.as_deref() == Some("nested") {
                     out.push_str("        if let Some(vec) = self.value() {\n");
+                    out.push_str(
+                        "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                    );
                     out.push_str("            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();\n");
                     out.push_str("            map.insert(\"value\".to_string(), json!(arr));\n");
                     out.push_str("        }\n");
                 } else {
                     out.push_str("        if let Some(vec) = self.value() {\n");
+                    out.push_str(
+                        "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                    );
                     out.push_str("            let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();\n");
                     out.push_str("            map.insert(\"value\".to_string(), json!(arr));\n");
                     out.push_str("        }\n");
@@ -654,6 +660,9 @@ fn emit_field_direct(out: &mut String, field: &Field, pascal_name: &str) {
                     "        if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();\n");
                 out.push_str(&format!(
                     "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
@@ -665,6 +674,9 @@ fn emit_field_direct(out: &mut String, field: &Field, pascal_name: &str) {
                     "        if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();\n");
                 out.push_str(&format!(
                     "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
@@ -676,6 +688,9 @@ fn emit_field_direct(out: &mut String, field: &Field, pascal_name: &str) {
                     "        if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("            let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();\n");
                 out.push_str(&format!(
                     "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
@@ -688,6 +703,9 @@ fn emit_field_direct(out: &mut String, field: &Field, pascal_name: &str) {
                     "        if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str(
                     "            let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();\n",
                 );
@@ -751,6 +769,9 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                     "            if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("                let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"
@@ -762,6 +783,9 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                     "            if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"
@@ -773,6 +797,9 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                     "            if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("                let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"
@@ -784,6 +811,9 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                     "            if let Some(vec) = self.{}() {{\n",
                     field.name
                 ));
+                out.push_str(
+                    "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
+                );
                 out.push_str("                let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"

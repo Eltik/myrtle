@@ -155,7 +155,7 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "character_table" | "battle_equip_table" | "token_table" | "ep_breakbuff_table"
+        "ep_breakbuff_table" | "token_table" | "character_table" | "battle_equip_table"
     )
 }
 
@@ -163,11 +163,23 @@ fn has_yostar_schema(schema_type: &str) -> bool {
 fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
     let data_clone = data.to_vec();
-    let prev_hook = panic::take_hook();
-    panic::set_hook(Box::new(|_| {}));
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
+            "ep_breakbuff_table" => {
+                use crate::generated_fbs_yostar::ep_breakbuff_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
             "character_table" => {
                 use crate::generated_fbs_yostar::character_table_generated::*;
                 let root = unsafe {
@@ -182,24 +194,9 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 };
                 Ok(root.to_json())
             }
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            "ep_breakbuff_table" => {
-                use crate::generated_fbs_yostar::ep_breakbuff_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
             _ => Err(format!("No Yostar schema for {}", schema_type)),
         }
     }));
-    panic::set_hook(prev_hook);
     match decode_result {
         Ok(Ok(value)) => {
             if value.as_object().is_some_and(|o| o.is_empty()) {
@@ -224,8 +221,6 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
     let schema_type = guess_root_type(filename);
     let data_clone = data.to_vec();
 
-    let prev_hook = panic::take_hook();
-    panic::set_hook(Box::new(|_| {}));
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
@@ -551,7 +546,6 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
             _ => Err(format!("Unknown schema type: {}", schema_type)),
         }
     }));
-    panic::set_hook(prev_hook);
 
     match decode_result {
         Ok(Ok(value)) => {
