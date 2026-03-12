@@ -65,30 +65,3 @@ impl ResourceManifest {
         self.filename_to_path.get(filename).map(|s| s.as_str())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::PathBuf;
-
-    #[test]
-    fn test_load_manifest() {
-        let idx = PathBuf::from("../downloader/ArkAssets/17e57a849bd61f65f7acd03d65bd137b.idx");
-        let manifest = match ResourceManifest::load(&idx) {
-            Ok(m) => m,
-            Err(e) => {
-                eprintln!("skip: {e}");
-                return;
-            }
-        };
-
-        println!("Loaded {} entries", manifest.filename_to_path.len());
-
-        // Print some sample mappings
-        for (name, path) in manifest.filename_to_path.iter().take(20) {
-            println!("  {name} -> {path}");
-        }
-
-        assert!(!manifest.filename_to_path.is_empty());
-    }
-}

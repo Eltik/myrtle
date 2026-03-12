@@ -15,7 +15,7 @@ pub fn read_object(file: &SerializedFile, obj: &ObjectInfo) -> Result<Value, io:
     read_value(&mut r, type_tree)
 }
 
-fn read_value(r: &mut EndianReader, node: &TypeTreeNode) -> Result<Value, io::Error> {
+pub fn read_value(r: &mut EndianReader, node: &TypeTreeNode) -> Result<Value, io::Error> {
     let val = match node.type_name.as_str() {
         "bool" => Value::Bool(r.read_bool()?),
         "SInt8" | "char" => Value::Number(r.read_i8()?.into()),
@@ -133,118 +133,4 @@ pub fn read_objects_by_class(file: &SerializedFile, class_ids: &[i32]) -> Vec<(i
         .filter(|obj| class_ids.contains(&obj.class_id))
         .filter_map(|obj| read_object(file, obj).ok().map(|v| (obj.path_id, v)))
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::unity::bundle::BundleFile;
-    use crate::unity::serialized_file::SerializedFile;
-
-    /// Bug: read_array with corrupted huge size (negative i32) causes capacity overflow panic
-    /// instead of returning an error.
-    #[test]
-    fn test_read_array_corrupted_size_no_panic() {
-        use crate::unity::endian_reader::EndianReader;
-        use crate::unity::type_tree::TypeTreeNode;
-
-        // Create a minimal type tree: root struct with one Array child containing int elements
-        let element_node = TypeTreeNode {
-            type_name: "int".to_string(),
-            name: "data".to_string(),
-            byte_size: 4,
-            version: 0,
-            level: 2,
-            type_flags: 0,
-            meta_flag: 0,
-            children: vec![],
-        };
-        let size_node = TypeTreeNode {
-            type_name: "int".to_string(),
-            name: "size".to_string(),
-            byte_size: 4,
-            version: 0,
-            level: 2,
-            type_flags: 0,
-            meta_flag: 0,
-            children: vec![],
-        };
-        let array_node = TypeTreeNode {
-            type_name: "Array".to_string(),
-            name: "Array".to_string(),
-            byte_size: -1,
-            version: 0,
-            level: 1,
-            type_flags: 0,
-            meta_flag: 0x4000,
-            children: vec![size_node, element_node],
-        };
-        let root = TypeTreeNode {
-            type_name: "vector".to_string(),
-            name: "m_Container".to_string(),
-            byte_size: -1,
-            version: 0,
-            level: 0,
-            type_flags: 0,
-            meta_flag: 0,
-            children: vec![array_node],
-        };
-
-        // Data contains array size = -1 (0xFFFFFFFF) — wraps to usize::MAX, should not panic
-        let mut data = vec![0xFF, 0xFF, 0xFF, 0xFF]; // i32 = -1 in LE
-        data.extend_from_slice(&[0u8; 64]); // some padding
-
-        let mut r = EndianReader::new(&data, false);
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            super::read_value(&mut r, &root)
-        }));
-        assert!(
-            result.is_ok(),
-            "read_value should not panic on huge array size"
-        );
-        assert!(
-            result.unwrap().is_err(),
-            "should return Err for corrupted array size"
-        );
-    }
-
-    #[test]
-    fn test_read_object() {
-        let data = match std::fs::read("../downloader/ArkAssets/ui/skin_groups.ab") {
-            Ok(d) => d,
-            Err(e) => {
-                eprintln!("skip: {e}");
-                return;
-            }
-        };
-        let bundle = BundleFile::parse(data).unwrap();
-        let sf = SerializedFile::parse(bundle.files[0].data.clone()).unwrap();
-
-        let targets = [28, 49, 83, 142];
-
-        for obj in sf.objects.iter().filter(|o| targets.contains(&o.class_id)) {
-            match read_object(&sf, obj) {
-                Ok(val) => {
-                    let s = serde_json::to_string(&val).unwrap();
-                    let preview = if s.len() > 200 {
-                        format!("{}...", &s[..200])
-                    } else {
-                        s
-                    };
-                    println!(
-                        "OK  path_id={} class={} => {}",
-                        obj.path_id, obj.class_id, preview
-                    );
-                }
-                Err(e) => {
-                    if obj.class_id != 213 {
-                        println!(
-                            "ERR path_id={} class={} offset={} size={} => {}",
-                            obj.path_id, obj.class_id, obj.byte_start, obj.byte_size, e
-                        );
-                    }
-                }
-            }
-        }
-    }
 }
