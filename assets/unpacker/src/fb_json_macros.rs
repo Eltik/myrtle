@@ -5,6 +5,21 @@
 
 use serde_json::Value;
 
+/// Maximum number of elements we'll attempt to decode from a FlatBuffer vector.
+/// Anything larger is almost certainly a corrupted/misaligned offset read by `_unchecked`.
+/// Panicking here (rather than attempting allocation) lets `catch_unwind` handle it
+/// gracefully — `handle_alloc_error` aborts the process and cannot be caught.
+pub const MAX_FB_VECTOR_LEN: usize = 10_000_000;
+
+/// Panics if a FlatBuffer vector length exceeds the sanity limit.
+#[inline]
+pub fn check_vector_len(len: usize, field_name: &str) {
+    assert!(
+        len <= MAX_FB_VECTOR_LEN,
+        "FlatBuffer vector '{field_name}' has suspicious length {len} (max {MAX_FB_VECTOR_LEN})"
+    );
+}
+
 /// Trait for FlatBuffer types that can be serialized to JSON
 pub trait FlatBufferToJson {
     fn to_json(&self) -> Value;
@@ -109,6 +124,7 @@ macro_rules! fb_field {
     // Vector of strings: Option<Vector<ForwardsUOffset<&str>>>
     ($map:expr, $name:expr, $value:expr, vec_string) => {
         if let Some(vec) = $value {
+            $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let arr: Vec<serde_json::Value> = (0..vec.len())
                 .map(|i| serde_json::json!(vec.get(i)))
                 .collect();
@@ -122,6 +138,7 @@ macro_rules! fb_field {
     // Vector of nested types: Option<Vector<ForwardsUOffset<NestedType>>>
     ($map:expr, $name:expr, $value:expr, vec_nested) => {
         if let Some(vec) = $value {
+            $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let arr: Vec<serde_json::Value> = (0..vec.len())
                 .map(|i| $crate::fb_json_macros::FlatBufferToJson::to_json(&vec.get(i)))
                 .collect();
@@ -135,6 +152,7 @@ macro_rules! fb_field {
     // Vector of key-value types that should become a JSON object
     ($map:expr, $name:expr, $value:expr, vec_kv) => {
         if let Some(vec) = $value {
+            $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let mut kv_map = serde_json::Map::new();
             for i in 0..vec.len() {
                 let entry = vec.get(i);
@@ -156,11 +174,13 @@ macro_rules! fb_field {
     // Vector of key-value types where value is a vector (array)
     ($map:expr, $name:expr, $value:expr, vec_kv_array) => {
         if let Some(vec) = $value {
+            $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let mut kv_map = serde_json::Map::new();
             for i in 0..vec.len() {
                 let entry = vec.get(i);
                 let key = entry.key().to_string();
                 if let Some(values) = entry.value() {
+                    $crate::fb_json_macros::check_vector_len(values.len(), $name);
                     let arr: Vec<serde_json::Value> = (0..values.len())
                         .map(|j| $crate::fb_json_macros::FlatBufferToJson::to_json(&values.get(j)))
                         .collect();
@@ -177,6 +197,7 @@ macro_rules! fb_field {
     // Vector of scalars: Option<Vector<i32>> etc
     ($map:expr, $name:expr, $value:expr, vec_scalar) => {
         if let Some(vec) = $value {
+            $crate::fb_json_macros::check_vector_len(vec.len(), $name);
             let arr: Vec<serde_json::Value> = vec.iter().map(|v| serde_json::json!(v)).collect();
             $map.insert(
                 $crate::fb_json_macros::to_pascal_case($name),
