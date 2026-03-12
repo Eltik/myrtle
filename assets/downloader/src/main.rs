@@ -1,20 +1,10 @@
 mod cli;
-mod download;
-mod error;
-mod extract;
-mod hot_update;
-mod manifest;
-mod pipeline;
-mod progress;
-mod server;
-mod types;
-mod version;
 
 use std::sync::Arc;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use server::Server;
+use downloader::{download, hot_update, manifest, pipeline, server::Server, types, version};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -28,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
     let client = reqwest::Client::new();
 
     // Fetch version
-    let ver = version::fetch_version(&client, server).await?;
+    let ver = version::fetch_version(&client, server.version_url()).await?;
     println!(
         "Client: {}  Resources: {}",
         ver.client_version, ver.res_version
@@ -39,7 +29,8 @@ async fn main() -> anyhow::Result<()> {
 
         Commands::ListPacks => {
             let groups =
-                hot_update::fetch_hot_update_list(&client, server, &ver.res_version).await?;
+                hot_update::fetch_hot_update_list(&client, server.cdn_base_url(), &ver.res_version)
+                    .await?;
             for g in &groups {
                 println!(
                     "{:<30} {:>10}  ({} files)",
@@ -52,7 +43,8 @@ async fn main() -> anyhow::Result<()> {
 
         Commands::Download { all, packages } => {
             let groups =
-                hot_update::fetch_hot_update_list(&client, server, &ver.res_version).await?;
+                hot_update::fetch_hot_update_list(&client, server.cdn_base_url(), &ver.res_version)
+                    .await?;
 
             // Select which groups to download
             let selected: Vec<_> = if all {
