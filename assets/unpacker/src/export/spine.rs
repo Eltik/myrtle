@@ -5,7 +5,8 @@ use std::path::Path;
 use base64::Engine;
 use serde_json::Value;
 
-use super::texture::export_texture;
+use super::alpha_merge;
+use super::texture::decode_texture_object;
 
 /// Spine animation category based on asset naming/content
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -324,16 +325,21 @@ pub fn export_spine_assets(
             count += 1;
         }
 
-        // Export textures (already resolved by path_id, no name collisions)
+        // Decode textures and apply alpha merging
+        let mut decoded = HashMap::new();
         for (_, tex_val) in &asset.textures {
-            match export_texture(tex_val, &spine_dir, resources) {
-                Ok(()) => count += 1,
+            match decode_texture_object(tex_val, resources) {
+                Ok(Some(tex)) => {
+                    decoded.insert(tex.name.clone(), tex);
+                }
+                Ok(None) => {}
                 Err(e) => {
                     let name = tex_val["m_Name"].as_str().unwrap_or("?");
-                    eprintln!("  error exporting spine texture {name}: {e}");
+                    eprintln!("  error decoding spine texture {name}: {e}");
                 }
             }
         }
+        count += alpha_merge::merge_and_export(decoded, &spine_dir);
     }
 
     count

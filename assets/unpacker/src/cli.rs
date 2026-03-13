@@ -50,6 +50,10 @@ pub struct ExtractArgs {
     #[arg(long)]
     pub idx: Option<PathBuf>,
 
+    /// Disable automatic alpha texture merging (export raw textures as-is)
+    #[arg(long)]
+    pub no_merge: bool,
+
     /// Number of parallel threads (default: number of CPUs)
     #[arg(short = 'j', long = "jobs")]
     pub jobs: Option<usize>,

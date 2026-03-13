@@ -13,10 +13,11 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use cli::{Cli, Command};
+use export::alpha_merge;
 use export::audio::export_audio;
 use export::spine;
 use export::text_asset::export_text_asset;
-use export::texture::export_texture;
+use export::texture::{decode_texture_object, save_decoded_texture};
 use unity::bundle::BundleFile;
 use unity::object_reader::read_object;
 use unity::serialized_file::SerializedFile;
@@ -94,6 +95,7 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let extract_text = args.extract_all() || args.text;
     let extract_audio = args.extract_all() || args.audio;
     let extract_spine = args.extract_all() || args.spine;
+    let merge_alpha = !args.no_merge && extract_image;
 
     let exported = AtomicUsize::new(0);
 
@@ -109,13 +111,22 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             extract_text,
             extract_audio,
             extract_spine,
+            merge_alpha,
         );
-        exported.fetch_add(count, Ordering::Relaxed);
+        if count > 0 {
+            let prev = exported.fetch_add(count, Ordering::Relaxed);
+            let new_total = prev + count;
+            // Print periodic progress to stdout for external tools (e.g., run.mjs)
+            if new_total / 500 > prev / 500 {
+                pb.suspend(|| println!("progress: {new_total} assets"));
+            }
+        }
         pb.inc(1);
     });
 
     pb.finish_with_message("done");
-    println!("Exported {} assets", exported.load(Ordering::Relaxed));
+    let total = exported.load(Ordering::Relaxed);
+    println!("Exported {total} assets");
 }
 
 /// Search input dir and its parent for a .idx manifest file
@@ -139,6 +150,7 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
 /// 114=MonoBehaviour, 49=TextAsset, 21=Material, 28=Texture2D
 const SPINE_CLASS_IDS: &[i32] = &[114, 49, 21, 28];
 
+#[allow(clippy::too_many_arguments)]
 fn process_bundle(
     file_path: &Path,
     input_dir: &Path,
@@ -147,6 +159,7 @@ fn process_bundle(
     extract_text: bool,
     extract_audio: bool,
     extract_spine: bool,
+    merge_alpha: bool,
 ) -> usize {
     let data = match std::fs::read(file_path) {
         Ok(d) => d,
@@ -222,6 +235,9 @@ fn process_bundle(
 
     // Phase 2: Normal per-object export (skip spine-claimed assets by path_id)
     if needs_phase2 {
+        // Buffer decoded textures for alpha merging
+        let mut decoded_textures: HashMap<String, export::texture::DecodedTexture> = HashMap::new();
+
         for entry in &bundle.files {
             if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
                 continue;
@@ -253,28 +269,51 @@ fn process_bundle(
 
                 let name = val["m_Name"].as_str().unwrap_or("unnamed");
 
-                let result = match obj.class_id {
+                match obj.class_id {
                     28 => {
-                        let dir = output_dir.join("textures").join(&bundle_subdir);
-                        std::fs::create_dir_all(&dir).ok();
-                        export_texture(&val, &dir, &resources)
+                        // Buffer textures instead of saving immediately
+                        match decode_texture_object(&val, &resources) {
+                            Ok(Some(tex)) => {
+                                decoded_textures.insert(tex.name.clone(), tex);
+                            }
+                            Ok(None) => {}
+                            Err(e) => eprintln!("  error decoding {name}: {e}"),
+                        }
                     }
                     49 => {
                         let dir = output_dir.join("text").join(&bundle_subdir);
                         std::fs::create_dir_all(&dir).ok();
-                        export_text_asset(&val, &dir, None)
+                        match export_text_asset(&val, &dir, None) {
+                            Ok(()) => exported += 1,
+                            Err(e) => eprintln!("  error exporting {name}: {e}"),
+                        }
                     }
                     83 => {
                         let dir = output_dir.join("audio").join(&bundle_subdir);
                         std::fs::create_dir_all(&dir).ok();
-                        export_audio(&val, &dir, &resources)
+                        match export_audio(&val, &dir, &resources) {
+                            Ok(()) => exported += 1,
+                            Err(e) => eprintln!("  error exporting {name}: {e}"),
+                        }
                     }
                     _ => unreachable!(),
-                };
+                }
+            }
+        }
 
-                match result {
-                    Ok(()) => exported += 1,
-                    Err(e) => eprintln!("  error exporting {name}: {e}"),
+        // Export buffered textures (with or without alpha merging)
+        if !decoded_textures.is_empty() {
+            let dir = output_dir.join("textures").join(&bundle_subdir);
+            std::fs::create_dir_all(&dir).ok();
+
+            if merge_alpha {
+                exported += alpha_merge::merge_and_export(decoded_textures, &dir);
+            } else {
+                for tex in decoded_textures.values() {
+                    match save_decoded_texture(tex, &dir) {
+                        Ok(()) => exported += 1,
+                        Err(e) => eprintln!("  error saving {}: {e}", tex.name),
+                    }
                 }
             }
         }
