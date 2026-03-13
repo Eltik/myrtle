@@ -7,6 +7,7 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	statSync,
 	writeFileSync,
 } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
@@ -127,6 +128,28 @@ function readStoredVersion(savedir) {
 function writeStoredVersion(savedir, resVersion) {
 	mkdirSync(savedir, { recursive: true });
 	writeFileSync(join(savedir, ".version"), resVersion, "utf-8");
+}
+
+/**
+ * Check if the unpacker binary is newer than the last extraction timestamp.
+ * Returns true if re-extraction is needed (binary was rebuilt since last extract).
+ */
+function unpackerIsNewer(savedir) {
+	const stampFile = join(savedir, ".last_extract");
+	try {
+		const binMtime = statSync(UNPACKER_BIN).mtimeMs;
+		const stampMtime = statSync(stampFile).mtimeMs;
+		return binMtime > stampMtime;
+	} catch {
+		// Stamp doesn't exist → never extracted, or binary missing
+		return existsSync(UNPACKER_BIN);
+	}
+}
+
+/** Touch the extraction timestamp file after a successful unpack. */
+function touchExtractStamp(savedir) {
+	mkdirSync(savedir, { recursive: true });
+	writeFileSync(join(savedir, ".last_extract"), new Date().toISOString(), "utf-8");
 }
 
 function binariesExist() {
@@ -359,22 +382,23 @@ function runUnpack({
 		let stdoutBuf = "";
 		let stderrRaw = "";
 		let totalExported = 0;
-		let phases = 0;
 
 		child.stdout.on("data", (chunk) => {
 			stdoutBuf += chunk.toString();
-			// Parse incremental "Exported N ..." lines as they arrive
-			const matches = stdoutBuf.matchAll(/Exported\s+(\d+)\s+/g);
-			let lastTotal = 0;
-			let count = 0;
-			for (const m of matches) {
-				lastTotal += parseInt(m[1], 10);
-				count++;
+
+			// Parse incremental "progress: N assets" lines for live updates
+			let latestProgress = totalExported;
+			for (const m of stdoutBuf.matchAll(/progress:\s*(\d+)\s+assets/g)) {
+				const n = parseInt(m[1], 10);
+				if (n > latestProgress) latestProgress = n;
 			}
-			if (count > phases) {
-				phases = count;
-				totalExported = lastTotal;
-				// We don't know the final total, so show a count-up spinner-style
+			// Also parse "Exported N ..." lines (gamedata phase + final)
+			for (const m of stdoutBuf.matchAll(/Exported\s+(\d+)\s+/g)) {
+				const n = parseInt(m[1], 10);
+				if (n > latestProgress) latestProgress = n;
+			}
+			if (latestProgress > totalExported) {
+				totalExported = latestProgress;
 				onProgress?.({ completed: totalExported, total: 0, percent: -1 });
 			}
 		});
@@ -688,7 +712,10 @@ async function runUpdate() {
 		console.log(chalk.dim("  No local version found (first run)"));
 	}
 
-	if (storedVer === serverVer.resVersion) {
+	const assetsUpToDate = storedVer === serverVer.resVersion;
+	const needsReextract = assetsUpToDate && unpackerIsNewer(savedir);
+
+	if (assetsUpToDate && !needsReextract) {
 		console.log(
 			boxen(chalk.green("Assets are up to date!"), {
 				padding: 1,
@@ -700,51 +727,83 @@ async function runUpdate() {
 		return;
 	}
 
-	// Update available
-	console.log(
-		boxen(
-			[
-				chalk.yellow.bold("Update Available"),
-				"",
-				`Current: ${storedVer ?? chalk.dim("(none)")}`,
-				`Server:  ${chalk.green(serverVer.resVersion)}`,
-			].join("\n"),
-			{
-				padding: 1,
-				margin: { top: 1, bottom: 0, left: 1, right: 1 },
-				borderStyle: "round",
-				borderColor: "yellow",
-			},
-		),
-	);
-
-	const { proceed } = await inquirer.prompt([
-		{
-			type: "confirm",
-			name: "proceed",
-			message: "Download and extract updates?",
-			default: true,
-		},
-	]);
-	if (!proceed) return;
-
-	// Download phase
-	console.log();
-	const dlBar = createProgressBar("Downloading");
-	dlBar.startSpinner("Fetching asset manifest…");
-	try {
-		const dlStats = await runDownload({
-			serverKey,
-			savedir,
-			threads,
-			onProgress: ({ completed, total }) => dlBar.render(completed, total),
-		});
-		dlBar.succeed(
-			`Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`,
+	if (needsReextract) {
+		// Assets haven't changed but the unpacker binary is newer
+		console.log(
+			boxen(
+				[
+					chalk.yellow.bold("Re-extraction needed"),
+					"",
+					`Assets version ${chalk.green(storedVer)} is current,`,
+					`but the unpacker binary has been rebuilt since last extraction.`,
+				].join("\n"),
+				{
+					padding: 1,
+					margin: { top: 1, bottom: 0, left: 1, right: 1 },
+					borderStyle: "round",
+					borderColor: "yellow",
+				},
+			),
 		);
-	} catch (err) {
-		dlBar.fail(`Download failed: ${err.message}`);
-		return;
+
+		const { proceed } = await inquirer.prompt([
+			{
+				type: "confirm",
+				name: "proceed",
+				message: "Re-extract with updated unpacker?",
+				default: true,
+			},
+		]);
+		if (!proceed) return;
+	} else {
+		// New assets available from server
+		console.log(
+			boxen(
+				[
+					chalk.yellow.bold("Update Available"),
+					"",
+					`Current: ${storedVer ?? chalk.dim("(none)")}`,
+					`Server:  ${chalk.green(serverVer.resVersion)}`,
+				].join("\n"),
+				{
+					padding: 1,
+					margin: { top: 1, bottom: 0, left: 1, right: 1 },
+					borderStyle: "round",
+					borderColor: "yellow",
+				},
+			),
+		);
+
+		const { proceed } = await inquirer.prompt([
+			{
+				type: "confirm",
+				name: "proceed",
+				message: "Download and extract updates?",
+				default: true,
+			},
+		]);
+		if (!proceed) return;
+	}
+
+	// Download phase (skip if only re-extracting)
+	if (!needsReextract) {
+		console.log();
+		const dlBar = createProgressBar("Downloading");
+		dlBar.startSpinner("Fetching asset manifest…");
+		try {
+			const dlStats = await runDownload({
+				serverKey,
+				savedir,
+				threads,
+				onProgress: ({ completed, total }) => dlBar.render(completed, total),
+			});
+			dlBar.succeed(
+				`Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`,
+			);
+		} catch (err) {
+			dlBar.fail(`Download failed: ${err.message}`);
+			return;
+		}
 	}
 
 	// Unpack phase
@@ -766,11 +825,17 @@ async function runUpdate() {
 		return;
 	}
 
-	// Save version
-	writeStoredVersion(savedir, serverVer.resVersion);
+	// Save version & extraction timestamp
+	if (!assetsUpToDate) {
+		writeStoredVersion(savedir, serverVer.resVersion);
+	}
+	touchExtractStamp(savedir);
 
+	const msg = needsReextract
+		? `Re-extracted with updated unpacker (${serverVer.resVersion})`
+		: `Updated to ${serverVer.resVersion}`;
 	console.log(
-		boxen(chalk.green.bold(`Updated to ${serverVer.resVersion}`), {
+		boxen(chalk.green.bold(msg), {
 			padding: 1,
 			margin: { top: 1, bottom: 0, left: 1, right: 1 },
 			borderStyle: "round",
@@ -988,9 +1053,10 @@ async function runWebSocketServer() {
 				onProgress: (p) => broadcast({ type: "unpack_progress", ...p }),
 			});
 
-			// Update stored version
+			// Update stored version and extraction timestamp
 			const serverVer = await fetchServerVersion(config.serverKey);
 			writeStoredVersion(config.savedir, serverVer.resVersion);
+			touchExtractStamp(config.savedir);
 			currentVersion = serverVer.resVersion;
 
 			currentState = "idle";
@@ -1024,12 +1090,13 @@ async function runWebSocketServer() {
 
 			currentState = "idle";
 
-			if (storedVer === serverVer.resVersion) {
+			const needsReextract = unpackerIsNewer(config.savedir);
+			if (storedVer === serverVer.resVersion && !needsReextract) {
 				broadcast(statusMessage());
 				return;
 			}
 
-			// Update available
+			// Update available (new assets or unpacker rebuild)
 			broadcast({
 				type: "update_available",
 				currentVersion: storedVer ?? null,

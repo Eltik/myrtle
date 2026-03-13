@@ -3,19 +3,28 @@ use std::{collections::HashMap, io, path::Path};
 use base64::Engine;
 use serde_json::Value;
 
-pub fn export_texture(
+/// Decoded texture data ready for saving or combining.
+pub struct DecodedTexture {
+    pub name: String,
+    pub width: u32,
+    pub height: u32,
+    /// RGBA bytes, already vertically flipped (top-left origin).
+    pub rgba: Vec<u8>,
+}
+
+/// Decode a Texture2D object into in-memory RGBA data without writing to disk.
+pub fn decode_texture_object(
     obj: &Value,
-    output_dir: &Path,
     resources: &HashMap<String, Vec<u8>>,
-) -> Result<(), io::Error> {
+) -> Result<Option<DecodedTexture>, io::Error> {
     let name = obj["m_Name"].as_str().unwrap_or("unnamed");
     let width = obj["m_Width"].as_u64().unwrap_or(0) as u32;
     let height = obj["m_Height"].as_u64().unwrap_or(0) as u32;
     let format = obj["m_TextureFormat"].as_i64().unwrap_or(0) as i32;
-    let image_data = obj["image data"].as_str().unwrap_or(""); // base64 string
+    let image_data = obj["image data"].as_str().unwrap_or("");
 
     if width == 0 || height == 0 {
-        return Ok(());
+        return Ok(None);
     }
 
     let image_bytes = if !image_data.is_empty() {
@@ -23,14 +32,13 @@ pub fn export_texture(
             .decode(image_data)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?
     } else {
-        // Try m_StreamData (.resS)
         let stream = &obj["m_StreamData"];
         let offset = stream["offset"].as_u64().unwrap_or(0) as usize;
         let size = stream["size"].as_u64().unwrap_or(0) as usize;
         let path = stream["path"].as_str().unwrap_or("");
 
         if size == 0 || path.is_empty() {
-            return Ok(());
+            return Ok(None);
         }
 
         let filename = path.rsplit('/').next().unwrap_or(path);
@@ -42,14 +50,14 @@ pub fn export_texture(
         })?;
 
         if offset + size > res_data.len() {
-            return Ok(());
+            return Ok(None);
         }
         res_data[offset..offset + size].to_vec()
     };
 
     let mut buf = vec![0u32; (width * height) as usize];
     if decode_texture(&image_bytes, width, height, format, &mut buf).is_err() {
-        return Ok(());
+        return Ok(None);
     }
 
     // Convert u32 (ABGR packed) to RGBA bytes
@@ -72,12 +80,37 @@ pub fn export_texture(
         }
     }
 
-    // Save PNG
-    let path = output_dir.join(format!("{name}.png"));
-    image::save_buffer(&path, &rgba, width, height, image::ColorType::Rgba8)
-        .map_err(io::Error::other)?;
+    Ok(Some(DecodedTexture {
+        name: name.to_string(),
+        width,
+        height,
+        rgba,
+    }))
+}
 
-    Ok(())
+/// Save a decoded texture to disk as PNG.
+pub fn save_decoded_texture(tex: &DecodedTexture, output_dir: &Path) -> Result<(), io::Error> {
+    let path = output_dir.join(format!("{}.png", tex.name));
+    image::save_buffer(
+        &path,
+        &tex.rgba,
+        tex.width,
+        tex.height,
+        image::ColorType::Rgba8,
+    )
+    .map_err(io::Error::other)
+}
+
+/// Decode and save a Texture2D object as PNG (convenience wrapper).
+pub fn export_texture(
+    obj: &Value,
+    output_dir: &Path,
+    resources: &HashMap<String, Vec<u8>>,
+) -> Result<(), io::Error> {
+    let Some(decoded) = decode_texture_object(obj, resources)? else {
+        return Ok(());
+    };
+    save_decoded_texture(&decoded, output_dir)
 }
 
 pub fn decode_texture(

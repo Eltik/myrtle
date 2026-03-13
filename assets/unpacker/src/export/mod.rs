@@ -1,3 +1,4 @@
+pub mod alpha_merge;
 pub mod audio;
 pub mod fsb5;
 pub mod gamedata;
