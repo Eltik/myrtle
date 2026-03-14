@@ -1,8 +1,23 @@
-use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
+use std::sync::{Arc, OnceLock};
+
+use tokio::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::hypergryph::constants::{Domain, Server};
+use crate::{
+    core::hypergryph::constants::{Domain, Server},
+    utils::random::{fill_random, random_digits},
+};
+
+static GLOBAL_CONFIG: OnceLock<Arc<RwLock<GlobalConfig>>> = OnceLock::new();
+
+pub fn config() -> &'static Arc<RwLock<GlobalConfig>> {
+    GLOBAL_CONFIG.get().expect("GlobalConfig not initialized")
+}
+
+pub fn init_config(cfg: GlobalConfig) {
+    GLOBAL_CONFIG.set(Arc::new(RwLock::new(cfg))).ok();
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct DeviceIds {
@@ -15,8 +30,8 @@ impl DeviceIds {
     pub fn generate() -> Self {
         Self {
             device_id: Self::uuid_v4(),
-            device_id2: format!("86{}", Self::random_digits(13)),
-            device_id3: Self::new_v4(),
+            device_id2: format!("86{}", random_digits(13)),
+            device_id3: Self::uuid_v4(),
         }
     }
 
@@ -26,7 +41,7 @@ impl DeviceIds {
 
     fn uuid_v4() -> String {
         let mut bytes = [0u8; 16];
-        Self::fill_random(&mut bytes);
+        fill_random(&mut bytes);
 
         bytes[6] = (bytes[6] & 0x0F) | 0x40;
         bytes[8] = (bytes[8] & 0x3F) | 0x80;
@@ -41,16 +56,6 @@ impl DeviceIds {
             u64::from_be_bytes([0, 0, b[10], b[11], b[12], b[13], b[14], b[15]]),
         )
     }
-
-    fn random_digits(count: usize) -> String {
-        let mut buf = [0u8; 1];
-        (0..count)
-            .map(|_| {
-                Self::fill_random(&mut buf);
-                char::from_digit((buf[0] % 10) as u32, 10).unwrap()
-            })
-            .collect()
-    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -60,9 +65,46 @@ pub struct VersionInfo {
     pub client_version: String,
 }
 
+type ServerMap<T> = [T; 6];
+type DomainMap<T> = [T; 12];
+
 #[derive(Debug, Clone, Default)]
 pub struct GlobalConfig {
     pub device_ids: DeviceIds,
-    pub domains: HashMap<Server, HashMap<Domain, String>>,
-    pub versions: HashMap<Server, VersionInfo>,
+    pub domains: ServerMap<DomainMap<Option<String>>>,
+    pub versions: ServerMap<VersionInfo>,
+}
+
+impl GlobalConfig {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Get a domain URL for a specific server + domain pair
+    pub fn domain(&self, server: Server, domain: Domain) -> Option<&str> {
+        self.domains[server.index()][domain.index()].as_deref()
+    }
+
+    /// Set a domain URL for a specific server + domain pair
+    pub fn set_domain(&mut self, server: Server, domain: Domain, url: String) {
+        self.domains[server.index()][domain.index()] = Some(url);
+    }
+
+    /// Get version info for a server
+    pub fn version(&self, server: Server) -> &VersionInfo {
+        &self.versions[server.index()]
+    }
+
+    /// Set version info for a server
+    pub fn set_version(&mut self, server: Server, info: VersionInfo) {
+        self.versions[server.index()] = info;
+    }
+
+    pub fn reset_network(&mut self) {
+        self.domains = Default::default();
+    }
+
+    pub fn reset_versions(&mut self) {
+        self.versions = Default::default();
+    }
 }
