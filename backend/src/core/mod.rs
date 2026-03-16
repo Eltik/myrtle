@@ -1,2 +1,2 @@
-pub mod hypergryph;
 pub mod auth;
+pub mod hypergryph;
