@@ -28,7 +28,7 @@ env:
 
 jobs:
   # ──────────────────────────────────────────────────────────────────────────────
-  # Formatting check (fast, fail-first)
+  # Formatting check
   # ──────────────────────────────────────────────────────────────────────────────
   fmt:
     name: Rustfmt
@@ -49,7 +49,7 @@ jobs:
         run: cargo fmt --check
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Linting (clippy)
+  # Linting
   # ──────────────────────────────────────────────────────────────────────────────
   clippy:
     name: Clippy
@@ -144,7 +144,7 @@ jobs:
         run: cargo test --doc
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Release build (ensures optimized binaries compile on all platforms)
+  # Release build
   # ──────────────────────────────────────────────────────────────────────────────
   build-release:
     name: Release Build
@@ -209,7 +209,7 @@ jobs:
           retention-days: 7
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Run script validation (Node.js orchestrator)
+  # Run script validation
   # ──────────────────────────────────────────────────────────────────────────────
   run-script:
     name: Run Script
@@ -272,7 +272,7 @@ jobs:
         run: cargo audit || echo "::warning::Unpacker audit found vulnerabilities"
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Integration: end-to-end pipeline validation
+  # Integration
   # ──────────────────────────────────────────────────────────────────────────────
   integration:
     name: Integration
@@ -333,7 +333,7 @@ jobs:
           fi
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # Final status gate (for branch protection rules)
+  # Final status
   # ──────────────────────────────────────────────────────────────────────────────
   ci-pass:
     name: CI Pass

@@ -3,6 +3,7 @@ pub mod audio;
 pub mod fsb5;
 pub mod gamedata;
 pub mod manifest;
+pub mod portrait;
 pub mod spine;
 pub mod text_asset;
 pub mod texture;

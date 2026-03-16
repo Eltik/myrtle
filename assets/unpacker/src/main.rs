@@ -15,6 +15,7 @@ use walkdir::WalkDir;
 use cli::{Cli, Command};
 use export::alpha_merge;
 use export::audio::export_audio;
+use export::portrait;
 use export::spine;
 use export::text_asset::export_text_asset;
 use export::texture::{decode_texture_object, save_decoded_texture};
@@ -95,6 +96,7 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let extract_text = args.extract_all() || args.text;
     let extract_audio = args.extract_all() || args.audio;
     let extract_spine = args.extract_all() || args.spine;
+    let extract_portrait = args.extract_all() || args.portrait;
     let merge_alpha = !args.no_merge && extract_image;
 
     let exported = AtomicUsize::new(0);
@@ -111,6 +113,7 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             extract_text,
             extract_audio,
             extract_spine,
+            extract_portrait,
             merge_alpha,
         );
         if count > 0 {
@@ -159,6 +162,7 @@ fn process_bundle(
     extract_text: bool,
     extract_audio: bool,
     extract_spine: bool,
+    extract_portrait: bool,
     merge_alpha: bool,
 ) -> usize {
     let data = match std::fs::read(file_path) {
@@ -192,6 +196,8 @@ fn process_bundle(
 
     let mut exported = 0;
     let is_spine_bundle = extract_spine && spine::detect_spine_bundle(&bundle_subdir, input_dir);
+    let is_portrait_bundle =
+        extract_portrait && portrait::detect_portrait_bundle(&bundle_subdir, input_dir);
     let needs_phase2 = extract_image || extract_text || extract_audio;
 
     // Phase 1: Spine extraction (only read spine-relevant class_ids)
@@ -233,7 +239,77 @@ fn process_bundle(
         HashSet::new()
     };
 
-    // Phase 2: Normal per-object export (skip spine-claimed assets by path_id)
+    // Phase 1.5: Portrait extraction from SpritePacker atlases
+    let portrait_claimed_pids: HashSet<i64> = if is_portrait_bundle {
+        let mut all_objects: HashMap<i64, (i32, serde_json::Value)> = HashMap::new();
+
+        for entry in &bundle.files {
+            if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
+                continue;
+            }
+            let sf = match SerializedFile::parse(entry.data.clone()) {
+                Ok(sf) => sf,
+                Err(_) => continue,
+            };
+            for obj in &sf.objects {
+                if obj.class_id == 114 || obj.class_id == 28 {
+                    let val = match read_object(&sf, obj) {
+                        Ok(v) => v,
+                        Err(_) => continue,
+                    };
+                    all_objects.insert(obj.path_id, (obj.class_id, val));
+                }
+            }
+        }
+
+        // Parse SpritePacker MonoBehaviours
+        let mut packers = Vec::new();
+        let mut claimed = HashSet::new();
+        for (pid, (class_id, val)) in &all_objects {
+            if *class_id == 114
+                && let Some(packer) = portrait::parse_sprite_packer(val)
+            {
+                claimed.insert(*pid);
+                claimed.insert(packer.texture_pid);
+                claimed.insert(packer.alpha_pid);
+                packers.push(packer);
+            }
+        }
+
+        if !packers.is_empty() {
+            // Decode all textures referenced by packers (RGB + alpha)
+            let mut decoded: HashMap<i64, export::texture::DecodedTexture> = HashMap::new();
+            for (pid, (class_id, val)) in &all_objects {
+                if *class_id == 28 && claimed.contains(pid) {
+                    match decode_texture_object(val, &resources) {
+                        Ok(Some(tex)) => {
+                            decoded.insert(*pid, tex);
+                        }
+                        Ok(None) => {}
+                        Err(e) => eprintln!("  error decoding portrait texture: {e}"),
+                    }
+                }
+            }
+
+            let dir = output_dir.join("portraits");
+            std::fs::create_dir_all(&dir).ok();
+            exported += portrait::extract_portraits(&packers, &decoded, &dir);
+        }
+
+        drop(all_objects);
+        claimed
+    } else {
+        HashSet::new()
+    };
+
+    // Combine claimed path_ids from spine + portrait phases
+    let claimed_pids: HashSet<i64> = spine_claimed_pids
+        .iter()
+        .chain(portrait_claimed_pids.iter())
+        .copied()
+        .collect();
+
+    // Phase 2: Normal per-object export (skip claimed assets by path_id)
     if needs_phase2 {
         // Buffer decoded textures for alpha merging
         let mut decoded_textures: HashMap<String, export::texture::DecodedTexture> = HashMap::new();
@@ -249,8 +325,8 @@ fn process_bundle(
             };
 
             for obj in &sf.objects {
-                // Skip assets claimed by spine extraction
-                if !spine_claimed_pids.is_empty() && spine_claimed_pids.contains(&obj.path_id) {
+                // Skip assets claimed by spine/portrait extraction
+                if !claimed_pids.is_empty() && claimed_pids.contains(&obj.path_id) {
                     continue;
                 }
 

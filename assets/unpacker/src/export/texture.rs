@@ -56,7 +56,11 @@ pub fn decode_texture_object(
     };
 
     let mut buf = vec![0u32; (width * height) as usize];
-    if decode_texture(&image_bytes, width, height, format, &mut buf).is_err() {
+    if let Err(e) = decode_texture(&image_bytes, width, height, format, &mut buf) {
+        eprintln!(
+            "  decode_texture failed for {name} ({width}x{height} fmt={format}, {} bytes): {e}",
+            image_bytes.len()
+        );
         return Ok(None);
     }
 
@@ -218,8 +222,8 @@ pub fn decode_texture(
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
         }
         48..=56 => {
-            // ASTC variants
-            let (bw, bh) = match format {
+            // ASTC variants — try reported block size first, fall back if data doesn't fit
+            let reported = match format {
                 48 => (4, 4),
                 49 => (5, 5),
                 50 => (6, 6),
@@ -231,8 +235,35 @@ pub fn decode_texture(
                 56 => (12, 12),
                 _ => unreachable!(),
             };
-            texture2ddecoder::decode_astc(data, w as usize, h as usize, bw, bh, buf)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
+            let result = texture2ddecoder::decode_astc(
+                data, w as usize, h as usize, reported.0, reported.1, buf,
+            );
+            if result.is_err() {
+                // Unity sometimes reports wrong ASTC block size; find the block size
+                // that matches the actual data length: blocks = ceil(w/bw) * ceil(h/bh), bytes = blocks * 16
+                let candidates: &[(usize, usize)] =
+                    &[(4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (10, 10), (12, 12)];
+                let mut decoded = false;
+                for &(bw, bh) in candidates {
+                    if (bw, bh) == reported {
+                        continue;
+                    }
+                    let blocks_w = (w as usize).div_ceil(bw);
+                    let blocks_h = (h as usize).div_ceil(bh);
+                    let expected = blocks_w * blocks_h * 16;
+                    if expected <= data.len()
+                        && texture2ddecoder::decode_astc(data, w as usize, h as usize, bw, bh, buf)
+                            .is_ok()
+                    {
+                        decoded = true;
+                        break;
+                    }
+                }
+                if !decoded {
+                    result
+                        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
+                }
+            }
         }
         _ => {
             return Err(io::Error::new(

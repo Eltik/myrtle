@@ -46,6 +46,10 @@ pub struct ExtractArgs {
     #[arg(long)]
     pub spine: bool,
 
+    /// Extract portraits from SpritePacker atlases (charportraits)
+    #[arg(long)]
+    pub portrait: bool,
+
     /// Path to resource manifest .idx file (for gamedata extraction)
     #[arg(long)]
     pub idx: Option<PathBuf>,
@@ -62,7 +66,7 @@ pub struct ExtractArgs {
 impl ExtractArgs {
     /// Returns true if no type filters are set (extract everything)
     pub fn extract_all(&self) -> bool {
-        !self.image && !self.text && !self.audio && !self.gamedata && !self.spine
+        !self.image && !self.text && !self.audio && !self.gamedata && !self.spine && !self.portrait
     }
 }
 

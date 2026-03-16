@@ -50,6 +50,7 @@ dependencies = [
  "sha1",
  "tokio",
  "urlencoding",
+ "walkdir",
 ]
 
 [[package]]
