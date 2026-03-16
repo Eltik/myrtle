@@ -24,7 +24,7 @@ pub async fn init(client: &Client) {
     // TODO: Emit event for when everything is initialized
 }
 
-pub async fn reload_all(client: &Client) {
+pub async fn reload(client: &Client) {
     network::load_network_config(client).await;
     version::load_version_config(client).await;
 

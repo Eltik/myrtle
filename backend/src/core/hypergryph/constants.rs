@@ -155,3 +155,24 @@ impl AuthSession {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, Serialize)]
+pub enum Pid {
+    #[serde(rename = "US-ARKNIGHTS")]
+    UsArknights,
+    #[serde(rename = "JP-AK")]
+    JpAk,
+    #[serde(rename = "KR-ARKNIGHTS")]
+    KrArknights,
+}
+
+impl From<Server> for Pid {
+    fn from(server: Server) -> Self {
+        match server {
+            Server::EN => Pid::UsArknights,
+            Server::JP => Pid::JpAk,
+            Server::KR => Pid::KrArknights,
+            _ => Pid::UsArknights,
+        }
+    }
+}
