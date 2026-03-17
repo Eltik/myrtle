@@ -4,7 +4,7 @@ use crate::core::gamedata::{
     assets::AssetIndex,
     types::{
         material::Materials,
-        module::{BattleEquip, Module, ModuleItemCost, RawModule, RawModules},
+        module::{BattleEquip, Module, ModuleItemCost, Modules, RawModule, RawModules},
         operator::OperatorModule,
     },
 };
@@ -32,6 +32,28 @@ pub fn get_operator_modules(
             OperatorModule { module, data }
         })
         .collect()
+}
+
+pub fn enrich_modules_global(
+    raw: &RawModules,
+    battle_equip: &BattleEquip,
+    materials: &Materials,
+    assets: &AssetIndex,
+) -> Modules {
+    let equip_dict = raw
+        .equip_dict
+        .iter()
+        .map(|(k, v)| (k.clone(), enrich_module(v, materials, assets)))
+        .collect();
+
+    Modules {
+        equip_dict,
+        mission_list: raw.mission_list.clone(),
+        sub_prof_dict: raw.sub_prof_dict.clone(),
+        char_equip: raw.char_equip.clone(),
+        equip_track_dict: HashMap::new(),
+        battle_equip: battle_equip.clone(),
+    }
 }
 
 fn enrich_module(raw: &RawModule, materials: &Materials, assets: &AssetIndex) -> Module {

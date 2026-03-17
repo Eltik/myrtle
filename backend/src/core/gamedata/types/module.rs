@@ -359,3 +359,21 @@ pub struct BattleEquipTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub equips: HashMap<String, ModuleData>,
 }
+
+impl UniequipTableFile {
+    pub fn into_raw_modules(self) -> RawModules {
+        RawModules {
+            equip_dict: self.equip_dict,
+            mission_list: self.mission_list,
+            sub_prof_dict: self.sub_prof_dict,
+            char_equip: self.char_equip,
+            equip_track_dict: self.equip_track_dict,
+        }
+    }
+}
+
+impl BattleEquipTableFile {
+    pub fn into_battle_equip(self) -> BattleEquip {
+        self.equips
+    }
+}

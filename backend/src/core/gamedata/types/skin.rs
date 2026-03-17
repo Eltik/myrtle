@@ -211,3 +211,16 @@ pub struct SkinTableFile {
     #[serde(default)]
     pub special_skin_info_list: Vec<SpecialSkinInfo>,
 }
+
+impl SkinTableFile {
+    pub fn into_skin_data(self) -> SkinData {
+        SkinData {
+            char_skins: self.char_skins,
+            buildin_evolve_map: HashMap::new(), // Raw Value -> structured conversion skipped
+            buildin_patch_map: HashMap::new(),
+            brand_list: self.brand_list,
+            special_skin_info_list: self.special_skin_info_list,
+            enriched_skins: HashMap::new(),
+        }
+    }
+}

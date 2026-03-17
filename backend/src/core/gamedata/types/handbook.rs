@@ -423,3 +423,16 @@ pub struct HandbookTableFile {
     #[serde(default)]
     pub handbook_stage_time: Vec<HandbookStageTime>,
 }
+
+impl HandbookTableFile {
+    pub fn into_handbook(self) -> Handbook {
+        Handbook {
+            handbook_dict: self.handbook_dict,
+            npc_dict: self.npc_dict,
+            team_mission_list: self.team_mission_list,
+            handbook_display_condition_list: self.handbook_display_condition_list,
+            handbook_stage_data: self.handbook_stage_data,
+            handbook_stage_time: self.handbook_stage_time,
+        }
+    }
+}

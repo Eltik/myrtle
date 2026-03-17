@@ -351,3 +351,15 @@ pub struct ItemTableFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub char_voucher_items: HashMap<String, CharVoucherItem>,
 }
+
+impl ItemTableFile {
+    pub fn into_materials(self) -> Materials {
+        Materials {
+            items: self.items,
+            exp_items: self.exp_items,
+            potential_items: HashMap::new(),
+            ap_supplies: self.ap_supply_out_of_date_dict,
+            char_voucher_items: self.char_voucher_items,
+        }
+    }
+}

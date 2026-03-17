@@ -183,3 +183,29 @@ pub struct GachaTableFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub special_gacha_percent_dict: HashMap<i32, f64>,
 }
+
+impl GachaTableFile {
+    pub fn into_gacha_data(self) -> GachaData {
+        GachaData {
+            gacha_pool_client: self.gacha_pool_client,
+            newbee_gacha_pool_client: self.newbee_gacha_pool_client,
+            special_recruit_pool: self.special_recruit_pool,
+            gacha_tags: self.gacha_tags,
+            recruit_pool: self.recruit_pool,
+            potential_material_converter: self.potential_material_converter,
+            classic_potential_material_converter: self.classic_potential_material_converter,
+            recruit_rarity_table: self.recruit_rarity_table,
+            special_tag_rarity_table: self.special_tag_rarity_table,
+            recruit_detail: self.recruit_detail,
+            show_gacha_log_entry: self.show_gacha_log_entry,
+            carousel: self.carousel,
+            free_gacha: self.free_gacha,
+            limit_ten_gacha_item: self.limit_ten_gacha_item,
+            linkage_ten_gacha_item: self.linkage_ten_gacha_item,
+            normal_gacha_item: self.normal_gacha_item,
+            fes_gacha_pool_relate_item: self.fes_gacha_pool_relate_item,
+            dic_recruit6_star_hint: self.dic_recruit6_star_hint,
+            special_gacha_percent_dict: self.special_gacha_percent_dict,
+        }
+    }
+}

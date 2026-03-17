@@ -1,11 +1,14 @@
 use crate::core::gamedata::{assets::AssetIndex, types::material::Materials};
 
+pub mod chibi;
+pub mod enemies;
 pub mod handbook;
 pub mod modules;
 pub mod operators;
 pub mod profile;
 pub mod skills;
 pub mod skins;
+pub mod voice;
 
 pub fn resolve_item_icon(
     item_id: &str,
