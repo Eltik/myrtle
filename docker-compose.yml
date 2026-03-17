@@ -1,0 +1,119 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - myrtle_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myrtle -d myrtle"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myrtle
+    profiles:
+      - "${ENABLE_DB:-true}"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - myrtle_redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myrtle
+    profiles:
+      - "${ENABLE_CACHE:-true}"
+
+  backend:
+    build:
+      context: ./backend
+      platforms:
+        - linux/amd64
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      redis:
+        condition: service_healthy
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      DATA_DIR: ${DATA_DIR}
+      ASSETS_DIR: ${ASSETS_DIR}
+      JWT_SECRET: ${JWT_SECRET}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      RUST_LOG: ${RUST_LOG:-info}
+      ASSET_MODE: ${ASSET_MODE:-local}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_PATH_STYLE: ${S3_PATH_STYLE:-true}
+      S3_PREFIX: ${S3_PREFIX}
+    volumes:
+      - ./backend:/src
+      - ./assets/Unpacked:/data/Unpacked:ro
+    ports:
+      - "3060:3060"
+    networks:
+      - myrtle
+    profiles:
+      - "true"
+
+  frontend:
+    build:
+      context: ./frontend
+      platforms:
+        - linux/amd64
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: ${BACKEND_URL}
+      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+    volumes:
+      - ./frontend:/src
+    ports:
+      - "3000:3000"
+    networks:
+      - myrtle
+    profiles:
+      - "true"
+
+  asset-tools:
+    build:
+      context: ./assets
+      platforms:
+        - linux/amd64
+    profiles:
+      - tools
+    volumes:
+      - ./assets/ArkAssets:/data/ArkAssets
+      - ./assets/Unpacked:/data/Unpacked
+
+volumes:
+  myrtle_pgdata:
+  myrtle_redisdata:
+
+networks:
+  myrtle:
+    driver: bridge
