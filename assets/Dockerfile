@@ -17,14 +17,12 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cd unpacker && cargo build --release && \
     cp target/release/unpacker /usr/local/bin/
 
-RUN cp download.sh unpack.sh /usr/local/bin/ 
+RUN cp download.sh unpack.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/download.sh /usr/local/bin/unpack.sh
 
-RUN cp unity-rs/src/resources/FMOD/libfmod.so /usr/local/lib/
-RUN cp unity-rs/src/resources/FMOD/libfmodstudio.so /usr/local/lib/
 RUN ldconfig
 
 RUN mkdir -p /data/ArkAssets /data/output
 VOLUME ["/data/ArkAssets", "/data/output"]
-    
+
 CMD ["sh", "-c", "echo 'Run with: download.sh or unpack.sh'"]
