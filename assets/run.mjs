@@ -146,6 +146,20 @@ function unpackerIsNewer(savedir) {
 	}
 }
 
+/**
+ * Check if the extraction output directory is missing or empty.
+ * Returns true if re-extraction is needed because output doesn't exist.
+ */
+function outputMissingOrEmpty(outputDir) {
+	try {
+		const entries = readdirSync(outputDir);
+		return entries.length === 0;
+	} catch {
+		// Directory doesn't exist
+		return true;
+	}
+}
+
 /** Touch the extraction timestamp file after a successful unpack. */
 function touchExtractStamp(savedir) {
 	mkdirSync(savedir, { recursive: true });
@@ -713,7 +727,8 @@ async function runUpdate() {
 	}
 
 	const assetsUpToDate = storedVer === serverVer.resVersion;
-	const needsReextract = assetsUpToDate && unpackerIsNewer(savedir);
+	const needsReextract =
+		assetsUpToDate && (unpackerIsNewer(savedir) || outputMissingOrEmpty(outputDir));
 
 	if (assetsUpToDate && !needsReextract) {
 		console.log(
@@ -728,14 +743,16 @@ async function runUpdate() {
 	}
 
 	if (needsReextract) {
-		// Assets haven't changed but the unpacker binary is newer
+		const reason = outputMissingOrEmpty(outputDir)
+			? "but the output directory is missing or empty."
+			: "but the unpacker binary has been rebuilt since last extraction.";
 		console.log(
 			boxen(
 				[
 					chalk.yellow.bold("Re-extraction needed"),
 					"",
 					`Assets version ${chalk.green(storedVer)} is current,`,
-					`but the unpacker binary has been rebuilt since last extraction.`,
+					reason,
 				].join("\n"),
 				{
 					padding: 1,
@@ -1090,7 +1107,8 @@ async function runWebSocketServer() {
 
 			currentState = "idle";
 
-			const needsReextract = unpackerIsNewer(config.savedir);
+			const needsReextract =
+				unpackerIsNewer(config.savedir) || outputMissingOrEmpty(config.outputDir);
 			if (storedVer === serverVer.resVersion && !needsReextract) {
 				broadcast(statusMessage());
 				return;
