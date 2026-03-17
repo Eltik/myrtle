@@ -70,7 +70,7 @@ services:
       S3_PREFIX: ${S3_PREFIX}
     volumes:
       - ./backend:/src
-      - ./assets/Unpacked:/data/Unpacked:ro
+      - ./assets/output:/data/output:ro
     ports:
       - "3060:3060"
     networks:
@@ -108,7 +108,7 @@ services:
       - tools
     volumes:
       - ./assets/ArkAssets:/data/ArkAssets
-      - ./assets/Unpacked:/data/Unpacked
+      - ./assets/output:/data/output
 
 volumes:
   myrtle_pgdata:
