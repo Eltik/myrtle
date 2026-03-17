@@ -75,6 +75,23 @@ pub enum OperatorProfession {
     Trap,
 }
 
+impl OperatorProfession {
+    pub const fn to_raw_str(&self) -> &'static str {
+        match self {
+            Self::Medic => "MEDIC",
+            Self::Caster => "CASTER",
+            Self::Guard => "WARRIOR",
+            Self::Vanguard => "PIONEER",
+            Self::Sniper => "SNIPER",
+            Self::Specialist => "SPECIAL",
+            Self::Supporter => "SUPPORT",
+            Self::Defender => "TANK",
+            Self::Token => "TOKEN",
+            Self::Trap => "TRAP",
+        }
+    }
+}
+
 // ============================================================================
 // Nested Structs
 // ============================================================================
