@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
+        chibi::init_chibi_data,
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
@@ -135,7 +136,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         favor,
         voices,
         gacha,
-        chibis: Default::default(), // TODO: chibi enrichment
+        chibis: init_chibi_data(assets_dir),
         zones,
         stages,
         medals,
