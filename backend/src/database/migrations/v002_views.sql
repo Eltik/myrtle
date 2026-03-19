@@ -41,17 +41,17 @@ SELECT
     uo.default_skill, uo.voice_lan, uo.current_equip, uo.current_tmpl,
     uo.obtained_at,
     COALESCE(
-        (SELECT jsonb_agg(jsonb_build_object("index", s.skill_index, "mastery", s.specialize_level)
+        (SELECT jsonb_agg(jsonb_build_object('index', s.skill_index, 'mastery', s.specialize_level)
          ORDER BY s.skill_index)
          FROM user_operator_skills s
          WHERE s.user_id = uo.user_id AND s.operator_id = uo.operator_id),
-        "[]"::jsonb
+        '[]'::jsonb
     ) AS masteries,
     COALESCE(
-        (SELECT jsonb_agg(jsonb_build_object("id", m.module_id, "level", m.module_level, "locked", m.locked))
+        (SELECT jsonb_agg(jsonb_build_object('id', m.module_id, 'level', m.module_level, 'locked', m.locked))
          FROM user_operator_modules m
          WHERE m.user_id = uo.user_id AND m.operator_id = uo.operator_id),
-        "[]"::jsonb
+        '[]'::jsonb
     ) AS modules
 FROM user_operators uo;
 

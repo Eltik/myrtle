@@ -29,7 +29,7 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
 
         if !applied {
             let mut tx = pool.begin().await?;
-            sqlx::query(sql).execute(&mut *tx).await?;
+            sqlx::raw_sql(sql).execute(&mut *tx).await?;
             sqlx::query("INSERT INTO _migrations (name) VALUES ($1)")
                 .bind(name)
                 .execute(&mut *tx)

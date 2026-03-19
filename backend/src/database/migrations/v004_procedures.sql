@@ -46,16 +46,16 @@ BEGIN
         recruit_permits, social_point, hgg_shard, lgg_shard, practice_tickets, gold,
         monthly_sub_end, register_ts, last_online_ts, main_stage_progress, resume, friend_num_limit)
     VALUES (v_user_id,
-        (p_status->>"exp")::INT, (p_status->>"orundum")::INT, (p_status->>"orundum_shard")::INT,
-        (p_status->>"lmd")::INT, (p_status->>"sanity")::SMALLINT, (p_status->>"max_sanity")::SMALLINT,
-        (p_status->>"gacha_tickets")::INT, (p_status->>"ten_pull_tickets")::INT,
-        (p_status->>"classic_gacha_tickets")::INT, (p_status->>"classic_ten_pull_tickets")::INT,
-        (p_status->>"recruit_permits")::INT, (p_status->>"social_point")::INT,
-        (p_status->>"hgg_shard")::INT, (p_status->>"lgg_shard")::INT,
-        (p_status->>"practice_tickets")::INT, (p_status->>"gold")::INT,
-        (p_status->>"monthly_sub_end")::BIGINT, (p_status->>"register_ts")::BIGINT,
-        (p_status->>"last_online_ts")::BIGINT, p_status->>"main_stage_progress",
-        p_status->>"resume", (p_status->>"friend_num_limit")::SMALLINT)
+        (p_status->>'exp')::INT, (p_status->>'orundum')::INT, (p_status->>'orundum_shard')::INT,
+        (p_status->>'lmd')::INT, (p_status->>'sanity')::SMALLINT, (p_status->>'max_sanity')::SMALLINT,
+        (p_status->>'gacha_tickets')::INT, (p_status->>'ten_pull_tickets')::INT,
+        (p_status->>'classic_gacha_tickets')::INT, (p_status->>'classic_ten_pull_tickets')::INT,
+        (p_status->>'recruit_permits')::INT, (p_status->>'social_point')::INT,
+        (p_status->>'hgg_shard')::INT, (p_status->>'lgg_shard')::INT,
+        (p_status->>'practice_tickets')::INT, (p_status->>'gold')::INT,
+        (p_status->>'monthly_sub_end')::BIGINT, (p_status->>'register_ts')::BIGINT,
+        (p_status->>'last_online_ts')::BIGINT, p_status->>'main_stage_progress',
+        p_status->>'resume', (p_status->>'friend_num_limit')::SMALLINT)
     ON CONFLICT (user_id) DO UPDATE SET
         exp = EXCLUDED.exp, orundum = EXCLUDED.orundum, orundum_shard = EXCLUDED.orundum_shard,
         lmd = EXCLUDED.lmd, sanity = EXCLUDED.sanity, max_sanity = EXCLUDED.max_sanity,
@@ -73,34 +73,34 @@ BEGIN
     DELETE FROM user_operators WHERE user_id = v_user_id;
     INSERT INTO user_operators (user_id, operator_id, elite, level, exp, potential, skill_level,
         favor_point, skin_id, default_skill, voice_lan, current_equip, current_tmpl, obtained_at)
-    SELECT v_user_id, op->>"operator_id", (op->>"elite")::SMALLINT, (op->>"level")::SMALLINT,
-           COALESCE((op->>"exp")::INT, 0), (op->>"potential")::SMALLINT, (op->>"skill_level")::SMALLINT,
-           COALESCE((op->>"favor_point")::INT, 0), op->>"skin_id", COALESCE((op->>"default_skill")::SMALLINT, 0),
-           op->>"voice_lan", op->>"current_equip", op->>"current_tmpl", (op->>"obtained_at")::BIGINT
+    SELECT v_user_id, op->>'operator_id', (op->>'elite')::SMALLINT, (op->>'level')::SMALLINT,
+           COALESCE((op->>'exp')::INT, 0), (op->>'potential')::SMALLINT, (op->>'skill_level')::SMALLINT,
+           COALESCE((op->>'favor_point')::INT, 0), op->>'skin_id', COALESCE((op->>'default_skill')::SMALLINT, 0),
+           op->>'voice_lan', op->>'current_equip', op->>'current_tmpl', (op->>'obtained_at')::BIGINT
     FROM jsonb_array_elements(p_operators) AS op;
 
     -- Insert skills
     INSERT INTO user_operator_skills (user_id, operator_id, skill_index, specialize_level)
-    SELECT v_user_id, sk->>"operator_id", (sk->>"skill_index")::SMALLINT, (sk->>"specialize_level")::SMALLINT
+    SELECT v_user_id, sk->>'operator_id', (sk->>'skill_index')::SMALLINT, (sk->>'specialize_level')::SMALLINT
     FROM jsonb_array_elements(p_skills) AS sk;
 
     -- Insert modules
     INSERT INTO user_operator_modules (user_id, operator_id, module_id, module_level, locked)
-    SELECT v_user_id, m->>"operator_id", m->>"module_id", (m->>"module_level")::SMALLINT,
-           COALESCE((m->>"locked")::BOOLEAN, false)
+    SELECT v_user_id, m->>'operator_id', m->>'module_id', (m->>'module_level')::SMALLINT,
+           COALESCE((m->>'locked')::BOOLEAN, false)
     FROM jsonb_array_elements(p_modules) AS m;
 
     -- Replace items
     DELETE FROM user_items WHERE user_id = v_user_id;
     INSERT INTO user_items (user_id, item_id, quantity)
-    SELECT v_user_id, i->>"item_id", (i->>"quantity")::INT
+    SELECT v_user_id, i->>'item_id', (i->>'quantity')::INT
     FROM jsonb_array_elements(p_items) AS i
-    WHERE (i->>"quantity")::INT > 0;
+    WHERE (i->>'quantity')::INT > 0;
 
     -- Replace skins
     DELETE FROM user_skins WHERE user_id = v_user_id;
     INSERT INTO user_skins (user_id, skin_id, obtained_at)
-    SELECT v_user_id, sk->>"skin_id", (sk->>"obtained_at")::BIGINT
+    SELECT v_user_id, sk->>'skin_id', (sk->>'obtained_at')::BIGINT
     FROM jsonb_array_elements(p_skins) AS sk;
 
     -- Upsert JSONB game state blobs
@@ -109,7 +109,7 @@ BEGIN
 
     DELETE FROM user_roguelike_progress WHERE user_id = v_user_id;
     INSERT INTO user_roguelike_progress (user_id, theme_id, progress)
-    SELECT v_user_id, r->>"theme_id", r->"progress"
+    SELECT v_user_id, r->>'theme_id', r->'progress'
     FROM jsonb_array_elements(p_roguelike) AS r;
 
     INSERT INTO user_sandbox_progress (user_id, progress) VALUES (v_user_id, p_sandbox)
@@ -117,7 +117,7 @@ BEGIN
 
     DELETE FROM user_medals WHERE user_id = v_user_id;
     INSERT INTO user_medals (user_id, medal_id, val, first_ts, reach_ts)
-    SELECT v_user_id, m->>"medal_id", m->"val", (m->>"first_ts")::BIGINT, (m->>"reach_ts")::BIGINT
+    SELECT v_user_id, m->>'medal_id', m->'val', (m->>'first_ts')::BIGINT, (m->>'reach_ts')::BIGINT
     FROM jsonb_array_elements(p_medals) AS m;
 
     INSERT INTO user_building (user_id, data) VALUES (v_user_id, p_building)
@@ -136,8 +136,8 @@ CREATE OR REPLACE PROCEDURE sp_insert_gacha_batch(
 LANGUAGE plpgsql AS $$
 BEGIN
     INSERT INTO gacha_records (user_id, char_id, pool_id, rarity, pull_timestamp, pool_name, gacha_type)
-    SELECT p_user_id, r->>"char_id", r->>"pool_id", (r->>"rarity")::SMALLINT,
-        (r->>"pull_timestamp")::BIGINT, r->>"pool_name", r->>"gacha_type"
+    SELECT p_user_id, r->>'char_id', r->>'pool_id', (r->>'rarity')::SMALLINT,
+        (r->>'pull_timestamp')::BIGINT, r->>'pool_name', r->>'gacha_type'
     FROM jsonb_array_elements(p_records) AS r
     ON CONFLICT (user_id, pull_timestamp, char_id, pool_id) DO NOTHING;
 END;

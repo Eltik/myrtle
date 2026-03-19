@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 chrono = { version = "0.4.44", features = ["serde"] }
+dotenv = "0.15.0"
 hex = "0.4"
 hmac = "0.12.1"
 jsonwebtoken = "10.3.0"

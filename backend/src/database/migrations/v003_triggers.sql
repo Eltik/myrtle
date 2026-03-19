@@ -19,28 +19,26 @@ DECLARE
     record_pk TEXT;
     actor UUID;
 BEGIN
-    -- Try to get actor from session variable (set by application)
     BEGIN
-        actor := current_setting("app.current_user_id", true)::UUID;
+        actor := current_setting('app.current_user_id', true)::UUID;
     EXCEPTION WHEN OTHERS THEN
         actor := NULL;
     END;
 
-    -- Extract PK (first column)
-    IF TG_OP = "DELETE" THEN
+    IF TG_OP = 'DELETE' THEN
         record_pk := OLD.id::TEXT;
         INSERT INTO audit_log (table_name, record_id, action, old_data, changed_by)
-        VALUES (TG_TABLE_NAME, record_pk, "DELETE", to_jsonb(OLD), actor);
+        VALUES (TG_TABLE_NAME, record_pk, 'DELETE', to_jsonb(OLD), actor);
         RETURN OLD;
-    ELSIF TG_OP = "UPDATE" THEN
+    ELSIF TG_OP = 'UPDATE' THEN
         record_pk := NEW.id::TEXT;
         INSERT INTO audit_log (table_name, record_id, action, old_data, new_data, changed_by)
-        VALUES (TG_TABLE_NAME, record_pk, "UPDATE", to_jsonb(OLD), to_jsonb(NEW), actor);
+        VALUES (TG_TABLE_NAME, record_pk, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), actor);
         RETURN NEW;
-    ELSIF TG_OP = "INSERT" THEN
+    ELSIF TG_OP = 'INSERT' THEN
         record_pk := NEW.id::TEXT;
         INSERT INTO audit_log (table_name, record_id, action, new_data, changed_by)
-        VALUES (TG_TABLE_NAME, record_pk, "INSERT", to_jsonb(NEW), actor);
+        VALUES (TG_TABLE_NAME, record_pk, 'INSERT', to_jsonb(NEW), actor);
         RETURN NEW;
     END IF;
     RETURN NULL;

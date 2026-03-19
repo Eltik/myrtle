@@ -14,7 +14,7 @@ CREATE TABLE users (
     server_id   SMALLINT NOT NULL REFERENCES servers(id),
     nickname    VARCHAR(50),
     level       SMALLINT DEFAULT 0,
-    role        VARCHAR(20) NOT NULL DEFAULT "user",
+    role        VARCHAR(20) NOT NULL DEFAULT 'user',
     avatar_id   VARCHAR(50),
     resume_id   VARCHAR(50),
     secretary   VARCHAR(50),               -- Assistant operator ID
@@ -65,7 +65,7 @@ CREATE TABLE user_settings (
 
 CREATE TABLE user_operators (
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    operator_id     VARCHAR(30) NOT NULL,       -- e.g. "char_002_amiya"
+    operator_id     VARCHAR(50) NOT NULL,       -- e.g. "char_002_amiya"
     elite           SMALLINT NOT NULL DEFAULT 0, -- 0, 1, 2
     level           SMALLINT NOT NULL DEFAULT 1,
     exp             INT NOT NULL DEFAULT 0,
@@ -75,15 +75,15 @@ CREATE TABLE user_operators (
     skin_id         VARCHAR(50),
     default_skill   SMALLINT DEFAULT 0,
     voice_lan       VARCHAR(20),
-    current_equip   VARCHAR(30),               -- Currently equipped module ID
-    current_tmpl    VARCHAR(30),               -- Current template (Amiya etc)
+    current_equip   VARCHAR(50),               -- Currently equipped module ID
+    current_tmpl    VARCHAR(50),               -- Current template (Amiya etc)
     obtained_at     BIGINT,                    -- gain_time from game
     PRIMARY KEY (user_id, operator_id)
 );
 
 CREATE TABLE user_operator_skills (
     user_id         UUID NOT NULL,
-    operator_id     VARCHAR(30) NOT NULL,
+    operator_id     VARCHAR(50) NOT NULL,
     skill_index     SMALLINT NOT NULL,           -- 0, 1, 2
     specialize_level SMALLINT NOT NULL DEFAULT 0, -- 0-3 (mastery)
     PRIMARY KEY (user_id, operator_id, skill_index),
@@ -92,8 +92,8 @@ CREATE TABLE user_operator_skills (
 
 CREATE TABLE user_operator_modules (
     user_id         UUID NOT NULL,
-    operator_id     VARCHAR(30) NOT NULL,
-    module_id       VARCHAR(30) NOT NULL,        -- e.g. "uniequip_002_amiya"
+    operator_id     VARCHAR(50) NOT NULL,
+    module_id       VARCHAR(50) NOT NULL,        -- e.g. "uniequip_002_amiya"
     module_level    SMALLINT NOT NULL DEFAULT 0,  -- 0-3
     locked          BOOLEAN NOT NULL DEFAULT false,
     PRIMARY KEY (user_id, operator_id, module_id),
@@ -106,7 +106,7 @@ CREATE TABLE user_operator_modules (
 
 CREATE TABLE user_items (
     user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    item_id     VARCHAR(30) NOT NULL,
+    item_id     VARCHAR(50) NOT NULL,
     quantity    INT NOT NULL DEFAULT 0,
     PRIMARY KEY (user_id, item_id)
 );
@@ -150,7 +150,7 @@ CREATE TABLE user_sandbox_progress (
 -- Medal completion
 CREATE TABLE user_medals (
     user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    medal_id    VARCHAR(30) NOT NULL,
+    medal_id    VARCHAR(50) NOT NULL,
     val         JSONB,                         -- completion value (number or array)
     first_ts    BIGINT,                        -- first obtain timestamp
     reach_ts    BIGINT,                        -- reach condition timestamp
@@ -196,12 +196,12 @@ CREATE TABLE user_scores (
 CREATE TABLE gacha_records (
     id              BIGSERIAL PRIMARY KEY,
     user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    char_id         VARCHAR(30) NOT NULL,
+    char_id         VARCHAR(50) NOT NULL,
     pool_id         VARCHAR(50) NOT NULL,
     rarity          SMALLINT NOT NULL,
     pull_timestamp  BIGINT NOT NULL,
     pool_name       VARCHAR(100),
-    gacha_type      VARCHAR(30),
+    gacha_type      VARCHAR(50),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (user_id, pull_timestamp, char_id, pool_id)
 );
@@ -215,7 +215,7 @@ CREATE TABLE tier_lists (
     name            VARCHAR(100) NOT NULL,
     slug            VARCHAR(100) NOT NULL UNIQUE,
     description     TEXT,
-    list_type       VARCHAR(20) NOT NULL DEFAULT "official",
+    list_type       VARCHAR(20) NOT NULL DEFAULT 'official',
     created_by      UUID REFERENCES users(id) ON DELETE SET NULL,
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -234,7 +234,7 @@ CREATE TABLE tiers (
 
 CREATE TABLE tier_placements (
     tier_id         UUID NOT NULL REFERENCES tiers(id) ON DELETE CASCADE,
-    operator_id     VARCHAR(30) NOT NULL,
+    operator_id     VARCHAR(50) NOT NULL,
     sub_order       SMALLINT NOT NULL DEFAULT 0,
     notes           TEXT,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -1,3 +1,6 @@
+-- Enable trigram extension for fuzzy search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Users
 CREATE INDEX idx_users_server ON users(server_id);
 CREATE INDEX idx_users_nickname ON users USING gin(nickname gin_trgm_ops);

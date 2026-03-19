@@ -47,6 +47,17 @@ impl Server {
         }
     }
 
+    pub const fn display_name(&self) -> &'static str {
+        match self {
+            Server::EN => "English",
+            Server::JP => "Japanese",
+            Server::KR => "Korean",
+            Server::CN => "Chinese",
+            Server::Bilibili => "Bilibili",
+            Server::TW => "Taiwanese",
+        }
+    }
+
     pub const fn as_str(&self) -> &'static str {
         match self {
             Server::EN => "en",
