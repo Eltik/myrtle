@@ -25,18 +25,31 @@ BEGIN
         actor := NULL;
     END;
 
+    -- Extract PK: try 'id' first, fall back to 'user_id'
     IF TG_OP = 'DELETE' THEN
-        record_pk := OLD.id::TEXT;
+        record_pk := COALESCE(
+            (to_jsonb(OLD)->>'id'),
+            (to_jsonb(OLD)->>'user_id'),
+            'unknown'
+        );
         INSERT INTO audit_log (table_name, record_id, action, old_data, changed_by)
         VALUES (TG_TABLE_NAME, record_pk, 'DELETE', to_jsonb(OLD), actor);
         RETURN OLD;
     ELSIF TG_OP = 'UPDATE' THEN
-        record_pk := NEW.id::TEXT;
+        record_pk := COALESCE(
+            (to_jsonb(NEW)->>'id'),
+            (to_jsonb(NEW)->>'user_id'),
+            'unknown'
+        );
         INSERT INTO audit_log (table_name, record_id, action, old_data, new_data, changed_by)
         VALUES (TG_TABLE_NAME, record_pk, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), actor);
         RETURN NEW;
     ELSIF TG_OP = 'INSERT' THEN
-        record_pk := NEW.id::TEXT;
+        record_pk := COALESCE(
+            (to_jsonb(NEW)->>'id'),
+            (to_jsonb(NEW)->>'user_id'),
+            'unknown'
+        );
         INSERT INTO audit_log (table_name, record_id, action, new_data, changed_by)
         VALUES (TG_TABLE_NAME, record_pk, 'INSERT', to_jsonb(NEW), actor);
         RETURN NEW;
