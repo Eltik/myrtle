@@ -287,11 +287,6 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_EquipTalentD
         if let Some(v) = self.rangeId() {
             map.insert("RangeId".to_string(), json!(v));
         }
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.tokenKey() {
             map.insert("TokenKey".to_string(), json!(v));
         }
@@ -322,11 +317,6 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_TalentData<'
         if let Some(v) = self.rangeId() {
             map.insert("RangeId".to_string(), json!(v));
         }
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.tokenKey() {
             map.insert("TokenKey".to_string(), json!(v));
         }
@@ -339,12 +329,7 @@ impl FlatBufferToJson
     for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTalentDataBundle<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -364,11 +349,6 @@ impl FlatBufferToJson
             "RequiredPotentialRank".to_string(),
             json!(self.requiredPotentialRank()),
         );
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.overrideDescripton() {
             map.insert("OverrideDescripton".to_string(), json!(v));
         }
@@ -386,12 +366,7 @@ impl FlatBufferToJson
     for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTraitDataBundle<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -410,15 +385,6 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleUniEqu
         if let Some(v) = self.validInMapTag() {
             map.insert("ValidInMapTag".to_string(), json!(v));
         }
-        if let Some(nested) = self.addOrOverrideTalentDataBundle() {
-            map.insert(
-                "AddOrOverrideTalentDataBundle".to_string(),
-                nested.to_json(),
-            );
-        }
-        if let Some(nested) = self.overrideTraitDataBundle() {
-            map.insert("OverrideTraitDataBundle".to_string(), nested.to_json());
-        }
         Value::Object(map)
     }
 }
@@ -428,12 +394,7 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
-        if let Some(vec) = self.value() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("value".to_string(), json!(arr));
-        }
+        map.insert("Key".to_string(), json!(self.key()));
         Value::Object(map)
     }
 }
@@ -442,33 +403,13 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         map.insert("EquipLevel".to_string(), json!(self.equipLevel()));
-        if let Some(vec) = self.parts() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Parts".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.attributeBlackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AttributeBlackboard".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.tokenAttributeBlackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("TokenAttributeBlackboard".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
 
 impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipPack<'_> {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.phases() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Phases".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -490,18 +431,7 @@ impl FlatBufferToJson
     for battle_equip_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.equips() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-                return Some(("Equips".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -553,11 +483,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_T
             "RequiredPotentialRank".to_string(),
             json!(self.requiredPotentialRank()),
         );
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.overrideDescripton() {
             map.insert("OverrideDescripton".to_string(), json!(v));
         }
@@ -573,12 +498,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_T
 
 impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_TraitDataBundle<'_> {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -658,16 +578,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
             map.insert("RangeId".to_string(), json!(v));
         }
         map.insert("MaxLevel".to_string(), json!(self.maxLevel()));
-        if let Some(vec) = self.attributesKeyFrames() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AttributesKeyFrames".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.evolveCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("EvolveCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -681,11 +591,6 @@ impl FlatBufferToJson
             map.insert("UnlockCond".to_string(), nested.to_json());
         }
         map.insert("LvlUpTime".to_string(), json!(self.lvlUpTime()));
-        if let Some(vec) = self.levelUpCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LevelUpCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -701,11 +606,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_M
         }
         if let Some(v) = self.overrideTokenKey() {
             map.insert("OverrideTokenKey".to_string(), json!(v));
-        }
-        if let Some(vec) = self.levelUpCostCond() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LevelUpCostCond".to_string(), json!(arr));
         }
         if let Some(nested) = self.unlockCond() {
             map.insert("UnlockCond".to_string(), nested.to_json());
@@ -745,11 +645,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_TalentData<'_> 
         if let Some(v) = self.rangeId() {
             map.insert("RangeId".to_string(), json!(v));
         }
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.tokenKey() {
             map.insert("TokenKey".to_string(), json!(v));
         }
@@ -762,12 +657,7 @@ impl FlatBufferToJson
     for character_table_generated::clz_Torappu_CharacterData_TalentDataBundle<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -781,10 +671,7 @@ impl FlatBufferToJson
             "AttributeType".to_string(),
             self.attributeType().to_json_value(),
         );
-        map.insert(
-            "FormulaItem".to_string(),
-            self.formulaItem().to_json_value(),
-        );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -820,16 +707,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributeModifi
             let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
             map.insert("AbnormalCombos".to_string(), json!(arr));
         }
-        if let Some(vec) = self.abnormalComboImmunes() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
-            map.insert("AbnormalComboImmunes".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.attributeModifiers() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AttributeModifiers".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -853,11 +730,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
         }
         if let Some(nested) = self.buff() {
             map.insert("Buff".to_string(), nested.to_json());
-        }
-        if let Some(vec) = self.equivalentCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("EquivalentCost".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -922,11 +794,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_S
         if let Some(nested) = self.unlockCond() {
             map.insert("UnlockCond".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.lvlUpCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LvlUpCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -977,11 +844,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Some(nested) = self.mainPower() {
             map.insert("MainPower".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.subPower() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("SubPower".to_string(), json!(arr));
-        }
         if let Some(v) = self.displayNumber() {
             map.insert("DisplayNumber".to_string(), json!(v));
         }
@@ -989,11 +851,6 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
             map.insert("Appellation".to_string(), json!(v));
         }
         map.insert("Position".to_string(), self.position().to_json_value());
-        if let Some(vec) = self.tagList() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
-            map.insert("TagList".to_string(), json!(arr));
-        }
         if let Some(v) = self.itemUsage() {
             map.insert("ItemUsage".to_string(), json!(v));
         }
@@ -1017,40 +874,10 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Some(nested) = self.trait_() {
             map.insert("Trait_".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.phases() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Phases".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.skills() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Skills".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.displayTokenDict() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("DisplayTokenDict".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.talents() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Talents".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.potentialRanks() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("PotentialRanks".to_string(), json!(arr));
-        }
         if let Some(vec) = self.favorKeyFrames() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("FavorKeyFrames".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.allSkillLvlup() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AllSkillLvlup".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -1071,18 +898,7 @@ impl FlatBufferToJson
     for character_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.characters() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-                return Some(("Characters".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -1095,11 +911,6 @@ impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_EPBreakBuffD
             "ElementBreakDuration".to_string(),
             json!(self.elementBreakDuration()),
         );
-        if let Some(vec) = self.elementBuffs() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
-            map.insert("ElementBuffs".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -1121,18 +932,7 @@ impl FlatBufferToJson
     for ep_breakbuff_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.ep_breakbuffs() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-                return Some(("Ep_breakbuffs".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -1184,11 +984,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Trait
             "RequiredPotentialRank".to_string(),
             json!(self.requiredPotentialRank()),
         );
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.overrideDescripton() {
             map.insert("OverrideDescripton".to_string(), json!(v));
         }
@@ -1204,12 +999,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Trait
 
 impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_TraitDataBundle<'_> {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -1289,16 +1079,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Phase
             map.insert("RangeId".to_string(), json!(v));
         }
         map.insert("MaxLevel".to_string(), json!(self.maxLevel()));
-        if let Some(vec) = self.attributesKeyFrames() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AttributesKeyFrames".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.evolveCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("EvolveCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -1312,11 +1092,6 @@ impl FlatBufferToJson
             map.insert("UnlockCond".to_string(), nested.to_json());
         }
         map.insert("LvlUpTime".to_string(), json!(self.lvlUpTime()));
-        if let Some(vec) = self.levelUpCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LevelUpCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -1332,11 +1107,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_MainS
         }
         if let Some(v) = self.overrideTokenKey() {
             map.insert("OverrideTokenKey".to_string(), json!(v));
-        }
-        if let Some(vec) = self.levelUpCostCond() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LevelUpCostCond".to_string(), json!(arr));
         }
         if let Some(nested) = self.unlockCond() {
             map.insert("UnlockCond".to_string(), nested.to_json());
@@ -1376,11 +1146,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_TalentData<'_> {
         if let Some(v) = self.rangeId() {
             map.insert("RangeId".to_string(), json!(v));
         }
-        if let Some(vec) = self.blackboard() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Blackboard".to_string(), json!(arr));
-        }
         if let Some(v) = self.tokenKey() {
             map.insert("TokenKey".to_string(), json!(v));
         }
@@ -1391,12 +1156,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_TalentData<'_> {
 
 impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_TalentDataBundle<'_> {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Some(vec) = self.candidates() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Candidates".to_string(), json!(arr));
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }
@@ -1410,10 +1170,7 @@ impl FlatBufferToJson
             "AttributeType".to_string(),
             self.attributeType().to_json_value(),
         );
-        map.insert(
-            "FormulaItem".to_string(),
-            self.formulaItem().to_json_value(),
-        );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -1449,16 +1206,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributeModifierDa
             let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
             map.insert("AbnormalCombos".to_string(), json!(arr));
         }
-        if let Some(vec) = self.abnormalComboImmunes() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();
-            map.insert("AbnormalComboImmunes".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.attributeModifiers() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AttributeModifiers".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -1482,11 +1229,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Poten
         }
         if let Some(nested) = self.buff() {
             map.insert("Buff".to_string(), nested.to_json());
-        }
-        if let Some(vec) = self.equivalentCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("EquivalentCost".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -1551,11 +1293,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Skill
         if let Some(nested) = self.unlockCond() {
             map.insert("UnlockCond".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.lvlUpCost() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("LvlUpCost".to_string(), json!(arr));
-        }
         Value::Object(map)
     }
 }
@@ -1606,11 +1343,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Some(nested) = self.mainPower() {
             map.insert("MainPower".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.subPower() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("SubPower".to_string(), json!(arr));
-        }
         if let Some(v) = self.displayNumber() {
             map.insert("DisplayNumber".to_string(), json!(v));
         }
@@ -1618,11 +1350,6 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
             map.insert("Appellation".to_string(), json!(v));
         }
         map.insert("Position".to_string(), self.position().to_json_value());
-        if let Some(vec) = self.tagList() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
-            map.insert("TagList".to_string(), json!(arr));
-        }
         if let Some(v) = self.itemUsage() {
             map.insert("ItemUsage".to_string(), json!(v));
         }
@@ -1646,40 +1373,10 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Some(nested) = self.trait_() {
             map.insert("Trait_".to_string(), nested.to_json());
         }
-        if let Some(vec) = self.phases() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Phases".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.skills() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Skills".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.displayTokenDict() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("DisplayTokenDict".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.talents() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("Talents".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.potentialRanks() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("PotentialRanks".to_string(), json!(arr));
-        }
         if let Some(vec) = self.favorKeyFrames() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("FavorKeyFrames".to_string(), json!(arr));
-        }
-        if let Some(vec) = self.allSkillLvlup() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-            map.insert("AllSkillLvlup".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -1700,18 +1397,7 @@ impl FlatBufferToJson
     for token_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_>
 {
     fn to_json(&self) -> Value {
-        let mut map = Map::new();
-        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            if let Some(vec) = self.characters() {
-                assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
-                return Some(("Characters".to_string(), json!(arr)));
-            }
-            #[allow(unreachable_code)]
-            None
-        })) {
-            map.insert(k, v);
-        }
+        let map = Map::new();
         Value::Object(map)
     }
 }

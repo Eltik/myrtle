@@ -6553,6 +6553,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Blackboard_DataP
 impl FlatBufferToJson for activity_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -19448,6 +19451,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(vec) = self.blackboard() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -24600,6 +24606,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::clz_Torappu_StoryReadTipsData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(v) = self.picId() {
             map.insert("PicId".to_string(), json!(v));
         }
@@ -25795,6 +25804,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -29933,6 +29943,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -30617,6 +30628,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),
@@ -31023,6 +31035,9 @@ impl FlatBufferToJson for charm_table_generated::clz_Torappu_Blackboard_DataPair
 impl FlatBufferToJson for charm_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -32169,6 +32184,9 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_Blackboard_Da
 impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -33505,6 +33523,9 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_Blackboard_Data
 impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -41415,6 +41436,9 @@ impl FlatBufferToJson for prts___levels_generated::clz_UnityEngine_Vector3<'_> {
 impl FlatBufferToJson for prts___levels_generated::clz_Torappu_MapEffectData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.offset() {
             map.insert("Offset".to_string(), nested.to_json());
         }
@@ -41519,6 +41543,9 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LegacyInLevelRune
             "DifficultyMask".to_string(),
             self.difficultyMask().to_json_value(),
         );
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert(
             "ProfessionMask".to_string(),
             self.professionMask().to_json_value(),
@@ -41731,6 +41758,9 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData_EnemyDa
         }
         if let Some(v) = self.description() {
             map.insert("Description".to_string(), json!(v));
+        }
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
         }
         if let Some(nested) = self.attributes() {
             map.insert("Attributes".to_string(), nested.to_json());
@@ -42033,6 +42063,9 @@ impl FlatBufferToJson
             "ManagedByScheduler".to_string(),
             json!(self.managedByScheduler()),
         );
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert("Count".to_string(), json!(self.count()));
         map.insert("PreDelay".to_string(), json!(self.preDelay()));
         map.insert("Interval".to_string(), json!(self.interval()));
@@ -42149,6 +42182,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for prts___levels_generated::clz_Torappu_CharacterData_UniqueEquipPair<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert("Level".to_string(), json!(self.level()));
         Value::Object(map)
     }
@@ -43852,6 +43888,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_Blackboard_DataPair
 impl FlatBufferToJson for retro_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -46580,6 +46619,9 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Blackboar
 impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_RoguelikeBuff<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(vec) = self.blackboard() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -48985,6 +49027,7 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert("Type_".to_string(), self.type_().to_json_value());
         Value::Object(map)
     }
@@ -49049,6 +49092,7 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
             map.insert("Id".to_string(), json!(v));
         }
         map.insert("Type_".to_string(), self.type_().to_json_value());
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert("Weight".to_string(), json!(self.weight()));
         Value::Object(map)
     }
@@ -53087,6 +53131,9 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_Blackboard_D
 impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -53141,6 +53188,9 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_LegacyInLeve
             "DifficultyMask".to_string(),
             self.difficultyMask().to_json_value(),
         );
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert(
             "ProfessionMask".to_string(),
             self.professionMask().to_json_value(),
@@ -53614,6 +53664,7 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_SandboxV2Sho
         }
         map.insert("Count".to_string(), json!(self.count()));
         map.insert("CoinType".to_string(), self.coinType().to_json_value());
+        map.insert("Value".to_string(), json!(self.value()));
         Value::Object(map)
     }
 }
@@ -56680,6 +56731,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_Blackboard_DataPa
 impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         if let Some(nested) = self.selector() {
             map.insert("Selector".to_string(), nested.to_json());
         }
@@ -56734,6 +56788,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_LegacyInLevelRune
             "DifficultyMask".to_string(),
             self.difficultyMask().to_json_value(),
         );
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert(
             "ProfessionMask".to_string(),
             self.professionMask().to_json_value(),
@@ -62024,6 +62081,9 @@ impl FlatBufferToJson for story_table_generated::clz_Torappu_StoryData_Trigger<'
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         map.insert("Type_".to_string(), self.type_().to_json_value());
+        if let Some(v) = self.key() {
+            map.insert("Key".to_string(), json!(v));
+        }
         map.insert("UseRegex".to_string(), json!(self.useRegex()));
         Value::Object(map)
     }
@@ -62478,6 +62538,7 @@ impl FlatBufferToJson
             "FormulaItem".to_string(),
             self.formulaItem().to_json_value(),
         );
+        map.insert("Value".to_string(), json!(self.value()));
         map.insert(
             "LoadFromBlackboard".to_string(),
             json!(self.loadFromBlackboard()),

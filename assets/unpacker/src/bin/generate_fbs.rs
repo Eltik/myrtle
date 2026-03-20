@@ -553,20 +553,13 @@ fn emit_struct_impl(out: &mut String, s: &ParsedStruct, module: &str, is_root: b
     if s.is_dict {
         emit_dict_impl(out, s, module);
     } else {
-        let has_fields = s
-            .fields
-            .iter()
-            .any(|f| f.name != "key" && f.name != "value");
-        if has_fields {
-            out.push_str("        let mut map = Map::new();\n");
-        } else {
+        if s.fields.is_empty() {
             out.push_str("        let map = Map::new();\n");
+        } else {
+            out.push_str("        let mut map = Map::new();\n");
         }
 
         for field in &s.fields {
-            if field.name == "key" || field.name == "value" {
-                continue;
-            }
             let pascal = pascal_case(&field.name);
             if is_root {
                 emit_field_safe(out, field, &pascal);
@@ -1063,51 +1056,67 @@ fn generate_decode_dispatch(
 
     out.push_str("/// Check if a schema type has a Yostar variant\n");
     out.push_str("fn has_yostar_schema(schema_type: &str) -> bool {\n");
-    out.push_str("    matches!(schema_type,\n        ");
-    let yostar_arms: Vec<String> = yostar_types.iter().map(|t| format!("\"{t}\"")).collect();
-    out.push_str(&yostar_arms.join(" | "));
-    out.push_str("\n    )\n}\n\n");
+    if yostar_types.is_empty() {
+        out.push_str("    let _ = schema_type;\n");
+        out.push_str("    false\n");
+    } else {
+        out.push_str("    matches!(schema_type,\n        ");
+        let yostar_arms: Vec<String> = yostar_types.iter().map(|t| format!("\"{t}\"")).collect();
+        out.push_str(&yostar_arms.join(" | "));
+        out.push_str("\n    )\n");
+    }
+    out.push_str("}\n\n");
 
     out.push_str("/// Try decoding with Yostar-specific schemas\n");
     out.push_str(
         "fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {\n",
     );
-    out.push_str("    use crate::fb_json_macros::FlatBufferToJson;\n");
-    out.push_str("    let data_clone = data.to_vec();\n");
-    out.push_str("    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {\n");
-    out.push_str("        let data = &data_clone;\n");
-    out.push_str("        match schema_type {\n");
 
-    for (module, structs) in yostar_structs {
-        for s in structs {
-            if let Some(ref root_fn) = s.root_fn_name {
-                // Find schema type for this module
-                if let Some((schema_type, _)) = schema_to_module.iter().find(|(_, m)| *m == module)
+    // Check if there are any yostar root types
+    let has_yostar_roots = yostar_structs
+        .iter()
+        .any(|(_, structs)| structs.iter().any(|s| s.root_fn_name.is_some()));
+
+    if !has_yostar_roots {
+        out.push_str("    let _ = data;\n");
+        out.push_str("    Err(format!(\"No Yostar schema for {}\", schema_type))\n");
+    } else {
+        out.push_str("    use crate::fb_json_macros::FlatBufferToJson;\n");
+        out.push_str("    let data_clone = data.to_vec();\n");
+        out.push_str("    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {\n");
+        out.push_str("        let data = &data_clone;\n");
+        out.push_str("        match schema_type {\n");
+
+        for (module, structs) in yostar_structs {
+            for s in structs {
+                if let Some(ref root_fn) = s.root_fn_name
+                    && let Some((schema_type, _)) =
+                        schema_to_module.iter().find(|(_, m)| *m == module)
                 {
                     out.push_str(&format!(
-                                            "            \"{schema_type}\" => {{\n\
-                                             \x20               use crate::generated_fbs_yostar::{module}::*;\n\
-                                             \x20               let root = unsafe {{ {root_fn}(data) }};\n\
-                                             \x20               Ok(root.to_json())\n\
-                                             \x20           }}\n"
-                                        ));
+                        "            \"{schema_type}\" => {{\n\
+                             \x20               use crate::generated_fbs_yostar::{module}::*;\n\
+                             \x20               let root = unsafe {{ {root_fn}(data) }};\n\
+                             \x20               Ok(root.to_json())\n\
+                             \x20           }}\n"
+                    ));
                 }
             }
         }
-    }
 
-    out.push_str("            _ => Err(format!(\"No Yostar schema for {}\", schema_type)),\n");
-    out.push_str("        }\n");
-    out.push_str("    }));\n");
-    out.push_str("    match decode_result {\n");
-    out.push_str("        Ok(Ok(value)) => {\n");
-    out.push_str("            if value.as_object().map_or(false, |o| o.is_empty()) {\n");
-    out.push_str("                Err(\"Yostar decode returned empty\".to_string())\n");
-    out.push_str("            } else { Ok(value) }\n");
-    out.push_str("        }\n");
-    out.push_str("        Ok(Err(e)) => Err(e),\n");
-    out.push_str("        Err(_) => Err(\"Yostar decode panic\".to_string()),\n");
-    out.push_str("    }\n");
+        out.push_str("            _ => Err(format!(\"No Yostar schema for {}\", schema_type)),\n");
+        out.push_str("        }\n");
+        out.push_str("    }));\n");
+        out.push_str("    match decode_result {\n");
+        out.push_str("        Ok(Ok(value)) => {\n");
+        out.push_str("            if value.as_object().map_or(false, |o| o.is_empty()) {\n");
+        out.push_str("                Err(\"Yostar decode returned empty\".to_string())\n");
+        out.push_str("            } else { Ok(value) }\n");
+        out.push_str("        }\n");
+        out.push_str("        Ok(Err(e)) => Err(e),\n");
+        out.push_str("        Err(_) => Err(\"Yostar decode panic\".to_string()),\n");
+        out.push_str("    }\n");
+    }
     out.push_str("}\n\n");
 
     out.push_str("/// Decode FlatBuffer data to JSON using schema-based decoding\n");

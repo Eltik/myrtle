@@ -153,61 +153,14 @@ fn guess_root_type(filename: &str) -> &'static str {
 
 /// Check if a schema type has a Yostar variant
 fn has_yostar_schema(schema_type: &str) -> bool {
-    matches!(
-        schema_type,
-        "ep_breakbuff_table" | "token_table" | "character_table" | "battle_equip_table"
-    )
+    let _ = schema_type;
+    false
 }
 
 /// Try decoding with Yostar-specific schemas
 fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {
-    use crate::fb_json_macros::FlatBufferToJson;
-    let data_clone = data.to_vec();
-    let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
-        let data = &data_clone;
-        match schema_type {
-            "ep_breakbuff_table" => {
-                use crate::generated_fbs_yostar::ep_breakbuff_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            "character_table" => {
-                use crate::generated_fbs_yostar::character_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            "battle_equip_table" => {
-                use crate::generated_fbs_yostar::battle_equip_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            _ => Err(format!("No Yostar schema for {}", schema_type)),
-        }
-    }));
-    match decode_result {
-        Ok(Ok(value)) => {
-            if value.as_object().is_some_and(|o| o.is_empty()) {
-                Err("Yostar decode returned empty".to_string())
-            } else {
-                Ok(value)
-            }
-        }
-        Ok(Err(e)) => Err(e),
-        Err(_) => Err("Yostar decode panic".to_string()),
-    }
+    let _ = data;
+    Err(format!("No Yostar schema for {}", schema_type))
 }
 
 /// Decode FlatBuffer data to JSON using schema-based decoding

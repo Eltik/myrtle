@@ -3,6 +3,14 @@ name = "backend"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "generate-dps-formulas"
+path = "src/bin/generate_dps_formulas.rs"
+
+[[bin]]
+name = "generate-expected-dps"
+path = "src/bin/generate_expected_dps.rs"
+
 [dependencies]
 chrono = { version = "0.4.44", features = ["serde"] }
 dotenv = "0.15.0"
@@ -11,6 +19,7 @@ hmac = "0.12.1"
 jsonwebtoken = "10.3.0"
 md-5 = "0.10.6"
 rayon = "1.11.0"
+regex = "1.12.3"
 reqwest = { version = "0.13", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
