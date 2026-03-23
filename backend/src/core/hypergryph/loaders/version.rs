@@ -12,7 +12,7 @@ pub async fn load_version_config(client: &Client) {
         let client = client.clone();
         set.spawn(async move { load_single_server(&client, server).await });
     }
-    while let Some(_) = set.join_next().await {}
+    while set.join_next().await.is_some() {}
 }
 
 async fn load_single_server(client: &Client, server: Server) -> bool {

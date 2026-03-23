@@ -4,12 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [[bin]]
-name = "generate-dps-formulas"
-path = "src/bin/generate_dps_formulas.rs"
-
-[[bin]]
-name = "generate-expected-dps"
-path = "src/bin/generate_expected_dps.rs"
+name = "generate-dps"
+path = "src/bin/generate_dps.rs"
 
 [dependencies]
 chrono = { version = "0.4.44", features = ["serde"] }

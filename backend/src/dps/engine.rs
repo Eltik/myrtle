@@ -23,17 +23,46 @@ pub struct DpsResult {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct SkillFormula {
     #[serde(rename = "type")]
     pub formula_type: String,
     // Indices into skill_parameters/talent_parameters for param resolution
-    pub atk_scale_idx: Option<usize>,   // skill_params[idx]
-    pub hits_idx: Option<usize>,        // skill_params[idx] for hit count
-    pub hits: Option<f64>,              // literal hit count
-    pub targets: Option<f64>,           // literal target count
-    pub aspd_talent_idx: Option<usize>, // talent1_params[idx] for ASPD
-    pub def_ignore_idx: Option<usize>,  // talent1_params[idx] for DEF ignore
-    pub res_ignore_idx: Option<usize>,  // talent1_params[idx] for RES ignore
+    pub atk_scale_idx: Option<usize>, // skill_params[idx] for ATK scale
+    pub hits_idx: Option<usize>,      // skill_params[idx] for hit count
+    pub hits: Option<f64>,            // literal hit count
+    pub targets: Option<f64>,         // literal target count
+    pub aspd_talent_idx: Option<usize>, // talent1_params[idx] for ASPD bonus
+    pub def_ignore_idx: Option<usize>, // talent1_params[idx] for DEF ignore
+    pub res_ignore_idx: Option<usize>, // talent1_params[idx] for RES ignore
+    // Extended fields for generic_dps
+    pub scale_on_skill_only: Option<bool>, // only apply atk_scale when skill is active
+    pub cycle_average: Option<bool>,       // average skill + basic attack over SP cost
+    pub talent_atk_idx: Option<usize>,     // talent1_params[idx] for ATK buff
+    pub module_atk_scale: Option<f64>,     // module multiplier on final ATK (e.g. 1.1)
+    pub override_interval: Option<f64>,    // skill overrides attack interval
+    pub damage_type: Option<String>,       // "arts" or "physical" to override is_physical
+}
+
+impl Default for SkillFormula {
+    fn default() -> Self {
+        Self {
+            formula_type: "custom".to_string(),
+            atk_scale_idx: None,
+            hits_idx: None,
+            hits: None,
+            targets: None,
+            aspd_talent_idx: None,
+            def_ignore_idx: None,
+            res_ignore_idx: None,
+            scale_on_skill_only: None,
+            cycle_average: None,
+            talent_atk_idx: None,
+            module_atk_scale: None,
+            override_interval: None,
+            damage_type: None,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,63 +88,12 @@ pub struct ConditionalConfig {
     pub modules: Vec<i32>,
 }
 
-pub fn calculate_skill_dps(unit: &OperatorUnit, formula: &SkillFormula, enemy: &EnemyStats) -> f64 {
-    // Resolve parameters from config indices
-    let atk_scale = formula
-        .atk_scale_idx
-        .and_then(|i| unit.skill_parameters.get(i))
-        .copied()
-        .unwrap_or(0.0);
-
-    let hits = formula
-        .hits_idx
-        .and_then(|i| unit.skill_parameters.get(i))
-        .copied()
-        .or(formula.hits)
-        .unwrap_or(1.0);
-
-    let targets = formula.targets.unwrap_or(1.0);
-
-    match formula.formula_type.as_str() {
-        "atk_buff" => formulas::atk_buff(unit, enemy, atk_scale, hits),
-        "multi_hit" => formulas::multi_hit(unit, enemy, atk_scale, hits, targets),
-        "atk_buff_aspd" => {
-            let extra_aspd = formula
-                .aspd_talent_idx
-                .and_then(|i| unit.talent1_parameters.get(i))
-                .copied()
-                .unwrap_or(0.0);
-            formulas::atk_buff_with_aspd(unit, enemy, atk_scale, extra_aspd)
-        }
-        "true_damage" => formulas::true_damage(unit, atk_scale),
-        "aoe" => {
-            let target_cap = formula.targets.unwrap_or(unit.targets as f64);
-            formulas::aoe(unit, enemy, atk_scale, target_cap)
-        }
-        "def_ignore" => {
-            let def_ignore = formula
-                .def_ignore_idx
-                .and_then(|i| unit.talent1_parameters.get(i))
-                .copied()
-                .unwrap_or(0.0);
-            let res_ignore = formula
-                .res_ignore_idx
-                .and_then(|i| unit.talent1_parameters.get(i))
-                .copied()
-                .unwrap_or(0.0);
-            formulas::damage_with_ignore(unit, enemy, atk_scale, def_ignore, res_ignore)
-        }
-        "res_ignore" => {
-            let res_ignore = formula
-                .res_ignore_idx
-                .and_then(|i| unit.talent1_parameters.get(i))
-                .copied()
-                .unwrap_or(0.0);
-            formulas::damage_with_ignore(unit, enemy, atk_scale, 0.0, res_ignore)
-        }
-        "custom" => super::custom::dispatch(unit, enemy),
-        _ => unit.normal_attack(enemy, None, None, None),
-    }
+pub fn calculate_skill_dps(
+    unit: &OperatorUnit,
+    _formula: &SkillFormula,
+    enemy: &EnemyStats,
+) -> f64 {
+    super::custom::dispatch(unit, enemy).unwrap_or(0.0)
 }
 
 static FORMULAS: LazyLock<HashMap<String, OperatorFormula>> = LazyLock::new(load_formulas);

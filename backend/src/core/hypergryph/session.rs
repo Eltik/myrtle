@@ -25,6 +25,7 @@ struct GetSecretBody<'a> {
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct GetSecretResponse {
     result: i32,
     uid: String,
@@ -107,6 +108,7 @@ async fn get_secret(
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct U8TokenResponse {
     result: i32,
     uid: String,

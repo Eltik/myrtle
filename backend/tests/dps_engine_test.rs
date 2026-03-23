@@ -11,6 +11,7 @@ fn load_expected_dps() -> HashMap<String, f64> {
     serde_json::from_str(&data).expect("Invalid expected_dps.json")
 }
 
+#[allow(clippy::too_many_arguments)]
 fn make_test_key(
     operator_name: &str,
     skill: i32,

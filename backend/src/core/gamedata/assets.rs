@@ -196,9 +196,10 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::SkillIcon)
     } else if dir_name.starts_with("icon_enemies_") {
         Some(AssetKind::EnemyIcon)
-    } else if dir_name.starts_with("ui_item_icons_") {
-        Some(AssetKind::ItemIcon)
-    } else if dir_name == "item_icons_no_tiny_hub" || dir_name == "item_icons_stack_hub" {
+    } else if dir_name.starts_with("ui_item_icons_")
+        || dir_name == "item_icons_no_tiny_hub"
+        || dir_name == "item_icons_stack_hub"
+    {
         Some(AssetKind::ItemIcon)
     } else {
         None

@@ -27,6 +27,7 @@ pub async fn get_operator(
 }
 
 /// Sync full user data from game server
+#[allow(clippy::too_many_arguments)]
 pub async fn sync_user_data(
     pool: &PgPool,
     uid: &str,
