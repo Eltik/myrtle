@@ -522,13 +522,9 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
 
         // Quick syntax check: look for known bad patterns — only in THIS function
         let fn_body_check = &generated[fn_start_pos..];
-        let hardcoded_fallbacks: &[&str] = &["Muelsyse", "Rosmontis"];
-
-        let fn_code = &generated[fn_start_pos..];
-        let has_type_issues = fn_code.contains("cloned_op");
+        let hardcoded_fallbacks: &[&str] = &[];
 
         let has_bad_syntax = hardcoded_fallbacks.contains(class_name)
-            || has_type_issues
             || fn_body_check.contains("= = ")
             || fn_body_check.contains("! = ");
 
@@ -615,7 +611,7 @@ fn transpile_skill_dps(py_body: &str) -> String {
     let assign_var_re = Regex::new(r"^\t*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap();
     let mut all_vars: Vec<String> = Vec::new();
     let mut vec_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let builtin_vars = ["dps", "skill", "defense", "res", "self"];
+    let builtin_vars = ["dps", "skill", "defense", "res", "self", "atk_interval"];
 
     // Also capture variables assigned inside inline if statements
     let inline_assign_re = Regex::new(r"if\s+.+?:\s*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap();
@@ -668,17 +664,12 @@ fn transpile_skill_dps(py_body: &str) -> String {
         }
     }
 
-    // Detect self.atk_interval assignments to hoist the override variable
-    let needs_atk_override = py_body.contains("self.atk_interval");
-    if needs_atk_override && !all_vars.contains(&"atk_interval_override".to_string()) {
-        all_vars.push("atk_interval_override".to_string());
-    }
-
     // Emit standard declarations
     lines.push("    let skill = unit.skill_index;".into());
     lines.push("    let skillf = unit.skill_index as f64;".into());
     lines.push("    let mut defense = enemy.defense;".into());
     lines.push("    let mut res = enemy.res;".into());
+    lines.push("    let mut atk_interval: f64 = unit.attack_interval as f64;".into());
     lines.push("    let mut dps: f64 = 0.0;".into());
 
     // Hoist all variable declarations to function scope
@@ -747,7 +738,9 @@ fn transpile_skill_dps(py_body: &str) -> String {
         let py_indent = tab_count;
 
         // Close braces when indent decreases
-        let is_continuation = trimmed.starts_with("else:") || trimmed.starts_with("elif ");
+        // Only `else:` is a continuation (attaches to preceding if).
+        // `elif` is treated as a new block — the preceding if must be closed first.
+        let is_continuation = trimmed.starts_with("else:");
         if !is_continuation {
             while py_indent < *indent_stack.last().unwrap_or(&0) {
                 indent_stack.pop();
@@ -997,12 +990,11 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         return format!("if {cond} {{ return Some({val}); }}");
     }
 
-    // Handle self.atk_interval = X (override attack interval)
+    // Handle self.atk_interval = X (override local atk_interval variable)
     let self_assign_re = Regex::new(r"^self\.atk_interval\s*=\s*(.+)$").unwrap();
     if let Some(cap) = self_assign_re.captures(&line) {
         let val = transpile_expressions(&cap[1], declared);
-        declared.insert("atk_interval_override".to_string());
-        return format!("let atk_interval_override: f64 = {val};");
+        return format!("atk_interval = {val};");
     }
 
     // Handle "if COND: self.atk_interval = X"
@@ -1010,8 +1002,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     if let Some(cap) = if_atk_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let val = transpile_expressions(&cap[2], declared);
-        declared.insert("atk_interval_override".to_string());
-        return format!("if {cond} {{ atk_interval_override = {val}; }}");
+        return format!("if {cond} {{ atk_interval = {val}; }}");
     }
 
     // Inline if with array index assignment: "if COND: VAR[N] = EXPR"
@@ -1381,9 +1372,15 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         s = s.replace("skill_params", "unit.skill_parameters");
     }
 
+    // Clone operator fields (must come before self.atk to avoid partial match)
+    s = s.replace("self.cloned_op.atk_interval", "unit.clone_atk_interval");
+    s = s.replace("self.cloned_op.atk", "unit.clone_atk");
+    s = s.replace("self.cloned_op.ranged", "unit.clone_is_ranged");
+    s = s.replace("self.cloned_op.physical", "unit.clone_is_physical");
+
     // self.X → unit.X field mappings
     s = s.replace("self.drone_atk_interval", "unit.drone_atk_interval as f64");
-    s = s.replace("self.atk_interval", "unit.attack_interval as f64");
+    s = s.replace("self.atk_interval", "atk_interval");
     s = s.replace("self.drone_atk", "unit.drone_atk");
     s = s.replace("self.attack_speed", "unit.attack_speed");
     s = s.replace("self.buff_atk_flat", "unit.buff_atk_flat");

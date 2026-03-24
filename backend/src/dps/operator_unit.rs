@@ -56,6 +56,12 @@ pub struct OperatorUnit {
     pub drone_atk: f64,
     pub drone_atk_interval: f32,
 
+    // Clone/summon operator stats (for operators like Muelsyse that copy another operator)
+    pub clone_atk: f64,
+    pub clone_atk_interval: f64,
+    pub clone_is_ranged: bool,
+    pub clone_is_physical: bool,
+
     pub trait_damage: bool,
     pub trait_damage_name: Option<String>,
     pub trait_damage_names: Vec<String>,
@@ -720,6 +726,11 @@ impl OperatorUnit {
             drone_atk,
             drone_atk_interval,
 
+            clone_atk: 0.0,
+            clone_atk_interval: 0.0,
+            clone_is_ranged: false,
+            clone_is_physical: false,
+
             trait_damage,
             trait_damage_name: None,
             trait_damage_names: Vec::new(),
@@ -753,8 +764,7 @@ impl OperatorUnit {
                 shred_res_flat,
             ],
 
-            // Default ammo (overridden by operator __init__ if needed)
-            ammo: 1.0,
+            ammo: 0.0,
         }
     }
 
