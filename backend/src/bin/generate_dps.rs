@@ -66,6 +66,7 @@ struct TestCase {
 }
 
 fn main() {
+    dotenv::dotenv().ok();
     let args: Vec<String> = std::env::args().collect();
 
     let repo_path = if let Some(i) = args.iter().position(|a| a == "--repo") {
@@ -326,7 +327,9 @@ fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFor
     println!("\n=== Generating expected_dps.json ===");
 
     // Load existing module IDs from game data to filter out non-existent modules
-    let equip_keys = load_equip_keys("../assets/output/gamedata/excel/battle_equip_table.json");
+    let game_data_dir =
+        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
+    let equip_keys = load_equip_keys(&format!("{game_data_dir}/battle_equip_table.json"));
     println!("Loaded {} module IDs from game data", equip_keys.len());
 
     let defenses = [0.0, 300.0, 500.0, 1000.0];
