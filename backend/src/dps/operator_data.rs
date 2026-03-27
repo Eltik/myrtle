@@ -469,23 +469,30 @@ impl OperatorData {
                     let talent_data: Vec<f64> =
                         candidate.blackboard.iter().map(|b| b.value).collect();
 
+                    // Use talent_index (0=talent1, 1=talent2) for slot dispatch.
+                    // Fall back to name-matching for hidden talents (talent_index=-1).
+                    let is_talent1 = candidate.talent_index == 0
+                        || (candidate.talent_index < 0 && candidate_name == talent1_name);
+                    let is_talent2 = candidate.talent_index == 1
+                        || (candidate.talent_index < 0 && candidate_name == talent2_name);
+
                     if is_primary_talent {
                         let params = TalentParameters {
                             required_promotion: 2,
                             required_level: candidate.unlock_condition.level,
-                            required_module_id: operator_module
-                                .module
-                                .id
-                                .clone()
-                                .unwrap_or_default(),
+                            // Use char_equip_order as module identifier (matches Python's module numbering)
+                            required_module_id: format!(
+                                "{}",
+                                operator_module.module.char_equip_order
+                            ),
                             required_module_level: equip_level,
                             required_potential: candidate.required_potential_rank,
                             talent_data,
                         };
 
-                        if candidate_name == talent1_name {
+                        if is_talent1 {
                             talent1_parameters.push(params);
-                        } else if candidate_name == talent2_name {
+                        } else if is_talent2 {
                             talent2_parameters.push(params);
                         }
                     } else {
@@ -494,9 +501,9 @@ impl OperatorData {
                             talent_data,
                         };
 
-                        if candidate_name == talent1_name {
+                        if is_talent1 {
                             talent1_module_extra.push(extra);
-                        } else if candidate_name == talent2_name {
+                        } else if is_talent2 {
                             talent2_module_extra.push(extra);
                         }
                     }

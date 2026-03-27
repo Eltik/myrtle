@@ -98,7 +98,7 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_297_hamoni" => generated::harmonie(unit, enemy),
         "char_141_nights" => generated::haze(unit, enemy),
         "char_188_helage" => generated::hellagur(unit, enemy),
-        "char_120_hibisc" => generated::hibiscus(unit, enemy),
+        "char_1024_hbisc2" => generated::hibiscus(unit, enemy),
         "char_4066_highmo" => generated::highmore(unit, enemy),
         "char_4088_hodrer" => generated::hoederer(unit, enemy),
         "char_4027_heyak" => generated::hoolheyak(unit, enemy),

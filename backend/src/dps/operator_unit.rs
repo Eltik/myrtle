@@ -381,7 +381,7 @@ impl OperatorUnit {
         // Note: skill_index is 1-indexed (1=S1, 2=S2, 3=S3) like Python
         // For array access, we use (skill_index - 1) since Python does skill_parameters[skill-1]
         let mut skill_parameters: Vec<f64> = Vec::new();
-        let mut skill_cost = -1;
+        let mut skill_cost = 0;
         let mut skill_duration: f64 = -1.0;
 
         if rarity > 2 && skill_index >= 1 {
@@ -401,7 +401,7 @@ impl OperatorUnit {
                 .get(skill_idx)
                 .and_then(|costs| costs.get(skill_lvl))
                 .copied()
-                .unwrap_or(-1);
+                .unwrap_or(0);
 
             skill_duration = operator_data
                 .skill_durations
@@ -425,12 +425,12 @@ impl OperatorUnit {
                     && level >= talent_data.required_level
                     && talent_data.required_level >= current_req_level
                 {
-                    let op_module_id = operator_module
+                    let op_module_order = operator_module
                         .as_ref()
-                        .and_then(|m| m.module.id.as_deref())
-                        .unwrap_or("");
+                        .map(|m| m.module.char_equip_order.to_string())
+                        .unwrap_or_default();
 
-                    if op_module_id.is_empty() {
+                    if op_module_order.is_empty() {
                         if talent_data.required_module_id.is_empty()
                             && potential > talent_data.required_potential
                             && potential > current_req_potential
@@ -442,13 +442,9 @@ impl OperatorUnit {
                             current_req_module_lvl = talent_data.required_module_level;
                         }
                     } else {
-                        // Operator has a module equipped
-                        // Accept entry if:
-                        // 1. Entry requires no specific module (required_module_id is empty), OR
-                        // 2. Entry requires a specific module that matches the equipped one
                         let module_requirement_satisfied =
                             talent_data.required_module_id.is_empty()
-                                || op_module_id == talent_data.required_module_id;
+                                || op_module_order == talent_data.required_module_id;
 
                         if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level
@@ -486,12 +482,12 @@ impl OperatorUnit {
                     && level >= talent_data.required_level
                     && talent_data.required_level >= current_req_level
                 {
-                    let op_module_id = operator_module
+                    let op_module_order = operator_module
                         .as_ref()
-                        .and_then(|m| m.module.id.as_deref())
-                        .unwrap_or("");
+                        .map(|m| m.module.char_equip_order.to_string())
+                        .unwrap_or_default();
 
-                    if op_module_id.is_empty() {
+                    if op_module_order.is_empty() {
                         if talent_data.required_module_id.is_empty()
                             && potential > talent_data.required_potential
                             && potential > current_req_potential
@@ -503,13 +499,9 @@ impl OperatorUnit {
                             current_req_module_lvl = talent_data.required_module_level;
                         }
                     } else {
-                        // Operator has a module equipped
-                        // Accept entry if:
-                        // 1. Entry requires no specific module (required_module_id is empty), OR
-                        // 2. Entry requires a specific module that matches the equipped one
                         let module_requirement_satisfied =
                             talent_data.required_module_id.is_empty()
-                                || op_module_id == talent_data.required_module_id;
+                                || op_module_order == talent_data.required_module_id;
 
                         if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level

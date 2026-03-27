@@ -127,10 +127,16 @@ pub fn calculate_dps(
     let skill_formula = formula.skills.get(&skill_key)?;
 
     // Calculate skill DPS
+    // Save and zero out buff_fragile before calling skill_dps — operators should not
+    // see external fragile (matches Python behavior where buff_fragile=0 during skill_dps).
+    // Fragile is applied externally after the call.
+    let external_fragile = unit.buff_fragile;
+    let mut unit = unit;
+    unit.buff_fragile = 0.0;
     let skill_dps = calculate_skill_dps(&unit, skill_formula, &shredded);
 
-    // Apply fragile (always last)
-    let skill_dps = skill_dps * (1.0 + unit.buff_fragile);
+    // Apply fragile externally (always last)
+    let skill_dps = skill_dps * (1.0 + external_fragile);
 
     // Total damage
     let total_damage = if unit.skill_duration > 0.0 {
