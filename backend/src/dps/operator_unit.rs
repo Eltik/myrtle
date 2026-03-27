@@ -103,6 +103,7 @@ impl OperatorUnit {
         default_potential: i32,
         default_module_index: i32,
         available_skills: Vec<i32>,
+        formula_modules: Vec<i32>,
     ) -> Self {
         let rarity = operator_data.rarity;
 
@@ -237,26 +238,54 @@ impl OperatorUnit {
         };
 
         // Calculate module
-        // Note: module_index is 1-indexed (1=X, 2=Y, 3=Δ) like Python
-        // For array access, we use (module_index - 1)
+        // Python maps module values through formula's available_modules by position:
+        //   formula_modules[0] → uniequip_002 (sequential 1)
+        //   formula_modules[1] → uniequip_003 (sequential 2)
+        //   formula_modules[2] → uniequip_004 (sequential 3)
+        // The module_index from params is one of the formula_modules values.
+        // We find the position in formula_modules, then map to the corresponding
+        // physical module by its uniequip prefix (not by array position, since
+        // operator.modules ordering is not guaranteed).
         let mut operator_module: Option<OperatorModule> = None;
         let mut operator_module_level = 0;
         let mut module_index: i32 = 0;
         let mut module_level: i32 = 0;
+        // Sequential module number (1=uniequip_002, 2=uniequip_003, 3=uniequip_004)
+        // Used for talent resolution to match Python's req_module numbering
+        let mut module_sequential: i32 = 0;
+
+        // Helper: uniequip prefix patterns for positions 0, 1, 2
+        let uniequip_prefixes = ["uniequip_002_", "uniequip_003_", "uniequip_004_"];
 
         let max_level_e2 = MAX_LEVELS[2][(rarity - 1) as usize];
         if elite == 2 && level >= max_level_e2 - 30 {
             let available_modules = &operator_data.available_modules;
 
-            // Get default module by order number (char_equip_order)
+            // Find a physical module by its uniequip prefix
+            let find_module_by_prefix =
+                |prefix: &str| -> Option<&OperatorModule> {
+                    available_modules.iter().find(|m| {
+                        m.module
+                            .id
+                            .as_deref()
+                            .map(|id| id.starts_with(prefix))
+                            .unwrap_or(false)
+                    })
+                };
+
+            // Get default module
             if default_module_index >= 1 {
-                let found_default = available_modules
+                if let Some(pos) = formula_modules
                     .iter()
-                    .enumerate()
-                    .find(|(_, m)| m.module.char_equip_order == default_module_index);
-                if let Some((idx, _)) = found_default {
-                    operator_module = Some(available_modules[idx].clone());
-                    module_index = default_module_index;
+                    .position(|&m| m == default_module_index)
+                {
+                    if let Some(prefix) = uniequip_prefixes.get(pos) {
+                        if let Some(phys_module) = find_module_by_prefix(prefix) {
+                            operator_module = Some(phys_module.clone());
+                            module_index = default_module_index;
+                            module_sequential = (pos + 1) as i32;
+                        }
+                    }
                 }
             }
 
@@ -266,30 +295,30 @@ impl OperatorUnit {
                 if param_module_index == 0 {
                     operator_module = None;
                     module_index = 0;
+                    module_sequential = 0;
                 } else if param_module_index >= 1 {
-                    // Python uses module_index as 1-indexed selection of available modules
-                    // module_index=1 means X module (char_equip_order=1 if exists, else first with order>0)
-                    // module_index=2 means Y module (char_equip_order=2 if exists, else second with order>0)
-                    // First try to find by exact char_equip_order match
-                    let found_module = available_modules
+                    // Find position of param_module_index in formula_modules
+                    // Position maps to uniequip prefix: 0→002, 1→003, 2→004
+                    let pos = formula_modules
                         .iter()
-                        .find(|m| m.module.char_equip_order == param_module_index);
+                        .position(|&m| m == param_module_index);
 
-                    // If not found by exact match, try to find nth module with order > 0
-                    let found_module = found_module.or_else(|| {
-                        let mut real_modules: Vec<_> = available_modules
+                    let found = if let Some(pos) = pos {
+                        uniequip_prefixes.get(pos).and_then(|prefix| {
+                            find_module_by_prefix(prefix).map(|m| (pos, m))
+                        })
+                    } else {
+                        // Fallback: try exact charEquipOrder match
+                        available_modules
                             .iter()
-                            .filter(|m| m.module.char_equip_order > 0)
-                            .collect();
-                        // Sort by char_equip_order for consistent ordering
-                        real_modules.sort_by_key(|m| m.module.char_equip_order);
-                        let array_idx = (param_module_index - 1) as usize;
-                        real_modules.get(array_idx).copied()
-                    });
+                            .enumerate()
+                            .find(|(_, m)| m.module.char_equip_order == param_module_index)
+                    };
 
-                    if let Some(module) = found_module {
+                    if let Some((pos, module)) = found {
                         operator_module = Some(module.clone());
                         module_index = param_module_index;
+                        module_sequential = (pos + 1) as i32;
 
                         let param_module_level = params.module_level.unwrap_or(-1);
                         operator_module_level = if param_module_level <= 3 && param_module_level > 1
@@ -412,6 +441,12 @@ impl OperatorUnit {
         }
 
         // Calculate talent1 parameters
+        // Use module_sequential (1/2/3) for talent resolution, matching Python's
+        // req_module numbering (1=uniequip_002, 2=uniequip_003, 3=uniequip_004).
+        // Python resolves: required_module = available_modules[req_module-1]
+        // and checks: module == required_module
+        // We match this by comparing module_sequential against talent's required_module_id.
+        let op_module_seq = format!("{}", module_sequential);
         let mut talent1_parameters = operator_data.talent1_defaults.clone();
         if !operator_data.talent1_parameters.is_empty() {
             let mut current_promo = 0;
@@ -425,12 +460,7 @@ impl OperatorUnit {
                     && level >= talent_data.required_level
                     && talent_data.required_level >= current_req_level
                 {
-                    let op_module_order = operator_module
-                        .as_ref()
-                        .map(|m| m.module.char_equip_order.to_string())
-                        .unwrap_or_default();
-
-                    if op_module_order.is_empty() {
+                    if module_sequential == 0 {
                         if talent_data.required_module_id.is_empty()
                             && potential > talent_data.required_potential
                             && potential > current_req_potential
@@ -444,7 +474,7 @@ impl OperatorUnit {
                     } else {
                         let module_requirement_satisfied =
                             talent_data.required_module_id.is_empty()
-                                || op_module_order == talent_data.required_module_id;
+                                || op_module_seq == talent_data.required_module_id;
 
                         if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level
@@ -482,12 +512,7 @@ impl OperatorUnit {
                     && level >= talent_data.required_level
                     && talent_data.required_level >= current_req_level
                 {
-                    let op_module_order = operator_module
-                        .as_ref()
-                        .map(|m| m.module.char_equip_order.to_string())
-                        .unwrap_or_default();
-
-                    if op_module_order.is_empty() {
+                    if module_sequential == 0 {
                         if talent_data.required_module_id.is_empty()
                             && potential > talent_data.required_potential
                             && potential > current_req_potential
@@ -501,7 +526,7 @@ impl OperatorUnit {
                     } else {
                         let module_requirement_satisfied =
                             talent_data.required_module_id.is_empty()
-                                || op_module_order == talent_data.required_module_id;
+                                || op_module_seq == talent_data.required_module_id;
 
                         if module_requirement_satisfied
                             && operator_module_level >= talent_data.required_module_level

@@ -117,6 +117,7 @@ pub fn calculate_dps(
         formula.default_potential,
         formula.default_module,
         formula.available_skills.clone(),
+        formula.available_modules.clone(),
     );
 
     // Apply shreds to enemy

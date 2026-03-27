@@ -313,8 +313,12 @@ impl OperatorData {
         let mut talent1_module_extra: Vec<OperatorModuleExtra> = Vec::new();
         let mut talent2_module_extra: Vec<OperatorModuleExtra> = Vec::new();
 
-        for module_prefix in &["uniequip_002_", "uniequip_003_", "uniequip_004_"] {
+        for (seq_idx, module_prefix) in ["uniequip_002_", "uniequip_003_", "uniequip_004_"]
+            .iter()
+            .enumerate()
+        {
             let module_key = format!("{module_prefix}{op_id_suffix}");
+            let module_sequential = (seq_idx + 1) as i32; // 1, 2, 3
 
             if let Some(op_module) = operator
                 .modules
@@ -323,6 +327,7 @@ impl OperatorData {
             {
                 Self::process_module_talents(
                     op_module,
+                    module_sequential,
                     talent1_name,
                     talent2_name,
                     &mut talent1_parameters,
@@ -437,6 +442,7 @@ impl OperatorData {
 
     fn process_module_talents(
         operator_module: &OperatorModule,
+        module_sequential: i32,
         talent1_name: Option<&str>,
         talent2_name: Option<&str>,
         talent1_parameters: &mut Vec<TalentParameters>,
@@ -480,11 +486,9 @@ impl OperatorData {
                         let params = TalentParameters {
                             required_promotion: 2,
                             required_level: candidate.unlock_condition.level,
-                            // Use char_equip_order as module identifier (matches Python's module numbering)
-                            required_module_id: format!(
-                                "{}",
-                                operator_module.module.char_equip_order
-                            ),
+                            // Sequential module number: 1=uniequip_002, 2=uniequip_003, 3=uniequip_004
+                            // Matches Python's req_module assignment in JsonReader.py
+                            required_module_id: format!("{}", module_sequential),
                             required_module_level: equip_level,
                             required_potential: candidate.required_potential_rank,
                             talent_data,
