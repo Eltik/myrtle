@@ -286,8 +286,48 @@ fn extract_init_method(class_body: &str) -> String {
 
 // ── Step 3: Generate expected_dps.json ──────────────────────────────────
 
+/// Load all module IDs from battle_equip_table.json for existence checks.
+fn load_equip_keys(path: &str) -> std::collections::HashSet<String> {
+    let raw = fs::read_to_string(path).unwrap_or_else(|_| "{}".to_string());
+    let parsed: serde_json::Value = serde_json::from_str(&raw).unwrap_or_default();
+    let mut keys = std::collections::HashSet::new();
+    if let Some(equips) = parsed.get("Equips").and_then(|v| v.as_array()) {
+        for entry in equips {
+            if let Some(key) = entry.get("key").and_then(|k| k.as_str()) {
+                keys.insert(key.to_string());
+            }
+        }
+    }
+    keys
+}
+
+/// Check if a specific module exists in game data for the given operator.
+fn module_exists_in_game_data(
+    equip_keys: &std::collections::HashSet<String>,
+    char_id: &str,
+    formula_available_modules: &[i32],
+    module_value: i32,
+) -> bool {
+    if module_value == 0 {
+        return true;
+    }
+    let op_id_suffix = char_id.split('_').nth(2).unwrap_or("");
+    let prefixes = ["uniequip_002_", "uniequip_003_", "uniequip_004_"];
+    let pos = formula_available_modules
+        .iter()
+        .position(|&m| m == module_value);
+    pos.and_then(|p| prefixes.get(p))
+        .map_or(false, |prefix| {
+            equip_keys.contains(&format!("{prefix}{op_id_suffix}"))
+        })
+}
+
 fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFormula>) {
     println!("\n=== Generating expected_dps.json ===");
+
+    // Load existing module IDs from game data to filter out non-existent modules
+    let equip_keys = load_equip_keys("../assets/output/gamedata/excel/battle_equip_table.json");
+    println!("Loaded {} module IDs from game data", equip_keys.len());
 
     let defenses = [0.0, 300.0, 500.0, 1000.0];
     let resistances = [0.0, 20.0, 30.0, 50.0];
@@ -300,13 +340,27 @@ fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFor
 
     let mut cases: Vec<TestCase> = Vec::new();
     let mut seen = std::collections::HashSet::new();
+    let mut skipped_modules = 0u64;
 
-    for formula in formulas.values() {
+    for (char_id, formula) in formulas {
+        // Check if ALL formula modules exist in game data.
+        // Python's talent resolution cross-references talent data from ALL modules
+        // (e.g., uniequip_004's talent data can affect talent values when uniequip_003
+        // is equipped). If any module is missing, talent data will diverge.
+        let all_modules_exist = formula.available_modules.iter().all(|&m| {
+            module_exists_in_game_data(&equip_keys, char_id, &formula.available_modules, m)
+        });
+
         for &skill in &formula.available_skills {
             let modules: Vec<i32> = std::iter::once(0)
                 .chain(formula.available_modules.iter().copied())
                 .collect();
             for &module in &modules {
+                // Skip ALL module tests if any formula module is missing from game data
+                if module > 0 && !all_modules_exist {
+                    skipped_modules += 1;
+                    continue;
+                }
                 for &def in &defenses {
                     for &res in &resistances {
                         for &(fragile, dm, df, rm, rf) in &debuffs {
@@ -344,7 +398,11 @@ fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFor
         }
     }
 
-    println!("Generated {} test cases", cases.len());
+    println!(
+        "Generated {} test cases ({} module combos skipped — not in game data)",
+        cases.len(),
+        skipped_modules
+    );
 
     // Write embedded Python script to temp file
     let py_script = format!(

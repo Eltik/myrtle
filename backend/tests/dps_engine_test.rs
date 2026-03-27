@@ -112,11 +112,25 @@ fn test_engine_vs_python_expected() {
                 continue;
             }
 
-            let game_module_count = operator.modules.len();
+            // Check if ALL formula modules exist in game data.
+            // Python's talent resolution cross-references data from ALL modules,
+            // so missing any module causes talent value divergence.
+            let prefixes = ["uniequip_002_", "uniequip_003_", "uniequip_004_"];
+            let all_modules_exist = formula.available_modules.iter().all(|&m| {
+                let pos = formula.available_modules.iter().position(|&v| v == m);
+                pos.and_then(|p| prefixes.get(p)).map_or(false, |prefix| {
+                    operator.modules.iter().any(|om| {
+                        om.module
+                            .id
+                            .as_deref()
+                            .map_or(false, |id| id.starts_with(prefix))
+                    })
+                })
+            });
 
             for module in std::iter::once(0).chain(formula.available_modules.iter().copied()) {
-                // Skip modules not present in game data (e.g. CN-only content not yet on global)
-                if module > 0 && game_module_count == 0 {
+                // Skip ALL module tests if any formula module is missing from game data
+                if module > 0 && !all_modules_exist {
                     skipped += 1;
                     continue;
                 }
