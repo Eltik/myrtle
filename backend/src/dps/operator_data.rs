@@ -440,6 +440,7 @@ impl OperatorData {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn process_module_talents(
         operator_module: &OperatorModule,
         module_sequential: i32,

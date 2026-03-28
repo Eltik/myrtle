@@ -11,8 +11,7 @@ async fn main() {
     // ── Game data loading ───────────────────────────────────────────────
     let data_dir_str =
         std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir_str =
-        std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
     let data_dir = Path::new(&data_dir_str);
     let assets_dir = Path::new(&assets_dir_str);
 

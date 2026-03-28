@@ -12039,7 +12039,12 @@ pub fn tecno(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     final_atk = unit.atk * (1.0 + unit.buff_atk + atkbuff) + unit.buff_atk_flat;
     hitdmg = (final_atk * (1.0 - res / 100.0)).max(final_atk * 0.05);
     dps = hitdmg / atk_interval * (unit.attack_speed + aspd) / 100.0;
-    final_drone = unit.drone_atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
+    // __init__ mutation: if self.module == 2 and self.module_lvl > 1: self.drone_atk += 100
+    let mut drone_atk = unit.drone_atk;
+    if unit.module_index == 2 && unit.module_level > 1 {
+        drone_atk += 100.0;
+    }
+    final_drone = drone_atk * (1.0 + unit.buff_atk) + unit.buff_atk_flat;
     drone_hitdmg = (final_drone * (1.0 - res / 100.0)).max(final_drone * 0.05);
     aspd_correction = if unit.module_index == 2 {
         4.0 + (unit.module_level as f64)
@@ -13759,7 +13764,8 @@ pub fn vulcan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     atk_interval = if skill == 2 { 2.0 } else { atk_interval };
     final_atk = unit.atk * (1.0 + atkbuff + unit.buff_atk) + unit.buff_atk_flat;
     hitdmg = (final_atk - defense).max(final_atk * 0.05);
-    dps = hitdmg / atk_interval * unit.attack_speed / 100.0 * (unit.targets as f64).min(targets);
+    dps = hitdmg / unit.attack_interval as f64 * unit.attack_speed / 100.0
+        * (unit.targets as f64).min(targets);
 
     Some(dps)
 }
@@ -14077,8 +14083,23 @@ pub fn walter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
                 * (unit.targets as f64 - 1.0);
         }
     }
-    shadowhit =
-        (unit.drone_atk * (1.0 - res / 100.0)).max(unit.drone_atk * 0.05) * unit.targets as f64;
+    // Compute shadows (from Python __init__ — multi-line logic the transpiler can't capture)
+    let mut shadows: f64 = 0.0;
+    if unit.elite == 2 {
+        if skill == 0 || skill == 3 {
+            if unit.talent2_damage {
+                shadows = 3.0;
+            } else {
+                shadows = (skillf + 1.0).min(2.0);
+            }
+            if unit.skill_parameters.get(1).copied().unwrap_or(0.0) == 1.0 && skill == 3 {
+                shadows -= 1.0;
+            }
+        } else {
+            shadows = if unit.talent2_damage { 1.0 } else { 0.0 };
+        }
+    }
+    shadowhit = (unit.drone_atk * (1.0 - res / 100.0)).max(unit.drone_atk * 0.05) * shadows;
     dps += shadowhit / 4.25;
 
     Some(dps)

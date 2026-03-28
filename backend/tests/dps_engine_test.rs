@@ -65,8 +65,7 @@ fn test_engine_vs_python_expected() {
     dotenv::dotenv().ok();
     let data_dir_str =
         std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
-    let assets_dir_str =
-        std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
     let data_dir = Path::new(&data_dir_str);
     let assets_dir = Path::new(&assets_dir_str);
     let game_data =
@@ -123,12 +122,12 @@ fn test_engine_vs_python_expected() {
             let prefixes = ["uniequip_002_", "uniequip_003_", "uniequip_004_"];
             let all_modules_exist = formula.available_modules.iter().all(|&m| {
                 let pos = formula.available_modules.iter().position(|&v| v == m);
-                pos.and_then(|p| prefixes.get(p)).map_or(false, |prefix| {
+                pos.and_then(|p| prefixes.get(p)).is_some_and(|prefix| {
                     operator.modules.iter().any(|om| {
                         om.module
                             .id
                             .as_deref()
-                            .map_or(false, |id| id.starts_with(prefix))
+                            .is_some_and(|id| id.starts_with(prefix))
                     })
                 })
             });

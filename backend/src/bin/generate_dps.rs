@@ -318,9 +318,7 @@ fn module_exists_in_game_data(
         .iter()
         .position(|&m| m == module_value);
     pos.and_then(|p| prefixes.get(p))
-        .map_or(false, |prefix| {
-            equip_keys.contains(&format!("{prefix}{op_id_suffix}"))
-        })
+        .is_some_and(|prefix| equip_keys.contains(&format!("{prefix}{op_id_suffix}")))
 }
 
 fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFormula>) {
@@ -763,8 +761,7 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
                     && !rl.contains("(unit.module_level as f64)")
                     && !rl.contains("module_level > ")
                     && !rl.contains("4.0 + 4.0")
-                    && !rl.contains("attack_speed -=") // Kaltsit complex expression
-                    // Block bare "ammo = 1" (loses enclosing guard) but allow "ammo = EXPR" with computation
+                    && !rl.contains("attack_speed -=")
                     && (!rl.trim().starts_with("ammo = 1;") || rl.contains("if "));
                 if valid {
                     // Use the main coercion function to handle integer→float conversion
@@ -1222,14 +1219,6 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
             _ => {}
         }
     }
-
-    // If the Python body does NOT mutate self.atk_interval (field write),
-    // revert self.atk_interval reads to use unit.attack_interval (the field)
-    // instead of the local atk_interval variable. This prevents local
-    // `atk_interval = X` assignments from affecting field reads (Vulcan fix).
-    // Note: Vulcan has a local atk_interval that differs from self.atk_interval.
-    // A proper fix would require distinguishing Python's `self.X` (field) from
-    // bare `X` (local variable). This is a known limitation of the line-by-line transpiler.
 
     format!("{decl_section}\n{processed_body}")
 }
@@ -1887,6 +1876,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.module_lvl", "(unit.module_level as f64)");
     s = s.replace("self.module", "unit.module_index");
     s = s.replace("self.ammo", "unit.ammo");
+    s = s.replace("self.shadows", "unit.shadows");
 
     // Additional operator property mappings
     s = s.replace("self.below50", "unit.talent2_damage");

@@ -92,6 +92,9 @@ pub struct OperatorUnit {
 
     /// Ammo count for operators like ExecutorAlter (set in __init__)
     pub ammo: f64,
+
+    /// Shadow count for Walter (Wisadel) — computed from skill, elite, talent2, skill_params
+    pub shadows: f64,
 }
 
 impl OperatorUnit {
@@ -262,31 +265,27 @@ impl OperatorUnit {
             let available_modules = &operator_data.available_modules;
 
             // Find a physical module by its uniequip prefix
-            let find_module_by_prefix =
-                |prefix: &str| -> Option<&OperatorModule> {
-                    available_modules.iter().find(|m| {
-                        m.module
-                            .id
-                            .as_deref()
-                            .map(|id| id.starts_with(prefix))
-                            .unwrap_or(false)
-                    })
-                };
+            let find_module_by_prefix = |prefix: &str| -> Option<&OperatorModule> {
+                available_modules.iter().find(|m| {
+                    m.module
+                        .id
+                        .as_deref()
+                        .map(|id| id.starts_with(prefix))
+                        .unwrap_or(false)
+                })
+            };
 
             // Get default module
-            if default_module_index >= 1 {
-                if let Some(pos) = formula_modules
+            if default_module_index >= 1
+                && let Some(pos) = formula_modules
                     .iter()
                     .position(|&m| m == default_module_index)
-                {
-                    if let Some(prefix) = uniequip_prefixes.get(pos) {
-                        if let Some(phys_module) = find_module_by_prefix(prefix) {
-                            operator_module = Some(phys_module.clone());
-                            module_index = default_module_index;
-                            module_sequential = (pos + 1) as i32;
-                        }
-                    }
-                }
+                && let Some(prefix) = uniequip_prefixes.get(pos)
+                && let Some(phys_module) = find_module_by_prefix(prefix)
+            {
+                operator_module = Some(phys_module.clone());
+                module_index = default_module_index;
+                module_sequential = (pos + 1) as i32;
             }
 
             if !available_modules.is_empty() {
@@ -304,9 +303,9 @@ impl OperatorUnit {
                         .position(|&m| m == param_module_index);
 
                     let found = if let Some(pos) = pos {
-                        uniequip_prefixes.get(pos).and_then(|prefix| {
-                            find_module_by_prefix(prefix).map(|m| (pos, m))
-                        })
+                        uniequip_prefixes
+                            .get(pos)
+                            .and_then(|prefix| find_module_by_prefix(prefix).map(|m| (pos, m)))
                     } else {
                         // Fallback: try exact charEquipOrder match
                         available_modules
@@ -782,6 +781,7 @@ impl OperatorUnit {
             ],
 
             ammo: 0.0,
+            shadows: 0.0,
         }
     }
 
