@@ -1,11 +1,11 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
 
 /// v_user_profile view
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserProfile {
     pub id: Uuid,
     pub uid: String,
