@@ -1,4 +1,7 @@
-use backend::app::state::{AppConfig, AppState};
+use backend::{
+    app::state::{AppConfig, AppState},
+    core::gamedata::assets::AssetIndex,
+};
 use dotenv::dotenv;
 use std::path::Path;
 
@@ -27,6 +30,9 @@ async fn main() {
     .expect("failed to load game data");
     tracing::info!(operators = game_data.operators.len(), "game data loaded");
 
+    // Build asset index
+    let asset_index = AssetIndex::build(Path::new(&assets_dir_str));
+
     // Database (pool + migrations + seeding)
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = backend::database::init(&database_url)
@@ -42,7 +48,7 @@ async fn main() {
 
     // Start server
     let config = AppConfig::from_env();
-    let state = AppState::new(db, redis, game_data, config);
+    let state = AppState::new(db, redis, game_data, asset_index, config);
 
     backend::app::server::run(state)
         .await

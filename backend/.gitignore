@@ -1,3 +1,4 @@
 /target
 /tasks
 .env
+.DS_Store
