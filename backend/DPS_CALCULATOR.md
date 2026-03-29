@@ -44,3 +44,5 @@ cargo test --test dps_engine_test -- --no-capture
 | `tests/fixtures/expected_dps.json` | `--expected` |
 
 **Note**: Ebenholz fails, but that is a Python bug. Rust is correct.
+
+TODO: Small script or function that autochecks when the DPS calculator Python repository updates, and then pull and re-generate everything.
