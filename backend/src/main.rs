@@ -1,60 +1,50 @@
-use backend::dps::engine;
-use backend::dps::operator_unit::{EnemyStats, OperatorParams};
+use backend::app::state::{AppConfig, AppState};
 use dotenv::dotenv;
 use std::path::Path;
-use std::time::Instant;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
 
-    // ── Game data loading ───────────────────────────────────────────────
+    // Tracing
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "backend=info,tower_http=info".into()),
+        )
+        .init();
+
+    // Game data
     let data_dir_str =
         std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
     let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
-    let data_dir = Path::new(&data_dir_str);
-    let assets_dir = Path::new(&assets_dir_str);
 
-    println!("Loading game data...");
-    let start = Instant::now();
+    tracing::info!("loading game data...");
+    let game_data = backend::core::gamedata::init_game_data(
+        Path::new(&data_dir_str),
+        Path::new(&assets_dir_str),
+    )
+    .expect("failed to load game data");
+    tracing::info!(operators = game_data.operators.len(), "game data loaded");
 
-    let data = match backend::core::gamedata::init_game_data(data_dir, assets_dir) {
-        Ok(data) => {
-            let elapsed = start.elapsed();
-            println!("Loaded in {elapsed:.2?}");
-            println!("  Operators: {}", data.operators.len());
-            println!("  Skills: {}", data.skills.len());
-            println!("  Modules: {}", data.modules.equip_dict.len());
-            println!("  Skins: {}", data.skins.char_skins.len());
-            println!("  Voices: {}", data.voices.char_words.len());
-            println!("  Enemies: {}", data.enemies.enemy_data.len());
-            println!("  Stages: {}", data.stages.len());
-            println!("  Zones: {}", data.zones.len());
-            println!("  Medals: {}", data.medals.medals.len());
-            println!("  Chibis: {}", data.chibis.characters.len());
-            data
-        }
-        Err(e) => {
-            eprintln!("Failed to load game data: {e}");
-            std::process::exit(1);
-        }
-    };
+    // Database (pool + migrations + seeding)
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db = backend::database::init(&database_url)
+        .await
+        .expect("failed to initialize database");
 
-    if let Some(operator) = data.operators.get("char_211_adnach") {
-        let params = OperatorParams::default();
-        let enemy = EnemyStats {
-            defense: 200.0,
-            res: 0.0,
-        };
+    // Redis
+    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".into());
+    let redis_client = redis::Client::open(redis_url).expect("invalid REDIS_URL");
+    let redis = redis::aio::ConnectionManager::new(redis_client)
+        .await
+        .expect("failed to connect to redis");
 
-        match engine::calculate_dps(operator, params, &enemy) {
-            Some(result) => {
-                println!("\nDPS Test: Adnachiel vs 200 DEF");
-                println!("  Skill DPS: {:.2}", result.skill_dps);
-                println!("  Total Damage: {:.2}", result.total_damage);
-                println!("  Average DPS: {:.2}", result.average_dps);
-            }
-            None => eprintln!("  DPS calc failed for Adnachiel"),
-        }
-    }
+    // Start server
+    let config = AppConfig::from_env();
+    let state = AppState::new(db, redis, game_data, config);
+
+    backend::app::server::run(state)
+        .await
+        .expect("server error");
 }
