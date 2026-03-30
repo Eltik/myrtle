@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use redis::aio::ConnectionManager;
+use reqwest::Client;
 use sqlx::PgPool;
 
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
@@ -12,6 +13,7 @@ pub struct AppState {
     pub game_data: Arc<GameData>,
     pub asset_index: Arc<AssetIndex>,
     pub config: Arc<AppConfig>,
+    pub http_client: Client,
 }
 
 impl AppState {
@@ -21,6 +23,7 @@ impl AppState {
         game_data: GameData,
         asset_index: AssetIndex,
         config: AppConfig,
+        client: Client,
     ) -> Self {
         Self {
             db,
@@ -28,6 +31,7 @@ impl AppState {
             game_data: Arc::new(game_data),
             asset_index: Arc::new(asset_index),
             config: Arc::new(config),
+            http_client: client,
         }
     }
 }

@@ -3,6 +3,15 @@ use uuid::Uuid;
 
 use crate::database::models::user::{User, UserProfile};
 
+/// Create minimal user
+pub async fn create_user(pool: &PgPool, uid: &str, server_id: i16) -> Result<User, sqlx::Error> {
+    sqlx::query_as::<_, User>("INSERT INTO users (uid, server_id) VALUES ($1, $2) RETURNING *")
+        .bind(uid)
+        .bind(server_id)
+        .fetch_one(pool)
+        .await
+}
+
 /// Find user profile by Arknights UID
 pub async fn find_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserProfile>, sqlx::Error> {
     sqlx::query_as::<_, UserProfile>("SELECT * FROM v_user_profile WHERE uid = $1")

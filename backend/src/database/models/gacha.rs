@@ -1,10 +1,10 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::types::{
     Uuid,
     chrono::{DateTime, Utc},
 };
 
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GachaRecord {
     pub id: i64,
     pub user_id: Uuid,
@@ -18,7 +18,7 @@ pub struct GachaRecord {
 }
 
 /// v_gacha_stats view
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GachaStats {
     pub user_id: Uuid,
     pub total_pulls: Option<i64>,

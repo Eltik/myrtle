@@ -228,7 +228,7 @@ struct PortalLoginBody<'a> {
     check_account: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct AccountPortalSession {
     pub yssid: String,
     pub yssid_sig: String,

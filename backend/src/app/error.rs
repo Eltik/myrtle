@@ -3,6 +3,8 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use thiserror::Error;
 
+use crate::core::hypergryph::fetch::FetchError;
+
 #[derive(Debug, Error)]
 pub enum ApiError {
     // Client errors
@@ -101,5 +103,16 @@ impl From<redis::RedisError> for ApiError {
 impl From<jsonwebtoken::errors::Error> for ApiError {
     fn from(_: jsonwebtoken::errors::Error) -> Self {
         ApiError::Unauthorized
+    }
+}
+
+impl From<FetchError> for ApiError {
+    fn from(e: FetchError) -> Self {
+        match e {
+            FetchError::NotLoggedIn => ApiError::Unauthorized,
+            FetchError::DomainNotFound(_, _) => ApiError::BadRequest("unsupported server".into()),
+            FetchError::RequestFailed(e) => ApiError::Internal(e.into()),
+            FetchError::ParseError(msg) => ApiError::BadRequest(msg),
+        }
     }
 }

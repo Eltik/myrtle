@@ -46,9 +46,12 @@ async fn main() {
         .await
         .expect("failed to connect to redis");
 
+    // reqwest client
+    let http_client = reqwest::Client::new();
+
     // Start server
     let config = AppConfig::from_env();
-    let state = AppState::new(db, redis, game_data, asset_index, config);
+    let state = AppState::new(db, redis, game_data, asset_index, config, http_client);
 
     backend::app::server::run(state)
         .await

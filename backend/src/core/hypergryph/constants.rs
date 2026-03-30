@@ -143,7 +143,7 @@ pub const DEFAULT_HEADERS: &[(&str, &str)] = &[
     ("Connection", "Keep-Alive"),
 ];
 
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AuthSession {
     pub uid: Box<str>,
     pub secret: Box<str>,

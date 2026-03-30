@@ -21,6 +21,13 @@ pub enum CacheKey<'a> {
     TierList {
         slug: &'a str,
     },
+    GameSession {
+        uid: &'a str,
+    },
+    PortalSession {
+        uid: &'a str,
+    },
+    GachaGlobalStats,
 }
 
 impl CacheKey<'_> {
@@ -41,6 +48,9 @@ impl CacheKey<'_> {
             }
             CacheKey::Search { query_hash } => format!("search:{query_hash}"),
             CacheKey::TierList { slug } => format!("tierlist:{slug}"),
+            CacheKey::GameSession { uid } => format!("game_session:{uid}"),
+            CacheKey::PortalSession { uid } => format!("portal_session:{uid}"),
+            CacheKey::GachaGlobalStats => "gacha:global_stats".to_owned(),
         }
     }
 
@@ -52,6 +62,9 @@ impl CacheKey<'_> {
             CacheKey::Leaderboard { .. } => Duration::from_secs(300), // 5 min
             CacheKey::Search { .. } => Duration::from_secs(120), // 2 min
             CacheKey::TierList { .. } => Duration::from_secs(600), // 10 min
+            CacheKey::GameSession { .. } => Duration::from_secs(3600), // 1 hour
+            CacheKey::PortalSession { .. } => Duration::from_secs(3600), // 1 hour
+            CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
         }
     }
 }
