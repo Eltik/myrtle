@@ -4,5 +4,6 @@ pub mod leaderboard;
 pub mod roster;
 pub mod search;
 pub mod static_data;
+pub mod stats;
 pub mod tier_list;
 pub mod user;

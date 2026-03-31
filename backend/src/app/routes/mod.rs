@@ -13,6 +13,7 @@ pub mod leaderboard;
 pub mod roster;
 pub mod search;
 pub mod static_data;
+pub mod stats;
 pub mod tier_lists;
 pub mod user;
 
@@ -36,5 +37,7 @@ pub fn router() -> Router<AppState> {
         .route("/roster/{operator_id}", get(roster::get_operator))
         .route("/gacha/fetch", post(gacha::fetch))
         .route("/gacha/global-stats", get(gacha::global_stats))
+        .route("/stats", get(stats::stats))
+        .route("/admin/stats", get(stats::admin_stats))
         .merge(tier_lists::router())
 }

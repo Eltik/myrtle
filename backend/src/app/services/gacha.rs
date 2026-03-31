@@ -49,8 +49,6 @@ impl GachaApiItem {
             "single"
         } else if self.pool_id.starts_with("BOOT_") {
             "boot"
-        } else if self.pool_id.starts_with("NORM_") {
-            "normal"
         } else {
             "normal"
         }
