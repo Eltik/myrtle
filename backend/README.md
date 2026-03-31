@@ -448,3 +448,8 @@ cargo check
 ```
 
 The DPS test suite validates Rust calculations against the Python reference implementation with a tolerance of 0.15% or 1.0 damage.
+
+
+## TODO
+- Listen to asset websocket and reload game data
+- Small script or function that autochecks when the DPS calculator Python repository updates, and then pull and re-generate everything.
