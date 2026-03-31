@@ -1,15 +1,17 @@
 use axum::{
     Router,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 
 use crate::app::state::AppState;
 
 pub mod assets;
 pub mod auth;
+pub mod dps;
 pub mod gacha;
 pub mod health;
 pub mod leaderboard;
+pub mod operator_notes;
 pub mod roster;
 pub mod search;
 pub mod static_data;
@@ -39,5 +41,14 @@ pub fn router() -> Router<AppState> {
         .route("/gacha/global-stats", get(gacha::global_stats))
         .route("/stats", get(stats::stats))
         .route("/admin/stats", get(stats::admin_stats))
+        .route("/dps/operators", get(dps::operators))
+        .route("/dps/calculate", post(dps::calculate))
+        .route("/operator-notes", get(operator_notes::list))
+        .route("/operator-notes/{operator_id}", get(operator_notes::get))
+        .route("/operator-notes/{operator_id}", put(operator_notes::update))
+        .route(
+            "/operator-notes/{operator_id}/audit",
+            get(operator_notes::audit_log),
+        )
         .merge(tier_lists::router())
 }

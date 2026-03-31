@@ -98,6 +98,14 @@ pub fn calculate_skill_dps(
 
 static FORMULAS: LazyLock<HashMap<String, OperatorFormula>> = LazyLock::new(load_formulas);
 
+pub fn get_formula(op_id: &str) -> Option<&OperatorFormula> {
+    FORMULAS.get(op_id)
+}
+
+pub fn supported_operators() -> &'static HashMap<String, OperatorFormula> {
+    &FORMULAS
+}
+
 pub fn calculate_dps(
     operator: &Operator,
     params: OperatorParams,
