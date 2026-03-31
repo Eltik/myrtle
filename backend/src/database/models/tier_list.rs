@@ -46,3 +46,12 @@ pub struct TierListVersion {
     pub published_by: Option<Uuid>,
     pub published_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TierListPermission {
+    pub tier_list_id: Uuid,
+    pub user_id: Uuid,
+    pub permission: String,
+    pub granted_by: Option<Uuid>,
+    pub granted_at: DateTime<Utc>,
+}
