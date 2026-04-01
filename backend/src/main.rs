@@ -1,6 +1,6 @@
 use backend::{
     app::state::{AppConfig, AppState},
-    core::gamedata::assets::AssetIndex,
+    core::{gamedata::assets::AssetIndex, hypergryph::config::GlobalConfig},
 };
 use dotenv::dotenv;
 use std::path::Path;
@@ -48,6 +48,10 @@ async fn main() {
 
     // reqwest client
     let http_client = reqwest::Client::new();
+
+    // Initialize configs
+    backend::core::hypergryph::config::init_config(GlobalConfig::new());
+    backend::core::hypergryph::loaders::init(&http_client).await;
 
     // Start server
     let config = AppConfig::from_env();

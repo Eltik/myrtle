@@ -16,7 +16,6 @@ pub struct LeaderboardEntry {
     pub secretary_skin_id: Option<String>,
     pub server: String,
     pub total_score: Option<f64>,
-    pub composite_score: Option<f64>,
     pub grade: Option<String>,
     pub operator_score: Option<f64>,
     pub stage_score: Option<f64>,
@@ -42,7 +41,5 @@ pub struct UserScore {
     pub base_score: f64,
     pub skin_score: f64,
     pub grade: Option<String>,
-    pub composite_score: f64,
-    pub breakdown: Option<serde_json::Value>,
     pub calculated_at: DateTime<Utc>,
 }

@@ -3,7 +3,7 @@ CREATE VIEW v_leaderboard AS
 SELECT
     u.id, u.uid, u.nickname, u.level, u.avatar_id, u.secretary, u.secretary_skin_id,
     s.code AS server,
-    sc.total_score, sc.composite_score, sc.grade,
+    sc.total_score, sc.grade,
     sc.operator_score, sc.stage_score, sc.roguelike_score,
     sc.sandbox_score, sc.medal_score, sc.base_score, sc.skin_score,
     RANK() OVER (ORDER BY sc.total_score DESC) AS rank_global,
@@ -19,7 +19,7 @@ SELECT
     u.id, u.uid, u.nickname, u.level, u.avatar_id, u.secretary,
     u.secretary_skin_id, u.resume_id, u.role,
     s.code AS server,
-    sc.total_score, sc.grade, sc.composite_score, sc.breakdown,
+    sc.total_score, sc.grade,
     us.public_profile, us.store_gacha, us.share_stats,
     st.exp, st.orundum, st.lmd, st.sanity, st.max_sanity,
     st.gacha_tickets, st.ten_pull_tickets, st.monthly_sub_end,

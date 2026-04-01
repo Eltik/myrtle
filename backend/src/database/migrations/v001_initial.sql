@@ -184,8 +184,6 @@ CREATE TABLE user_scores (
     base_score          DOUBLE PRECISION NOT NULL DEFAULT 0,
     skin_score          DOUBLE PRECISION NOT NULL DEFAULT 0,
     grade               VARCHAR(5),              -- S+, S, A, B, C, D
-    composite_score     DOUBLE PRECISION NOT NULL DEFAULT 0,
-    breakdown           JSONB,                   -- Full 170+ field breakdown for frontend
     calculated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

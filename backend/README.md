@@ -1,6 +1,6 @@
 # myrtle.moe Backend
 
-REST API for Arknights game data, user profiles, DPS calculations, gacha tracking, and community tier lists. Built in Rust with Axum, PostgreSQL, and Redis.
+REST API for Arknights game data, user profiles, DPS calculations, gacha tracking, and community tier lists. Built in Rust with PostgreSQL.
 
 ## Tech Stack
 
@@ -453,3 +453,4 @@ The DPS test suite validates Rust calculations against the Python reference impl
 ## TODO
 - Listen to asset websocket and reload game data
 - Small script or function that autochecks when the DPS calculator Python repository updates, and then pull and re-generate everything.
+- Complete scoring

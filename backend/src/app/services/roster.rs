@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::Deserialize;
 
 use crate::{
@@ -6,11 +7,17 @@ use crate::{
         error::ApiError,
         state::AppState,
     },
-    core::hypergryph::{
-        constants::{AuthSession, Server},
-        fetch::auth_request,
+    core::{
+        grade::calculate::calculate_user_grade,
+        hypergryph::{
+            constants::{AuthSession, Server},
+            fetch::auth_request,
+        },
     },
-    database::queries::roster,
+    database::{
+        models::score::UserScore,
+        queries::{roster, score, users},
+    },
 };
 
 #[derive(Deserialize)]
@@ -49,16 +56,26 @@ pub struct PlayerStatus {
     pub secretary_skin_id: Option<String>,
     pub resume: Option<String>,
     pub exp: Option<i64>,
+    #[serde(rename = "diamondShard")]
     pub orundum: Option<i64>,
-    pub gold: Option<i64>,   // maps to LMD
-    pub ap: Option<i64>,     // maps to sanity
-    pub max_ap: Option<i64>, // maps to max_sanity
+    pub gold: Option<i64>,
+    pub ap: Option<i64>,
+    pub max_ap: Option<i64>,
     pub gacha_ticket: Option<i64>,
     pub ten_gacha_ticket: Option<i64>,
+    pub classic_gacha_ticket: Option<i64>,
+    pub classic_ten_gacha_ticket: Option<i64>,
+    pub recruit_license: Option<i64>,
+    pub social_point: Option<i64>,
+    pub hgg_shard: Option<i64>,
+    pub lgg_shard: Option<i64>,
+    pub practice_ticket: Option<i64>,
+    #[serde(rename = "monthlySubscriptionEndTime")]
     pub monthly_sub_end: Option<i64>,
     pub register_ts: Option<i64>,
     pub last_online_ts: Option<i64>,
     pub friend_num_limit: Option<i64>,
+    pub main_stage_progress: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -194,7 +211,7 @@ pub async fn refresh(
         .and_then(|d| d.get("stages"))
         .cloned()
         .unwrap_or_default();
-    let roguelike = user.roguelike.unwrap_or_default();
+    let roguelike = extract_roguelike(&user.roguelike);
     let sandbox = user.sandbox.unwrap_or_default();
     let medals = extract_medals(&user.medal);
     let building = user.building.unwrap_or_default();
@@ -224,6 +241,29 @@ pub async fn refresh(
         &checkin,
     )
     .await?;
+
+    if let Some(user) = users::find_by_uid(&state.db, user_id).await? {
+        let grade = calculate_user_grade(&state.db, user.id, &state.game_data).await?;
+
+        score::update_score(
+            &state.db,
+            &UserScore {
+                user_id: user.id,
+                operator_score: grade.operator_grade,
+                total_score: grade.total_score, // for now, just operator
+                grade: Some(grade.overall),
+                // zero out the rest until implemented
+                stage_score: 0.0,
+                roguelike_score: 0.0,
+                sandbox_score: 0.0,
+                medal_score: 0.0,
+                base_score: 0.0,
+                skin_score: 0.0,
+                calculated_at: Utc::now(),
+            },
+        )
+        .await?;
+    }
 
     Ok(raw)
 }
@@ -367,14 +407,24 @@ fn extract_status(status: Option<&PlayerStatus>) -> serde_json::Value {
     serde_json::json!({
         "exp": s.exp.unwrap_or(0),
         "orundum": s.orundum.unwrap_or(0),
+        "orundum_shard": 0,
         "lmd": s.gold.unwrap_or(0),
         "sanity": s.ap.unwrap_or(0),
         "max_sanity": s.max_ap.unwrap_or(0),
         "gacha_tickets": s.gacha_ticket.unwrap_or(0),
         "ten_pull_tickets": s.ten_gacha_ticket.unwrap_or(0),
+        "classic_gacha_tickets": s.classic_gacha_ticket.unwrap_or(0),
+        "classic_ten_pull_tickets": s.classic_ten_gacha_ticket.unwrap_or(0),
+        "recruit_permits": s.recruit_license.unwrap_or(0),
+        "social_point": s.social_point.unwrap_or(0),
+        "hgg_shard": s.hgg_shard.unwrap_or(0),
+        "lgg_shard": s.lgg_shard.unwrap_or(0),
+        "practice_tickets": s.practice_ticket.unwrap_or(0),
+        "gold": s.gold.unwrap_or(0),
         "monthly_sub_end": s.monthly_sub_end.unwrap_or(0),
         "register_ts": s.register_ts.unwrap_or(0),
         "last_online_ts": s.last_online_ts.unwrap_or(0),
+        "main_stage_progress": s.main_stage_progress.as_deref().unwrap_or(""),
         "resume": s.resume.as_deref().unwrap_or(""),
         "friend_num_limit": s.friend_num_limit.unwrap_or(0),
     })
@@ -398,6 +448,28 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
                 "val": entry.val.unwrap_or(0),
                 "first_ts": entry.fts.unwrap_or(0),
                 "reach_ts": entry.rts.unwrap_or(0),
+            })
+        })
+        .collect();
+
+    serde_json::to_value(entries).unwrap_or_default()
+}
+
+fn extract_roguelike(rlv2: &Option<serde_json::Value>) -> serde_json::Value {
+    let Some(outer) = rlv2
+        .as_ref()
+        .and_then(|v| v.get("outer"))
+        .and_then(|o| o.as_object())
+    else {
+        return serde_json::json!([]);
+    };
+
+    let entries: Vec<serde_json::Value> = outer
+        .iter()
+        .map(|(theme_id, progress)| {
+            serde_json::json!({
+                "theme_id": theme_id,
+                "progress": progress,
             })
         })
         .collect();

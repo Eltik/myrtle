@@ -20,8 +20,6 @@ pub struct UserProfile {
     // Scores (LEFT JOIN)
     pub total_score: Option<f64>,
     pub grade: Option<String>,
-    pub composite_score: Option<f64>,
-    pub breakdown: Option<serde_json::Value>,
     // Settings (LEFT JOIN)
     pub public_profile: Option<bool>,
     pub store_gacha: Option<bool>,

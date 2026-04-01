@@ -7,6 +7,10 @@ edition = "2024"
 name = "generate-dps"
 path = "src/bin/generate_dps.rs"
 
+[[bin]]
+name = "test"
+path = "src/bin/test.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 axum = { version = "0.8.8", features = ["macros"] }
@@ -14,7 +18,7 @@ chrono = { version = "0.4.44", features = ["serde"] }
 dotenv = "0.15.0"
 hex = "0.4"
 hmac = "0.12.1"
-jsonwebtoken = "10.3.0"
+jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 md-5 = "0.10.6"
 rayon = "1.11.0"
 redis = { version = "1.1.0", features = ["tokio-comp", "connection-manager"] }

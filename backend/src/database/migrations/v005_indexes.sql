@@ -7,7 +7,6 @@ CREATE INDEX idx_users_nickname ON users USING gin(nickname gin_trgm_ops);
 
 -- Scores (leaderboard)
 CREATE INDEX idx_scores_total ON user_scores(total_score DESC);
-CREATE INDEX idx_scores_composite ON user_scores(composite_score DESC);
 
 -- Operators
 CREATE INDEX idx_user_ops_operator ON user_operators(operator_id);
