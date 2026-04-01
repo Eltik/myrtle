@@ -49,6 +49,22 @@ impl FromRequestParts<AppState> for AuthUser {
     }
 }
 
+pub struct MaybeAuthUser(pub Option<AuthUser>);
+
+impl FromRequestParts<AppState> for MaybeAuthUser {
+    type Rejection = ApiError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &AppState,
+    ) -> Result<Self, Self::Rejection> {
+        match AuthUser::from_request_parts(parts, state).await {
+            Ok(user) => Ok(MaybeAuthUser(Some(user))),
+            Err(_) => Ok(MaybeAuthUser(None)),
+        }
+    }
+}
+
 fn extract_bearer(headers: &HeaderMap) -> Result<&str, ApiError> {
     headers
         .get("authorization")

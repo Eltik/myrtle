@@ -54,8 +54,8 @@ CREATE TABLE user_status (
 CREATE TABLE user_settings (
     user_id         UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     public_profile  BOOLEAN NOT NULL DEFAULT true,
-    store_gacha     BOOLEAN NOT NULL DEFAULT false,
-    share_stats     BOOLEAN NOT NULL DEFAULT false,
+    store_gacha     BOOLEAN NOT NULL DEFAULT true,
+    share_stats     BOOLEAN NOT NULL DEFAULT true,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
