@@ -59,5 +59,7 @@ async fn main() {
         .await
         .expect("failed to calculate grade");
 
-    tracing::info!(grade.overall, "user grade calculated");
+    tracing::info!(grade.overall);
+    tracing::info!(grade.operator_grade);
+    tracing::info!(grade.total_score);
 }
