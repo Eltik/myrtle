@@ -104,6 +104,7 @@ pub struct RoomAssignment {
     pub slot_id: String,
     pub room_type: String,
     pub level: i32,
+    pub formula_type: Option<String>,
     pub operators: Vec<String>, // char_ids assigned to this room
     pub total_efficiency: f64,  // computed total bonus for this room
 }

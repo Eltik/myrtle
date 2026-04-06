@@ -184,87 +184,157 @@ fn assign_production_rooms(
     total_dorm_levels: i32,
     global_bonuses: &HashMap<String, f64>,
 ) -> Vec<RoomAssignment> {
-    let mut room_assignments: Vec<RoomAssignment> = Vec::new();
+    let factory_rooms: Vec<&&UserRoom> = rooms.iter()
+        .filter(|r| r.room_type == "MANUFACTURE")
+        .collect();
+    let trading_rooms: Vec<&&UserRoom> = rooms.iter()
+        .filter(|r| r.room_type == "TRADING")
+        .collect();
 
-    for room in rooms {
-        let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
-        let mut room_ops: Vec<String> = Vec::new();
-        let mut room_teammates: Vec<TeammateInfo> = Vec::new();
+    let num_factories = factory_rooms.len();
 
-        // Fill each slot greedily
-        for _slot in 0..max_slots {
-            let mut best_id: Option<String> = None;
-            let mut best_score: f64 = f64::NEG_INFINITY;
+    // Try all gold/EXP splits and pick the best
+    let mut best_assignments: Vec<RoomAssignment> = Vec::new();
+    let mut best_total: f64 = f64::NEG_INFINITY;
+    let mut best_assigned_snapshot: HashSet<String> = assigned.clone();
 
-            for op in operators {
-                if assigned.contains(&op.char_id) {
-                    continue;
-                }
+    // Gold factories must be >= trading post count (TPs need gold bars to trade)
+    let min_gold = trading_rooms.len().min(num_factories);
 
-                let score = score_operator_in_room(
-                    op,
-                    &room.room_type,
-                    &room_teammates,
-                    registry,
-                    building_data,
-                    facility_counts,
-                    total_dorm_levels,
-                );
+    for num_gold in min_gold..=num_factories {
+        let mut trial_assigned = assigned.clone();
+        let mut trial_rooms: Vec<RoomAssignment> = Vec::new();
 
-                if score > best_score {
-                    best_score = score;
-                    best_id = Some(op.char_id.clone());
-                }
-            }
+        // Assign factories: first num_gold get F_GOLD, rest get F_EXP
+        for (i, factory) in factory_rooms.iter().enumerate() {
+            let formula = if i < num_gold { "F_GOLD" } else { "F_EXP" };
+            let room_assignment = assign_single_room(
+                factory,
+                Some(formula),
+                operators,
+                &mut trial_assigned,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                global_bonuses,
+            );
+            trial_rooms.push(room_assignment);
+        }
 
-            if let Some(ref id) = best_id {
-                if best_score <= 0.0 {
-                    break;
-                } // No beneficial operator left
+        // Assign trading posts (no formula filter)
+        for tp in &trading_rooms {
+            let room_assignment = assign_single_room(
+                tp,
+                None,
+                operators,
+                &mut trial_assigned,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                global_bonuses,
+            );
+            trial_rooms.push(room_assignment);
+        }
 
-                assigned.insert(id.clone());
-                room_ops.push(id.clone());
+        let trial_total: f64 = trial_rooms.iter().map(|r| r.total_efficiency).sum();
+        if trial_total > best_total {
+            best_total = trial_total;
+            best_assignments = trial_rooms;
+            best_assigned_snapshot = trial_assigned;
+        }
+    }
 
-                // Build TeammateInfo for the newly assigned operator
-                let op = operators.iter().find(|o| o.char_id == *id).unwrap();
-                let direct_eff =
-                    compute_direct_efficiency(op, &room.room_type, registry, building_data);
-                room_teammates.push(TeammateInfo {
-                    buff_ids: op.available_buffs.clone(),
-                    direct_efficiency: direct_eff,
-                });
-            } else {
-                break; // No candidates left
+    // Apply the winning assignment's used operators to the real assigned set
+    *assigned = best_assigned_snapshot;
+    best_assignments
+}
+
+fn assign_single_room(
+    room: &UserRoom,
+    formula_type: Option<&str>,
+    operators: &[OperatorBaseProfile],
+    assigned: &mut HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    global_bonuses: &HashMap<String, f64>,
+) -> RoomAssignment {
+    let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
+    let mut room_ops: Vec<String> = Vec::new();
+    let mut room_teammates: Vec<TeammateInfo> = Vec::new();
+
+    for _slot in 0..max_slots {
+        let mut best_id: Option<String> = None;
+        let mut best_score: f64 = f64::NEG_INFINITY;
+
+        for op in operators {
+            if assigned.contains(&op.char_id) { continue; }
+
+            let score = score_operator_in_room(
+                op,
+                &room.room_type,
+                formula_type,
+                &room_teammates,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+            );
+
+            if score > best_score {
+                best_score = score;
+                best_id = Some(op.char_id.clone());
             }
         }
 
-        // Final room efficiency: re-evaluate all operators with full team context
-        let total_efficiency = compute_room_efficiency(
-            &room_ops,
-            &room.room_type,
-            operators,
-            registry,
-            building_data,
-            facility_counts,
-            total_dorm_levels,
-        ) + global_bonuses.get(&room.room_type).unwrap_or(&0.0);
+        if let Some(ref id) = best_id {
+            if best_score <= 0.0 { break; }
 
-        room_assignments.push(RoomAssignment {
-            slot_id: room.slot_id.clone(),
-            room_type: room.room_type.clone(),
-            level: room.level,
-            operators: room_ops,
-            total_efficiency,
-        });
+            assigned.insert(id.clone());
+            room_ops.push(id.clone());
+
+            let op = operators.iter().find(|o| o.char_id == *id).unwrap();
+            let direct_eff = compute_direct_efficiency(
+                op, &room.room_type, formula_type, registry, building_data,
+            );
+            room_teammates.push(TeammateInfo {
+                buff_ids: op.available_buffs.clone(),
+                direct_efficiency: direct_eff,
+            });
+        } else {
+            break;
+        }
     }
 
-    room_assignments
+    let total_efficiency = compute_room_efficiency(
+        &room_ops,
+        &room.room_type,
+        formula_type,
+        operators,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+    ) + global_bonuses.get(&room.room_type).unwrap_or(&0.0);
+
+    RoomAssignment {
+        slot_id: room.slot_id.clone(),
+        room_type: room.room_type.clone(),
+        level: room.level,
+        formula_type: formula_type.map(|s| s.to_string()),
+        operators: room_ops,
+        total_efficiency,
+    }
 }
 
 /// Score how valuable an operator would be if added to a room with existing teammates.
 fn score_operator_in_room(
     op: &OperatorBaseProfile,
     room_type: &str,
+    formula_type: Option<&str>,
     current_teammates: &[TeammateInfo],
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
@@ -284,6 +354,13 @@ fn score_operator_in_room(
             if buff.room_type != room_type {
                 continue;
             }
+            if let Some(formula) = formula_type {
+                if !buff.targets.is_empty()
+                    && !buff.targets.iter().any(|t| t == formula)
+                {
+                    continue; // This buff doesn't work for this formula
+                }
+            }
         } else {
             continue;
         }
@@ -300,6 +377,7 @@ fn score_operator_in_room(
 fn compute_direct_efficiency(
     op: &OperatorBaseProfile,
     room_type: &str,
+    formula_type: Option<&str>,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> f64 {
@@ -308,6 +386,13 @@ fn compute_direct_efficiency(
         if let Some(buff) = building_data.buffs.get(buff_id) {
             if buff.room_type != room_type {
                 continue;
+            }
+            if let Some(formula) = formula_type {
+                if !buff.targets.is_empty()
+                    && !buff.targets.iter().any(|t| t == formula)
+                {
+                    continue; // This buff doesn't work for this formula
+                }
             }
         } else {
             continue;
@@ -323,6 +408,7 @@ fn compute_direct_efficiency(
 fn compute_room_efficiency(
     room_ops: &[String],
     room_type: &str,
+    formula_type: Option<&str>,
     all_operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
@@ -334,7 +420,7 @@ fn compute_room_efficiency(
         .iter()
         .map(|id| {
             let op = all_operators.iter().find(|o| o.char_id == *id).unwrap();
-            let direct_eff = compute_direct_efficiency(op, room_type, registry, building_data);
+            let direct_eff = compute_direct_efficiency(op, room_type, formula_type, registry, building_data);
             TeammateInfo {
                 buff_ids: op.available_buffs.clone(),
                 direct_efficiency: direct_eff,
@@ -365,6 +451,13 @@ fn compute_room_efficiency(
             if let Some(buff) = building_data.buffs.get(buff_id) {
                 if buff.room_type != room_type {
                     continue;
+                }
+                if let Some(formula) = formula_type {
+                    if !buff.targets.is_empty()
+                        && !buff.targets.iter().any(|t| t == formula)
+                    {
+                        continue; // This buff doesn't work for this formula
+                    }
                 }
             } else {
                 continue;

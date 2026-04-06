@@ -11,10 +11,6 @@ path = "src/bin/generate_dps.rs"
 name = "test"
 path = "src/bin/test.rs"
 
-[[bin]]
-name = "grade-example"
-path = "src/bin/grade_example.rs"
-
 [dependencies]
 anyhow = "1.0.102"
 axum = { version = "0.8.8", features = ["macros"] }
