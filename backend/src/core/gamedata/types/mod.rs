@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+pub mod building;
 pub mod chibi;
 pub mod enemy;
 pub mod gacha;
@@ -35,6 +36,8 @@ use trust::Favor;
 use voice::Voices;
 use zone::Zone;
 
+use crate::core::gamedata::types::building::BuildingDataFile;
+
 #[derive(Debug, Clone, Default)]
 pub struct GameData {
     pub operators: HashMap<String, Operator>,
@@ -53,6 +56,7 @@ pub struct GameData {
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
+    pub building: BuildingDataFile,
 }
 
 impl GameData {

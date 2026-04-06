@@ -1,3 +1,4 @@
+/// TODO: Delete later. Used for testing grades.
 use std::path::Path;
 
 use backend::core::grade::calculate::calculate_user_grade;
@@ -61,5 +62,6 @@ async fn main() {
 
     tracing::info!(grade.overall);
     tracing::info!(grade.operator_grade);
+    tracing::info!(grade.base_grade);
     tracing::info!(grade.total_score);
 }

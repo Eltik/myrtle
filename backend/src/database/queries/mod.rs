@@ -1,3 +1,4 @@
+pub mod building;
 pub mod gacha;
 pub mod items;
 pub mod operator_notes;

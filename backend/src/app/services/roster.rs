@@ -257,7 +257,7 @@ pub async fn refresh(
                 roguelike_score: 0.0,
                 sandbox_score: 0.0,
                 medal_score: 0.0,
-                base_score: 0.0,
+                base_score: grade.base_grade,
                 skin_score: 0.0,
                 calculated_at: Utc::now(),
             },

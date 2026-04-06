@@ -13,6 +13,7 @@ use crate::core::gamedata::{
     tables::{DataError, load_table, load_table_or_warn},
     types::{
         GameData,
+        building::BuildingDataFile,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
         handbook::HandbookTableFile,
@@ -63,6 +64,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let voice_file: VoicesTableFile = load_table_or_warn(data_dir, "charword_table", &mut warnings);
     let enemy_file: EnemyHandbookTableFile =
         load_table_or_warn(data_dir, "enemy_handbook_table", &mut warnings);
+    let building_file: BuildingDataFile =
+        load_table_or_warn(data_dir, "building_data", &mut warnings);
 
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
@@ -142,5 +145,6 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         medals,
         roguelike,
         enemies,
+        building: building_file,
     })
 }
