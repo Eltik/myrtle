@@ -75,5 +75,28 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
         BuffResolutionStrategy::NonProduction { value } => *value,
 
         BuffResolutionStrategy::Complex { estimated_pct } => *estimated_pct,
+
+        BuffResolutionStrategy::MoraleDecayEfficiency {
+            time_averaged_value,
+        } => *time_averaged_value,
+        BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, .. } => {
+            // Order limit is tracked separately via TeammateInfo
+            *efficiency
+        }
+        BuffResolutionStrategy::OrderLimitScaling {
+            per_cap_threshold,
+            bonus_per_threshold,
+            cap_pct,
+        } => {
+            let total_cap: i32 = ctx
+                .room_teammates
+                .iter()
+                .map(|t| t.order_limit_contribution)
+                .sum();
+            // Only count positive CAP for threshold calculation
+            let effective_cap = total_cap.max(0) as f64;
+            let thresholds_met = (effective_cap / per_cap_threshold).floor();
+            (thresholds_met * bonus_per_threshold).min(*cap_pct)
+        }
     }
 }

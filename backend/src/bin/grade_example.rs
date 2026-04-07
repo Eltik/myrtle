@@ -5,6 +5,7 @@
 use std::path::Path;
 
 use backend::core::gamedata::types::GameData;
+use backend::core::grade::base::assignment::compute_sustained_assignment;
 use backend::core::grade::base::{
     assignment::compute_optimal_assignment,
     buff_registry::build_registry,
@@ -129,7 +130,11 @@ async fn main() {
     sorted.sort_by_key(|(name, _)| *name);
     for (room_type, levels) in &sorted {
         let levels_str: Vec<String> = levels.iter().map(|l| format!("L{l}")).collect();
-        println!("  {room_type}: {} ({})", levels.len(), levels_str.join(", "));
+        println!(
+            "  {room_type}: {} ({})",
+            levels.len(),
+            levels_str.join(", ")
+        );
     }
 
     // Run optimal assignment
@@ -179,4 +184,63 @@ async fn main() {
         _ => "F",
     };
     println!("  Letter Grade: {grade}");
+
+    // Run sustained assignment
+    println!("\n=== OPTIMAL ASSIGNMENT (SHIFT A) ===");
+    let sustained =
+        compute_sustained_assignment(&profiles, &user_building, &game_data.building, &registry);
+
+    for room in &sustained.shift_a.rooms {
+        let ops: Vec<String> = room
+            .operators
+            .iter()
+            .map(|id| {
+                let name = operator_name(id, &game_data);
+                format!("{name} ({id})")
+            })
+            .collect();
+        let formula_label = room.formula_type.as_deref().unwrap_or("");
+        println!(
+            "\n  {} (L{}) {formula_label} — +{:.1}% efficiency",
+            room.room_type, room.level, room.total_efficiency
+        );
+        for op in &ops {
+            println!("    - {op}");
+        }
+    }
+    println!(
+        "\n  SHIFT A TOTAL: +{:.1}%",
+        sustained.shift_a.total_production_efficiency
+    );
+
+    println!("\n=== ROTATION (SHIFT B) ===");
+    for room in &sustained.shift_b.rooms {
+        let ops: Vec<String> = room
+            .operators
+            .iter()
+            .map(|id| {
+                let name = operator_name(id, &game_data);
+                format!("{name} ({id})")
+            })
+            .collect();
+        let formula_label = room.formula_type.as_deref().unwrap_or("");
+        println!(
+            "\n  {} (L{}) {formula_label} — +{:.1}% efficiency",
+            room.room_type, room.level, room.total_efficiency
+        );
+        for op in &ops {
+            println!("    - {op}");
+        }
+        if room.operators.is_empty() {
+            println!("    (no beneficial operators)");
+        }
+    }
+    println!(
+        "\n  SHIFT B TOTAL: +{:.1}%",
+        sustained.shift_b.total_production_efficiency
+    );
+    println!(
+        "\n  SUSTAINED AVERAGE: +{:.1}%",
+        sustained.sustained_efficiency
+    );
 }

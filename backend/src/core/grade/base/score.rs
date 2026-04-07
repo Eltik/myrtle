@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use crate::core::gamedata::types::{GameData, building::BuildingDataFile};
+use crate::core::grade::base::assignment::compute_sustained_assignment;
 use crate::database::models::roster::RosterEntry;
 
 use super::{
-    assignment::compute_optimal_assignment,
     buff_registry::{BuffResolutionStrategy, build_registry},
     types::{OperatorBaseProfile, UserBuilding},
 };
@@ -75,13 +75,12 @@ fn score_production_potential(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> f64 {
-    let assignment = compute_optimal_assignment(profiles, building, building_data, registry);
-    let user_efficiency = assignment.total_production_efficiency;
+    let user = compute_sustained_assignment(profiles, building, building_data, registry);
+    let user_efficiency = user.sustained_efficiency;
 
-    // Compute theoretical max: what if every operator in the game was available?
     let all_ops = build_max_profiles(building_data);
-    let max_assignment = compute_optimal_assignment(&all_ops, building, building_data, registry);
-    let max_efficiency = max_assignment.total_production_efficiency;
+    let max = compute_sustained_assignment(&all_ops, building, building_data, registry);
+    let max_efficiency = max.sustained_efficiency;
 
     if max_efficiency <= 0.0 {
         return 0.0;

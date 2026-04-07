@@ -98,6 +98,7 @@ pub struct TeammateInfo {
     pub buff_ids: Vec<String>,
     /// Sum of DirectEfficiency values from this teammate's buffs
     pub direct_efficiency: f64,
+    pub order_limit_contribution: i32,
 }
 
 pub struct RoomAssignment {
@@ -112,4 +113,10 @@ pub struct RoomAssignment {
 pub struct BaseAssignment {
     pub rooms: Vec<RoomAssignment>,
     pub total_production_efficiency: f64, // sum across all production rooms
+}
+
+pub struct ShiftAssignment {
+    pub shift_a: BaseAssignment,
+    pub shift_b: BaseAssignment,
+    pub sustained_efficiency: f64, // average of both shifts
 }
