@@ -22,7 +22,7 @@ pub fn grade_base(
     }
 
     // Build the buff registry
-    let registry = build_registry(&building_data.buffs);
+    let (registry, morale_drains) = build_registry(&building_data.buffs);
 
     // Parse user building layout from JSONB
     let user_building = match building_json {
@@ -37,7 +37,13 @@ pub fn grade_base(
     let profiles = build_operator_profiles(roster, game_data);
 
     // Dimension 1: Production Roster Potential (40%)
-    let d1 = score_production_potential(&profiles, &user_building, building_data, &registry);
+    let d1 = score_production_potential(
+        &profiles,
+        &user_building,
+        building_data,
+        &registry,
+        &morale_drains,
+    );
 
     // Dimension 2: Base Infrastructure (25%)
     let d2 = score_infrastructure(&user_building, building_data);
@@ -74,12 +80,15 @@ fn score_production_potential(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
 ) -> f64 {
-    let user = compute_sustained_assignment(profiles, building, building_data, registry);
+    let user =
+        compute_sustained_assignment(profiles, building, building_data, registry, morale_drains);
     let user_efficiency = user.sustained_efficiency;
 
     let all_ops = build_max_profiles(building_data);
-    let max = compute_sustained_assignment(&all_ops, building, building_data, registry);
+    let max =
+        compute_sustained_assignment(&all_ops, building, building_data, registry, morale_drains);
     let max_efficiency = max.sustained_efficiency;
 
     if max_efficiency <= 0.0 {

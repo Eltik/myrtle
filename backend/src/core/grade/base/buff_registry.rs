@@ -1,8 +1,49 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use regex::Regex;
 
 use crate::core::gamedata::types::building::Buff;
+
+static RE_FIRST_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
+
+static RE_FIRST_FLOAT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>").unwrap());
+
+static RE_TAG_KEYWORD: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.kw>(\w+)</>").unwrap());
+
+static RE_LAST_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
+
+static RE_LAST_PCT_INNER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"([\d.]+)%").unwrap());
+
+static RE_KW_NUMBER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>(\d+)</>").unwrap());
+
+static RE_VDOWN_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vdown>[+-]?([\d.]+)%?</>").unwrap());
+
+static RE_PER_HOUR_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%?</>\s*per hour").unwrap());
+
+static RE_ORDER_LIMIT_POS: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"order limit\s*<@cc\.vup>\+?(\d+)</>").unwrap());
+
+static RE_ORDER_LIMIT_NEG: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"order limit\s*<@cc\.vdown>-?(\d+)</>").unwrap());
+
+static RE_NTH_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
+
+static RE_VUP_NUMBER: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>(\d+)</>").unwrap());
+
+static RE_MORALE_INCREASE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"Morale consumed per hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap());
+
+static RE_MORALE_DECREASE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"Morale consumed per hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap());
 
 pub enum BuffResolutionStrategy {
     /// Efficiency field is the bonus %. Value = efficiency as f64.
@@ -85,8 +126,15 @@ pub enum BuffResolutionStrategy {
     MoraleDecayEfficiency { time_averaged_value: f64 },
 }
 
-pub fn build_registry(buffs: &HashMap<String, Buff>) -> HashMap<String, BuffResolutionStrategy> {
+pub fn build_registry(
+    buffs: &HashMap<String, Buff>,
+) -> (
+    HashMap<String, BuffResolutionStrategy>,
+    HashMap<String, f64>, // buff_id -> morale drain modifier
+) {
     let mut registry: HashMap<String, BuffResolutionStrategy> = HashMap::new();
+    let mut morale_drains = HashMap::new();
+
     for (buff_id, buff) in buffs {
         let prefix = buff_id.split("[").next().unwrap_or(buff_id);
         // "manu_prod_spd&power[000]" → "manu_prod_spd&power"
@@ -333,68 +381,74 @@ pub fn build_registry(buffs: &HashMap<String, Buff>) -> HashMap<String, BuffReso
             _ => BuffResolutionStrategy::CapacityOnly,
         };
 
+        let mut drain = 0.0;
+        if let Some(val) = parse_morale_drain_increase(&buff.description) {
+            drain += val;
+        }
+        if let Some(val) = parse_morale_drain_decrease(&buff.description) {
+            drain -= val;
+        }
+
+        if drain != 0.0 {
+            morale_drains.insert(buff_id.clone(), drain);
+        }
+
         registry.insert(buff_id.clone(), strategy);
     }
 
-    registry
+    (registry, morale_drains)
 }
 
 /// Extract first percentage like "+25%" from description markup
 fn parse_first_pct(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
 /// Extract first float like "+0.7" from description markup (for morale values)
 fn parse_first_float(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>\+?([\d.]+)</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_FIRST_FLOAT
+        .captures(desc)
+        .and_then(|c| c[1].parse().ok())
 }
 
 /// Extract tag keyword like "Knight" from <@cc.kw>Knight</>
 fn parse_tag_keyword(desc: &str) -> Option<String> {
-    let re = Regex::new(r"<@cc\.kw>(\w+)</>").unwrap();
-    re.captures(desc).map(|c| c[1].to_lowercase())
+    RE_TAG_KEYWORD.captures(desc).map(|c| c[1].to_lowercase())
 }
 
 /// Extract the last percentage in description (for cap values)
 fn parse_last_pct(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap();
-    re.find_iter(desc).last().and_then(|m| {
-        let inner = Regex::new(r"([\d.]+)%").unwrap();
-        inner.captures(m.as_str()).and_then(|c| c[1].parse().ok())
+    RE_LAST_PCT.find_iter(desc).last().and_then(|m| {
+        RE_LAST_PCT_INNER
+            .captures(m.as_str())
+            .and_then(|c| c[1].parse().ok())
     })
 }
 
 /// Parse number from <@cc.kw>4</> pattern
 fn parse_kw_number(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.kw>(\d+)</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_KW_NUMBER.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
 /// Parse first negative percentage from <@cc.vdown>-5%</> or <@cc.vdown>+0.25</>
 fn parse_first_vdown_pct(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vdown>[+-]?([\d.]+)%?</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_VDOWN_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
 /// Parse "per hour" percentage: "+2% per hour" or "+1% per hour"
 fn parse_per_hour_pct(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>\+?([\d.]+)%?</>\s*per hour").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_PER_HOUR_PCT
+        .captures(desc)
+        .and_then(|c| c[1].parse().ok())
 }
 
 /// Parse order limit from description.
 /// Matches "+4" from <@cc.vup>+4</> or "-6" from <@cc.vdown>-6</>
 fn parse_order_limit(desc: &str) -> Option<i32> {
-    // Try positive first: "order limit <@cc.vup>+4</>"
-    let re_pos = Regex::new(r"order limit\s*<@cc\.vup>\+?(\d+)</>").unwrap();
-    if let Some(cap) = re_pos.captures(desc) {
+    if let Some(cap) = RE_ORDER_LIMIT_POS.captures(desc) {
         return cap[1].parse::<i32>().ok();
     }
-    // Try negative: "order limit <@cc.vdown>-6</>"
-    let re_neg = Regex::new(r"order limit\s*<@cc\.vdown>-?(\d+)</>").unwrap();
-    if let Some(cap) = re_neg.captures(desc) {
+    if let Some(cap) = RE_ORDER_LIMIT_NEG.captures(desc) {
         return cap[1].parse::<i32>().ok().map(|v| -v);
     }
     None
@@ -403,27 +457,28 @@ fn parse_order_limit(desc: &str) -> Option<i32> {
 /// Parse the Nth <@cc.vup> percentage (0-indexed).
 /// Useful when a description has multiple percentage values.
 fn parse_nth_pct(desc: &str, n: usize) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap();
-    re.find_iter(desc).nth(n).and_then(|m| {
-        let inner = Regex::new(r"([\d.]+)%").unwrap();
-        inner.captures(m.as_str()).and_then(|c| c[1].parse().ok())
+    RE_NTH_PCT.find_iter(desc).nth(n).and_then(|m| {
+        RE_LAST_PCT_INNER
+            .captures(m.as_str())
+            .and_then(|c| c[1].parse().ok())
     })
 }
 
 /// Parse a plain number from <@cc.vup>5</> (no % sign)
 fn parse_first_vup_number(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"<@cc\.vup>(\d+)</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_VUP_NUMBER.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
 /// Parse increased morale drain: "Morale consumed per hour <@cc.vdown>+0.25</>"
 pub fn parse_morale_drain_increase(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"Morale consumed per hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_MORALE_INCREASE
+        .captures(desc)
+        .and_then(|c| c[1].parse().ok())
 }
 
 /// Parse decreased morale drain: "Morale consumed per hour <@cc.vup>-?([\d.]+)</>"
 pub fn parse_morale_drain_decrease(desc: &str) -> Option<f64> {
-    let re = Regex::new(r"Morale consumed per hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap();
-    re.captures(desc).and_then(|c| c[1].parse().ok())
+    RE_MORALE_DECREASE
+        .captures(desc)
+        .and_then(|c| c[1].parse().ok())
 }

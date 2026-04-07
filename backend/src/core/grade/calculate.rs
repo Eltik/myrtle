@@ -27,9 +27,7 @@ pub async fn calculate_user_grade(
     let building_json = building::get_building(pool, user_id).await?;
     let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
 
-    let mut scores: Vec<(f64, f64)> = vec![]; // (weight, value)
-    scores.push((1.0, operator_grade));
-    scores.push((0.5, base_grade));
+    let scores: Vec<(f64, f64)> = vec![(1.0, operator_grade), (0.5, base_grade)];
     // Future:
     // scores.push((0.4, stage_grade));
     // scores.push((0.3, roguelike_grade));

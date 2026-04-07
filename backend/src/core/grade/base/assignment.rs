@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::core::{
     gamedata::types::building::BuildingDataFile,
     grade::base::{
-        buff_registry::{BuffResolutionStrategy, parse_morale_drain_decrease, parse_morale_drain_increase},
+        buff_registry::BuffResolutionStrategy,
         evaluate::evaluate_buff,
         types::{
             BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, ShiftAssignment,
@@ -17,6 +17,7 @@ pub fn compute_optimal_assignment(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
 ) -> BaseAssignment {
     let mut facility_counts: HashMap<String, usize> = HashMap::new();
     for room in &building.rooms {
@@ -48,6 +49,7 @@ pub fn compute_optimal_assignment(
         &facility_counts,
         total_dorm_levels,
         &global_bonuses,
+        morale_drains,
     );
 
     let total_production_efficiency = room_assignments.iter().map(|r| r.total_efficiency).sum();
@@ -63,6 +65,7 @@ pub fn compute_sustained_assignment(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
 ) -> ShiftAssignment {
     let mut facility_counts: HashMap<String, usize> = HashMap::new();
     for room in &building.rooms {
@@ -91,6 +94,7 @@ pub fn compute_sustained_assignment(
         &facility_counts,
         total_dorm_levels,
         &global_bonuses,
+        morale_drains,
     );
 
     // --- Shift B: best team from remaining operators ---
@@ -105,6 +109,7 @@ pub fn compute_sustained_assignment(
         &facility_counts,
         total_dorm_levels,
         &global_bonuses,
+        morale_drains,
     );
 
     let total_a: f64 = rooms_a.iter().map(|r| r.total_efficiency).sum();
@@ -213,17 +218,12 @@ fn assign_control_center(
             {
                 continue;
             }
-            if let Some(strategy) = registry.get(buff_id) {
-                match strategy {
-                    BuffResolutionStrategy::GlobalEffect {
-                        target_room,
-                        bonus_pct,
-                    } => {
-                        *global_bonuses.entry(target_room.clone()).or_insert(0.0) += bonus_pct;
-                    }
-                    // TODO: Skip TagBased for now — would need to know which ops end up in which rooms (chicken-and-egg)
-                    _ => {}
-                }
+            if let Some(BuffResolutionStrategy::GlobalEffect {
+                target_room,
+                bonus_pct,
+            }) = registry.get(buff_id)
+            {
+                *global_bonuses.entry(target_room.clone()).or_insert(0.0) += bonus_pct;
             }
         }
     }
@@ -231,6 +231,7 @@ fn assign_control_center(
     (cc_assigned, global_bonuses)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn assign_production_rooms(
     rooms: &[&UserRoom],
     operators: &[OperatorBaseProfile],
@@ -240,6 +241,7 @@ fn assign_production_rooms(
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
     global_bonuses: &HashMap<String, f64>,
+    morale_drains: &HashMap<String, f64>,
 ) -> Vec<RoomAssignment> {
     let factory_rooms: Vec<&&UserRoom> = rooms
         .iter()
@@ -275,6 +277,7 @@ fn assign_production_rooms(
                 facility_counts,
                 total_dorm_levels,
                 global_bonuses,
+                morale_drains,
             );
             trial_rooms.push(room_assignment);
         }
@@ -291,6 +294,7 @@ fn assign_production_rooms(
                 facility_counts,
                 total_dorm_levels,
                 global_bonuses,
+                morale_drains,
             );
             trial_rooms.push(room_assignment);
         }
@@ -308,6 +312,7 @@ fn assign_production_rooms(
     best_assignments
 }
 
+#[allow(clippy::too_many_arguments)]
 fn assign_single_room(
     room: &UserRoom,
     formula_type: Option<&str>,
@@ -318,6 +323,7 @@ fn assign_single_room(
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
     global_bonuses: &HashMap<String, f64>,
+    morale_drains: &HashMap<String, f64>,
 ) -> RoomAssignment {
     let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
     let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
@@ -334,6 +340,7 @@ fn assign_single_room(
         total_dorm_levels,
         max_slots,
         false,
+        morale_drains,
     );
     let normal_eff = normal.2 + global; // (ops, teammates, efficiency)
 
@@ -352,6 +359,7 @@ fn assign_single_room(
             total_dorm_levels,
             max_slots,
             true,
+            morale_drains,
         );
         auto_eff = auto_result.2 + global;
     } else {
@@ -385,6 +393,7 @@ fn assign_single_room(
 
 /// Fill a room greedily. Returns (operator_ids, teammate_infos, total_efficiency).
 /// If automation_only is true, only considers FacilityCountScaling buffs.
+#[allow(clippy::too_many_arguments)]
 fn greedy_fill_room(
     room: &UserRoom,
     formula_type: Option<&str>,
@@ -396,6 +405,7 @@ fn greedy_fill_room(
     total_dorm_levels: i32,
     max_slots: i32,
     automation_only: bool,
+    morale_drains: &HashMap<String, f64>,
 ) -> (Vec<String>, Vec<TeammateInfo>, f64) {
     let mut room_ops: Vec<String> = Vec::new();
     let mut room_teammates: Vec<TeammateInfo> = Vec::new();
@@ -446,6 +456,7 @@ fn greedy_fill_room(
                     building_data,
                     facility_counts,
                     total_dorm_levels,
+                    morale_drains,
                 )
             };
 
@@ -511,6 +522,7 @@ fn greedy_fill_room(
             building_data,
             facility_counts,
             total_dorm_levels,
+            morale_drains,
         )
     };
 
@@ -561,6 +573,7 @@ fn score_operator_facility_only(
 }
 
 /// Score how valuable an operator would be if added to a room with existing teammates.
+#[allow(clippy::too_many_arguments)]
 fn score_operator_in_room(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -570,6 +583,7 @@ fn score_operator_in_room(
     building_data: &BuildingDataFile,
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
+    morale_drains: &HashMap<String, f64>,
 ) -> f64 {
     let ctx = EvalContext {
         facility_counts,
@@ -599,7 +613,8 @@ fn score_operator_in_room(
     }
 
     // Apply morale drain penalty/bonus
-    let drain_mod = compute_morale_modifier(op, room_type, formula_type, building_data);
+    let drain_mod =
+        compute_morale_modifier(op, room_type, formula_type, building_data, morale_drains);
     let base_drain = 1.0; // 1.0 morale/hr base
     let effective_drain = (base_drain + drain_mod).max(0.1); // floor to prevent division by zero
     let shift_hours = 24.0 / effective_drain; // how long this op can work
@@ -680,6 +695,7 @@ fn compute_order_limit(
 }
 
 /// Re-evaluate total room efficiency with complete team context.
+#[allow(clippy::too_many_arguments)]
 fn compute_room_efficiency(
     room_ops: &[String],
     room_type: &str,
@@ -689,6 +705,7 @@ fn compute_room_efficiency(
     building_data: &BuildingDataFile,
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
+    morale_drains: &HashMap<String, f64>,
 ) -> f64 {
     // Build full TeammateInfo for everyone in the room
     let teammates: Vec<TeammateInfo> = room_ops
@@ -750,7 +767,8 @@ fn compute_room_efficiency(
             }
         }
 
-        let drain_mod = compute_morale_modifier(op, room_type, formula_type, building_data);
+        let drain_mod =
+            compute_morale_modifier(op, room_type, formula_type, building_data, morale_drains);
         let effective_drain = (1.0 + drain_mod).max(0.1);
         let duration_ratio = (24.0 / effective_drain / 24.0).min(2.0);
         op_total *= duration_ratio;
@@ -769,24 +787,22 @@ fn compute_morale_modifier(
     room_type: &str,
     formula_type: Option<&str>,
     building_data: &BuildingDataFile,
+    morale_drains: &HashMap<String, f64>,
 ) -> f64 {
     let mut modifier = 0.0;
     for buff_id in &op.available_buffs {
         if let Some(buff) = building_data.buffs.get(buff_id) {
-            if buff.room_type != room_type { continue; }
-            if let Some(formula) = formula_type {
-                if !buff.targets.is_empty()
-                    && !buff.targets.iter().any(|t| t == formula)
-                { continue; }
+            if buff.room_type != room_type {
+                continue;
             }
-            // Parse morale drain from description
-            // Increased drain: "Morale consumed per hour <@cc.vdown>+0.25</>"
-            if let Some(val) = parse_morale_drain_increase(&buff.description) {
-                modifier += val; // positive = drains faster
+            if let Some(formula) = formula_type
+                && !buff.targets.is_empty()
+                && !buff.targets.iter().any(|t| t == formula)
+            {
+                continue;
             }
-            // Decreased drain: "Morale consumed per hour <@cc.vup>-0.25</>"
-            if let Some(val) = parse_morale_drain_decrease(&buff.description) {
-                modifier -= val; // subtract = drains slower
+            if let Some(drain) = morale_drains.get(buff_id) {
+                modifier += drain;
             }
         }
     }

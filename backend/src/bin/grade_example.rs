@@ -98,7 +98,7 @@ async fn main() {
 
     // Build profiles and registry
     let profiles = build_profiles(&user_roster, &game_data);
-    let registry = build_registry(&game_data.building.buffs);
+    let (registry, morale_drains) = build_registry(&game_data.building.buffs);
     println!("{} operators with base skills", profiles.len());
     println!("{} buffs classified", registry.len());
 
@@ -139,8 +139,13 @@ async fn main() {
 
     // Run optimal assignment
     println!("\n=== OPTIMAL ASSIGNMENT ===");
-    let assignment =
-        compute_optimal_assignment(&profiles, &user_building, &game_data.building, &registry);
+    let assignment = compute_optimal_assignment(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+        &morale_drains,
+    );
 
     for room in &assignment.rooms {
         let ops: Vec<String> = room
@@ -187,8 +192,13 @@ async fn main() {
 
     // Run sustained assignment
     println!("\n=== OPTIMAL ASSIGNMENT (SHIFT A) ===");
-    let sustained =
-        compute_sustained_assignment(&profiles, &user_building, &game_data.building, &registry);
+    let sustained = compute_sustained_assignment(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+        &morale_drains,
+    );
 
     for room in &sustained.shift_a.rooms {
         let ops: Vec<String> = room
