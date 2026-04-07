@@ -332,6 +332,16 @@ jobs:
             exit 1
           fi
 
+      - name: Upload game data for backend CI
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
+        uses: actions/upload-artifact@v5
+        with:
+          name: game-data
+          path: |
+            assets/output/gamedata/
+          retention-days: 7
+          if-no-files-found: warn
+
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status
   # ──────────────────────────────────────────────────────────────────────────────
