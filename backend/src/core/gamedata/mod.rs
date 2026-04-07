@@ -107,6 +107,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             materials: &materials,
             assets: &assets,
             drones: &drones,
+            building: &building_file,
         },
     );
 

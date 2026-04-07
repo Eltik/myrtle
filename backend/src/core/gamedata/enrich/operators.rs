@@ -4,11 +4,13 @@ use std::collections::HashMap;
 use crate::core::gamedata::{
     assets::AssetIndex,
     types::{
+        building::BuildingDataFile,
         handbook::Handbook,
         material::Materials,
         module::{BattleEquip, RawModules},
         operator::{
-            AllSkillLevelUp, Drone, EvolveCost, LevelUpCostItem, Operator, Phase, RawOperator,
+            AllSkillLevelUp, Drone, EvolveCost, LevelUpCostItem, Operator, OperatorBaseSkill,
+            Phase, RawOperator,
         },
         skill::Skill,
         skin::SkinData,
@@ -30,6 +32,7 @@ pub struct EnrichCtx<'a> {
     pub materials: &'a Materials,
     pub assets: &'a AssetIndex,
     pub drones: &'a HashMap<String, Drone>,
+    pub building: &'a BuildingDataFile,
 }
 
 pub fn enrich_all_operators(
@@ -106,6 +109,8 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
     let portrait = ctx.assets.portrait_path(id).map(str::to_owned);
     let skin = ctx.assets.charart_path(id);
 
+    let base_skills = get_operator_base_skills(id, ctx.building);
+
     Operator {
         id: Some(id.to_owned()),
         name: raw.name.clone(),
@@ -144,6 +149,7 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         handbook: handbook_item,
         profile,
         artists,
+        base_skills,
         portrait,
         skin,
     }
@@ -239,4 +245,29 @@ fn enrich_all_skill_level_up(all: &[AllSkillLevelUp], ctx: &EnrichCtx) -> Vec<Al
                 .collect(),
         })
         .collect()
+}
+
+fn get_operator_base_skills(char_id: &str, building: &BuildingDataFile) -> Vec<OperatorBaseSkill> {
+    let Some(building_char) = building.chars.get(char_id) else {
+        return Vec::new();
+    };
+
+    let mut skills = Vec::new();
+    for slot in &building_char.buff_char {
+        for entry in &slot.buff_data {
+            if let Some(buff) = building.buffs.get(&entry.buff_id) {
+                skills.push(OperatorBaseSkill {
+                    buff_id: entry.buff_id.clone(),
+                    buff_name: buff.buff_name.clone(),
+                    description: buff.description.clone(),
+                    room_type: buff.room_type.clone(),
+                    efficiency: buff.efficiency,
+                    targets: buff.targets.clone(),
+                    unlock_elite: entry.cond.elite(),
+                    unlock_level: entry.cond.level,
+                });
+            }
+        }
+    }
+    skills
 }

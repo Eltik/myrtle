@@ -468,6 +468,7 @@ pub struct Operator {
     pub handbook: HandbookItem,
     pub profile: Option<OperatorProfile>,
     pub artists: Vec<String>,
+    pub base_skills: Vec<OperatorBaseSkill>,
     /// Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png
     pub portrait: Option<String>,
     /// Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png
@@ -530,6 +531,21 @@ pub struct SkillLevelCost {
 }
 
 pub type SkillLevelUpCost = Vec<SkillLevelCost>;
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorBaseSkill {
+    pub buff_id: String,
+    pub buff_name: String,
+    pub description: String,
+    pub room_type: String,
+    pub efficiency: i32,
+    pub targets: Vec<String>,
+    /// Elite phase required to unlock (0, 1, or 2)
+    pub unlock_elite: i32,
+    /// Level required to unlock
+    pub unlock_level: i32,
+}
 
 // ============================================================================
 // Drone Type
