@@ -415,3 +415,15 @@ fn parse_first_vup_number(desc: &str) -> Option<f64> {
     let re = Regex::new(r"<@cc\.vup>(\d+)</>").unwrap();
     re.captures(desc).and_then(|c| c[1].parse().ok())
 }
+
+/// Parse increased morale drain: "Morale consumed per hour <@cc.vdown>+0.25</>"
+pub fn parse_morale_drain_increase(desc: &str) -> Option<f64> {
+    let re = Regex::new(r"Morale consumed per hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap();
+    re.captures(desc).and_then(|c| c[1].parse().ok())
+}
+
+/// Parse decreased morale drain: "Morale consumed per hour <@cc.vup>-?([\d.]+)</>"
+pub fn parse_morale_drain_decrease(desc: &str) -> Option<f64> {
+    let re = Regex::new(r"Morale consumed per hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap();
+    re.captures(desc).and_then(|c| c[1].parse().ok())
+}

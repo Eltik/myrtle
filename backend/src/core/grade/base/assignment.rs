@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::core::{
     gamedata::types::building::BuildingDataFile,
     grade::base::{
-        buff_registry::BuffResolutionStrategy,
+        buff_registry::{BuffResolutionStrategy, parse_morale_drain_decrease, parse_morale_drain_increase},
         evaluate::evaluate_buff,
         types::{
             BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, ShiftAssignment,
@@ -597,7 +597,16 @@ fn score_operator_in_room(
             total += evaluate_buff(strategy, &ctx);
         }
     }
-    total
+
+    // Apply morale drain penalty/bonus
+    let drain_mod = compute_morale_modifier(op, room_type, formula_type, building_data);
+    let base_drain = 1.0; // 1.0 morale/hr base
+    let effective_drain = (base_drain + drain_mod).max(0.1); // floor to prevent division by zero
+    let shift_hours = 24.0 / effective_drain; // how long this op can work
+    let normal_shift = 24.0; // base shift duration with no modifier
+    let duration_ratio = (shift_hours / normal_shift).min(2.0); // cap at 2x to prevent runaway
+
+    total * duration_ratio
 }
 
 /// Compute only the DirectEfficiency sum for an operator in a room type.
@@ -721,6 +730,7 @@ fn compute_room_efficiency(
             room_teammates: others,
         };
 
+        let mut op_total = 0.0;
         for buff_id in &op.available_buffs {
             if let Some(buff) = building_data.buffs.get(buff_id) {
                 if buff.room_type != room_type {
@@ -736,10 +746,49 @@ fn compute_room_efficiency(
                 continue;
             }
             if let Some(strategy) = registry.get(buff_id) {
-                total += evaluate_buff(strategy, &ctx);
+                op_total += evaluate_buff(strategy, &ctx);
             }
         }
+
+        let drain_mod = compute_morale_modifier(op, room_type, formula_type, building_data);
+        let effective_drain = (1.0 + drain_mod).max(0.1);
+        let duration_ratio = (24.0 / effective_drain / 24.0).min(2.0);
+        op_total *= duration_ratio;
+
+        total += op_total;
     }
 
     total
+}
+
+/// Compute the morale drain modifier for an operator's buffs in a room.
+/// Returns the delta from base drain (positive = drains faster, negative = drains slower).
+/// Base drain is 1.0/hr for all operators.
+fn compute_morale_modifier(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    formula_type: Option<&str>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    let mut modifier = 0.0;
+    for buff_id in &op.available_buffs {
+        if let Some(buff) = building_data.buffs.get(buff_id) {
+            if buff.room_type != room_type { continue; }
+            if let Some(formula) = formula_type {
+                if !buff.targets.is_empty()
+                    && !buff.targets.iter().any(|t| t == formula)
+                { continue; }
+            }
+            // Parse morale drain from description
+            // Increased drain: "Morale consumed per hour <@cc.vdown>+0.25</>"
+            if let Some(val) = parse_morale_drain_increase(&buff.description) {
+                modifier += val; // positive = drains faster
+            }
+            // Decreased drain: "Morale consumed per hour <@cc.vup>-0.25</>"
+            if let Some(val) = parse_morale_drain_decrease(&buff.description) {
+                modifier -= val; // subtract = drains slower
+            }
+        }
+    }
+    modifier
 }
