@@ -63,5 +63,6 @@ async fn main() {
     tracing::info!(grade.overall);
     tracing::info!(grade.operator_grade);
     tracing::info!(grade.base_grade);
+    tracing::info!(grade.roguelike_grade);
     tracing::info!(grade.total_score);
 }

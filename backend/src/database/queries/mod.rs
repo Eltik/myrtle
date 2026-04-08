@@ -2,6 +2,7 @@ pub mod building;
 pub mod gacha;
 pub mod items;
 pub mod operator_notes;
+pub mod roguelike;
 pub mod roster;
 pub mod score;
 pub mod tier_lists;

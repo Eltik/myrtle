@@ -4,14 +4,18 @@ use uuid::Uuid;
 use crate::{
     core::{
         gamedata::types::GameData,
-        grade::{base::score::grade_base, grade_operators::grade_operators},
+        grade::{
+            base::score::grade_base, grade_operators::grade_operators,
+            grade_roguelike::grade_roguelike,
+        },
     },
-    database::queries::{building, roster},
+    database::queries::{building, roguelike, roster},
 };
 
 pub struct UserGrade {
     pub operator_grade: f64,
     pub base_grade: f64,
+    pub roguelike_grade: f64,
     pub overall: String,
     pub total_score: f64,
 }
@@ -27,10 +31,16 @@ pub async fn calculate_user_grade(
     let building_json = building::get_building(pool, user_id).await?;
     let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
 
-    let scores: Vec<(f64, f64)> = vec![(1.0, operator_grade), (0.5, base_grade)];
+    let roguelike_data = roguelike::get_roguelike_progress(pool, user_id).await?;
+    let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
+
+    let scores: Vec<(f64, f64)> = vec![
+        (1.0, operator_grade),
+        (0.5, base_grade),
+        (0.3, roguelike_grade),
+    ];
     // Future:
     // scores.push((0.4, stage_grade));
-    // scores.push((0.3, roguelike_grade));
     // scores.push((0.2, medal_grade));
     // scores.push((0.1, skin_grade));
 
@@ -41,6 +51,7 @@ pub async fn calculate_user_grade(
     Ok(UserGrade {
         operator_grade,
         base_grade,
+        roguelike_grade,
         overall,
         total_score,
     })
