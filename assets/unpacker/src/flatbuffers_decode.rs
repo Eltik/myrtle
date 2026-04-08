@@ -155,7 +155,7 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "ep_breakbuff_table" | "battle_equip_table" | "character_table" | "token_table"
+        "token_table" | "ep_breakbuff_table" | "character_table" | "battle_equip_table"
     )
 }
 
@@ -166,17 +166,17 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::*;
+                let root = unsafe {
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                };
+                Ok(root.to_json())
+            }
             "ep_breakbuff_table" => {
                 use crate::generated_fbs_yostar::ep_breakbuff_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_epbreak_buff_data_unchecked(data)
-                };
-                Ok(root.to_json())
-            }
-            "battle_equip_table" => {
-                use crate::generated_fbs_yostar::battle_equip_table_generated::*;
-                let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
                 };
                 Ok(root.to_json())
             }
@@ -187,10 +187,10 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 };
                 Ok(root.to_json())
             }
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::*;
+            "battle_equip_table" => {
+                use crate::generated_fbs_yostar::battle_equip_table_generated::*;
                 let root = unsafe {
-                    root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
+                    root_as_clz_torappu_simple_kvtable_clz_torappu_battle_equip_pack_unchecked(data)
                 };
                 Ok(root.to_json())
             }

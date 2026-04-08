@@ -504,9 +504,32 @@ async function runSetup() {
 		ccFound = !!xcodeOut;
 		ccVersion = xcodeOut ? `Xcode CLT: ${xcodeOut}` : null;
 	} else if (isWindows) {
-		const clOut = tryExec("where", ["cl"]);
-		ccFound = !!clOut;
-		ccVersion = clOut ? clOut.split("\n")[0] : null;
+		// Check which Rust toolchain is active (gnu vs msvc)
+		const rustcHost = tryExec("rustc", ["-vV"]);
+		const isMsvcToolchain = rustcHost?.includes("x86_64-pc-windows-msvc");
+
+		if (isMsvcToolchain) {
+			// For MSVC toolchain, check if cl.exe exists (even if not in PATH)
+			// Try common MSVC installation paths
+			const clOut = tryExec("where", ["cl"]);
+			if (clOut) {
+				ccFound = true;
+				ccVersion = clOut.split("\n")[0];
+			} else {
+				// Check if MSVC is installed even if not in PATH
+				const vswhereOut = tryExec("C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+					["-latest", "-requires", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"]);
+				if (vswhereOut) {
+					ccFound = true;
+					ccVersion = "MSVC (found via vswhere, not in PATH)";
+				}
+			}
+		} else {
+			// For GNU toolchain, check for gcc
+			const gccOut = tryExec("gcc", ["--version"]);
+			ccFound = !!gccOut;
+			ccVersion = gccOut ? gccOut.split("\n")[0] : null;
+		}
 	} else {
 		const gccOut = tryExec("gcc", ["--version"]);
 		ccFound = !!gccOut;
