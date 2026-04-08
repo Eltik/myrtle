@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use serde::Deserialize;
 
 use crate::core::gamedata::types::roguelike::{RoguelikeGameData, RoguelikeThemeGameData};
@@ -26,40 +28,61 @@ type Dimension = (f64, f64);
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 struct ThemeProgress {
-    /// Which ending IDs the user has unlocked
     #[serde(default)]
-    ending: Option<serde_json::Value>,
-
-    /// Relic IDs the user has seen/collected
+    record: Option<Record>,
     #[serde(default)]
-    relic: Option<serde_json::Value>,
-
-    /// Capsule pool unlocks (rogue_1 only)
+    collect: Option<Collect>,
     #[serde(default)]
-    capsule: Option<serde_json::Value>,
-
-    /// Band/token unlocks
+    challenge: Option<Challenge>,
     #[serde(default)]
-    band: Option<serde_json::Value>,
-
-    /// Challenge completions
-    #[serde(default)]
-    challenge: Option<serde_json::Value>,
-
-    /// Current BP level
-    #[serde(default)]
-    bp: Option<BpProgress>,
-
-    /// Highest difficulty grade cleared
-    #[serde(default)]
-    difficulty: Option<serde_json::Value>,
+    bp: Option<Bp>,
 }
 
+/// progress.record
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct BpProgress {
+struct Record {
+    /// {MODE: {ending_id: count}} - ex. {"NORMAL": {"ro_ending_1": 11}}
     #[serde(default)]
-    level: i32,
+    ending_cnt: Option<HashMap<String, HashMap<String, serde_json::Value>>>,
+}
+
+/// progress.collect
+#[derive(Debug, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct Collect {
+    /// {relic_id: {state: 0/1/2/, progress: ...}}
+    #[serde(default)]
+    relic: Option<HashMap<String, CollectEntry>>,
+    #[serde(default)]
+    capsule: Option<HashMap<String, CollectEntry>>,
+    #[serde(default)]
+    band: Option<HashMap<String, CollectEntry>>,
+    /// {MODE: {grade_str: {state: 0/2, progress: ...}}}
+    #[serde(default)]
+    mode_grade: Option<HashMap<String, HashMap<String, CollectEntry>>>,
+}
+
+#[derive(Debug, Deserialize, Default, Clone)]
+struct CollectEntry {
+    #[serde(default)]
+    state: i32,
+}
+
+/// progress.challenge
+#[derive(Debug, Deserialize, Default)]
+struct Challenge {
+    /// {challenge_id: grade_value}
+    #[serde(default)]
+    grade: Option<HashMap<String, serde_json::Value>>,
+}
+
+/// progress.bp
+#[derive(Debug, Deserialize, Default)]
+struct Bp {
+    /// {bp_level_N: 1} — count of keys = BP level reached
+    #[serde(default)]
+    reward: Option<HashMap<String, serde_json::Value>>,
 }
 
 /// Grades a user's roguelike progress across all themes.
@@ -102,7 +125,20 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
 
     // 1. Endings (30%)
     if theme.max_endings > 0 {
-        let count = count_object_keys(&progress.ending);
+        let count = progress
+            .record
+            .as_ref()
+            .and_then(|r| r.ending_cnt.as_ref())
+            .map(|ec| {
+                let mut ids = HashSet::new();
+                for mode_endings in ec.values() {
+                    for ending_id in mode_endings.keys() {
+                        ids.insert(ending_id.as_str());
+                    }
+                }
+                ids.len()
+            })
+            .unwrap_or(0);
         let score = (count as f64 / theme.max_endings as f64).min(1.0);
         dimensions.push((WEIGHT_ENDINGS, score));
     }
@@ -114,13 +150,19 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
     }
 
     // 3. Collectibles (20%) - relics + capsules + bands
+    //    Cap per-category: user data includes non-catalog items (event relics, etc.)
+    //    that exceed archiveComp max. Cap each so overflow in one category
+    //    doesn't compensate for missing items in another.
     let max_collectibles = theme.max_relics + theme.max_capsules + theme.max_bands;
     if max_collectibles > 0 {
-        let relics = count_object_keys(&progress.relic);
-        let capsules = count_object_keys(&progress.capsule);
-        let bands = count_object_keys(&progress.band);
+        let relics = count_unlocked(&progress.collect.as_ref().and_then(|c| c.relic.clone()))
+            .min(theme.max_relics as usize);
+        let capsules = count_unlocked(&progress.collect.as_ref().and_then(|c| c.capsule.clone()))
+            .min(theme.max_capsules as usize);
+        let bands = count_unlocked(&progress.collect.as_ref().and_then(|c| c.band.clone()))
+            .min(theme.max_bands as usize);
         let total = relics + capsules + bands;
-        let score = (total as f64 / max_collectibles as f64).min(1.0);
+        let score = total as f64 / max_collectibles as f64;
 
         let weight = if theme.max_challenges == 0 {
             WEIGHT_COLLECTIBLES + WEIGHT_CHALLENGES
@@ -132,7 +174,12 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
 
     // 4. BP Progress (15%)
     if theme.max_bp_levels > 0 {
-        let bp_level = progress.bp.as_ref().map_or(0, |bp| bp.level);
+        let bp_level = progress
+            .bp
+            .as_ref()
+            .and_then(|bp| bp.reward.as_ref())
+            .map(|r| r.len() as i32)
+            .unwrap_or(0);
         let raw = (bp_level as f64 / theme.max_bp_levels as f64).min(1.0);
         let score = log_curve_ratio(raw);
         dimensions.push((WEIGHT_BP, score));
@@ -140,7 +187,12 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
 
     // 5. Challenges (10%) - skip if theme has none (e.g. rogue_5)
     if theme.max_challenges > 0 {
-        let count = count_object_keys(&progress.challenge);
+        let count = progress
+            .challenge
+            .as_ref()
+            .and_then(|c| c.grade.as_ref())
+            .map(|g| g.len())
+            .unwrap_or(0);
         let score = (count as f64 / theme.max_challenges as f64).min(1.0);
         dimensions.push((WEIGHT_CHALLENGES, score));
     }
@@ -160,7 +212,20 @@ fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGa
         return 0.0;
     }
 
-    let highest = extract_highest_difficulty(progress);
+    let highest = progress
+        .collect
+        .as_ref()
+        .and_then(|c| c.mode_grade.as_ref())
+        .and_then(|mg| mg.get("NORMAL"))
+        .map(|normal| {
+            normal
+                .iter()
+                .filter(|(_, entry)| entry.state >= 2)
+                .filter_map(|(grade_str, _)| grade_str.parse::<i32>().ok())
+                .max()
+                .unwrap_or(-1)
+        })
+        .unwrap_or(-1);
 
     if highest <= 0 {
         return 0.0;
@@ -175,24 +240,11 @@ fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGa
     }
 }
 
-fn extract_highest_difficulty(progress: &ThemeProgress) -> i32 {
-    // TODO: Replace with actual logic, need to view game data
-    let Some(diff) = &progress.difficulty else {
-        return 0;
-    };
-
-    if let Some(obj) = diff.as_object() {
-        // Try to find a "grade" or max key
-        obj.values().filter_map(|v| v.as_i64()).max().unwrap_or(0) as i32
-    } else {
-        0
-    }
-}
-
-fn count_object_keys(val: &Option<serde_json::Value>) -> usize {
-    val.as_ref()
-        .and_then(|v| v.as_object())
-        .map_or(0, |obj| obj.len())
+fn count_unlocked(items: &Option<HashMap<String, CollectEntry>>) -> usize {
+    items
+        .as_ref()
+        .map(|m| m.values().filter(|e| e.state >= 1).count())
+        .unwrap_or(0)
 }
 
 fn log_curve_ratio(t: f64) -> f64 {
