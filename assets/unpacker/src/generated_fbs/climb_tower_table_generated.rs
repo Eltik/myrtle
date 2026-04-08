@@ -10431,6 +10431,7 @@ impl<'a> clz_Torappu_ClimbTowerDetailConst<'a> {
     pub const VT_SWEEPOPENDIFFICULTLAYER: flatbuffers::VOffsetT = 36;
     pub const VT_SWEEPCOSTCOUNT: flatbuffers::VOffsetT = 38;
     pub const VT_SQUADMEMSTARTTIME: flatbuffers::VOffsetT = 40;
+    pub const VT_RECORDNORESETSTARTTIME: flatbuffers::VOffsetT = 42;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -10442,6 +10443,7 @@ impl<'a> clz_Torappu_ClimbTowerDetailConst<'a> {
         args: &'args clz_Torappu_ClimbTowerDetailConstArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_ClimbTowerDetailConst<'bldr>> {
         let mut builder = clz_Torappu_ClimbTowerDetailConstBuilder::new(_fbb);
+        builder.add_recordNoResetStartTime(args.recordNoResetStartTime);
         builder.add_squadMemStartTime(args.squadMemStartTime);
         builder.add_sweepStartTime(args.sweepStartTime);
         builder.add_sweepCostCount(args.sweepCostCount);
@@ -10496,6 +10498,7 @@ impl<'a> clz_Torappu_ClimbTowerDetailConst<'a> {
         let sweepOpenDifficultLayer = self.sweepOpenDifficultLayer();
         let sweepCostCount = self.sweepCostCount();
         let squadMemStartTime = self.squadMemStartTime();
+        let recordNoResetStartTime = self.recordNoResetStartTime();
         clz_Torappu_ClimbTowerDetailConstT {
             unlockLevelId,
             unlockModuleNumRequirement,
@@ -10516,6 +10519,7 @@ impl<'a> clz_Torappu_ClimbTowerDetailConst<'a> {
             sweepOpenDifficultLayer,
             sweepCostCount,
             squadMemStartTime,
+            recordNoResetStartTime,
         }
     }
 
@@ -10770,6 +10774,20 @@ impl<'a> clz_Torappu_ClimbTowerDetailConst<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn recordNoResetStartTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_ClimbTowerDetailConst::VT_RECORDNORESETSTARTTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_ClimbTowerDetailConst<'_> {
@@ -10839,6 +10857,11 @@ impl flatbuffers::Verifiable for clz_Torappu_ClimbTowerDetailConst<'_> {
             )?
             .visit_field::<i32>("sweepCostCount", Self::VT_SWEEPCOSTCOUNT, false)?
             .visit_field::<i64>("squadMemStartTime", Self::VT_SQUADMEMSTARTTIME, false)?
+            .visit_field::<i64>(
+                "recordNoResetStartTime",
+                Self::VT_RECORDNORESETSTARTTIME,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -10863,6 +10886,7 @@ pub struct clz_Torappu_ClimbTowerDetailConstArgs<'a> {
     pub sweepOpenDifficultLayer: i32,
     pub sweepCostCount: i32,
     pub squadMemStartTime: i64,
+    pub recordNoResetStartTime: i64,
 }
 impl<'a> Default for clz_Torappu_ClimbTowerDetailConstArgs<'a> {
     #[inline]
@@ -10887,6 +10911,7 @@ impl<'a> Default for clz_Torappu_ClimbTowerDetailConstArgs<'a> {
             sweepOpenDifficultLayer: 0,
             sweepCostCount: 0,
             squadMemStartTime: 0,
+            recordNoResetStartTime: 0,
         }
     }
 }
@@ -11048,6 +11073,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_recordNoResetStartTime(&mut self, recordNoResetStartTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_ClimbTowerDetailConst::VT_RECORDNORESETSTARTTIME,
+            recordNoResetStartTime,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_ClimbTowerDetailConstBuilder<'a, 'b, A> {
@@ -11089,6 +11122,7 @@ impl core::fmt::Debug for clz_Torappu_ClimbTowerDetailConst<'_> {
         ds.field("sweepOpenDifficultLayer", &self.sweepOpenDifficultLayer());
         ds.field("sweepCostCount", &self.sweepCostCount());
         ds.field("squadMemStartTime", &self.squadMemStartTime());
+        ds.field("recordNoResetStartTime", &self.recordNoResetStartTime());
         ds.finish()
     }
 }
@@ -11114,6 +11148,7 @@ pub struct clz_Torappu_ClimbTowerDetailConstT {
     pub sweepOpenDifficultLayer: i32,
     pub sweepCostCount: i32,
     pub squadMemStartTime: i64,
+    pub recordNoResetStartTime: i64,
 }
 impl Default for clz_Torappu_ClimbTowerDetailConstT {
     fn default() -> Self {
@@ -11137,6 +11172,7 @@ impl Default for clz_Torappu_ClimbTowerDetailConstT {
             sweepOpenDifficultLayer: 0,
             sweepCostCount: 0,
             squadMemStartTime: 0,
+            recordNoResetStartTime: 0,
         }
     }
 }
@@ -11173,6 +11209,7 @@ impl clz_Torappu_ClimbTowerDetailConstT {
         let sweepOpenDifficultLayer = self.sweepOpenDifficultLayer;
         let sweepCostCount = self.sweepCostCount;
         let squadMemStartTime = self.squadMemStartTime;
+        let recordNoResetStartTime = self.recordNoResetStartTime;
         clz_Torappu_ClimbTowerDetailConst::create(
             _fbb,
             &clz_Torappu_ClimbTowerDetailConstArgs {
@@ -11195,6 +11232,7 @@ impl clz_Torappu_ClimbTowerDetailConstT {
                 sweepOpenDifficultLayer,
                 sweepCostCount,
                 squadMemStartTime,
+                recordNoResetStartTime,
             },
         )
     }

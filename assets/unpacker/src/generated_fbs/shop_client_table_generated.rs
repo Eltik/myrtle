@@ -481,18 +481,20 @@ pub const ENUM_MIN_ENUM__TORAPPU_SHOP_COND_TRIG_PACKAGE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_SHOP_COND_TRIG_PACKAGE_TYPE: i32 = 3;
+pub const ENUM_MAX_ENUM__TORAPPU_SHOP_COND_TRIG_PACKAGE_TYPE: i32 = 5;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_SHOP_COND_TRIG_PACKAGE_TYPE:
-    [enum__Torappu_ShopCondTrigPackageType; 4] = [
+    [enum__Torappu_ShopCondTrigPackageType; 6] = [
     enum__Torappu_ShopCondTrigPackageType::NONE,
     enum__Torappu_ShopCondTrigPackageType::RETURN_PROGRESS,
     enum__Torappu_ShopCondTrigPackageType::RETURN_ONCE,
     enum__Torappu_ShopCondTrigPackageType::NEW_PROGRESS,
+    enum__Torappu_ShopCondTrigPackageType::CHOOSE_REGISTER_TIME,
+    enum__Torappu_ShopCondTrigPackageType::CHOOSE_NEWBIE,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -504,14 +506,18 @@ impl enum__Torappu_ShopCondTrigPackageType {
     pub const RETURN_PROGRESS: Self = Self(1);
     pub const RETURN_ONCE: Self = Self(2);
     pub const NEW_PROGRESS: Self = Self(3);
+    pub const CHOOSE_REGISTER_TIME: Self = Self(4);
+    pub const CHOOSE_NEWBIE: Self = Self(5);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_MAX: i32 = 5;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::RETURN_PROGRESS,
         Self::RETURN_ONCE,
         Self::NEW_PROGRESS,
+        Self::CHOOSE_REGISTER_TIME,
+        Self::CHOOSE_NEWBIE,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -520,6 +526,8 @@ impl enum__Torappu_ShopCondTrigPackageType {
             Self::RETURN_PROGRESS => Some("RETURN_PROGRESS"),
             Self::RETURN_ONCE => Some("RETURN_ONCE"),
             Self::NEW_PROGRESS => Some("NEW_PROGRESS"),
+            Self::CHOOSE_REGISTER_TIME => Some("CHOOSE_REGISTER_TIME"),
+            Self::CHOOSE_NEWBIE => Some("CHOOSE_NEWBIE"),
             _ => None,
         }
     }

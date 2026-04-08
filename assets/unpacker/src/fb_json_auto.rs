@@ -2090,6 +2090,15 @@ impl EnumToJson for display_meta_table_generated::enum__Torappu_UIGuideTarget {
     }
 }
 
+impl EnumToJson for display_meta_table_generated::enum__Torappu_KeyCodeType {
+    fn to_json_value(&self) -> Value {
+        match self.variant_name() {
+            Some(name) => json!(name),
+            None => json!(format!("UNKNOWN_{}", self.0)),
+        }
+    }
+}
+
 impl EnumToJson for display_meta_table_generated::enum__Torappu_KeySettingGroup {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
@@ -4766,7 +4775,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -4802,7 +4813,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -4813,7 +4826,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -4824,7 +4839,9 @@ impl FlatBufferToJson for activity_table_generated::dict__string__string<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__long<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -5014,7 +5031,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_DefaultFirstData
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_DefaultFirstData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5046,7 +5065,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5091,7 +5112,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5124,7 +5147,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5135,7 +5160,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ItemBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -5249,7 +5276,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5277,7 +5306,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5320,7 +5351,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5356,7 +5389,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5412,7 +5447,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5438,7 +5475,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5475,7 +5514,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5499,7 +5540,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__enum__Torappu_VersusCheckInData_TasteType__clz_Torappu_VersusCheckInData_TasteRewardData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5548,7 +5591,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5580,7 +5625,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5633,7 +5680,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5685,7 +5734,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5696,7 +5747,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -5719,7 +5772,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5730,7 +5785,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ItemBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5758,7 +5815,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5788,7 +5847,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5862,7 +5923,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5888,7 +5951,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5916,7 +5981,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -5998,7 +6065,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act3D0Data<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act3D0Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6132,7 +6201,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act4D0Data<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act4D0Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6178,7 +6249,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6203,7 +6276,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6242,7 +6317,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act5D0Data<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act5D0Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6334,7 +6411,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -6361,7 +6440,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act5D1Data_RuneR
 impl FlatBufferToJson for activity_table_generated::dict__string__bool<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -6395,7 +6476,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6423,7 +6506,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -6669,7 +6754,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act5D1Data<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act5D1Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6757,7 +6844,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6787,7 +6876,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6815,7 +6906,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6845,7 +6938,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6928,7 +7023,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -6956,7 +7053,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7030,7 +7129,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act9D0Data<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act9D0Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7114,7 +7215,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7166,7 +7269,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7194,7 +7299,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__enum__Torappu_Act12SideData_RecycleDialogType__list_clz_Torappu_Act12SideData_RecycleDialogData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -7242,7 +7349,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act12SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act12SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7319,7 +7428,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act13SideData_Pr
 impl FlatBufferToJson for activity_table_generated::dict__int__clz_Torappu_ItemBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7409,7 +7520,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7446,7 +7559,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7485,7 +7600,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7560,7 +7677,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act13SideData_DailyMissionRewardGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7596,7 +7715,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7643,7 +7764,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7667,7 +7790,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7728,7 +7853,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act13SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act13SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7768,7 +7895,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7812,7 +7941,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7852,7 +7983,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7895,7 +8028,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7921,7 +8056,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -7981,7 +8118,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8010,7 +8149,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8061,7 +8202,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8135,7 +8278,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8172,7 +8317,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8209,7 +8356,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8242,7 +8391,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8282,7 +8433,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8320,7 +8473,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8359,7 +8514,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8486,7 +8643,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act17sideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act17sideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8509,7 +8668,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8537,7 +8698,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act20SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act20SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8569,7 +8732,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8605,7 +8770,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act21SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act21SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8638,7 +8805,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8720,7 +8889,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8763,7 +8934,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8791,7 +8964,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8821,7 +8996,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8859,7 +9036,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8901,7 +9080,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -8929,7 +9110,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityRoguelikeData_OuterBuffUnlockInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9026,7 +9209,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9058,7 +9243,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9093,7 +9280,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityInterlockData_TreasureMonsterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9128,7 +9317,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9165,7 +9356,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9260,7 +9453,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ActivityInterlockData_FinalStageProgressData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -9305,7 +9500,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9336,7 +9533,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9351,7 +9550,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -9411,7 +9612,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityBossRushData_BossRushStageGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9446,7 +9649,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityBossRushData_BossRushStageAdditionData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9500,7 +9705,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9511,7 +9718,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__clz_Torappu_ActivityBossRushData_BossRushDropInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -9537,7 +9746,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityBossRushData_BossRushMissionAdditionData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9585,7 +9796,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9635,7 +9848,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9667,7 +9882,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9785,7 +10002,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9875,7 +10094,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9886,7 +10107,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__clz_Torappu_ActivityFloatParadeData_RewardPool<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -9899,7 +10122,9 @@ impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__str
 impl FlatBufferToJson for activity_table_generated::dict__string__float<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -9951,7 +10176,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -9994,7 +10221,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10029,7 +10258,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActivityMainlineBuffData_MissionGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10132,7 +10363,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10180,7 +10413,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10221,7 +10456,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10250,7 +10487,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10290,7 +10529,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10331,7 +10572,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_Act24SideData_MeldingGachaBoxGoodData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -10365,7 +10608,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10415,7 +10660,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10516,7 +10763,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10527,7 +10776,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -10588,7 +10839,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10725,7 +10978,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act24SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act24SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10783,7 +11038,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10823,7 +11080,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10858,7 +11117,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10910,7 +11171,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -10972,7 +11235,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11014,7 +11279,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11046,7 +11313,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11075,7 +11344,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11153,7 +11424,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act25SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act25SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11206,7 +11479,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11283,7 +11558,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11343,7 +11620,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11486,7 +11765,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act27SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act27SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11532,7 +11813,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11581,7 +11864,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11612,7 +11897,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11656,7 +11943,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11723,7 +12012,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11776,7 +12067,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11885,7 +12178,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act42D0Data<'_> 
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act42D0Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11920,7 +12215,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -11956,7 +12253,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12048,7 +12347,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12085,7 +12386,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12130,7 +12433,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12166,7 +12471,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12222,7 +12529,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12310,7 +12619,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12404,7 +12715,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act29SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act29SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12480,7 +12793,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12529,7 +12844,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12569,7 +12886,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12604,7 +12923,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12681,7 +13002,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12714,7 +13037,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12764,7 +13089,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12878,7 +13205,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -12939,7 +13268,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act35SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act35SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13005,7 +13336,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13035,7 +13368,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13063,7 +13398,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13096,7 +13433,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13122,7 +13461,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13151,7 +13492,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13186,7 +13529,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13245,7 +13590,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13439,7 +13786,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13473,7 +13822,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13510,7 +13861,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13547,7 +13900,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13599,7 +13954,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act36SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act36SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13629,7 +13986,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13659,7 +14018,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13719,7 +14080,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act38SideData_Act38SidePuzzleGroupFocusData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13760,7 +14123,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act38SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act38SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13831,7 +14196,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13882,7 +14249,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13932,7 +14301,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -13972,7 +14343,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14002,7 +14375,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14134,7 +14509,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActArcadeData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActArcadeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14269,7 +14646,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14314,7 +14693,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14354,7 +14735,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14399,7 +14782,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14423,7 +14808,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14448,7 +14835,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14497,7 +14886,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14529,7 +14920,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14582,7 +14975,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -14625,7 +15020,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15119,7 +15516,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15153,7 +15552,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -15189,7 +15590,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15328,7 +15731,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActMultiV3Data<'
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActMultiV3Data<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15354,7 +15759,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15377,7 +15784,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActMainSSData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActMainSSData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15471,7 +15880,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15530,7 +15941,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15566,7 +15979,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15606,7 +16021,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15651,7 +16068,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15680,7 +16099,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15722,7 +16143,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15772,7 +16195,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -15783,7 +16208,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__clz_Torappu_ActivityEnemyDuelSingleCommentData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -15895,6 +16322,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityEnemyDue
         }
         if let Some(v) = self.defaultEmoticonPicId() {
             map.insert("DefaultEmoticonPicId".to_string(), json!(v));
+        }
+        if let Some(v) = self.defaultEnemyTag() {
+            map.insert("DefaultEnemyTag".to_string(), json!(v));
         }
         map.insert(
             "ModeOperationRoundNumber".to_string(),
@@ -16194,7 +16624,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16237,7 +16669,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16298,7 +16732,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16339,7 +16775,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16365,7 +16803,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16455,7 +16895,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16506,7 +16948,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act42SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act42SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16536,7 +16980,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16574,7 +17020,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16604,7 +17052,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16637,7 +17087,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16674,7 +17126,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16706,7 +17160,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16860,7 +17316,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act44SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act44SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16912,7 +17370,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16936,7 +17396,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -16947,7 +17409,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -16978,7 +17442,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17093,7 +17559,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17121,7 +17589,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act1VHalfIdleStageProductionData_ItemProductionData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17156,7 +17626,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17197,7 +17669,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17233,7 +17707,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17261,7 +17737,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act1VHalfIdleCharEvolveData_ProfessionCharEvolveData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17287,7 +17765,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17317,7 +17797,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17347,7 +17829,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17385,7 +17869,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17453,7 +17939,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17764,7 +18252,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17792,7 +18282,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17822,7 +18314,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act1VHalfIdleDiagramData_LineRelationData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17849,7 +18343,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17906,7 +18402,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -17944,7 +18442,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -17972,7 +18472,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18006,7 +18508,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18045,7 +18549,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18058,7 +18564,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__list_clz_Torappu_Act1VHalfIdleEquipData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18087,7 +18595,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18228,7 +18738,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18266,7 +18778,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18310,7 +18824,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18379,7 +18895,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18415,7 +18933,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act45SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act45SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18470,7 +18990,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18500,7 +19022,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18563,7 +19087,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18599,7 +19125,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18625,7 +19153,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_Act46SideData_Act46SideSettleDialogData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18638,7 +19168,9 @@ impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torap
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__list_clz_Torappu_Act46SideData_Act46SideSettleDialogData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -18694,7 +19226,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act46SideData_Act46SideMonopolyResourceItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18740,7 +19274,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act46SideData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act46SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18825,7 +19361,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18888,7 +19426,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18947,7 +19487,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessCharChessData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -18958,7 +19500,9 @@ impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Ac
 impl FlatBufferToJson for activity_table_generated::dict__string__enum__Torappu_RarityRank<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), self.value().to_json_value());
         Value::Object(map)
     }
@@ -18990,7 +19534,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19001,7 +19547,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -19040,7 +19588,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__int__clz_Torappu_ActAutoChessData_ActAutoChessShopLevelDisplayData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19100,7 +19650,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessCharShopChessData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19164,7 +19716,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessTrapChessData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19198,7 +19752,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessTrapShopChessData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19231,7 +19787,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19258,7 +19816,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessData_ActAutoChessBattleData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -19271,7 +19831,9 @@ impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__list_clz_Torappu_ActAutoChessData_ActAutoChessBattleData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -19349,7 +19911,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19399,7 +19963,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessGarrisonData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19438,7 +20004,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19467,7 +20035,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_clz_Torappu_ActAutoChessData_ActAutoChessBuffInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -19503,7 +20073,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessEffectChoiceInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19540,7 +20112,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19578,7 +20152,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyEntry<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19600,7 +20176,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutochessSpecialEnemyTypeEntry<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19667,7 +20245,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData_ActAutoChessPlayerTitleData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -19702,7 +20282,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__int__list_clz_Torappu_ActAutoChessData_ActAutoChessShopCharChessInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -19944,7 +20526,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActAutoChessData
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_ActAutoChessData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20214,7 +20798,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20239,7 +20825,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_long<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -20262,7 +20850,9 @@ impl FlatBufferToJson for activity_table_generated::hg__internal__JObject<'_> {
 impl FlatBufferToJson for activity_table_generated::dict__string__hg__internal__JObject<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20275,7 +20865,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -20302,7 +20894,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20421,7 +21015,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20449,7 +21045,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -20498,7 +21096,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20553,7 +21153,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20580,7 +21182,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act4funLiveMatEf
 impl FlatBufferToJson for activity_table_generated::dict__enum__Torappu_Act4funStageAttributeType__clz_Torappu_Act4funLiveMatEffectInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20626,7 +21230,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20679,7 +21285,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20707,7 +21315,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20751,7 +21361,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20790,7 +21402,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20834,7 +21448,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20867,7 +21483,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20900,7 +21518,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -20939,7 +21559,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21082,7 +21704,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21262,7 +21886,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act5FunRoundData
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act5FunRoundData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21299,7 +21925,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_Act5FunNpcData<'
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_Act5FunNpcData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21341,7 +21969,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21367,7 +21997,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21456,7 +22088,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21554,7 +22188,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21588,7 +22224,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -21618,7 +22256,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21700,7 +22340,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21729,7 +22371,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21769,7 +22413,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21800,7 +22446,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21895,7 +22543,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -21958,7 +22608,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_CartComponents<'
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_CartComponents<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -21971,7 +22623,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22066,7 +22720,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22104,7 +22760,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22167,7 +22825,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22207,7 +22867,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22241,7 +22903,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22281,7 +22945,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22307,7 +22973,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22342,7 +23010,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22374,7 +23044,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22412,7 +23084,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22449,7 +23123,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22497,7 +23173,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22531,7 +23209,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22573,7 +23253,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22732,7 +23414,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22796,7 +23480,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22823,7 +23509,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22912,7 +23600,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22947,7 +23637,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_KVSwitchInfo<'_>
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_KVSwitchInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -22972,7 +23664,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23002,7 +23696,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23032,7 +23728,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23178,7 +23876,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23222,7 +23922,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23264,7 +23966,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23317,7 +24021,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23357,7 +24063,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23397,7 +24105,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23427,7 +24137,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23538,7 +24250,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23617,7 +24331,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23651,7 +24367,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23699,7 +24417,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23742,7 +24462,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23773,7 +24495,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23810,7 +24534,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23856,7 +24582,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessShopStateTokenData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23912,7 +24640,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -23950,7 +24680,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__clz_Torappu_AutoChessData_AutoChessRandomEnemyAttributeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24005,7 +24737,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24016,7 +24750,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__int__clz_Torappu_AutoChessData_AutoChessTurnInfoData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -24310,7 +25046,9 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_AutoChessData<'_
 impl FlatBufferToJson for activity_table_generated::dict__string__list_dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -24355,7 +25093,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24414,7 +25154,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24446,7 +25188,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24475,7 +25219,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24541,7 +25287,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24565,7 +25313,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24595,7 +25345,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24633,7 +25385,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -24647,7 +25401,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.basicInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BasicInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24658,7 +25416,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.homeActConfig() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HomeActConfig".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24669,7 +25431,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zoneToActivity() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ZoneToActivity".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24680,7 +25446,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.actTimeTrackPoint() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActTimeTrackPoint".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24691,7 +25461,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24702,7 +25476,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionGroup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionGroup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24713,7 +25491,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.replicateMissions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ReplicateMissions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24742,7 +25524,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityItems() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityItems".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24753,7 +25539,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.syncPoints() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SyncPoints".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24764,7 +25554,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dynActs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DynActs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24775,7 +25569,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageRewardsData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageRewardsData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24786,7 +25584,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.actThemes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActThemes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24842,7 +25644,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.kvSwitchData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("KvSwitchData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24853,7 +25659,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dynEntrySwitchData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DynEntrySwitchData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24864,7 +25674,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.hiddenStageData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HiddenStageData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24875,7 +25689,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionArchives() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionArchives".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24904,7 +25722,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stringRes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StringRes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24915,7 +25737,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityTraps() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityTraps".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24926,7 +25752,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityTrapMissions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityTrapMissions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24937,7 +25767,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.trapRuneDataDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TrapRuneDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24948,7 +25782,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityTemplateMissionStyles() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityTemplateMissionStyles".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24959,7 +25797,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityCrossDayTrackTypeDataDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityCrossDayTrackTypeDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24970,7 +25812,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityCrossDayTrackTypeMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityCrossDayTrackTypeMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -24981,7 +25827,11 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityStoryReadTipsDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityStoryReadTipsDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25201,7 +26051,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for audio_data_generated::dict__enum__Torappu_VoiceLangType__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -25214,7 +26066,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -25227,7 +26081,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for audio_data_generated::dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -25240,7 +26096,9 @@ impl FlatBufferToJson for audio_data_generated::dict__string__list_dict__string_
 impl FlatBufferToJson for audio_data_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -25256,7 +26114,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.bgmBanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BgmBanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25267,7 +26129,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.soundFXBanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SoundFXBanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25278,7 +26144,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.soundFXCtrlBanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SoundFXCtrlBanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25289,7 +26159,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.snapshotBanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SnapshotBanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25309,7 +26183,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.musics() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Musics".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25320,7 +26198,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.duckings() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Duckings".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25331,7 +26213,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.fadeStyles() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FadeStyles".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25342,7 +26228,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.soundFxVoiceLang() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SoundFxVoiceLang".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25353,7 +26243,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.bankAlias() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BankAlias".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25410,7 +26304,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -25421,7 +26317,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for bake_muzzle_data_generated::dict__string__list_dict__int__clz_Torappu_Battle_BakedMountPointData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -25453,7 +26351,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -25490,7 +26390,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -25504,7 +26406,11 @@ impl FlatBufferToJson for bake_muzzle_data_generated::clz_Torappu_Battle_BakedSp
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.bakedAnimDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BakedAnimDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25712,7 +26618,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -25762,7 +26670,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -25778,7 +26688,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equips() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Equips".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -25982,7 +26896,9 @@ impl FlatBufferToJson for buff_table_generated::clz_Torappu_BuffData<'_> {
 impl FlatBufferToJson for buff_table_generated::dict__string__clz_Torappu_BuffData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -25996,7 +26912,11 @@ impl FlatBufferToJson for buff_table_generated::clz_Torappu_SimpleKVTable_clz_To
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.buffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Buffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -26012,7 +26932,9 @@ impl FlatBufferToJson for buff_table_generated::clz_Torappu_SimpleKVTable_clz_To
 impl FlatBufferToJson for building_data_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -26035,7 +26957,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26063,7 +26987,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26161,7 +27087,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26201,7 +27129,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26226,7 +27156,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__int__clz_Torappu_BuildingData_LayoutData_SlotCleanCost_CountCost<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26256,7 +27188,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26287,7 +27221,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26325,7 +27261,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26363,7 +27301,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26676,7 +27616,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26733,7 +27675,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26744,7 +27688,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -26845,7 +27791,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26911,7 +27859,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26950,7 +27900,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -26975,7 +27927,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__enum__Torappu_BuildingData_FurnitureType__clz_Torappu_BuildingData_CustomData_FurnitureTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27003,7 +27957,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__enum__Torappu_BuildingData_FurnitureSubType__clz_Torappu_BuildingData_CustomData_FurnitureSubTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27033,7 +27989,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__string__list_clz_Torappu_BuildingData_CustomData_DormitoryDefaultFurnitureItem<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -27062,7 +28020,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -27123,7 +28083,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27134,7 +28096,9 @@ impl FlatBufferToJson for building_data_generated::dict__string__clz_Torappu_Bui
 impl FlatBufferToJson for building_data_generated::dict__enum__Torappu_BuildingData_DiySortType__list_dict__string__clz_Torappu_BuildingData_CustomData_DiyUISortTemplateListData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -27259,7 +28223,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27309,7 +28275,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27396,7 +28364,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27420,7 +28390,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27483,7 +28455,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27509,7 +28483,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27520,7 +28496,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -27596,7 +28574,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27641,7 +28621,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27684,7 +28666,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for building_data_generated::dict__string__clz_Torappu_BuildingData_BuildingRoomTypeBuffSortData_buffGroupInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27721,7 +28705,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -27892,7 +28878,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.shopOutputRatio() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ShopOutputRatio".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -27903,7 +28893,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.shopStackRatio() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ShopStackRatio".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28158,7 +29152,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.roomUnlockConds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RoomUnlockConds".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28169,7 +29167,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.rooms() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Rooms".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28180,7 +29182,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.layouts() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Layouts".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28191,7 +29197,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.prefabs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Prefabs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28301,7 +29311,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.chars() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Chars".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28312,7 +29326,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.buffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Buffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28323,7 +29341,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.workshopBonus() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WorkshopBonus".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28343,7 +29365,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.manufactFormulas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ManufactFormulas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28354,7 +29380,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.shopFormulas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ShopFormulas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28365,7 +29395,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.workshopFormulas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WorkshopFormulas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28385,7 +29419,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.goldItems() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GoldItems".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28407,7 +29445,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.workshopRarities() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WorkshopRarities".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28418,7 +29460,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.todoItemSortPriorityDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TodoItemSortPriorityDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28429,7 +29475,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.slotPrequeDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SlotPrequeDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28440,7 +29490,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dormitoryPrequeDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DormitoryPrequeDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28451,7 +29505,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.workshopTargetDesDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WorkshopTargetDesDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28462,7 +29520,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tradingOrderDesDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TradingOrderDesDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28482,7 +29544,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stationManageFilterInfos() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StationManageFilterInfos".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28513,7 +29579,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.categoryNames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CategoryNames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28524,7 +29594,11 @@ impl FlatBufferToJson for building_data_generated::clz_Torappu_BuildingData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.buffSortData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BuffSortData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28584,7 +29658,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28597,7 +29673,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -28627,7 +29705,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28643,7 +29723,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.furnitureObstacleData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FurnitureObstacleData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28654,7 +29738,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.roomObstacleData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RoomObstacleData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28665,7 +29753,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.furnitureLODConfig() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FurnitureLODConfig".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -28834,7 +29926,9 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignData_Dro
 impl FlatBufferToJson for campaign_table_generated::dict__enum__Torappu_CampaignStageType__clz_Torappu_CampaignData_DropGainInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28867,7 +29961,9 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignData<'_>
 impl FlatBufferToJson for campaign_table_generated::dict__string__clz_Torappu_CampaignData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28897,7 +29993,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28921,7 +30019,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28951,7 +30051,9 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignZoneData
 impl FlatBufferToJson for campaign_table_generated::dict__string__clz_Torappu_CampaignZoneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28984,7 +30086,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -28995,7 +30099,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for campaign_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -29101,7 +30207,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29116,7 +30224,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -29132,7 +30242,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaigns() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Campaigns".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29143,7 +30257,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignGroups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignGroups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29154,7 +30272,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignRegions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignRegions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29165,7 +30287,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignZones() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignZones".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29176,7 +30302,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignMissions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignMissions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29187,7 +30317,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageIndexInZoneMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageIndexInZoneMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29207,7 +30341,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignRotateStageOpenTimes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignRotateStageOpenTimes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29218,7 +30356,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignTrainingStageOpenTimes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignTrainingStageOpenTimes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29229,7 +30371,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignTrainingAllOpenTimes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignTrainingAllOpenTimes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29240,7 +30386,11 @@ impl FlatBufferToJson for campaign_table_generated::clz_Torappu_CampaignTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.campaignZoneMapData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CampaignZoneMapData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29285,7 +30435,9 @@ impl FlatBufferToJson for chapter_table_generated::clz_Torappu_ChapterData<'_> {
 impl FlatBufferToJson for chapter_table_generated::dict__string__clz_Torappu_ChapterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29301,7 +30453,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.chapters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Chapters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29404,7 +30560,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29418,7 +30576,7 @@ impl FlatBufferToJson for char_master_table_generated::clz_Torappu_SimpleKVTable
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.master_data_bundles() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Master_data_bundles".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29434,7 +30592,9 @@ impl FlatBufferToJson for char_master_table_generated::clz_Torappu_SimpleKVTable
 impl FlatBufferToJson for char_meta_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -29486,7 +30646,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29501,7 +30663,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -29514,7 +30678,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for char_meta_table_generated::dict__string__long<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -29562,7 +30728,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29576,7 +30744,11 @@ impl FlatBufferToJson for char_meta_table_generated::clz_Torappu_CharMetaTable<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.spCharGroups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpCharGroups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29587,7 +30759,11 @@ impl FlatBufferToJson for char_meta_table_generated::clz_Torappu_CharMetaTable<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.spCharMissions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpCharMissions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29598,7 +30774,11 @@ impl FlatBufferToJson for char_meta_table_generated::clz_Torappu_CharMetaTable<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.spCharVoucherSkinTime() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpCharVoucherSkinTime".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29609,7 +30789,11 @@ impl FlatBufferToJson for char_meta_table_generated::clz_Torappu_CharMetaTable<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charIdMasterListMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharIdMasterListMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29620,7 +30804,11 @@ impl FlatBufferToJson for char_meta_table_generated::clz_Torappu_CharMetaTable<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charMasterDataMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharMasterDataMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -29653,7 +30841,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -29875,7 +31065,9 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharacterData_
 impl FlatBufferToJson for char_patch_table_generated::dict__string__bool<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -30218,7 +31410,9 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharacterData<
 impl FlatBufferToJson for char_patch_table_generated::dict__string__clz_Torappu_CharacterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -30260,7 +31454,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -30290,7 +31486,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -30304,7 +31502,11 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharPatchData<
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.infos() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Infos".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -30315,7 +31517,11 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharPatchData<
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.patchChars() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("PatchChars".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -30326,7 +31532,11 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharPatchData<
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.unlockConds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("UnlockConds".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -30337,7 +31547,11 @@ impl FlatBufferToJson for char_patch_table_generated::clz_Torappu_CharPatchData<
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.patchDetailInfoList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("PatchDetailInfoList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -30560,7 +31774,9 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_M
 impl FlatBufferToJson for character_table_generated::dict__string__bool<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -30903,7 +32119,9 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
 impl FlatBufferToJson for character_table_generated::dict__string__clz_Torappu_CharacterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -30919,7 +32137,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Characters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31124,7 +32346,11 @@ impl FlatBufferToJson for charm_table_generated::clz_Torappu_CharmData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charmList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharmList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31191,7 +32417,9 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordData<'_>
 impl FlatBufferToJson for charword_table_generated::dict__string__clz_Torappu_CharWordData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31223,7 +32451,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31260,7 +32490,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31291,7 +32523,9 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_VoiceLangData<'_
 impl FlatBufferToJson for charword_table_generated::dict__string__clz_Torappu_VoiceLangData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31317,7 +32551,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31343,7 +32579,9 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_VoiceLangGroupDa
 impl FlatBufferToJson for charword_table_generated::dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31354,7 +32592,9 @@ impl FlatBufferToJson for charword_table_generated::dict__enum__Torappu_VoiceLan
 impl FlatBufferToJson for charword_table_generated::dict__string__enum__Torappu_VoiceLangType<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), self.value().to_json_value());
         Value::Object(map)
     }
@@ -31376,7 +32616,9 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_NewVoiceTimeData
 impl FlatBufferToJson for charword_table_generated::dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -31424,7 +32666,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31447,7 +32691,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31475,7 +32721,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31489,7 +32737,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charWords() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharWords".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31500,7 +32752,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charExtraWords() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharExtraWords".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31511,7 +32767,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.voiceLangDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("VoiceLangDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31543,7 +32803,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.voiceLangTypeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("VoiceLangTypeDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31554,7 +32818,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.voiceLangGroupTypeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("VoiceLangGroupTypeDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31565,7 +32833,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charDefaultTypeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharDefaultTypeDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31576,7 +32848,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.startTimeWithTypeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StartTimeWithTypeDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31619,7 +32895,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.fesVoiceData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FesVoiceData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31630,7 +32910,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.fesVoiceWeight() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FesVoiceWeight".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31641,7 +32925,11 @@ impl FlatBufferToJson for charword_table_generated::clz_Torappu_CharWordTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.extraVoiceConfigData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ExtraVoiceConfigData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31694,7 +32982,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31742,7 +33032,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -31758,7 +33050,11 @@ impl FlatBufferToJson for checkin_table_generated::clz_Torappu_CheckInTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.groups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Groups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31769,7 +33065,11 @@ impl FlatBufferToJson for checkin_table_generated::clz_Torappu_CheckInTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.monthlySubItem() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MonthlySubItem".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -31891,7 +33191,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -31970,7 +33272,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32043,7 +33347,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32073,7 +33379,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32260,7 +33568,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32301,7 +33611,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32338,7 +33650,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32382,7 +33696,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32444,6 +33760,10 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerDet
         map.insert(
             "SquadMemStartTime".to_string(),
             json!(self.squadMemStartTime()),
+        );
+        map.insert(
+            "RecordNoResetStartTime".to_string(),
+            json!(self.recordNoResetStartTime()),
         );
         Value::Object(map)
     }
@@ -32545,7 +33865,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32590,7 +33912,9 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_MissionGroup<
 impl FlatBufferToJson for climb_tower_table_generated::dict__string__clz_Torappu_MissionGroup<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32604,7 +33928,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.towers() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Towers".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32615,7 +33943,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levels() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Levels".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32626,7 +33958,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tacticalBuffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TacticalBuffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32637,7 +33973,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.mainCards() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MainCards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32648,7 +33988,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subCards() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SubCards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32659,7 +34003,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.curseCards() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CurseCards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32670,7 +34018,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.seasonInfos() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SeasonInfos".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32690,7 +34042,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.rewardInfoList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RewardInfoList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32701,7 +34057,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.rewardInfoListHardMode() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RewardInfoListHardMode".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32712,7 +34072,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32723,7 +34087,11 @@ impl FlatBufferToJson for climb_tower_table_generated::clz_Torappu_ClimbTowerTab
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionGroup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionGroup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32807,7 +34175,11 @@ impl FlatBufferToJson for clue_data_generated::clz_Torappu_MeetingClueData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.clues() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Clues".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32818,7 +34190,11 @@ impl FlatBufferToJson for clue_data_generated::clz_Torappu_MeetingClueData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.clueTypes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ClueTypes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32829,7 +34205,11 @@ impl FlatBufferToJson for clue_data_generated::clz_Torappu_MeetingClueData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.receiveTimeBonus() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ReceiveTimeBonus".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -32968,7 +34348,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for cooperate_battle_table_generated::dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -32994,7 +34376,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -33014,7 +34398,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for cooperate_battle_table_generated::dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -33058,7 +34444,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for cooperate_battle_table_generated::dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33069,7 +34457,9 @@ impl FlatBufferToJson for cooperate_battle_table_generated::dict__string__clz_To
 impl FlatBufferToJson for cooperate_battle_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -33102,7 +34492,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.endTileInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EndTileInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33113,7 +34507,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballAheadGoalCntFactor() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballAheadGoalCntFactor".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33134,7 +34532,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballLastRoundResultFactor() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballLastRoundResultFactor".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33145,7 +34547,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballLevelOfWaveFactor() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballLevelOfWaveFactor".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33156,7 +34562,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballTeamWeights() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballTeamWeights".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33167,7 +34577,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballTeamPlayers() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballTeamPlayers".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33178,7 +34592,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.footballPlayersName() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FootballPlayersName".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33237,7 +34655,11 @@ impl FlatBufferToJson for crisis_table_generated::clz_Torappu_CrisisClientData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.seasonInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SeasonInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33349,7 +34771,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33373,7 +34797,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33541,7 +34967,9 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_RuneData<'_> {
 impl FlatBufferToJson for crisis_v2_table_generated::dict__string__list_clz_Torappu_RuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -33612,7 +35040,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33685,7 +35115,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33733,7 +35165,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -33786,7 +35220,11 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_CrisisV2SharedD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.seasonInfoDataMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SeasonInfoDataMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33797,7 +35235,11 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_CrisisV2SharedD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.scoreLevelToAppraiseDataMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ScoreLevelToAppraiseDataMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33817,7 +35259,11 @@ impl FlatBufferToJson for crisis_v2_table_generated::clz_Torappu_CrisisV2SharedD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.battleCommentRuneData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BattleCommentRuneData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -33912,7 +35358,9 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_PlayerAvatar
 impl FlatBufferToJson for display_meta_table_generated::dict__enum__Torappu_PlayerAvatarGroupType__clz_Torappu_PlayerAvatarGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34143,7 +35591,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34183,7 +35633,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34221,7 +35673,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -34304,7 +35758,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34335,7 +35791,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34346,11 +35804,29 @@ impl FlatBufferToJson
 impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
+        if let Some(v) = self.limitId() {
+            map.insert("LimitId".to_string(), json!(v));
+        }
         if let Some(v) = self.id() {
             map.insert("Id".to_string(), json!(v));
         }
         map.insert("AvailStartTime".to_string(), json!(self.availStartTime()));
         map.insert("AvailEndTime".to_string(), json!(self.availEndTime()));
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for display_meta_table_generated::dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
+        if let Some(v) = self.value() {
+            map.insert("value".to_string(), v.to_json());
+        }
         Value::Object(map)
     }
 }
@@ -34420,7 +35896,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34525,7 +36003,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34577,7 +36057,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34620,7 +36102,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34631,7 +36115,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for display_meta_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -34690,7 +36176,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34741,7 +36229,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34759,6 +36249,10 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_KeyItem<'_> 
             map.insert("KeyName".to_string(), json!(v));
         }
         map.insert("UseIcon".to_string(), json!(self.useIcon()));
+        map.insert(
+            "KeyCodeType".to_string(),
+            self.keyCodeType().to_json_value(),
+        );
         if let Some(vec) = self.keyCodes() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -34772,7 +36266,9 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_KeyItem<'_> 
 impl FlatBufferToJson for display_meta_table_generated::dict__string__clz_Torappu_KeyItem<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34836,7 +36332,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34936,7 +36434,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -34977,7 +36477,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35019,7 +36521,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35072,7 +36576,9 @@ impl FlatBufferToJson for display_meta_table_generated::clz_UnityEngine_Vector2<
 impl FlatBufferToJson for display_meta_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -35131,7 +36637,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35170,7 +36678,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35196,7 +36706,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35245,7 +36757,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35279,7 +36793,9 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_MagazineLeaf
 impl FlatBufferToJson for display_meta_table_generated::dict__string__list_dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -35357,7 +36873,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35372,6 +36890,36 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_StickerData<
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("StickerMap".to_string(), json!(arr));
+        }
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_AVGDialogPresetData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        map.insert("Id".to_string(), json!(self.id()));
+        if let Some(v) = self.name() {
+            map.insert("Name".to_string(), json!(v));
+        }
+        map.insert("NameFontSize".to_string(), json!(self.nameFontSize()));
+        map.insert("MessageFontSize".to_string(), json!(self.messageFontSize()));
+        map.insert(
+            "MessageMinHeight".to_string(),
+            json!(self.messageMinHeight()),
+        );
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_AVGDialogSettingData<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        map.insert("DefaultPresetId".to_string(), json!(self.defaultPresetId()));
+        if let Some(vec) = self.presetList() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("PresetList".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -35437,7 +36985,11 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_DisplayMetaD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.storyVariantData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StoryVariantData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -35448,7 +37000,11 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_DisplayMetaD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.guidebookGroupDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GuidebookGroupDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -35468,7 +37024,11 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_DisplayMetaD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.resolutionSettingList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ResolutionSettingList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -35497,6 +37057,15 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_DisplayMetaD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.stickerData() {
                 return Some(("StickerData".to_string(), nested.to_json()));
+            }
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.avgDialogSettingData() {
+                return Some(("AvgDialogSettingData".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -35821,7 +37390,11 @@ impl FlatBufferToJson for enemy_database_generated::clz_Torappu_EnemyDatabase<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.enemies() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Enemies".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -35884,7 +37457,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for enemy_handbook_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -35962,7 +37537,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -35989,7 +37566,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36003,7 +37582,11 @@ impl FlatBufferToJson for enemy_handbook_table_generated::clz_Torappu_EnemyHandB
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelInfoList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LevelInfoList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36014,7 +37597,11 @@ impl FlatBufferToJson for enemy_handbook_table_generated::clz_Torappu_EnemyHandB
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.enemyData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EnemyData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36025,7 +37612,11 @@ impl FlatBufferToJson for enemy_handbook_table_generated::clz_Torappu_EnemyHandB
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.raceData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RaceData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36045,6 +37636,10 @@ impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_EPBreakBuffD
             "ElementBreakDuration".to_string(),
             json!(self.elementBreakDuration()),
         );
+        map.insert(
+            "EnemyElementBreakDuration".to_string(),
+            json!(self.enemyElementBreakDuration()),
+        );
         if let Some(vec) = self.elementBuffs() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
@@ -36059,7 +37654,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36075,7 +37672,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.ep_breakbuffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Ep_breakbuffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36144,7 +37745,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36162,7 +37765,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.extra_battlelogs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Extra_battlelogs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36213,7 +37820,11 @@ impl FlatBufferToJson for favor_table_generated::clz_Torappu_FavorTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.favorFrames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FavorFrames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36343,7 +37954,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for gacha_table_generated::dict__int__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -36425,7 +38038,9 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_RecruitPool<'_> {
 impl FlatBufferToJson for gacha_table_generated::dict__int__clz_Torappu_ItemBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36457,7 +38072,9 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData_RecruitRa
 impl FlatBufferToJson for gacha_table_generated::dict__int__clz_Torappu_GachaData_RecruitRange<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36468,7 +38085,9 @@ impl FlatBufferToJson for gacha_table_generated::dict__int__clz_Torappu_GachaDat
 impl FlatBufferToJson for gacha_table_generated::dict__int__list_int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -36565,7 +38184,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36576,7 +38197,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for gacha_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -36587,7 +38210,9 @@ impl FlatBufferToJson for gacha_table_generated::dict__string__string<'_> {
 impl FlatBufferToJson for gacha_table_generated::dict__int__float<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -36599,7 +38224,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.gachaPoolClient() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GachaPoolClient".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36610,7 +38239,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.newbeeGachaPoolClient() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NewbeeGachaPoolClient".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36621,7 +38254,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.specialRecruitPool() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpecialRecruitPool".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36632,7 +38269,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.gachaTags() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GachaTags".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36673,7 +38314,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.recruitRarityTable() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RecruitRarityTable".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36684,7 +38329,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.specialTagRarityTable() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpecialTagRarityTable".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36714,7 +38363,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.carousel() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Carousel".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36725,7 +38378,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.freeGacha() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FreeGacha".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36736,7 +38393,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.limitTenGachaItem() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LimitTenGachaItem".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36747,7 +38408,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.linkageTenGachaItem() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LinkageTenGachaItem".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36758,7 +38423,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.normalGachaItem() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NormalGachaItem".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36769,7 +38438,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.fesGachaPoolRelateItem() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FesGachaPoolRelateItem".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36780,7 +38453,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dicRecruit6StarHint() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DicRecruit6StarHint".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36791,7 +38468,11 @@ impl FlatBufferToJson for gacha_table_generated::clz_Torappu_GachaData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.specialGachaPercentDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpecialGachaPercentDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36819,7 +38500,9 @@ impl FlatBufferToJson for gamedata_const_generated::list_int<'_> {
 impl FlatBufferToJson for gamedata_const_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -36853,7 +38536,9 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_ItemBundle<'_> {
 impl FlatBufferToJson for gamedata_const_generated::dict__int__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -36880,7 +38565,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -36893,7 +38580,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), self.value().to_json_value());
         Value::Object(map)
     }
@@ -36904,6 +38593,27 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts_F
         let mut map = Map::new();
         map.insert("FeverDuration".to_string(), json!(self.feverDuration()));
         map.insert("FeverNeed".to_string(), json!(self.feverNeed()));
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson
+    for gamedata_const_generated::clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'_>
+{
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        map.insert(
+            "DefaultReaderFontsize".to_string(),
+            json!(self.defaultReaderFontsize()),
+        );
+        map.insert(
+            "DefaultReaderLinespace".to_string(),
+            json!(self.defaultReaderLinespace()),
+        );
+        map.insert(
+            "DefaultReaderBackgroundAlpha".to_string(),
+            json!(self.defaultReaderBackgroundAlpha()),
+        );
         Value::Object(map)
     }
 }
@@ -36943,7 +38653,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.maxLevel() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MaxLevel".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36954,7 +38668,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characterExpMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharacterExpMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36965,7 +38683,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characterUpgradeCostMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharacterUpgradeCostMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -36976,7 +38698,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.evolveGoldCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EvolveGoldCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37429,7 +39155,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.richTextStyles() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RichTextStyles".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37440,7 +39170,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charAssistRefreshTime() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharAssistRefreshTime".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37552,7 +39286,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.legacyItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LegacyItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37583,7 +39321,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.assistBeUsedSocialPt() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("AssistBeUsedSocialPt".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37895,7 +39637,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.termDescriptionDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TermDescriptionDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -37990,7 +39736,11 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subProfessionDamageTypePairs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SubProfessionDamageTypePairs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38086,6 +39836,15 @@ impl FlatBufferToJson for gamedata_const_generated::clz_Torappu_GameDataConsts<'
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             return Some(("IsSoCharEnabled".to_string(), json!(self.isSoCharEnabled())));
+            #[allow(unreachable_code)]
+            None
+        })) {
+            map.insert(k, v);
+        }
+        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
+            if let Some(nested) = self.avgReaderModeDefaultSetting() {
+                return Some(("AvgReaderModeDefaultSetting".to_string(), nested.to_json()));
+            }
             #[allow(unreachable_code)]
             None
         })) {
@@ -38255,7 +40014,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38280,7 +40041,9 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_NPCUnlock<'
 impl FlatBufferToJson for handbook_info_table_generated::dict__string__clz_Torappu_NPCUnlock<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38343,7 +40106,9 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_NPCData<'_>
 impl FlatBufferToJson for handbook_info_table_generated::dict__string__clz_Torappu_NPCData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38377,7 +40142,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38404,7 +40171,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38459,7 +40228,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38486,7 +40257,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.handbookDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HandbookDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38497,7 +40272,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.npcDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NpcDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38508,7 +40287,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.teamMissionList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TeamMissionList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38519,7 +40302,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.handbookDisplayConditionList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HandbookDisplayConditionList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38530,7 +40317,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.handbookStageData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HandbookStageData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38541,7 +40332,11 @@ impl FlatBufferToJson for handbook_info_table_generated::clz_Torappu_HandbookInf
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.handbookStageTime() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("HandbookStageTime".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38582,7 +40377,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38598,7 +40395,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.handbook_teams() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Handbook_teams".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38658,7 +40459,11 @@ impl FlatBufferToJson for hotupdate_meta_table_generated::clz_Torappu_HotUpdateM
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.picList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("PicList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38683,7 +40488,9 @@ impl FlatBufferToJson for hotupdate_meta_table_generated::clz_Torappu_HotUpdateM
 impl FlatBufferToJson for init_text_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -38697,7 +40504,11 @@ impl FlatBufferToJson for init_text_generated::clz_Torappu_LanguageData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.strings() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Strings".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -38819,7 +40630,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_ItemData<'_> {
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_ItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38841,7 +40654,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_ExpItemFeature<'_> {
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_ExpItemFeature<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38852,7 +40667,9 @@ impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_ExpIte
 impl FlatBufferToJson for item_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -38863,7 +40680,9 @@ impl FlatBufferToJson for item_table_generated::dict__string__string<'_> {
 impl FlatBufferToJson for item_table_generated::dict__int__list_dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -38888,7 +40707,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_ApSupplyFeature<'_> 
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_ApSupplyFeature<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38915,7 +40736,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38926,7 +40749,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for item_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -38962,7 +40787,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_UniCollectionInfo<'_
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_UniCollectionInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -38988,7 +40815,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_ItemPackInfo<'_> {
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_ItemPackInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39012,7 +40841,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39035,7 +40866,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39060,7 +40893,9 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_FavorCharacterInfo<'
 impl FlatBufferToJson for item_table_generated::dict__string__clz_Torappu_FavorCharacterInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39074,7 +40909,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.items() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Items".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39085,7 +40924,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.expItems() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ExpItems".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39096,7 +40939,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.potentialItems() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("PotentialItems".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39107,7 +40954,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.apSupplies() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ApSupplies".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39118,7 +40969,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charVoucherItems() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharVoucherItems".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39129,7 +40984,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.uniqueInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("UniqueInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39140,7 +40999,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.itemTimeLimit() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ItemTimeLimit".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39151,7 +41014,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.uniCollectionInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("UniCollectionInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39162,7 +41029,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.itemPackInfos() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ItemPackInfos".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39173,7 +41044,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.fullPotentialCharacters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FullPotentialCharacters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39184,7 +41059,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.activityPotentialCharacters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActivityPotentialCharacters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39195,7 +41074,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.favorCharacters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FavorCharacters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39206,7 +41089,11 @@ impl FlatBufferToJson for item_table_generated::clz_Torappu_InventoryData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.itemShopNameDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ItemShopNameDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39283,7 +41170,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39297,7 +41186,7 @@ impl FlatBufferToJson for legion_mode_buff_table_generated::clz_Torappu_SimpleKV
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.legion_mode_buffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Legion_mode_buffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39313,7 +41202,9 @@ impl FlatBufferToJson for legion_mode_buff_table_generated::clz_Torappu_SimpleKV
 impl FlatBufferToJson for level_script_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -39329,7 +41220,11 @@ impl FlatBufferToJson for level_script_table_generated::clz_Torappu_Battle_Level
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelScriptDataCharacterDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LevelScriptDataCharacterDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39340,7 +41235,11 @@ impl FlatBufferToJson for level_script_table_generated::clz_Torappu_Battle_Level
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelScriptDataEnemyDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LevelScriptDataEnemyDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39351,7 +41250,11 @@ impl FlatBufferToJson for level_script_table_generated::clz_Torappu_Battle_Level
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelScriptDataLevelDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LevelScriptDataLevelDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39362,7 +41265,11 @@ impl FlatBufferToJson for level_script_table_generated::clz_Torappu_Battle_Level
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelScriptDataGameModeDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("LevelScriptDataGameModeDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39389,7 +41296,9 @@ impl FlatBufferToJson for level_script_table_generated::clz_Torappu_Battle_Level
 impl FlatBufferToJson for main_text_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -39403,7 +41312,11 @@ impl FlatBufferToJson for main_text_generated::clz_Torappu_LanguageData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.strings() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Strings".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39562,7 +41475,9 @@ impl FlatBufferToJson for medal_table_generated::clz_Torappu_MedalTypeData<'_> {
 impl FlatBufferToJson for medal_table_generated::dict__string__clz_Torappu_MedalTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -39576,7 +41491,11 @@ impl FlatBufferToJson for medal_table_generated::clz_Torappu_MedalData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.medalList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MedalList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39587,7 +41506,11 @@ impl FlatBufferToJson for medal_table_generated::clz_Torappu_MedalData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.medalTypeData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MedalTypeData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39834,7 +41757,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tipsMetaList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TipsMetaList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39845,7 +41772,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.flashAlertAfterStageItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("FlashAlertAfterStageItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39856,7 +41787,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.mapPreviewDisplayMetaItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MapPreviewDisplayMetaItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39867,7 +41802,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.battleFinishDisplayMetaItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BattleFinishDisplayMetaItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39878,7 +41817,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.battleLoadingDisplayMetaItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BattleLoadingDisplayMetaItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39889,7 +41832,11 @@ impl FlatBufferToJson for meta_ui_table_generated::clz_Torappu_MetaUIDisplayTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.battleAutoBattleMetaItemList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BattleAutoBattleMetaItemList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -39980,7 +41927,9 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionData<'_> {
 impl FlatBufferToJson for mission_table_generated::dict__string__clz_Torappu_MissionData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40025,7 +41974,9 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionGroup<'_> 
 impl FlatBufferToJson for mission_table_generated::dict__string__clz_Torappu_MissionGroup<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40062,7 +42013,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40101,7 +42054,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40131,7 +42086,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40181,7 +42138,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40238,7 +42197,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40278,7 +42239,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40292,7 +42255,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Missions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40303,7 +42270,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionGroups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionGroups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40314,7 +42285,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.periodicalRewards() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("PeriodicalRewards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40325,7 +42300,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.weeklyRewards() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WeeklyRewards".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40336,7 +42315,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.soCharMissionGroupInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SoCharMissionGroupInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40347,7 +42330,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dailyMissionGroupInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DailyMissionGroupInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40358,7 +42345,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dailyMissionPeriodInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DailyMissionPeriodInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40369,7 +42360,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.mainlineMissionEndImageDataList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MainlineMissionEndImageDataList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40380,7 +42375,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.crossAppShareMissions() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CrossAppShareMissions".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40400,7 +42399,11 @@ impl FlatBufferToJson for mission_table_generated::clz_Torappu_MissionTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.guideMissionGroupInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GuideMissionGroupInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -40625,7 +42628,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40733,7 +42738,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40774,7 +42781,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40828,7 +42837,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40879,7 +42890,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40938,7 +42951,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -40951,7 +42966,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -40989,7 +43006,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -41035,7 +43054,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -41062,7 +43083,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -41101,7 +43124,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -41198,7 +43223,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -41220,6 +43247,10 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_NewbieCheckIn
             map.insert("BindGPGoodId".to_string(), json!(v));
         }
         map.insert("CheckInDuration".to_string(), json!(self.checkInDuration()));
+        map.insert(
+            "CompensateEndDay".to_string(),
+            json!(self.compensateEndDay()),
+        );
         map.insert("TotalCheckInDay".to_string(), json!(self.totalCheckInDay()));
         if let Some(v) = self.iconId() {
             map.insert("IconId".to_string(), json!(v));
@@ -41229,6 +43260,8 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_NewbieCheckIn
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("CheckInRewardDict".to_string(), json!(arr));
         }
+        map.insert("TrigStartTime".to_string(), json!(self.trigStartTime()));
+        map.insert("TrigEndTime".to_string(), json!(self.trigEndTime()));
         Value::Object(map)
     }
 }
@@ -41299,7 +43332,11 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerSch
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.schedule() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Schedule".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -41310,7 +43347,11 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerSch
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.dataMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DataMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -41339,7 +43380,11 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_OpenServerSch
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.newbieCheckInPackageList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NewbieCheckInPackageList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -41568,7 +43613,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -42171,7 +44218,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -42211,6 +44260,21 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_CharacterInst_Met
         map.insert("Phase".to_string(), self.phase().to_json_value());
         map.insert("FavorPoint".to_string(), json!(self.favorPoint()));
         map.insert("PotentialRank".to_string(), json!(self.potentialRank()));
+        Value::Object(map)
+    }
+}
+
+impl FlatBufferToJson for prts___levels_generated::clz_Torappu_CharacterInst_TalentInst<'_> {
+    fn to_json(&self) -> Value {
+        let mut map = Map::new();
+        if let Some(v) = self.prefabKey() {
+            map.insert("PrefabKey".to_string(), json!(v));
+        }
+        if let Some(vec) = self.blackboard() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("Blackboard".to_string(), json!(arr));
+        }
         Value::Object(map)
     }
 }
@@ -42255,6 +44319,11 @@ impl FlatBufferToJson
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("OverrideSkillBlackboard".to_string(), json!(arr));
         }
+        if let Some(vec) = self.overrideTalents() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("OverrideTalents".to_string(), json!(arr));
+        }
         Value::Object(map)
     }
 }
@@ -42294,6 +44363,11 @@ impl FlatBufferToJson
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("OverrideSkillBlackboard".to_string(), json!(arr));
+        }
+        if let Some(vec) = self.overrideTalents() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("OverrideTalents".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -42335,6 +44409,11 @@ impl FlatBufferToJson
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("OverrideSkillBlackboard".to_string(), json!(arr));
+        }
+        if let Some(vec) = self.overrideTalents() {
+            assert!(vec.len() <= 10_000_000, "FB vector too large");
+            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+            map.insert("OverrideTalents".to_string(), json!(arr));
         }
         Value::Object(map)
     }
@@ -42427,7 +44506,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tilesDisallowToLocate() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TilesDisallowToLocate".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42438,7 +44521,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.runes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Runes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42449,7 +44536,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.optionalRunes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("OptionalRunes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42460,7 +44551,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.globalBuffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("GlobalBuffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42471,7 +44566,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.routes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Routes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42482,7 +44581,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.extraRoutes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ExtraRoutes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42493,7 +44596,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.enemies() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Enemies".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42504,7 +44611,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.enemyDbRefs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EnemyDbRefs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42515,7 +44626,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.waves() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Waves".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42526,7 +44641,11 @@ impl FlatBufferToJson for prts___levels_generated::clz_Torappu_LevelData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.branches() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Branches".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42633,7 +44752,9 @@ impl FlatBufferToJson for replicate_table_generated::clz_Torappu_ReplicateTable<
 impl FlatBufferToJson for replicate_table_generated::dict__string__clz_Torappu_ReplicateTable<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -42649,7 +44770,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.replications() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Replications".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42713,7 +44838,11 @@ impl FlatBufferToJson for resource_manifest_generated::clz_Torappu_Resource_Reso
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.bundles() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Bundles".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42724,7 +44853,11 @@ impl FlatBufferToJson for resource_manifest_generated::clz_Torappu_Resource_Reso
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.assetToBundleList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("AssetToBundleList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -42740,7 +44873,9 @@ impl FlatBufferToJson for resource_manifest_generated::clz_Torappu_Resource_Reso
 impl FlatBufferToJson for retro_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -42760,7 +44895,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_StageValidInfo<'_> 
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_StageValidInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -42896,7 +45033,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -42940,7 +45079,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroActData<'_> {
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_RetroActData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -42998,7 +45139,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroTrailData<'_> 
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_RetroTrailData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43039,7 +45182,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_StageData_ExtraCond
 impl FlatBufferToJson for retro_table_generated::dict__int__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -43246,7 +45391,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_StageData<'_> {
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_StageData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43303,7 +45450,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43347,7 +45496,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43387,7 +45538,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43430,7 +45583,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43456,7 +45611,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43516,7 +45673,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43545,7 +45704,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43596,7 +45757,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43670,7 +45833,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43707,7 +45872,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43744,7 +45911,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43777,7 +45946,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43955,7 +46126,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -43991,7 +46164,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44030,7 +46205,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44157,7 +46334,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_Act17sideData<'_> {
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_Act17sideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44199,7 +46378,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44226,7 +46407,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44249,7 +46432,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44277,7 +46462,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_Act20SideData<'_> {
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_Act20SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44309,7 +46496,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44345,7 +46534,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_Act21SideData<'_> {
 impl FlatBufferToJson for retro_table_generated::dict__string__clz_Torappu_Act21SideData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44383,7 +46574,9 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_ActivityCustomData<
 impl FlatBufferToJson for retro_table_generated::dict__int__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -44395,7 +46588,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zoneToRetro() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ZoneToRetro".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44406,7 +46603,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageValidInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageValidInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44417,7 +46618,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stages() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Stages".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44428,7 +46633,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.retroActList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RetroActList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44439,7 +46648,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.retroTrailList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RetroTrailList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44450,7 +46663,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44496,7 +46713,11 @@ impl FlatBufferToJson for retro_table_generated::clz_Torappu_RetroStageTable<'_>
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.retroCoinMaxOfLevels() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RetroCoinMaxOfLevels".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -44627,7 +46848,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44658,7 +46881,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__clz_Torappu_RoguelikeTopicConst_PredefinedChar<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44747,7 +46972,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44961,7 +47188,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -44997,7 +47226,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45062,7 +47293,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45199,7 +47432,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45243,7 +47478,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45285,7 +47522,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45340,7 +47579,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45428,7 +47669,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45480,7 +47723,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45520,7 +47765,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45560,7 +47807,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45601,7 +47850,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45651,7 +47902,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45706,7 +47959,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45760,7 +48015,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45789,7 +48046,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45820,7 +48079,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45854,7 +48115,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45957,7 +48220,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -45984,7 +48249,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46031,7 +48298,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__int__clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46060,7 +48329,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__int__clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46071,7 +48342,9 @@ impl FlatBufferToJson for roguelike_topic_table_generated::dict__int__clz_Torapp
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__int__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -46094,7 +48367,9 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46344,7 +48619,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46398,7 +48675,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46420,7 +48699,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46449,7 +48730,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46499,7 +48782,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46538,7 +48823,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46567,7 +48854,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46597,7 +48886,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46651,7 +48942,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46705,7 +48998,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46742,7 +49037,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46822,7 +49119,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46861,7 +49160,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46887,7 +49188,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__enum__Torappu_RoguelikeEventType__clz_Torappu_RoguelikeGameNodeTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46951,7 +49254,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -46984,7 +49289,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47030,7 +49337,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47075,7 +49384,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47108,7 +49419,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47123,7 +49436,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -47434,7 +49749,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47463,7 +49780,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47504,7 +49823,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47562,7 +49883,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47597,7 +49920,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47622,7 +49947,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__enum__Torappu_RoguelikeTopicMode__clz_Torappu_RoguelikeBattleSummeryDescriptionData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47689,7 +50016,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47716,7 +50045,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47799,7 +50130,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -47839,7 +50172,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47865,7 +50200,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47880,7 +50217,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -47937,7 +50276,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47960,7 +50301,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -47988,7 +50331,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48014,7 +50359,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48048,7 +50395,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48138,7 +50487,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48419,13 +50770,13 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("RollNodeData".to_string(), json!(arr));
         }
+        if let Some(nested) = self.activity() {
+            map.insert("Activity".to_string(), nested.to_json());
+        }
         if let Some(vec) = self.relicTipsData() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
             map.insert("RelicTipsData".to_string(), json!(arr));
-        }
-        if let Some(nested) = self.activity() {
-            map.insert("Activity".to_string(), nested.to_json());
         }
         Value::Object(map)
     }
@@ -48436,7 +50787,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48522,7 +50875,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48567,7 +50922,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48578,7 +50935,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -48604,7 +50963,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48700,7 +51061,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48742,7 +51105,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48753,7 +51118,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__list_dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -48875,7 +51242,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48912,7 +51281,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -48925,7 +51296,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -49012,7 +51385,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49036,7 +51411,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfig<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49103,7 +51480,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49135,7 +51514,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49202,7 +51583,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49243,7 +51626,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49280,7 +51665,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49305,7 +51692,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49395,7 +51784,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49488,7 +51879,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49551,7 +51944,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49584,7 +51979,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49615,7 +52012,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49715,7 +52114,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49828,7 +52229,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -49939,7 +52342,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50010,7 +52415,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50038,7 +52445,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50268,7 +52677,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50496,7 +52907,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50559,7 +52972,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50854,7 +53269,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -50927,7 +53344,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for roguelike_topic_table_generated::dict__string__clz_Torappu_RoguelikeCommonDevDifficultyNodeInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51472,7 +53891,11 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.topics() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Topics".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -51492,7 +53915,11 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.details() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Details".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -51503,7 +53930,11 @@ impl FlatBufferToJson for roguelike_topic_table_generated::clz_Torappu_Roguelike
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.modules() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Modules".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -51584,7 +54015,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51605,7 +54038,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51663,7 +54098,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51724,7 +54161,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51769,7 +54208,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51797,7 +54238,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51821,7 +54264,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51832,7 +54277,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_perm_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -51875,7 +54322,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51907,7 +54356,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51932,7 +54383,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -51984,7 +54437,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52009,7 +54464,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52043,7 +54500,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52112,7 +54571,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52139,7 +54600,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52178,7 +54641,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52224,7 +54689,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52264,7 +54731,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52294,7 +54763,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52329,7 +54800,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52367,7 +54840,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52397,7 +54872,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52467,7 +54944,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52492,7 +54971,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -52543,7 +55024,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_perm_table_generated::dict__enum__Torappu_SandboxV2EnemyRushType__list_clz_Torappu_SandboxV2BattleRushEnemyGroupConfig<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -52740,7 +55223,9 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_ItemBundle<'
 impl FlatBufferToJson for sandbox_perm_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -53173,7 +55658,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53213,7 +55700,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -53266,7 +55755,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53279,7 +55770,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -53328,7 +55821,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53354,7 +55849,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53396,7 +55893,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53425,7 +55924,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53474,7 +55975,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53507,7 +56010,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53541,7 +56046,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53575,7 +56082,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53615,7 +56124,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53645,7 +56156,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53674,7 +56187,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53685,7 +56200,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_perm_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -53757,7 +56274,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -53770,7 +56289,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_perm_table_generated::dict__int__list_dict__int__list_clz_Torappu_SandboxV2LogisticsCharData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -53844,7 +56365,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53873,7 +56396,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53915,7 +56440,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53943,7 +56470,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -53972,7 +56501,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54014,7 +56545,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -54051,7 +56584,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54064,7 +56599,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -54172,7 +56709,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54210,7 +56749,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54241,7 +56782,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54270,7 +56813,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54298,7 +56843,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54450,7 +56997,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54483,7 +57032,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54533,7 +57084,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54612,7 +57165,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54642,7 +57197,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54669,7 +57226,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54705,7 +57264,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54739,7 +57300,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54966,7 +57529,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -54998,7 +57563,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55391,7 +57958,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55441,7 +58010,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55455,7 +58026,11 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_SandboxPermT
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.basicInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BasicInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -55475,7 +58050,11 @@ impl FlatBufferToJson for sandbox_perm_table_generated::clz_Torappu_SandboxPermT
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.itemData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ItemData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -55670,7 +58249,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55701,7 +58282,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55726,7 +58309,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55737,7 +58322,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -55769,7 +58356,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55811,7 +58400,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55843,7 +58434,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55877,7 +58470,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55907,7 +58502,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55960,7 +58557,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -55988,7 +58587,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56013,7 +58614,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxItemToastD
 impl FlatBufferToJson for sandbox_table_generated::dict__enum__Torappu_SandboxItemType__clz_Torappu_SandboxItemToastData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56068,7 +58671,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxRewardData
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxRewardData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56097,7 +58702,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56125,7 +58732,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56136,7 +58745,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -56208,7 +58819,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -56223,7 +58836,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -56253,7 +58868,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxNodeTypeDa
 impl FlatBufferToJson for sandbox_table_generated::dict__enum__Torappu_SandboxNodeType__clz_Torappu_SandboxNodeTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56292,7 +58909,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56338,7 +58957,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56376,7 +58997,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxStageData<
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxStageData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56398,7 +59021,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxEventData<
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxEventData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56433,7 +59058,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56465,7 +59092,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56487,7 +59116,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxEventTypeD
 impl FlatBufferToJson for sandbox_table_generated::dict__enum__Torappu_SandboxEventType__clz_Torappu_SandboxEventTypeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56525,7 +59156,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56549,7 +59182,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxUnitData<'
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxUnitData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56573,7 +59208,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxDailyDescT
 impl FlatBufferToJson for sandbox_table_generated::dict__enum__Torappu_SandboxDailyDescTemplateType__clz_Torappu_SandboxDailyDescTemplateData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56622,7 +59259,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for sandbox_table_generated::dict__enum__Torappu_SandboxEnemyRushType__list_clz_Torappu_Battle_Sandbox_RushEnemyGroupConfig<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -56773,7 +59412,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -56813,7 +59454,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -57000,7 +59643,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxActTable<'
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxActTable<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57045,7 +59690,9 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxItemData<'
 impl FlatBufferToJson for sandbox_table_generated::dict__string__clz_Torappu_SandboxItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57059,7 +59706,11 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.sandboxActTables() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SandboxActTables".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57070,7 +59721,11 @@ impl FlatBufferToJson for sandbox_table_generated::clz_Torappu_SandboxTable<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.itemDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ItemDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57318,7 +59973,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57399,7 +60056,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), self.value().to_json_value());
         Value::Object(map)
     }
@@ -57427,7 +60086,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57470,7 +60131,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57524,7 +60187,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.recommendList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RecommendList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57535,7 +60202,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.creditUnlockGroup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CreditUnlockGroup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57555,7 +60226,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.carousels() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Carousels".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57566,7 +60241,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.chooseShopRelations() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ChooseShopRelations".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57577,7 +60256,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.shopUnlockDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ShopUnlockDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57610,7 +60293,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.shopGPDataDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ShopGPDataDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57621,7 +60308,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tabDisplayData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TabDisplayData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57641,7 +60332,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.ls() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Ls".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57652,7 +60347,11 @@ impl FlatBufferToJson for shop_client_table_generated::clz_Torappu_ShopClientDat
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.os() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Os".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57760,7 +60459,9 @@ impl FlatBufferToJson for skill_table_generated::clz_Torappu_SkillDataBundle<'_>
 impl FlatBufferToJson for skill_table_generated::dict__string__clz_Torappu_SkillDataBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57776,7 +60477,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.skills() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Skills".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -57907,8 +60612,14 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData<'_> {
         if let Some(v) = self.avatarId() {
             map.insert("AvatarId".to_string(), json!(v));
         }
+        if let Some(v) = self.spAvatarId() {
+            map.insert("SpAvatarId".to_string(), json!(v));
+        }
         if let Some(v) = self.portraitId() {
             map.insert("PortraitId".to_string(), json!(v));
+        }
+        if let Some(v) = self.spPortraitId() {
+            map.insert("SpPortraitId".to_string(), json!(v));
         }
         if let Some(v) = self.dynPortraitId() {
             map.insert("DynPortraitId".to_string(), json!(v));
@@ -57940,7 +60651,9 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData<'_> {
 impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_CharSkinData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -57951,7 +60664,9 @@ impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_CharSk
 impl FlatBufferToJson for skin_table_generated::dict__int__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -57962,7 +60677,9 @@ impl FlatBufferToJson for skin_table_generated::dict__int__string<'_> {
 impl FlatBufferToJson for skin_table_generated::dict__string__list_dict__int__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -57975,7 +60692,9 @@ impl FlatBufferToJson for skin_table_generated::dict__string__list_dict__int__st
 impl FlatBufferToJson for skin_table_generated::dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -57986,7 +60705,9 @@ impl FlatBufferToJson for skin_table_generated::dict__string__string<'_> {
 impl FlatBufferToJson for skin_table_generated::dict__string__list_dict__string__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -58054,7 +60775,9 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinBrandInfo<'_
 impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_CharSkinBrandInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58089,6 +60812,12 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SpDynIllustInfo<'_> 
         if let Some(v) = self.spIllustId() {
             map.insert("SpIllustId".to_string(), json!(v));
         }
+        if let Some(v) = self.spPortraitId() {
+            map.insert("SpPortraitId".to_string(), json!(v));
+        }
+        if let Some(v) = self.spAvatarId() {
+            map.insert("SpAvatarId".to_string(), json!(v));
+        }
         Value::Object(map)
     }
 }
@@ -58096,7 +60825,9 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SpDynIllustInfo<'_> 
 impl FlatBufferToJson for skin_table_generated::dict__string__clz_Torappu_SpDynIllustInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58110,7 +60841,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charSkins() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharSkins".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58121,7 +60856,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.buildinEvolveMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BuildinEvolveMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58132,7 +60871,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.buildinPatchMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BuildinPatchMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58143,7 +60886,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.brandList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("BrandList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58154,7 +60901,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.specialSkinInfoList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpecialSkinInfoList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58165,7 +60916,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.spDynSkins() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpDynSkins".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58176,7 +60931,11 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_SkinTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.spDynIllustSkinTagsMap() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpDynIllustSkinTagsMap".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58226,7 +60985,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58280,7 +61041,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58325,7 +61088,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58352,7 +61117,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58380,7 +61147,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58405,7 +61174,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58432,7 +61203,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58459,7 +61232,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for special_operator_table_generated::dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58493,7 +61268,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58518,7 +61295,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58546,7 +61325,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58575,7 +61356,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58603,7 +61386,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58637,7 +61422,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58691,7 +61478,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58761,7 +61550,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58862,7 +61653,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58909,7 +61702,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -58953,7 +61748,11 @@ impl FlatBufferToJson for special_operator_table_generated::clz_Torappu_SpecialO
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.operatorBasicData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("OperatorBasicData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58964,7 +61763,11 @@ impl FlatBufferToJson for special_operator_table_generated::clz_Torappu_SpecialO
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.operatorDetailData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("OperatorDetailData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58975,7 +61778,11 @@ impl FlatBufferToJson for special_operator_table_generated::clz_Torappu_SpecialO
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.modeData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ModeData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58986,7 +61793,11 @@ impl FlatBufferToJson for special_operator_table_generated::clz_Torappu_SpecialO
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.nodeUnlockMissionData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NodeUnlockMissionData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -58997,7 +61808,11 @@ impl FlatBufferToJson for special_operator_table_generated::clz_Torappu_SpecialO
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.nodeUnlockMissionGroup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("NodeUnlockMissionGroup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -59152,7 +61967,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageData_ExtraCond
 impl FlatBufferToJson for stage_table_generated::dict__int__string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), json!(v));
         }
@@ -59359,7 +62176,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageData<'_> {
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StageData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59402,7 +62221,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_RuneStageGroupData<
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_RuneStageGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59438,7 +62259,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_MapThemeData<'_> {
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_MapThemeData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59466,7 +62289,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_TileAppendInfo<'_> 
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_TileAppendInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59496,7 +62321,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59507,7 +62334,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for stage_table_generated::dict__string__long<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -59552,7 +62381,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_TimelyDropTimeInfo<
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_TimelyDropTimeInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59565,7 +62396,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59618,7 +62451,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_OverrideDropInfo<'_
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_OverrideDropInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59631,7 +62466,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -59661,7 +62498,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_OverrideUnlockInfo<
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_OverrideUnlockInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59684,7 +62523,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_TimelyDropInfo<'_> 
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_TimelyDropInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59704,7 +62545,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageValidInfo<'_> 
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StageValidInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59753,7 +62596,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageFogInfo<'_> {
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StageFogInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59796,7 +62641,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageStartCond<'_> 
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StageStartCond<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59823,7 +62670,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageDiffGroupTable
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StageDiffGroupTable<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59855,7 +62704,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), self.key().to_json_value());
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), k.to_json_value());
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59866,7 +62717,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for stage_table_generated::dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -59895,7 +62748,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59923,7 +62778,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59958,7 +62815,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_ApProtectZoneInfo<'
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_ApProtectZoneInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -59969,7 +62828,9 @@ impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_ApPro
 impl FlatBufferToJson for stage_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -59993,7 +62854,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_ActCustomStageData<
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_ActCustomStageData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60047,7 +62910,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60092,7 +62957,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StorylineData<'_> {
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StorylineData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60226,7 +63093,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60257,7 +63126,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StorylineTagData<'_
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_StorylineTagData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60318,7 +63189,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60350,7 +63223,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_CGGalleryGroupData<
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_CGGalleryGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60396,7 +63271,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_CGGalleryCGData<'_>
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_CGGalleryCGData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60423,7 +63300,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_SixStarRuneData<'_>
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_SixStarRuneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60483,7 +63362,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60509,7 +63390,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60536,7 +63419,9 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_ConditionalDropInfo
 impl FlatBufferToJson for stage_table_generated::dict__string__clz_Torappu_ConditionalDropInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -60550,7 +63435,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stages() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Stages".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60561,7 +63450,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.runeStageGroups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RuneStageGroups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60572,7 +63465,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.mapThemes() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MapThemes".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60583,7 +63480,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tileInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TileInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60594,7 +63495,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.forceOpenTable() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ForceOpenTable".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60605,7 +63510,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.timelyStageDropInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TimelyStageDropInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60616,7 +63525,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.overrideDropInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("OverrideDropInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60627,7 +63540,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.overrideUnlockInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("OverrideUnlockInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60638,7 +63555,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.timelyTable() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("TimelyTable".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60649,7 +63570,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageValidInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageValidInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60660,7 +63585,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageFogInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageFogInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60671,7 +63600,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stageStartConds() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StageStartConds".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60682,7 +63615,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.diffGroupTable() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("DiffGroupTable".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60693,7 +63630,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.storyStageShowGroup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StoryStageShowGroup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60704,7 +63645,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.specialBattleFinishStageData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SpecialBattleFinishStageData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60715,7 +63660,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.recordRewardData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("RecordRewardData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60726,7 +63675,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.apProtectZoneInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ApProtectZoneInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60737,7 +63690,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.antiSpoilerDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("AntiSpoilerDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60748,7 +63705,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.actCustomStageDatas() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ActCustomStageDatas".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60770,7 +63731,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.storylines() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Storylines".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60781,7 +63746,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.storylineStorySets() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StorylineStorySets".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60792,7 +63761,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.storylineTags() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("StorylineTags".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60812,7 +63785,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.cgGalleryDisplays() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CgGalleryDisplays".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60823,7 +63800,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.cgGalleryGroups() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CgGalleryGroups".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60834,7 +63815,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.cgGalleryCgs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CgGalleryCgs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60845,7 +63830,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.sixStarRuneData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SixStarRuneData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60856,7 +63845,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.sixStarMilestoneInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SixStarMilestoneInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60867,7 +63860,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.sixStarCompatibleInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SixStarCompatibleInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60878,7 +63875,11 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_StageTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.conditionalDropInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ConditionalDropInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -60963,7 +63964,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_MiniActTrialData_MiniActTrialSingleData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61020,7 +64023,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_PicArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61049,7 +64054,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_AudioArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61090,7 +64097,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_AvgArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61128,7 +64137,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_StoryArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61211,7 +64222,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_NewsArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61248,7 +64261,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_LandmarkArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61274,7 +64289,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_LogArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61304,7 +64321,9 @@ impl FlatBufferToJson for story_review_meta_table_generated::clz_Torappu_ActArch
 impl FlatBufferToJson for story_review_meta_table_generated::dict__string__clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61435,7 +64454,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61471,7 +64492,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61509,7 +64532,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61545,7 +64570,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61583,7 +64610,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61621,7 +64650,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61661,7 +64692,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61689,7 +64722,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61756,7 +64791,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -61816,7 +64853,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -62050,7 +65089,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -62064,7 +65105,7 @@ impl FlatBufferToJson for story_review_table_generated::clz_Torappu_SimpleKVTabl
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.story_reviews() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Story_reviews".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -62174,7 +65215,9 @@ impl FlatBufferToJson for story_table_generated::clz_Torappu_StoryData<'_> {
 impl FlatBufferToJson for story_table_generated::dict__string__clz_Torappu_StoryData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -62190,7 +65233,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.stories() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Stories".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -62238,7 +65285,11 @@ impl FlatBufferToJson for tip_table_generated::clz_Torappu_TipTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tips() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Tips".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -62249,7 +65300,11 @@ impl FlatBufferToJson for tip_table_generated::clz_Torappu_TipTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.worldViewTips() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WorldViewTips".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -62472,7 +65527,9 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_MainS
 impl FlatBufferToJson for token_table_generated::dict__string__bool<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -62813,7 +65870,9 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
 impl FlatBufferToJson for token_table_generated::dict__string__clz_Torappu_CharacterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -62829,7 +65888,11 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Characters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -62845,7 +65908,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for uniequip_table_generated::dict__string__int<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         map.insert("value".to_string(), json!(self.value()));
         Value::Object(map)
     }
@@ -62866,7 +65931,9 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_ItemBundle<'_> {
 impl FlatBufferToJson for uniequip_table_generated::dict__int__list_clz_Torappu_ItemBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
@@ -62959,7 +66026,9 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipData<'_>
 impl FlatBufferToJson for uniequip_table_generated::dict__string__clz_Torappu_UniEquipData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63003,7 +66072,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63033,7 +66104,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63044,7 +66117,9 @@ impl FlatBufferToJson
 impl FlatBufferToJson for uniequip_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -63104,7 +66179,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equipDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EquipDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63115,7 +66194,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.missionList() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MissionList".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63126,7 +66209,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subProfDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SubProfDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63137,7 +66224,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subProfToProfDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("SubProfToProfDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63148,7 +66239,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.charEquip() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("CharEquip".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63159,7 +66254,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equipTypeInfos() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EquipTypeInfos".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63170,7 +66269,11 @@ impl FlatBufferToJson for uniequip_table_generated::clz_Torappu_UniEquipTable<'_
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equipTrackDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("EquipTrackDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63240,7 +66343,9 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneData<'_> {
 impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_ZoneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63264,7 +66369,9 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_WeeklyZoneData<'_> {
 impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_WeeklyZoneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63284,7 +66391,9 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneValidInfo<'_> {
 impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_ZoneValidInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63341,7 +66450,9 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_MainlineZoneData<'_>
 impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_MainlineZoneData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63469,7 +66580,9 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneRecordGroupData<
 impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_ZoneRecordGroupData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63480,7 +66593,9 @@ impl FlatBufferToJson for zone_table_generated::dict__string__clz_Torappu_ZoneRe
 impl FlatBufferToJson for zone_table_generated::dict__string__list_string<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(vec) = self.value() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -63514,7 +66629,9 @@ impl FlatBufferToJson
 {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        map.insert("key".to_string(), json!(self.key()));
+        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
+            map.insert("key".to_string(), json!(k));
+        }
         if let Some(v) = self.value() {
             map.insert("value".to_string(), v.to_json());
         }
@@ -63540,7 +66657,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zones() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("Zones".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63551,7 +66672,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.weeklyAdditionInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("WeeklyAdditionInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63562,7 +66687,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zoneValidInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ZoneValidInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63573,7 +66702,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.mainlineAdditionInfo() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("MainlineAdditionInfo".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63584,7 +66717,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zoneRecordGroupedData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ZoneRecordGroupedData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -63595,7 +66732,11 @@ impl FlatBufferToJson for zone_table_generated::clz_Torappu_ZoneTable<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.zoneRecordRewardData() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();
+                let arr: Vec<Value> = (0..vec.len())
+                    .filter_map(|i| {
+                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
+                    })
+                    .collect();
                 return Some(("ZoneRecordRewardData".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]

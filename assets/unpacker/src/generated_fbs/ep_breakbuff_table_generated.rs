@@ -29,7 +29,8 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_EPBreakBuffData<'a> {
 
 impl<'a> clz_Torappu_EPBreakBuffData<'a> {
     pub const VT_ELEMENTBREAKDURATION: flatbuffers::VOffsetT = 4;
-    pub const VT_ELEMENTBUFFS: flatbuffers::VOffsetT = 6;
+    pub const VT_ENEMYELEMENTBREAKDURATION: flatbuffers::VOffsetT = 6;
+    pub const VT_ELEMENTBUFFS: flatbuffers::VOffsetT = 8;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -44,17 +45,20 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
         if let Some(x) = args.elementBuffs {
             builder.add_elementBuffs(x);
         }
+        builder.add_enemyElementBreakDuration(args.enemyElementBreakDuration);
         builder.add_elementBreakDuration(args.elementBreakDuration);
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_EPBreakBuffDataT {
         let elementBreakDuration = self.elementBreakDuration();
+        let enemyElementBreakDuration = self.enemyElementBreakDuration();
         let elementBuffs = self
             .elementBuffs()
             .map(|x| x.iter().map(|s| s.to_string()).collect());
         clz_Torappu_EPBreakBuffDataT {
             elementBreakDuration,
+            enemyElementBreakDuration,
             elementBuffs,
         }
     }
@@ -68,6 +72,20 @@ impl<'a> clz_Torappu_EPBreakBuffData<'a> {
             self._tab
                 .get::<f32>(
                     clz_Torappu_EPBreakBuffData::VT_ELEMENTBREAKDURATION,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn enemyElementBreakDuration(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_EPBreakBuffData::VT_ENEMYELEMENTBREAKDURATION,
                     Some(0.0),
                 )
                 .unwrap()
@@ -97,6 +115,11 @@ impl flatbuffers::Verifiable for clz_Torappu_EPBreakBuffData<'_> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<f32>("elementBreakDuration", Self::VT_ELEMENTBREAKDURATION, false)?
+            .visit_field::<f32>(
+                "enemyElementBreakDuration",
+                Self::VT_ENEMYELEMENTBREAKDURATION,
+                false,
+            )?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
             >>("elementBuffs", Self::VT_ELEMENTBUFFS, false)?
@@ -106,6 +129,7 @@ impl flatbuffers::Verifiable for clz_Torappu_EPBreakBuffData<'_> {
 }
 pub struct clz_Torappu_EPBreakBuffDataArgs<'a> {
     pub elementBreakDuration: f32,
+    pub enemyElementBreakDuration: f32,
     pub elementBuffs: Option<
         flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
     >,
@@ -115,6 +139,7 @@ impl<'a> Default for clz_Torappu_EPBreakBuffDataArgs<'a> {
     fn default() -> Self {
         clz_Torappu_EPBreakBuffDataArgs {
             elementBreakDuration: 0.0,
+            enemyElementBreakDuration: 0.0,
             elementBuffs: None,
         }
     }
@@ -130,6 +155,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_EPBreakBuffDataBuil
         self.fbb_.push_slot::<f32>(
             clz_Torappu_EPBreakBuffData::VT_ELEMENTBREAKDURATION,
             elementBreakDuration,
+            0.0,
+        );
+    }
+    #[inline]
+    pub fn add_enemyElementBreakDuration(&mut self, enemyElementBreakDuration: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_EPBreakBuffData::VT_ENEMYELEMENTBREAKDURATION,
+            enemyElementBreakDuration,
             0.0,
         );
     }
@@ -166,6 +199,10 @@ impl core::fmt::Debug for clz_Torappu_EPBreakBuffData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_EPBreakBuffData");
         ds.field("elementBreakDuration", &self.elementBreakDuration());
+        ds.field(
+            "enemyElementBreakDuration",
+            &self.enemyElementBreakDuration(),
+        );
         ds.field("elementBuffs", &self.elementBuffs());
         ds.finish()
     }
@@ -174,12 +211,14 @@ impl core::fmt::Debug for clz_Torappu_EPBreakBuffData<'_> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_EPBreakBuffDataT {
     pub elementBreakDuration: f32,
+    pub enemyElementBreakDuration: f32,
     pub elementBuffs: Option<Vec<String>>,
 }
 impl Default for clz_Torappu_EPBreakBuffDataT {
     fn default() -> Self {
         Self {
             elementBreakDuration: 0.0,
+            enemyElementBreakDuration: 0.0,
             elementBuffs: None,
         }
     }
@@ -190,6 +229,7 @@ impl clz_Torappu_EPBreakBuffDataT {
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_EPBreakBuffData<'b>> {
         let elementBreakDuration = self.elementBreakDuration;
+        let enemyElementBreakDuration = self.enemyElementBreakDuration;
         let elementBuffs = self.elementBuffs.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
             _fbb.create_vector(&w)
@@ -198,6 +238,7 @@ impl clz_Torappu_EPBreakBuffDataT {
             _fbb,
             &clz_Torappu_EPBreakBuffDataArgs {
                 elementBreakDuration,
+                enemyElementBreakDuration,
                 elementBuffs,
             },
         )

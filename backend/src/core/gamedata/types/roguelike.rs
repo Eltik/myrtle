@@ -2,6 +2,9 @@
 //!
 //! Contains types for parsing roguelike_topic_table.json and storing
 //! processed data for use in user scoring calculations.
+//!
+//! The FlatBuffer-exported JSON uses PascalCase keys and `[{key, value}]`
+//! arrays for dict types. We parse via serde_json::Value and extract manually.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -44,78 +47,54 @@ pub struct RoguelikeThemeGameData {
     pub max_buffs: i32,
 }
 
-/// Root structure for roguelike_topic_table.json parsing
+/// Root structure for roguelike_topic_table.json (FlatBuffer export format)
+///
+/// Top-level keys: Topics, Details, Modules, Constant, CustomizeData
+/// Topics and Details are `[{key, value}]` arrays (PascalCase).
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RoguelikeTopicTableFile {
-    pub topics: HashMap<String, RoguelikeTopicEntry>,
-    pub details: HashMap<String, RoguelikeDetailEntry>,
-}
-
-/// Topic entry (theme metadata)
-#[derive(Debug, Clone, Deserialize)]
-pub struct RoguelikeTopicEntry {
-    pub id: String,
-    pub name: String,
-}
-
-/// Detail entry containing collectibles and challenges
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RoguelikeDetailEntry {
-    #[serde(default)]
-    pub endings: Option<HashMap<String, serde_json::Value>>,
-    #[serde(default)]
-    pub challenges: Option<HashMap<String, serde_json::Value>>,
-    #[serde(default)]
-    pub difficulties: Option<Vec<RoguelikeDifficultyEntry>>,
-    #[serde(default)]
-    pub milestones: Option<Vec<serde_json::Value>>,
-    #[serde(default)]
-    pub month_squad: Option<HashMap<String, serde_json::Value>>,
-    #[serde(default)]
-    pub archive_comp: Option<HashMap<String, serde_json::Value>>,
-    #[serde(default)]
-    pub band_ref: Option<HashMap<String, serde_json::Value>>,
-}
-
-/// Difficulty entry for extracting max grade
-#[derive(Debug, Clone, Deserialize)]
-pub struct RoguelikeDifficultyEntry {
-    #[serde(default)]
-    pub grade: i32,
+    #[serde(alias = "Topics", alias = "topics", default)]
+    pub topics: serde_json::Value,
+    #[serde(alias = "Details", alias = "details", default)]
+    pub details: serde_json::Value,
 }
 
 impl RoguelikeGameData {
-    /// Parse from roguelike_topic_table.json
-    /// Uses archiveComp for collectible counts (eg. max collectible count)
+    /// Parse from roguelike_topic_table.json.
+    ///
+    /// Handles both formats:
+    /// - FlatBuffer export: PascalCase, `[{key, value}]` arrays
+    /// - CN-gamedata: camelCase, `{key: value}` dicts
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
         let mut data = RoguelikeGameData::default();
 
-        for (theme_id, detail) in &table.details {
-            let topic = table.topics.get(theme_id);
-            let theme_name = topic.map_or(theme_id.clone(), |t| t.name.clone());
+        let topics = kv_to_map(&table.topics);
+        let details = kv_to_map(&table.details);
 
-            let max_endings = detail.endings.as_ref().map_or(0, |e| e.len() as i32);
+        for (theme_id, detail) in &details {
+            let theme_name = topics
+                .get(theme_id)
+                .and_then(|t| get_str(t, &["Name", "name"]))
+                .unwrap_or_else(|| theme_id.clone());
 
-            let max_challenges = detail.challenges.as_ref().map_or(0, |c| c.len() as i32);
+            let max_endings = get_kv_array_len(detail, &["Endings", "endings"]);
+            let max_challenges = get_kv_array_len(detail, &["Challenges", "challenges"]);
+            let max_bp_levels = get_array_len(detail, &["Milestones", "milestones"]);
+            let max_monthly_squads = get_kv_array_len(detail, &["MonthSquad", "monthSquad"]);
+            let max_bands = get_kv_array_len(detail, &["BandRef", "bandRef"]);
 
-            let max_difficulty_grade = detail
-                .difficulties
-                .as_ref()
-                .map_or(0, |diffs| diffs.iter().map(|d| d.grade).max().unwrap_or(0));
+            let max_difficulty_grade = get_array(detail, &["Difficulties", "difficulties"])
+                .iter()
+                .filter_map(|d| {
+                    d.get("Grade")
+                        .or_else(|| d.get("grade"))
+                        .and_then(|v| v.as_i64())
+                })
+                .max()
+                .unwrap_or(0) as i32;
 
-            let max_bp_levels = detail.milestones.as_ref().map_or(0, |m| m.len() as i32);
-
-            let max_monthly_squads = detail.month_squad.as_ref().map_or(0, |s| s.len() as i32);
-
-            let (
-                max_relics,
-                max_capsules,
-                max_bands,
-                max_theme_collectibles,
-                max_endbook_items,
-                max_buffs,
-            ) = parse_archive_comp(detail);
+            let (max_relics, max_capsules, max_theme_collectibles, max_endbook_items, max_buffs) =
+                parse_archive_comp(detail);
 
             data.themes.insert(
                 theme_id.clone(),
@@ -169,59 +148,122 @@ impl RoguelikeGameData {
     }
 }
 
-/// Extracts collectible max counts from archiveComp.
+/// Extracts collectible max counts from ArchiveComp.
 ///
-/// archiveComp structure: { "relic": {"relic": {id: ...}}, "capsule": {"capsule": {...}}, ... }
-/// Each category has an inner key (usually same name) containing a dict of items.
-///
-/// Categories we care about:
-/// - relic, capsule: standard collectibles (separate fields)
-/// - band: tracked via detail.bandRef, but user data has bands in collect.band
-/// - endbook: CG scene unlocks
-/// - buff: permanent buff purchases
-/// - totem, chaos, fragment, disaster, wrath, copper: theme-specific → summed into max_theme_collectibles
-fn parse_archive_comp(detail: &RoguelikeDetailEntry) -> (i32, i32, i32, i32, i32, i32) {
-    let archive = match &detail.archive_comp {
+/// FlatBuffer format: `{ "Relic": { "Relic": [{key, value}, ...] }, ... }`
+/// CN-gamedata format: `{ "relic": { "relic": { id: ... } }, ... }`
+fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
+    let archive = match detail
+        .get("ArchiveComp")
+        .or_else(|| detail.get("archiveComp"))
+    {
         Some(a) => a,
-        None => return (0, 0, 0, 0, 0, 0),
+        None => return (0, 0, 0, 0, 0),
     };
 
-    let count_inner = |category: &str| -> i32 {
-        archive
-            .get(category)
-            .and_then(|v| v.as_object())
-            .map_or(0, |obj| {
-                // The inner dict has one or more keys; count items in the
-                // first dict-valued key (the collectible items dict)
-                obj.values()
-                    .filter_map(|v| v.as_object())
-                    .map(|inner| inner.len() as i32)
-                    .sum()
-            })
+    let count_inner = |category_variants: &[&str]| -> i32 {
+        let cat = category_variants.iter().find_map(|c| archive.get(*c));
+        let Some(cat_val) = cat else { return 0 };
+
+        if let Some(obj) = cat_val.as_object() {
+            // Each inner key maps to either a dict (CN) or a [{key,value}] array (FBS)
+            obj.values()
+                .map(|v| {
+                    if let Some(arr) = v.as_array() {
+                        // FBS format: [{key, value}, ...]
+                        arr.len() as i32
+                    } else if let Some(inner_obj) = v.as_object() {
+                        // CN format: {id: ...}
+                        inner_obj.len() as i32
+                    } else {
+                        0
+                    }
+                })
+                .sum()
+        } else {
+            0
+        }
     };
 
-    let max_relics = count_inner("relic");
-    let max_capsules = count_inner("capsule");
+    let max_relics = count_inner(&["Relic", "relic"]);
+    let max_capsules = count_inner(&["Capsule", "capsule"]);
+    let max_endbook_items = count_inner(&["Endbook", "endbook"]);
+    let max_buffs = count_inner(&["Buff", "buff"]);
 
-    let max_bands = detail.band_ref.as_ref().map_or(0, |b| b.len() as i32);
-
-    let max_endbook_items = count_inner("endbook");
-    let max_buffs = count_inner("buff");
-
-    // Theme-specific collectibles: everything in archiveComp that isn't
-    // relic, capsule, trap, chat, endbook, buff
-    let theme_specific_categories = ["totem", "chaos", "fragment", "disaster", "wrath", "copper"];
-    let max_theme_collectibles: i32 = theme_specific_categories
+    let theme_specific = [
+        ["Totem", "totem"],
+        ["Chaos", "chaos"],
+        ["Fragment", "fragment"],
+        ["Disaster", "disaster"],
+        ["Wrath", "wrath"],
+        ["Copper", "copper"],
+    ];
+    let max_theme_collectibles: i32 = theme_specific
         .iter()
-        .map(|cat| count_inner(cat))
+        .map(|variants| count_inner(variants))
         .sum();
 
     (
         max_relics,
         max_capsules,
-        max_bands,
         max_theme_collectibles,
         max_endbook_items,
         max_buffs,
     )
+}
+
+// ── JSON helpers ───────────────────────────────────────────────
+
+/// Convert a `[{key, value}]` array or `{key: value}` dict to a HashMap.
+fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
+    let mut map = HashMap::new();
+    if let Some(arr) = val.as_array() {
+        for item in arr {
+            if let (Some(k), Some(v)) =
+                (item.get("key").and_then(|k| k.as_str()), item.get("value"))
+            {
+                map.insert(k.to_string(), v.clone());
+            }
+        }
+    } else if let Some(obj) = val.as_object() {
+        for (k, v) in obj {
+            map.insert(k.clone(), v.clone());
+        }
+    }
+    map
+}
+
+/// Get a string field, trying multiple key variants.
+fn get_str(val: &serde_json::Value, keys: &[&str]) -> Option<String> {
+    keys.iter()
+        .find_map(|k| val.get(*k))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+}
+
+/// Count elements in a `[{key, value}]` array or `{key: value}` dict.
+fn get_kv_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
+    let field = keys.iter().find_map(|k| val.get(*k));
+    match field {
+        Some(v) if v.is_array() => v.as_array().map_or(0, |a| a.len() as i32),
+        Some(v) if v.is_object() => v.as_object().map_or(0, |o| o.len() as i32),
+        _ => 0,
+    }
+}
+
+/// Count elements in a plain array.
+fn get_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
+    keys.iter()
+        .find_map(|k| val.get(*k))
+        .and_then(|v| v.as_array())
+        .map_or(0, |a| a.len() as i32)
+}
+
+/// Get a plain array.
+fn get_array(val: &serde_json::Value, keys: &[&str]) -> Vec<serde_json::Value> {
+    keys.iter()
+        .find_map(|k| val.get(*k))
+        .and_then(|v| v.as_array())
+        .cloned()
+        .unwrap_or_default()
 }

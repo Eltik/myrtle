@@ -53,10 +53,6 @@ struct ThemeProgress {
     /// Highest difficulty grade cleared
     #[serde(default)]
     difficulty: Option<serde_json::Value>,
-
-    /// Monthly squad data
-    #[serde(default)]
-    month_squad: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Deserialize, Default)]

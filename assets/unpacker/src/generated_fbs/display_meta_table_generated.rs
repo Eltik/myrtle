@@ -1647,6 +1647,101 @@ impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_UIGuideTarget {}
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
+pub const ENUM_MIN_ENUM__TORAPPU_KEY_CODE_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_KEY_CODE_TYPE: i32 = 1;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_KEY_CODE_TYPE: [enum__Torappu_KeyCodeType; 2] = [
+    enum__Torappu_KeyCodeType::KEYBOARD,
+    enum__Torappu_KeyCodeType::MOUSE,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_KeyCodeType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_KeyCodeType {
+    pub const KEYBOARD: Self = Self(0);
+    pub const MOUSE: Self = Self(1);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 1;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::KEYBOARD, Self::MOUSE];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::KEYBOARD => Some("KEYBOARD"),
+            Self::MOUSE => Some("MOUSE"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_KeyCodeType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_KeyCodeType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_KeyCodeType {
+    type Output = enum__Torappu_KeyCodeType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_KeyCodeType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_KeyCodeType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_KeyCodeType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 pub const ENUM_MIN_ENUM__TORAPPU_KEY_SETTING_GROUP: i32 = 0;
 #[deprecated(
     since = "2.0.0",
@@ -10197,9 +10292,10 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NameCardV2TimeLimitInfo<'a> {
 }
 
 impl<'a> clz_Torappu_NameCardV2TimeLimitInfo<'a> {
-    pub const VT_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_AVAILSTARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_AVAILENDTIME: flatbuffers::VOffsetT = 8;
+    pub const VT_LIMITID: flatbuffers::VOffsetT = 4;
+    pub const VT_ID: flatbuffers::VOffsetT = 6;
+    pub const VT_AVAILSTARTTIME: flatbuffers::VOffsetT = 8;
+    pub const VT_AVAILENDTIME: flatbuffers::VOffsetT = 10;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -10216,20 +10312,37 @@ impl<'a> clz_Torappu_NameCardV2TimeLimitInfo<'a> {
         if let Some(x) = args.id {
             builder.add_id(x);
         }
+        if let Some(x) = args.limitId {
+            builder.add_limitId(x);
+        }
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_NameCardV2TimeLimitInfoT {
+        let limitId = self.limitId().map(|x| x.to_string());
         let id = self.id().map(|x| x.to_string());
         let availStartTime = self.availStartTime();
         let availEndTime = self.availEndTime();
         clz_Torappu_NameCardV2TimeLimitInfoT {
+            limitId,
             id,
             availStartTime,
             availEndTime,
         }
     }
 
+    #[inline]
+    pub fn limitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_NameCardV2TimeLimitInfo::VT_LIMITID,
+                None,
+            )
+        }
+    }
     #[inline]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
@@ -10280,6 +10393,7 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("limitId", Self::VT_LIMITID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
             .visit_field::<i64>("availStartTime", Self::VT_AVAILSTARTTIME, false)?
             .visit_field::<i64>("availEndTime", Self::VT_AVAILENDTIME, false)?
@@ -10288,6 +10402,7 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     }
 }
 pub struct clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
+    pub limitId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub id: Option<flatbuffers::WIPOffset<&'a str>>,
     pub availStartTime: i64,
     pub availEndTime: i64,
@@ -10296,6 +10411,7 @@ impl<'a> Default for clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_NameCardV2TimeLimitInfoArgs {
+            limitId: None,
             id: None,
             availStartTime: 0,
             availEndTime: 0,
@@ -10310,6 +10426,13 @@ pub struct clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a: 'b, 'b, A: flatbuffers
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
     clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a, 'b, A>
 {
+    #[inline]
+    pub fn add_limitId(&mut self, limitId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_NameCardV2TimeLimitInfo::VT_LIMITID,
+            limitId,
+        );
+    }
     #[inline]
     pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
@@ -10353,6 +10476,7 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 impl core::fmt::Debug for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_NameCardV2TimeLimitInfo");
+        ds.field("limitId", &self.limitId());
         ds.field("id", &self.id());
         ds.field("availStartTime", &self.availStartTime());
         ds.field("availEndTime", &self.availEndTime());
@@ -10362,6 +10486,7 @@ impl core::fmt::Debug for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_NameCardV2TimeLimitInfoT {
+    pub limitId: Option<String>,
     pub id: Option<String>,
     pub availStartTime: i64,
     pub availEndTime: i64,
@@ -10369,6 +10494,7 @@ pub struct clz_Torappu_NameCardV2TimeLimitInfoT {
 impl Default for clz_Torappu_NameCardV2TimeLimitInfoT {
     fn default() -> Self {
         Self {
+            limitId: None,
             id: None,
             availStartTime: 0,
             availEndTime: 0,
@@ -10380,16 +10506,232 @@ impl clz_Torappu_NameCardV2TimeLimitInfoT {
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_NameCardV2TimeLimitInfo<'b>> {
+        let limitId = self.limitId.as_ref().map(|x| _fbb.create_string(x));
         let id = self.id.as_ref().map(|x| _fbb.create_string(x));
         let availStartTime = self.availStartTime;
         let availEndTime = self.availEndTime;
         clz_Torappu_NameCardV2TimeLimitInfo::create(
             _fbb,
             &clz_Torappu_NameCardV2TimeLimitInfoArgs {
+                limitId,
                 id,
                 availStartTime,
                 availEndTime,
             },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_NameCardV2TimeLimitInfoOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a> {
+    type Inner = dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_NameCardV2TimeLimitInfo { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_NameCardV2TimeLimitInfoArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_NameCardV2TimeLimitInfoBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_NameCardV2TimeLimitInfoT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_NameCardV2TimeLimitInfoT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_NameCardV2TimeLimitInfo::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_NameCardV2TimeLimitInfo,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_NameCardV2TimeLimitInfo<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>>(
+                    dict__string__clz_Torappu_NameCardV2TimeLimitInfo::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_NameCardV2TimeLimitInfo<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_NameCardV2TimeLimitInfoArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_NameCardV2TimeLimitInfoBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_NameCardV2TimeLimitInfo::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_NameCardV2TimeLimitInfo<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_NameCardV2TimeLimitInfo>>(
+                dict__string__clz_Torappu_NameCardV2TimeLimitInfo::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_NameCardV2TimeLimitInfoBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_NameCardV2TimeLimitInfo::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_NameCardV2TimeLimitInfo");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_NameCardV2TimeLimitInfoT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_NameCardV2TimeLimitInfoT>>,
+}
+impl Default for dict__string__clz_Torappu_NameCardV2TimeLimitInfoT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_NameCardV2TimeLimitInfoT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_NameCardV2TimeLimitInfo::create(
+            _fbb,
+            &dict__string__clz_Torappu_NameCardV2TimeLimitInfoArgs { key, value },
         )
     }
 }
@@ -10792,7 +11134,7 @@ impl<'a> clz_Torappu_NameCardV2SkinData<'a> {
     ) -> Option<
         flatbuffers::Vector<
             'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
         >,
     > {
         // Safety:
@@ -10802,7 +11144,7 @@ impl<'a> clz_Torappu_NameCardV2SkinData<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo>,
                 >,
             >>(clz_Torappu_NameCardV2SkinData::VT_TIMELIMITINFOLIST, None)
         }
@@ -10864,7 +11206,7 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2SkinData<'_> {
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo>,
                 >,
             >>("timeLimitInfoList", Self::VT_TIMELIMITINFOLIST, false)?
             .finish();
@@ -10900,7 +11242,7 @@ pub struct clz_Torappu_NameCardV2SkinDataArgs<'a> {
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
             >,
         >,
     >,
@@ -11100,7 +11442,7 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_NameCardV2SkinDataB
         timeLimitInfoList: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'b>>,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'b>>,
             >,
         >,
     ) {
@@ -11176,7 +11518,7 @@ pub struct clz_Torappu_NameCardV2SkinDataT {
     pub skinTmplCnt: i32,
     pub canChangeTmpl: bool,
     pub isTimeLimit: bool,
-    pub timeLimitInfoList: Option<Vec<clz_Torappu_NameCardV2TimeLimitInfoT>>,
+    pub timeLimitInfoList: Option<Vec<dict__string__clz_Torappu_NameCardV2TimeLimitInfoT>>,
 }
 impl Default for clz_Torappu_NameCardV2SkinDataT {
     fn default() -> Self {
@@ -16214,8 +16556,9 @@ impl<'a> clz_Torappu_KeyItem<'a> {
     pub const VT_KEYID: flatbuffers::VOffsetT = 4;
     pub const VT_KEYNAME: flatbuffers::VOffsetT = 6;
     pub const VT_USEICON: flatbuffers::VOffsetT = 8;
-    pub const VT_KEYCODES: flatbuffers::VOffsetT = 10;
-    pub const VT_CANBESETTED: flatbuffers::VOffsetT = 12;
+    pub const VT_KEYCODETYPE: flatbuffers::VOffsetT = 10;
+    pub const VT_KEYCODES: flatbuffers::VOffsetT = 12;
+    pub const VT_CANBESETTED: flatbuffers::VOffsetT = 14;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -16230,6 +16573,7 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         if let Some(x) = args.keyCodes {
             builder.add_keyCodes(x);
         }
+        builder.add_keyCodeType(args.keyCodeType);
         if let Some(x) = args.keyName {
             builder.add_keyName(x);
         }
@@ -16245,12 +16589,14 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         let keyId = self.keyId().map(|x| x.to_string());
         let keyName = self.keyName().map(|x| x.to_string());
         let useIcon = self.useIcon();
+        let keyCodeType = self.keyCodeType();
         let keyCodes = self.keyCodes().map(|x| x.into_iter().collect());
         let canBeSetted = self.canBeSetted();
         clz_Torappu_KeyItemT {
             keyId,
             keyName,
             useIcon,
+            keyCodeType,
             keyCodes,
             canBeSetted,
         }
@@ -16284,6 +16630,20 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         unsafe {
             self._tab
                 .get::<bool>(clz_Torappu_KeyItem::VT_USEICON, Some(false))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn keyCodeType(&self) -> enum__Torappu_KeyCodeType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_KeyCodeType>(
+                    clz_Torappu_KeyItem::VT_KEYCODETYPE,
+                    Some(enum__Torappu_KeyCodeType::KEYBOARD),
+                )
                 .unwrap()
         }
     }
@@ -16324,6 +16684,7 @@ impl flatbuffers::Verifiable for clz_Torappu_KeyItem<'_> {
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("keyId", Self::VT_KEYID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("keyName", Self::VT_KEYNAME, false)?
             .visit_field::<bool>("useIcon", Self::VT_USEICON, false)?
+            .visit_field::<enum__Torappu_KeyCodeType>("keyCodeType", Self::VT_KEYCODETYPE, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
                 "keyCodes",
                 Self::VT_KEYCODES,
@@ -16338,6 +16699,7 @@ pub struct clz_Torappu_KeyItemArgs<'a> {
     pub keyId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub keyName: Option<flatbuffers::WIPOffset<&'a str>>,
     pub useIcon: bool,
+    pub keyCodeType: enum__Torappu_KeyCodeType,
     pub keyCodes: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, i32>>>,
     pub canBeSetted: bool,
 }
@@ -16348,6 +16710,7 @@ impl<'a> Default for clz_Torappu_KeyItemArgs<'a> {
             keyId: None,
             keyName: None,
             useIcon: false,
+            keyCodeType: enum__Torappu_KeyCodeType::KEYBOARD,
             keyCodes: None,
             canBeSetted: false,
         }
@@ -16375,6 +16738,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_KeyItemBuilder<'a, 
     pub fn add_useIcon(&mut self, useIcon: bool) {
         self.fbb_
             .push_slot::<bool>(clz_Torappu_KeyItem::VT_USEICON, useIcon, false);
+    }
+    #[inline]
+    pub fn add_keyCodeType(&mut self, keyCodeType: enum__Torappu_KeyCodeType) {
+        self.fbb_.push_slot::<enum__Torappu_KeyCodeType>(
+            clz_Torappu_KeyItem::VT_KEYCODETYPE,
+            keyCodeType,
+            enum__Torappu_KeyCodeType::KEYBOARD,
+        );
     }
     #[inline]
     pub fn add_keyCodes(&mut self, keyCodes: flatbuffers::WIPOffset<flatbuffers::Vector<'b, i32>>) {
@@ -16411,6 +16782,7 @@ impl core::fmt::Debug for clz_Torappu_KeyItem<'_> {
         ds.field("keyId", &self.keyId());
         ds.field("keyName", &self.keyName());
         ds.field("useIcon", &self.useIcon());
+        ds.field("keyCodeType", &self.keyCodeType());
         ds.field("keyCodes", &self.keyCodes());
         ds.field("canBeSetted", &self.canBeSetted());
         ds.finish()
@@ -16422,6 +16794,7 @@ pub struct clz_Torappu_KeyItemT {
     pub keyId: Option<String>,
     pub keyName: Option<String>,
     pub useIcon: bool,
+    pub keyCodeType: enum__Torappu_KeyCodeType,
     pub keyCodes: Option<Vec<i32>>,
     pub canBeSetted: bool,
 }
@@ -16431,6 +16804,7 @@ impl Default for clz_Torappu_KeyItemT {
             keyId: None,
             keyName: None,
             useIcon: false,
+            keyCodeType: enum__Torappu_KeyCodeType::KEYBOARD,
             keyCodes: None,
             canBeSetted: false,
         }
@@ -16444,6 +16818,7 @@ impl clz_Torappu_KeyItemT {
         let keyId = self.keyId.as_ref().map(|x| _fbb.create_string(x));
         let keyName = self.keyName.as_ref().map(|x| _fbb.create_string(x));
         let useIcon = self.useIcon;
+        let keyCodeType = self.keyCodeType;
         let keyCodes = self.keyCodes.as_ref().map(|x| _fbb.create_vector(x));
         let canBeSetted = self.canBeSetted;
         clz_Torappu_KeyItem::create(
@@ -16452,6 +16827,7 @@ impl clz_Torappu_KeyItemT {
                 keyId,
                 keyName,
                 useIcon,
+                keyCodeType,
                 keyCodes,
                 canBeSetted,
             },
@@ -25594,6 +25970,485 @@ impl clz_Torappu_StickerDataT {
         clz_Torappu_StickerData::create(_fbb, &clz_Torappu_StickerDataArgs { stickerMap })
     }
 }
+pub enum clz_Torappu_AVGDialogPresetDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_AVGDialogPresetData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_AVGDialogPresetData<'a> {
+    type Inner = clz_Torappu_AVGDialogPresetData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_AVGDialogPresetData<'a> {
+    pub const VT_ID: flatbuffers::VOffsetT = 4;
+    pub const VT_NAME: flatbuffers::VOffsetT = 6;
+    pub const VT_NAMEFONTSIZE: flatbuffers::VOffsetT = 8;
+    pub const VT_MESSAGEFONTSIZE: flatbuffers::VOffsetT = 10;
+    pub const VT_MESSAGEMINHEIGHT: flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_AVGDialogPresetData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_AVGDialogPresetDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogPresetData<'bldr>> {
+        let mut builder = clz_Torappu_AVGDialogPresetDataBuilder::new(_fbb);
+        builder.add_messageMinHeight(args.messageMinHeight);
+        builder.add_messageFontSize(args.messageFontSize);
+        builder.add_nameFontSize(args.nameFontSize);
+        if let Some(x) = args.name {
+            builder.add_name(x);
+        }
+        builder.add_id(args.id);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_AVGDialogPresetDataT {
+        let id = self.id();
+        let name = self.name().map(|x| x.to_string());
+        let nameFontSize = self.nameFontSize();
+        let messageFontSize = self.messageFontSize();
+        let messageMinHeight = self.messageMinHeight();
+        clz_Torappu_AVGDialogPresetDataT {
+            id,
+            name,
+            nameFontSize,
+            messageFontSize,
+            messageMinHeight,
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_AVGDialogPresetData::VT_ID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn name(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_AVGDialogPresetData::VT_NAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn nameFontSize(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_AVGDialogPresetData::VT_NAMEFONTSIZE, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn messageFontSize(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_AVGDialogPresetData::VT_MESSAGEFONTSIZE, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn messageMinHeight(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(
+                    clz_Torappu_AVGDialogPresetData::VT_MESSAGEMINHEIGHT,
+                    Some(0.0),
+                )
+                .unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_AVGDialogPresetData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<i32>("id", Self::VT_ID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
+            .visit_field::<i32>("nameFontSize", Self::VT_NAMEFONTSIZE, false)?
+            .visit_field::<i32>("messageFontSize", Self::VT_MESSAGEFONTSIZE, false)?
+            .visit_field::<f32>("messageMinHeight", Self::VT_MESSAGEMINHEIGHT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_AVGDialogPresetDataArgs<'a> {
+    pub id: i32,
+    pub name: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub nameFontSize: i32,
+    pub messageFontSize: i32,
+    pub messageMinHeight: f32,
+}
+impl<'a> Default for clz_Torappu_AVGDialogPresetDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_AVGDialogPresetDataArgs {
+            id: 0,
+            name: None,
+            nameFontSize: 0,
+            messageFontSize: 0,
+            messageMinHeight: 0.0,
+        }
+    }
+}
+
+pub struct clz_Torappu_AVGDialogPresetDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_AVGDialogPresetDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_id(&mut self, id: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_AVGDialogPresetData::VT_ID, id, 0);
+    }
+    #[inline]
+    pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_AVGDialogPresetData::VT_NAME,
+            name,
+        );
+    }
+    #[inline]
+    pub fn add_nameFontSize(&mut self, nameFontSize: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_AVGDialogPresetData::VT_NAMEFONTSIZE,
+            nameFontSize,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_messageFontSize(&mut self, messageFontSize: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_AVGDialogPresetData::VT_MESSAGEFONTSIZE,
+            messageFontSize,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_messageMinHeight(&mut self, messageMinHeight: f32) {
+        self.fbb_.push_slot::<f32>(
+            clz_Torappu_AVGDialogPresetData::VT_MESSAGEMINHEIGHT,
+            messageMinHeight,
+            0.0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_AVGDialogPresetDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_AVGDialogPresetDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogPresetData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_AVGDialogPresetData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_AVGDialogPresetData");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("nameFontSize", &self.nameFontSize());
+        ds.field("messageFontSize", &self.messageFontSize());
+        ds.field("messageMinHeight", &self.messageMinHeight());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_AVGDialogPresetDataT {
+    pub id: i32,
+    pub name: Option<String>,
+    pub nameFontSize: i32,
+    pub messageFontSize: i32,
+    pub messageMinHeight: f32,
+}
+impl Default for clz_Torappu_AVGDialogPresetDataT {
+    fn default() -> Self {
+        Self {
+            id: 0,
+            name: None,
+            nameFontSize: 0,
+            messageFontSize: 0,
+            messageMinHeight: 0.0,
+        }
+    }
+}
+impl clz_Torappu_AVGDialogPresetDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogPresetData<'b>> {
+        let id = self.id;
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        let nameFontSize = self.nameFontSize;
+        let messageFontSize = self.messageFontSize;
+        let messageMinHeight = self.messageMinHeight;
+        clz_Torappu_AVGDialogPresetData::create(
+            _fbb,
+            &clz_Torappu_AVGDialogPresetDataArgs {
+                id,
+                name,
+                nameFontSize,
+                messageFontSize,
+                messageMinHeight,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_AVGDialogSettingDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_AVGDialogSettingData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_AVGDialogSettingData<'a> {
+    type Inner = clz_Torappu_AVGDialogSettingData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_AVGDialogSettingData<'a> {
+    pub const VT_DEFAULTPRESETID: flatbuffers::VOffsetT = 4;
+    pub const VT_PRESETLIST: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_AVGDialogSettingData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_AVGDialogSettingDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData<'bldr>> {
+        let mut builder = clz_Torappu_AVGDialogSettingDataBuilder::new(_fbb);
+        if let Some(x) = args.presetList {
+            builder.add_presetList(x);
+        }
+        builder.add_defaultPresetId(args.defaultPresetId);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_AVGDialogSettingDataT {
+        let defaultPresetId = self.defaultPresetId();
+        let presetList = self
+            .presetList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_AVGDialogSettingDataT {
+            defaultPresetId,
+            presetList,
+        }
+    }
+
+    #[inline]
+    pub fn defaultPresetId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_AVGDialogSettingData::VT_DEFAULTPRESETID,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn presetList(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogPresetData<'a>>>,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogPresetData>,
+                >,
+            >>(clz_Torappu_AVGDialogSettingData::VT_PRESETLIST, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_AVGDialogSettingData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<i32>("defaultPresetId", Self::VT_DEFAULTPRESETID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogPresetData>,
+                >,
+            >>("presetList", Self::VT_PRESETLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_AVGDialogSettingDataArgs<'a> {
+    pub defaultPresetId: i32,
+    pub presetList: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogPresetData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_AVGDialogSettingDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_AVGDialogSettingDataArgs {
+            defaultPresetId: 0,
+            presetList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_AVGDialogSettingDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_AVGDialogSettingDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_defaultPresetId(&mut self, defaultPresetId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_AVGDialogSettingData::VT_DEFAULTPRESETID,
+            defaultPresetId,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_presetList(
+        &mut self,
+        presetList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogPresetData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_AVGDialogSettingData::VT_PRESETLIST,
+            presetList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_AVGDialogSettingDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_AVGDialogSettingDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_AVGDialogSettingData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_AVGDialogSettingData");
+        ds.field("defaultPresetId", &self.defaultPresetId());
+        ds.field("presetList", &self.presetList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_AVGDialogSettingDataT {
+    pub defaultPresetId: i32,
+    pub presetList: Option<Vec<clz_Torappu_AVGDialogPresetDataT>>,
+}
+impl Default for clz_Torappu_AVGDialogSettingDataT {
+    fn default() -> Self {
+        Self {
+            defaultPresetId: 0,
+            presetList: None,
+        }
+    }
+}
+impl clz_Torappu_AVGDialogSettingDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData<'b>> {
+        let defaultPresetId = self.defaultPresetId;
+        let presetList = self.presetList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_AVGDialogSettingData::create(
+            _fbb,
+            &clz_Torappu_AVGDialogSettingDataArgs {
+                defaultPresetId,
+                presetList,
+            },
+        )
+    }
+}
 pub enum clz_Torappu_DisplayMetaDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -25625,6 +26480,7 @@ impl<'a> clz_Torappu_DisplayMetaData<'a> {
     pub const VT_ARTGALLERYCOLLECTDATA: flatbuffers::VOffsetT = 24;
     pub const VT_MAGAZINELEAFDATA: flatbuffers::VOffsetT = 26;
     pub const VT_STICKERDATA: flatbuffers::VOffsetT = 28;
+    pub const VT_AVGDIALOGSETTINGDATA: flatbuffers::VOffsetT = 30;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -25636,6 +26492,9 @@ impl<'a> clz_Torappu_DisplayMetaData<'a> {
         args: &'args clz_Torappu_DisplayMetaDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_DisplayMetaData<'bldr>> {
         let mut builder = clz_Torappu_DisplayMetaDataBuilder::new(_fbb);
+        if let Some(x) = args.avgDialogSettingData {
+            builder.add_avgDialogSettingData(x);
+        }
         if let Some(x) = args.stickerData {
             builder.add_stickerData(x);
         }
@@ -25698,6 +26557,7 @@ impl<'a> clz_Torappu_DisplayMetaData<'a> {
         let artGalleryCollectData = self.artGalleryCollectData().map(|x| Box::new(x.unpack()));
         let magazineLeafData = self.magazineLeafData().map(|x| Box::new(x.unpack()));
         let stickerData = self.stickerData().map(|x| Box::new(x.unpack()));
+        let avgDialogSettingData = self.avgDialogSettingData().map(|x| Box::new(x.unpack()));
         clz_Torappu_DisplayMetaDataT {
             playerAvatarData,
             homeBackgroundData,
@@ -25712,6 +26572,7 @@ impl<'a> clz_Torappu_DisplayMetaData<'a> {
             artGalleryCollectData,
             magazineLeafData,
             stickerData,
+            avgDialogSettingData,
         }
     }
 
@@ -25908,6 +26769,19 @@ impl<'a> clz_Torappu_DisplayMetaData<'a> {
                 )
         }
     }
+    #[inline]
+    pub fn avgDialogSettingData(&self) -> Option<clz_Torappu_AVGDialogSettingData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogSettingData>>(
+                    clz_Torappu_DisplayMetaData::VT_AVGDIALOGSETTINGDATA,
+                    None,
+                )
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_DisplayMetaData<'_> {
@@ -25990,6 +26864,11 @@ impl flatbuffers::Verifiable for clz_Torappu_DisplayMetaData<'_> {
                 Self::VT_STICKERDATA,
                 false,
             )?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_AVGDialogSettingData>>(
+                "avgDialogSettingData",
+                Self::VT_AVGDIALOGSETTINGDATA,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -26030,6 +26909,7 @@ pub struct clz_Torappu_DisplayMetaDataArgs<'a> {
         Option<flatbuffers::WIPOffset<clz_Torappu_ArtGalleryCollectData<'a>>>,
     pub magazineLeafData: Option<flatbuffers::WIPOffset<clz_Torappu_MagazineLeafData<'a>>>,
     pub stickerData: Option<flatbuffers::WIPOffset<clz_Torappu_StickerData<'a>>>,
+    pub avgDialogSettingData: Option<flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_DisplayMetaDataArgs<'a> {
     #[inline]
@@ -26048,6 +26928,7 @@ impl<'a> Default for clz_Torappu_DisplayMetaDataArgs<'a> {
             artGalleryCollectData: None,
             magazineLeafData: None,
             stickerData: None,
+            avgDialogSettingData: None,
         }
     }
 }
@@ -26210,6 +27091,17 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_DisplayMetaDataBuil
             );
     }
     #[inline]
+    pub fn add_avgDialogSettingData(
+        &mut self,
+        avgDialogSettingData: flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_AVGDialogSettingData>>(
+                clz_Torappu_DisplayMetaData::VT_AVGDIALOGSETTINGDATA,
+                avgDialogSettingData,
+            );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_DisplayMetaDataBuilder<'a, 'b, A> {
@@ -26242,6 +27134,7 @@ impl core::fmt::Debug for clz_Torappu_DisplayMetaData<'_> {
         ds.field("artGalleryCollectData", &self.artGalleryCollectData());
         ds.field("magazineLeafData", &self.magazineLeafData());
         ds.field("stickerData", &self.stickerData());
+        ds.field("avgDialogSettingData", &self.avgDialogSettingData());
         ds.finish()
     }
 }
@@ -26261,6 +27154,7 @@ pub struct clz_Torappu_DisplayMetaDataT {
     pub artGalleryCollectData: Option<Box<clz_Torappu_ArtGalleryCollectDataT>>,
     pub magazineLeafData: Option<Box<clz_Torappu_MagazineLeafDataT>>,
     pub stickerData: Option<Box<clz_Torappu_StickerDataT>>,
+    pub avgDialogSettingData: Option<Box<clz_Torappu_AVGDialogSettingDataT>>,
 }
 impl Default for clz_Torappu_DisplayMetaDataT {
     fn default() -> Self {
@@ -26278,6 +27172,7 @@ impl Default for clz_Torappu_DisplayMetaDataT {
             artGalleryCollectData: None,
             magazineLeafData: None,
             stickerData: None,
+            avgDialogSettingData: None,
         }
     }
 }
@@ -26308,6 +27203,7 @@ impl clz_Torappu_DisplayMetaDataT {
         let artGalleryCollectData = self.artGalleryCollectData.as_ref().map(|x| x.pack(_fbb));
         let magazineLeafData = self.magazineLeafData.as_ref().map(|x| x.pack(_fbb));
         let stickerData = self.stickerData.as_ref().map(|x| x.pack(_fbb));
+        let avgDialogSettingData = self.avgDialogSettingData.as_ref().map(|x| x.pack(_fbb));
         clz_Torappu_DisplayMetaData::create(
             _fbb,
             &clz_Torappu_DisplayMetaDataArgs {
@@ -26324,6 +27220,7 @@ impl clz_Torappu_DisplayMetaDataT {
                 artGalleryCollectData,
                 magazineLeafData,
                 stickerData,
+                avgDialogSettingData,
             },
         )
     }

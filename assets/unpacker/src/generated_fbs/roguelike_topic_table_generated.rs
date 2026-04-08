@@ -59117,8 +59117,8 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     pub const VT_STYLECONFIG: flatbuffers::VOffsetT = 100;
     pub const VT_EXPLORETOOLS: flatbuffers::VOffsetT = 102;
     pub const VT_ROLLNODEDATA: flatbuffers::VOffsetT = 104;
-    pub const VT_RELICTIPSDATA: flatbuffers::VOffsetT = 106;
-    pub const VT_ACTIVITY: flatbuffers::VOffsetT = 108;
+    pub const VT_ACTIVITY: flatbuffers::VOffsetT = 106;
+    pub const VT_RELICTIPSDATA: flatbuffers::VOffsetT = 108;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -59130,11 +59130,11 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
         args: &'args clz_Torappu_RoguelikeTopicDetailArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicDetail<'bldr>> {
         let mut builder = clz_Torappu_RoguelikeTopicDetailBuilder::new(_fbb);
-        if let Some(x) = args.activity {
-            builder.add_activity(x);
-        }
         if let Some(x) = args.relicTipsData {
             builder.add_relicTipsData(x);
+        }
+        if let Some(x) = args.activity {
+            builder.add_activity(x);
         }
         if let Some(x) = args.rollNodeData {
             builder.add_rollNodeData(x);
@@ -59426,10 +59426,10 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
         let rollNodeData = self
             .rollNodeData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let activity = self.activity().map(|x| Box::new(x.unpack()));
         let relicTipsData = self
             .relicTipsData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let activity = self.activity().map(|x| Box::new(x.unpack()));
         clz_Torappu_RoguelikeTopicDetailT {
             updates,
             enrolls,
@@ -59482,8 +59482,8 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
             styleConfig,
             exploreTools,
             rollNodeData,
-            relicTipsData,
             activity,
+            relicTipsData,
         }
     }
 
@@ -60538,6 +60538,19 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
         }
     }
     #[inline]
+    pub fn activity(&self) -> Option<clz_Torappu_RoguelikeActivityData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>(
+                    clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY,
+                    None,
+                )
+        }
+    }
+    #[inline]
     pub fn relicTipsData(
         &self,
     ) -> Option<
@@ -60556,19 +60569,6 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
                     flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>,
                 >,
             >>(clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA, None)
-        }
-    }
-    #[inline]
-    pub fn activity(&self) -> Option<clz_Torappu_RoguelikeActivityData<'a>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>(
-                    clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY,
-                    None,
-                )
         }
     }
 }
@@ -60632,8 +60632,8 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikePredefinedConstStyleData>>("styleConfig", Self::VT_STYLECONFIG, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData>>>>("exploreTools", Self::VT_EXPLORETOOLS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData>>>>("rollNodeData", Self::VT_ROLLNODEDATA, false)?
-     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>>>>("relicTipsData", Self::VT_RELICTIPSDATA, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>("activity", Self::VT_ACTIVITY, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>>>>("relicTipsData", Self::VT_RELICTIPSDATA, false)?
      .finish();
         Ok(())
     }
@@ -60690,8 +60690,8 @@ pub struct clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     pub styleConfig: Option<flatbuffers::WIPOffset<clz_Torappu_RoguelikePredefinedConstStyleData<'a>>>,
     pub exploreTools: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData<'a>>>>>,
     pub rollNodeData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData<'a>>>>>,
-    pub relicTipsData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>>>>,
     pub activity: Option<flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData<'a>>>,
+    pub relicTipsData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     #[inline]
@@ -60748,8 +60748,8 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
             styleConfig: None,
             exploreTools: None,
             rollNodeData: None,
-            relicTipsData: None,
             activity: None,
+            relicTipsData: None,
         }
     }
 }
@@ -61526,6 +61526,17 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_activity(
+        &mut self,
+        activity: flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData>>(
+                clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY,
+                activity,
+            );
+    }
+    #[inline]
     pub fn add_relicTipsData(
         &mut self,
         relicTipsData: flatbuffers::WIPOffset<
@@ -61539,17 +61550,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
             clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA,
             relicTipsData,
         );
-    }
-    #[inline]
-    pub fn add_activity(
-        &mut self,
-        activity: flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData<'b>>,
-    ) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData>>(
-                clz_Torappu_RoguelikeTopicDetail::VT_ACTIVITY,
-                activity,
-            );
     }
     #[inline]
     pub fn new(
@@ -61628,8 +61628,8 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeTopicDetail<'_> {
         ds.field("styleConfig", &self.styleConfig());
         ds.field("exploreTools", &self.exploreTools());
         ds.field("rollNodeData", &self.rollNodeData());
-        ds.field("relicTipsData", &self.relicTipsData());
         ds.field("activity", &self.activity());
+        ds.field("relicTipsData", &self.relicTipsData());
         ds.finish()
     }
 }
@@ -61687,8 +61687,8 @@ pub struct clz_Torappu_RoguelikeTopicDetailT {
   pub styleConfig: Option<Box<clz_Torappu_RoguelikePredefinedConstStyleDataT>>,
   pub exploreTools: Option<Vec<dict__string__clz_Torappu_RoguelikeGameExploreToolDataT>>,
   pub rollNodeData: Option<Vec<dict__string__clz_Torappu_RoguelikeRollNodeDataT>>,
-  pub relicTipsData: Option<Vec<dict__string__clz_Torappu_RoguelikeRelicTipsDataT>>,
   pub activity: Option<Box<clz_Torappu_RoguelikeActivityDataT>>,
+  pub relicTipsData: Option<Vec<dict__string__clz_Torappu_RoguelikeRelicTipsDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeTopicDetailT {
     fn default() -> Self {
@@ -61744,8 +61744,8 @@ impl Default for clz_Torappu_RoguelikeTopicDetailT {
             styleConfig: None,
             exploreTools: None,
             rollNodeData: None,
-            relicTipsData: None,
             activity: None,
+            relicTipsData: None,
         }
     }
 }
@@ -61940,11 +61940,11 @@ impl clz_Torappu_RoguelikeTopicDetailT {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let activity = self.activity.as_ref().map(|x| x.pack(_fbb));
         let relicTipsData = self.relicTipsData.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
-        let activity = self.activity.as_ref().map(|x| x.pack(_fbb));
         clz_Torappu_RoguelikeTopicDetail::create(
             _fbb,
             &clz_Torappu_RoguelikeTopicDetailArgs {
@@ -61999,8 +61999,8 @@ impl clz_Torappu_RoguelikeTopicDetailT {
                 styleConfig,
                 exploreTools,
                 rollNodeData,
-                relicTipsData,
                 activity,
+                relicTipsData,
             },
         )
     }

@@ -12658,9 +12658,12 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
     pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
     pub const VT_BINDGPGOODID: flatbuffers::VOffsetT = 10;
     pub const VT_CHECKINDURATION: flatbuffers::VOffsetT = 12;
-    pub const VT_TOTALCHECKINDAY: flatbuffers::VOffsetT = 14;
-    pub const VT_ICONID: flatbuffers::VOffsetT = 16;
-    pub const VT_CHECKINREWARDDICT: flatbuffers::VOffsetT = 18;
+    pub const VT_COMPENSATEENDDAY: flatbuffers::VOffsetT = 14;
+    pub const VT_TOTALCHECKINDAY: flatbuffers::VOffsetT = 16;
+    pub const VT_ICONID: flatbuffers::VOffsetT = 18;
+    pub const VT_CHECKINREWARDDICT: flatbuffers::VOffsetT = 20;
+    pub const VT_TRIGSTARTTIME: flatbuffers::VOffsetT = 22;
+    pub const VT_TRIGENDTIME: flatbuffers::VOffsetT = 24;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -12672,6 +12675,8 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
         args: &'args clz_Torappu_NewbieCheckInPackageDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_NewbieCheckInPackageData<'bldr>> {
         let mut builder = clz_Torappu_NewbieCheckInPackageDataBuilder::new(_fbb);
+        builder.add_trigEndTime(args.trigEndTime);
+        builder.add_trigStartTime(args.trigStartTime);
         builder.add_endTime(args.endTime);
         builder.add_startTime(args.startTime);
         if let Some(x) = args.checkInRewardDict {
@@ -12681,6 +12686,7 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
             builder.add_iconId(x);
         }
         builder.add_totalCheckInDay(args.totalCheckInDay);
+        builder.add_compensateEndDay(args.compensateEndDay);
         builder.add_checkInDuration(args.checkInDuration);
         if let Some(x) = args.bindGPGoodId {
             builder.add_bindGPGoodId(x);
@@ -12697,20 +12703,26 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
         let endTime = self.endTime();
         let bindGPGoodId = self.bindGPGoodId().map(|x| x.to_string());
         let checkInDuration = self.checkInDuration();
+        let compensateEndDay = self.compensateEndDay();
         let totalCheckInDay = self.totalCheckInDay();
         let iconId = self.iconId().map(|x| x.to_string());
         let checkInRewardDict = self
             .checkInRewardDict()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let trigStartTime = self.trigStartTime();
+        let trigEndTime = self.trigEndTime();
         clz_Torappu_NewbieCheckInPackageDataT {
             groupId,
             startTime,
             endTime,
             bindGPGoodId,
             checkInDuration,
+            compensateEndDay,
             totalCheckInDay,
             iconId,
             checkInRewardDict,
+            trigStartTime,
+            trigEndTime,
         }
     }
 
@@ -12775,6 +12787,20 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
         }
     }
     #[inline]
+    pub fn compensateEndDay(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_NewbieCheckInPackageData::VT_COMPENSATEENDDAY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
     pub fn totalCheckInDay(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
@@ -12828,6 +12854,34 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
             )
         }
     }
+    #[inline]
+    pub fn trigStartTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_NewbieCheckInPackageData::VT_TRIGSTARTTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn trigEndTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_NewbieCheckInPackageData::VT_TRIGENDTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_NewbieCheckInPackageData<'_> {
@@ -12847,6 +12901,7 @@ impl flatbuffers::Verifiable for clz_Torappu_NewbieCheckInPackageData<'_> {
                 false,
             )?
             .visit_field::<i32>("checkInDuration", Self::VT_CHECKINDURATION, false)?
+            .visit_field::<i32>("compensateEndDay", Self::VT_COMPENSATEENDDAY, false)?
             .visit_field::<i32>("totalCheckInDay", Self::VT_TOTALCHECKINDAY, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
@@ -12857,6 +12912,8 @@ impl flatbuffers::Verifiable for clz_Torappu_NewbieCheckInPackageData<'_> {
                     >,
                 >,
             >>("checkInRewardDict", Self::VT_CHECKINREWARDDICT, false)?
+            .visit_field::<i64>("trigStartTime", Self::VT_TRIGSTARTTIME, false)?
+            .visit_field::<i64>("trigEndTime", Self::VT_TRIGENDTIME, false)?
             .finish();
         Ok(())
     }
@@ -12867,6 +12924,7 @@ pub struct clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
     pub endTime: i64,
     pub bindGPGoodId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub checkInDuration: i32,
+    pub compensateEndDay: i32,
     pub totalCheckInDay: i32,
     pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub checkInRewardDict: Option<
@@ -12879,6 +12937,8 @@ pub struct clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
             >,
         >,
     >,
+    pub trigStartTime: i64,
+    pub trigEndTime: i64,
 }
 impl<'a> Default for clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
     #[inline]
@@ -12889,9 +12949,12 @@ impl<'a> Default for clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
             endTime: 0,
             bindGPGoodId: None,
             checkInDuration: 0,
+            compensateEndDay: 0,
             totalCheckInDay: 0,
             iconId: None,
             checkInRewardDict: None,
+            trigStartTime: 0,
+            trigEndTime: 0,
         }
     }
 }
@@ -12939,6 +13002,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_compensateEndDay(&mut self, compensateEndDay: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_NewbieCheckInPackageData::VT_COMPENSATEENDDAY,
+            compensateEndDay,
+            0,
+        );
+    }
+    #[inline]
     pub fn add_totalCheckInDay(&mut self, totalCheckInDay: i32) {
         self.fbb_.push_slot::<i32>(
             clz_Torappu_NewbieCheckInPackageData::VT_TOTALCHECKINDAY,
@@ -12971,6 +13042,22 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_trigStartTime(&mut self, trigStartTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_NewbieCheckInPackageData::VT_TRIGSTARTTIME,
+            trigStartTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_trigEndTime(&mut self, trigEndTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_NewbieCheckInPackageData::VT_TRIGENDTIME,
+            trigEndTime,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_NewbieCheckInPackageDataBuilder<'a, 'b, A> {
@@ -12995,9 +13082,12 @@ impl core::fmt::Debug for clz_Torappu_NewbieCheckInPackageData<'_> {
         ds.field("endTime", &self.endTime());
         ds.field("bindGPGoodId", &self.bindGPGoodId());
         ds.field("checkInDuration", &self.checkInDuration());
+        ds.field("compensateEndDay", &self.compensateEndDay());
         ds.field("totalCheckInDay", &self.totalCheckInDay());
         ds.field("iconId", &self.iconId());
         ds.field("checkInRewardDict", &self.checkInRewardDict());
+        ds.field("trigStartTime", &self.trigStartTime());
+        ds.field("trigEndTime", &self.trigEndTime());
         ds.finish()
     }
 }
@@ -13009,9 +13099,12 @@ pub struct clz_Torappu_NewbieCheckInPackageDataT {
     pub endTime: i64,
     pub bindGPGoodId: Option<String>,
     pub checkInDuration: i32,
+    pub compensateEndDay: i32,
     pub totalCheckInDay: i32,
     pub iconId: Option<String>,
     pub checkInRewardDict: Option<Vec<dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT>>,
+    pub trigStartTime: i64,
+    pub trigEndTime: i64,
 }
 impl Default for clz_Torappu_NewbieCheckInPackageDataT {
     fn default() -> Self {
@@ -13021,9 +13114,12 @@ impl Default for clz_Torappu_NewbieCheckInPackageDataT {
             endTime: 0,
             bindGPGoodId: None,
             checkInDuration: 0,
+            compensateEndDay: 0,
             totalCheckInDay: 0,
             iconId: None,
             checkInRewardDict: None,
+            trigStartTime: 0,
+            trigEndTime: 0,
         }
     }
 }
@@ -13037,12 +13133,15 @@ impl clz_Torappu_NewbieCheckInPackageDataT {
         let endTime = self.endTime;
         let bindGPGoodId = self.bindGPGoodId.as_ref().map(|x| _fbb.create_string(x));
         let checkInDuration = self.checkInDuration;
+        let compensateEndDay = self.compensateEndDay;
         let totalCheckInDay = self.totalCheckInDay;
         let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
         let checkInRewardDict = self.checkInRewardDict.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let trigStartTime = self.trigStartTime;
+        let trigEndTime = self.trigEndTime;
         clz_Torappu_NewbieCheckInPackageData::create(
             _fbb,
             &clz_Torappu_NewbieCheckInPackageDataArgs {
@@ -13051,9 +13150,12 @@ impl clz_Torappu_NewbieCheckInPackageDataT {
                 endTime,
                 bindGPGoodId,
                 checkInDuration,
+                compensateEndDay,
                 totalCheckInDay,
                 iconId,
                 checkInRewardDict,
+                trigStartTime,
+                trigEndTime,
             },
         )
     }

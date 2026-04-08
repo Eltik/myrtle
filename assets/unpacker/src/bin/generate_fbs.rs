@@ -58,8 +58,53 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
         return Err(format!("FBS directory not found: {}", fbs_dir.display()).into());
     }
 
+    patch_schemas(&fbs_dir);
+
     println!("CN schemas: {}", fbs_dir.display());
     Ok(fbs_dir)
+}
+
+/// Apply known fixes to upstream FBS schemas before running flatc.
+///
+/// The OpenArknightsFBS repo is community-maintained and occasionally has
+/// field ordering issues that cause VTable misalignment. FlatBuffers assigns
+/// VTable slots by declaration order, so a field inserted in the middle
+/// (rather than appended) breaks all subsequent offsets.
+///
+/// Each patch is documented with the symptom and root cause.
+fn patch_schemas(fbs_dir: &Path) {
+    let patches: &[(&str, &str, &str)] = &[
+        // roguelike_topic_table.fbs: `relicTipsData` was inserted before `activity`
+        // in clz_Torappu_RoguelikeTopicDetail, but the binary has `activity` at
+        // slot 51 (matching CN-gamedata field order). Moving `relicTipsData` after
+        // `activity` fixes the VTable alignment and allows Details to decode.
+        (
+            "roguelike_topic_table.fbs",
+            // old: relicTipsData before activity
+            "    rollNodeData: [dict__string__clz_Torappu_RoguelikeRollNodeData]; \n\
+             \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData]; \n\
+             \x20   activity: clz_Torappu_RoguelikeActivityData; \n\
+             }",
+            // new: activity before relicTipsData
+            "    rollNodeData: [dict__string__clz_Torappu_RoguelikeRollNodeData];\n\
+             \x20   activity: clz_Torappu_RoguelikeActivityData;\n\
+             \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData];\n\
+             }",
+        ),
+    ];
+
+    for (filename, old, new) in patches {
+        let path = fbs_dir.join(filename);
+        let Ok(content) = fs::read_to_string(&path) else {
+            continue;
+        };
+        if content.contains(old) {
+            let patched = content.replace(old, new);
+            if fs::write(&path, patched).is_ok() {
+                println!("  patched {filename}: reordered fields for VTable alignment");
+            }
+        }
+    }
 }
 
 fn fetch_yostar_schemas() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -591,9 +636,17 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
             out.push_str("            map.insert(\"key\".to_string(), json!(k));\n");
             out.push_str("        }\n");
         } else if kf.is_enum {
-            out.push_str("        map.insert(\"key\".to_string(), self.key().to_json_value());\n");
+            out.push_str(
+                "        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {\n",
+            );
+            out.push_str("            map.insert(\"key\".to_string(), k.to_json_value());\n");
+            out.push_str("        }\n");
         } else {
-            out.push_str("        map.insert(\"key\".to_string(), json!(self.key()));\n");
+            out.push_str(
+                "        if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {\n",
+            );
+            out.push_str("            map.insert(\"key\".to_string(), json!(k));\n");
+            out.push_str("        }\n");
         }
     }
 
@@ -779,7 +832,7 @@ fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
                 out.push_str(
                     "                assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
                 );
-                out.push_str("                let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();\n");
+                out.push_str("                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();\n");
                 out.push_str(&format!(
                     "                return Some((\"{pascal_name}\".to_string(), json!(arr)));\n"
                 ));
