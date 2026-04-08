@@ -26,6 +26,8 @@ pub fn fill_random(buf: &mut [u8]) {
 
 #[cfg(target_os = "linux")]
 mod platform {
+    use std::sync::atomic::{AtomicI32, Ordering};
+
     // Sentinel values stored in GETRANDOM_STATE:
     //   UNCHECKED (-1) → haven't probed yet
     //   UNAVAILABLE (0) → getrandom syscall not present, fall back to /dev/urandom
