@@ -14,7 +14,8 @@ pub async fn get_resource(state: &AppState, resource: &str) -> Result<Value, Api
         return Ok(cached);
     }
 
-    let value = serialize_resource(&state.game_data, resource)?;
+    let gd = state.game_data.load();
+    let value = serialize_resource(&gd, resource)?;
     state.cache.set(&key, &value).await;
     Ok(value)
 }

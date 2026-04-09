@@ -238,7 +238,7 @@ pub async fn refresh(
     .await?;
 
     if let Some(user) = users::find_by_uid(&state.db, user_id).await? {
-        let grade = calculate_user_grade(&state.db, user.id, &state.game_data).await?;
+        let grade = calculate_user_grade(&state.db, user.id, &state.game_data.load()).await?;
 
         score::update_score(
             &state.db,

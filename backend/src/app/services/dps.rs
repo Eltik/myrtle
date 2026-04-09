@@ -109,8 +109,8 @@ pub struct RequestShred {
 }
 
 pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
-    let operator = state
-        .game_data
+    let gd = state.game_data.load();
+    let operator = gd
         .operators
         .get(&req.operator_id)
         .ok_or(ApiError::NotFound)?;

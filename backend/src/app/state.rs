@@ -1,5 +1,7 @@
+use std::ops::Deref;
 use std::sync::Arc;
 
+use arc_swap::ArcSwap;
 use reqwest::Client;
 use sqlx::PgPool;
 
@@ -8,10 +10,21 @@ use crate::core::gamedata::{assets::AssetIndex, types::GameData};
 
 #[derive(Clone)]
 pub struct AppState {
+    inner: Arc<AppStateInner>,
+}
+
+impl Deref for AppState {
+    type Target = AppStateInner;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+pub struct AppStateInner {
     pub db: PgPool,
     pub cache: CacheStore,
-    pub game_data: Arc<GameData>,
-    pub asset_index: Arc<AssetIndex>,
+    pub game_data: ArcSwap<GameData>,
+    pub asset_index: ArcSwap<AssetIndex>,
     pub config: Arc<AppConfig>,
     pub http_client: Client,
 }
@@ -26,13 +39,23 @@ impl AppState {
         client: Client,
     ) -> Self {
         Self {
-            db,
-            cache,
-            game_data: Arc::new(game_data),
-            asset_index: Arc::new(asset_index),
-            config: Arc::new(config),
-            http_client: client,
+            inner: Arc::new(AppStateInner {
+                db,
+                cache,
+                game_data: ArcSwap::from_pointee(game_data),
+                asset_index: ArcSwap::from_pointee(asset_index),
+                config: Arc::new(config),
+                http_client: client,
+            }),
         }
+    }
+
+    pub fn swap_game_data(&self, new: GameData) {
+        self.game_data.store(Arc::new(new));
+    }
+
+    pub fn swap_asset_index(&self, new: AssetIndex) {
+        self.asset_index.store(Arc::new(new));
     }
 }
 
@@ -41,6 +64,8 @@ pub struct AppConfig {
     pub rate_limit_rpm: u32,
     pub service_key: String,
     pub assets_dir: String,
+    pub game_data_dir: String,
+    pub asset_ws_url: Option<String>,
 }
 
 impl AppConfig {
@@ -53,6 +78,11 @@ impl AppConfig {
                 .unwrap_or(100),
             service_key: std::env::var("SERVICE_KEY").expect("SERVICE_KEY must be set"),
             assets_dir: std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into()),
+            game_data_dir: std::env::var("GAME_DATA_DIR")
+                .unwrap_or_else(|_| "../assets/output/gamedata/excel".into()),
+            asset_ws_url: std::env::var("ASSET_WS_URL")
+                .ok()
+                .filter(|s| !s.is_empty() && s != "disabled"),
         }
     }
 }

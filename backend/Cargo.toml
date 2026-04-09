@@ -17,10 +17,12 @@ path = "src/bin/grade_detail.rs"
 
 [dependencies]
 anyhow = "1.0.102"
+arc-swap = "1"
 axum = { version = "0.8.8", features = ["macros"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 dashmap = "6"
 dotenv = "0.15.0"
+futures-util = "0.3"
 hex = "0.4"
 hmac = "0.12.1"
 jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
@@ -35,6 +37,7 @@ sha1 = "0.10.6"
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio", "uuid", "chrono", "json"] }
 thiserror = "2.0.18"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tokio-tungstenite = { version = "0.26", features = ["connect"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["cors", "compression-gzip", "trace", "request-id"] }
 tracing = "0.1.44"

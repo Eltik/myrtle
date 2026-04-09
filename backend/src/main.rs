@@ -78,6 +78,9 @@ async fn main() {
     let config = AppConfig::from_env();
     let state = AppState::new(db, cache, game_data, asset_index, config, http_client);
 
+    // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
+    backend::core::asset_watcher::spawn(state.clone());
+
     backend::app::server::run(state)
         .await
         .expect("server error");

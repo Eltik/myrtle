@@ -95,6 +95,44 @@ impl CacheStore {
         }
     }
 
+    pub async fn invalidate_by_prefix(&self, prefix: &str) {
+        match self {
+            Self::Redis(conn) => {
+                let pattern = format!("{prefix}*");
+                let mut cursor: u64 = 0;
+                loop {
+                    let result: Result<(u64, Vec<String>), _> = redis::cmd("SCAN")
+                        .arg(cursor)
+                        .arg("MATCH")
+                        .arg(&pattern)
+                        .arg("COUNT")
+                        .arg(100)
+                        .query_async(&mut conn.clone())
+                        .await;
+                    match result {
+                        Ok((next, keys)) => {
+                            if !keys.is_empty() {
+                                let _: Result<(), _> =
+                                    conn.clone().del::<Vec<String>, ()>(keys).await;
+                            }
+                            if next == 0 {
+                                break;
+                            }
+                            cursor = next;
+                        }
+                        Err(e) => {
+                            tracing::debug!(error = %e, "cache prefix invalidation failed");
+                            break;
+                        }
+                    }
+                }
+            }
+            Self::Memory { entries } => {
+                entries.retain(|k, _| !k.starts_with(prefix));
+            }
+        }
+    }
+
     pub async fn ping(&self) -> bool {
         match self {
             Self::Redis(conn) => redis::cmd("PING")

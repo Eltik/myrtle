@@ -1064,6 +1064,7 @@ async function runWebSocketServer() {
 			// Download phase
 			currentState = "downloading";
 			broadcast(statusMessage());
+			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Downloading assets...`));
 
 			const dlStats = await runDownload({
 				serverKey: config.serverKey,
@@ -1074,6 +1075,7 @@ async function runWebSocketServer() {
 					broadcast({ type: "status", state: "downloading", message: msg }),
 			});
 
+			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`));
 			broadcast({
 				type: "download_complete",
 				downloaded: dlStats.downloaded,
@@ -1085,6 +1087,7 @@ async function runWebSocketServer() {
 			// Unpack phase
 			currentState = "unpacking";
 			broadcast(statusMessage());
+			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Unpacking assets...`));
 
 			const upStats = await runUnpack({
 				inputDir: config.savedir,
@@ -1100,6 +1103,7 @@ async function runWebSocketServer() {
 			currentVersion = serverVer.resVersion;
 
 			currentState = "idle";
+			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Update complete: v${currentVersion}, ${dlStats.downloaded} downloaded, ${upStats.exported} exported`));
 			broadcast({
 				type: "update_complete",
 				version: currentVersion,
@@ -1110,6 +1114,7 @@ async function runWebSocketServer() {
 			broadcast(statusMessage());
 		} catch (err) {
 			currentState = "idle";
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Update failed: ${err.message}`));
 			broadcast({ type: "error", message: `Update failed: ${err.message}` });
 			broadcast(statusMessage());
 		} finally {
@@ -1124,6 +1129,7 @@ async function runWebSocketServer() {
 		try {
 			currentState = "checking";
 			broadcast(statusMessage());
+			console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Checking for updates...`));
 
 			const serverVer = await fetchServerVersion(config.serverKey);
 			const storedVer = readStoredVersion(config.savedir);
@@ -1133,8 +1139,15 @@ async function runWebSocketServer() {
 			const needsReextract =
 				unpackerIsNewer(config.savedir) || outputMissingOrEmpty(config.outputDir);
 			if (storedVer === serverVer.resVersion && !needsReextract) {
+				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Up to date (${storedVer})`));
 				broadcast(statusMessage());
 				return;
+			}
+
+			if (needsReextract) {
+				console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Re-extraction needed (assets current but output stale)`));
+			} else {
+				console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] Update available: ${storedVer ?? "(none)"} → ${serverVer.resVersion}`));
 			}
 
 			// Update available (new assets or unpacker rebuild)
@@ -1148,6 +1161,7 @@ async function runWebSocketServer() {
 			await performUpdate();
 		} catch (err) {
 			currentState = "idle";
+			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Version check failed: ${err.message}`));
 			broadcast({
 				type: "error",
 				message: `Version check failed: ${err.message}`,
@@ -1158,6 +1172,7 @@ async function runWebSocketServer() {
 
 	// Handle client connections
 	wss.on("connection", (ws) => {
+		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Client connected (${clients.size + 1} total)`));
 		clients.add(ws);
 		sendTo(ws, statusMessage());
 
@@ -1194,7 +1209,10 @@ async function runWebSocketServer() {
 			}
 		});
 
-		ws.on("close", () => clients.delete(ws));
+		ws.on("close", () => {
+			clients.delete(ws);
+			console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Client disconnected (${clients.size} remaining)`));
+		});
 		ws.on("error", () => clients.delete(ws));
 	});
 

@@ -9,8 +9,8 @@ pub async fn avatar(
     State(state): State<AppState>,
     Path(avatar_id): Path<String>,
 ) -> Result<Response, ApiError> {
-    let rel_path = state
-        .asset_index
+    let idx = state.asset_index.load();
+    let rel_path = idx
         .path(AssetKind::Avatar, &avatar_id)
         .ok_or(ApiError::NotFound)?;
     serve_file(&state.config.assets_dir, rel_path).await
@@ -20,10 +20,8 @@ pub async fn portrait(
     State(state): State<AppState>,
     Path(char_id): Path<String>,
 ) -> Result<Response, ApiError> {
-    let rel_path = state
-        .asset_index
-        .portrait_path(&char_id)
-        .ok_or(ApiError::NotFound)?;
+    let idx = state.asset_index.load();
+    let rel_path = idx.portrait_path(&char_id).ok_or(ApiError::NotFound)?;
 
     serve_file(&state.config.assets_dir, rel_path).await
 }

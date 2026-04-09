@@ -80,14 +80,15 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
     )?;
 
     // Game data stats are free — just read from memory
+    let gd = state.game_data.load();
     let game_data = GameDataStats {
-        operators: state.game_data.operators.len(),
-        skills: state.game_data.skills.len(),
-        modules: state.game_data.modules.equip_dict.len(),
-        skins: state.game_data.skins.char_skins.len(),
-        stages: state.game_data.stages.len(),
-        zones: state.game_data.zones.len(),
-        enemies: state.game_data.enemies.enemy_data.len(),
+        operators: gd.operators.len(),
+        skills: gd.skills.len(),
+        modules: gd.modules.equip_dict.len(),
+        skins: gd.skins.char_skins.len(),
+        stages: gd.stages.len(),
+        zones: gd.zones.len(),
+        enemies: gd.enemies.enemy_data.len(),
     };
 
     let response = StatsResponse {
