@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use redis::aio::ConnectionManager;
 use reqwest::Client;
 use sqlx::PgPool;
 
+use crate::app::cache::store::CacheStore;
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
-    pub redis: ConnectionManager,
+    pub cache: CacheStore,
     pub game_data: Arc<GameData>,
     pub asset_index: Arc<AssetIndex>,
     pub config: Arc<AppConfig>,
@@ -19,7 +19,7 @@ pub struct AppState {
 impl AppState {
     pub fn new(
         db: PgPool,
-        redis: ConnectionManager,
+        cache: CacheStore,
         game_data: GameData,
         asset_index: AssetIndex,
         config: AppConfig,
@@ -27,7 +27,7 @@ impl AppState {
     ) -> Self {
         Self {
             db,
-            redis,
+            cache,
             game_data: Arc::new(game_data),
             asset_index: Arc::new(asset_index),
             config: Arc::new(config),

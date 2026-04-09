@@ -1,5 +1,4 @@
 use crate::app::cache::keys::CacheKey;
-use crate::app::cache::store;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::hypergryph::yostar::AccountPortalSession;
@@ -92,8 +91,7 @@ pub async fn fetch_and_store(
     user_id: Uuid,
     uid: &str,
 ) -> Result<FetchResult, ApiError> {
-    let portal_json: Option<String> =
-        store::get(&mut state.redis.clone(), &CacheKey::PortalSession { uid }).await;
+    let portal_json: Option<String> = state.cache.get(&CacheKey::PortalSession { uid }).await;
 
     let portal_json = portal_json.ok_or(ApiError::BadRequest(
         "no portal session — login again".into(),
@@ -180,7 +178,7 @@ struct GlobalGachaStatsRow {
 /// Global anonymous stats
 pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiError> {
     let key = CacheKey::GachaGlobalStats;
-    if let Some(cached) = store::get(&mut state.redis.clone(), &key).await {
+    if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
 
@@ -207,7 +205,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
         five_star_rate: (stats.five_star_count as f64 / total) * 100.0,
     };
 
-    store::set(&mut state.redis.clone(), &key, &result).await;
+    state.cache.set(&key, &result).await;
     Ok(result)
 }
 

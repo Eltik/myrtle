@@ -1,11 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    app::{
-        cache::{keys::CacheKey, store},
-        error::ApiError,
-        state::AppState,
-    },
+    app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     database::{models::score::LeaderboardEntry, queries::score},
 };
 
@@ -28,7 +24,7 @@ pub async fn get_leaderboard(
         server,
         page: offset / limit,
     };
-    if let Some(cached) = store::get(&mut state.redis.clone(), &key).await {
+    if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
 
@@ -39,6 +35,6 @@ pub async fn get_leaderboard(
     )?;
 
     let page = LeaderboardPage { entries, total };
-    store::set(&mut state.redis.clone(), &key, &page).await;
+    state.cache.set(&key, &page).await;
     Ok(page)
 }

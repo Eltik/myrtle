@@ -1,5 +1,4 @@
 use crate::app::cache::keys::CacheKey;
-use crate::app::cache::store;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::jwt;
@@ -46,22 +45,18 @@ pub async fn login(
         serde_json::to_string(&result.session).map_err(|e| ApiError::Internal(e.into()))?;
     let uid = &*result.session.uid;
 
-    store::set(
-        &mut state.redis.clone(),
-        &CacheKey::GameSession { uid },
-        &session_json,
-    )
-    .await;
+    state
+        .cache
+        .set(&CacheKey::GameSession { uid }, &session_json)
+        .await;
 
     if let Some(portal) = &result.portal_session {
         let portal_json =
             serde_json::to_string(portal).map_err(|e| ApiError::Internal(e.into()))?;
-        store::set(
-            &mut state.redis.clone(),
-            &CacheKey::PortalSession { uid },
-            &portal_json,
-        )
-        .await;
+        state
+            .cache
+            .set(&CacheKey::PortalSession { uid }, &portal_json)
+            .await;
     }
 
     let user = match find_raw_by_uid(&state.db, uid, server.index() as i16).await? {

@@ -1,11 +1,7 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::{
-    app::{
-        cache::{keys::CacheKey, store},
-        error::ApiError,
-        state::AppState,
-    },
+    app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     database::{models::user::UserProfile, queries::users},
 };
 
@@ -21,11 +17,11 @@ pub async fn search_users(
         query_hash: hasher.finish(),
     };
 
-    if let Some(cached) = store::get(&mut state.redis.clone(), &key).await {
+    if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
 
     let results = users::search_by_nickname(&state.db, query, limit as i64, offset as i64).await?;
-    store::set(&mut state.redis.clone(), &key, &results).await;
+    state.cache.set(&key, &results).await;
     Ok(results)
 }

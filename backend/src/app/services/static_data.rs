@@ -1,4 +1,4 @@
-use crate::app::cache::{keys::CacheKey, store};
+use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
@@ -10,12 +10,12 @@ pub async fn get_resource(state: &AppState, resource: &str) -> Result<Value, Api
         fields_hash: 0,
         page: 0,
     };
-    if let Some(cached) = store::get::<Value>(&mut state.redis.clone(), &key).await {
+    if let Some(cached) = state.cache.get::<Value>(&key).await {
         return Ok(cached);
     }
 
     let value = serialize_resource(&state.game_data, resource)?;
-    store::set(&mut state.redis.clone(), &key, &value).await;
+    state.cache.set(&key, &value).await;
     Ok(value)
 }
 

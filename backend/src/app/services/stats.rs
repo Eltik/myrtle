@@ -1,4 +1,4 @@
-use crate::app::cache::{keys::CacheKey, store};
+use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use serde::{Deserialize, Serialize};
@@ -68,7 +68,7 @@ pub struct TierListStats {
 
 pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
     let key = CacheKey::Stats;
-    if let Some(cached) = store::get::<StatsResponse>(&mut state.redis.clone(), &key).await {
+    if let Some(cached) = state.cache.get::<StatsResponse>(&key).await {
         return Ok(cached);
     }
 
@@ -98,7 +98,7 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
         computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     };
 
-    store::set(&mut state.redis.clone(), &key, &response).await;
+    state.cache.set(&key, &response).await;
     Ok(response)
 }
 

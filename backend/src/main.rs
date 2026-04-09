@@ -1,5 +1,8 @@
 use backend::{
-    app::state::{AppConfig, AppState},
+    app::{
+        cache::store::CacheStore,
+        state::{AppConfig, AppState},
+    },
     core::{gamedata::assets::AssetIndex, hypergryph::config::GlobalConfig},
 };
 use dotenv::dotenv;
@@ -39,12 +42,30 @@ async fn main() {
         .await
         .expect("failed to initialize database");
 
-    // Redis
-    let redis_url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".into());
-    let redis_client = redis::Client::open(redis_url).expect("invalid REDIS_URL");
-    let redis = redis::aio::ConnectionManager::new(redis_client)
-        .await
-        .expect("failed to connect to redis");
+    // Cache (Redis or in-memory fallback)
+    let cache = match std::env::var("REDIS_URL") {
+        Ok(url) => match redis::Client::open(url) {
+            Ok(client) => match redis::aio::ConnectionManager::new(client).await {
+                Ok(conn) => {
+                    tracing::info!("connected to Redis");
+                    CacheStore::new_redis(conn)
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, "Redis unavailable, falling back to in-memory cache");
+                    CacheStore::new_memory()
+                }
+            },
+            Err(e) => {
+                tracing::warn!(error = %e, "invalid REDIS_URL, falling back to in-memory cache");
+                CacheStore::new_memory()
+            }
+        },
+        Err(_) => {
+            tracing::info!("REDIS_URL not set, using in-memory cache");
+            CacheStore::new_memory()
+        }
+    };
+    cache.spawn_cleanup();
 
     // reqwest client
     let http_client = reqwest::Client::new();
@@ -55,7 +76,7 @@ async fn main() {
 
     // Start server
     let config = AppConfig::from_env();
-    let state = AppState::new(db, redis, game_data, asset_index, config, http_client);
+    let state = AppState::new(db, cache, game_data, asset_index, config, http_client);
 
     backend::app::server::run(state)
         .await

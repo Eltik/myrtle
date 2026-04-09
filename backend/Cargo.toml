@@ -19,6 +19,7 @@ path = "src/bin/grade_detail.rs"
 anyhow = "1.0.102"
 axum = { version = "0.8.8", features = ["macros"] }
 chrono = { version = "0.4.44", features = ["serde"] }
+dashmap = "6"
 dotenv = "0.15.0"
 hex = "0.4"
 hmac = "0.12.1"

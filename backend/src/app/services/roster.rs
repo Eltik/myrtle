@@ -2,11 +2,7 @@ use chrono::Utc;
 use serde::Deserialize;
 
 use crate::{
-    app::{
-        cache::{keys::CacheKey, store},
-        error::ApiError,
-        state::AppState,
-    },
+    app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     core::{
         grade::calculate::calculate_user_grade,
         hypergryph::{
@@ -152,11 +148,10 @@ pub async fn refresh(
     user_id: &str,
     server: Server,
 ) -> Result<serde_json::Value, ApiError> {
-    let session_json: Option<String> = store::get(
-        &mut state.redis.clone(),
-        &CacheKey::GameSession { uid: user_id },
-    )
-    .await;
+    let session_json: Option<String> = state
+        .cache
+        .get(&CacheKey::GameSession { uid: user_id })
+        .await;
 
     let session_json =
         session_json.ok_or(ApiError::BadRequest("no game session — login again".into()))?;
