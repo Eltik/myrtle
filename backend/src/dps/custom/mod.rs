@@ -229,6 +229,7 @@ pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
         "char_1039_thorn2" => generated::thorns_alter(unit, enemy),
         "char_4151_tinman" => generated::tin_man(unit, enemy),
         "char_4191_tippi" => generated::tippi(unit, enemy),
+        "char_4056_titi" => generated::titi(unit, enemy),
         "char_363_toddi" => generated::toddifons(unit, enemy),
         "char_4182_oblvns" => generated::togawa_sakiko(unit, enemy),
         "char_411_tomimi" => generated::tomimi(unit, enemy),

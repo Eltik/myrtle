@@ -45,4 +45,36 @@ cargo test --test dps_engine_test -- --no-capture
 
 **Note**: Ebenholz fails, but that is a Python bug. Rust is correct.
 
-TODO: Small script or function that autochecks when the DPS calculator Python repository updates, and then pull and re-generate everything.
+## Auto-Update (DPS Watcher)
+
+The backend includes a built-in DPS watcher (`src/core/dps_watcher.rs`) that automatically polls the upstream Python repository for changes and regenerates the DPS code.
+
+### Enable
+
+Set `DPS_POLL_INTERVAL` in your `.env` to activate (value in seconds):
+
+```env
+DPS_POLL_INTERVAL=1800          # Check every 30 minutes
+DPS_AUTO_BUILD=true             # Rebuild backend binary after regeneration (default: true)
+DPS_AUTO_RESTART=false          # Exit process after rebuild so supervisor restarts (default: false)
+```
+
+### Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `DPS_POLL_INTERVAL` | _(unset = disabled)_ | Seconds between GitHub checks |
+| `DPS_UPSTREAM_REPO` | `WhoAteMyCQQkie/ArknightsDpsCompare` | GitHub repo to watch |
+| `DPS_UPSTREAM_BRANCH` | `main` | Branch to track |
+| `DPS_LOCAL_REPO_PATH` | `external/ArknightsDpsCompare` | Local clone path |
+| `DPS_STATE_FILE` | `.dps-updater-state.json` | Persisted state file |
+| `DPS_AUTO_BUILD` | `true` | Rebuild backend after code generation |
+| `DPS_AUTO_RESTART` | `false` | Exit process after rebuild (use with systemd/Docker) |
+| `GITHUB_TOKEN` | _(optional)_ | For higher rate limits (not required) |
+
+### How It Works
+
+1. Polls `GET /repos/{repo}/commits` with ETag caching (304 = no API cost)
+2. On new commit: `git fetch` + `git reset --hard` the local clone
+3. Runs `generate-dps --formulas --transpile` (skips `--expected` for efficiency)
+4. Optionally rebuilds the backend binary and restarts via process supervisor

@@ -81,6 +81,9 @@ async fn main() {
     // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
     backend::core::asset_watcher::spawn(state.clone());
 
+    // Spawn DPS formula auto-update watcher (polls GitHub for upstream changes)
+    backend::core::dps_watcher::spawn(state.clone());
+
     backend::app::server::run(state)
         .await
         .expect("server error");
