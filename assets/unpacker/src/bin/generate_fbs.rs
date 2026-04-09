@@ -98,6 +98,8 @@ fn patch_schemas(fbs_dir: &Path) {
         let Ok(content) = fs::read_to_string(&path) else {
             continue;
         };
+        // Normalize CRLF → LF so patches match on Windows (git autocrlf)
+        let content = content.replace("\r\n", "\n");
         if content.contains(old) {
             let patched = content.replace(old, new);
             if fs::write(&path, patched).is_ok() {
