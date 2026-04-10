@@ -60612,14 +60612,8 @@ impl FlatBufferToJson for skin_table_generated::clz_Torappu_CharSkinData<'_> {
         if let Some(v) = self.avatarId() {
             map.insert("AvatarId".to_string(), json!(v));
         }
-        if let Some(v) = self.spAvatarId() {
-            map.insert("SpAvatarId".to_string(), json!(v));
-        }
         if let Some(v) = self.portraitId() {
             map.insert("PortraitId".to_string(), json!(v));
-        }
-        if let Some(v) = self.spPortraitId() {
-            map.insert("SpPortraitId".to_string(), json!(v));
         }
         if let Some(v) = self.dynPortraitId() {
             map.insert("DynPortraitId".to_string(), json!(v));

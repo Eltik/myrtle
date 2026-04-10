@@ -155,7 +155,7 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "token_table" | "ep_breakbuff_table" | "character_table" | "battle_equip_table"
+        "character_table" | "ep_breakbuff_table" | "token_table" | "battle_equip_table"
     )
 }
 
@@ -166,8 +166,8 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
         match schema_type {
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::*;
+            "character_table" => {
+                use crate::generated_fbs_yostar::character_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
@@ -180,8 +180,8 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, Str
                 };
                 Ok(root.to_json())
             }
-            "character_table" => {
-                use crate::generated_fbs_yostar::character_table_generated::*;
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
@@ -549,7 +549,22 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
 
     match decode_result {
         Ok(Ok(value)) => {
-            if value.as_object().is_some_and(|o| o.is_empty()) {
+            // A result is "useless" if either:
+            //   (a) the top-level object has no keys at all, or
+            //   (b) the root collection is present but empty because every
+            //       element was dropped by the filter_map safety net.
+            // Case (b) happens when the CN schema has fields the binary
+            // doesn't (e.g., validModeIndices in EquipTalentData for the
+            // Apr 2026 CN binary) and every element panics on decode.
+            // Without this check the Yostar fallback never fires.
+            let is_content_empty = match schema_type {
+                "battle_equip_table" => value
+                    .get("Equips")
+                    .and_then(|v| v.as_array())
+                    .is_some_and(|a| a.is_empty()),
+                _ => false,
+            };
+            if value.as_object().is_some_and(|o| o.is_empty()) || is_content_empty {
                 if has_yostar_schema(schema_type)
                     && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
                 {

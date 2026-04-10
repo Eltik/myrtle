@@ -1314,18 +1314,16 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
     pub const VT_DYNILLUSTID: flatbuffers::VOffsetT = 14;
     pub const VT_SPDYNILLUSTID: flatbuffers::VOffsetT = 16;
     pub const VT_AVATARID: flatbuffers::VOffsetT = 18;
-    pub const VT_SPAVATARID: flatbuffers::VOffsetT = 20;
-    pub const VT_PORTRAITID: flatbuffers::VOffsetT = 22;
-    pub const VT_SPPORTRAITID: flatbuffers::VOffsetT = 24;
-    pub const VT_DYNPORTRAITID: flatbuffers::VOffsetT = 26;
-    pub const VT_DYNENTRANCEID: flatbuffers::VOffsetT = 28;
-    pub const VT_BUILDINGID: flatbuffers::VOffsetT = 30;
-    pub const VT_BATTLESKIN: flatbuffers::VOffsetT = 32;
-    pub const VT_ISBUYSKIN: flatbuffers::VOffsetT = 34;
-    pub const VT_TMPLID: flatbuffers::VOffsetT = 36;
-    pub const VT_VOICEID: flatbuffers::VOffsetT = 38;
-    pub const VT_VOICETYPE: flatbuffers::VOffsetT = 40;
-    pub const VT_DISPLAYSKIN: flatbuffers::VOffsetT = 42;
+    pub const VT_PORTRAITID: flatbuffers::VOffsetT = 20;
+    pub const VT_DYNPORTRAITID: flatbuffers::VOffsetT = 22;
+    pub const VT_DYNENTRANCEID: flatbuffers::VOffsetT = 24;
+    pub const VT_BUILDINGID: flatbuffers::VOffsetT = 26;
+    pub const VT_BATTLESKIN: flatbuffers::VOffsetT = 28;
+    pub const VT_ISBUYSKIN: flatbuffers::VOffsetT = 30;
+    pub const VT_TMPLID: flatbuffers::VOffsetT = 32;
+    pub const VT_VOICEID: flatbuffers::VOffsetT = 34;
+    pub const VT_VOICETYPE: flatbuffers::VOffsetT = 36;
+    pub const VT_DISPLAYSKIN: flatbuffers::VOffsetT = 38;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -1359,14 +1357,8 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         if let Some(x) = args.dynPortraitId {
             builder.add_dynPortraitId(x);
         }
-        if let Some(x) = args.spPortraitId {
-            builder.add_spPortraitId(x);
-        }
         if let Some(x) = args.portraitId {
             builder.add_portraitId(x);
-        }
-        if let Some(x) = args.spAvatarId {
-            builder.add_spAvatarId(x);
         }
         if let Some(x) = args.avatarId {
             builder.add_avatarId(x);
@@ -1407,9 +1399,7 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         let dynIllustId = self.dynIllustId().map(|x| x.to_string());
         let spDynIllustId = self.spDynIllustId().map(|x| x.to_string());
         let avatarId = self.avatarId().map(|x| x.to_string());
-        let spAvatarId = self.spAvatarId().map(|x| x.to_string());
         let portraitId = self.portraitId().map(|x| x.to_string());
-        let spPortraitId = self.spPortraitId().map(|x| x.to_string());
         let dynPortraitId = self.dynPortraitId().map(|x| x.to_string());
         let dynEntranceId = self.dynEntranceId().map(|x| x.to_string());
         let buildingId = self.buildingId().map(|x| x.to_string());
@@ -1428,9 +1418,7 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
             dynIllustId,
             spDynIllustId,
             avatarId,
-            spAvatarId,
             portraitId,
-            spPortraitId,
             dynPortraitId,
             dynEntranceId,
             buildingId,
@@ -1549,18 +1537,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         }
     }
     #[inline]
-    pub fn spAvatarId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_CharSkinData::VT_SPAVATARID,
-                None,
-            )
-        }
-    }
-    #[inline]
     pub fn portraitId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
@@ -1568,18 +1544,6 @@ impl<'a> clz_Torappu_CharSkinData<'a> {
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_CharSkinData::VT_PORTRAITID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn spPortraitId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_CharSkinData::VT_SPPORTRAITID,
                 None,
             )
         }
@@ -1739,18 +1703,8 @@ impl flatbuffers::Verifiable for clz_Torappu_CharSkinData<'_> {
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "spAvatarId",
-                Self::VT_SPAVATARID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "portraitId",
                 Self::VT_PORTRAITID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "spPortraitId",
-                Self::VT_SPPORTRAITID,
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
@@ -1802,9 +1756,7 @@ pub struct clz_Torappu_CharSkinDataArgs<'a> {
     pub dynIllustId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub avatarId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub spAvatarId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub portraitId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub spPortraitId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub dynPortraitId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub dynEntranceId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub buildingId: Option<flatbuffers::WIPOffset<&'a str>>,
@@ -1827,9 +1779,7 @@ impl<'a> Default for clz_Torappu_CharSkinDataArgs<'a> {
             dynIllustId: None,
             spDynIllustId: None,
             avatarId: None,
-            spAvatarId: None,
             portraitId: None,
-            spPortraitId: None,
             dynPortraitId: None,
             dynEntranceId: None,
             buildingId: None,
@@ -1913,24 +1863,10 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CharSkinDataBuilder
         );
     }
     #[inline]
-    pub fn add_spAvatarId(&mut self, spAvatarId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_CharSkinData::VT_SPAVATARID,
-            spAvatarId,
-        );
-    }
-    #[inline]
     pub fn add_portraitId(&mut self, portraitId: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
             clz_Torappu_CharSkinData::VT_PORTRAITID,
             portraitId,
-        );
-    }
-    #[inline]
-    pub fn add_spPortraitId(&mut self, spPortraitId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_CharSkinData::VT_SPPORTRAITID,
-            spPortraitId,
         );
     }
     #[inline]
@@ -2031,9 +1967,7 @@ impl core::fmt::Debug for clz_Torappu_CharSkinData<'_> {
         ds.field("dynIllustId", &self.dynIllustId());
         ds.field("spDynIllustId", &self.spDynIllustId());
         ds.field("avatarId", &self.avatarId());
-        ds.field("spAvatarId", &self.spAvatarId());
         ds.field("portraitId", &self.portraitId());
-        ds.field("spPortraitId", &self.spPortraitId());
         ds.field("dynPortraitId", &self.dynPortraitId());
         ds.field("dynEntranceId", &self.dynEntranceId());
         ds.field("buildingId", &self.buildingId());
@@ -2057,9 +1991,7 @@ pub struct clz_Torappu_CharSkinDataT {
     pub dynIllustId: Option<String>,
     pub spDynIllustId: Option<String>,
     pub avatarId: Option<String>,
-    pub spAvatarId: Option<String>,
     pub portraitId: Option<String>,
-    pub spPortraitId: Option<String>,
     pub dynPortraitId: Option<String>,
     pub dynEntranceId: Option<String>,
     pub buildingId: Option<String>,
@@ -2081,9 +2013,7 @@ impl Default for clz_Torappu_CharSkinDataT {
             dynIllustId: None,
             spDynIllustId: None,
             avatarId: None,
-            spAvatarId: None,
             portraitId: None,
-            spPortraitId: None,
             dynPortraitId: None,
             dynEntranceId: None,
             buildingId: None,
@@ -2112,9 +2042,7 @@ impl clz_Torappu_CharSkinDataT {
         let dynIllustId = self.dynIllustId.as_ref().map(|x| _fbb.create_string(x));
         let spDynIllustId = self.spDynIllustId.as_ref().map(|x| _fbb.create_string(x));
         let avatarId = self.avatarId.as_ref().map(|x| _fbb.create_string(x));
-        let spAvatarId = self.spAvatarId.as_ref().map(|x| _fbb.create_string(x));
         let portraitId = self.portraitId.as_ref().map(|x| _fbb.create_string(x));
-        let spPortraitId = self.spPortraitId.as_ref().map(|x| _fbb.create_string(x));
         let dynPortraitId = self.dynPortraitId.as_ref().map(|x| _fbb.create_string(x));
         let dynEntranceId = self.dynEntranceId.as_ref().map(|x| _fbb.create_string(x));
         let buildingId = self.buildingId.as_ref().map(|x| _fbb.create_string(x));
@@ -2135,9 +2063,7 @@ impl clz_Torappu_CharSkinDataT {
                 dynIllustId,
                 spDynIllustId,
                 avatarId,
-                spAvatarId,
                 portraitId,
-                spPortraitId,
                 dynPortraitId,
                 dynEntranceId,
                 buildingId,

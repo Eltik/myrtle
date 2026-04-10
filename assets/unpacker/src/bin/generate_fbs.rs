@@ -91,6 +91,34 @@ fn patch_schemas(fbs_dir: &Path) {
              \x20   relicTipsData: [dict__string__clz_Torappu_RoguelikeRelicTipsData];\n\
              }",
         ),
+        // skin_table.fbs: upstream commit 4975a03 "Update 2.7.21" (Apr 7 2026)
+        // inserted `spAvatarId` and `spPortraitId` into the middle of
+        // clz_Torappu_CharSkinData (between avatarId/portraitId and
+        // portraitId/dynPortraitId). The actual CN binary was serialized with
+        // the pre-4975a03 schema and does NOT contain these fields. The inserted
+        // fields shift all subsequent VTable slots by +4, so every CharSkin
+        // entry panics when the decoder follows garbage offsets, and the
+        // filter_map safety net drops all ~5669 skins → CharSkins: [].
+        //
+        // Fix: remove the two inserted fields from the schema. The backend
+        // never reads `spAvatarId` / `spPortraitId` (see backend/src/core/
+        // gamedata/types/skin.rs Skin struct — only skin_id, char_id, avatar_id,
+        // portrait_id, battle_skin, display_skin are consumed), so this is a
+        // pure alignment fix with zero backend impact. When the binary later
+        // ships these fields, upstream's schema can be re-enabled.
+        (
+            "skin_table.fbs",
+            // old: spAvatarId and spPortraitId inserted mid-struct
+            "    avatarId: string; \n\
+             \x20   spAvatarId: string; \n\
+             \x20   portraitId: string; \n\
+             \x20   spPortraitId: string; \n\
+             \x20   dynPortraitId: string; ",
+            // new: inserted fields removed, original order restored
+            "    avatarId: string;\n\
+             \x20   portraitId: string;\n\
+             \x20   dynPortraitId: string; ",
+        ),
     ];
 
     for (filename, old, new) in patches {
@@ -1210,7 +1238,22 @@ fn generate_decode_dispatch(
 
     out.push_str(r#"    match decode_result {
                      Ok(Ok(value)) => {
-                         if value.as_object().map_or(false, |o| o.is_empty()) {
+                         // A result is "useless" if either:
+                         //   (a) the top-level object has no keys at all, or
+                         //   (b) the root collection is present but empty because every
+                         //       element was dropped by the filter_map safety net.
+                         // Case (b) happens when the CN schema has fields the binary
+                         // doesn't (e.g., validModeIndices in EquipTalentData for the
+                         // Apr 2026 CN binary) and every element panics on decode.
+                         // Without this check the Yostar fallback never fires.
+                         let is_content_empty = match schema_type {
+                             "battle_equip_table" => value
+                                 .get("Equips")
+                                 .and_then(|v| v.as_array())
+                                 .map_or(false, |a| a.is_empty()),
+                             _ => false,
+                         };
+                         if value.as_object().map_or(false, |o| o.is_empty()) || is_content_empty {
                              if has_yostar_schema(schema_type) {
                                  if let Ok(v) = decode_flatbuffer_yostar(data, schema_type) {
                                      return Ok(v);
