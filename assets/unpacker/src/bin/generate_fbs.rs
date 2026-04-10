@@ -119,6 +119,114 @@ fn patch_schemas(fbs_dir: &Path) {
              \x20   portraitId: string;\n\
              \x20   dynPortraitId: string; ",
         ),
+        // activity_table.fbs: commit 4975a03 inserted `defaultEnemyTag` into
+        // the middle of clz_Torappu_ActivityEnemyDuelConstData, between
+        // `defaultEmoticonPicId` and `modeOperationRoundNumber`. The binary
+        // doesn't have it, shifting all subsequent slots. Remove to restore
+        // alignment. Backend does not load activity_table.
+        (
+            "activity_table.fbs",
+            "    defaultEmoticonPicId: string; \n\
+             \x20   defaultEnemyTag: string; \n\
+             \x20   modeOperationRoundNumber: int; ",
+            "    defaultEmoticonPicId: string;\n\
+             \x20   modeOperationRoundNumber: int; ",
+        ),
+        // open_server_table.fbs: commit 4975a03 inserted `compensateEndDay`
+        // mid-struct in clz_Torappu_NewbieCheckInPackageData (between
+        // `checkInDuration` and `totalCheckInDay`). The same commit also
+        // appended `trigStartTime`/`trigEndTime` to the END of the struct,
+        // which is forward-compatible (absent fields read as None) — so we
+        // only need to remove the mid-struct insertion. Backend does not
+        // load open_server_table.
+        (
+            "open_server_table.fbs",
+            "    checkInDuration: int; \n\
+             \x20   compensateEndDay: int; \n\
+             \x20   totalCheckInDay: int; ",
+            "    checkInDuration: int;\n\
+             \x20   totalCheckInDay: int; ",
+        ),
+        // display_meta_table.fbs: commit 4975a03 made three breaking changes.
+        // (1) Inserted `limitId` at the START of clz_Torappu_NameCardV2TimeLimitInfo,
+        //     shifting every field after it by +2 slots.
+        // (2) Inserted `keyCodeType` mid-struct in clz_Torappu_KeyItem, between
+        //     `useIcon` and `keyCodes`.
+        // (3) Changed `timeLimitInfoList` element type from
+        //     `[clz_Torappu_NameCardV2TimeLimitInfo]` to the dict-wrapped
+        //     `[dict__string__clz_Torappu_NameCardV2TimeLimitInfo]`. The binary
+        //     still stores plain table elements, so every element misreads.
+        // Revert all three. Backend does not load display_meta_table.
+        (
+            "display_meta_table.fbs",
+            "table clz_Torappu_NameCardV2TimeLimitInfo {\n\
+             \x20   limitId: string; \n\
+             \x20   id: string; ",
+            "table clz_Torappu_NameCardV2TimeLimitInfo {\n\
+             \x20   id: string; ",
+        ),
+        (
+            "display_meta_table.fbs",
+            "    useIcon: bool; \n\
+             \x20   keyCodeType: enum__Torappu_KeyCodeType; \n\
+             \x20   keyCodes: [int]; ",
+            "    useIcon: bool;\n\
+             \x20   keyCodes: [int]; ",
+        ),
+        (
+            "display_meta_table.fbs",
+            "    timeLimitInfoList: [dict__string__clz_Torappu_NameCardV2TimeLimitInfo]; ",
+            "    timeLimitInfoList: [clz_Torappu_NameCardV2TimeLimitInfo]; ",
+        ),
+        // ep_breakbuff_table.fbs: commit 4975a03 inserted `enemyElementBreakDuration`
+        // mid-struct in clz_Torappu_EPBreakBuffData (between `elementBreakDuration`
+        // and `elementBuffs`). ep_breakbuff has a Yostar variant fallback already,
+        // but the CN path emits panic noise on every decode attempt. Remove the
+        // field to silence the noise. Backend does not load ep_breakbuff_table.
+        (
+            "ep_breakbuff_table.fbs",
+            "    elementBreakDuration: float; \n\
+             \x20   enemyElementBreakDuration: float; \n\
+             \x20   elementBuffs: [string]; ",
+            "    elementBreakDuration: float;\n\
+             \x20   elementBuffs: [string]; ",
+        ),
+        // stage_table.fbs: clz_Torappu_CGGalleryGroupData is mid-struct
+        // misaligned vs the current CN binary. The decoder reads slot 8
+        // (locationId) and follows a garbage offset, writing raw bytes into
+        // the output string. This produces invalid UTF-8 in the JSON file,
+        // which causes serde_json::from_reader in the backend's
+        // load_table_or_warn to fail → StageTableFile silently loads as
+        // Default::default() → every stage-dependent feature breaks.
+        //
+        // stage_table.fbs has not been modified upstream since 94bf1f8 (game
+        // version 2.7.11); the game is now at 2.7.21, so ten minor versions
+        // of schema drift have accumulated. The actual misalignment inside
+        // CGGalleryGroupData is unknown (binary inspection required to
+        // diagnose precisely).
+        //
+        // Mitigation: truncate CGGalleryGroupData to only its first two
+        // fields (storySetId, storylineId — which decode cleanly). Removing
+        // trailing fields from a FlatBuffers table is SAFE — each table has
+        // its own VTable, so slot numbers in other structs are unaffected,
+        // and absent trailing fields in the binary simply aren't read.
+        // The backend's StageTableFile only deserializes the top-level
+        // `Stages` field and ignores CgGalleryGroups entirely
+        // (backend/src/core/gamedata/types/stage.rs:166-171), so zero
+        // functionality is lost.
+        (
+            "stage_table.fbs",
+            "table clz_Torappu_CGGalleryGroupData {\n\
+             \x20   storySetId: string; \n\
+             \x20   storylineId: string; \n\
+             \x20   locationId: string; \n\
+             \x20   displays: [string]; \n\
+             }",
+            "table clz_Torappu_CGGalleryGroupData {\n\
+             \x20   storySetId: string;\n\
+             \x20   storylineId: string;\n\
+             }",
+        ),
     ];
 
     for (filename, old, new) in patches {

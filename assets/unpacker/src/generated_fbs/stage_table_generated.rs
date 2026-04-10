@@ -22344,8 +22344,6 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CGGalleryGroupData<'a> {
 impl<'a> clz_Torappu_CGGalleryGroupData<'a> {
     pub const VT_STORYSETID: flatbuffers::VOffsetT = 4;
     pub const VT_STORYLINEID: flatbuffers::VOffsetT = 6;
-    pub const VT_LOCATIONID: flatbuffers::VOffsetT = 8;
-    pub const VT_DISPLAYS: flatbuffers::VOffsetT = 10;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -22357,12 +22355,6 @@ impl<'a> clz_Torappu_CGGalleryGroupData<'a> {
         args: &'args clz_Torappu_CGGalleryGroupDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'bldr>> {
         let mut builder = clz_Torappu_CGGalleryGroupDataBuilder::new(_fbb);
-        if let Some(x) = args.displays {
-            builder.add_displays(x);
-        }
-        if let Some(x) = args.locationId {
-            builder.add_locationId(x);
-        }
         if let Some(x) = args.storylineId {
             builder.add_storylineId(x);
         }
@@ -22375,15 +22367,9 @@ impl<'a> clz_Torappu_CGGalleryGroupData<'a> {
     pub fn unpack(&self) -> clz_Torappu_CGGalleryGroupDataT {
         let storySetId = self.storySetId().map(|x| x.to_string());
         let storylineId = self.storylineId().map(|x| x.to_string());
-        let locationId = self.locationId().map(|x| x.to_string());
-        let displays = self
-            .displays()
-            .map(|x| x.iter().map(|s| s.to_string()).collect());
         clz_Torappu_CGGalleryGroupDataT {
             storySetId,
             storylineId,
-            locationId,
-            displays,
         }
     }
 
@@ -22411,31 +22397,6 @@ impl<'a> clz_Torappu_CGGalleryGroupData<'a> {
             )
         }
     }
-    #[inline]
-    pub fn locationId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_CGGalleryGroupData::VT_LOCATIONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn displays(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
-            >>(clz_Torappu_CGGalleryGroupData::VT_DISPLAYS, None)
-        }
-    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_CGGalleryGroupData<'_> {
@@ -22456,14 +22417,6 @@ impl flatbuffers::Verifiable for clz_Torappu_CGGalleryGroupData<'_> {
                 Self::VT_STORYLINEID,
                 false,
             )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "locationId",
-                Self::VT_LOCATIONID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("displays", Self::VT_DISPLAYS, false)?
             .finish();
         Ok(())
     }
@@ -22471,10 +22424,6 @@ impl flatbuffers::Verifiable for clz_Torappu_CGGalleryGroupData<'_> {
 pub struct clz_Torappu_CGGalleryGroupDataArgs<'a> {
     pub storySetId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub storylineId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub locationId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub displays: Option<
-        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
-    >,
 }
 impl<'a> Default for clz_Torappu_CGGalleryGroupDataArgs<'a> {
     #[inline]
@@ -22482,8 +22431,6 @@ impl<'a> Default for clz_Torappu_CGGalleryGroupDataArgs<'a> {
         clz_Torappu_CGGalleryGroupDataArgs {
             storySetId: None,
             storylineId: None,
-            locationId: None,
-            displays: None,
         }
     }
 }
@@ -22508,25 +22455,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CGGalleryGroupDataB
         );
     }
     #[inline]
-    pub fn add_locationId(&mut self, locationId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_CGGalleryGroupData::VT_LOCATIONID,
-            locationId,
-        );
-    }
-    #[inline]
-    pub fn add_displays(
-        &mut self,
-        displays: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_CGGalleryGroupData::VT_DISPLAYS,
-            displays,
-        );
-    }
-    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_CGGalleryGroupDataBuilder<'a, 'b, A> {
@@ -22548,8 +22476,6 @@ impl core::fmt::Debug for clz_Torappu_CGGalleryGroupData<'_> {
         let mut ds = f.debug_struct("clz_Torappu_CGGalleryGroupData");
         ds.field("storySetId", &self.storySetId());
         ds.field("storylineId", &self.storylineId());
-        ds.field("locationId", &self.locationId());
-        ds.field("displays", &self.displays());
         ds.finish()
     }
 }
@@ -22558,16 +22484,12 @@ impl core::fmt::Debug for clz_Torappu_CGGalleryGroupData<'_> {
 pub struct clz_Torappu_CGGalleryGroupDataT {
     pub storySetId: Option<String>,
     pub storylineId: Option<String>,
-    pub locationId: Option<String>,
-    pub displays: Option<Vec<String>>,
 }
 impl Default for clz_Torappu_CGGalleryGroupDataT {
     fn default() -> Self {
         Self {
             storySetId: None,
             storylineId: None,
-            locationId: None,
-            displays: None,
         }
     }
 }
@@ -22578,18 +22500,11 @@ impl clz_Torappu_CGGalleryGroupDataT {
     ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'b>> {
         let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
         let storylineId = self.storylineId.as_ref().map(|x| _fbb.create_string(x));
-        let locationId = self.locationId.as_ref().map(|x| _fbb.create_string(x));
-        let displays = self.displays.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
-            _fbb.create_vector(&w)
-        });
         clz_Torappu_CGGalleryGroupData::create(
             _fbb,
             &clz_Torappu_CGGalleryGroupDataArgs {
                 storySetId,
                 storylineId,
-                locationId,
-                displays,
             },
         )
     }

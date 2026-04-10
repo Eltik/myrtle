@@ -16323,9 +16323,6 @@ impl FlatBufferToJson for activity_table_generated::clz_Torappu_ActivityEnemyDue
         if let Some(v) = self.defaultEmoticonPicId() {
             map.insert("DefaultEmoticonPicId".to_string(), json!(v));
         }
-        if let Some(v) = self.defaultEnemyTag() {
-            map.insert("DefaultEnemyTag".to_string(), json!(v));
-        }
         map.insert(
             "ModeOperationRoundNumber".to_string(),
             json!(self.modeOperationRoundNumber()),
@@ -35804,9 +35801,6 @@ impl FlatBufferToJson
 impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
-        if let Some(v) = self.limitId() {
-            map.insert("LimitId".to_string(), json!(v));
-        }
         if let Some(v) = self.id() {
             map.insert("Id".to_string(), json!(v));
         }
@@ -36249,10 +36243,6 @@ impl FlatBufferToJson for display_meta_table_generated::clz_Torappu_KeyItem<'_> 
             map.insert("KeyName".to_string(), json!(v));
         }
         map.insert("UseIcon".to_string(), json!(self.useIcon()));
-        map.insert(
-            "KeyCodeType".to_string(),
-            self.keyCodeType().to_json_value(),
-        );
         if let Some(vec) = self.keyCodes() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
             let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();
@@ -37635,10 +37625,6 @@ impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_EPBreakBuffD
         map.insert(
             "ElementBreakDuration".to_string(),
             json!(self.elementBreakDuration()),
-        );
-        map.insert(
-            "EnemyElementBreakDuration".to_string(),
-            json!(self.enemyElementBreakDuration()),
         );
         if let Some(vec) = self.elementBuffs() {
             assert!(vec.len() <= 10_000_000, "FB vector too large");
@@ -43247,10 +43233,6 @@ impl FlatBufferToJson for open_server_table_generated::clz_Torappu_NewbieCheckIn
             map.insert("BindGPGoodId".to_string(), json!(v));
         }
         map.insert("CheckInDuration".to_string(), json!(self.checkInDuration()));
-        map.insert(
-            "CompensateEndDay".to_string(),
-            json!(self.compensateEndDay()),
-        );
         map.insert("TotalCheckInDay".to_string(), json!(self.totalCheckInDay()));
         if let Some(v) = self.iconId() {
             map.insert("IconId".to_string(), json!(v));
@@ -63201,14 +63183,6 @@ impl FlatBufferToJson for stage_table_generated::clz_Torappu_CGGalleryGroupData<
         }
         if let Some(v) = self.storylineId() {
             map.insert("StorylineId".to_string(), json!(v));
-        }
-        if let Some(v) = self.locationId() {
-            map.insert("LocationId".to_string(), json!(v));
-        }
-        if let Some(vec) = self.displays() {
-            assert!(vec.len() <= 10_000_000, "FB vector too large");
-            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();
-            map.insert("Displays".to_string(), json!(arr));
         }
         Value::Object(map)
     }

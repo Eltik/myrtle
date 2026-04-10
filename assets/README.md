@@ -1156,4 +1156,45 @@ See LICENSE file in repository.
 
 ---
 
-Last updated: 2026-03-11
+## TODO: Known FBS Extraction Issues
+
+Audit performed 2026-04-10 after fixing `battle_equip_table`, `skin_table`, `stage_table`, and five other tables affected by upstream commit `4975a03` ("Update 2.7.21", Apr 7 2026) in [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS). All backend-loaded tables are now clean; the items below are residual issues that don't currently block functionality but should be addressed.
+
+### Non-loaded tables with invalid UTF-8 output
+
+These produce JSON files containing raw binary bytes (from FlatBuffers VTable misalignment where the decoder follows garbage offsets and writes the resulting memory contents into string fields). `serde_json::from_reader` rejects these files. The backend does not currently load them, so the breakage is cosmetic — but any future consumer will hit a parse error.
+
+- [ ] **`activity_table`** — invalid UTF-8 at byte ~3193552 near `"Id"`. The Apr 7 patch removed `defaultEnemyTag` from `clz_Torappu_ActivityEnemyDuelConstData`, which eliminated most panics, but a second misalignment remains in some nested struct. Needs diagnosis: install a panic-attribution hook in `flatbuffers_decode.rs` and re-extract to pinpoint the offending line in `fb_json_auto.rs`, then find the corresponding struct and add a removal/reorder patch to `patch_schemas()`.
+
+- [ ] **`open_server_table`** — invalid UTF-8 at byte ~17160 near `"BindGPGoodId"`. Likely another field in `clz_Torappu_NewbieCheckInPackageData` or a sibling struct that wasn't covered by the `compensateEndDay` removal. Same diagnosis path as above.
+
+### Non-loaded tables with panic noise but valid output
+
+These emit panic messages to stderr during extraction but produce syntactically valid JSON. The filter_map safety net drops the bad elements. Low priority — output is parseable and backend doesn't read them.
+
+- [ ] **`climb_tower_table`** — ~63 panics. The `recordNoResetStartTime` field added in `4975a03` is appended (forward-compatible), so the panics must originate elsewhere. Root cause unknown.
+- [ ] **`charm_table`** — ~44 panics, 6 KB output. Not touched by `4975a03`.
+- [ ] **`crisis_v2_table`** — ~4 panics, 3 KB output.
+- [ ] **`retro_table`** — ~2 panics, 3.8 MB output (99.9% success rate).
+- [ ] **`sandbox_perm_table`** — ~1 panic.
+
+### Known noise in already-fixed tables
+
+- [ ] **`battle_equip_table`** — the CN schema path still panics ~867 times on every extraction because `clz_Torappu_EquipTalentData.validModeIndices` doesn't exist in the current CN binary. The `is_content_empty` check in `flatbuffers_decode.rs` detects the resulting `{"Equips": []}` and correctly falls back to the Yostar schema, producing a populated output file. The noise is cosmetic but clutters logs. A cleaner fix would be to remove `validModeIndices` from the CN schema via `patch_schemas()` so the CN path stops panicking in the first place — then the Yostar fallback isn't needed either.
+
+### stage_table truncation workaround
+
+- [ ] **`stage_table.fbs`** has not been updated upstream since game version 2.7.11 (commit `94bf1f8`), but the live game is at 2.7.21. Ten minor versions of schema drift have accumulated. The immediate symptom was `clz_Torappu_CGGalleryGroupData` producing garbage UTF-8 in `LocationId`, which broke `serde_json::from_reader` for the entire file. The current patch truncates `CGGalleryGroupData` to only its first two fields (`storySetId`, `storylineId`), discarding `locationId` and `displays`. This is safe because the backend's `StageTableFile` only reads the top-level `Stages` field and ignores `CgGalleryGroups` entirely, but it means any future consumer that wants CG gallery metadata will see truncated data. A proper fix requires either:
+  - A binary inspection of the actual CN game's `CGGalleryGroupData` VTable layout to determine what fields it contains, or
+  - Waiting for upstream `OpenArknightsFBS` to publish a `2.7.21` update for `stage_table.fbs`.
+- [ ] Re-audit `stage_table`'s other nested structs (`RuneStageGroups`, `OverrideUnlockInfo`, `SixStarRuneData`, `CgGalleryDisplays` — all currently empty in output) to see whether additional truncations are needed once a similar drift appears in a backend-consumed field.
+
+### Follow-up
+
+- [ ] Add an automated audit step to the asset pipeline: after extraction, attempt `serde_json::from_reader` on every `.json` file in `output/gamedata/excel/` and fail the build (or emit a loud warning) if any backend-loaded table produces invalid UTF-8. This would have caught the silent `stage_table` failure immediately instead of letting `load_table_or_warn` quietly fall back to `Default::default()`.
+- [ ] Investigate a generalized "strict UTF-8 string accessor" wrapper in the generated `to_json` code that replaces raw bytes with `\uFFFD` (replacement character) when the FlatBuffers string accessor returns non-UTF-8 data, so that downstream JSON parsers don't break when the decoder misreads a field.
+- [ ] Periodically `git fetch` upstream `OpenArknightsFBS` and diff against the pinned commit. When new commits land, re-evaluate which `patch_schemas()` entries are still needed (upstream fixes make our patches no-ops, but the dead code accumulates).
+
+---
+
+Last updated: 2026-04-10

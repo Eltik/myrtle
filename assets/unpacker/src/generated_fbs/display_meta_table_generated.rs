@@ -10292,10 +10292,9 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_NameCardV2TimeLimitInfo<'a> {
 }
 
 impl<'a> clz_Torappu_NameCardV2TimeLimitInfo<'a> {
-    pub const VT_LIMITID: flatbuffers::VOffsetT = 4;
-    pub const VT_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_AVAILSTARTTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_AVAILENDTIME: flatbuffers::VOffsetT = 10;
+    pub const VT_ID: flatbuffers::VOffsetT = 4;
+    pub const VT_AVAILSTARTTIME: flatbuffers::VOffsetT = 6;
+    pub const VT_AVAILENDTIME: flatbuffers::VOffsetT = 8;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -10312,37 +10311,20 @@ impl<'a> clz_Torappu_NameCardV2TimeLimitInfo<'a> {
         if let Some(x) = args.id {
             builder.add_id(x);
         }
-        if let Some(x) = args.limitId {
-            builder.add_limitId(x);
-        }
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_NameCardV2TimeLimitInfoT {
-        let limitId = self.limitId().map(|x| x.to_string());
         let id = self.id().map(|x| x.to_string());
         let availStartTime = self.availStartTime();
         let availEndTime = self.availEndTime();
         clz_Torappu_NameCardV2TimeLimitInfoT {
-            limitId,
             id,
             availStartTime,
             availEndTime,
         }
     }
 
-    #[inline]
-    pub fn limitId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_NameCardV2TimeLimitInfo::VT_LIMITID,
-                None,
-            )
-        }
-    }
     #[inline]
     pub fn id(&self) -> Option<&'a str> {
         // Safety:
@@ -10393,7 +10375,6 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("limitId", Self::VT_LIMITID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
             .visit_field::<i64>("availStartTime", Self::VT_AVAILSTARTTIME, false)?
             .visit_field::<i64>("availEndTime", Self::VT_AVAILENDTIME, false)?
@@ -10402,7 +10383,6 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     }
 }
 pub struct clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
-    pub limitId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub id: Option<flatbuffers::WIPOffset<&'a str>>,
     pub availStartTime: i64,
     pub availEndTime: i64,
@@ -10411,7 +10391,6 @@ impl<'a> Default for clz_Torappu_NameCardV2TimeLimitInfoArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_NameCardV2TimeLimitInfoArgs {
-            limitId: None,
             id: None,
             availStartTime: 0,
             availEndTime: 0,
@@ -10426,13 +10405,6 @@ pub struct clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a: 'b, 'b, A: flatbuffers
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
     clz_Torappu_NameCardV2TimeLimitInfoBuilder<'a, 'b, A>
 {
-    #[inline]
-    pub fn add_limitId(&mut self, limitId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_NameCardV2TimeLimitInfo::VT_LIMITID,
-            limitId,
-        );
-    }
     #[inline]
     pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
@@ -10476,7 +10448,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 impl core::fmt::Debug for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_NameCardV2TimeLimitInfo");
-        ds.field("limitId", &self.limitId());
         ds.field("id", &self.id());
         ds.field("availStartTime", &self.availStartTime());
         ds.field("availEndTime", &self.availEndTime());
@@ -10486,7 +10457,6 @@ impl core::fmt::Debug for clz_Torappu_NameCardV2TimeLimitInfo<'_> {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_NameCardV2TimeLimitInfoT {
-    pub limitId: Option<String>,
     pub id: Option<String>,
     pub availStartTime: i64,
     pub availEndTime: i64,
@@ -10494,7 +10464,6 @@ pub struct clz_Torappu_NameCardV2TimeLimitInfoT {
 impl Default for clz_Torappu_NameCardV2TimeLimitInfoT {
     fn default() -> Self {
         Self {
-            limitId: None,
             id: None,
             availStartTime: 0,
             availEndTime: 0,
@@ -10506,14 +10475,12 @@ impl clz_Torappu_NameCardV2TimeLimitInfoT {
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_NameCardV2TimeLimitInfo<'b>> {
-        let limitId = self.limitId.as_ref().map(|x| _fbb.create_string(x));
         let id = self.id.as_ref().map(|x| _fbb.create_string(x));
         let availStartTime = self.availStartTime;
         let availEndTime = self.availEndTime;
         clz_Torappu_NameCardV2TimeLimitInfo::create(
             _fbb,
             &clz_Torappu_NameCardV2TimeLimitInfoArgs {
-                limitId,
                 id,
                 availStartTime,
                 availEndTime,
@@ -11134,7 +11101,7 @@ impl<'a> clz_Torappu_NameCardV2SkinData<'a> {
     ) -> Option<
         flatbuffers::Vector<
             'a,
-            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
+            flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
         >,
     > {
         // Safety:
@@ -11144,7 +11111,7 @@ impl<'a> clz_Torappu_NameCardV2SkinData<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     'a,
-                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo>,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>,
                 >,
             >>(clz_Torappu_NameCardV2SkinData::VT_TIMELIMITINFOLIST, None)
         }
@@ -11206,7 +11173,7 @@ impl flatbuffers::Verifiable for clz_Torappu_NameCardV2SkinData<'_> {
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
-                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo>,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo>,
                 >,
             >>("timeLimitInfoList", Self::VT_TIMELIMITINFOLIST, false)?
             .finish();
@@ -11242,7 +11209,7 @@ pub struct clz_Torappu_NameCardV2SkinDataArgs<'a> {
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
-                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
+                flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'a>>,
             >,
         >,
     >,
@@ -11442,7 +11409,7 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_NameCardV2SkinDataB
         timeLimitInfoList: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
-                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_NameCardV2TimeLimitInfo<'b>>,
+                flatbuffers::ForwardsUOffset<clz_Torappu_NameCardV2TimeLimitInfo<'b>>,
             >,
         >,
     ) {
@@ -11518,7 +11485,7 @@ pub struct clz_Torappu_NameCardV2SkinDataT {
     pub skinTmplCnt: i32,
     pub canChangeTmpl: bool,
     pub isTimeLimit: bool,
-    pub timeLimitInfoList: Option<Vec<dict__string__clz_Torappu_NameCardV2TimeLimitInfoT>>,
+    pub timeLimitInfoList: Option<Vec<clz_Torappu_NameCardV2TimeLimitInfoT>>,
 }
 impl Default for clz_Torappu_NameCardV2SkinDataT {
     fn default() -> Self {
@@ -16556,9 +16523,8 @@ impl<'a> clz_Torappu_KeyItem<'a> {
     pub const VT_KEYID: flatbuffers::VOffsetT = 4;
     pub const VT_KEYNAME: flatbuffers::VOffsetT = 6;
     pub const VT_USEICON: flatbuffers::VOffsetT = 8;
-    pub const VT_KEYCODETYPE: flatbuffers::VOffsetT = 10;
-    pub const VT_KEYCODES: flatbuffers::VOffsetT = 12;
-    pub const VT_CANBESETTED: flatbuffers::VOffsetT = 14;
+    pub const VT_KEYCODES: flatbuffers::VOffsetT = 10;
+    pub const VT_CANBESETTED: flatbuffers::VOffsetT = 12;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -16573,7 +16539,6 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         if let Some(x) = args.keyCodes {
             builder.add_keyCodes(x);
         }
-        builder.add_keyCodeType(args.keyCodeType);
         if let Some(x) = args.keyName {
             builder.add_keyName(x);
         }
@@ -16589,14 +16554,12 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         let keyId = self.keyId().map(|x| x.to_string());
         let keyName = self.keyName().map(|x| x.to_string());
         let useIcon = self.useIcon();
-        let keyCodeType = self.keyCodeType();
         let keyCodes = self.keyCodes().map(|x| x.into_iter().collect());
         let canBeSetted = self.canBeSetted();
         clz_Torappu_KeyItemT {
             keyId,
             keyName,
             useIcon,
-            keyCodeType,
             keyCodes,
             canBeSetted,
         }
@@ -16630,20 +16593,6 @@ impl<'a> clz_Torappu_KeyItem<'a> {
         unsafe {
             self._tab
                 .get::<bool>(clz_Torappu_KeyItem::VT_USEICON, Some(false))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn keyCodeType(&self) -> enum__Torappu_KeyCodeType {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<enum__Torappu_KeyCodeType>(
-                    clz_Torappu_KeyItem::VT_KEYCODETYPE,
-                    Some(enum__Torappu_KeyCodeType::KEYBOARD),
-                )
                 .unwrap()
         }
     }
@@ -16684,7 +16633,6 @@ impl flatbuffers::Verifiable for clz_Torappu_KeyItem<'_> {
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("keyId", Self::VT_KEYID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("keyName", Self::VT_KEYNAME, false)?
             .visit_field::<bool>("useIcon", Self::VT_USEICON, false)?
-            .visit_field::<enum__Torappu_KeyCodeType>("keyCodeType", Self::VT_KEYCODETYPE, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
                 "keyCodes",
                 Self::VT_KEYCODES,
@@ -16699,7 +16647,6 @@ pub struct clz_Torappu_KeyItemArgs<'a> {
     pub keyId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub keyName: Option<flatbuffers::WIPOffset<&'a str>>,
     pub useIcon: bool,
-    pub keyCodeType: enum__Torappu_KeyCodeType,
     pub keyCodes: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, i32>>>,
     pub canBeSetted: bool,
 }
@@ -16710,7 +16657,6 @@ impl<'a> Default for clz_Torappu_KeyItemArgs<'a> {
             keyId: None,
             keyName: None,
             useIcon: false,
-            keyCodeType: enum__Torappu_KeyCodeType::KEYBOARD,
             keyCodes: None,
             canBeSetted: false,
         }
@@ -16738,14 +16684,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_KeyItemBuilder<'a, 
     pub fn add_useIcon(&mut self, useIcon: bool) {
         self.fbb_
             .push_slot::<bool>(clz_Torappu_KeyItem::VT_USEICON, useIcon, false);
-    }
-    #[inline]
-    pub fn add_keyCodeType(&mut self, keyCodeType: enum__Torappu_KeyCodeType) {
-        self.fbb_.push_slot::<enum__Torappu_KeyCodeType>(
-            clz_Torappu_KeyItem::VT_KEYCODETYPE,
-            keyCodeType,
-            enum__Torappu_KeyCodeType::KEYBOARD,
-        );
     }
     #[inline]
     pub fn add_keyCodes(&mut self, keyCodes: flatbuffers::WIPOffset<flatbuffers::Vector<'b, i32>>) {
@@ -16782,7 +16720,6 @@ impl core::fmt::Debug for clz_Torappu_KeyItem<'_> {
         ds.field("keyId", &self.keyId());
         ds.field("keyName", &self.keyName());
         ds.field("useIcon", &self.useIcon());
-        ds.field("keyCodeType", &self.keyCodeType());
         ds.field("keyCodes", &self.keyCodes());
         ds.field("canBeSetted", &self.canBeSetted());
         ds.finish()
@@ -16794,7 +16731,6 @@ pub struct clz_Torappu_KeyItemT {
     pub keyId: Option<String>,
     pub keyName: Option<String>,
     pub useIcon: bool,
-    pub keyCodeType: enum__Torappu_KeyCodeType,
     pub keyCodes: Option<Vec<i32>>,
     pub canBeSetted: bool,
 }
@@ -16804,7 +16740,6 @@ impl Default for clz_Torappu_KeyItemT {
             keyId: None,
             keyName: None,
             useIcon: false,
-            keyCodeType: enum__Torappu_KeyCodeType::KEYBOARD,
             keyCodes: None,
             canBeSetted: false,
         }
@@ -16818,7 +16753,6 @@ impl clz_Torappu_KeyItemT {
         let keyId = self.keyId.as_ref().map(|x| _fbb.create_string(x));
         let keyName = self.keyName.as_ref().map(|x| _fbb.create_string(x));
         let useIcon = self.useIcon;
-        let keyCodeType = self.keyCodeType;
         let keyCodes = self.keyCodes.as_ref().map(|x| _fbb.create_vector(x));
         let canBeSetted = self.canBeSetted;
         clz_Torappu_KeyItem::create(
@@ -16827,7 +16761,6 @@ impl clz_Torappu_KeyItemT {
                 keyId,
                 keyName,
                 useIcon,
-                keyCodeType,
                 keyCodes,
                 canBeSetted,
             },
