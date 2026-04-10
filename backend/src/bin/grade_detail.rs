@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use backend::core::gamedata::types::GameData;
+use backend::core::gamedata::types::medal::{MedalData, MedalDefinition};
 use backend::core::gamedata::types::module::ModuleType;
 use backend::core::gamedata::types::operator::{Operator, OperatorProfession, OperatorRarity};
 use backend::core::gamedata::types::roguelike::RoguelikeGameData;
@@ -16,7 +17,7 @@ use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding};
 use backend::core::grade::calculate::calculate_user_grade;
 use backend::core::grade::grade_roguelike::grade_roguelike;
 use backend::database::models::roster::RosterEntry;
-use backend::database::queries::{building, roguelike, roster, users};
+use backend::database::queries::{building, medals, roguelike, roster, users};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -477,6 +478,278 @@ fn print_roguelike_detail(
     }
 }
 
+// ── Medal detail ───────────────────────────────────────────────
+//
+// Classification and scoring constants are duplicated from
+// src/core/grade/grade_medals.rs so the debug binary can produce
+// per-pool, per-rarity breakdowns. Keep in sync if tuning weights.
+
+const MEDAL_PERMANENT_POOL_WEIGHT: f64 = 0.65;
+const MEDAL_EVENT_POOL_WEIGHT: f64 = 0.35;
+const MEDAL_DECAY_HORIZON_SECONDS: f64 = 5.0 * 365.25 * 86400.0;
+const MEDAL_RECENCY_FLOOR: f64 = 0.30;
+const MEDAL_HIDDEN_MULTIPLIER: f64 = 1.5;
+
+fn medal_rarity_weight(rarity: &str) -> f64 {
+    match rarity {
+        "T1" => 1.0,
+        "T1D5" => 2.5,
+        "T2" => 4.0,
+        "T2D5" => 10.0,
+        "T3" => 20.0,
+        "T3D5" => 40.0,
+        _ => 1.0,
+    }
+}
+
+fn medal_weight(medal: &MedalDefinition) -> f64 {
+    let base = medal_rarity_weight(&medal.rarity);
+    if medal.is_hidden {
+        base * MEDAL_HIDDEN_MULTIPLIER
+    } else {
+        base
+    }
+}
+
+fn is_permanent_medal(medal: &MedalDefinition) -> bool {
+    if medal.expire_times.is_empty() {
+        return true;
+    }
+    let latest = medal.expire_times.iter().max_by_key(|e| e.start);
+    if let Some(entry) = latest {
+        return entry.expire_type == "PERM" && entry.end == -1;
+    }
+    false
+}
+
+fn medal_event_end_ts(medal: &MedalDefinition) -> Option<i64> {
+    if medal.expire_times.is_empty() {
+        return None;
+    }
+    let latest = medal.expire_times.iter().max_by_key(|e| e.start)?;
+    if latest.expire_type == "PERM" && latest.end == -1 {
+        return None;
+    }
+    if latest.end > 0 {
+        Some(latest.end)
+    } else {
+        Some(latest.start.max(0))
+    }
+}
+
+fn medal_recency_weight(event_end_ts: i64, now_ts: i64) -> f64 {
+    let age = (now_ts - event_end_ts).max(0) as f64;
+    let ratio = age / MEDAL_DECAY_HORIZON_SECONDS;
+    (1.0 - ratio).max(MEDAL_RECENCY_FLOOR)
+}
+
+#[derive(Default)]
+struct MedalBucket {
+    earned_count: usize,
+    total_count: usize,
+    earned_weight: f64,
+    total_weight: f64,
+}
+
+fn print_medal_detail(user_medals: &[(String, Option<i64>, Option<i64>)], medal_data: &MedalData) {
+    println!("\n{}", "=".repeat(60));
+    println!("=== MEDAL GRADE DETAIL ===");
+    println!();
+
+    if medal_data.medals.is_empty() {
+        println!("  No medal game data loaded.");
+        return;
+    }
+
+    let earned: HashSet<&str> = user_medals.iter().map(|(id, _, _)| id.as_str()).collect();
+    let now = chrono::Utc::now().timestamp();
+
+    let rarities = ["T1", "T1D5", "T2", "T2D5", "T3", "T3D5"];
+    let mut perm_by_rarity: HashMap<&str, MedalBucket> = rarities
+        .iter()
+        .map(|r| (*r, MedalBucket::default()))
+        .collect();
+    let mut event_by_rarity: HashMap<&str, MedalBucket> = rarities
+        .iter()
+        .map(|r| (*r, MedalBucket::default()))
+        .collect();
+
+    let mut perm_earned_w = 0.0;
+    let mut perm_total_w = 0.0;
+    let mut perm_count_total = 0usize;
+    let mut perm_count_earned = 0usize;
+
+    let mut event_earned_w = 0.0;
+    let mut event_cap = 0.0;
+    let mut event_count_total = 0usize;
+    let mut event_count_earned = 0usize;
+
+    let mut hidden_earned = 0usize;
+    let mut hidden_total = 0usize;
+
+    // Track top-contributing earned medals for display
+    let mut top_contributors: Vec<(String, String, f64, &'static str)> = Vec::new();
+
+    for medal in medal_data.medals.values() {
+        let is_earned = earned.contains(medal.medal_id.as_str());
+        let weight = medal_weight(medal);
+        let rarity_key: &str = rarities
+            .iter()
+            .find(|r| **r == medal.rarity.as_str())
+            .copied()
+            .unwrap_or("T1");
+
+        if medal.is_hidden {
+            hidden_total += 1;
+            if is_earned {
+                hidden_earned += 1;
+            }
+        }
+
+        if is_permanent_medal(medal) {
+            perm_count_total += 1;
+            perm_total_w += weight;
+            let b = perm_by_rarity.entry(rarity_key).or_default();
+            b.total_count += 1;
+            b.total_weight += weight;
+            if is_earned {
+                perm_count_earned += 1;
+                perm_earned_w += weight;
+                b.earned_count += 1;
+                b.earned_weight += weight;
+                top_contributors.push((
+                    medal.medal_name.clone(),
+                    medal.rarity.clone(),
+                    weight,
+                    "permanent",
+                ));
+            }
+        } else if let Some(end_ts) = medal_event_end_ts(medal) {
+            let recency = medal_recency_weight(end_ts, now);
+            let weighted = weight * recency;
+            event_count_total += 1;
+            event_cap += weighted;
+            let b = event_by_rarity.entry(rarity_key).or_default();
+            b.total_count += 1;
+            b.total_weight += weighted;
+            if is_earned {
+                event_count_earned += 1;
+                event_earned_w += weighted;
+                b.earned_count += 1;
+                b.earned_weight += weighted;
+                top_contributors.push((
+                    medal.medal_name.clone(),
+                    medal.rarity.clone(),
+                    weighted,
+                    "event",
+                ));
+            }
+        }
+    }
+
+    let perm_score = if perm_total_w > 0.0 {
+        (perm_earned_w / perm_total_w).min(1.0)
+    } else {
+        0.0
+    };
+    let event_score = if event_cap > 0.0 {
+        (event_earned_w / event_cap).min(1.0)
+    } else {
+        0.0
+    };
+    let medal_score =
+        perm_score * MEDAL_PERMANENT_POOL_WEIGHT + event_score * MEDAL_EVENT_POOL_WEIGHT;
+
+    println!("  Summary:");
+    println!(
+        "    Total classified medals:  {}",
+        perm_count_total + event_count_total
+    );
+    println!("    Permanent pool size:      {perm_count_total}");
+    println!("    Event pool size:          {event_count_total}");
+    println!("    User earned (any pool):   {}", earned.len());
+    println!();
+
+    println!(
+        "  Permanent Pool  [weight {:.0}%]",
+        MEDAL_PERMANENT_POOL_WEIGHT * 100.0
+    );
+    println!("    Earned:         {perm_count_earned}/{perm_count_total}");
+    println!(
+        "    Weighted:       {:.2}/{:.2}",
+        perm_earned_w, perm_total_w
+    );
+    println!("    Score:          {perm_score:.4}");
+    println!("    By rarity:");
+    for r in &rarities {
+        let b = perm_by_rarity.get(r).unwrap();
+        if b.total_count == 0 {
+            continue;
+        }
+        println!(
+            "      {:<5} {:>4}/{:<4}  (weight {:>7.1}/{:<7.1})",
+            r, b.earned_count, b.total_count, b.earned_weight, b.total_weight
+        );
+    }
+    println!();
+
+    println!(
+        "  Event Pool      [weight {:.0}%]  (temporal decay, floor {:.2})",
+        MEDAL_EVENT_POOL_WEIGHT * 100.0,
+        MEDAL_RECENCY_FLOOR
+    );
+    println!("    Earned:         {event_count_earned}/{event_count_total}");
+    println!("    Weighted cap:   {:.2}/{:.2}", event_earned_w, event_cap);
+    println!("    Score:          {event_score:.4}");
+    println!("    By rarity:");
+    for r in &rarities {
+        let b = event_by_rarity.get(r).unwrap();
+        if b.total_count == 0 {
+            continue;
+        }
+        println!(
+            "      {:<5} {:>4}/{:<4}  (weight {:>7.1}/{:<7.1})",
+            r, b.earned_count, b.total_count, b.earned_weight, b.total_weight
+        );
+    }
+    println!();
+
+    println!(
+        "  Hidden medals earned: {hidden_earned}/{hidden_total}  (x{MEDAL_HIDDEN_MULTIPLIER} multiplier applied)"
+    );
+    println!();
+
+    // Top 10 earned contributors
+    top_contributors.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap());
+    let top_n = 10;
+    if !top_contributors.is_empty() {
+        println!("  Top {top_n} earned contributors:");
+        println!(
+            "  {:<40} {:>5} {:>10} {:>10}",
+            "Medal", "Rarity", "Weight", "Pool"
+        );
+        println!("  {}", "-".repeat(70));
+        for (name, rarity, weight, pool) in top_contributors.iter().take(top_n) {
+            let display_name: String = if name.chars().count() > 38 {
+                format!("{}…", name.chars().take(37).collect::<String>())
+            } else {
+                name.clone()
+            };
+            println!(
+                "  {:<40} {:>5} {:>10.2} {:>10}",
+                display_name, rarity, weight, pool
+            );
+        }
+        println!();
+    }
+
+    println!(
+        "  Medal Score:    {:.4} ({})",
+        medal_score,
+        score_to_grade(medal_score)
+    );
+}
+
 // ── Main ───────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -518,6 +791,7 @@ async fn main() {
     let rl_progress = roguelike::get_roguelike_progress(&db, user_id)
         .await
         .expect("roguelike");
+    let user_medals = medals::get_user_medals(&db, user_id).await.expect("medals");
 
     // ── Overall grade ──────────────────────────────────────────
     let grade = calculate_user_grade(&db, user_id, &game_data)
@@ -532,6 +806,7 @@ async fn main() {
     println!("    Operators: {:.4}  (weight 1.0)", grade.operator_grade);
     println!("    Base:      {:.4}  (weight 0.5)", grade.base_grade);
     println!("    Roguelike: {:.4}  (weight 0.3)", grade.roguelike_grade);
+    println!("    Medals:    {:.4}  (weight 0.2)", grade.medal_grade);
     println!("============================================================");
 
     // ── Operator grade detail ──────────────────────────────────
@@ -739,4 +1014,7 @@ async fn main() {
         "  Roguelike Score: {rl_score:.4} ({})",
         score_to_grade(rl_score)
     );
+
+    // ── Medal grade detail ─────────────────────────────────────
+    print_medal_detail(&user_medals, &game_data.medals);
 }

@@ -249,9 +249,9 @@ pub async fn refresh(
                 grade: Some(grade.overall),
                 // zero out the rest until implemented
                 stage_score: 0.0,
-                roguelike_score: 0.0,
+                roguelike_score: grade.roguelike_grade,
                 sandbox_score: 0.0,
-                medal_score: 0.0,
+                medal_score: grade.medal_grade,
                 base_score: grade.base_grade,
                 skin_score: 0.0,
                 calculated_at: Utc::now(),

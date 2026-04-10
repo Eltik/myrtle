@@ -5,17 +5,18 @@ use crate::{
     core::{
         gamedata::types::GameData,
         grade::{
-            base::score::grade_base, grade_operators::grade_operators,
+            base::score::grade_base, grade_medals::grade_medals, grade_operators::grade_operators,
             grade_roguelike::grade_roguelike,
         },
     },
-    database::queries::{building, roguelike, roster},
+    database::queries::{building, medals, roguelike, roster},
 };
 
 pub struct UserGrade {
     pub operator_grade: f64,
     pub base_grade: f64,
     pub roguelike_grade: f64,
+    pub medal_grade: f64,
     pub overall: String,
     pub total_score: f64,
 }
@@ -25,19 +26,23 @@ pub async fn calculate_user_grade(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<UserGrade, sqlx::Error> {
-    let user_roster = roster::get_roster(pool, user_id).await?;
+    let (user_roster, building_json, roguelike_data, user_medals) = tokio::try_join!(
+        roster::get_roster(pool, user_id),
+        building::get_building(pool, user_id),
+        roguelike::get_roguelike_progress(pool, user_id),
+        medals::get_user_medals(pool, user_id),
+    )?;
+
     let operator_grade = grade_operators(&user_roster, game_data);
-
-    let building_json = building::get_building(pool, user_id).await?;
     let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
-
-    let roguelike_data = roguelike::get_roguelike_progress(pool, user_id).await?;
     let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
+    let medal_grade = grade_medals(&user_medals, &game_data.medals);
 
     let scores: Vec<(f64, f64)> = vec![
         (1.0, operator_grade),
         (0.5, base_grade),
         (0.3, roguelike_grade),
+        (0.2, medal_grade),
     ];
     // Future:
     // scores.push((0.4, stage_grade));
@@ -52,6 +57,7 @@ pub async fn calculate_user_grade(
         operator_grade,
         base_grade,
         roguelike_grade,
+        medal_grade,
         overall,
         total_score,
     })
