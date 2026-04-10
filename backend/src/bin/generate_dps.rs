@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::LazyLock;
 
 // ── Shared types ────────────────────────────────────────────────────────
 
@@ -413,27 +414,30 @@ os.chdir("{repo_path}")
 sys.path.insert(0, ".")
 from damagecalc.damage_formulas import *
 from damagecalc.utils import PlotParameters
-
-def calc(tc):
-    try:
-        pp = PlotParameters(skill=tc['skill'], module=tc['module'])
-        op = globals()[tc['operator']](pp)
-    except Exception:
-        return None
-    d = max(0, (tc['defense'] - tc['def_shred_flat'])) * tc['def_shred_mult']
-    r = max(0, (tc['res'] - tc['res_shred_flat'])) * tc['res_shred_mult']
-    try:
-        dps = float(op.skill_dps(d, r)) * (1 + tc['fragile'])
-        return dps
-    except Exception:
-        return None
+from collections import defaultdict
 
 cases = json.load(sys.stdin)
-results = {{}}
+
+grouped = defaultdict(list)
 for tc in cases:
-    dps = calc(tc)
-    if dps is not None:
-        results[tc['key']] = dps
+    grouped[(tc['operator'], tc['skill'], tc['module'])].append(tc)
+
+results = {{}}
+for (op_name, skill, module), tcs in grouped.items():
+    try:
+        pp = PlotParameters(skill=skill, module=module)
+        op = globals()[op_name](pp)
+    except Exception:
+        continue
+    for tc in tcs:
+        d = max(0, (tc['defense'] - tc['def_shred_flat'])) * tc['def_shred_mult']
+        r = max(0, (tc['res'] - tc['res_shred_flat'])) * tc['res_shred_mult']
+        try:
+            dps = float(op.skill_dps(d, r)) * (1 + tc['fragile'])
+            results[tc['key']] = dps
+        except Exception:
+            pass
+
 json.dump(results, sys.stdout)
 "#
     );
@@ -665,6 +669,179 @@ const RUST_KEYWORDS: &[(&str, &str)] = &[
     ("mut", "mut_val"),
     ("unsafe", "unsafe_val"),
 ];
+
+/// Pre-compiled regexes used across the transpilation functions.
+struct TranspileRegexes {
+    // transpile_skill_dps
+    assign_var_re: Regex,
+    inline_assign_re: Regex,
+    array_assign_re: Regex,
+
+    // coerce_arithmetic_literals
+    get_fix: Regex,
+    idx_fix: Regex,
+    len_sub: Regex,
+    slice_fix: Regex,
+    slice_fix2: Regex,
+    skillf_cmp: Regex,
+    i32_float_cmp: Regex,
+    cast_cmp: Regex,
+    max_float: Regex,
+    min_float: Regex,
+    recv_max: Regex,
+    recv_min: Regex,
+    range_fix: Regex,
+    range_fix2: Regex,
+    range_fix3: Regex,
+    double_float: Regex,
+    aug_int: Regex,
+    skillf_leftover: Regex,
+
+    // transpile_line
+    bare_ref_re: Regex,
+    if_return_re: Regex,
+    self_assign_re: Regex,
+    if_atk_re: Regex,
+    inline_if_arr_re: Regex,
+    arr_idx_assign_re: Regex,
+    arr_literal_re: Regex,
+    arr_ternary_re: Regex,
+    inline_if_re: Regex,
+    arr_re: Regex,
+    inner_ternary: Regex,
+    inline_if_op_re: Regex,
+    inline_elif_re: Regex,
+    for_range_re: Regex,
+    if_in_re: Regex,
+    inline_else_re: Regex,
+
+    // transpile_expressions
+    pow_pp: Regex,
+    pow_ps: Regex,
+    pow_sp: Regex,
+    pow_ss: Regex,
+    in_list_re: Regex,
+    int_pat: Regex,
+    neg_idx_re: Regex,
+    sp_re: Regex,
+    t1_re: Regex,
+    t2_re: Regex,
+    param_slice_max: Regex,
+    param_slice_min: Regex,
+    self_skill_re: Regex,
+    shreds_re: Regex,
+    user_arr_idx_re: Regex,
+    not_eq_re: Regex,
+    not_re: Regex,
+    expr_ternary_re: Regex,
+    ternary_re: Regex,
+    aug_ternary_re: Regex,
+    double_assign: Regex,
+    assign_re: Regex,
+    aug_re: Regex,
+
+    // transpile_expressions — keyword regexes (pre-filtered, non-skipped only)
+    keywords: Vec<(Regex, &'static str)>,
+    // transpile_expressions — min/max function regexes
+    min_func: Regex,
+    max_func: Regex,
+}
+
+static RE: LazyLock<TranspileRegexes> = LazyLock::new(|| {
+    let mut keywords = Vec::new();
+    for &(kw, replacement) in RUST_KEYWORDS {
+        if kw == "mut"
+            || kw == "pub"
+            || kw == "fn"
+            || kw == "use"
+            || kw == "impl"
+            || kw == "struct"
+            || kw == "enum"
+            || kw == "const"
+            || kw == "static"
+            || kw == "return"
+            || kw == "unsafe"
+            || kw == "extern"
+        {
+            continue;
+        }
+        keywords.push((Regex::new(&format!(r"\b{kw}\b")).unwrap(), replacement));
+    }
+
+    TranspileRegexes {
+        // transpile_skill_dps
+        assign_var_re: Regex::new(r"^\t*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap(),
+        inline_assign_re: Regex::new(r"if\s+.+?:\s*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap(),
+        array_assign_re: Regex::new(r"^\t*(\w+)\s*=\s*\[").unwrap(),
+
+        // coerce_arithmetic_literals
+        get_fix: Regex::new(r"\.get\((\d+)\.0\)").unwrap(),
+        idx_fix: Regex::new(r"\[(\d+)\.0\]").unwrap(),
+        len_sub: Regex::new(r"\.len\(\)\s*-\s*(\d+)\.0").unwrap(),
+        slice_fix: Regex::new(r"\[(\d+)\.0:\]").unwrap(),
+        slice_fix2: Regex::new(r"\[:(\d+)\.0\]").unwrap(),
+        skillf_cmp: Regex::new(r"\bskillf\s*(==|!=|<=|>=|<|>)\s*").unwrap(),
+        i32_float_cmp: Regex::new(r"\b(skill|unit\.elite|unit\.module_index|unit\.module_level|unit\.potential)\s*(==|!=|<=|>=|<|>)\s*(\d+)\.0\b").unwrap(),
+        cast_cmp: Regex::new(r"\(unit\.(elite|module_level|module_index|potential) as f64\)\s*(==|!=|<=|>=|<|>)\s*(\d+)\.0?\b").unwrap(),
+        max_float: Regex::new(r"\.max\((\d+\.\d+)\)").unwrap(),
+        min_float: Regex::new(r"\.min\((\d+\.\d+)\)").unwrap(),
+        recv_max: Regex::new(r"\((\d+\.\d+)\)\.max\(").unwrap(),
+        recv_min: Regex::new(r"\((\d+\.\d+)\)\.min\(").unwrap(),
+        range_fix: Regex::new(r"(\d+)\.0\.\.(\d+)\.0").unwrap(),
+        range_fix2: Regex::new(r"(\d+)\.0\.\.").unwrap(),
+        range_fix3: Regex::new(r"\.\.(\d+)\.0([)\s])").unwrap(),
+        double_float: Regex::new(r"(\d+)\.0\.0").unwrap(),
+        aug_int: Regex::new(r"(\*=|\+=|-=|/=) (\d+);").unwrap(),
+        skillf_leftover: Regex::new(r"\bskillf\s*(==|!=|<=|>=|<|>)\s*(\d+(?:\.\d+)?)").unwrap(),
+
+        // transpile_line
+        bare_ref_re: Regex::new(r"^self\.\w+(\s+(and|or)\s+self\.\w+)*\s*(and\s+self\.\w+)*;?\s*$").unwrap(),
+        if_return_re: Regex::new(r"^if\s+(.+?):\s*return\s+(.+)$").unwrap(),
+        self_assign_re: Regex::new(r"^self\.atk_interval\s*=\s*(.+)$").unwrap(),
+        if_atk_re: Regex::new(r"^if\s+(.+?):\s*self\.atk_interval\s*=\s*(.+)$").unwrap(),
+        inline_if_arr_re: Regex::new(r"^if\s+(.+?):\s*(\w+)\[([^\]]+)\]\s*=\s*(.+)$").unwrap(),
+        arr_idx_assign_re: Regex::new(r"^(\w+)\[([^\]]+)\]\s*=\s*(.+)$").unwrap(),
+        arr_literal_re: Regex::new(r"^(\w+)\s*=\s*\[([^\]]*)\]$").unwrap(),
+        arr_ternary_re: Regex::new(r"^(\w+)\s*=\s*\[([^\]]*)\]\s+if\s+(.+?)\s+else\s+\[([^\]]*)\]$").unwrap(),
+        inline_if_re: Regex::new(r"^if\s+(.+?):\s*(\w+)\s*=\s*(.+)$").unwrap(),
+        arr_re: Regex::new(r"^\[([^\]]*)\]$").unwrap(),
+        inner_ternary: Regex::new(r"^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap(),
+        inline_if_op_re: Regex::new(r"^if\s+(.+?):\s*(\w+)\s*(\+=|-=|\*=)\s*(.+)$").unwrap(),
+        inline_elif_re: Regex::new(r"^elif\s+(.+?):\s*(.+)$").unwrap(),
+        for_range_re: Regex::new(r"^for\s+(\w+)\s+in\s+range\((.+)\):?$").unwrap(),
+        if_in_re: Regex::new(r"^if\s+self\.skill\s+in\s*\[([^\]]+)\]:?$").unwrap(),
+        inline_else_re: Regex::new(r"^else:\s+(.+)$").unwrap(),
+
+        // transpile_expressions
+        pow_pp: Regex::new(r"\(([^)]+)\)\s*\*\*\s*\(([^)]+)\)").unwrap(),
+        pow_ps: Regex::new(r"\(([^)]+)\)\s*\*\*\s*(\d+\.\d+|\w+)").unwrap(),
+        pow_sp: Regex::new(r"(\d+\.\d+|\w+)\s*\*\*\s*\(([^)]+)\)").unwrap(),
+        pow_ss: Regex::new(r"(\d+\.\d+|\w+)\s*\*\*\s*(\d+\.\d+|\w+)").unwrap(),
+        in_list_re: Regex::new(r"(\w+(?:\.\w+)*)\s+in\s*\[([^\]]+)\]").unwrap(),
+        int_pat: Regex::new(r"\bint\(").unwrap(),
+        neg_idx_re: Regex::new(r"self\.(skill_params|talent1_params|talent2_params)\[-(\d+)\]").unwrap(),
+        sp_re: Regex::new(r"self\.skill_params\[(\d+)\]").unwrap(),
+        t1_re: Regex::new(r"self\.talent1_params\[(\d+)\]").unwrap(),
+        t2_re: Regex::new(r"self\.talent2_params\[(\d+)\]").unwrap(),
+        param_slice_max: Regex::new(r"max\((?:self\.(\w+_params)|unit\.(\w+))\[:(\d+)\]\)").unwrap(),
+        param_slice_min: Regex::new(r"min\((?:self\.(\w+_params)|unit\.(\w+))\[(\d+):\]\)").unwrap(),
+        self_skill_re: Regex::new(r"self\.skill([^a-zA-Z_\d])").unwrap(),
+        shreds_re: Regex::new(r"self\.shreds\[(\d+)\]").unwrap(),
+        user_arr_idx_re: Regex::new(r"\b([a-z_]\w*)\[([^\]]+)\]").unwrap(),
+        not_eq_re: Regex::new(r"\bnot\s+(\S+)\s*==\s*(\S+)").unwrap(),
+        not_re: Regex::new(r"\bnot\s+").unwrap(),
+        expr_ternary_re: Regex::new(r"(.+)\s+if\s+(.+?)\s+else\s+(.+)").unwrap(),
+        ternary_re: Regex::new(r"^(\s*(?:let\s+mut\s+)?\w+\s*=\s*)(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap(),
+        aug_ternary_re: Regex::new(r"^(\s*)(\w+)\s*(\*=|\+=|-=|/=)\s*(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap(),
+        double_assign: Regex::new(r"^(\s*)(\w+)\s*=\s*(\w+)\s*=\s*(.+)$").unwrap(),
+        assign_re: Regex::new(r"^(\s*)(\w+)\s*=\s*(.+)$").unwrap(),
+        aug_re: Regex::new(r"^(\s*)(\w+)\s*(\+=|-=|\*=|/=)\s*(.+)$").unwrap(),
+
+        keywords,
+        min_func: Regex::new(r"\bmin\(").unwrap(),
+        max_func: Regex::new(r"\bmax\(").unwrap(),
+    }
+});
 
 /// Holds transpiled __init__ mutations: shadow declarations + mutation code + modified fields
 struct InitMutations {
@@ -934,7 +1111,6 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
     let mut lines: Vec<String> = Vec::new();
 
     // Pass 1: Collect all assigned variable names for hoisting
-    let assign_var_re = Regex::new(r"^\t*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap();
     let mut all_vars: Vec<String> = Vec::new();
     let mut vec_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
     let builtin_vars = ["dps", "skill", "defense", "res", "self", "atk_interval"];
@@ -944,11 +1120,6 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
     // If no: map self.atk_interval → unit.attack_interval as f64 (immutable field read)
     let _mutates_atk_interval =
         py_body.contains("self.atk_interval =") || py_body.contains("self.atk_interval=");
-
-    // Also capture variables assigned inside inline if statements
-    let inline_assign_re = Regex::new(r"if\s+.+?:\s*(\w+)\s*(?:=|\+=|-=|\*=|/=)\s").unwrap();
-    // Detect array assignments: VAR = [...]
-    let array_assign_re = Regex::new(r"^\t*(\w+)\s*=\s*\[").unwrap();
 
     for py_line in py_body.lines() {
         let trimmed = py_line.trim();
@@ -965,7 +1136,7 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
         }
 
         // Detect array variable assignments
-        if let Some(cap) = array_assign_re.captures(trimmed) {
+        if let Some(cap) = RE.array_assign_re.captures(trimmed) {
             let var = escape_keyword(&cap[1]);
             if !builtin_vars.contains(&var.as_str()) {
                 vec_vars.insert(var.clone());
@@ -973,7 +1144,7 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
         }
 
         // Capture vars from inline if: "if COND: VAR = ..."
-        if let Some(cap) = inline_assign_re.captures(trimmed) {
+        if let Some(cap) = RE.inline_assign_re.captures(trimmed) {
             let var = escape_keyword(&cap[1]);
             if !builtin_vars.contains(&var.as_str()) && !all_vars.contains(&var) {
                 all_vars.push(var);
@@ -988,7 +1159,7 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
         {
             continue;
         }
-        if let Some(cap) = assign_var_re.captures(trimmed) {
+        if let Some(cap) = RE.assign_var_re.captures(trimmed) {
             let var = escape_keyword(&cap[1]);
             if !builtin_vars.contains(&var.as_str()) && !all_vars.contains(&var) {
                 all_vars.push(var);
@@ -1279,56 +1450,41 @@ fn coerce_arithmetic_literals(line: &str) -> String {
     // Step 2: Revert contexts where integers are needed
 
     // .get(N.0) → .get(N)
-    let get_fix = Regex::new(r"\.get\((\d+)\.0\)").unwrap();
-    s = get_fix.replace_all(&s, ".get($1)").to_string();
+    s = RE.get_fix.replace_all(&s, ".get($1)").to_string();
 
     // [N.0] → [N] (array indexing)
-    let idx_fix = Regex::new(r"\[(\d+)\.0\]").unwrap();
-    s = idx_fix.replace_all(&s, "[$1]").to_string();
+    s = RE.idx_fix.replace_all(&s, "[$1]").to_string();
 
     // .len() - N.0 → .len() - N (usize arithmetic)
-    let len_sub = Regex::new(r"\.len\(\)\s*-\s*(\d+)\.0").unwrap();
-    s = len_sub.replace_all(&s, ".len() - $1").to_string();
+    s = RE.len_sub.replace_all(&s, ".len() - $1").to_string();
 
     // Slice N.0: → N: (inside brackets)
-    let slice_fix = Regex::new(r"\[(\d+)\.0:\]").unwrap();
-    s = slice_fix.replace_all(&s, "[$1..]").to_string();
-    let slice_fix2 = Regex::new(r"\[:(\d+)\.0\]").unwrap();
-    s = slice_fix2.replace_all(&s, "[..$1]").to_string();
+    s = RE.slice_fix.replace_all(&s, "[$1..]").to_string();
+    s = RE.slice_fix2.replace_all(&s, "[..$1]").to_string();
 
     // skillf in comparisons → skill (i32 comparison)
-    let skillf_cmp = Regex::new(r"\bskillf\s*(==|!=|<=|>=|<|>)\s*").unwrap();
-    s = skillf_cmp.replace_all(&s, "skill $1 ").to_string();
+    s = RE.skillf_cmp.replace_all(&s, "skill $1 ").to_string();
     s = s.replace("if skillf ", "if skill ");
 
     // i32 fields: comparisons with floats → revert to bare integer
     // NOTE: unit.ammo is f64, not i32 — do NOT include it here
-    let i32_float_cmp = Regex::new(r"\b(skill|unit\.elite|unit\.module_index|unit\.module_level|unit\.potential)\s*(==|!=|<=|>=|<|>)\s*(\d+)\.0\b").unwrap();
-    s = i32_float_cmp.replace_all(&s, "$1 $2 $3").to_string();
+    s = RE.i32_float_cmp.replace_all(&s, "$1 $2 $3").to_string();
 
     // Casted comparisons: "(unit.X as f64) > N.0" → "unit.X > N"
-    let cast_cmp = Regex::new(r"\(unit\.(elite|module_level|module_index|potential) as f64\)\s*(==|!=|<=|>=|<|>)\s*(\d+)\.0?\b").unwrap();
-    s = cast_cmp.replace_all(&s, "unit.$1 $2 $3").to_string();
+    s = RE.cast_cmp.replace_all(&s, "unit.$1 $2 $3").to_string();
 
     // .max(N.0) → .max(N.0_f64) — disambiguate for type inference
-    let max_float = Regex::new(r"\.max\((\d+\.\d+)\)").unwrap();
-    s = max_float.replace_all(&s, ".max(${1}_f64)").to_string();
-    let min_float = Regex::new(r"\.min\((\d+\.\d+)\)").unwrap();
-    s = min_float.replace_all(&s, ".min(${1}_f64)").to_string();
+    s = RE.max_float.replace_all(&s, ".max(${1}_f64)").to_string();
+    s = RE.min_float.replace_all(&s, ".min(${1}_f64)").to_string();
 
     // Ambiguous float RECEIVER: "(N.0).max(" → "(N.0_f64).max("
-    let recv_max = Regex::new(r"\((\d+\.\d+)\)\.max\(").unwrap();
-    s = recv_max.replace_all(&s, "(${1}_f64).max(").to_string();
-    let recv_min = Regex::new(r"\((\d+\.\d+)\)\.min\(").unwrap();
-    s = recv_min.replace_all(&s, "(${1}_f64).min(").to_string();
+    s = RE.recv_max.replace_all(&s, "(${1}_f64).max(").to_string();
+    s = RE.recv_min.replace_all(&s, "(${1}_f64).min(").to_string();
 
     // Ranges: N.0..N.0 → N..N
-    let range_fix = Regex::new(r"(\d+)\.0\.\.(\d+)\.0").unwrap();
-    s = range_fix.replace_all(&s, "$1..$2").to_string();
-    let range_fix2 = Regex::new(r"(\d+)\.0\.\.").unwrap();
-    s = range_fix2.replace_all(&s, "$1..").to_string();
-    let range_fix3 = Regex::new(r"\.\.(\d+)\.0([)\s])").unwrap();
-    s = range_fix3.replace_all(&s, "..$1$2").to_string();
+    s = RE.range_fix.replace_all(&s, "$1..$2").to_string();
+    s = RE.range_fix2.replace_all(&s, "$1..").to_string();
+    s = RE.range_fix3.replace_all(&s, "..$1$2").to_string();
 
     // .trunc().0 → .trunc()
     s = s.replace(".trunc().0", ".trunc()");
@@ -1342,17 +1498,15 @@ fn coerce_arithmetic_literals(line: &str) -> String {
     s = s.replace("as i64.0", "as i64");
 
     // Double float: N.0.0 → N.0
-    let double_float = Regex::new(r"(\d+)\.0\.0").unwrap();
-    s = double_float.replace_all(&s, "$1.0").to_string();
+    s = RE.double_float.replace_all(&s, "$1.0").to_string();
     s = s.replace(".0.0)", ".0)");
 
     // Augmented assignments with integers: "*= N;" → "*= N.0;"
-    let aug_int = Regex::new(r"(\*=|\+=|-=|/=) (\d+);").unwrap();
-    s = aug_int.replace_all(&s, "$1 $2.0;").to_string();
+    s = RE.aug_int.replace_all(&s, "$1 $2.0;").to_string();
 
     // Leftover skillf in comparison context
-    let skillf_leftover = Regex::new(r"\bskillf\s*(==|!=|<=|>=|<|>)\s*(\d+(?:\.\d+)?)").unwrap();
-    s = skillf_leftover
+    s = RE
+        .skillf_leftover
         .replace_all(&s, |caps: &regex::Captures| {
             let op = &caps[1];
             let num = caps[2].trim_end_matches(".0");
@@ -1375,9 +1529,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
 
     // Skip bare attribute reads (no-op in Python): "self.something" or "self.something and ..."
     // These are just side-effect-free expressions that Python evaluates but discards
-    let bare_ref_re =
-        Regex::new(r"^self\.\w+(\s+(and|or)\s+self\.\w+)*\s*(and\s+self\.\w+)*;?\s*$").unwrap();
-    if bare_ref_re.is_match(py.trim()) && !py.contains('=') && !py.contains('(') {
+    if RE.bare_ref_re.is_match(py.trim()) && !py.contains('=') && !py.contains('(') {
         return String::new();
     }
     // Also skip standalone string literals (""")
@@ -1393,31 +1545,27 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Handle "if COND: return EXPR" → "if COND { return Some(EXPR); }"
-    let if_return_re = Regex::new(r"^if\s+(.+?):\s*return\s+(.+)$").unwrap();
-    if let Some(cap) = if_return_re.captures(&line) {
+    if let Some(cap) = RE.if_return_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let val = transpile_expressions(&cap[2], declared);
         return format!("if {cond} {{ return Some({val}); }}");
     }
 
     // Handle self.atk_interval = X (override local atk_interval variable)
-    let self_assign_re = Regex::new(r"^self\.atk_interval\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = self_assign_re.captures(&line) {
+    if let Some(cap) = RE.self_assign_re.captures(&line) {
         let val = transpile_expressions(&cap[1], declared);
         return format!("atk_interval = {val};");
     }
 
     // Handle "if COND: self.atk_interval = X"
-    let if_atk_re = Regex::new(r"^if\s+(.+?):\s*self\.atk_interval\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = if_atk_re.captures(&line) {
+    if let Some(cap) = RE.if_atk_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let val = transpile_expressions(&cap[2], declared);
         return format!("if {cond} {{ atk_interval = {val}; }}");
     }
 
     // Inline if with array index assignment: "if COND: VAR[N] = EXPR"
-    let inline_if_arr_re = Regex::new(r"^if\s+(.+?):\s*(\w+)\[([^\]]+)\]\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = inline_if_arr_re.captures(&line) {
+    if let Some(cap) = RE.inline_if_arr_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let var = escape_keyword(&cap[2]);
         let idx = &cap[3];
@@ -1426,8 +1574,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Array index assignment: VAR[N] = EXPR
-    let arr_idx_assign_re = Regex::new(r"^(\w+)\[([^\]]+)\]\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = arr_idx_assign_re.captures(&line) {
+    if let Some(cap) = RE.arr_idx_assign_re.captures(&line) {
         let var = escape_keyword(&cap[1]);
         let idx = &cap[2];
         let val = transpile_expressions(&cap[3], declared);
@@ -1435,8 +1582,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Array literal assignment: VAR = [val1, val2, ...]
-    let arr_literal_re = Regex::new(r"^(\w+)\s*=\s*\[([^\]]*)\]$").unwrap();
-    if let Some(cap) = arr_literal_re.captures(&line) {
+    if let Some(cap) = RE.arr_literal_re.captures(&line) {
         let var = escape_keyword(&cap[1]);
         let elements: Vec<String> = cap[2]
             .split(',')
@@ -1446,9 +1592,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Array ternary: VAR = [A,B] if COND else [C,D]
-    let arr_ternary_re =
-        Regex::new(r"^(\w+)\s*=\s*\[([^\]]*)\]\s+if\s+(.+?)\s+else\s+\[([^\]]*)\]$").unwrap();
-    if let Some(cap) = arr_ternary_re.captures(&line) {
+    if let Some(cap) = RE.arr_ternary_re.captures(&line) {
         let var = escape_keyword(&cap[1]);
         let true_elems: Vec<String> = cap[2]
             .split(',')
@@ -1467,14 +1611,12 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Single-line if with assignment: "if COND: VAR = EXPR"
-    let inline_if_re = Regex::new(r"^if\s+(.+?):\s*(\w+)\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = inline_if_re.captures(&line) {
+    if let Some(cap) = RE.inline_if_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let var = escape_keyword(&cap[2]);
         let mut val = cap[3].to_string();
         // Handle array literal in the value: [a, b, c]
-        let arr_re = Regex::new(r"^\[([^\]]*)\]$").unwrap();
-        if let Some(ac) = arr_re.captures(&val) {
+        if let Some(ac) = RE.arr_re.captures(&val) {
             let elements: Vec<String> = ac[1]
                 .split(',')
                 .map(|e| transpile_expressions(e.trim(), declared))
@@ -1483,8 +1625,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         }
         // Handle nested ternary in the value
         else {
-            let inner_ternary = Regex::new(r"^(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap();
-            if let Some(tc) = inner_ternary.captures(&val) {
+            if let Some(tc) = RE.inner_ternary.captures(&val) {
                 let t_val = transpile_expressions(&tc[1], declared);
                 let t_cond = transpile_expressions(&tc[2], declared);
                 let f_val = transpile_expressions(&tc[3], declared);
@@ -1497,8 +1638,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Handle "if COND: VAR += EXPR" etc
-    let inline_if_op_re = Regex::new(r"^if\s+(.+?):\s*(\w+)\s*(\+=|-=|\*=)\s*(.+)$").unwrap();
-    if let Some(cap) = inline_if_op_re.captures(&line) {
+    if let Some(cap) = RE.inline_if_op_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let var = escape_keyword(&cap[2]);
         let op = &cap[3];
@@ -1507,8 +1647,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Inline elif: "elif COND: STMT" → close previous block, open new if
-    let inline_elif_re = Regex::new(r"^elif\s+(.+?):\s*(.+)$").unwrap();
-    if let Some(cap) = inline_elif_re.captures(&line)
+    if let Some(cap) = RE.inline_elif_re.captures(&line)
         && !cap[2].trim().is_empty()
         && !cap[2].trim().starts_with('#')
     {
@@ -1518,8 +1657,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Python for-range loop: for i in range(N) → for _i in 0..(N as i32) { let i = _i as f64;
-    let for_range_re = Regex::new(r"^for\s+(\w+)\s+in\s+range\((.+)\):?$").unwrap();
-    if let Some(cap) = for_range_re.captures(&line) {
+    if let Some(cap) = RE.for_range_re.captures(&line) {
         let var = &cap[1];
         let n = transpile_expressions(&cap[2], declared);
         declared.insert(var.to_string());
@@ -1527,8 +1665,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // if ... in [...]:
-    let if_in_re = Regex::new(r"^if\s+self\.skill\s+in\s*\[([^\]]+)\]:?$").unwrap();
-    if let Some(cap) = if_in_re.captures(&line) {
+    if let Some(cap) = RE.if_in_re.captures(&line) {
         let nums: Vec<String> = cap[1]
             .split(',')
             .map(|s| format!("skill == {}", s.trim()))
@@ -1559,8 +1696,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
     }
 
     // Inline else: "else: STMT" — merge with preceding inline if
-    let inline_else_re = Regex::new(r"^else:\s+(.+)$").unwrap();
-    if let Some(cap) = inline_else_re.captures(line.trim()) {
+    if let Some(cap) = RE.inline_else_re.captures(line.trim()) {
         let raw_stmt = cap[1].trim();
         // Handle "else: return EXPR"
         if raw_stmt.starts_with("return ") {
@@ -1602,29 +1738,29 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // ** (power) FIRST, before any other transformations
     // Handle all combinations of simple/paren expressions around **
     // 1) (...) ** (...)
-    let pow_pp = Regex::new(r"\(([^)]+)\)\s*\*\*\s*\(([^)]+)\)").unwrap();
-    s = pow_pp
+    s = RE
+        .pow_pp
         .replace_all(&s, "($1 as f64).powf(($2) as f64)")
         .to_string();
     // 2) (...) ** simple
-    let pow_ps = Regex::new(r"\(([^)]+)\)\s*\*\*\s*(\d+\.\d+|\w+)").unwrap();
-    s = pow_ps
+    s = RE
+        .pow_ps
         .replace_all(&s, "($1 as f64).powf($2 as f64)")
         .to_string();
     // 3) simple ** (...)
-    let pow_sp = Regex::new(r"(\d+\.\d+|\w+)\s*\*\*\s*\(([^)]+)\)").unwrap();
-    s = pow_sp
+    s = RE
+        .pow_sp
         .replace_all(&s, "($1 as f64).powf(($2) as f64)")
         .to_string();
     // 4) simple ** simple
-    let pow_ss = Regex::new(r"(\d+\.\d+|\w+)\s*\*\*\s*(\d+\.\d+|\w+)").unwrap();
-    s = pow_ss
+    s = RE
+        .pow_ss
         .replace_all(&s, "($1 as f64).powf($2 as f64)")
         .to_string();
 
     // X in [A,B,C] → (X == A || X == B || X == C)
-    let in_list_re = Regex::new(r"(\w+(?:\.\w+)*)\s+in\s*\[([^\]]+)\]").unwrap();
-    s = in_list_re
+    s = RE
+        .in_list_re
         .replace_all(&s, |caps: &regex::Captures| {
             let var = &caps[1];
             let items: Vec<String> = caps[2]
@@ -1639,10 +1775,9 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
 
     // int(x) → truncate toward zero (stays f64) — uses balanced paren matching
     {
-        let int_pat = Regex::new(r"\bint\(").unwrap();
         let mut search_from = 0;
         loop {
-            let Some(m) = int_pat.find(&s[search_from..]) else {
+            let Some(m) = RE.int_pat.find(&s[search_from..]) else {
                 break;
             };
             let abs_start = search_from + m.start();
@@ -1672,9 +1807,8 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Negative indexing: params[-N] → params[params.len() - N]
-    let neg_idx_re =
-        Regex::new(r"self\.(skill_params|talent1_params|talent2_params)\[-(\d+)\]").unwrap();
-    s = neg_idx_re
+    s = RE
+        .neg_idx_re
         .replace_all(&s, |caps: &regex::Captures| {
             let field = match &caps[1] {
                 "skill_params" => "unit.skill_parameters",
@@ -1688,14 +1822,14 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         .to_string();
 
     // skill_params[N]
-    let sp_re = Regex::new(r"self\.skill_params\[(\d+)\]").unwrap();
-    s = sp_re
+    s = RE
+        .sp_re
         .replace_all(&s, "unit.skill_parameters.get($1).copied().unwrap_or(0.0)")
         .to_string();
 
     // talent1_params[N]
-    let t1_re = Regex::new(r"self\.talent1_params\[(\d+)\]").unwrap();
-    s = t1_re
+    s = RE
+        .t1_re
         .replace_all(
             &s,
             "unit.talent1_parameters.get($1).copied().unwrap_or(0.0)",
@@ -1703,8 +1837,8 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         .to_string();
 
     // talent2_params[N]
-    let t2_re = Regex::new(r"self\.talent2_params\[(\d+)\]").unwrap();
-    s = t2_re
+    s = RE
+        .t2_re
         .replace_all(
             &s,
             "unit.talent2_parameters.get($1).copied().unwrap_or(0.0)",
@@ -1749,9 +1883,8 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         s = s.replace("self.talent2_params", "unit.talent2_parameters");
     }
     // max/min on parameter slices — match both self.X_params and unit.X_parameters
-    let param_slice_max =
-        Regex::new(r"max\((?:self\.(\w+_params)|unit\.(\w+))\[:(\d+)\]\)").unwrap();
-    s = param_slice_max
+    s = RE
+        .param_slice_max
         .replace_all(&s, |caps: &regex::Captures| {
             let field = if let Some(m) = caps.get(1) {
                 match m.as_str() {
@@ -1767,9 +1900,8 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
             format!("{field}[..{n}].iter().copied().fold(f64::NEG_INFINITY, f64::max)")
         })
         .to_string();
-    let param_slice_min =
-        Regex::new(r"min\((?:self\.(\w+_params)|unit\.(\w+))\[(\d+):\]\)").unwrap();
-    s = param_slice_min
+    s = RE
+        .param_slice_min
         .replace_all(&s, |caps: &regex::Captures| {
             let field = if let Some(m) = caps.get(1) {
                 match m.as_str() {
@@ -1840,10 +1972,9 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // Comparison context (== != < > <= >= in): use `skill` (i32)
     // Everything else (arithmetic, function args): use `skillf` (f64)
     // Match "self.skill" followed by a non-alphanumeric, non-underscore char (captured)
-    let self_skill_re = Regex::new(r"self\.skill([^a-zA-Z_\d])").unwrap();
     {
         let input = s.clone();
-        s = self_skill_re.replace_all(&input, |caps: &regex::Captures| {
+        s = RE.self_skill_re.replace_all(&input, |caps: &regex::Captures| {
             let trailing = &caps[1];
             let m = caps.get(0).unwrap();
             let after = &input[m.end()..];
@@ -1889,15 +2020,14 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.shadows", "unit.targets as f64");
 
     // self.shreds[N] → unit.shreds[N]
-    let shreds_re = Regex::new(r"self\.shreds\[(\d+)\]").unwrap();
-    s = shreds_re.replace_all(&s, "unit.shreds[$1]").to_string();
+    s = RE.shreds_re.replace_all(&s, "unit.shreds[$1]").to_string();
 
     // User-defined array indexing: VARNAME[expr] → VARNAME[(expr) as usize]
     // Only for user variables (lowercase start), NOT unit.X or self.X
     // User-defined array indexing: arr[expr] → arr[(expr) as usize]
     // Skip: unit.X[N], self.X[N], vec![N], range indices [N..M]
-    let user_arr_idx_re = Regex::new(r"\b([a-z_]\w*)\[([^\]]+)\]").unwrap();
-    s = user_arr_idx_re
+    s = RE
+        .user_arr_idx_re
         .replace_all(&s, |caps: &regex::Captures| {
             let var = &caps[1];
             let idx = &caps[2];
@@ -1923,10 +2053,8 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace(" and ", " && ");
     s = s.replace(" or ", " || ");
     // "not X == Y" → "X != Y" / "not X" → "!X"
-    let not_eq_re = Regex::new(r"\bnot\s+(\S+)\s*==\s*(\S+)").unwrap();
-    s = not_eq_re.replace_all(&s, "$1 != $2").to_string();
-    let not_re = Regex::new(r"\bnot\s+").unwrap();
-    s = not_re.replace_all(&s, "!").to_string();
+    s = RE.not_eq_re.replace_all(&s, "$1 != $2").to_string();
+    s = RE.not_re.replace_all(&s, "!").to_string();
 
     // // → floor division (approximate)
     s = s.replace("//", "/ ");
@@ -1934,12 +2062,11 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // Standalone ternary (not assignment): "EXPR if COND else ALT" in expression
     // Must come BEFORE fmax/min/max so ternaries inside function args get converted first
     // Match: capture everything before " if " that isn't an assignment
-    let expr_ternary_re = Regex::new(r"(.+)\s+if\s+(.+?)\s+else\s+(.+)").unwrap();
     if !s.contains("let ")
         && !s.contains('{')
         && s.contains(" if ")
         && s.contains(" else ")
-        && let Some(cap) = expr_ternary_re.captures(&s.clone())
+        && let Some(cap) = RE.expr_ternary_re.captures(&s.clone())
     {
         let before = cap[1].trim();
         let cond = cap[2].trim();
@@ -2008,10 +2135,13 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // Use balanced paren matching to handle nested expressions
     for func in &["min", "max"] {
         let method = *func;
+        let re = if *func == "min" {
+            &RE.min_func
+        } else {
+            &RE.max_func
+        };
         let mut search_from = 0;
         loop {
-            let pattern = format!("\\b{func}\\(");
-            let re = Regex::new(&pattern).unwrap();
             let Some(m) = re.find(&s[search_from..]) else {
                 break;
             };
@@ -2065,9 +2195,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Handle inline ternary: "VAR = A if COND else B"
-    let ternary_re =
-        Regex::new(r"^(\s*(?:let\s+mut\s+)?\w+\s*=\s*)(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap();
-    if let Some(cap) = ternary_re.captures(&s.clone()) {
+    if let Some(cap) = RE.ternary_re.captures(&s.clone()) {
         let assign = &cap[1];
         let true_val = &cap[2];
         let cond = &cap[3];
@@ -2076,9 +2204,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Augmented assignment ternary: "VAR *= A if COND else B"
-    let aug_ternary_re =
-        Regex::new(r"^(\s*)(\w+)\s*(\*=|\+=|-=|/=)\s*(.+?)\s+if\s+(.+?)\s+else\s+(.+)$").unwrap();
-    if let Some(cap) = aug_ternary_re.captures(&s.clone()) {
+    if let Some(cap) = RE.aug_ternary_re.captures(&s.clone()) {
         let indent = &cap[1];
         let var = escape_keyword(&cap[2]);
         let op = &cap[3];
@@ -2089,16 +2215,14 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Fix double assignment: "x = x = expr" → "x = expr" (Python idiom)
-    let double_assign = Regex::new(r"^(\s*)(\w+)\s*=\s*(\w+)\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = double_assign.captures(&s.clone())
+    if let Some(cap) = RE.double_assign.captures(&s.clone())
         && cap[2] == cap[3]
     {
         s = format!("{}{} = {}", &cap[1], &cap[2], &cap[4]);
     }
 
     // Assignments
-    let assign_re = Regex::new(r"^(\s*)(\w+)\s*=\s*(.+)$").unwrap();
-    if let Some(cap) = assign_re.captures(&s.clone()) {
+    if let Some(cap) = RE.assign_re.captures(&s.clone()) {
         let indent = &cap[1];
         let var = &cap[2];
         let val = &cap[3];
@@ -2114,8 +2238,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Augmented assignments
-    let aug_re = Regex::new(r"^(\s*)(\w+)\s*(\+=|-=|\*=|/=)\s*(.+)$").unwrap();
-    if let Some(cap) = aug_re.captures(&s.clone()) {
+    if let Some(cap) = RE.aug_re.captures(&s.clone()) {
         let indent = &cap[1];
         let var = escape_keyword(&cap[2]);
         let op = &cap[3];
@@ -2124,28 +2247,12 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     }
 
     // Escape Rust keywords used as variable names
-    for &(kw, replacement) in RUST_KEYWORDS {
-        if kw == "mut"
-            || kw == "pub"
-            || kw == "fn"
-            || kw == "use"
-            || kw == "impl"
-            || kw == "struct"
-            || kw == "enum"
-            || kw == "const"
-            || kw == "static"
-            || kw == "return"
-            || kw == "unsafe"
-            || kw == "extern"
-        {
-            // These are Rust syntax keywords — only replace if used as a variable name
-            // (i.e., in assignment LHS or standalone expression, not after `let`)
-            continue;
-        }
-        let kw_re = Regex::new(&format!(r"\b{kw}\b")).unwrap();
+    for (kw_re, replacement) in &RE.keywords {
+        // Extract the keyword from the regex pattern for string containment checks
+        let kw = replacement.trim_end_matches("_val");
         if s.contains(kw) && !s.contains(&format!("\"{kw}\"")) && !s.contains(&format!("unit.{kw}"))
         {
-            s = kw_re.replace_all(&s, replacement).to_string();
+            s = kw_re.replace_all(&s, *replacement).to_string();
         }
     }
 
