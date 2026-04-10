@@ -111,7 +111,7 @@ pub struct TroopSkill {
 #[derive(Deserialize)]
 pub struct EquipEntry {
     pub level: Option<i64>,
-    pub locked: Option<bool>,
+    pub locked: Option<i64>, // 0 / 1 integer
 }
 
 #[derive(Deserialize)]
@@ -343,7 +343,7 @@ fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
                             "operator_id": char_id,
                             "module_id": module_id,
                             "module_level": entry.level.unwrap_or(0),
-                            "locked": entry.locked.unwrap_or(false),
+                            "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
                         }))
                     },
                 ))
