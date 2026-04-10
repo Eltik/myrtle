@@ -101,7 +101,7 @@ pub async fn fetch_and_store(
         .map_err(|_| ApiError::BadRequest("invalid portal session".into()))?;
 
     let mut all_items: Vec<GachaApiItem> = Vec::new();
-    let mut index = 0;
+    let mut index: i64 = 1;
 
     loop {
         let url = format!(
@@ -141,7 +141,7 @@ pub async fn fetch_and_store(
             break;
         }
 
-        index += page_count as i64;
+        index += 1;
     }
 
     let total_fetched = all_items.len();
