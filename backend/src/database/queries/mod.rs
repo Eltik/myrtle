@@ -6,5 +6,6 @@ pub mod operator_notes;
 pub mod roguelike;
 pub mod roster;
 pub mod score;
+pub mod stages;
 pub mod tier_lists;
 pub mod users;

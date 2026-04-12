@@ -16,6 +16,7 @@ use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding};
 use backend::core::grade::calculate::calculate_user_grade;
 use backend::core::grade::grade_roguelike::grade_roguelike;
+use backend::core::grade::stages::grade_stages_detail;
 use backend::database::models::roster::RosterEntry;
 use backend::database::queries::{building, medals, roguelike, roster, users};
 use serde::Deserialize;
@@ -805,6 +806,7 @@ async fn main() {
     );
     println!("    Operators: {:.4}  (weight 1.0)", grade.operator_grade);
     println!("    Base:      {:.4}  (weight 0.5)", grade.base_grade);
+    println!("    Stages:    {:.4}  (weight 0.4)", grade.stage_grade);
     println!("    Roguelike: {:.4}  (weight 0.3)", grade.roguelike_grade);
     println!("    Medals:    {:.4}  (weight 0.2)", grade.medal_grade);
     println!("============================================================");
@@ -1017,4 +1019,80 @@ async fn main() {
 
     // ── Medal grade detail ─────────────────────────────────────
     print_medal_detail(&user_medals, &game_data.medals);
+
+    // ── Stage grade detail ─────────────────────────────────────
+    let stage_detail = grade_stages_detail(&db, user_id, &game_data)
+        .await
+        .expect("stages");
+
+    println!("\n{}", "=".repeat(60));
+    println!("=== STAGE GRADE DETAIL ===");
+    println!();
+
+    println!("  Summary:");
+    println!(
+        "    Universe size:        {}",
+        stage_detail.permanent_total + stage_detail.event_total
+    );
+    println!("    Permanent pool size:  {}", stage_detail.permanent_total);
+    println!("    Event pool size:      {}", stage_detail.event_total);
+    println!(
+        "    Total cleared:        {}",
+        stage_detail.permanent_cleared + stage_detail.event_cleared
+    );
+    println!(
+        "    Total 3-starred:      {}",
+        stage_detail.permanent_three_starred + stage_detail.event_three_starred
+    );
+    println!();
+
+    println!("  Permanent Pool  [weight 70%]");
+    let perm_clear_pct = if stage_detail.permanent_total > 0 {
+        stage_detail.permanent_cleared as f64 / stage_detail.permanent_total as f64 * 100.0
+    } else {
+        0.0
+    };
+    let perm_3s_pct = if stage_detail.permanent_total > 0 {
+        stage_detail.permanent_three_starred as f64 / stage_detail.permanent_total as f64 * 100.0
+    } else {
+        0.0
+    };
+    println!(
+        "    Cleared:        {}/{}  ({:.1}%)",
+        stage_detail.permanent_cleared, stage_detail.permanent_total, perm_clear_pct
+    );
+    println!(
+        "    3-starred:      {}/{}  ({:.1}%)",
+        stage_detail.permanent_three_starred, stage_detail.permanent_total, perm_3s_pct
+    );
+    println!("    Score:          {:.4}", stage_detail.permanent_pool);
+    println!();
+
+    println!("  Event Pool      [weight 30%]  (temporal decay, floor 0.30)");
+    let event_clear_pct = if stage_detail.event_total > 0 {
+        stage_detail.event_cleared as f64 / stage_detail.event_total as f64 * 100.0
+    } else {
+        0.0
+    };
+    let event_3s_pct = if stage_detail.event_total > 0 {
+        stage_detail.event_three_starred as f64 / stage_detail.event_total as f64 * 100.0
+    } else {
+        0.0
+    };
+    println!(
+        "    Cleared:        {}/{}  ({:.1}%)",
+        stage_detail.event_cleared, stage_detail.event_total, event_clear_pct
+    );
+    println!(
+        "    3-starred:      {}/{}  ({:.1}%)",
+        stage_detail.event_three_starred, stage_detail.event_total, event_3s_pct
+    );
+    println!("    Score:          {:.4}", stage_detail.event_pool);
+    println!();
+
+    println!(
+        "  Stage Score:    {:.4} ({})",
+        stage_detail.total,
+        score_to_grade(stage_detail.total)
+    );
 }

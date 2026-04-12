@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+pub mod activity;
 pub mod building;
 pub mod chibi;
 pub mod enemy;
@@ -15,10 +16,12 @@ pub mod serde_helpers;
 pub mod skill;
 pub mod skin;
 pub mod stage;
+pub mod stage_universe;
 pub mod trust;
 pub mod voice;
 pub mod zone;
 
+use building::BuildingDataFile;
 use chibi::ChibiData;
 use enemy::EnemyHandbook;
 use gacha::GachaData;
@@ -32,11 +35,10 @@ use roguelike::RoguelikeGameData;
 use skill::Skill;
 use skin::SkinData;
 use stage::Stage;
+use stage_universe::StageUniverse;
 use trust::Favor;
 use voice::Voices;
 use zone::Zone;
-
-use crate::core::gamedata::types::building::BuildingDataFile;
 
 #[derive(Debug, Clone, Default)]
 pub struct GameData {
@@ -57,6 +59,7 @@ pub struct GameData {
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,
     pub building: BuildingDataFile,
+    pub stage_universe: StageUniverse,
 }
 
 impl GameData {

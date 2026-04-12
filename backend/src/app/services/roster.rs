@@ -247,8 +247,7 @@ pub async fn refresh(
                 operator_score: grade.operator_grade,
                 total_score: grade.total_score, // for now, just operator
                 grade: Some(grade.overall),
-                // zero out the rest until implemented
-                stage_score: 0.0,
+                stage_score: grade.stage_grade,
                 roguelike_score: grade.roguelike_grade,
                 sandbox_score: 0.0,
                 medal_score: grade.medal_grade,

@@ -13,6 +13,7 @@ use crate::core::gamedata::{
     tables::{DataError, load_table, load_table_or_warn},
     types::{
         GameData,
+        activity::ActivityTableFile,
         building::BuildingDataFile,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
@@ -26,6 +27,7 @@ use crate::core::gamedata::{
         skill::SkillTableFile,
         skin::SkinTableFile,
         stage::StageTableFile,
+        stage_universe::StageUniverse,
         trust::Favor,
         voice::{Voices, VoicesTableFile},
         zone::ZoneTableFile,
@@ -68,6 +70,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         load_table_or_warn(data_dir, "building_data", &mut warnings);
     let roguelike_file: RoguelikeTopicTableFile =
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
+    let activity_file: ActivityTableFile =
+        load_table_or_warn(data_dir, "activity_table", &mut warnings);
 
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
@@ -79,6 +83,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let stages = stage_file.stages;
     let medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
+    let stage_universe = StageUniverse::build(&stages, &zones, &activity_file.basic_info);
 
     let skills = enrich_all_skills(skill_file.skills, &assets);
     let drones = extract_all_drones(&raw_operators);
@@ -149,5 +154,6 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         roguelike,
         enemies,
         building: building_file,
+        stage_universe,
     })
 }
