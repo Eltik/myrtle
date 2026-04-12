@@ -37,6 +37,8 @@ pub struct GameUser {
     pub roguelike: Option<serde_json::Value>,
     #[serde(rename = "deepSea")]
     pub sandbox: Option<serde_json::Value>,
+    #[serde(rename = "sandboxPerm")]
+    pub sandbox_perm: Option<serde_json::Value>,
     #[serde(rename = "checkIn")]
     pub checkin: Option<CheckIn>,
 }
@@ -207,7 +209,7 @@ pub async fn refresh(
         .cloned()
         .unwrap_or_default();
     let roguelike = extract_roguelike(&user.roguelike);
-    let sandbox = user.sandbox.unwrap_or_default();
+    let sandbox = user.sandbox_perm.unwrap_or_default();
     let medals = extract_medals(&user.medal);
     let building = user.building.unwrap_or_default();
     let checkin: Vec<i16> = user.checkin.and_then(|c| c.history).unwrap_or_default();

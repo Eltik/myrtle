@@ -2,3 +2,5 @@
 /tasks
 .env
 .DS_Store
+deep_sea_dump.json
+sandbox_perm_dump.json

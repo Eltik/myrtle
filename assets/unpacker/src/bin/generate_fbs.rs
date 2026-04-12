@@ -712,7 +712,7 @@ fn generate_fb_json_auto(
         let parsed_structs = &structs[*module];
         out.push_str(&format!("// From {module}\n"));
         for s in parsed_structs {
-            emit_struct_impl(&mut out, s, module, s.is_root);
+            emit_struct_impl(&mut out, s, module);
         }
     }
 
@@ -726,7 +726,7 @@ fn generate_fb_json_auto(
     Ok(())
 }
 
-fn emit_struct_impl(out: &mut String, s: &ParsedStruct, module: &str, is_root: bool) {
+fn emit_struct_impl(out: &mut String, s: &ParsedStruct, module: &str) {
     out.push_str(&format!(
         "impl FlatBufferToJson for {module}::{}<'_> {{\n\
         \x20   fn to_json(&self) -> Value {{\n",
@@ -744,11 +744,7 @@ fn emit_struct_impl(out: &mut String, s: &ParsedStruct, module: &str, is_root: b
 
         for field in &s.fields {
             let pascal = pascal_case(&field.name);
-            if is_root {
-                emit_field_safe(out, field, &pascal);
-            } else {
-                emit_field_direct(out, field, &pascal);
-            }
+            emit_field_safe(out, field, &pascal);
         }
 
         out.push_str("        Value::Object(map)\n");
@@ -836,114 +832,8 @@ fn emit_dict_impl(out: &mut String, s: &ParsedStruct, _module: &str) {
     out.push_str("        Value::Object(map)\n");
 }
 
-fn emit_field_direct(out: &mut String, field: &Field, pascal_name: &str) {
-    if field.is_vector {
-        match field.element_type.as_deref() {
-            Some("string") => {
-                out.push_str(&format!(
-                    "        if let Some(vec) = self.{}() {{\n",
-                    field.name
-                ));
-                out.push_str(
-                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
-                );
-                out.push_str("            let arr: Vec<Value> = (0..vec.len()).map(|i| json!(vec.get(i))).collect();\n");
-                out.push_str(&format!(
-                    "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
-                ));
-                out.push_str("        }\n");
-            }
-            Some("nested") => {
-                out.push_str(&format!(
-                    "        if let Some(vec) = self.{}() {{\n",
-                    field.name
-                ));
-                out.push_str(
-                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
-                );
-                out.push_str("            let arr: Vec<Value> = (0..vec.len()).map(|i| vec.get(i).to_json()).collect();\n");
-                out.push_str(&format!(
-                    "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
-                ));
-                out.push_str("        }\n");
-            }
-            Some("enum") => {
-                out.push_str(&format!(
-                    "        if let Some(vec) = self.{}() {{\n",
-                    field.name
-                ));
-                out.push_str(
-                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
-                );
-                out.push_str("            let arr: Vec<Value> = vec.iter().map(|e| e.to_json_value()).collect();\n");
-                out.push_str(&format!(
-                    "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
-                ));
-                out.push_str("        }\n");
-            }
-            _ => {
-                // scalar vector
-                out.push_str(&format!(
-                    "        if let Some(vec) = self.{}() {{\n",
-                    field.name
-                ));
-                out.push_str(
-                    "            assert!(vec.len() <= 10_000_000, \"FB vector too large\");\n",
-                );
-                out.push_str(
-                    "            let arr: Vec<Value> = vec.iter().map(|v| json!(v)).collect();\n",
-                );
-                out.push_str(&format!(
-                    "            map.insert(\"{pascal_name}\".to_string(), json!(arr));\n"
-                ));
-                out.push_str("        }\n");
-            }
-        }
-    } else if field.is_enum {
-        if field.is_option {
-            out.push_str(&format!(
-                "        if let Some(e) = self.{}() {{\n",
-                field.name
-            ));
-            out.push_str(&format!(
-                "            map.insert(\"{pascal_name}\".to_string(), e.to_json_value());\n"
-            ));
-            out.push_str("        }\n");
-        } else {
-            out.push_str(&format!(
-                "        map.insert(\"{pascal_name}\".to_string(), self.{}().to_json_value());\n",
-                field.name
-            ));
-        }
-    } else if field.is_nested {
-        out.push_str(&format!(
-            "        if let Some(nested) = self.{}() {{\n",
-            field.name
-        ));
-        out.push_str(&format!(
-            "            map.insert(\"{pascal_name}\".to_string(), nested.to_json());\n"
-        ));
-        out.push_str("        }\n");
-    } else if field.is_option {
-        out.push_str(&format!(
-            "        if let Some(v) = self.{}() {{\n",
-            field.name
-        ));
-        out.push_str(&format!(
-            "            map.insert(\"{pascal_name}\".to_string(), json!(v));\n"
-        ));
-        out.push_str("        }\n");
-    } else {
-        // Plain scalar
-        out.push_str(&format!(
-            "        map.insert(\"{pascal_name}\".to_string(), json!(self.{}()));\n",
-            field.name
-        ));
-    }
-}
-
 fn emit_field_safe(out: &mut String, field: &Field, pascal_name: &str) {
-    // Wrap each field in catch_unwind for root structs
+    // Wrap each field in catch_unwind so a single corrupted field doesn't kill the struct
     out.push_str("        if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {\n");
 
     if field.is_vector {
