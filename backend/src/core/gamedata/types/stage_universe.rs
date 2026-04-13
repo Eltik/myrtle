@@ -82,12 +82,6 @@ impl StageUniverse {
         }
 
         let permanent_max: f64 = permanent.iter().map(|e| e.weight).sum();
-        eprintln!(
-            "StageUniverse: {} permanent, {} event, perm_max={:.2}",
-            permanent.len(),
-            event.len(),
-            permanent_max
-        );
 
         Self {
             permanent,
