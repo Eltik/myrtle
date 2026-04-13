@@ -83,7 +83,10 @@ fn get_or_create_skin<'a>(
     skin_name: &str,
     base_path: &str,
 ) -> &'a mut ChibiSkin {
-    let idx = character.skins.iter().position(|s| s.name == skin_name);
+    let idx = character
+        .skins
+        .iter()
+        .position(|s| s.name.eq_ignore_ascii_case(skin_name));
     match idx {
         Some(i) => &mut character.skins[i],
         None => {
@@ -136,15 +139,17 @@ fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles
             continue;
         }
 
-        let (stem, ext) = if let Some(s) = lower.strip_suffix(".atlas") {
-            (s, "atlas")
-        } else if let Some(s) = lower.strip_suffix(".skel") {
-            (s, "skel")
-        } else if let Some(s) = lower.strip_suffix(".png") {
-            (s, "png")
+        let ext = if lower.ends_with(".atlas") {
+            "atlas"
+        } else if lower.ends_with(".skel") {
+            "skel"
+        } else if lower.ends_with(".png") {
+            "png"
         } else {
             continue;
         };
+
+        let stem = &name[..name.len() - ext.len() - 1];
 
         let url = format!("{base_url}/{name}");
         let group = groups.entry(stem.to_owned()).or_default();
@@ -177,6 +182,7 @@ fn derive_skin_name(stem: &str, char_id: &str) -> String {
     let cleaned = stem
         .strip_prefix("dyn_illust_")
         .or_else(|| stem.strip_prefix("dyn_portrait_"))
+        .or_else(|| stem.strip_prefix("build_"))
         .unwrap_or(stem);
 
     let char_lower = char_id.to_lowercase();
@@ -184,10 +190,10 @@ fn derive_skin_name(stem: &str, char_id: &str) -> String {
 
     if cleaned_lower == char_lower {
         "default".to_owned()
-    } else if let Some(suffix) = cleaned_lower.strip_prefix(&format!("{char_lower}_")) {
-        suffix.to_owned()
+    } else if cleaned_lower.starts_with(&format!("{char_lower}_")) {
+        // Return the ORIGINAL case suffix, not the lowercased one
+        cleaned[char_id.len() + 1..].to_owned()
     } else {
-        // Can't parse — use the stem as-is
         cleaned.to_owned()
     }
 }
