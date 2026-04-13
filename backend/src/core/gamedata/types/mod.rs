@@ -12,6 +12,7 @@ pub mod module;
 pub mod operator;
 pub mod range;
 pub mod roguelike;
+pub mod sandbox_universe;
 pub mod serde_helpers;
 pub mod skill;
 pub mod skin;
@@ -32,6 +33,7 @@ use module::Modules;
 use operator::Operator;
 use range::Ranges;
 use roguelike::RoguelikeGameData;
+use sandbox_universe::SandboxUniverse;
 use skill::Skill;
 use skin::SkinData;
 use stage::Stage;
@@ -60,6 +62,7 @@ pub struct GameData {
     pub enemies: EnemyHandbook,
     pub building: BuildingDataFile,
     pub stage_universe: StageUniverse,
+    pub sandbox_universe: SandboxUniverse,
 }
 
 impl GameData {

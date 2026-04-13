@@ -5,6 +5,7 @@ pub mod medals;
 pub mod operator_notes;
 pub mod roguelike;
 pub mod roster;
+pub mod sandbox;
 pub mod score;
 pub mod stages;
 pub mod tier_lists;

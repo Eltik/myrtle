@@ -16,6 +16,7 @@ use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding};
 use backend::core::grade::calculate::calculate_user_grade;
 use backend::core::grade::grade_roguelike::grade_roguelike;
+use backend::core::grade::sandbox::grade_sandbox_detail;
 use backend::core::grade::stages::grade_stages_detail;
 use backend::database::models::roster::RosterEntry;
 use backend::database::queries::{building, medals, roguelike, roster, users};
@@ -1095,4 +1096,89 @@ async fn main() {
         stage_detail.total,
         score_to_grade(stage_detail.total)
     );
+
+    // ── Sandbox grade detail ──────────────────────────────────
+    let sandbox_detail = grade_sandbox_detail(&db, user_id, &game_data)
+        .await
+        .expect("sandbox");
+
+    println!("\n{}", "=".repeat(60));
+    println!("=== SANDBOX (RECLAMATION ALGORITHM) GRADE DETAIL ===");
+    println!();
+
+    if sandbox_detail.total == 0.0 && sandbox_detail.achievements_completed == 0 {
+        println!("  No sandbox progress found.");
+    } else {
+        println!("  Achievements    [weight 30%]");
+        println!(
+            "    Completed:      {}/{}  ({:.1}%)",
+            sandbox_detail.achievements_completed,
+            sandbox_detail.achievements_total,
+            if sandbox_detail.achievements_total > 0 {
+                sandbox_detail.achievements_completed as f64
+                    / sandbox_detail.achievements_total as f64
+                    * 100.0
+            } else {
+                0.0
+            }
+        );
+        println!("    Score:          {:.4}", sandbox_detail.achievements);
+        println!();
+
+        println!("  Exploration     [weight 20%]");
+        println!(
+            "    Nodes explored: {}/{}  ({:.1}%)",
+            sandbox_detail.nodes_explored,
+            sandbox_detail.nodes_total,
+            if sandbox_detail.nodes_total > 0 {
+                sandbox_detail.nodes_explored as f64 / sandbox_detail.nodes_total as f64 * 100.0
+            } else {
+                0.0
+            }
+        );
+        println!("    Score:          {:.4}", sandbox_detail.exploration);
+        println!();
+
+        println!("  Tech Tree       [weight 15%]");
+        println!(
+            "    Unlocked:       {}/{}  ({:.1}%)",
+            sandbox_detail.tech_unlocked,
+            sandbox_detail.tech_total,
+            if sandbox_detail.tech_total > 0 {
+                sandbox_detail.tech_unlocked as f64 / sandbox_detail.tech_total as f64 * 100.0
+            } else {
+                0.0
+            }
+        );
+        println!("    Score:          {:.4}", sandbox_detail.tech_tree);
+        println!();
+
+        println!("  Quests          [weight 15%]");
+        println!(
+            "    Completed:      {}/{}  ({:.1}%)",
+            sandbox_detail.quests_completed,
+            sandbox_detail.quests_total,
+            if sandbox_detail.quests_total > 0 {
+                sandbox_detail.quests_completed as f64 / sandbox_detail.quests_total as f64 * 100.0
+            } else {
+                0.0
+            }
+        );
+        println!("    Score:          {:.4}", sandbox_detail.quests);
+        println!();
+
+        println!("  Base & Building [weight 10%]");
+        println!("    Score:          {:.4}", sandbox_detail.base_building);
+        println!();
+
+        println!("  Content Depth   [weight 10%]");
+        println!("    Score:          {:.4}", sandbox_detail.content_depth);
+        println!();
+
+        println!(
+            "  Sandbox Score:  {:.4} ({})",
+            sandbox_detail.total,
+            score_to_grade(sandbox_detail.total)
+        );
+    }
 }

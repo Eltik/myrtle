@@ -6,7 +6,7 @@ use crate::{
         gamedata::types::GameData,
         grade::{
             base::score::grade_base, grade_medals::grade_medals, grade_operators::grade_operators,
-            grade_roguelike::grade_roguelike, stages::grade_stages,
+            grade_roguelike::grade_roguelike, sandbox::grade_sandbox, stages::grade_stages,
         },
     },
     database::queries::{building, medals, roguelike, roster},
@@ -18,6 +18,7 @@ pub struct UserGrade {
     pub roguelike_grade: f64,
     pub medal_grade: f64,
     pub stage_grade: f64,
+    pub sandbox_grade: f64,
     pub overall: String,
     pub total_score: f64,
 }
@@ -27,12 +28,13 @@ pub async fn calculate_user_grade(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<UserGrade, sqlx::Error> {
-    let (user_roster, building_json, roguelike_data, user_medals, stage_grade) = tokio::try_join!(
+    let (user_roster, building_json, roguelike_data, user_medals, stage_grade, sandbox_grade) = tokio::try_join!(
         roster::get_roster(pool, user_id),
         building::get_building(pool, user_id),
         roguelike::get_roguelike_progress(pool, user_id),
         medals::get_user_medals(pool, user_id),
-        grade_stages(pool, user_id, game_data)
+        grade_stages(pool, user_id, game_data),
+        grade_sandbox(pool, user_id, game_data),
     )?;
 
     let operator_grade = grade_operators(&user_roster, game_data);
@@ -46,9 +48,8 @@ pub async fn calculate_user_grade(
         (0.3, roguelike_grade),
         (0.2, medal_grade),
         (0.4, stage_grade),
+        (0.2, sandbox_grade),
     ];
-    // Future:
-    // scores.push((0.1, skin_grade));
 
     let total_weight: f64 = scores.iter().map(|(w, _)| w).sum();
     let total_score = scores.iter().map(|(w, v)| w * v).sum::<f64>() / total_weight;
@@ -60,6 +61,7 @@ pub async fn calculate_user_grade(
         roguelike_grade,
         medal_grade,
         stage_grade,
+        sandbox_grade,
         overall,
         total_score,
     })

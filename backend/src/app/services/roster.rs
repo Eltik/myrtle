@@ -251,7 +251,7 @@ pub async fn refresh(
                 grade: Some(grade.overall),
                 stage_score: grade.stage_grade,
                 roguelike_score: grade.roguelike_grade,
-                sandbox_score: 0.0,
+                sandbox_score: grade.sandbox_grade,
                 medal_score: grade.medal_grade,
                 base_score: grade.base_grade,
                 skin_score: 0.0,

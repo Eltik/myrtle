@@ -24,6 +24,7 @@ use crate::core::gamedata::{
         operator::CharacterTable,
         range::Ranges,
         roguelike::{RoguelikeGameData, RoguelikeTopicTableFile},
+        sandbox_universe::SandboxUniverse,
         skill::SkillTableFile,
         skin::SkinTableFile,
         stage::StageTableFile,
@@ -84,6 +85,10 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
     let stage_universe = StageUniverse::build(&stages, &zones, &activity_file.basic_info);
+
+    let sandbox_perm_raw: serde_json::Value =
+        load_table_or_warn(data_dir, "sandbox_perm_table", &mut warnings);
+    let sandbox_universe = SandboxUniverse::build(&sandbox_perm_raw);
 
     let skills = enrich_all_skills(skill_file.skills, &assets);
     let drones = extract_all_drones(&raw_operators);
@@ -155,5 +160,6 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         enemies,
         building: building_file,
         stage_universe,
+        sandbox_universe,
     })
 }
