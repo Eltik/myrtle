@@ -123,8 +123,10 @@ services:
     profiles:
       - tools
     volumes:
+      - ./assets:/src
       - ./assets/ArkAssets:/data/ArkAssets
       - ./assets/output:/data/output
+      - cargo_cache:/usr/local/cargo/registry
 
 volumes:
   myrtle_pgdata:
