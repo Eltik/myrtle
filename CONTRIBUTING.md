@@ -19,11 +19,12 @@
 
 > Note: Docker engine and compose are included in Docker Desktop.
 
-Before getting started, be sure to clone the repository.
+Before getting started, be sure to clone the repository and initialize the submodules.
 
 ```shell
 git clone https://github.com/Eltik/myrtle.git
 cd myrtle
+git submodule update --init --recursive
 ```
 
 ---
@@ -90,6 +91,18 @@ docker compose run --rm asset-tools download.sh [server] [threads]
 docker compose run --rm asset-tools unpack.sh [threads]
 # Example: docker compose run --rm asset-tools unpack.sh 4
 ```
+
+#### 4. Generate FlatBuffer schemas
+
+```shell
+docker compose run --rm asset-tools generate_fbs.sh
+```
+
+#### 5. Regenerate DPS Calculations
+```shell
+docker compose run --rm dps-tools
+```
+This parses the Python DPS source, transpiles formulas to Rust, and runs linting/formatting. See [DPS_CALCULATOR.md](backend/DPS_CALCULATOR.md) for details.
 
 > **NOTE**: The asset downloader and extractor can also be run directly without the utility scripts.
 >
