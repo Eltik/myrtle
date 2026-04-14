@@ -39,45 +39,44 @@ const MAX_ELITE_BY_RARITY: Record<number, number> = {
  * Gets the avatar URL for an operator based on their current skin.
  * Uses the /api/cdn/avatar/ endpoint which the backend resolves.
  */
-function getOperatorAvatarUrl(charId: string, skinId: string | null, _evolvePhase: number, currentTmpl?: string | null): string {
+function getOperatorAvatarUrl(charId: string, skinId: string | null, _evolvePhase: number, _currentTmpl?: string | null): string {
     if (!skinId) {
-        return `/api/cdn/avatar/${charId}`;
+        return `/api/cdn/avatar/${encodeURIComponent(charId)}`;
     }
 
+    // Purchased skins use `@` separator, e.g. "char_4087_ines@boc#8".
+    // Normalize to underscore form that matches v3 asset index keys.
     if (skinId.includes("@")) {
-        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return `/api/cdn/avatar/${normalizedSkinId}`;
+        const normalized = skinId.replaceAll("@", "_");
+        return `/api/cdn/avatar/${encodeURIComponent(normalized)}`;
     }
 
     if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
-        return `/api/cdn/avatar/${charId}`;
+        return `/api/cdn/avatar/${encodeURIComponent(charId)}`;
     }
 
-    if (skinId.endsWith("#2") || skinId.endsWith("_2")) {
-        const normalizedSkinId = skinId.replaceAll("#", "_");
-        return `/api/cdn/avatar/${normalizedSkinId}`;
-    }
-
-    const normalizedSkinId = skinId.replaceAll("#", "_");
-    return `/api/cdn/avatar/${normalizedSkinId}`;
+    const normalized = skinId.replaceAll("#", "_");
+    return `/api/cdn/avatar/${encodeURIComponent(normalized)}`;
 }
 
 /**
  * Gets the full portrait URL for the dialog.
  */
-function getOperatorPortraitUrl(charId: string, skinId: string | null, evolvePhase: number, currentTmpl?: string | null): string {
+function getOperatorPortraitUrl(charId: string, skinId: string | null, evolvePhase: number, _currentTmpl?: string | null): string {
     if (!skinId) {
         const suffix = evolvePhase >= 2 ? "_2" : "_1";
-        return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
+        return `/api/cdn/upk/chararts/${encodeURIComponent(charId)}/${encodeURIComponent(charId + suffix)}.png`;
     }
 
+    // Purchased skin (e.g. "char_4087_ines@boc#8"): swap `@` to `_` but keep `#`
+    // in the filename — the CDN proxy re-encodes segments before forwarding.
     if (skinId.includes("@")) {
-        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
+        const normalized = skinId.replaceAll("@", "_");
+        return `/api/cdn/upk/skinpack/${encodeURIComponent(charId)}/${encodeURIComponent(normalized)}.png`;
     }
 
-    const normalizedSkinId = skinId.replaceAll("#", "_");
-    return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
+    const normalized = skinId.replaceAll("#", "_");
+    return `/api/cdn/upk/chararts/${encodeURIComponent(charId)}/${encodeURIComponent(normalized)}.png`;
 }
 
 export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
@@ -115,7 +114,7 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
         for (const staticSkill of operator?.skills ?? []) {
             const skillStatic = staticSkill.static;
             const mastery = data.masteries.find((m) => m.skill_id === staticSkill.skillId);
-            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? staticSkill.skillId}.png`;
+            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/skill-icons/${skillStatic?.iconId ?? skillStatic?.skillId ?? staticSkill.skillId}.png`;
             imagesToPreload.push(skillIcon);
 
             if ((mastery?.specialize_level ?? 0) > 0) {

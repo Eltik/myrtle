@@ -20,9 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         // Fetch roster and static operator data in parallel
+        // v3: /static/operators returns Record<string, Operator> keyed by operator ID
         const [rosterResponse, operatorsResponse] = await Promise.all([
-            backendFetch(`/roster?uid=${id}`),
-            backendFetch("/static/operators?limit=1000"),
+            backendFetch(`/roster?uid=${encodeURIComponent(id)}`),
+            backendFetch("/static/operators"),
         ]);
 
         if (!rosterResponse.ok) {
@@ -32,21 +33,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(rosterResponse.status).json({ error: "Failed to fetch roster data" });
         }
 
-        const roster: RosterEntry[] = await rosterResponse.json();
+        // v3 returns masteries/modules in the view's raw shape — map them to the
+        // field names the frontend components expect.
+        type V3RosterEntry = Omit<RosterEntry, "masteries" | "modules"> & {
+            masteries?: Array<{ index: number; mastery: number }>;
+            modules?: Array<{ id: string; level: number; locked?: boolean }>;
+        };
+        const roster = (await rosterResponse.json()) as V3RosterEntry[];
 
-        // Build operator static data lookup map
+        // Build operator static data lookup map - v3 returns a direct map, not wrapped
         let staticMap: Record<string, CharacterStatic> = {};
         if (operatorsResponse.ok) {
-            const operatorsData = await operatorsResponse.json();
-            const operators: CharacterStatic[] = operatorsData.operators ?? [];
-            staticMap = Object.fromEntries(operators.map((op) => [op.id, op]));
+            staticMap = (await operatorsResponse.json()) as Record<string, CharacterStatic>;
         }
 
-        // Enrich roster entries with static data
-        const enriched: EnrichedRosterEntry[] = roster.map((entry) => ({
-            ...entry,
-            static: staticMap[entry.operator_id] ?? null,
-        }));
+        // Enrich roster entries with static data + normalize field names
+        const enriched: EnrichedRosterEntry[] = roster.map((entry) => {
+            const staticOp = staticMap[entry.operator_id] ?? null;
+
+            // Map {index, mastery} → {skill_id, specialize_level}
+            // using the operator's static skill list (ordered by index)
+            const masteries = (entry.masteries ?? []).map((m) => ({
+                skill_id: staticOp?.skills?.[m.index]?.skillId ?? "",
+                specialize_level: m.mastery,
+            }));
+
+            // Map {id, level, locked} → {equip_id, level}
+            // Arknights game quirk: locked (not-yet-unlocked) modules still report
+            // `level: 1` in the equip record. Treat them as level 0 so the UI
+            // doesn't incorrectly show them as unlocked.
+            const modules = (entry.modules ?? [])
+                .filter((m) => !m.locked)
+                .map((m) => ({
+                    equip_id: m.id,
+                    level: m.level,
+                }));
+
+            return {
+                ...entry,
+                masteries,
+                modules,
+                static: staticOp,
+            } as EnrichedRosterEntry;
+        });
 
         return res.status(200).json({
             characters: enriched,

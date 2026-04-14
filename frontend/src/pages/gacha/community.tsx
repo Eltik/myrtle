@@ -139,10 +139,11 @@ function RateBar({ label, actual, expected, color }: { label: string; actual: nu
 
 export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> = async () => {
     try {
-        const { env } = await import("~/env");
         const { backendFetch } = await import("~/lib/backend-fetch");
 
-        const response = await backendFetch("/gacha/stats");
+        // v3: /gacha/global-stats is the PUBLIC endpoint (no auth);
+        // /gacha/stats requires a user token and returns per-user stats.
+        const response = await backendFetch("/gacha/global-stats");
 
         if (!response.ok) {
             console.error(`Global gacha stats fetch failed: ${response.status}`);

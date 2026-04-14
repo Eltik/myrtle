@@ -14,7 +14,7 @@ import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { formatProfession, getOperatorImageURL, getProfessionIconName, getRarityStarCount } from "~/lib/utils";
 import type { CharacterStatic, EnrichedRosterEntry } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
-import { getAttributeStats } from "./impl/helpers";
+import { getAttributeStats, getTrustPercent } from "./impl/helpers";
 import { ModuleItem } from "./impl/module-item";
 import { SkillItem } from "./impl/skill-item";
 
@@ -33,7 +33,9 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const hasPreloadedRef = useRef(false);
     const { prefetch } = useCDNPrefetch();
 
-    const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
+    // Trust % derived from the user's raw favor_point (v3 stores raw game XP).
+    const trustPercent = getTrustPercent(data.favor_point ?? 0);
+    const trustPercentage = (trustPercent / 200) * 100;
     const maxLevel = operator?.phases?.[data.elite]?.MaxLevel ?? 1;
     const stats = getAttributeStats(data, operator);
 
@@ -96,7 +98,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
         const imagesToPreload: string[] = [operatorImage, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`];
 
         for (const skill of skillDisplayData) {
-            const skillIcon = skill.skillStatic?.image ? `/api/cdn${skill.skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skill.skillStatic?.iconId ?? skill.skillStatic?.skillId ?? skill.skillId}.png`;
+            const skillIcon = skill.skillStatic?.image ? `/api/cdn${skill.skillStatic.image}` : `/api/cdn/skill-icons/${skill.skillStatic?.iconId ?? skill.skillStatic?.skillId ?? skill.skillId}.png`;
             imagesToPreload.push(skillIcon);
 
             if (skill.specializeLevel > 0) {
@@ -196,7 +198,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-sm">Trust</span>
-                                <span className="font-bold text-sm">{(operator?.trust ?? 0).toFixed(0)}%</span>
+                                <span className="font-bold text-sm">{trustPercent}%</span>
                             </div>
                             <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
                         </div>

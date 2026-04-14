@@ -6,14 +6,15 @@ import type { UserProfile } from "~/types/api/impl/user";
 
 const LoginSchema = z.object({
     email: z.string().min(1, "Email is required").max(254, "Email too long").email("Invalid email format"),
+    // v3 backend expects `code` as a 6-digit string. Accept string or number
+    // from the client and always forward as a zero-padded string.
     code: z
         .union([z.string(), z.number()])
         .transform((val) => {
-            const num = typeof val === "string" ? Number.parseInt(val, 10) : val;
-            if (Number.isNaN(num)) throw new Error("Code must be a valid number");
-            return num;
-        })
-        .refine((val) => val >= 0 && val <= 999999, "Code must be a 6-digit number"),
+            const str = typeof val === "number" ? String(val) : val.trim();
+            if (!/^\d{1,6}$/.test(str)) throw new Error("Code must be a 6-digit number");
+            return str.padStart(6, "0");
+        }),
     server: AKServerSchema.default("en"),
 });
 
@@ -90,15 +91,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Step 2: Set auth cookies with JWT token
         setAuthCookies(res, loginData.token);
 
-        // Step 3: Fire and forget refresh to trigger game data sync
-        backendFetch("/refresh", {
+        // Step 3: Trigger game data sync and WAIT for it to complete.
+        // Without awaiting, step 4 would fetch a stale or empty profile.
+        console.log(`[login] Triggering /refresh for uid=${loginData.uid}`);
+        const refreshResponse = await backendFetch("/refresh", {
             method: "POST",
             bearerToken: loginData.token,
-        }).catch((err) => {
-            console.error("Background refresh failed:", err);
         });
 
-        // Step 4: Fetch user profile
+        if (!refreshResponse.ok) {
+            const errText = await refreshResponse.text().catch(() => "");
+            console.error(`[login] /refresh FAILED ${refreshResponse.status}: ${errText}`);
+            // Don't silently succeed — if sync fails, the profile will be empty/stale.
+            return res.status(502).json({
+                success: false,
+                error: `Sync failed (${refreshResponse.status}). Try logging in again.`,
+            });
+        }
+
+        const refreshBody = await refreshResponse.text().catch(() => "");
+        console.log(`[login] /refresh OK for uid=${loginData.uid}, response length=${refreshBody.length}`);
+
+        // Step 4: Fetch user profile (now populated with fresh game data)
         const userResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(loginData.uid)}`);
 
         if (!userResponse.ok) {

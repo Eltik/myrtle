@@ -74,18 +74,17 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 };
             }
 
-            const tierListsData = (await tierListsResponse.json()) as {
-                tier_lists: Array<{
-                    id: string;
-                    name: string;
-                    slug: string;
-                    description: string | null;
-                    is_active: boolean;
-                    tier_list_type: "official" | "community";
-                    created_at: string;
-                    updated_at: string;
-                }>;
-            };
+            // v3: GET /tier-lists returns TierList[] directly (plain array)
+            const tierListsData = (await tierListsResponse.json()) as Array<{
+                id: string;
+                name: string;
+                slug: string;
+                description: string | null;
+                list_type: string;
+                is_active: boolean;
+                created_at: string;
+                updated_at: string;
+            }>;
 
             // v3: /static/operators returns Record<string, Operator>
             const operatorsResponse = await backendFetch("/static/operators");
@@ -100,7 +99,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             }
 
             const tierListsWithDetails: TierListPreview[] = await Promise.all(
-                tierListsData.tier_lists.map(async (tierList) => {
+                tierListsData.map(async (tierList) => {
                     try {
                         const detailResponse = await backendFetch(`/tier-lists/${tierList.slug}`);
 
@@ -111,7 +110,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                                 slug: tierList.slug,
                                 description: tierList.description ?? null,
                                 is_active: tierList.is_active,
-                                tier_list_type: tierList.tier_list_type || "official",
+                                tier_list_type: (tierList.list_type || "official") as "official" | "community",
                                 created_at: tierList.created_at,
                                 updated_at: tierList.updated_at,
                                 operatorCount: 0,
@@ -147,7 +146,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
-                            tier_list_type: tierList.tier_list_type || "official",
+                            tier_list_type: (tierList.list_type || "official") as "official" | "community",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount,
@@ -161,7 +160,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
-                            tier_list_type: tierList.tier_list_type || "official",
+                            tier_list_type: (tierList.list_type || "official") as "official" | "community",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount: 0,
@@ -198,7 +197,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 slug: rawData.slug,
                 description: rawData.description ?? null,
                 is_active: rawData.is_active ?? false,
-                tier_list_type: rawData.tier_list_type || "official",
+                tier_list_type: (rawData.list_type || "official") as "official" | "community",
                 created_by: rawData.created_by ?? null,
                 created_at: rawData.created_at ?? null,
                 updated_at: rawData.updated_at ?? null,
