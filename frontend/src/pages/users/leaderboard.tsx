@@ -24,29 +24,19 @@ const LeaderboardPage: NextPage<Props> = ({ data }) => {
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
     const { sort, server, limit, offset } = context.query;
 
-    const { env } = await import("~/env");
-    const backendURL = new URL("/leaderboard", env.BACKEND_URL);
+    const { backendFetch } = await import("~/lib/backend-fetch");
 
-    if (sort && typeof sort === "string") {
-        backendURL.searchParams.set("sort", sort);
-    }
-    if (server && typeof server === "string") {
-        backendURL.searchParams.set("server", server);
-    }
-    if (limit && typeof limit === "string") {
-        backendURL.searchParams.set("limit", limit);
-    }
-    if (offset && typeof offset === "string") {
-        backendURL.searchParams.set("offset", offset);
-    }
+    const params = new URLSearchParams();
+    if (sort && typeof sort === "string") params.set("sort", sort);
+    if (server && typeof server === "string") params.set("server", server);
+    if (limit && typeof limit === "string") params.set("limit", limit);
+    if (offset && typeof offset === "string") params.set("offset", offset);
+
+    const queryString = params.toString();
+    const path = queryString ? `/leaderboard?${queryString}` : "/leaderboard";
 
     try {
-        const response = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await backendFetch(path);
 
         if (!response.ok) {
             console.error(`Leaderboard fetch failed: ${response.status}`);

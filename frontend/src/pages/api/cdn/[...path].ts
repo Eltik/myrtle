@@ -28,9 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const portraitMatch = fullPath.match(/^portrait[s]?\/(.+)$/);
 
         if (avatarMatch?.[1]) {
-            // Strip .png extension - backend looks up by asset name
+            // Strip .png extension - backend looks up by asset name.
+            // Encode so `#` etc. survive URL parsing in backendFetch.
             const id = avatarMatch[1].replace(/\.png$/i, "");
-            const response = await backendFetch(`/avatar/${id}`);
+            const response = await backendFetch(`/avatar/${encodeURIComponent(id)}`);
 
             if (!response.ok) {
                 return res.status(response.status).json({ error: "Failed to fetch avatar" });
@@ -49,9 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const portraitId = portraitMatch?.[1];
         if (portraitId) {
-            // Strip .png extension and _1/_2 suffix - backend appends these internally
+            // Strip .png extension and _1/_2 suffix - backend appends these internally.
+            // Encode so special chars like `#` survive URL parsing.
             const rawId = portraitId.replace(/\.png$/i, "").replace(/_(1\+?|2)$/, "");
-            const response = await backendFetch(`/portrait/${rawId}`);
+            const response = await backendFetch(`/portrait/${encodeURIComponent(rawId)}`);
 
             if (!response.ok) {
                 return res.status(response.status).json({ error: "Failed to fetch portrait" });
@@ -87,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             : null;
 
         if (assetMatch?.id) {
-            const response = await backendFetch(`/${assetMatch.route}/${assetMatch.id}`);
+            const response = await backendFetch(`/${assetMatch.route}/${encodeURIComponent(assetMatch.id)}`);
             if (response.ok) {
                 const buffer = Buffer.from(await response.arrayBuffer());
                 const contentType = response.headers.get("Content-Type") ?? "image/png";

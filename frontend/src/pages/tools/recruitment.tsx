@@ -78,34 +78,28 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
         }
 
         // Extract recruitable operator names from recruitDetail
-        // The recruitDetail contains operator names in a formatted string
-        // We need to match operators that are in the recruitment pool
+        // Format: rarity sections separated by "----", operators separated by " / "
+        // Some operators are wrapped in <@rc.eml>Name</>, most are plain text
         const operatorsList = Object.values(operatorsData);
 
-        // Parse recruitDetail to get recruitable operator names
-        // Format typically includes names separated by \n or / with ★ rarity indicators
         const recruitableNames = new Set<string>();
         if (recruitDetail) {
-            // Extract names from the recruit detail text
-            // Typical format: "★★★★★★\n<@rc.eml>Operator1</>\n<@rc.eml>Operator2</>"
-            const nameMatches = recruitDetail.match(/<@rc\.eml>(.*?)<\/>/g);
-            if (nameMatches) {
-                for (const match of nameMatches) {
-                    const name = match.replace(/<@rc\.eml>/, "").replace(/<\/>/, "").trim();
-                    if (name) recruitableNames.add(name);
+            // Split by lines and parse each section
+            const lines = recruitDetail.split("\n");
+            for (const line of lines) {
+                // Skip headers, rules, and separators
+                if (line.startsWith("<@rc.title>") || line.startsWith("<@rc.subtitle>") || line.startsWith("<@rc.em>") || line.startsWith("-----") || line.trim() === "" || /^★+$/.test(line.trim())) {
+                    continue;
                 }
-            }
 
-            // Also try plain text format with / separator
-            if (recruitableNames.size === 0) {
-                const lines = recruitDetail.split("\n");
-                for (const line of lines) {
-                    const names = line.split("/").map((n) => n.replace(/★+/g, "").replace(/<[^>]*>/g, "").trim()).filter(Boolean);
-                    for (const name of names) {
-                        if (name.length > 0 && !name.startsWith("-----")) {
-                            recruitableNames.add(name);
-                        }
-                    }
+                // Split by " / " separator and clean each name
+                const names = line.split("/").map((n) => {
+                    // Strip all markup tags like <@rc.eml>, </>
+                    return n.replace(/<[^>]*>/g, "").replace(/★+/g, "").trim();
+                }).filter((n) => n.length > 0);
+
+                for (const name of names) {
+                    recruitableNames.add(name);
                 }
             }
         }

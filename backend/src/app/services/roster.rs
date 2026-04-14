@@ -100,6 +100,8 @@ pub struct TroopChar {
     pub default_skill_index: Option<i64>,
     pub current_equip: Option<String>,
     pub gain_time: Option<i64>,
+    pub voice_lan: Option<String>,
+    pub current_tmpl: Option<String>,
     pub skills: Option<Vec<TroopSkill>>,
     pub equip: Option<serde_json::Map<String, serde_json::Value>>,
 }
@@ -286,6 +288,8 @@ fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
                 "default_skill": c.default_skill_index.unwrap_or(0),
                 "current_equip": c.current_equip,
                 "obtained_at": c.gain_time.unwrap_or(0),
+                "voice_lan": c.voice_lan,
+                "current_tmpl": c.current_tmpl,
             }))
         })
         .collect();

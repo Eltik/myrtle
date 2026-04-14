@@ -86,7 +86,7 @@ function getModuleIconUrl(baseUrl: string, uniEquipIcon: string): string {
 }
 
 function getSkillIconUrl(baseUrl: string, skillId: string): string {
-    return `${baseUrl}/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillId}.png`;
+    return `${baseUrl}/api/cdn/skill-icons/${skillId}.png`;
 }
 
 function parseRarity(rarity: string): number {

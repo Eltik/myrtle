@@ -56,20 +56,40 @@ export function linearInterpolateByLevel(level: number, maxLevel: number, baseVa
     return Math.round(baseValue + ((level - 1) * (maxValue - baseValue)) / (maxLevel - 1));
 }
 
-export function getStatIncreaseAtTrust(favorKeyFrames: UserFavorKeyFrame[] | undefined, rawTrust: number): { maxHp: number; atk: number; def: number } {
+/**
+ * Max raw favor_point value in the game — corresponds to trust 200% (max bond).
+ * This is a game constant from Arknights' favor_table.json.
+ */
+const MAX_FAVOR_POINT = 25570;
+
+/**
+ * Compute stat bonuses at the given raw favor point value.
+ * `favor_point` from v3 is raw XP (0 to ~25570), not a 0-200 trust range.
+ * favorKeyFrames contains stat bonuses at max trust; we scale proportionally.
+ */
+export function getStatIncreaseAtTrust(favorKeyFrames: UserFavorKeyFrame[] | undefined, rawFavorPoint: number): { maxHp: number; atk: number; def: number } {
     if (!favorKeyFrames || favorKeyFrames.length === 0) {
         return { maxHp: 0, atk: 0, def: 0 };
     }
 
-    // Trust caps at 100 for stats even though favor points go to 200
-    const trust = Math.min(100, Math.floor(rawTrust / 2));
-    const maxTrustFrame = favorKeyFrames[favorKeyFrames.length - 1]?.Data;
+    const maxFrame = favorKeyFrames[favorKeyFrames.length - 1];
+    const maxStats = maxFrame?.Data;
+
+    const clamped = Math.max(0, Math.min(rawFavorPoint, MAX_FAVOR_POINT));
+    const ratio = clamped / MAX_FAVOR_POINT;
 
     return {
-        maxHp: Math.round((trust * (maxTrustFrame?.MaxHp ?? 0)) / 100),
-        atk: Math.round((trust * (maxTrustFrame?.Atk ?? 0)) / 100),
-        def: Math.round((trust * (maxTrustFrame?.Def ?? 0)) / 100),
+        maxHp: Math.round((maxStats?.MaxHp ?? 0) * ratio),
+        atk: Math.round((maxStats?.Atk ?? 0) * ratio),
+        def: Math.round((maxStats?.Def ?? 0) * ratio),
     };
+}
+
+/**
+ * Convert raw favor_point from v3 to a trust percentage (0-200).
+ */
+export function getTrustPercent(rawFavorPoint: number): number {
+    return Math.min(200, Math.round((rawFavorPoint / MAX_FAVOR_POINT) * 200));
 }
 
 export function getStatIncreaseAtPotential(

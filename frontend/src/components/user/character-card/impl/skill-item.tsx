@@ -21,7 +21,7 @@ export function SkillItem({ skillId, specializeLevel, skillStatic, index, isDefa
                 className={isSmall ? "h-6 w-6 rounded" : "h-7 w-7 rounded-sm"}
                 height={isSmall ? 24 : 28}
                 loading="lazy"
-                src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skillId}.png`}
+                src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/skill-icons/${skillStatic?.iconId ?? skillStatic?.skillId ?? skillId}.png`}
                 unoptimized
                 width={isSmall ? 24 : 28}
             />

@@ -8,12 +8,12 @@ name = "generate-dps"
 path = "src/bin/generate_dps.rs"
 
 [[bin]]
-name = "test"
-path = "src/bin/test.rs"
+name = "export-database"
+path = "src/bin/export_database.rs"
 
 [[bin]]
-name = "grade-detail"
-path = "src/bin/grade_detail.rs"
+name = "import-database"
+path = "src/bin/import_database.rs"
 
 [dependencies]
 anyhow = "1.0.102"

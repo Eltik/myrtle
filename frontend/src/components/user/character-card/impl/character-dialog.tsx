@@ -7,6 +7,7 @@ import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Separator } from "~/components/ui/shadcn/separator";
 import type { CharacterStatic, EnrichedRosterEntry } from "~/types/api/impl/user";
+import { getTrustPercent } from "./helpers";
 import { ModuleItem } from "./module-item";
 import { SkillItem } from "./skill-item";
 
@@ -130,7 +131,7 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[0.625rem] text-muted-foreground sm:text-xs">Trust</span>
-                            <span className="font-medium text-sm tabular-nums">{operator?.trust ?? 0}%</span>
+                            <span className="font-medium text-sm tabular-nums">{getTrustPercent(data.favor_point ?? 0)}%</span>
                         </div>
                     </div>
 
