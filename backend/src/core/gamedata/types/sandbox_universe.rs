@@ -30,7 +30,7 @@ impl SandboxUniverse {
                 .unwrap_or(0)
         };
 
-        let universe = Self {
+        Self {
             max_achievements: count("AchievementData"),
             max_nodes: Self::count_map_nodes(sandbox_data),
             max_zones: count("ZoneData"),
@@ -42,24 +42,7 @@ impl SandboxUniverse {
             max_base_level: count("BaseUpdate"),
             max_blueprints: count("BuildingItemData") + count("CraftItemData"),
             max_rifts: count("FixedRiftData"),
-        };
-
-        eprintln!(
-            "SandboxUniverse: achievements={}, nodes={}, zones={}, tech={}, quests={}, stages={}, recipes={}, music={}, base_levels={}, blueprints={}, rifts={}",
-            universe.max_achievements,
-            universe.max_nodes,
-            universe.max_zones,
-            universe.max_tech_nodes,
-            universe.max_quests,
-            universe.max_stages,
-            universe.max_recipes,
-            universe.max_music,
-            universe.max_base_level,
-            universe.max_blueprints,
-            universe.max_rifts,
-        );
-
-        universe
+        }
     }
 
     fn extract_sandbox_v2(raw: &Value) -> Option<&Value> {
