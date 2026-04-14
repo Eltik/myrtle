@@ -16,7 +16,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 use std::process::{Command, Stdio};
 use std::sync::LazyLock;
 
@@ -126,6 +126,7 @@ fn generate_formulas_json(repo_path: &str, py_src: &str) {
     println!("Parsed {} operators", operators.len());
 
     let json = serde_json::to_string_pretty(&operators).unwrap();
+    fs::remove_file("src/dps/config/operator_formulas.json").unwrap();
     fs::write("src/dps/config/operator_formulas.json", &json).unwrap();
     println!("Written to src/dps/config/operator_formulas.json");
 }
@@ -484,7 +485,11 @@ json.dump(results, sys.stdout)
         fs::create_dir_all(parent).unwrap();
     }
     let json = serde_json::to_string_pretty(&results).unwrap();
-    fs::write(output_path, &json).unwrap();
+    fs::remove_file(output_path).unwrap();
+
+    let file = fs::File::create(output_path).unwrap();
+    let mut writer = BufWriter::new(file);
+    writer.write_all(json.as_bytes()).unwrap();
     println!("Written to {}", output_path.display());
 
     // Cleanup
@@ -610,6 +615,7 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
     println!("Transpiled: {success}, Failed: {failed}");
 
     // Write generated.rs
+    fs::remove_file("src/dps/custom/generated.rs").unwrap();
     fs::write("src/dps/custom/generated.rs", &generated).expect("Failed to write generated.rs");
     println!("Written to src/dps/custom/generated.rs");
 
@@ -631,6 +637,7 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
     mod_rs.push_str("    }\n");
     mod_rs.push_str("}\n");
 
+    fs::remove_file("src/dps/custom/mod.rs").unwrap();
     fs::write("src/dps/custom/mod.rs", &mod_rs).expect("Failed to write mod.rs");
     println!(
         "Written to src/dps/custom/mod.rs ({} dispatch arms)",
