@@ -96,6 +96,25 @@ services:
     profiles:
       - "true"
 
+  dps-tools:
+    build:
+      context: ./backend
+      platforms:
+        - linux/amd64
+      dockerfile: Dockerfile.dev
+    profiles:
+      - tools
+    volumes:
+      - ./backend:/src
+      - ./assets/output:/data/output:ro
+      - cargo_cache:/usr/local/cargo/registry
+      - pip_cache:/root/.cache/pip
+    environment:
+      GAME_DATA_DIR: ${GAME_DATA_DIR}
+      ASSETS_DIR: ${ASSETS_DIR}
+      CARGO_TARGET_DIR: /tmp/cargo_target
+    command: sh ./scripts/run-dps-tools.sh
+
   asset-tools:
     build:
       context: ./assets
@@ -110,6 +129,8 @@ services:
 volumes:
   myrtle_pgdata:
   myrtle_redisdata:
+  cargo_cache:
+  pip_cache:
 
 networks:
   myrtle:
