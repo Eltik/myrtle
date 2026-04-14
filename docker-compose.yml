@@ -1,13 +1,13 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - myrtle_pgdata:/var/lib/postgresql/data
+      - myrtle_pgdata:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:
@@ -86,7 +86,7 @@ services:
       - backend
     environment:
       BACKEND_URL: ${BACKEND_URL}
-      INTERNAL_SERVICE_KEY: ${INTERNAL_SERVICE_KEY}
+      INTERNAL_SERVICE_KEY: ${SERVICE_KEY}
     volumes:
       - ./frontend:/src
     ports:
