@@ -1,7 +1,7 @@
 FROM rust:1-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-dev pkg-config libssl-dev git ca-certificates
+    python3-dev pkg-config libssl-dev git ca-certificates build-essential
 RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
