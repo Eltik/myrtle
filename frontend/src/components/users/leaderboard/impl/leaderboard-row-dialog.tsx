@@ -136,7 +136,7 @@ function DialogContent({ entry, onClose, isLoading }: { entry: LeaderboardEntry;
                         <div className="text-right">
                             <p className="text-muted-foreground text-xs uppercase tracking-wide">Total Score</p>
                             <p className="font-bold font-mono text-2xl">
-                                <AnimatedNumber springOptions={{ bounce: 0, duration: 800 }} value={entry.total_score ?? 0} />
+                                <AnimatedNumber springOptions={{ bounce: 0, duration: 800 }} value={entry.total_score ?? 0} round={false} />
                             </p>
                         </div>
                     </div>

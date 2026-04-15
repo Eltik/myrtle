@@ -9,9 +9,10 @@ export type AnimatedNumberProps = {
     springOptions?: SpringOptions;
     as?: React.ElementType;
     decimals?: number;
+    round?: boolean,
 };
 
-export function AnimatedNumber({ value, className, springOptions, as: Component = "span", decimals = 0 }: AnimatedNumberProps) {
+export function AnimatedNumber({ value, className, springOptions, as: Component = "span", decimals = 0, round = true}: AnimatedNumberProps) {
     const MotionComponent = motion(Component);
 
     const spring = useSpring(0, springOptions);
@@ -19,7 +20,7 @@ export function AnimatedNumber({ value, className, springOptions, as: Component 
         if (decimals > 0) {
             return current.toFixed(decimals);
         }
-        return Math.round(current).toLocaleString();
+        return round ? Math.round(current).toLocaleString() : current.toLocaleString();
     });
 
     useEffect(() => {

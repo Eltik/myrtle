@@ -189,147 +189,166 @@ export default async function handler(req: NextRequest) {
 
     try {
         const backendUrl = process.env.BACKEND_URL;
-        const response = await fetch(`${backendUrl}/get-user?uid=${userId}`, {
-            headers: {
-                "Content-Type": "application/json",
-                "X-Internal-Service-Key": process.env.INTERNAL_SERVICE_KEY ?? "",
-            },
-        });
+        const headers = {
+            "Content-Type": "application/json",
+            "X-Internal-Service-Key": process.env.INTERNAL_SERVICE_KEY ?? "",
+        };
 
-        if (!response.ok) {
+        // v3 backend is nested under `/api`, and raw game data (troop/social)
+        // is no longer returned from /get-user. Fetch profile, roster, and
+        // static operator data separately.
+        const [profileResponse, rosterResponse, operatorsResponse] = await Promise.all([fetch(`${backendUrl}/api/get-user?uid=${userId}`, { headers }), fetch(`${backendUrl}/api/roster?uid=${userId}`, { headers }).catch(() => null), fetch(`${backendUrl}/api/static/operators`, { headers }).catch(() => null)]);
+
+        if (!profileResponse.ok) {
             return generateFallbackImage();
         }
 
-        const data = await response.json();
-
-        if (!data?.uid) {
+        const profile = await profileResponse.json();
+        if (!profile?.uid) {
             return generateFallbackImage();
         }
 
-        // v3: UserProfile has flat fields
-        const nickName = data.nickname || "Unknown";
-        const level = data.level || 1;
-        const secretary = data.secretary;
-        const secretarySkinId = data.secretary_skin_id ?? "";
+        const nickName = profile.nickname || "Unknown";
+        const level = profile.level || 1;
+        const secretaryId = profile.secretary || "char_002_amiya";
+        const secretarySkinId = profile.secretary_skin_id ?? "";
 
-        // v3: raw game data (troop/social) is no longer in /get-user response
-        const chars = data.troop?.chars || {};
-        const charsArray = Object.values(chars) as Array<{
-            instId: number;
-            charId: string;
-            evolvePhase: number;
-            skin: string;
+        interface V3RosterEntry {
+            operator_id: string;
+            elite: number;
             level: number;
-            potentialRank: number;
-            skills: Array<{
-                specializeLevel: number;
-                skillId: string;
-                static?: { iconId?: string; skillId?: string; image?: string };
-            }>;
-            currentEquip: string | null;
-            equip: Record<string, { level: number; locked?: number }>;
-            static?: {
-                name: string;
-                rarity: string;
-                modules?: Array<{ uniEquipId: string; typeName1: string; uniEquipIcon?: string; image?: string }>;
-            };
-        }>;
+            potential: number;
+            skill_level: number;
+            skin_id: string | null;
+            masteries?: Array<{ index: number; mastery: number }>;
+            modules?: Array<{ id: string; level: number; locked?: boolean }>;
+        }
+        interface StaticSkill {
+            skillId: string;
+            static?: { iconId?: string | null; skillId?: string; image?: string };
+        }
+        interface StaticModule {
+            uniEquipId: string;
+            typeName1?: string;
+            uniEquipIcon?: string;
+            image?: string;
+        }
+        interface StaticOp {
+            name: string;
+            rarity: string;
+            skills?: StaticSkill[];
+            modules?: StaticModule[];
+        }
 
-        const secretaryId = secretary || "char_002_amiya";
-        const secretaryChar = charsArray.find((c) => c.charId === secretaryId);
-        const evolvePhase = secretaryChar?.evolvePhase ?? 2;
+        const roster: V3RosterEntry[] = rosterResponse?.ok ? ((await rosterResponse.json()) as V3RosterEntry[]) : [];
+        const staticMap: Record<string, StaticOp> = operatorsResponse?.ok ? ((await operatorsResponse.json()) as Record<string, StaticOp>) : {};
+
+        const secretaryEntry = roster.find((r) => r.operator_id === secretaryId);
+        const evolvePhase = secretaryEntry?.elite ?? 2;
 
         const artworkUrl = getCharartUrl(baseUrl, secretaryId, secretarySkinId, evolvePhase);
         const artworkBase64 = await fetchImageAsBase64(artworkUrl);
 
-        const assistCharList = data.social?.assistCharList || [];
+        // v3 has no assistCharList — surface top 3 operators by (elite, level, rarity)
+        const rarityOf = (id: string) => parseRarity(staticMap[id]?.rarity || "TIER_1");
+        const featured = [...roster]
+            .sort((a, b) => {
+                if (b.elite !== a.elite) return b.elite - a.elite;
+                if (b.level !== a.level) return b.level - a.level;
+                return rarityOf(b.operator_id) - rarityOf(a.operator_id);
+            })
+            .slice(0, 3);
+
         const supportUnits: SupportUnit[] = await Promise.all(
-            assistCharList
-                .filter((assist: { charInstId: number } | null) => assist !== null)
-                .slice(0, 3)
-                .map(async (assist: { charInstId: number; skillIndex: number }) => {
-                    const charData = charsArray.find((c) => c.instId === assist.charInstId) || (chars[assist.charInstId.toString()] as (typeof charsArray)[0]);
-                    if (!charData) return null;
+            featured.map(async (entry) => {
+                const charId = entry.operator_id;
+                const staticOp = staticMap[charId];
+                const name = staticOp?.name || charId.replace("char_", "").split("_").pop() || "Unknown";
+                const rarity = rarityOf(charId);
+                const charLevel = entry.level || 1;
+                const potentialRank = entry.potential || 0;
+                const potential = potentialRank + 1;
+                const charEvolvePhase = entry.elite || 0;
+                const mainSkillLvl = entry.skill_level || 7;
 
-                    const charId = charData.charId;
-                    const name = charData.static?.name || charId.replace("char_", "").split("_").pop() || "Unknown";
-                    const rarity = parseRarity(charData.static?.rarity || "TIER_1");
-                    const charLevel = charData.level || 1;
-                    const potentialRank = charData.potentialRank || 0;
-                    const potential = potentialRank + 1;
-                    const charEvolvePhase = charData.evolvePhase || 0;
-                    const mainSkillLvl = (charData as { mainSkillLvl?: number }).mainSkillLvl || 7;
+                const availableModules = staticOp?.modules?.filter((m) => m.typeName1 !== "ORIGINAL") || [];
+                const moduleLevelById = new Map<string, { level: number; locked: boolean }>();
+                for (const mod of entry.modules ?? []) {
+                    moduleLevelById.set(mod.id, { level: mod.level, locked: !!mod.locked });
+                }
+                const masteryByIndex = new Map<number, number>();
+                for (const m of entry.masteries ?? []) {
+                    masteryByIndex.set(m.index, m.mastery);
+                }
 
-                    const availableModules = charData.static?.modules?.filter((m) => m.typeName1 !== "ORIGINAL") || [];
+                const [avatarBase64, eliteIconBase64, potentialIconBase64] = await Promise.all([
+                    fetchImageAsBase64(getAvatarUrl(baseUrl, charId, entry.skin_id)),
+                    charEvolvePhase >= 2 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 2)) : charEvolvePhase === 1 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 1)) : Promise.resolve(null),
+                    fetchImageAsBase64(getPotentialIconUrl(baseUrl, potentialRank)),
+                ]);
 
-                    const [avatarBase64, eliteIconBase64, potentialIconBase64] = await Promise.all([
-                        fetchImageAsBase64(getAvatarUrl(baseUrl, charId, charData.skin)),
-                        charEvolvePhase >= 2 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 2)) : charEvolvePhase === 1 ? fetchImageAsBase64(getEliteIconUrl(baseUrl, 1)) : Promise.resolve(null),
-                        fetchImageAsBase64(getPotentialIconUrl(baseUrl, potentialRank)),
-                    ]);
+                const skillsData: SkillData[] = await Promise.all(
+                    (staticOp?.skills ?? []).map(async (skill, idx) => {
+                        const skillIconId = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
+                        const skillImagePath = skill.static?.image;
+                        const iconUrl = skillImagePath ? `${baseUrl}/api/cdn${skillImagePath}` : getSkillIconUrl(baseUrl, skillIconId);
+                        const specializeLevel = masteryByIndex.get(idx) ?? 0;
 
-                    const skillsData: SkillData[] = await Promise.all(
-                        (charData.skills || []).map(async (skill) => {
-                            const skillIconId = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
-                            const skillImagePath = skill.static?.image;
+                        const [iconBase64, masteryIconBase64] = await Promise.all([fetchImageAsBase64(iconUrl), specializeLevel > 0 ? fetchImageAsBase64(getMasteryIconUrl(baseUrl, specializeLevel)) : Promise.resolve(null)]);
 
-                            const iconUrl = skillImagePath ? `${baseUrl}/api/cdn${skillImagePath}` : getSkillIconUrl(baseUrl, skillIconId);
+                        return {
+                            skillId: skill.skillId,
+                            specializeLevel,
+                            skillLevel: mainSkillLvl,
+                            iconBase64,
+                            masteryIconBase64,
+                        };
+                    }),
+                );
 
-                            const [iconBase64, masteryIconBase64] = await Promise.all([fetchImageAsBase64(iconUrl), skill.specializeLevel > 0 ? fetchImageAsBase64(getMasteryIconUrl(baseUrl, skill.specializeLevel)) : Promise.resolve(null)]);
+                const modulesData: ModuleData[] = await Promise.all(
+                    availableModules.slice(0, 3).map(async (module) => {
+                        const equipData = moduleLevelById.get(module.uniEquipId);
+                        const level = equipData?.level ?? 0;
+                        const locked = equipData?.locked ?? true;
+                        const isUnlocked = level > 0 && !locked;
 
-                            return {
-                                skillId: skill.skillId,
-                                specializeLevel: skill.specializeLevel || 0,
-                                skillLevel: mainSkillLvl,
-                                iconBase64,
-                                masteryIconBase64,
-                            };
-                        }),
-                    );
+                        let iconBase64: string | null = null;
+                        if (isUnlocked) {
+                            const iconUrl = module.image ? `${baseUrl}/api/cdn${module.image}` : module.uniEquipIcon ? getModuleIconUrl(baseUrl, module.uniEquipIcon) : null;
+                            iconBase64 = iconUrl ? await fetchImageAsBase64(iconUrl) : null;
+                        }
 
-                    const modulesData: ModuleData[] = await Promise.all(
-                        availableModules.slice(0, 3).map(async (module) => {
-                            const equipData = charData.equip?.[module.uniEquipId];
-                            const level = equipData?.level ?? 0;
-                            const locked = equipData?.locked === 1;
-                            const isUnlocked = level > 0 && !locked;
+                        return {
+                            uniEquipId: module.uniEquipId,
+                            uniEquipIcon: module.uniEquipIcon || "",
+                            level,
+                            locked,
+                            iconBase64,
+                        };
+                    }),
+                );
 
-                            let iconBase64: string | null = null;
-                            if (isUnlocked) {
-                                const iconUrl = module.image ? `${baseUrl}/api/cdn${module.image}` : module.uniEquipIcon ? getModuleIconUrl(baseUrl, module.uniEquipIcon) : null;
-                                iconBase64 = iconUrl ? await fetchImageAsBase64(iconUrl) : null;
-                            }
-
-                            return {
-                                uniEquipId: module.uniEquipId,
-                                uniEquipIcon: module.uniEquipIcon || "",
-                                level,
-                                locked,
-                                iconBase64,
-                            };
-                        }),
-                    );
-
-                    return {
-                        name,
-                        level: charLevel,
-                        potential,
-                        avatarBase64,
-                        rarity,
-                        evolvePhase: charEvolvePhase,
-                        eliteIconBase64,
-                        potentialIconBase64,
-                        skills: skillsData,
-                        modules: modulesData,
-                    };
-                }),
+                return {
+                    name,
+                    level: charLevel,
+                    potential,
+                    avatarBase64,
+                    rarity,
+                    evolvePhase: charEvolvePhase,
+                    eliteIconBase64,
+                    potentialIconBase64,
+                    skills: skillsData,
+                    modules: modulesData,
+                };
+            }),
         );
 
         const validSupportUnits = supportUnits.filter((u): u is SupportUnit => u !== null);
 
         const rarityCount: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
-        for (const char of charsArray) {
-            const rarity = parseRarity((char as { static?: { rarity: string } }).static?.rarity || "TIER_1");
+        for (const entry of roster) {
+            const rarity = rarityOf(entry.operator_id);
             if (rarityCount[rarity] !== undefined) {
                 rarityCount[rarity]++;
             }
@@ -394,7 +413,7 @@ export default async function handler(req: NextRequest) {
                 >
                     {/* Header with branding */}
                     <div style={{ padding: "12px 16px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: "12px", fontWeight: 700, color: COLORS.muted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Support Units</span>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: COLORS.muted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Top Operators</span>
                         <span style={{ fontSize: "11px", color: COLORS.muted }}>myrtle.moe</span>
                     </div>
 
@@ -557,7 +576,7 @@ export default async function handler(req: NextRequest) {
                             </div>
                         ))}
 
-                        {validSupportUnits.length === 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, color: COLORS.muted, fontSize: "14px" }}>No support units set</div>}
+                        {validSupportUnits.length === 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, color: COLORS.muted, fontSize: "14px" }}>No operators recruited</div>}
                     </div>
                 </div>
 
