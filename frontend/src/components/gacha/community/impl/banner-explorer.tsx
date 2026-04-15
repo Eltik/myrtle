@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 "use client";
 
 import { Calendar, Clock, Layers, Search } from "lucide-react";

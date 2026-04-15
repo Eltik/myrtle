@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import { Card, CardContent } from "~/components/ui/shadcn/card";
 
 export function DataSourceNotice() {

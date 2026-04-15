@@ -50,6 +50,24 @@ pub async fn global_stats(
     Ok(Json(stats))
 }
 
+#[derive(Deserialize)]
+pub struct EnhancedStatsParams {
+    #[serde(alias = "topN")]
+    pub top_n: Option<u32>,
+    #[serde(alias = "includeTiming")]
+    pub include_timing: Option<bool>,
+}
+
+pub async fn enhanced_stats(
+    State(state): State<AppState>,
+    Query(params): Query<EnhancedStatsParams>,
+) -> Result<Json<services::gacha::GachaEnhancedStats>, ApiError> {
+    let top_n = params.top_n.unwrap_or(20).clamp(1, 50);
+    let include_timing = params.include_timing.unwrap_or(false);
+    let stats = services::gacha::get_enhanced_stats(&state, top_n, include_timing).await?;
+    Ok(Json(stats))
+}
+
 pub async fn history(
     State(state): State<AppState>,
     auth: AuthUser,
