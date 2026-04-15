@@ -4,7 +4,6 @@ import { backendFetch } from "~/lib/backend-fetch";
 import { formatSubProfession } from "~/lib/utils";
 import type { Skin } from "~/types/api/impl/skin";
 import type { ProfessionStat, SubProfessionStat, UserStatsResponse } from "~/types/api/impl/stats";
-import type { RosterEntry } from "~/types/api/impl/user";
 
 const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
 
@@ -14,6 +13,18 @@ interface StaticOperator {
     subProfessionId?: string;
     isNotObtainable?: boolean;
     rarity?: string;
+}
+
+// Raw shape of one entry from backend's `v_user_roster` view. The jsonb
+// aggregates use short keys (`index`/`mastery`, `id`/`level`/`locked`)
+// which are NOT the same as the frontend's `RosterEntry` type (which is
+// post-transform — see /api/user/[id]/characters.ts for the mapping).
+interface RawRosterEntry {
+    operator_id: string;
+    elite: number;
+    skin_id: string | null;
+    masteries: Array<{ index: number; mastery: number }> | null;
+    modules: Array<{ id: string; level: number; locked?: boolean }> | null;
 }
 
 /**
@@ -43,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(rosterResponse.status).json({ error: "Failed to fetch roster data" });
         }
 
-        const roster: RosterEntry[] = await rosterResponse.json();
+        const roster: RawRosterEntry[] = await rosterResponse.json();
 
         // Build static operator lookup: id -> StaticOperator
         const staticOperatorMap = new Map<string, StaticOperator>();
@@ -52,8 +63,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let totalAvailable = 0;
 
         if (operatorsResponse.ok) {
-            const operatorsJson = (await operatorsResponse.json()) as { operators?: StaticOperator[] };
-            const allOperators = operatorsJson.operators ?? [];
+            // Backend serializes the operators table as a bare `Record<id, Operator>`
+            // object (see backend::app::services::static_data). An earlier revision
+            // wrapped it as `{ operators: [...] }`, which is why this handler used
+            // to read `.operators` — and got `undefined`, zeroing every counter.
+            const operatorsJson = (await operatorsResponse.json()) as Record<string, StaticOperator>;
+            const allOperators: StaticOperator[] = Object.entries(operatorsJson).map(([id, op]) => ({
+                ...op,
+                id: op.id ?? id,
+            }));
 
             for (const op of allOperators) {
                 if (!op.profession || EXCLUDED_PROFESSIONS.has(op.profession)) continue;
@@ -113,12 +131,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             else if (entry.elite === 1) e1++;
             else e0++;
 
-            // Mastery stats
+            // Mastery stats. Backend jsonb uses the short key `mastery`
+            // (values 0–3) rather than `specialize_level`.
             const masteries = entry.masteries ?? [];
             let skillsAtM3 = 0;
             for (const mastery of masteries) {
-                totalMasteryLevels += mastery.specialize_level;
-                if (mastery.specialize_level === 3) skillsAtM3++;
+                totalMasteryLevels += mastery.mastery;
+                if (mastery.mastery === 3) skillsAtM3++;
             }
             if (skillsAtM3 >= 1) m3Count++;
             if (skillsAtM3 >= 2) m6Count++;
@@ -129,11 +148,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 maxPossibleMasteryLevels += masteries.length * 3;
             }
 
-            // Module stats - exclude INITIAL modules (uniequip_001 pattern)
+            // Module stats — exclude INITIAL modules (`uniequip_001` pattern).
+            // Backend jsonb calls the equip identifier `id`, not `equip_id`.
             const modules = entry.modules ?? [];
             for (const mod of modules) {
-                // Skip default/initial modules
-                if (mod.equip_id.includes("uniequip_001")) continue;
+                if (mod.id.includes("uniequip_001")) continue;
 
                 totalModulesAvailable++;
 
@@ -179,13 +198,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             })
             .sort((a, b) => (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99));
 
-        // Skin stats
+        // Skin stats. Backend serializes SkinData as
+        //   { charSkins: Record<skinId, Skin>, ... }
+        // so treat the response as SkinData and walk charSkins.
         let totalSkinsAvailable = 0;
         if (skinsResponse.ok) {
-            const skinsJson = (await skinsResponse.json()) as { skins?: Skin[] };
-            const allSkins = skinsJson.skins ?? [];
-            for (const skin of allSkins) {
-                if (!skin.skinId.includes("@")) continue;
+            const skinsJson = (await skinsResponse.json()) as { charSkins?: Record<string, Skin> };
+            for (const skin of Object.values(skinsJson.charSkins ?? {})) {
+                if (!skin.skinId?.includes("@")) continue;
                 totalSkinsAvailable++;
             }
         }

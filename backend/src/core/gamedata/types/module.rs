@@ -115,18 +115,23 @@ pub struct Mission {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleBlackboard {
-    #[serde(alias = "Key", alias = "key")]
+    #[serde(alias = "Key", alias = "key", default)]
     pub key: String,
-    #[serde(alias = "Value", alias = "value", default)]
+    #[serde(
+        alias = "Value",
+        alias = "value",
+        default,
+        deserialize_with = "super::serde_helpers::deserialize_null_default"
+    )]
     pub value: f64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleUnlockCondition {
-    #[serde(alias = "Phase")]
+    #[serde(alias = "Phase", default)]
     pub phase: String,
-    #[serde(alias = "Level")]
+    #[serde(alias = "Level", default)]
     pub level: i32,
 }
 

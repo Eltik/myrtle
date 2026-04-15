@@ -1,6 +1,35 @@
 use sqlx::PgPool;
+use sqlx::types::Uuid;
 
 use crate::database::models::score::{LeaderboardEntry, UserScore};
+
+/// Fetch the full score row for one user by `uid` (external 10-digit id).
+/// Returns `None` if the user has never been scored.
+pub async fn get_score_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserScore>, sqlx::Error> {
+    sqlx::query_as::<_, UserScore>(
+        r#"
+        SELECT sc.*
+        FROM user_scores sc
+        JOIN users u ON u.id = sc.user_id
+        WHERE u.uid = $1
+        "#,
+    )
+    .bind(uid)
+    .fetch_optional(pool)
+    .await
+}
+
+/// Fetch the full score row for one user by internal user_id (Uuid).
+#[allow(dead_code)]
+pub async fn get_score_by_user_id(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Option<UserScore>, sqlx::Error> {
+    sqlx::query_as::<_, UserScore>("SELECT * FROM user_scores WHERE user_id = $1")
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await
+}
 
 /// Get leaderboard with pagination
 pub async fn get_leaderboard(

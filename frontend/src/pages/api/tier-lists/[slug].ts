@@ -26,9 +26,12 @@ interface VerifyResponse {
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: AdminRole | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -45,8 +48,10 @@ async function verifyUserRole(token: string): Promise<{ valid: boolean; role: Ad
 async function verifyUserAuth(token: string): Promise<{ valid: boolean; role: string | null }> {
     try {
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -96,7 +101,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
             const data = await response.json();
 
-            // Transform backend response to match frontend TierListResponse format
+            // Transform backend response to match frontend TierListResponse format.
+            // v3 backend emits `list_type` and `tier.placements[]`; v2 used
+            // `tier_list_type` and `tier.operators[]`. Accept either so the
+            // frontend keeps working during/after migration.
+            type BackendPlacement = { id?: string; operator_id: string; sub_order: number; notes: string | null };
+            type BackendTier = {
+                id: string;
+                name: string;
+                display_order: number;
+                color: string | null;
+                description: string | null;
+                placements?: BackendPlacement[];
+                operators?: BackendPlacement[];
+            };
             const tierListResponse: TierListResponse = {
                 tier_list: {
                     id: data.id,
@@ -104,20 +122,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     slug: data.slug,
                     description: data.description,
                     is_active: data.is_active,
-                    tier_list_type: data.tier_list_type || "official",
+                    tier_list_type: data.list_type || data.tier_list_type || "official",
                     created_by: data.created_by,
                     created_at: data.created_at,
                     updated_at: data.updated_at,
                 },
-                tiers: (data.tiers || []).map((tier: { id: string; name: string; display_order: number; color: string | null; description: string | null; operators: Array<{ id: string; operator_id: string; sub_order: number; notes: string | null }> }) => ({
+                tiers: (data.tiers || []).map((tier: BackendTier) => ({
                     id: tier.id,
                     tier_list_id: data.id,
                     name: tier.name,
                     display_order: tier.display_order,
                     color: tier.color,
                     description: tier.description,
-                    placements: (tier.operators || []).map((op: { id: string; operator_id: string; sub_order: number; notes: string | null }) => ({
-                        id: op.id,
+                    placements: (tier.placements || tier.operators || []).map((op: BackendPlacement) => ({
+                        id: op.id ?? `${tier.id}:${op.operator_id}`,
                         tier_id: tier.id,
                         operator_id: op.operator_id,
                         sub_order: op.sub_order,
@@ -217,7 +235,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
 
             const tierListData = await tierListResponse.json();
-            const tierListType = tierListData.tier_list_type || "official";
+            // v3 backend emits `list_type`; v2 emitted `tier_list_type`. Accept either.
+            const tierListType = tierListData.list_type || tierListData.tier_list_type || "official";
 
             // For official tier lists, require admin permissions
             // For community tier lists, let the backend check ownership

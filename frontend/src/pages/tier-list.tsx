@@ -126,7 +126,8 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                         const topOperatorIds: string[] = [];
 
                         for (const tier of tiers) {
-                            const tierOperators = tier.operators || [];
+                            // v3 backend emits `placements`; v2 emitted `operators`.
+                            const tierOperators = tier.placements || tier.operators || [];
                             operatorCount += tierOperators.length;
 
                             if (topOperatorIds.length < 6) {
@@ -202,23 +203,34 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 created_at: rawData.created_at ?? null,
                 updated_at: rawData.updated_at ?? null,
             },
-            tiers: (rawData.tiers || []).map((tier: { id: string; name: string; display_order: number; color: string | null; description: string | null; operators?: Array<{ id: string; operator_id: string; sub_order: number; notes: string | null }> }) => ({
-                id: tier.id,
-                tier_list_id: rawData.id,
-                name: tier.name,
-                display_order: tier.display_order,
-                color: tier.color ?? null,
-                description: tier.description ?? null,
-                placements: (tier.operators || []).map((op) => ({
-                    id: op.id,
-                    tier_id: tier.id,
-                    operator_id: op.operator_id,
-                    sub_order: op.sub_order,
-                    notes: op.notes ?? null,
-                    created_at: rawData.created_at ?? null,
-                    updated_at: rawData.updated_at ?? null,
-                })),
-            })),
+            tiers: (rawData.tiers || []).map(
+                (tier: {
+                    id: string;
+                    name: string;
+                    display_order: number;
+                    color: string | null;
+                    description: string | null;
+                    // v3 backend emits `placements`; v2 emitted `operators`. Accept either.
+                    placements?: Array<{ id?: string; operator_id: string; sub_order: number; notes: string | null }>;
+                    operators?: Array<{ id?: string; operator_id: string; sub_order: number; notes: string | null }>;
+                }) => ({
+                    id: tier.id,
+                    tier_list_id: rawData.id,
+                    name: tier.name,
+                    display_order: tier.display_order,
+                    color: tier.color ?? null,
+                    description: tier.description ?? null,
+                    placements: (tier.placements || tier.operators || []).map((op) => ({
+                        id: op.id ?? `${tier.id}:${op.operator_id}`,
+                        tier_id: tier.id,
+                        operator_id: op.operator_id,
+                        sub_order: op.sub_order,
+                        notes: op.notes ?? null,
+                        created_at: rawData.created_at ?? null,
+                        updated_at: rawData.updated_at ?? null,
+                    })),
+                }),
+            ),
         };
 
         const operatorIds = new Set<string>();
@@ -248,8 +260,11 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             const versionsResponse = await backendFetch(`/tier-lists/${tierListSlug}/versions?limit=20`);
 
             if (versionsResponse.ok) {
-                const versionsData = (await versionsResponse.json()) as { versions: TierListVersionSummary[] };
-                versions = versionsData.versions.map((v) => ({
+                // Backend `/tier-lists/{slug}/versions` returns a bare array.
+                // Tolerate a `{ versions: [...] }` envelope too in case the shape changes.
+                const versionsData = (await versionsResponse.json()) as TierListVersionSummary[] | { versions: TierListVersionSummary[] };
+                const rawVersions = Array.isArray(versionsData) ? versionsData : (versionsData.versions ?? []);
+                versions = rawVersions.map((v) => ({
                     ...v,
                     change_summary: v.change_summary ?? null,
                     published_by: v.published_by ?? null,

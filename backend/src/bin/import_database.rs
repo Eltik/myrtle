@@ -25,6 +25,7 @@
 //!     transaction so a failure rolls back to the pre-import state.
 
 use anyhow::{Context, Result, bail};
+use backend::database::run_migrations;
 use backend::db_export::{FORMAT_VERSION, MANIFEST_FILE, SERIAL_COLUMNS, TABLES};
 use dotenv::dotenv;
 use serde::Deserialize;
@@ -59,6 +60,7 @@ struct TableEntry {
 struct Args {
     in_dir: PathBuf,
     truncate: bool,
+    migrate: bool,
     batch_size: usize,
 }
 
@@ -85,6 +87,13 @@ async fn main() -> Result<()> {
         .connect(&database_url)
         .await
         .context("failed to connect to database")?;
+
+    if args.migrate {
+        println!("running schema migrations...");
+        run_migrations(&pool)
+            .await
+            .context("failed to run migrations")?;
+    }
 
     let mut tx = pool.begin().await.context("failed to begin transaction")?;
 
@@ -272,6 +281,7 @@ fn verify_manifest_tables(manifest: &Manifest) -> Result<()> {
 fn parse_args() -> Result<Args> {
     let mut in_dir: Option<PathBuf> = None;
     let mut truncate = false;
+    let mut migrate = false;
     let mut batch_size = DEFAULT_BATCH_SIZE;
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
@@ -280,6 +290,7 @@ fn parse_args() -> Result<Args> {
                 in_dir = Some(PathBuf::from(it.next().context("--in requires a path")?));
             }
             "--truncate" => truncate = true,
+            "--migrate" => migrate = true,
             "--batch-size" => {
                 batch_size = it
                     .next()
@@ -300,16 +311,20 @@ fn parse_args() -> Result<Args> {
     Ok(Args {
         in_dir: in_dir.context("missing --in <dir>")?,
         truncate,
+        migrate,
         batch_size,
     })
 }
 
 fn print_usage() {
     eprintln!(
-        "Usage: import-database --in <dir> [--truncate] [--batch-size N]\n\
+        "Usage: import-database --in <dir> [--migrate] [--truncate] [--batch-size N]\n\
          \n\
          Replays <dir>/<table>.jsonl (as produced by export-database) into the\n\
          database pointed to by DATABASE_URL, inside a single transaction with\n\
-         audit triggers and FK checks suspended."
+         audit triggers and FK checks suspended.\n\
+         \n\
+         --migrate   Run v3 schema migrations first (useful on a fresh DB).\n\
+         --truncate  TRUNCATE every target table before loading."
     );
 }

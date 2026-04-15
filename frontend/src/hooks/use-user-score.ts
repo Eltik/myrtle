@@ -1,24 +1,33 @@
 import { useCallback, useEffect, useState } from "react";
 
-interface UserScore {
+/** Full score breakdown from the backend `user_scores` table. */
+export interface UserScoreBreakdown {
     total_score: number | null;
+    operator_score: number | null;
+    stage_score: number | null;
+    roguelike_score: number | null;
+    sandbox_score: number | null;
+    medal_score: number | null;
+    base_score: number | null;
+    skin_score: number | null;
     grade: string | null;
+    calculated_at: string | null;
 }
 
 interface UseUserScoreResult {
-    score: UserScore | null;
+    score: UserScoreBreakdown | null;
     isLoading: boolean;
     error: string | null;
     refetch: () => void;
 }
 
 /**
- * Hook to fetch user score data client-side.
- * Used to lazy-load the Score tab instead of passing data from SSR.
- * v3: Returns { total_score, grade } directly instead of StoredUserScore.
+ * Fetch a user's score breakdown client-side.
+ * v3: proxies `/api/user/{id}/score` → backend `/get-user-score?uid=…`,
+ * which returns the whole `user_scores` row or `null` if unscored.
  */
 export function useUserScore(userId: string): UseUserScoreResult {
-    const [score, setScore] = useState<UserScore | null>(null);
+    const [score, setScore] = useState<UserScoreBreakdown | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -35,15 +44,12 @@ export function useUserScore(userId: string): UseUserScoreResult {
             const response = await fetch(`/api/user/${userId}/score`);
 
             if (!response.ok) {
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 throw new Error(data.error || "Failed to fetch score");
             }
 
-            const data = await response.json();
-            setScore({
-                total_score: data.total_score ?? null,
-                grade: data.grade ?? null,
-            });
+            const data = (await response.json()) as UserScoreBreakdown | null;
+            setScore(data);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Unknown error");
             setScore(null);

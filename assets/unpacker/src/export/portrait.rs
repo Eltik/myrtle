@@ -30,10 +30,14 @@ pub struct SpritePackerData {
 // ─── Detection & Parsing ─────────────────────────────────────────────────────
 
 /// Check if a bundle path is a portrait atlas bundle.
+///
+/// Matches operator-portrait bundles from the current hot-update manifest
+/// (`spritepack/char_portrait_*.ab`) as well as the legacy
+/// `arts/charportraits/portraits_hub.ab` bundle.
 pub fn detect_portrait_bundle(bundle_subdir: &Path, input_dir: &Path) -> bool {
     let full_path = input_dir.join(bundle_subdir);
     let path_lower = full_path.to_string_lossy().to_lowercase();
-    path_lower.contains("charportraits") || path_lower.starts_with("charportraits")
+    path_lower.contains("char_portrait") || path_lower.contains("charportraits")
 }
 
 /// Check if a MonoBehaviour JSON is a SpritePacker (has `_sprites` + `_atlas`).
@@ -137,6 +141,130 @@ pub fn extract_portraits(
     count
 }
 
+/// Parsed Unity Sprite (class 213) assetbundle object.
+pub struct SpriteInfo {
+    pub name: String,
+    pub rect: SpriteRect,
+    pub rotate: u8,
+    pub texture_pid: i64,
+    pub alpha_pid: i64,
+}
+
+/// Parse a Sprite (class 213) MonoBehaviour-like serialized object.
+///
+/// Reads `m_RD.textureRect` (atlas pixel rect in Unity bottom-left origin),
+/// the RGB and alpha atlas PPtrs, and the rotation bits out of `settingsRaw`.
+pub fn parse_sprite(val: &Value) -> Option<SpriteInfo> {
+    let name = val.get("m_Name")?.as_str()?.to_string();
+    let rd = val.get("m_RD")?;
+    let tr = rd.get("textureRect")?;
+
+    let rect = SpriteRect {
+        x: tr.get("x")?.as_f64()? as i32,
+        y: tr.get("y")?.as_f64()? as i32,
+        w: tr.get("width")?.as_f64()? as i32,
+        h: tr.get("height")?.as_f64()? as i32,
+    };
+
+    let texture_pid = rd.get("texture")?.get("m_PathID")?.as_i64()?;
+    let alpha_pid = rd
+        .get("alphaTexture")
+        .and_then(|a| a.get("m_PathID"))
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0);
+
+    // settingsRaw bit layout (Unity Sprite):
+    //   bit 0     : packed
+    //   bits 1–2  : packingMode
+    //   bits 3–6  : packingRotation  (4 = 90° CW)
+    //   bit 7     : meshType
+    let settings_raw = rd.get("settingsRaw").and_then(|v| v.as_u64()).unwrap_or(0);
+    let packing_rotation = ((settings_raw >> 3) & 0xF) as u8;
+    let rotate = u8::from(packing_rotation == 4);
+
+    Some(SpriteInfo {
+        name,
+        rect,
+        rotate,
+        texture_pid,
+        alpha_pid,
+    })
+}
+
+/// Extract Unity Sprite-based portraits. Each sprite references an RGB atlas
+/// (and optionally a separate alpha atlas) by path_id; we crop its rect,
+/// merge alpha per-pixel, and save as `{name}.png` under `output_dir`.
+pub fn extract_sprites(
+    sprites: &[SpriteInfo],
+    textures_by_pid: &HashMap<i64, DecodedTexture>,
+    output_dir: &Path,
+) -> usize {
+    let name_to_pid: HashMap<&str, i64> = textures_by_pid
+        .iter()
+        .map(|(pid, tex)| (tex.name.as_str(), *pid))
+        .collect();
+
+    // Common alpha-companion naming conventions in Arknights bundles. Tried
+    // in order when the Sprite's `m_RD.alphaTexture` PPtr is null.
+    //
+    // Seen in practice:
+    //   * `{name}[alpha]`   — most common in current operator portrait atlases
+    //   * `{name}_alpha`    — occasionally in older bundles
+    //   * `{name}a`         — used by the legacy SpritePacker format
+    let alpha_suffixes = ["[alpha]", "_alpha", "a"];
+
+    let mut count = 0;
+    for sprite in sprites {
+        let Some(rgb_tex) = textures_by_pid.get(&sprite.texture_pid) else {
+            continue;
+        };
+        let alpha_tex = if sprite.alpha_pid != 0 {
+            textures_by_pid.get(&sprite.alpha_pid)
+        } else {
+            None
+        }
+        .or_else(|| {
+            for suffix in alpha_suffixes {
+                let candidate = format!("{}{suffix}", rgb_tex.name);
+                if let Some(pid) = name_to_pid.get(candidate.as_str())
+                    && let Some(tex) = textures_by_pid.get(pid)
+                {
+                    return Some(tex);
+                }
+            }
+            None
+        });
+
+        // The atlas texture's own height is the correct reference for
+        // flipping Unity bottom-left rects into top-left coordinates.
+        let atlas_h = rgb_tex.height;
+        let atlas_sprite = AtlasSprite {
+            name: sprite.name.clone(),
+            rect: SpriteRect {
+                x: sprite.rect.x,
+                y: sprite.rect.y,
+                w: sprite.rect.w,
+                h: sprite.rect.h,
+            },
+            rotate: sprite.rotate,
+        };
+
+        if let Some(data) = crop_sprite(rgb_tex, alpha_tex, &atlas_sprite, atlas_h) {
+            let (out_w, out_h) = if sprite.rotate == 1 {
+                (sprite.rect.h as u32, sprite.rect.w as u32)
+            } else {
+                (sprite.rect.w as u32, sprite.rect.h as u32)
+            };
+            let path = output_dir.join(format!("{}.png", sprite.name));
+            match image::save_buffer(&path, &data, out_w, out_h, image::ColorType::Rgba8) {
+                Ok(()) => count += 1,
+                Err(e) => eprintln!("  error saving portrait {}: {e}", sprite.name),
+            }
+        }
+    }
+    count
+}
+
 /// Crop a single sprite from the atlas, merging RGB + alpha per-pixel.
 fn crop_sprite(
     rgb: &DecodedTexture,
@@ -187,11 +315,21 @@ fn crop_sprite(
             let cg = rgb.rgba.get(src_idx + 1).copied().unwrap_or(0);
             let cb = rgb.rgba.get(src_idx + 2).copied().unwrap_or(0);
 
-            // Read alpha from separate alpha atlas (R channel)
-            let ca = alpha
-                .and_then(|a| a.rgba.get(src_idx))
-                .copied()
-                .unwrap_or(255);
+            // Alpha source priority:
+            //   1. Separate alpha atlas — sample at its own (src_x, src_y)
+            //      since its stride may differ from the RGB atlas. Alpha value
+            //      lives in the R channel for Alpha8/ETC2_R11 companions.
+            //   2. The RGB texture's own alpha channel — portrait bundles
+            //      whose format already encodes alpha (rare in current builds).
+            let ca = match alpha {
+                Some(a) => {
+                    let ax = src_x.min(a.width.saturating_sub(1));
+                    let ay = src_y.min(a.height.saturating_sub(1));
+                    let a_idx = ((ay * a.width + ax) * 4) as usize;
+                    a.rgba.get(a_idx).copied().unwrap_or(255)
+                }
+                None => rgb.rgba.get(src_idx + 3).copied().unwrap_or(255),
+            };
 
             // Color bleeding fix
             if ca == 0 {

@@ -1,10 +1,24 @@
-import type { GachaRecord } from "~/types/api/impl/gacha";
+import type { GachaItem, GachaRecordEntry, GachaRecords } from "~/types/api";
 
 /**
  * Pity system constants
  */
 export const SOFT_PITY_START = 50;
 export const HARD_PITY = 99;
+
+/**
+ * Statistics calculated from gacha records
+ */
+export interface GachaStatsSummary {
+    totalPulls: number;
+    sixStarCount: number;
+    fiveStarCount: number;
+    fourStarCount: number;
+    threeStarCount: number;
+    sixStarRate: number;
+    fiveStarRate: number;
+    pityCount: number;
+}
 
 /**
  * Parse the star/rarity string to a number.
@@ -17,38 +31,119 @@ export function parseRarity(star: string | number): number {
 }
 
 /**
- * Format rate as percentage string.
+ * Calculate pity counter (pulls since last 6-star).
+ * Records should be sorted newest first.
  */
-export function formatRate(rate: number): string {
-    return `${(rate * 100).toFixed(2)}%`;
+export function calculatePity(records: GachaItem[]): number {
+    let pity = 0;
+    for (const record of records) {
+        const rarity = parseRarity(record.star);
+        if (rarity === 6) {
+            break;
+        }
+        pity++;
+    }
+    return pity;
 }
 
 /**
- * Format pull timestamp for display.
+ * Calculate comprehensive statistics from gacha records.
  */
-export function formatPullDate(timestamp: number): string {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+export function calculateStats(records: GachaItem[]): GachaStatsSummary {
+    const totalPulls = records.length;
+    let sixStarCount = 0;
+    let fiveStarCount = 0;
+    let fourStarCount = 0;
+    let threeStarCount = 0;
+
+    for (const record of records) {
+        const rarity = parseRarity(record.star);
+        switch (rarity) {
+            case 6:
+                sixStarCount++;
+                break;
+            case 5:
+                fiveStarCount++;
+                break;
+            case 4:
+                fourStarCount++;
+                break;
+            default:
+                threeStarCount++;
+                break;
+        }
+    }
+
+    return {
+        totalPulls,
+        sixStarCount,
+        fiveStarCount,
+        fourStarCount,
+        threeStarCount,
+        sixStarRate: totalPulls > 0 ? sixStarCount / totalPulls : 0,
+        fiveStarRate: totalPulls > 0 ? fiveStarCount / totalPulls : 0,
+        pityCount: calculatePity(records),
+    };
+}
+
+/**
+ * Get total pulls across all gacha types.
+ */
+export function getTotalPulls(gachaRecords: GachaRecords): number {
+    return gachaRecords.limited.total + gachaRecords.regular.total + gachaRecords.special.total;
+}
+
+/**
+ * Get all records from all gacha types combined.
+ */
+export function getAllRecords(gachaRecords: GachaRecords): GachaItem[] {
+    return [...gachaRecords.limited.records, ...gachaRecords.regular.records, ...gachaRecords.special.records];
+}
+
+/**
+ * Filter records by rarity.
+ */
+export function filterByRarity(records: GachaItem[], rarity: number): GachaItem[] {
+    return records.filter((record) => parseRarity(record.star) === rarity);
+}
+
+/**
+ * Get the most recent N pulls.
+ */
+export function getRecentPulls(records: GachaItem[], count: number): GachaItem[] {
+    return records.slice(0, count);
+}
+
+/**
+ * Group records by pool ID.
+ */
+export function groupByPool(records: GachaItem[]): Map<string, GachaItem[]> {
+    const grouped = new Map<string, GachaItem[]>();
+    for (const record of records) {
+        const existing = grouped.get(record.poolId);
+        if (existing) {
+            existing.push(record);
+        } else {
+            grouped.set(record.poolId, [record]);
+        }
+    }
+    return grouped;
+}
+
+/**
+ * Sort records by timestamp.
+ */
+export function sortByTime(records: GachaItem[], order: "asc" | "desc"): GachaItem[] {
+    return [...records].sort((a, b) => {
+        return order === "asc" ? a.at - b.at : b.at - a.at;
     });
-}
-
-/**
- * Calculate average pulls per 6-star.
- */
-export function calculateAvgPullsPerSixStar(totalPulls: number, sixStarCount: number): number {
-    if (sixStarCount === 0) return 0;
-    return totalPulls / sixStarCount;
 }
 
 /**
  * Get Tailwind color class for rarity display.
  */
-export function getRarityColor(rarity: number): string {
+export function getRarityColor(star: string | number): string {
+    const rarity = parseRarity(star);
     switch (rarity) {
         case 6:
             return "text-orange-500";
@@ -62,8 +157,264 @@ export function getRarityColor(rarity: number): string {
 }
 
 /**
+ * Get background color class for rarity.
+ */
+export function getRarityBgColor(star: string | number): string {
+    const rarity = parseRarity(star);
+    switch (rarity) {
+        case 6:
+            return "bg-orange-500/10";
+        case 5:
+            return "bg-yellow-500/10";
+        case 4:
+            return "bg-purple-500/10";
+        default:
+            return "bg-blue-500/10";
+    }
+}
+
+/**
+ * Format pull timestamp (seconds since epoch) for display.
+ * Records from the backend are seconds; convert to ms for Date().
+ */
+export function formatPullDate(timestamp: number): string {
+    // Heuristic: treat values > 1e12 as milliseconds; else seconds.
+    const ms = timestamp > 1e12 ? timestamp : timestamp * 1000;
+    const date = new Date(ms);
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+/**
+ * Format rate as percentage string.
+ */
+export function formatRate(rate: number): string {
+    return `${(rate * 100).toFixed(2)}%`;
+}
+
+/**
+ * Calculate average pulls per 6-star.
+ */
+export function calculateAvgPullsPerSixStar(totalPulls: number, sixStarCount: number): number {
+    if (sixStarCount === 0) return 0;
+    return totalPulls / sixStarCount;
+}
+
+/**
+ * Count 6-stars obtained in soft pity range (pulls 50-99).
+ */
+export function countSixStarsInSoftPity(records: GachaItem[]): number {
+    let softPityCount = 0;
+    let pullsSinceLastSixStar = 0;
+    const sortedRecords = [...records].sort((a, b) => a.at - b.at);
+
+    for (const record of sortedRecords) {
+        pullsSinceLastSixStar++;
+        if (parseRarity(record.star) === 6) {
+            if (pullsSinceLastSixStar >= SOFT_PITY_START) {
+                softPityCount++;
+            }
+            pullsSinceLastSixStar = 0;
+        }
+    }
+    return softPityCount;
+}
+
+export interface OperatorCount {
+    charId: string;
+    charName: string;
+    count: number;
+    rarity: number;
+}
+
+export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): Record<number, OperatorCount[]> {
+    const countsByRarity: Record<number, Map<string, { charName: string; count: number }>> = {
+        6: new Map(),
+        5: new Map(),
+        4: new Map(),
+        3: new Map(),
+    };
+
+    for (const record of records) {
+        const rarity = parseRarity(record.star);
+        if (rarity >= 3 && rarity <= 6) {
+            const map = countsByRarity[rarity];
+            if (!map) continue;
+            const existing = map.get(record.charId);
+            if (existing) {
+                existing.count++;
+            } else {
+                map.set(record.charId, { charName: record.charName, count: 1 });
+            }
+        }
+    }
+
+    const result: Record<number, OperatorCount[]> = {};
+    for (const rarity of [6, 5, 4, 3]) {
+        const map = countsByRarity[rarity];
+        if (!map) continue;
+        const sorted = Array.from(map.entries())
+            .map(([charId, { charName, count }]) => ({ charId, charName, count, rarity }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, topN);
+        result[rarity] = sorted;
+    }
+
+    return result;
+}
+
+export interface SixStarPityEntry {
+    charId: string;
+    charName: string;
+    pityCount: number;
+    timestamp: number;
+    inSoftPity: boolean;
+}
+
+export interface BannerBreakdownEntry {
+    poolId: string;
+    poolName: string;
+    gachaType: string;
+    totalPulls: number;
+    firstPullTimestamp: number;
+    lastPullTimestamp: number;
+    sixStarCount: number;
+    fiveStarCount: number;
+    fourStarCount: number;
+    threeStarCount: number;
+    notablePulls: Array<{ charId: string; charName: string; count: number }>;
+    pulls: GachaItem[];
+    pityHistory: SixStarPityEntry[];
+    currentPity: number;
+}
+
+export type BannerSortMode = "recent" | "pullCount" | "sixStarRate";
+
+export function buildBannerBreakdown(records: GachaItem[]): BannerBreakdownEntry[] {
+    const poolMap = new Map<
+        string,
+        {
+            poolName: string;
+            gachaType: string;
+            pulls: GachaItem[];
+            sixStars: Map<string, { charName: string; count: number }>;
+        }
+    >();
+
+    for (const record of records) {
+        let entry = poolMap.get(record.poolId);
+        if (!entry) {
+            entry = {
+                poolName: record.poolName,
+                gachaType: record.typeName,
+                pulls: [],
+                sixStars: new Map(),
+            };
+            poolMap.set(record.poolId, entry);
+        }
+
+        entry.pulls.push(record);
+
+        if (parseRarity(record.star) === 6) {
+            const existing = entry.sixStars.get(record.charId);
+            if (existing) existing.count++;
+            else entry.sixStars.set(record.charId, { charName: record.charName, count: 1 });
+        }
+    }
+
+    return Array.from(poolMap.entries())
+        .map(([poolId, data]) => {
+            const sortedPulls = [...data.pulls].sort((a, b) => a.at - b.at);
+
+            let sixStarCount = 0;
+            let fiveStarCount = 0;
+            let fourStarCount = 0;
+            let threeStarCount = 0;
+            let pullsSinceLast6 = 0;
+            const pityHistory: SixStarPityEntry[] = [];
+
+            for (const pull of sortedPulls) {
+                pullsSinceLast6++;
+                const rarity = parseRarity(pull.star);
+                switch (rarity) {
+                    case 6: {
+                        sixStarCount++;
+                        pityHistory.push({
+                            charId: pull.charId,
+                            charName: pull.charName,
+                            pityCount: pullsSinceLast6,
+                            timestamp: pull.at,
+                            inSoftPity: pullsSinceLast6 >= SOFT_PITY_START,
+                        });
+                        pullsSinceLast6 = 0;
+                        break;
+                    }
+                    case 5:
+                        fiveStarCount++;
+                        break;
+                    case 4:
+                        fourStarCount++;
+                        break;
+                    default:
+                        threeStarCount++;
+                        break;
+                }
+            }
+
+            const firstPull = sortedPulls[0]?.at ?? 0;
+            const lastPull = sortedPulls[sortedPulls.length - 1]?.at ?? 0;
+
+            return {
+                poolId,
+                poolName: data.poolName,
+                gachaType: data.gachaType,
+                totalPulls: sortedPulls.length,
+                firstPullTimestamp: firstPull,
+                lastPullTimestamp: lastPull,
+                sixStarCount,
+                fiveStarCount,
+                fourStarCount,
+                threeStarCount,
+                notablePulls: Array.from(data.sixStars.entries())
+                    .map(([charId, { charName, count }]) => ({ charId, charName, count }))
+                    .sort((a, b) => b.count - a.count),
+                pulls: sortedPulls,
+                pityHistory,
+                currentPity: pullsSinceLast6,
+            };
+        })
+        .sort((a, b) => b.lastPullTimestamp - a.lastPullTimestamp);
+}
+
+export function sortBannerBreakdown(entries: BannerBreakdownEntry[], mode: BannerSortMode): BannerBreakdownEntry[] {
+    return [...entries].sort((a, b) => {
+        switch (mode) {
+            case "recent":
+                return b.lastPullTimestamp - a.lastPullTimestamp;
+            case "pullCount":
+                return b.totalPulls - a.totalPulls;
+            case "sixStarRate": {
+                const rateA = a.totalPulls > 0 ? a.sixStarCount / a.totalPulls : 0;
+                const rateB = b.totalPulls > 0 ? b.sixStarCount / b.totalPulls : 0;
+                return rateB - rateA;
+            }
+            default:
+                return 0;
+        }
+    });
+}
+
+export function isCollabBanner(poolId: string): boolean {
+    return poolId.startsWith("LINKAGE_");
+}
+
+/**
  * Map of operator rarity tier strings to numeric values.
- * Game data uses "TIER_6" for 6-star, etc.
  */
 export const RARITY_TIER_MAP: Record<string, number> = {
     TIER_6: 6,
@@ -74,14 +425,12 @@ export const RARITY_TIER_MAP: Record<string, number> = {
     TIER_1: 1,
 };
 
-/** Operator lookup entry for enriching gacha records */
 export interface OperatorLookupEntry {
     name: string;
     rarity: number;
     profession: string;
 }
 
-/** Build an operator lookup map from static operator data */
 export function buildOperatorLookup(operators: Array<{ id: string | null; name: string; rarity: string; profession: string }>): Map<string, OperatorLookupEntry> {
     const map = new Map<string, OperatorLookupEntry>();
     for (const op of operators) {
@@ -95,13 +444,85 @@ export function buildOperatorLookup(operators: Array<{ id: string | null; name: 
     return map;
 }
 
-/** Enrich v3 GachaRecord entries with operator names from lookup */
-export function enrichGachaRecords(records: GachaRecord[], operatorMap: Map<string, OperatorLookupEntry>): GachaRecord[] {
+/** Enrich gacha record entries with correct rarity and name from operator data */
+export function enrichRecordEntries(records: GachaRecordEntry[], operatorMap: Map<string, OperatorLookupEntry>): GachaRecordEntry[] {
     return records.map((record) => {
-        const op = operatorMap.get(record.char_id);
+        const op = operatorMap.get(record.charId);
         if (op) {
-            return { ...record, rarity: op.rarity };
+            return { ...record, rarity: op.rarity, charName: op.name };
         }
         return record;
     });
+}
+
+/** Enrich GachaRecords with correct rarity and name from operator data */
+export function enrichGachaRecords(records: GachaRecords, operatorMap: Map<string, OperatorLookupEntry>): GachaRecords {
+    const enrichItems = (items: GachaItem[]) =>
+        items.map((item) => {
+            const op = operatorMap.get(item.charId);
+            if (op) {
+                return { ...item, star: String(op.rarity), charName: op.name };
+            }
+            return item;
+        });
+
+    return {
+        limited: { ...records.limited, records: enrichItems(records.limited.records) },
+        regular: { ...records.regular, records: enrichItems(records.regular.records) },
+        special: { ...records.special, records: enrichItems(records.special.records) },
+    };
+}
+
+export function convertRecordEntryToGachaItem(entry: { charId: string; charName: string; rarity: number; poolId: string; poolName: string; gachaType: string; pullTimestamp: number; pullTimestampStr: string | null }): GachaItem {
+    return {
+        charId: entry.charId,
+        charName: entry.charName,
+        star: String(entry.rarity),
+        color: "",
+        poolId: entry.poolId,
+        poolName: entry.poolName,
+        typeName: entry.gachaType,
+        at: entry.pullTimestamp,
+        atStr: entry.pullTimestampStr ?? "",
+    };
+}
+
+export function convertHistoryToRecords(
+    entries: Array<{
+        charId: string;
+        charName: string;
+        rarity: number;
+        poolId: string;
+        poolName: string;
+        gachaType: string;
+        pullTimestamp: number;
+        pullTimestampStr: string | null;
+    }>,
+): GachaRecords {
+    const limited: GachaItem[] = [];
+    const regular: GachaItem[] = [];
+    const special: GachaItem[] = [];
+
+    for (const entry of entries) {
+        const item = convertRecordEntryToGachaItem(entry);
+        switch (entry.gachaType) {
+            case "limited":
+            case "linkage":
+                limited.push(item);
+                break;
+            case "single":
+            case "boot":
+                special.push(item);
+                break;
+            default:
+                regular.push(item);
+                break;
+        }
+    }
+
+    return {
+        limited: { gacha_type: "limited", records: limited, total: limited.length },
+        regular: { gacha_type: "regular", records: regular, total: regular.length },
+        special: { gacha_type: "special", records: special, total: special.length },
+    };
 }

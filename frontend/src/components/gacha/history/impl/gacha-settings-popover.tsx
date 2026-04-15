@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 gacha uses simplified types. This component is no longer used.
 "use client";
 
 import { Check, Settings2 } from "lucide-react";

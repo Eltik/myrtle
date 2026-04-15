@@ -27,9 +27,12 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();

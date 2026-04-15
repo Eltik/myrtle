@@ -39,18 +39,23 @@ type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
 interface VerifyResponse {
     valid: boolean;
     role?: string;
+    // Backend returns camelCase `userId`. Accept `user_id` too for forward-compat.
+    userId?: string;
     user_id?: string;
 }
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null; userId: string | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null, userId: null };
         const data: VerifyResponse = await response.json();
-        return { valid: data.valid, role: data.role || null, userId: data.user_id || null };
+        return { valid: data.valid, role: data.role || null, userId: data.userId ?? data.user_id ?? null };
     } catch {
         return { valid: false, role: null, userId: null };
     }
@@ -107,7 +112,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         const tierListData = await tierListResponse.json();
-        const tierListType = (tierListData.tier_list_type || "official") as TierListType;
+        // v3 backend emits `list_type`; v2 emitted `tier_list_type`. Accept either.
+        const tierListType = (tierListData.list_type || tierListData.tier_list_type || "official") as TierListType;
         const createdBy = tierListData.created_by;
 
         if (tierListType === "community") {
@@ -196,9 +202,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
 
             if (createResponse.ok) {
-                const createData = await createResponse.json();
+                // v3 backend returns the bare Tier object.
+                const createdTier = (await createResponse.json()) as { id: string };
                 if (tier.id) {
-                    tierIdMap.set(tier.id, createData.tier.id);
+                    tierIdMap.set(tier.id, createdTier.id);
                 }
 
                 for (const placement of tier.placements) {
@@ -209,13 +216,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                             Authorization: `Bearer ${siteToken}`,
                         },
                         body: JSON.stringify({
-                            tier_id: createData.tier.id,
+                            tier_id: createdTier.id,
                             operator_id: placement.operator_id,
                             sub_order: placement.sub_order,
                             notes: placement.notes,
                         }),
                     });
                 }
+            } else {
+                console.error(`Failed to create tier ${tier.name}:`, await createResponse.text());
             }
         }
 
@@ -232,6 +241,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const placementIdsHandled = new Set<string>();
 
         for (const tier of tiersToUpdate) {
+            // v3 backend expects a full tier payload including `display_order`.
             const tierUpdateResponse = await backendFetch(`/tier-lists/${slug}/tiers/${tier.id}`, {
                 method: "PUT",
                 headers: {
@@ -240,6 +250,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 },
                 body: JSON.stringify({
                     name: tier.name,
+                    display_order: tier.display_order,
                     color: tier.color,
                     description: tier.description,
                 }),
@@ -279,10 +290,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
         }
 
-        // Moves must happen before creates to avoid duplicate operator_id conflicts
-        for (const { placementId, newTierId, placement } of placementsToMove) {
-            console.log(`Moving placement ${placementId} to tier ${newTierId}`);
-            const moveResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}/move`, {
+        // v3 backend keys placements by `operator_id` (not placement UUID).
+        // Deletions first, then moves, then creates — avoids duplicate-operator
+        // conflicts when the same operator is being relocated.
+        //
+        // Operator→placement_id mapping is needed because `placementsToDelete`
+        // holds placement UUIDs from the old state. Resolve each back to its
+        // operator_id via the map built from `currentTiers`.
+        const placementIdToOperator = new Map<string, string>();
+        for (const tier of currentTiers) {
+            for (const op of tier.operators || []) {
+                placementIdToOperator.set(op.id, op.operator_id);
+            }
+        }
+
+        for (const placementId of placementsToDelete) {
+            const operatorId = placementIdToOperator.get(placementId);
+            if (!operatorId) continue;
+            const deleteResponse = await backendFetch(`/tier-lists/${slug}/placements/${encodeURIComponent(operatorId)}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+            });
+            if (!deleteResponse.ok) {
+                console.error(`Failed to delete placement for ${operatorId}:`, await deleteResponse.text());
+            }
+        }
+
+        for (const { newTierId, placement } of placementsToMove) {
+            const moveResponse = await backendFetch(`/tier-lists/${slug}/placements/${encodeURIComponent(placement.operator_id)}/move`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -290,18 +328,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 },
                 body: JSON.stringify({
                     new_tier_id: newTierId,
-                    new_sub_order: placement.sub_order,
+                    sub_order: placement.sub_order,
                 }),
             });
-
             if (!moveResponse.ok) {
-                const errorText = await moveResponse.text();
-                console.error(`Failed to move placement ${placementId}:`, errorText);
+                console.error(`Failed to move placement for ${placement.operator_id}:`, await moveResponse.text());
             }
         }
 
         for (const { tierId, placement } of placementsToCreate) {
-            console.log(`Creating placement for operator ${placement.operator_id} in tier ${tierId}`);
             const createResponse = await backendFetch(`/tier-lists/${slug}/placements`, {
                 method: "POST",
                 headers: {
@@ -315,59 +350,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                     notes: placement.notes,
                 }),
             });
-
             if (!createResponse.ok) {
-                const errorText = await createResponse.text();
-                console.error(`Failed to create placement for ${placement.operator_id}:`, errorText);
+                console.error(`Failed to create placement for ${placement.operator_id}:`, await createResponse.text());
             }
         }
 
-        for (const { placementId, placement } of placementsToUpdate) {
-            const updateResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}`, {
+        // Sub-order updates for existing placements: re-invoke `move_to` on the
+        // same tier to overwrite `sub_order`. (There is no dedicated placement
+        // update endpoint in v3; notes can't be edited through sync.)
+        for (const { placement } of placementsToUpdate) {
+            const containingTier = tiersToUpdate.find((t) => t.placements.some((p) => p.operator_id === placement.operator_id));
+            if (!containingTier?.id) continue;
+            const moveResponse = await backendFetch(`/tier-lists/${slug}/placements/${encodeURIComponent(placement.operator_id)}/move`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${siteToken}`,
+                },
+                body: JSON.stringify({
+                    new_tier_id: containingTier.id,
+                    sub_order: placement.sub_order,
+                }),
+            });
+            if (!moveResponse.ok) {
+                console.error(`Failed to reorder placement for ${placement.operator_id}:`, await moveResponse.text());
+            }
+        }
+
+        // v3 backend has no dedicated "reorder tiers" endpoint. Re-PUT each
+        // tier with its new display_order instead.
+        for (const [index, tier] of tiers.entries()) {
+            const resolvedId = tier.id?.startsWith("new-") ? tierIdMap.get(tier.id) : tier.id;
+            if (!resolvedId) continue;
+            await backendFetch(`/tier-lists/${slug}/tiers/${resolvedId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${siteToken}`,
                 },
                 body: JSON.stringify({
-                    sub_order: placement.sub_order,
-                    notes: placement.notes,
+                    name: tier.name,
+                    display_order: index,
+                    color: tier.color,
+                    description: tier.description,
                 }),
             });
-
-            if (!updateResponse.ok) {
-                console.error(`Failed to update placement ${placementId}:`, await updateResponse.text());
-            }
         }
-
-        for (const placementId of placementsToDelete) {
-            console.log(`Deleting placement ${placementId}`);
-            const deleteResponse = await backendFetch(`/tier-lists/${slug}/placements/${placementId}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${siteToken}`,
-                },
-            });
-
-            if (!deleteResponse.ok) {
-                console.error(`Failed to delete placement ${placementId}:`, await deleteResponse.text());
-            }
-        }
-
-        const reorderPayload = tiers.map((tier, index) => ({
-            tier_id: tier.id?.startsWith("new-") ? tierIdMap.get(tier.id) || tier.id : tier.id,
-            display_order: index,
-        }));
-
-        await backendFetch(`/tier-lists/${slug}/tiers/reorder`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${siteToken}`,
-            },
-            body: JSON.stringify({ order: reorderPayload }),
-        });
 
         return res.status(200).json({
             success: true,

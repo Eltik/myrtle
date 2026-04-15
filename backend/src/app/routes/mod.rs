@@ -23,6 +23,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/health", get(health::health))
         .route("/get-user", get(user::get_user))
+        .route("/get-user-score", get(user::get_user_score))
         .route("/leaderboard", get(leaderboard::leaderboard))
         .route("/search", get(search::search))
         .route("/static/{resource}", get(static_data::get_static))
@@ -41,7 +42,13 @@ pub fn router() -> Router<AppState> {
         .route("/auth/verify", get(auth::verify))
         .route("/auth/update-settings", post(auth::update_settings))
         .route("/gacha/history", get(gacha::history))
+        .route("/gacha/history/{char_id}", get(gacha::history_by_char))
+        .route("/gacha/stored-records", get(gacha::stored_records))
         .route("/gacha/stats", get(gacha::stats))
+        .route(
+            "/gacha/settings",
+            get(gacha::get_settings).post(gacha::update_settings),
+        )
         .route("/refresh", post(auth::refresh))
         .route("/roster", get(roster::get_roster))
         .route("/roster/{operator_id}", get(roster::get_operator))
