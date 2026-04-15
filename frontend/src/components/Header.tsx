@@ -1,49 +1,67 @@
 import { Link } from "@tanstack/react-router";
+import { Button } from "#/components/ui/button";
+import { Separator } from "#/components/ui/separator";
+import { MainNav, type NavItem } from "./MainNav";
+import { MobileNav } from "./MobileNav";
 import ThemeToggle from "./ThemeToggle";
+
+const navItems: NavItem[] = [
+    { href: "/", label: "Home" },
+    { href: "/operators", label: "Operators" },
+    { href: "/tools", label: "Tools" },
+    { href: "/about", label: "About" },
+];
+
+const toolItems: NavItem[] = [
+    { href: "/recruitment", label: "Recruitment Calculator" },
+    { href: "/tier-lists", label: "Tier Lists" },
+    { href: "/dps", label: "DPS Charts" },
+    { href: "/randomizer", label: "Randomizer" },
+];
 
 export default function Header() {
     return (
-        <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--header-bg)] px-4 backdrop-blur-lg">
-            <nav className="page-wrap flex flex-wrap items-center gap-x-3 gap-y-2 py-3 sm:py-4">
-                <h2 className="m-0 flex-shrink-0 text-base font-semibold tracking-tight">
-                    <Link to="/" className="inline-flex items-center gap-2 rounded-full border border-[var(--chip-line)] bg-[var(--chip-bg)] px-3 py-1.5 text-sm text-[var(--sea-ink)] no-underline shadow-[0_8px_24px_rgba(30,90,72,0.08)] sm:px-4 sm:py-2">
-                        <span className="h-2 w-2 rounded-full bg-[linear-gradient(90deg,#56c6be,#7ed3bf)]" />
-                        TanStack Start
-                    </Link>
-                </h2>
-
-                <div className="ml-auto flex items-center gap-1.5 sm:ml-0 sm:gap-2">
-                    <a href="https://x.com/tan_stack" target="_blank" rel="noreferrer" className="hidden rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] sm:block">
-                        <span className="sr-only">Follow TanStack on X</span>
-                        <svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24">
-                            <path fill="currentColor" d="M12.6 1h2.2L10 6.48 15.64 15h-4.41L7.78 9.82 3.23 15H1l5.14-5.84L.72 1h4.52l3.12 4.73L12.6 1zm-.77 12.67h1.22L4.57 2.26H3.26l8.57 11.41z" />
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+            <div className="page-wrap flex h-14 items-center gap-4 px-4 sm:h-16">
+                <MobileNav items={navItems} toolItems={toolItems} />
+                <Link to="/" className="flex items-center gap-2 text-foreground no-underline">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[var(--lagoon)]">
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="currentColor">
+                            <title>myrtle.moe logo icon</title>
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
-                    </a>
-                    <a href="https://github.com/TanStack" target="_blank" rel="noreferrer" className="hidden rounded-xl p-2 text-[var(--sea-ink-soft)] transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)] sm:block">
-                        <span className="sr-only">Go to TanStack GitHub</span>
-                        <svg viewBox="0 0 16 16" aria-hidden="true" width="24" height="24">
-                            <path
-                                fill="currentColor"
-                                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-                            />
-                        </svg>
-                    </a>
-
+                    </span>
+                    <span className="font-semibold tracking-tight">myrtle.moe</span>
+                </Link>
+                <MainNav items={navItems} className="ml-6" />
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
                     <ThemeToggle />
-                </div>
 
-                <div className="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-sm font-semibold sm:order-2 sm:w-auto sm:flex-nowrap sm:pb-0">
-                    <Link to="/" className="nav-link" activeProps={{ className: "nav-link is-active" }}>
-                        Home
-                    </Link>
-                    <Link to="/about" className="nav-link" activeProps={{ className: "nav-link is-active" }}>
-                        About
-                    </Link>
-                    <a href="https://tanstack.com/start/latest/docs/framework/react/overview" className="nav-link" target="_blank" rel="noreferrer">
-                        Docs
-                    </a>
+                    <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hidden sm:inline-flex"
+                        render={
+                            <a href="https://github.com/myrtle-moe" target="_blank" rel="noreferrer" aria-label="GitHub">
+                                <span className="sr-only">GitHub</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github h-4 w-4" aria-hidden="true">
+                                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                                    <path d="M9 18c-4.51 2-5-2-7-2" />
+                                </svg>
+                            </a>
+                        }
+                    />
+
+                    <Button size="sm" className="hidden sm:inline-flex">
+                        <Link to="/login" className="text-inherit no-underline">
+                            Sign In
+                        </Link>
+                    </Button>
                 </div>
-            </nav>
+            </div>
         </header>
     );
 }

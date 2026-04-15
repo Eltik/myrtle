@@ -1,19 +1,15 @@
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { useEffect } from "react";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
-
-import StoreDevtools from "../lib/demo-store-devtools";
-
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-
-import appCss from "../styles.css?url";
-
 import type { QueryClient } from "@tanstack/react-query";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions } from "#/lib/auth/store";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import StoreDevtools from "../lib/demo-store-devtools";
+import appCss from "../styles.css?url";
 
 interface MyRouterContext {
     queryClient: QueryClient;
@@ -64,6 +60,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
+                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: theme init script */}
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
                 <HeadContent />
             </head>

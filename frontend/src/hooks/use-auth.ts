@@ -1,8 +1,8 @@
-import { useStore } from "@tanstack/react-store";
 import { useRouter } from "@tanstack/react-router";
-import { authStore, authActions } from "#/lib/auth/store";
-import { loginFn, logoutFn, getSessionFn } from "#/lib/auth/server";
+import { useStore } from "@tanstack/react-store";
 import type { LoginInput } from "#/lib/auth/login";
+import { getSessionFn, loginFn, logoutFn } from "#/lib/auth/server";
+import { authActions, authStore } from "#/lib/auth/store";
 
 export function useAuth() {
     const router = useRouter();

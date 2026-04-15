@@ -9,9 +9,9 @@ import { useRender } from "@base-ui/react/use-render";
 import { ChevronRightIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { createContext, useContext } from "react";
-import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "#/lib/utils";
 
 type DrawerPosition = "right" | "left" | "top" | "bottom";
 
@@ -449,6 +449,7 @@ export function DrawerMenuCheckboxItem({
                 <>
                     <CheckboxPrimitive.Indicator className="col-start-1">
                         <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                            <title>Checked</title>
                             <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
                         </svg>
                     </CheckboxPrimitive.Indicator>
@@ -489,6 +490,7 @@ export function DrawerMenuRadioItem({
         >
             <RadioPrimitive.Indicator className="col-start-1">
                 <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                    <title>Selected</title>
                     <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
                 </svg>
             </RadioPrimitive.Indicator>

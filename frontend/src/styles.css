@@ -97,6 +97,7 @@
   --link-bg-hover: rgba(24, 44, 49, 0.8);
   --hero-a: rgba(96, 215, 207, 0.18);
   --hero-b: rgba(110, 200, 154, 0.12);
+  --background: #070709;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -141,17 +142,6 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  color: var(--primary);
-  text-decoration-color: color-mix(in srgb, var(--primary) 40%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
-}
-
-a:hover {
-  color: color-mix(in srgb, var(--primary) 80%, var(--foreground));
 }
 
 code {
