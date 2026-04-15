@@ -26,9 +26,12 @@ interface VerifyResponse {
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: AdminRole | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -45,8 +48,10 @@ async function verifyUserRole(token: string): Promise<{ valid: boolean; role: Ad
 async function verifyUserAuth(token: string): Promise<{ valid: boolean; role: string | null }> {
     try {
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -230,7 +235,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }
 
             const tierListData = await tierListResponse.json();
-            const tierListType = tierListData.tier_list_type || "official";
+            // v3 backend emits `list_type`; v2 emitted `tier_list_type`. Accept either.
+            const tierListType = tierListData.list_type || tierListData.tier_list_type || "official";
 
             // For official tier lists, require admin permissions
             // For community tier lists, let the backend check ownership

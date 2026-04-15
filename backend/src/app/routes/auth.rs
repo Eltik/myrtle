@@ -38,12 +38,16 @@ pub async fn login(
 }
 
 pub async fn verify(auth: AuthUser) -> Json<serde_json::Value> {
-    // AuthUser extractor already validated the token
+    // AuthUser extractor already validated the token.
+    // `role` is surfaced so frontend API routes can make permission decisions
+    // without a second round-trip (e.g. deciding whether a user may create an
+    // official tier list vs a community one).
     Json(serde_json::json!({
         "valid": true,
         "userId": auth.user_id,
         "uid": auth.uid,
         "server": auth.server,
+        "role": auth.role.to_string(),
     }))
 }
 

@@ -1,3 +1,6 @@
-// v3: Gacha history components have been simplified.
-// The old component exports are no longer used. The gacha history page
-// now renders inline using the v3 useGacha hook and GachaRecord types.
+export { BannerBreakdown } from "./impl/banner-breakdown";
+export { BannerTabs } from "./impl/banner-tabs";
+export { GachaSettingsPopover } from "./impl/gacha-settings-popover";
+export { PullFilters } from "./impl/pull-filters";
+export { PullHistoryList } from "./impl/pull-history-list";
+export { StatsOverview } from "./impl/stats-overview";

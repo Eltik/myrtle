@@ -63,38 +63,38 @@ fn sanitize_lone_surrogates(input: &str) -> String {
     let mut copied = 0;
     let mut i = 0;
     while i + 6 <= bytes.len() {
-        if bytes[i] == b'\\' && bytes[i + 1] == b'u' {
-            if let Some(cp) = std::str::from_utf8(&bytes[i + 2..i + 6])
+        if bytes[i] == b'\\'
+            && bytes[i + 1] == b'u'
+            && let Some(cp) = std::str::from_utf8(&bytes[i + 2..i + 6])
                 .ok()
                 .and_then(|h| u16::from_str_radix(h, 16).ok())
-            {
-                if (0xD800..=0xDBFF).contains(&cp) {
-                    let paired = i + 12 <= bytes.len()
-                        && bytes[i + 6] == b'\\'
-                        && bytes[i + 7] == b'u'
-                        && std::str::from_utf8(&bytes[i + 8..i + 12])
-                            .ok()
-                            .and_then(|h| u16::from_str_radix(h, 16).ok())
-                            .is_some_and(|lo| (0xDC00..=0xDFFF).contains(&lo));
-                    if paired {
-                        i += 12;
-                        continue;
-                    }
-                    out.push_str(&input[copied..i]);
-                    out.push_str("\\uFFFD");
-                    i += 6;
-                    copied = i;
-                    continue;
-                } else if (0xDC00..=0xDFFF).contains(&cp) {
-                    out.push_str(&input[copied..i]);
-                    out.push_str("\\uFFFD");
-                    i += 6;
-                    copied = i;
+        {
+            if (0xD800..=0xDBFF).contains(&cp) {
+                let paired = i + 12 <= bytes.len()
+                    && bytes[i + 6] == b'\\'
+                    && bytes[i + 7] == b'u'
+                    && std::str::from_utf8(&bytes[i + 8..i + 12])
+                        .ok()
+                        .and_then(|h| u16::from_str_radix(h, 16).ok())
+                        .is_some_and(|lo| (0xDC00..=0xDFFF).contains(&lo));
+                if paired {
+                    i += 12;
                     continue;
                 }
+                out.push_str(&input[copied..i]);
+                out.push_str("\\uFFFD");
                 i += 6;
+                copied = i;
+                continue;
+            } else if (0xDC00..=0xDFFF).contains(&cp) {
+                out.push_str(&input[copied..i]);
+                out.push_str("\\uFFFD");
+                i += 6;
+                copied = i;
                 continue;
             }
+            i += 6;
+            continue;
         }
         i += 1;
     }

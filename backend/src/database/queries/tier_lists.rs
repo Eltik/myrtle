@@ -169,6 +169,15 @@ pub async fn delete_tier(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+pub async fn delete_list(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
+    // FK cascade handles tiers, placements, versions, permissions.
+    sqlx::query("DELETE FROM tier_lists WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn add_placement(
     pool: &PgPool,
     tier_id: Uuid,

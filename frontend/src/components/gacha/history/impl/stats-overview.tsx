@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 gacha uses simplified types. This component is no longer used.
 "use client";
 
 import { BarChart3, HelpCircle, Sparkles, Star, Target, TrendingUp, Users } from "lucide-react";

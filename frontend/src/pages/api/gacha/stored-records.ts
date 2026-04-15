@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { GachaHistoryResponse } from "~/types/api";
+import type { GachaRecords } from "~/types/api";
 
 interface SuccessResponse {
     success: true;
-    data: GachaHistoryResponse;
+    data: GachaRecords;
 }
 
 interface ErrorResponse {
@@ -15,6 +15,11 @@ interface ErrorResponse {
 
 type ApiResponse = SuccessResponse | ErrorResponse;
 
+/**
+ * GET /api/gacha/stored-records
+ * Proxies the backend /gacha/stored-records endpoint which returns records
+ * already grouped into {limited, regular, special} with totals.
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     if (req.method !== "GET") {
         return res.status(405).json({ success: false, error: "Method not allowed" });
@@ -26,38 +31,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const { rarity, limit, offset, gachaType, charId, from, to, order } = req.query;
-
-        const params = new URLSearchParams();
-        const setIfString = (k: string, v: unknown) => {
-            if (typeof v === "string" && v.length > 0) params.set(k, v);
-        };
-        setIfString("rarity", rarity);
-        setIfString("limit", limit);
-        setIfString("offset", offset);
-        setIfString("gachaType", gachaType);
-        setIfString("charId", charId);
-        setIfString("from", from);
-        setIfString("to", to);
-        setIfString("order", order);
-
-        const response = await backendFetch(`/gacha/history?${params.toString()}`, {
+        const response = await backendFetch("/gacha/stored-records", {
             headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`Backend gacha history fetch failed: ${response.status} - ${errorText}`);
+            console.error(`Backend stored-records fetch failed: ${response.status} - ${errorText}`);
             return res.status(response.status).json({
                 success: false,
-                error: "Failed to fetch gacha history",
+                error: "Failed to fetch stored records",
             });
         }
 
-        const data: GachaHistoryResponse = await response.json();
+        const data: GachaRecords = await response.json();
         return res.status(200).json({ success: true, data });
     } catch (error) {
-        console.error("Error fetching gacha history:", error);
+        console.error("Error fetching stored records:", error);
         return res.status(500).json({ success: false, error: "An internal server error occurred" });
     }
 }

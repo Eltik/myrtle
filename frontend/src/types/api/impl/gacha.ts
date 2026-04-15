@@ -1,7 +1,7 @@
 // Gacha types
 
 // ============================================
-// v3 Gacha Record Types
+// v3 Gacha Record Types (raw DB row — still used by community + settings pages)
 // ============================================
 
 /** v3 gacha record from database */
@@ -28,7 +28,7 @@ export interface GachaStats {
     last_pull: number | null;
 }
 
-/** v3 global gacha statistics (camelCase from service layer) */
+/** v3 global gacha statistics (camelCase from service layer). Used by community page. */
 export interface GachaGlobalStats {
     totalPulls: number;
     totalUsers: number;
@@ -36,17 +36,104 @@ export interface GachaGlobalStats {
     fiveStarRate: number;
 }
 
-/** v3 gacha fetch result (camelCase from service layer) */
+/** v3 gacha fetch result (camelCase from service layer). */
 export interface GachaFetchResult {
     totalFetched: number;
     newRecords: number;
 }
 
-/** v3 gacha history query params */
+// ============================================
+// Grouped GachaRecords (limited/regular/special) — used by history page
+// ============================================
+
+export type GachaType = "limited" | "regular" | "special";
+
+export interface GachaItem {
+    charId: string;
+    charName: string;
+    star: string;
+    color: string;
+    poolId: string;
+    poolName: string;
+    typeName: string;
+    at: number;
+    atStr: string;
+}
+
+export interface GachaTypeRecords {
+    gacha_type: GachaType;
+    records: GachaItem[];
+    total: number;
+}
+
+export interface GachaRecords {
+    limited: GachaTypeRecords;
+    regular: GachaTypeRecords;
+    special: GachaTypeRecords;
+}
+
+// ============================================
+// History / Settings
+// ============================================
+
+/** Individual pull entry from stored history */
+export interface GachaRecordEntry {
+    id: string;
+    charId: string;
+    charName: string;
+    rarity: number;
+    poolId: string;
+    poolName: string;
+    gachaType: string;
+    pullTimestamp: number;
+    pullTimestampStr: string | null;
+}
+
+/** Pagination metadata for gacha history */
+export interface GachaPaginationInfo {
+    limit: number;
+    offset: number;
+    total: number;
+    hasMore: boolean;
+}
+
+export interface DateRange {
+    from: number | null;
+    to: number | null;
+}
+
+export interface HistoryFilters {
+    rarity: number | null;
+    gachaType: string | null;
+    charId: string | null;
+    dateRange: DateRange | null;
+}
+
+export interface GachaHistoryResponse {
+    records: GachaRecordEntry[];
+    pagination: GachaPaginationInfo;
+    filtersApplied: HistoryFilters;
+}
+
 export interface GachaHistoryParams {
-    rarity?: number;
     limit?: number;
     offset?: number;
+    rarity?: number;
+    gachaType?: GachaType;
+    charId?: string;
+    from?: number;
+    to?: number;
+    order?: "asc" | "desc";
+}
+
+export interface GachaSettings {
+    user_id: string;
+    store_records: boolean;
+    share_anonymous_stats: boolean;
+    total_pulls: number;
+    six_star_count: number;
+    five_star_count: number;
+    last_sync_at: string | null;
 }
 
 // ============================================

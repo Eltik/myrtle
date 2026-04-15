@@ -18,6 +18,7 @@ pub fn router() -> Router<AppState> {
         .route("/tier-lists/mine", get(crud::mine))
         .route("/tier-lists/{slug}", get(crud::get))
         .route("/tier-lists/{slug}", put(crud::update))
+        .route("/tier-lists/{slug}", delete(crud::delete))
         // Tiers
         .route("/tier-lists/{slug}/tiers", post(tiers::create))
         .route("/tier-lists/{slug}/tiers/{tier_id}", put(tiers::update))

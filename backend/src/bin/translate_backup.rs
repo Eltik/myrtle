@@ -84,8 +84,8 @@ struct OutTable {
 
 impl OutTable {
     fn new(path: &Path) -> Result<Self> {
-        let f = File::create(path)
-            .with_context(|| format!("failed to create {}", path.display()))?;
+        let f =
+            File::create(path).with_context(|| format!("failed to create {}", path.display()))?;
         Ok(Self {
             writer: BufWriter::with_capacity(1 << 20, f),
             rows: 0,
@@ -145,7 +145,10 @@ fn main() -> Result<()> {
         let w = tables.get_mut("tier_lists").unwrap();
         for r in &tier_lists {
             // skip soft-deleted rows — v3 has no is_deleted column
-            if r.get("is_deleted").and_then(|v| v.as_bool()).unwrap_or(false) {
+            if r.get("is_deleted")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+            {
                 continue;
             }
             let list_type = r
@@ -313,11 +316,15 @@ fn main() -> Result<()> {
             .and_then(|s| s.get("avatar"))
             .and_then(|a| a.get("id"))
             .and_then(|v| v.as_str());
-        let secretary = status.and_then(|s| s.get("secretary")).and_then(|v| v.as_str());
+        let secretary = status
+            .and_then(|s| s.get("secretary"))
+            .and_then(|v| v.as_str());
         let secretary_skin_id = status
             .and_then(|s| s.get("secretarySkinId"))
             .and_then(|v| v.as_str());
-        let resume_id = status.and_then(|s| s.get("resume")).and_then(|v| v.as_str());
+        let resume_id = status
+            .and_then(|s| s.get("resume"))
+            .and_then(|v| v.as_str());
 
         // users
         tables.get_mut("users").unwrap().write(&json!({
@@ -350,12 +357,16 @@ fn main() -> Result<()> {
         tables.get_mut("user_status").unwrap().write(&status_row)?;
 
         // user_operators / skills / modules
-        if let Some(troop) = data.and_then(|d| d.get("troop")).and_then(|t| t.get("chars"))
+        if let Some(troop) = data
+            .and_then(|d| d.get("troop"))
+            .and_then(|t| t.get("chars"))
             .and_then(|v| v.as_object())
         {
             let mut seen_ops: HashSet<String> = HashSet::new();
             for raw in troop.values() {
-                let Some(char_id) = raw.get("charId").and_then(|v| v.as_str()) else { continue };
+                let Some(char_id) = raw.get("charId").and_then(|v| v.as_str()) else {
+                    continue;
+                };
                 if !seen_ops.insert(char_id.to_string()) {
                     continue; // dupe across instIds → keep first
                 }
@@ -407,7 +418,10 @@ fn main() -> Result<()> {
 
         // user_items — old myrtle stored inventory as {item_id: {amount, ...meta}}
         // (with the full ItemTable entry inlined). v3 only needs id+quantity.
-        if let Some(inv) = data.and_then(|d| d.get("inventory")).and_then(|v| v.as_object()) {
+        if let Some(inv) = data
+            .and_then(|d| d.get("inventory"))
+            .and_then(|v| v.as_object())
+        {
             for (item_id, val) in inv {
                 let q = val
                     .get("amount")
@@ -452,10 +466,13 @@ fn main() -> Result<()> {
             .and_then(|d| d.get("stages"))
             .cloned()
             .unwrap_or_else(|| json!({}));
-        tables.get_mut("user_stage_progress").unwrap().write(&json!({
-            "user_id": id,
-            "stages": stages,
-        }))?;
+        tables
+            .get_mut("user_stage_progress")
+            .unwrap()
+            .write(&json!({
+                "user_id": id,
+                "stages": stages,
+            }))?;
 
         // user_roguelike_progress (rlv2.outer keyed by theme_id)
         if let Some(outer) = data
@@ -468,11 +485,14 @@ fn main() -> Result<()> {
                 if !seen_themes.insert(theme_id.clone()) {
                     continue;
                 }
-                tables.get_mut("user_roguelike_progress").unwrap().write(&json!({
-                    "user_id": id,
-                    "theme_id": theme_id,
-                    "progress": progress,
-                }))?;
+                tables
+                    .get_mut("user_roguelike_progress")
+                    .unwrap()
+                    .write(&json!({
+                        "user_id": id,
+                        "theme_id": theme_id,
+                        "progress": progress,
+                    }))?;
             }
         }
 
@@ -482,10 +502,13 @@ fn main() -> Result<()> {
             .or_else(|| data.and_then(|d| d.get("deepSea")))
             .cloned()
             .unwrap_or_else(|| json!({}));
-        tables.get_mut("user_sandbox_progress").unwrap().write(&json!({
-            "user_id": id,
-            "progress": sandbox,
-        }))?;
+        tables
+            .get_mut("user_sandbox_progress")
+            .unwrap()
+            .write(&json!({
+                "user_id": id,
+                "progress": sandbox,
+            }))?;
 
         // user_medals
         if let Some(medals) = data
@@ -509,7 +532,9 @@ fn main() -> Result<()> {
         }
 
         // user_building (full blob)
-        let building = data.and_then(|d| d.get("building")).cloned()
+        let building = data
+            .and_then(|d| d.get("building"))
+            .cloned()
             .unwrap_or_else(|| json!({}));
         tables.get_mut("user_building").unwrap().write(&json!({
             "user_id": id,
@@ -538,11 +563,13 @@ fn main() -> Result<()> {
                 .get("grade")
                 .and_then(|g| g.get("calculatedAt"))
                 .and_then(|v| v.as_i64())
-                .map(|secs| epoch_to_iso(secs))
-                .unwrap_or_else(|| obj.get("updated_at")
-                    .and_then(|v| v.as_str())
-                    .map(String::from)
-                    .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string()));
+                .map(epoch_to_iso)
+                .unwrap_or_else(|| {
+                    obj.get("updated_at")
+                        .and_then(|v| v.as_str())
+                        .map(String::from)
+                        .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string())
+                });
             tables.get_mut("user_scores").unwrap().write(&json!({
                 "user_id": id,
                 "total_score": score.get("totalScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
@@ -559,7 +586,7 @@ fn main() -> Result<()> {
         }
 
         user_count += 1;
-        if user_count % 25 == 0 {
+        if user_count.is_multiple_of(25) {
             println!("  …{user_count} users processed");
         }
         Ok(())
@@ -580,7 +607,10 @@ fn main() -> Result<()> {
             .iter()
             .filter_map(|r| {
                 let u = r.get("user_id")?.as_str()?.to_string();
-                let store = r.get("store_records").and_then(|v| v.as_bool()).unwrap_or(true);
+                let store = r
+                    .get("store_records")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
                 let share = r
                     .get("share_anonymous_stats")
                     .and_then(|v| v.as_bool())
@@ -602,10 +632,26 @@ fn main() -> Result<()> {
             if !user_ids.contains(user_id) {
                 continue; // orphan — FK would fail
             }
-            let char_id = r.get("char_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let pool_id = r.get("pool_id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let pull_ts = r.get("pull_timestamp").and_then(|v| v.as_i64()).unwrap_or(0);
-            let key = (user_id.to_string(), pull_ts, char_id.clone(), pool_id.clone());
+            let char_id = r
+                .get("char_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let pool_id = r
+                .get("pool_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let pull_ts = r
+                .get("pull_timestamp")
+                .and_then(|v| v.as_i64())
+                .unwrap_or(0);
+            let key = (
+                user_id.to_string(),
+                pull_ts,
+                char_id.clone(),
+                pool_id.clone(),
+            );
             if !seen.insert(key) {
                 continue; // v3 has UNIQUE(user_id, pull_timestamp, char_id, pool_id)
             }
@@ -670,7 +716,10 @@ fn settings_bool(settings: Option<&Value>, key: &str, default: bool) -> bool {
 
 fn build_status_row(user_id: &str, status: Option<&Value>) -> Value {
     let g = |k: &str| -> i64 {
-        status.and_then(|s| s.get(k)).and_then(|v| v.as_i64()).unwrap_or(0)
+        status
+            .and_then(|s| s.get(k))
+            .and_then(|v| v.as_i64())
+            .unwrap_or(0)
     };
     let gs = |k: &str| -> Option<String> {
         status
@@ -721,8 +770,8 @@ fn read_array(path: &Path) -> Result<Vec<Value>> {
     let mut reader = BufReader::with_capacity(1 << 20, f);
     let mut buf = String::new();
     reader.read_to_string(&mut buf)?;
-    let v: Value =
-        serde_json::from_str(&buf).with_context(|| format!("failed to parse {}", path.display()))?;
+    let v: Value = serde_json::from_str(&buf)
+        .with_context(|| format!("failed to parse {}", path.display()))?;
     match v {
         Value::Array(a) => Ok(a),
         _ => bail!("{}: expected top-level JSON array", path.display()),
@@ -775,7 +824,11 @@ where
         buf.push(start_byte);
         // We expect each element to be an object or array. Track depth +
         // string state so we know when the element ends.
-        let mut depth: i32 = if start_byte == b'{' || start_byte == b'[' { 1 } else { 0 };
+        let mut depth: i32 = if start_byte == b'{' || start_byte == b'[' {
+            1
+        } else {
+            0
+        };
         let mut in_string = start_byte == b'"';
         let mut escape = false;
 
@@ -841,11 +894,10 @@ fn rewrite_user_settings(out_dir: &Path, overrides: &HashMap<String, (bool, bool
         let mut v: Value = serde_json::from_str(&line)?;
         if let Some(uid) = v.get("user_id").and_then(|x| x.as_str())
             && let Some(&(store, share)) = overrides.get(uid)
+            && let Some(map) = v.as_object_mut()
         {
-            if let Some(map) = v.as_object_mut() {
-                map.insert("store_gacha".into(), json!(store));
-                map.insert("share_stats".into(), json!(share));
-            }
+            map.insert("store_gacha".into(), json!(store));
+            map.insert("share_stats".into(), json!(share));
         }
         rows.push(v);
     }

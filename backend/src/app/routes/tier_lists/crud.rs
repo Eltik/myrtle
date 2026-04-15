@@ -57,6 +57,28 @@ pub async fn mine(
     Ok(Json(lists))
 }
 
+pub async fn delete(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(slug): Path<String>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let list = queries::find_by_slug(&state.db, &slug)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    // Owner check is inside check_permission; Admin level covers delete.
+    services::tier_list::check_permission(
+        &state,
+        &list,
+        user_id,
+        auth.role,
+        crate::core::auth::permissions::Permission::Admin,
+    )
+    .await?;
+    queries::delete_list(&state.db, list.id).await?;
+    Ok(Json(serde_json::json!({ "status": "ok" })))
+}
+
 #[derive(Deserialize)]
 pub struct UpdateRequest {
     pub name: String,
