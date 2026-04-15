@@ -23,6 +23,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/health", get(health::health))
         .route("/get-user", get(user::get_user))
+        .route("/get-user-score", get(user::get_user_score))
         .route("/leaderboard", get(leaderboard::leaderboard))
         .route("/search", get(search::search))
         .route("/static/{resource}", get(static_data::get_static))
