@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -73,18 +72,6 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_EvolvePhase {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EvolvePhase",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -227,18 +214,6 @@ impl<'a> Default for clz_Torappu_CharacterData_UnlockConditionArgs {
             phase: enum__Torappu_EvolvePhase::PHASE_0,
             level: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharacterData_UnlockCondition<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharacterData_UnlockCondition", 2)?;
-        s.serialize_field("phase", &self.phase())?;
-        s.serialize_field("level", &self.level())?;
-        s.end()
     }
 }
 
@@ -443,27 +418,6 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
             value: 0.0,
             valueStr: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        s.serialize_field("value", &self.value())?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.end()
     }
 }
 
@@ -833,53 +787,6 @@ impl<'a> Default for clz_Torappu_TalentDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TalentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TalentData", 9)?;
-        if let Some(f) = self.unlockCondition() {
-            s.serialize_field("unlockCondition", &f)?;
-        } else {
-            s.skip_field("unlockCondition")?;
-        }
-        s.serialize_field("requiredPotentialRank", &self.requiredPotentialRank())?;
-        if let Some(f) = self.prefabKey() {
-            s.serialize_field("prefabKey", &f)?;
-        } else {
-            s.skip_field("prefabKey")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.rangeId() {
-            s.serialize_field("rangeId", &f)?;
-        } else {
-            s.skip_field("rangeId")?;
-        }
-        if let Some(f) = self.blackboard() {
-            s.serialize_field("blackboard", &f)?;
-        } else {
-            s.skip_field("blackboard")?;
-        }
-        if let Some(f) = self.tokenKey() {
-            s.serialize_field("tokenKey", &f)?;
-        } else {
-            s.skip_field("tokenKey")?;
-        }
-        s.serialize_field("isHideTalent", &self.isHideTalent())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TalentDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1180,27 +1087,6 @@ impl<'a> Default for clz_Torappu_CharacterData_MasterDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharacterData_MasterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharacterData_MasterData", 3)?;
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.masterId() {
-            s.serialize_field("masterId", &f)?;
-        } else {
-            s.skip_field("masterId")?;
-        }
-        if let Some(f) = self.talentData() {
-            s.serialize_field("talentData", &f)?;
-        } else {
-            s.skip_field("talentData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharacterData_MasterDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1392,21 +1278,6 @@ impl<'a> Default for clz_Torappu_CharacterData_MasterDataBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharacterData_MasterDataBundleArgs { candidates: None }
-    }
-}
-
-impl Serialize for clz_Torappu_CharacterData_MasterDataBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharacterData_MasterDataBundle", 1)?;
-        if let Some(f) = self.candidates() {
-            s.serialize_field("candidates", &f)?;
-        } else {
-            s.skip_field("candidates")?;
-        }
-        s.end()
     }
 }
 
@@ -1603,25 +1474,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharacterData_MasterDataBundleArg
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_CharacterData_MasterDataBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_CharacterData_MasterDataBundle",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1828,24 +1680,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterD
         clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundleArgs {
             master_data_bundles: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData_MasterDataBundle",
-            1,
-        )?;
-        if let Some(f) = self.master_data_bundles() {
-            s.serialize_field("master_data_bundles", &f)?;
-        } else {
-            s.skip_field("master_data_bundles")?;
-        }
-        s.end()
     }
 }
 

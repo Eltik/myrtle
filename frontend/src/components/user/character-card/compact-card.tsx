@@ -7,12 +7,12 @@ import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialog, MorphingDialogTrigger } from "~/components/ui/motion-primitives/morphing-dialog";
 import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { formatProfession, getRarityStarCount } from "~/lib/utils";
-import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
+import type { CharacterStatic, EnrichedRosterEntry } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
 import { getAttributeStats } from "./impl/helpers";
 
 interface CompactCharacterCardProps {
-    data: CharacterData;
+    data: EnrichedRosterEntry;
 }
 
 // Max level by rarity for each elite phase [E0, E1, E2]
@@ -39,57 +39,44 @@ const MAX_ELITE_BY_RARITY: Record<number, number> = {
  * Gets the avatar URL for an operator based on their current skin.
  * Uses the /api/cdn/avatar/ endpoint which the backend resolves.
  */
-function getOperatorAvatarUrl(charId: string, skin: string, _evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
-    let skinId = skin;
-
-    if (currentTmpl && tmpl && tmpl[currentTmpl]) {
-        skinId = tmpl[currentTmpl].skinId;
-    }
-
+function getOperatorAvatarUrl(charId: string, skinId: string | null, _evolvePhase: number, _currentTmpl?: string | null): string {
     if (!skinId) {
-        return `/api/cdn/avatar/${charId}`;
+        return `/api/cdn/avatar/${encodeURIComponent(charId)}`;
     }
 
+    // Purchased skins use `@` separator, e.g. "char_4087_ines@boc#8".
+    // Normalize to underscore form that matches v3 asset index keys.
     if (skinId.includes("@")) {
-        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return `/api/cdn/avatar/${normalizedSkinId}`;
+        const normalized = skinId.replaceAll("@", "_");
+        return `/api/cdn/avatar/${encodeURIComponent(normalized)}`;
     }
 
     if (skinId.endsWith("#1") || skinId.endsWith("_1")) {
-        return `/api/cdn/avatar/${charId}`;
+        return `/api/cdn/avatar/${encodeURIComponent(charId)}`;
     }
 
-    if (skinId.endsWith("#2") || skinId.endsWith("_2")) {
-        const normalizedSkinId = skinId.replaceAll("#", "_");
-        return `/api/cdn/avatar/${normalizedSkinId}`;
-    }
-
-    const normalizedSkinId = skinId.replaceAll("#", "_");
-    return `/api/cdn/avatar/${normalizedSkinId}`;
+    const normalized = skinId.replaceAll("#", "_");
+    return `/api/cdn/avatar/${encodeURIComponent(normalized)}`;
 }
 
 /**
  * Gets the full portrait URL for the dialog.
  */
-function getOperatorPortraitUrl(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
-    let skinId = skin;
-
-    if (currentTmpl && tmpl && tmpl[currentTmpl]) {
-        skinId = tmpl[currentTmpl].skinId;
-    }
-
+function getOperatorPortraitUrl(charId: string, skinId: string | null, evolvePhase: number, _currentTmpl?: string | null): string {
     if (!skinId) {
         const suffix = evolvePhase >= 2 ? "_2" : "_1";
-        return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
+        return `/api/cdn/upk/chararts/${encodeURIComponent(charId)}/${encodeURIComponent(charId + suffix)}.png`;
     }
 
+    // Purchased skin (e.g. "char_4087_ines@boc#8"): swap `@` to `_` but keep `#`
+    // in the filename — the CDN proxy re-encodes segments before forwarding.
     if (skinId.includes("@")) {
-        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
+        const normalized = skinId.replaceAll("@", "_");
+        return `/api/cdn/upk/skinpack/${encodeURIComponent(charId)}/${encodeURIComponent(normalized)}.png`;
     }
 
-    const normalizedSkinId = skinId.replaceAll("#", "_");
-    return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
+    const normalized = skinId.replaceAll("#", "_");
+    return `/api/cdn/upk/chararts/${encodeURIComponent(charId)}/${encodeURIComponent(normalized)}.png`;
 }
 
 export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
@@ -106,31 +93,41 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
 
     const stats = getAttributeStats(data, operator);
 
+    // Build skill display data by merging roster masteries with static skill data
+    const skillDisplayData = (operator?.skills ?? []).map((staticSkill, index) => {
+        const mastery = data.masteries.find((m) => m.skill_id === staticSkill.skillId);
+        return {
+            skillId: staticSkill.skillId,
+            specializeLevel: mastery?.specialize_level ?? 0,
+            index,
+        };
+    });
+
     const preloadDialogImages = useCallback(() => {
         if (hasPreloadedRef.current) return;
         hasPreloadedRef.current = true;
 
-        const portraitUrl = getOperatorPortraitUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+        const portraitUrl = getOperatorPortraitUrl(data.operator_id, data.skin_id, data.elite, data.current_tmpl);
 
-        const imagesToPreload: string[] = [portraitUrl, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`];
+        const imagesToPreload: string[] = [portraitUrl, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`];
 
-        for (const skill of data.skills) {
-            const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
-            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
+        for (const staticSkill of operator?.skills ?? []) {
+            const skillStatic = staticSkill.static;
+            const mastery = data.masteries.find((m) => m.skill_id === staticSkill.skillId);
+            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/skill-icons/${skillStatic?.iconId ?? skillStatic?.skillId ?? staticSkill.skillId}.png`;
             imagesToPreload.push(skillIcon);
 
-            if (skill.specializeLevel > 0) {
-                imagesToPreload.push(`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`);
+            if ((mastery?.specialize_level ?? 0) > 0) {
+                imagesToPreload.push(`/api/cdn/upk/arts/specialized_hub/specialized_${mastery?.specialize_level}.png`);
             }
         }
 
         if (operator?.modules) {
             for (const module of operator.modules) {
-                const equipData = data.equip[module.uniEquipId];
-                const moduleLevel = equipData?.level ?? 0;
-                const isLocked = equipData?.locked === 1;
+                const rosterMod = data.modules.find((m) => m.equip_id === module.uniEquipId);
+                const moduleLevel = rosterMod?.level ?? 0;
 
-                if (module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked) {
+                if (module.typeName1 !== "ORIGINAL" && moduleLevel > 0) {
                     const moduleImage = module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`;
                     imagesToPreload.push(moduleImage);
                 }
@@ -174,36 +171,29 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
         const maxElite = MAX_ELITE_BY_RARITY[starCount] ?? 2;
         const maxLevel = MAX_LEVEL_BY_RARITY[starCount]?.[maxElite] ?? 90;
 
-        if (data.evolvePhase !== maxElite) return false;
+        if (data.elite !== maxElite) return false;
         if (data.level !== maxLevel) return false;
-        if (starCount > 2 && data.mainSkillLvl !== 7) return false;
+        if (starCount > 2 && data.skill_level !== 7) return false;
 
         if (maxElite === 2) {
-            if (!data.skills.every((skill) => skill.specializeLevel === 3)) return false;
-            const unlockedModules =
-                operator?.modules?.filter((mod) => {
-                    const equipData = data.equip[mod.uniEquipId];
-                    return mod.typeName1 !== "ORIGINAL" && equipData && equipData.level > 0 && equipData.locked !== 1;
-                }) ?? [];
-            if (unlockedModules.length > 0 && !unlockedModules.every((mod) => data.equip[mod.uniEquipId]?.level === 3)) return false;
+            if (!data.masteries.every((m) => m.specialize_level === 3)) return false;
+            const unlockedModules = data.modules.filter((m) => m.level > 0);
+            if (unlockedModules.length > 0 && !unlockedModules.every((m) => m.level === 3)) return false;
         }
 
-        if (data.potentialRank !== 5) return false;
+        if (data.potential !== 5) return false;
         return true;
     })();
 
-    const avatarUrl = getOperatorAvatarUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
-    const portraitUrl = getOperatorPortraitUrl(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+    const avatarUrl = getOperatorAvatarUrl(data.operator_id, data.skin_id, data.elite, data.current_tmpl);
+    const portraitUrl = getOperatorPortraitUrl(data.operator_id, data.skin_id, data.elite, data.current_tmpl);
 
-    const unlockedModules =
-        operator?.modules?.filter((module) => {
-            const equipData = data.equip[module.uniEquipId];
-            const moduleLevel = equipData?.level ?? 0;
-            const isLocked = equipData?.locked === 1;
-            return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
-        }) ?? [];
+    const unlockedModules = (operator?.modules ?? []).filter((module) => {
+        const rosterMod = data.modules.find((m) => m.equip_id === module.uniEquipId);
+        return module.typeName1 !== "ORIGINAL" && (rosterMod?.level ?? 0) > 0;
+    });
 
-    const maxLevelForPhase = MAX_LEVEL_BY_RARITY[starCount]?.[data.evolvePhase] ?? 90;
+    const maxLevelForPhase = MAX_LEVEL_BY_RARITY[starCount]?.[data.elite] ?? 90;
     const isAtMaxLevel = data.level === maxLevelForPhase;
 
     return (
@@ -255,21 +245,21 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                         {!isMaxed && (
                             <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
                                 {/* Potential Badge */}
-                                {data.potentialRank > 0 && (
+                                {data.potential > 0 && (
                                     <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
-                                        <Image alt={`Potential ${data.potentialRank + 1}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={20} />
+                                        <Image alt={`Potential ${data.potential + 1}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`} unoptimized width={20} />
                                     </div>
                                 )}
 
                                 {/* Elite Badge */}
-                                {data.evolvePhase > 0 && (
+                                {data.elite > 0 && (
                                     <div className="mb-0 h-5 w-5 sm:mb-1 sm:h-8 sm:w-8">
-                                        <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={32} />
+                                        <Image alt={`Elite ${data.elite}`} className="icon-theme-aware h-full w-full object-contain" height={32} src={`/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`} unoptimized width={32} />
                                     </div>
                                 )}
 
                                 {/* Level Circle */}
-                                {(data.evolvePhase > 0 || data.level > 1) && (
+                                {(data.elite > 0 || data.level > 1) && (
                                     <div
                                         className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-secondary text-lg leading-none sm:h-12 sm:text-2xl"
                                         style={{
@@ -286,18 +276,18 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                         )}
 
                         {/* Right Side - Skills */}
-                        {!isMaxed && data.mainSkillLvl > 1 && (
+                        {!isMaxed && data.skill_level > 1 && (
                             <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
-                                {data.skills.map((skill, idx) => {
-                                    if (data.evolvePhase < idx) return null;
+                                {skillDisplayData.map((skill, idx) => {
+                                    if (data.elite < idx) return null;
 
                                     const hasM = skill.specializeLevel > 0;
                                     return (
-                                        <div className="relative flex h-4 w-4 items-center justify-center sm:h-6 sm:w-6" key={skill.skillId} style={{ marginLeft: `${idx * 4}px` }} title={hasM ? `Skill ${idx + 1}: M${skill.specializeLevel}` : `Skill ${idx + 1}: Lv.${data.mainSkillLvl}`}>
+                                        <div className="relative flex h-4 w-4 items-center justify-center sm:h-6 sm:w-6" key={skill.skillId} style={{ marginLeft: `${idx * 4}px` }} title={hasM ? `Skill ${idx + 1}: M${skill.specializeLevel}` : `Skill ${idx + 1}: Lv.${data.skill_level}`}>
                                             {hasM ? (
                                                 <Image alt={`M${skill.specializeLevel}`} className="h-full w-full object-contain" height={24} src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={24} />
                                             ) : (
-                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.625rem] text-secondary-foreground sm:text-xs">{data.mainSkillLvl}</div>
+                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.625rem] text-secondary-foreground sm:text-xs">{data.skill_level}</div>
                                             )}
                                         </div>
                                     );
@@ -309,7 +299,8 @@ export function CompactCharacterCard({ data }: CompactCharacterCardProps) {
                         {!isMaxed && unlockedModules.length > 0 && (
                             <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
                                 {unlockedModules.map((module) => {
-                                    const moduleLevel = data.equip[module.uniEquipId]?.level ?? 0;
+                                    const rosterMod = data.modules.find((m) => m.equip_id === module.uniEquipId);
+                                    const moduleLevel = rosterMod?.level ?? 0;
                                     const typeLetter = module.typeName1?.slice(-1) ?? "X";
 
                                     return (

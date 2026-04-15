@@ -85,16 +85,18 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
             "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
         };
 
-        // Fetch enhanced stats, operator data, and pool data in parallel
-        const backendURL = new URL("/gacha/stats/enhanced", env.BACKEND_URL);
+        // Fetch enhanced stats, operator data, and pool data in parallel.
+        // Backend router is mounted under `/api`, so every direct SSR fetch
+        // needs that prefix (same contract `backendFetch` enforces).
+        const backendURL = new URL("/api/gacha/stats/enhanced", env.BACKEND_URL);
         backendURL.searchParams.set("top_n", "20");
         backendURL.searchParams.set("include_timing", "true");
 
-        const operatorsURL = new URL("/static/operators", env.BACKEND_URL);
+        const operatorsURL = new URL("/api/static/operators", env.BACKEND_URL);
         operatorsURL.searchParams.set("fields", "id,name,rarity,profession");
         operatorsURL.searchParams.set("limit", "1000");
 
-        const poolsURL = new URL("/static/gacha/pools", env.BACKEND_URL);
+        const poolsURL = new URL("/api/static/gacha/pools", env.BACKEND_URL);
 
         const [statsResponse, operatorsResponse, poolsResponse] = await Promise.all([fetch(backendURL.toString(), { method: "GET", headers }), fetch(operatorsURL.toString(), { method: "GET", headers }).catch(() => null), fetch(poolsURL.toString(), { method: "GET", headers }).catch(() => null)]);
 
@@ -111,28 +113,34 @@ export const getServerSideProps: GetServerSideProps<GlobalGachaStatsPageProps> =
 
         const stats: GachaEnhancedStats = await statsResponse.json();
 
-        // Enrich operator data with correct rarity/name from static game data
+        // Enrich operator data with correct rarity/name from static game data.
+        // Backend `/api/static/operators` returns `Record<id, Operator>`
+        // directly (not `{ operators: [...] }`). Tolerate both shapes.
         if (operatorsResponse?.ok) {
             try {
-                const operatorData: { operators?: Array<{ id: string | null; name: string; rarity: string; profession: string }> } = await operatorsResponse.json();
-                if (operatorData.operators) {
-                    const lookup = new Map<string, { name: string; rarity: number }>();
-                    for (const op of operatorData.operators) {
-                        if (!op.id) continue;
-                        lookup.set(op.id, {
-                            name: op.name,
-                            rarity: RARITY_TIER_MAP[op.rarity] ?? 3,
-                        });
-                    }
+                type StaticOp = { id?: string | null; name: string; rarity: string; profession: string };
+                const raw = (await operatorsResponse.json()) as Record<string, StaticOp> | { operators?: StaticOp[] };
+                const entries: Array<[string, StaticOp]> = Array.isArray((raw as { operators?: StaticOp[] }).operators)
+                    ? ((raw as { operators: StaticOp[] }).operators.map((op) => [op.id ?? "", op] as [string, StaticOp]))
+                    : Object.entries(raw as Record<string, StaticOp>);
 
-                    stats.mostCommonOperators = stats.mostCommonOperators.map((op) => {
-                        const staticOp = lookup.get(op.charId);
-                        if (staticOp) {
-                            return { ...op, rarity: staticOp.rarity, charName: staticOp.name };
-                        }
-                        return op;
+                const lookup = new Map<string, { name: string; rarity: number }>();
+                for (const [id, op] of entries) {
+                    const opId = op.id ?? id;
+                    if (!opId) continue;
+                    lookup.set(opId, {
+                        name: op.name,
+                        rarity: RARITY_TIER_MAP[op.rarity] ?? 3,
                     });
                 }
+
+                stats.mostCommonOperators = stats.mostCommonOperators.map((op) => {
+                    const staticOp = lookup.get(op.charId);
+                    if (staticOp) {
+                        return { ...op, rarity: staticOp.rarity, charName: staticOp.name };
+                    }
+                    return op;
+                });
             } catch (err) {
                 console.error("Failed to parse operator data for enrichment:", err);
             }

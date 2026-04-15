@@ -1,11 +1,13 @@
-// Auto-generated FlatBuffer schemas for Arknights (Yostar/EN version)
-// These are for tables that have schema differences from CN
+// Auto-generated - do not edit
 
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(clippy::all)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
+#![allow(
+    dead_code,
+    unused_imports,
+    non_snake_case,
+    non_camel_case_types,
+    unreachable_patterns,
+    clippy::all
+)]
 
 pub mod battle_equip_table_generated;
 pub mod character_table_generated;

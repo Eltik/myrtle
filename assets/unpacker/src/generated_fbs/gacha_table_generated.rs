@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 10;
+pub const ENUM_MAX_ENUM__TORAPPU_GACHA_RULE_TYPE: i32 = 11;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleType; 11] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleType; 12] = [
     enum__Torappu_GachaRuleType::NORMAL,
     enum__Torappu_GachaRuleType::LIMITED,
     enum__Torappu_GachaRuleType::LINKAGE,
@@ -38,6 +37,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_GACHA_RULE_TYPE: [enum__Torappu_GachaRuleTyp
     enum__Torappu_GachaRuleType::SPECIAL,
     enum__Torappu_GachaRuleType::DOUBLE,
     enum__Torappu_GachaRuleType::CLASSIC_DOUBLE,
+    enum__Torappu_GachaRuleType::BACKFLOW,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -56,9 +56,10 @@ impl enum__Torappu_GachaRuleType {
     pub const SPECIAL: Self = Self(8);
     pub const DOUBLE: Self = Self(9);
     pub const CLASSIC_DOUBLE: Self = Self(10);
+    pub const BACKFLOW: Self = Self(11);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 10;
+    pub const ENUM_MAX: i32 = 11;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NORMAL,
         Self::LIMITED,
@@ -71,6 +72,7 @@ impl enum__Torappu_GachaRuleType {
         Self::SPECIAL,
         Self::DOUBLE,
         Self::CLASSIC_DOUBLE,
+        Self::BACKFLOW,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -86,6 +88,7 @@ impl enum__Torappu_GachaRuleType {
             Self::SPECIAL => Some("SPECIAL"),
             Self::DOUBLE => Some("DOUBLE"),
             Self::CLASSIC_DOUBLE => Some("CLASSIC_DOUBLE"),
+            Self::BACKFLOW => Some("BACKFLOW"),
             _ => None,
         }
     }
@@ -97,18 +100,6 @@ impl core::fmt::Debug for enum__Torappu_GachaRuleType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_GachaRuleType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_GachaRuleType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -166,13 +157,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -264,6 +255,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -362,9 +355,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -457,6 +452,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -552,6 +549,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -563,18 +562,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -696,21 +683,6 @@ impl<'a> Default for hg__internal__JObjectArgs<'a> {
     #[inline]
     fn default() -> Self {
         hg__internal__JObjectArgs { base64: None }
-    }
-}
-
-impl Serialize for hg__internal__JObject<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("hg__internal__JObject", 1)?;
-        if let Some(f) = self.base64() {
-            s.serialize_field("base64", &f)?;
-        } else {
-            s.skip_field("base64")?;
-        }
-        s.end()
     }
 }
 
@@ -1269,87 +1241,6 @@ impl<'a> Default for clz_Torappu_GachaPoolClientDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GachaPoolClientData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaPoolClientData", 19)?;
-        if let Some(f) = self.gachaPoolId() {
-            s.serialize_field("gachaPoolId", &f)?;
-        } else {
-            s.skip_field("gachaPoolId")?;
-        }
-        s.serialize_field("gachaIndex", &self.gachaIndex())?;
-        s.serialize_field("openTime", &self.openTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.gachaPoolName() {
-            s.serialize_field("gachaPoolName", &f)?;
-        } else {
-            s.skip_field("gachaPoolName")?;
-        }
-        if let Some(f) = self.gachaPoolSummary() {
-            s.serialize_field("gachaPoolSummary", &f)?;
-        } else {
-            s.skip_field("gachaPoolSummary")?;
-        }
-        if let Some(f) = self.gachaPoolDetail() {
-            s.serialize_field("gachaPoolDetail", &f)?;
-        } else {
-            s.skip_field("gachaPoolDetail")?;
-        }
-        if let Some(f) = self.guaranteeName() {
-            s.serialize_field("guaranteeName", &f)?;
-        } else {
-            s.skip_field("guaranteeName")?;
-        }
-        s.serialize_field("guarantee5Avail", &self.guarantee5Avail())?;
-        s.serialize_field("guarantee5Count", &self.guarantee5Count())?;
-        if let Some(f) = self.LMTGSID() {
-            s.serialize_field("LMTGSID", &f)?;
-        } else {
-            s.skip_field("LMTGSID")?;
-        }
-        if let Some(f) = self.CDPrimColor() {
-            s.serialize_field("CDPrimColor", &f)?;
-        } else {
-            s.skip_field("CDPrimColor")?;
-        }
-        if let Some(f) = self.CDSecColor() {
-            s.serialize_field("CDSecColor", &f)?;
-        } else {
-            s.skip_field("CDSecColor")?;
-        }
-        if let Some(f) = self.freeBackColor() {
-            s.serialize_field("freeBackColor", &f)?;
-        } else {
-            s.skip_field("freeBackColor")?;
-        }
-        s.serialize_field("gachaRuleType", &self.gachaRuleType())?;
-        if let Some(f) = self.dynMeta() {
-            s.serialize_field("dynMeta", &f)?;
-        } else {
-            s.skip_field("dynMeta")?;
-        }
-        if let Some(f) = self.linkageRuleId() {
-            s.serialize_field("linkageRuleId", &f)?;
-        } else {
-            s.skip_field("linkageRuleId")?;
-        }
-        if let Some(f) = self.linkageParam() {
-            s.serialize_field("linkageParam", &f)?;
-        } else {
-            s.skip_field("linkageParam")?;
-        }
-        if let Some(f) = self.limitParam() {
-            s.serialize_field("limitParam", &f)?;
-        } else {
-            s.skip_field("limitParam")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GachaPoolClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1864,39 +1755,6 @@ impl<'a> Default for clz_Torappu_NewbeeGachaPoolClientDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_NewbeeGachaPoolClientData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_NewbeeGachaPoolClientData", 7)?;
-        if let Some(f) = self.gachaPoolId() {
-            s.serialize_field("gachaPoolId", &f)?;
-        } else {
-            s.skip_field("gachaPoolId")?;
-        }
-        s.serialize_field("gachaIndex", &self.gachaIndex())?;
-        if let Some(f) = self.gachaPoolName() {
-            s.serialize_field("gachaPoolName", &f)?;
-        } else {
-            s.skip_field("gachaPoolName")?;
-        }
-        if let Some(f) = self.gachaPoolDetail() {
-            s.serialize_field("gachaPoolDetail", &f)?;
-        } else {
-            s.skip_field("gachaPoolDetail")?;
-        }
-        s.serialize_field("gachaPrice", &self.gachaPrice())?;
-        s.serialize_field("gachaTimes", &self.gachaTimes())?;
-        if let Some(f) = self.gachaOffset() {
-            s.serialize_field("gachaOffset", &f)?;
-        } else {
-            s.skip_field("gachaOffset")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_NewbeeGachaPoolClientDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2152,23 +2010,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2382,24 +2223,6 @@ impl<'a> Default for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataArgs<'
     }
 }
 
-impl Serialize for clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_SpecialRecruitPool_SpecialRecruitCostData", 3)?;
-        s.serialize_field("timeLength", &self.timeLength())?;
-        s.serialize_field("recruitPrice", &self.recruitPrice())?;
-        if let Some(f) = self.itemCosts() {
-            s.serialize_field("itemCosts", &f)?;
-        } else {
-            s.skip_field("itemCosts")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialRecruitPool_SpecialRecruitCostDataBuilder<
     'a: 'b,
     'b,
@@ -2605,18 +2428,6 @@ impl<'a> Default for dict__int__intArgs {
     }
 }
 
-impl Serialize for dict__int__int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__int", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
-    }
-}
-
 pub struct dict__int__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2789,23 +2600,6 @@ impl<'a> Default for clz_Torappu_BasedRecruitPool_RecruitConstantsArgs<'a> {
             tagPriceList: None,
             maxRecruitTime: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_BasedRecruitPool_RecruitConstants<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_BasedRecruitPool_RecruitConstants", 2)?;
-        if let Some(f) = self.tagPriceList() {
-            s.serialize_field("tagPriceList", &f)?;
-        } else {
-            s.skip_field("tagPriceList")?;
-        }
-        s.serialize_field("maxRecruitTime", &self.maxRecruitTime())?;
-        s.end()
     }
 }
 
@@ -3141,40 +2935,6 @@ impl<'a> Default for clz_Torappu_SpecialRecruitPoolArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialRecruitPool<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialRecruitPool", 8)?;
-        if let Some(f) = self.recruitId() {
-            s.serialize_field("recruitId", &f)?;
-        } else {
-            s.skip_field("recruitId")?;
-        }
-        if let Some(f) = self.tagName() {
-            s.serialize_field("tagName", &f)?;
-        } else {
-            s.skip_field("tagName")?;
-        }
-        s.serialize_field("tagId", &self.tagId())?;
-        s.serialize_field("order", &self.order())?;
-        s.serialize_field("startDateTime", &self.startDateTime())?;
-        s.serialize_field("endDateTime", &self.endDateTime())?;
-        if let Some(f) = self.recruitTimeTable() {
-            s.serialize_field("recruitTimeTable", &f)?;
-        } else {
-            s.skip_field("recruitTimeTable")?;
-        }
-        if let Some(f) = self.recruitConstants() {
-            s.serialize_field("recruitConstants", &f)?;
-        } else {
-            s.skip_field("recruitConstants")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialRecruitPoolBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3448,23 +3208,6 @@ impl<'a> Default for clz_Torappu_GachaTagArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GachaTag<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaTag", 3)?;
-        s.serialize_field("tagId", &self.tagId())?;
-        if let Some(f) = self.tagName() {
-            s.serialize_field("tagName", &f)?;
-        } else {
-            s.skip_field("tagName")?;
-        }
-        s.serialize_field("tagGroup", &self.tagGroup())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GachaTagBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3644,18 +3387,6 @@ impl<'a> Default for clz_Torappu_RecruitPool_RecruitTimeArgs {
             timeLength: 0,
             recruitPrice: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RecruitPool_RecruitTime<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecruitPool_RecruitTime", 2)?;
-        s.serialize_field("timeLength", &self.timeLength())?;
-        s.serialize_field("recruitPrice", &self.recruitPrice())?;
-        s.end()
     }
 }
 
@@ -3860,26 +3591,6 @@ impl<'a> Default for clz_Torappu_RecruitPoolArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RecruitPool<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecruitPool", 2)?;
-        if let Some(f) = self.recruitTimeTable() {
-            s.serialize_field("recruitTimeTable", &f)?;
-        } else {
-            s.skip_field("recruitTimeTable")?;
-        }
-        if let Some(f) = self.recruitConstants() {
-            s.serialize_field("recruitConstants", &f)?;
-        } else {
-            s.skip_field("recruitConstants")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RecruitPoolBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4077,22 +3788,6 @@ impl<'a> Default for dict__int__clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for dict__int__clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__clz_Torappu_ItemBundle", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4261,22 +3956,6 @@ impl<'a> Default for clz_Torappu_PotentialMaterialConverterConfigArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_PotentialMaterialConverterConfigArgs { items: None }
-    }
-}
-
-impl Serialize for clz_Torappu_PotentialMaterialConverterConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_PotentialMaterialConverterConfig", 1)?;
-        if let Some(f) = self.items() {
-            s.serialize_field("items", &f)?;
-        } else {
-            s.skip_field("items")?;
-        }
-        s.end()
     }
 }
 
@@ -4451,18 +4130,6 @@ impl<'a> Default for clz_Torappu_GachaData_RecruitRangeArgs {
             rarityStart: 0,
             rarityEnd: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GachaData_RecruitRange<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_RecruitRange", 2)?;
-        s.serialize_field("rarityStart", &self.rarityStart())?;
-        s.serialize_field("rarityEnd", &self.rarityEnd())?;
-        s.end()
     }
 }
 
@@ -4659,23 +4326,6 @@ impl<'a> Default for dict__int__clz_Torappu_GachaData_RecruitRangeArgs<'a> {
     }
 }
 
-impl Serialize for dict__int__clz_Torappu_GachaData_RecruitRange<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__int__clz_Torappu_GachaData_RecruitRange", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__clz_Torappu_GachaData_RecruitRangeBuilder<
     'a: 'b,
     'b,
@@ -4869,22 +4519,6 @@ impl<'a> Default for dict__int__list_intArgs<'a> {
             key: 0,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__int__list_int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__list_int", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5110,29 +4744,6 @@ impl<'a> Default for clz_Torappu_GachaData_CarouselDataArgs<'a> {
             endTime: 0,
             spriteId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GachaData_CarouselData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_CarouselData", 5)?;
-        if let Some(f) = self.poolId() {
-            s.serialize_field("poolId", &f)?;
-        } else {
-            s.skip_field("poolId")?;
-        }
-        s.serialize_field("index", &self.index())?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.spriteId() {
-            s.serialize_field("spriteId", &f)?;
-        } else {
-            s.skip_field("spriteId")?;
-        }
-        s.end()
     }
 }
 
@@ -5390,24 +5001,6 @@ impl<'a> Default for clz_Torappu_GachaData_FreeLimitGachaDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GachaData_FreeLimitGachaData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_FreeLimitGachaData", 4)?;
-        if let Some(f) = self.poolId() {
-            s.serialize_field("poolId", &f)?;
-        } else {
-            s.skip_field("poolId")?;
-        }
-        s.serialize_field("openTime", &self.openTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("freeCount", &self.freeCount())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GachaData_FreeLimitGachaDataBuilder<
     'a: 'b,
     'b,
@@ -5612,22 +5205,6 @@ impl<'a> Default for clz_Torappu_GachaData_LimitTenGachaTktArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GachaData_LimitTenGachaTkt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_LimitTenGachaTkt", 2)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("endTime", &self.endTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GachaData_LimitTenGachaTktBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -5828,27 +5405,6 @@ impl<'a> Default for clz_Torappu_GachaData_LinkageTenGachaTktArgs<'a> {
             endTime: 0,
             gachaPoolId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GachaData_LinkageTenGachaTkt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_LinkageTenGachaTkt", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.gachaPoolId() {
-            s.serialize_field("gachaPoolId", &f)?;
-        } else {
-            s.skip_field("gachaPoolId")?;
-        }
-        s.end()
     }
 }
 
@@ -6088,28 +5644,6 @@ impl<'a> Default for clz_Torappu_GachaData_NormalGachaTktArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GachaData_NormalGachaTkt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData_NormalGachaTkt", 4)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.gachaPoolId() {
-            s.serialize_field("gachaPoolId", &f)?;
-        } else {
-            s.skip_field("gachaPoolId")?;
-        }
-        s.serialize_field("isTen", &self.isTen())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GachaData_NormalGachaTktBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6314,27 +5848,6 @@ impl<'a> Default for clz_Torappu_GachaData_FesGachaPoolRelateItemArgs<'a> {
             rarityRank5ItemId: None,
             rarityRank6ItemId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GachaData_FesGachaPoolRelateItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_GachaData_FesGachaPoolRelateItem", 2)?;
-        if let Some(f) = self.rarityRank5ItemId() {
-            s.serialize_field("rarityRank5ItemId", &f)?;
-        } else {
-            s.skip_field("rarityRank5ItemId")?;
-        }
-        if let Some(f) = self.rarityRank6ItemId() {
-            s.serialize_field("rarityRank6ItemId", &f)?;
-        } else {
-            s.skip_field("rarityRank6ItemId")?;
-        }
-        s.end()
     }
 }
 
@@ -6549,25 +6062,6 @@ impl<'a> Default for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemA
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItem",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_GachaData_FesGachaPoolRelateItemBuilder<
     'a: 'b,
     'b,
@@ -6767,22 +6261,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6949,18 +6427,6 @@ impl<'a> Default for dict__int__floatArgs {
     #[inline]
     fn default() -> Self {
         dict__int__floatArgs { key: 0, value: 0.0 }
-    }
-}
-
-impl Serialize for dict__int__float<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__float", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
     }
 }
 
@@ -7702,107 +7168,6 @@ impl<'a> Default for clz_Torappu_GachaDataArgs<'a> {
             dicRecruit6StarHint: None,
             specialGachaPercentDict: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GachaData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GachaData", 19)?;
-        if let Some(f) = self.gachaPoolClient() {
-            s.serialize_field("gachaPoolClient", &f)?;
-        } else {
-            s.skip_field("gachaPoolClient")?;
-        }
-        if let Some(f) = self.newbeeGachaPoolClient() {
-            s.serialize_field("newbeeGachaPoolClient", &f)?;
-        } else {
-            s.skip_field("newbeeGachaPoolClient")?;
-        }
-        if let Some(f) = self.specialRecruitPool() {
-            s.serialize_field("specialRecruitPool", &f)?;
-        } else {
-            s.skip_field("specialRecruitPool")?;
-        }
-        if let Some(f) = self.gachaTags() {
-            s.serialize_field("gachaTags", &f)?;
-        } else {
-            s.skip_field("gachaTags")?;
-        }
-        if let Some(f) = self.recruitPool() {
-            s.serialize_field("recruitPool", &f)?;
-        } else {
-            s.skip_field("recruitPool")?;
-        }
-        if let Some(f) = self.potentialMaterialConverter() {
-            s.serialize_field("potentialMaterialConverter", &f)?;
-        } else {
-            s.skip_field("potentialMaterialConverter")?;
-        }
-        if let Some(f) = self.classicPotentialMaterialConverter() {
-            s.serialize_field("classicPotentialMaterialConverter", &f)?;
-        } else {
-            s.skip_field("classicPotentialMaterialConverter")?;
-        }
-        if let Some(f) = self.recruitRarityTable() {
-            s.serialize_field("recruitRarityTable", &f)?;
-        } else {
-            s.skip_field("recruitRarityTable")?;
-        }
-        if let Some(f) = self.specialTagRarityTable() {
-            s.serialize_field("specialTagRarityTable", &f)?;
-        } else {
-            s.skip_field("specialTagRarityTable")?;
-        }
-        if let Some(f) = self.recruitDetail() {
-            s.serialize_field("recruitDetail", &f)?;
-        } else {
-            s.skip_field("recruitDetail")?;
-        }
-        s.serialize_field("showGachaLogEntry", &self.showGachaLogEntry())?;
-        if let Some(f) = self.carousel() {
-            s.serialize_field("carousel", &f)?;
-        } else {
-            s.skip_field("carousel")?;
-        }
-        if let Some(f) = self.freeGacha() {
-            s.serialize_field("freeGacha", &f)?;
-        } else {
-            s.skip_field("freeGacha")?;
-        }
-        if let Some(f) = self.limitTenGachaItem() {
-            s.serialize_field("limitTenGachaItem", &f)?;
-        } else {
-            s.skip_field("limitTenGachaItem")?;
-        }
-        if let Some(f) = self.linkageTenGachaItem() {
-            s.serialize_field("linkageTenGachaItem", &f)?;
-        } else {
-            s.skip_field("linkageTenGachaItem")?;
-        }
-        if let Some(f) = self.normalGachaItem() {
-            s.serialize_field("normalGachaItem", &f)?;
-        } else {
-            s.skip_field("normalGachaItem")?;
-        }
-        if let Some(f) = self.fesGachaPoolRelateItem() {
-            s.serialize_field("fesGachaPoolRelateItem", &f)?;
-        } else {
-            s.skip_field("fesGachaPoolRelateItem")?;
-        }
-        if let Some(f) = self.dicRecruit6StarHint() {
-            s.serialize_field("dicRecruit6StarHint", &f)?;
-        } else {
-            s.skip_field("dicRecruit6StarHint")?;
-        }
-        if let Some(f) = self.specialGachaPercentDict() {
-            s.serialize_field("specialGachaPercentDict", &f)?;
-        } else {
-            s.skip_field("specialGachaPercentDict")?;
-        }
-        s.end()
     }
 }
 

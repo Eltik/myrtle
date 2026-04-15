@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -133,27 +132,6 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
             value: 0.0,
             valueStr: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        s.serialize_field("value", &self.value())?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.end()
     }
 }
 
@@ -354,25 +332,6 @@ impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuff
       blackboard: None,
     }
   }
-}
-
-impl Serialize
-    for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase<
-        '_,
-    >
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhase", 1)?;
-        if let Some(f) = self.blackboard() {
-            s.serialize_field("blackboard", &f)?;
-        } else {
-            s.skip_field("blackboard")?;
-        }
-        s.end()
-    }
 }
 
 pub struct clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart_LegionModeBuffLevelPhaseBuilder<
@@ -597,36 +556,6 @@ impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuff
             descriptionHead: None,
             levelPhases: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_Battle_Legion_LegionModeBuffData_LegionModeBuffDataPart",
-            5,
-        )?;
-        s.serialize_field("isInheritable", &self.isInheritable())?;
-        s.serialize_field("isRedrawWhenReplace", &self.isRedrawWhenReplace())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.descriptionHead() {
-            s.serialize_field("descriptionHead", &f)?;
-        } else {
-            s.skip_field("descriptionHead")?;
-        }
-        if let Some(f) = self.levelPhases() {
-            s.serialize_field("levelPhases", &f)?;
-        } else {
-            s.skip_field("levelPhases")?;
-        }
-        s.end()
     }
 }
 
@@ -869,22 +798,6 @@ impl<'a> Default for clz_Torappu_Battle_Legion_LegionModeBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Battle_Legion_LegionModeBuffData", 1)?;
-        if let Some(f) = self.dataParts() {
-            s.serialize_field("dataParts", &f)?;
-        } else {
-            s.skip_field("dataParts")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Battle_Legion_LegionModeBuffDataBuilder<
     'a: 'b,
     'b,
@@ -1085,25 +998,6 @@ impl<'a> Default for dict__string__clz_Torappu_Battle_Legion_LegionModeBuffDataA
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_Battle_Legion_LegionModeBuffData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1314,24 +1208,6 @@ impl<'a> Default
         clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffDataArgs {
             legion_mode_buffs: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_SimpleKVTable_clz_Torappu_Battle_Legion_LegionModeBuffData",
-            1,
-        )?;
-        if let Some(f) = self.legion_mode_buffs() {
-            s.serialize_field("legion_mode_buffs", &f)?;
-        } else {
-            s.skip_field("legion_mode_buffs")?;
-        }
-        s.end()
     }
 }
 

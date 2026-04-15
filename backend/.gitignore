@@ -1,9 +1,7 @@
-target
+/target
+/tasks
 .env
-backend claude.txt
-types claude.txt
-debug_logs/
-debug_sync_data.json
-__pycache__
-/tests/score_calculation/output
-/backups
+.DS_Store
+deep_sea_dump.json
+sandbox_perm_dump.json
+backup

@@ -5,7 +5,14 @@
  * Use these functions in React components to interact with the DPS calculator backend.
  */
 
-import type { DpsCalculateRequest, DpsCalculateResponse, DpsEnemyStats, DpsListOperatorsResponse, DpsOperatorParams, DpsRangeParams } from "~/types/api/impl/dps-calculator";
+import type {
+    DpsCalculateRequest,
+    DpsCalculateResponse,
+    DpsEnemyStats,
+    DpsListOperatorsResponse,
+    DpsOperatorParams,
+    DpsRangeParams,
+} from "~/types/api/impl/dps-calculator";
 
 export type {
     DpsBuffs,
@@ -193,7 +200,7 @@ export async function compareDps(operatorIds: string[], params?: DpsOperatorPara
  * const results = searchOperators("blaze", operators);
  * ```
  */
-export function searchOperators(query: string, operators: DpsListOperatorsResponse["operators"]): DpsListOperatorsResponse["operators"] {
+export function searchOperators(query: string, operators: DpsListOperatorsResponse): DpsListOperatorsResponse {
     const lowerQuery = query.toLowerCase();
     return operators.filter((op) => op.name.toLowerCase().includes(lowerQuery) || op.id.toLowerCase().includes(lowerQuery) || op.calculatorName.toLowerCase().includes(lowerQuery));
 }
@@ -205,7 +212,7 @@ export function searchOperators(query: string, operators: DpsListOperatorsRespon
  * @param operators - List of operators to filter
  * @returns Filtered list of operators with the specified rarity
  */
-export function filterOperatorsByRarity(rarity: number, operators: DpsListOperatorsResponse["operators"]): DpsListOperatorsResponse["operators"] {
+export function filterOperatorsByRarity(rarity: number, operators: DpsListOperatorsResponse): DpsListOperatorsResponse {
     return operators.filter((op) => op.rarity === rarity);
 }
 
@@ -216,7 +223,7 @@ export function filterOperatorsByRarity(rarity: number, operators: DpsListOperat
  * @param operators - List of operators to filter
  * @returns Filtered list of operators with the specified profession
  */
-export function filterOperatorsByProfession(profession: string, operators: DpsListOperatorsResponse["operators"]): DpsListOperatorsResponse["operators"] {
+export function filterOperatorsByProfession(profession: string, operators: DpsListOperatorsResponse): DpsListOperatorsResponse {
     const lowerProfession = profession.toLowerCase();
     return operators.filter((op) => op.profession.toLowerCase() === lowerProfession);
 }

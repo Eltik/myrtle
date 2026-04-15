@@ -20,7 +20,7 @@ export function Header({ user, role, statsLoading, onRefresh }: { user: AuthUser
     return (
         <div className="flex items-center justify-between">
             <div>
-                <h2 className="scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight first:mt-0">Welcome back, {user.status.nickName}!</h2>
+                <h2 className="scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight first:mt-0">Welcome back, {user.nickname}!</h2>
                 <p className="text-muted-foreground text-sm leading-7">Lets get started.</p>
                 <span className={cn("rounded px-2 py-0.5 font-medium font-mono text-xs", ROLE_BADGE_STYLES[role])}>{ROLE_DISPLAY_NAMES[role]}</span>
             </div>

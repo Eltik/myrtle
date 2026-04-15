@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { useUnownedOperators } from "~/hooks/use-unowned-operators";
 import { useUserCharacters } from "~/hooks/use-user-characters";
-import type { CharacterData, DisplayCharacter } from "~/types/api/impl/user";
+import type { DisplayCharacter, EnrichedRosterEntry } from "~/types/api/impl/user";
 import type { OwnershipFilter, RarityFilter, SortBy, SortOrder, ViewMode } from "~/types/frontend/impl/user";
 import { CharacterCard } from "../character-card";
 import { CompactCharacterCard } from "../character-card/compact-card";
@@ -23,7 +23,7 @@ const STATIC_ICONS = [
 
 const OWNED_ONLY_SORTS = new Set<SortBy>(["level", "obtained", "potential"]);
 
-const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
+const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, lastRef }: { char: EnrichedRosterEntry; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
     const isMaxed = checkIsMaxed(char);
 
     return (
@@ -33,7 +33,7 @@ const DetailedCardWrapper = memo(function DetailedCardWrapper({ char, isLast, la
     );
 });
 
-const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, lastRef }: { char: CharacterData; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
+const CompactCardWrapper = memo(function CompactCardWrapper({ char, isLast, lastRef }: { char: EnrichedRosterEntry; isLast: boolean; lastRef: ((node: HTMLDivElement) => void) | null }) {
     const isMaxed = checkIsMaxed(char);
 
     return (
@@ -101,7 +101,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
     const displayCharacters = useMemo((): DisplayCharacter[] | null => {
         if (ownershipFilter === "owned") return null; // Use the original path
 
-        const owned: DisplayCharacter[] = characters ? (Object.values(characters) as CharacterData[]).map((c) => ({ ...c, isOwned: true as const })) : [];
+        const owned: DisplayCharacter[] = characters ? characters.map((c) => ({ ...c, isOwned: true as const })) : [];
         const unowned: DisplayCharacter[] = unownedOperators ?? [];
 
         if (ownershipFilter === "unowned") return unowned;
@@ -110,8 +110,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
 
     const sortedAndFilteredCharacters = useMemo(() => {
         if (!characters) return [];
-        const chars = Object.values(characters) as (CharacterData & { static?: { name?: string; rarity?: string } })[];
-        return filterAndSortCharacters(chars, sortBy, sortOrder, filterRarity, searchTerm);
+        return filterAndSortCharacters(characters, sortBy, sortOrder, filterRarity, searchTerm);
     }, [characters, sortBy, sortOrder, filterRarity, searchTerm]);
 
     const sortedAndFilteredDisplay = useMemo(() => {
@@ -165,7 +164,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
         );
     }
 
-    if (!characters || Object.keys(characters).length === 0) {
+    if (!characters || characters.length === 0) {
         return (
             <div className="flex min-h-100 flex-col items-center justify-center text-center">
                 <p className="text-muted-foreground">No characters found</p>
@@ -173,9 +172,9 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
         );
     }
 
-    const renderCard = (char: DisplayCharacter | CharacterData, index: number) => {
+    const renderCard = (char: DisplayCharacter | EnrichedRosterEntry, index: number) => {
         const isLast = index === displayCount - 1;
-        const key = "isOwned" in char && !char.isOwned ? `unowned-${char.charId}` : char.charId;
+        const key = "isOwned" in char && !char.isOwned ? `unowned-${char.charId}` : ("operator_id" in char ? char.operator_id : "unknown");
 
         // Unowned character
         if ("isOwned" in char && !char.isOwned) {
@@ -187,7 +186,7 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
         }
 
         // Owned character
-        const ownedChar = char as CharacterData;
+        const ownedChar = char as EnrichedRosterEntry;
         if (viewMode === "detailed") {
             return <DetailedCardWrapper char={ownedChar} isLast={isLast} key={key} lastRef={lastCharacterRef} />;
         }
@@ -218,17 +217,17 @@ export function CharactersGrid({ userId }: CharactersGridProps) {
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
             ) : ownershipFilter === "owned" ? (
-                // Original owned-only rendering path (unchanged)
+                // Original owned-only rendering path
                 viewMode === "detailed" ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
-                            <DetailedCardWrapper char={char} isLast={index === displayCount - 1} key={char.charId} lastRef={lastCharacterRef} />
+                            <DetailedCardWrapper char={char} isLast={index === displayCount - 1} key={char.operator_id} lastRef={lastCharacterRef} />
                         ))}
                     </div>
                 ) : (
                     <div className="grid 3xl:grid-cols-7 grid-cols-3 justify-center gap-3 sm:grid-cols-4 sm:justify-start lg:grid-cols-5 xl:grid-cols-6">
                         {sortedAndFilteredCharacters.slice(0, displayCount).map((char, index) => (
-                            <CompactCardWrapper char={char} isLast={index === displayCount - 1} key={char.charId} lastRef={lastCharacterRef} />
+                            <CompactCardWrapper char={char} isLast={index === displayCount - 1} key={char.operator_id} lastRef={lastCharacterRef} />
                         ))}
                     </div>
                 )

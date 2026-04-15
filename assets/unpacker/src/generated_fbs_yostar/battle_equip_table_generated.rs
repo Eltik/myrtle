@@ -5,6 +5,8 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
@@ -80,6 +82,7 @@ impl core::fmt::Debug for enum__Torappu_UniEquipTarget {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_UniEquipTarget {
     type Inner = Self;
     #[inline]
@@ -189,6 +192,7 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
@@ -2421,8 +2425,9 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
     pub const VT_TARGET: flatbuffers::VOffsetT = 6;
     pub const VT_ISTOKEN: flatbuffers::VOffsetT = 8;
     pub const VT_VALIDINGAMETAG: flatbuffers::VOffsetT = 10;
-    pub const VT_ADDOROVERRIDETALENTDATABUNDLE: flatbuffers::VOffsetT = 12;
-    pub const VT_OVERRIDETRAITDATABUNDLE: flatbuffers::VOffsetT = 14;
+    pub const VT_VALIDINMAPTAG: flatbuffers::VOffsetT = 12;
+    pub const VT_ADDOROVERRIDETALENTDATABUNDLE: flatbuffers::VOffsetT = 14;
+    pub const VT_OVERRIDETRAITDATABUNDLE: flatbuffers::VOffsetT = 16;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -2440,6 +2445,9 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
         if let Some(x) = args.addOrOverrideTalentDataBundle {
             builder.add_addOrOverrideTalentDataBundle(x);
         }
+        if let Some(x) = args.validInMapTag {
+            builder.add_validInMapTag(x);
+        }
         if let Some(x) = args.validInGameTag {
             builder.add_validInGameTag(x);
         }
@@ -2456,6 +2464,7 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
         let target = self.target();
         let isToken = self.isToken();
         let validInGameTag = self.validInGameTag().map(|x| x.to_string());
+        let validInMapTag = self.validInMapTag().map(|x| x.to_string());
         let addOrOverrideTalentDataBundle = self
             .addOrOverrideTalentDataBundle()
             .map(|x| Box::new(x.unpack()));
@@ -2465,6 +2474,7 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
             target,
             isToken,
             validInGameTag,
+            validInMapTag,
             addOrOverrideTalentDataBundle,
             overrideTraitDataBundle,
         }
@@ -2520,6 +2530,18 @@ impl<'a> clz_Torappu_BattleUniEquipData<'a> {
         }
     }
     #[inline]
+    pub fn validInMapTag(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_BattleUniEquipData::VT_VALIDINMAPTAG,
+                None,
+            )
+        }
+    }
+    #[inline]
     pub fn addOrOverrideTalentDataBundle(
         &self,
     ) -> Option<clz_Torappu_CharacterData_EquipTalentDataBundle<'a>> {
@@ -2555,6 +2577,7 @@ impl flatbuffers::Verifiable for clz_Torappu_BattleUniEquipData<'_> {
      .visit_field::<enum__Torappu_UniEquipTarget>("target", Self::VT_TARGET, false)?
      .visit_field::<bool>("isToken", Self::VT_ISTOKEN, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("validInGameTag", Self::VT_VALIDINGAMETAG, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("validInMapTag", Self::VT_VALIDINMAPTAG, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_EquipTalentDataBundle>>("addOrOverrideTalentDataBundle", Self::VT_ADDOROVERRIDETALENTDATABUNDLE, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CharacterData_EquipTraitDataBundle>>("overrideTraitDataBundle", Self::VT_OVERRIDETRAITDATABUNDLE, false)?
      .finish();
@@ -2566,6 +2589,7 @@ pub struct clz_Torappu_BattleUniEquipDataArgs<'a> {
     pub target: enum__Torappu_UniEquipTarget,
     pub isToken: bool,
     pub validInGameTag: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub validInMapTag: Option<flatbuffers::WIPOffset<&'a str>>,
     pub addOrOverrideTalentDataBundle:
         Option<flatbuffers::WIPOffset<clz_Torappu_CharacterData_EquipTalentDataBundle<'a>>>,
     pub overrideTraitDataBundle:
@@ -2579,6 +2603,7 @@ impl<'a> Default for clz_Torappu_BattleUniEquipDataArgs<'a> {
             target: enum__Torappu_UniEquipTarget::NONE,
             isToken: false,
             validInGameTag: None,
+            validInMapTag: None,
             addOrOverrideTalentDataBundle: None,
             overrideTraitDataBundle: None,
         }
@@ -2615,6 +2640,13 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_BattleUniEquipDataB
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
             clz_Torappu_BattleUniEquipData::VT_VALIDINGAMETAG,
             validInGameTag,
+        );
+    }
+    #[inline]
+    pub fn add_validInMapTag(&mut self, validInMapTag: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_BattleUniEquipData::VT_VALIDINMAPTAG,
+            validInMapTag,
         );
     }
     #[inline]
@@ -2659,6 +2691,7 @@ impl core::fmt::Debug for clz_Torappu_BattleUniEquipData<'_> {
         ds.field("target", &self.target());
         ds.field("isToken", &self.isToken());
         ds.field("validInGameTag", &self.validInGameTag());
+        ds.field("validInMapTag", &self.validInMapTag());
         ds.field(
             "addOrOverrideTalentDataBundle",
             &self.addOrOverrideTalentDataBundle(),
@@ -2674,6 +2707,7 @@ pub struct clz_Torappu_BattleUniEquipDataT {
     pub target: enum__Torappu_UniEquipTarget,
     pub isToken: bool,
     pub validInGameTag: Option<String>,
+    pub validInMapTag: Option<String>,
     pub addOrOverrideTalentDataBundle:
         Option<Box<clz_Torappu_CharacterData_EquipTalentDataBundleT>>,
     pub overrideTraitDataBundle: Option<Box<clz_Torappu_CharacterData_EquipTraitDataBundleT>>,
@@ -2685,6 +2719,7 @@ impl Default for clz_Torappu_BattleUniEquipDataT {
             target: enum__Torappu_UniEquipTarget::NONE,
             isToken: false,
             validInGameTag: None,
+            validInMapTag: None,
             addOrOverrideTalentDataBundle: None,
             overrideTraitDataBundle: None,
         }
@@ -2699,6 +2734,7 @@ impl clz_Torappu_BattleUniEquipDataT {
         let target = self.target;
         let isToken = self.isToken;
         let validInGameTag = self.validInGameTag.as_ref().map(|x| _fbb.create_string(x));
+        let validInMapTag = self.validInMapTag.as_ref().map(|x| _fbb.create_string(x));
         let addOrOverrideTalentDataBundle = self
             .addOrOverrideTalentDataBundle
             .as_ref()
@@ -2711,6 +2747,7 @@ impl clz_Torappu_BattleUniEquipDataT {
                 target,
                 isToken,
                 validInGameTag,
+                validInMapTag,
                 addOrOverrideTalentDataBundle,
                 overrideTraitDataBundle,
             },

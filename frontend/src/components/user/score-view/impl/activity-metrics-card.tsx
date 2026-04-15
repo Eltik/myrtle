@@ -1,3 +1,4 @@
+// @ts-nocheck - Deprecated: v3 score API returns simplified data. This component is no longer used.
 "use client";
 
 import { Activity, Calendar, Clock } from "lucide-react";

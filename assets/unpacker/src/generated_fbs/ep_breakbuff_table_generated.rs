@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -118,22 +117,6 @@ impl<'a> Default for clz_Torappu_EPBreakBuffDataArgs<'a> {
             elementBreakDuration: 0.0,
             elementBuffs: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_EPBreakBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EPBreakBuffData", 2)?;
-        s.serialize_field("elementBreakDuration", &self.elementBreakDuration())?;
-        if let Some(f) = self.elementBuffs() {
-            s.serialize_field("elementBuffs", &f)?;
-        } else {
-            s.skip_field("elementBuffs")?;
-        }
-        s.end()
     }
 }
 
@@ -340,22 +323,6 @@ impl<'a> Default for dict__string__clz_Torappu_EPBreakBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_EPBreakBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_EPBreakBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_EPBreakBuffDataBuilder<
     'a: 'b,
     'b,
@@ -542,22 +509,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs<'
         clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffDataArgs {
             ep_breakbuffs: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData", 1)?;
-        if let Some(f) = self.ep_breakbuffs() {
-            s.serialize_field("ep_breakbuffs", &f)?;
-        } else {
-            s.skip_field("ep_breakbuffs")?;
-        }
-        s.end()
     }
 }
 

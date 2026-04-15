@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -262,52 +261,6 @@ impl<'a> Default for clz_Torappu_ChapterDataArgs<'a> {
             endZoneId: None,
             chapterEndStageId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ChapterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ChapterData", 8)?;
-        if let Some(f) = self.chapterId() {
-            s.serialize_field("chapterId", &f)?;
-        } else {
-            s.skip_field("chapterId")?;
-        }
-        if let Some(f) = self.chapterName() {
-            s.serialize_field("chapterName", &f)?;
-        } else {
-            s.skip_field("chapterName")?;
-        }
-        if let Some(f) = self.chapterName2() {
-            s.serialize_field("chapterName2", &f)?;
-        } else {
-            s.skip_field("chapterName2")?;
-        }
-        s.serialize_field("chapterIndex", &self.chapterIndex())?;
-        if let Some(f) = self.preposedChapterId() {
-            s.serialize_field("preposedChapterId", &f)?;
-        } else {
-            s.skip_field("preposedChapterId")?;
-        }
-        if let Some(f) = self.startZoneId() {
-            s.serialize_field("startZoneId", &f)?;
-        } else {
-            s.skip_field("startZoneId")?;
-        }
-        if let Some(f) = self.endZoneId() {
-            s.serialize_field("endZoneId", &f)?;
-        } else {
-            s.skip_field("endZoneId")?;
-        }
-        if let Some(f) = self.chapterEndStageId() {
-            s.serialize_field("chapterEndStageId", &f)?;
-        } else {
-            s.skip_field("chapterEndStageId")?;
-        }
-        s.end()
     }
 }
 
@@ -581,22 +534,6 @@ impl<'a> Default for dict__string__clz_Torappu_ChapterDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ChapterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_ChapterData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ChapterDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -778,22 +715,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ChapterDataArgs { chapters: None }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_ChapterData", 1)?;
-        if let Some(f) = self.chapters() {
-            s.serialize_field("chapters", &f)?;
-        } else {
-            s.skip_field("chapters")?;
-        }
-        s.end()
     }
 }
 

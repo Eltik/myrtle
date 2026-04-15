@@ -5,9 +5,107 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_SPECIAL_OPERATOR_TARGET_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_SPECIAL_OPERATOR_TARGET_TYPE: i32 = 1;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_SPECIAL_OPERATOR_TARGET_TYPE:
+    [enum__Torappu_SpecialOperatorTargetType; 2] = [
+    enum__Torappu_SpecialOperatorTargetType::NONE,
+    enum__Torappu_SpecialOperatorTargetType::ROGUE,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_SpecialOperatorTargetType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_SpecialOperatorTargetType {
+    pub const NONE: Self = Self(0);
+    pub const ROGUE: Self = Self(1);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 1;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::NONE, Self::ROGUE];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::ROGUE => Some("ROGUE"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_SpecialOperatorTargetType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpecialOperatorTargetType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_SpecialOperatorTargetType {
+    type Output = enum__Torappu_SpecialOperatorTargetType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_SpecialOperatorTargetType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_SpecialOperatorTargetType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_SpecialOperatorTargetType {}
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
@@ -63,6 +161,7 @@ impl core::fmt::Debug for enum__Torappu_BuildableType {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuildableType {
     type Inner = Self;
     #[inline]
@@ -180,6 +279,7 @@ impl core::fmt::Debug for enum__Torappu_RarityRank {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RarityRank {
     type Inner = Self;
     #[inline]
@@ -313,6 +413,7 @@ impl core::fmt::Debug for enum__Torappu_ProfessionCategory {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionCategory {
     type Inner = Self;
     #[inline]
@@ -422,6 +523,7 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
     #[inline]
@@ -476,13 +578,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 84;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -568,6 +670,14 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 85] = [
     enum__Torappu_ItemType::EMOTICON_SET,
     enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA,
     enum__Torappu_ItemType::EXCLUSIVE_TKT_GACHA_10,
+    enum__Torappu_ItemType::SO_CHAR_EXP,
+    enum__Torappu_ItemType::GIFTPACKAGE_TKT,
+    enum__Torappu_ItemType::VOUCHER_SKIN_V2,
+    enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
+    enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
+    enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -660,9 +770,17 @@ impl enum__Torappu_ItemType {
     pub const EMOTICON_SET: Self = Self(82);
     pub const EXCLUSIVE_TKT_GACHA: Self = Self(83);
     pub const EXCLUSIVE_TKT_GACHA_10: Self = Self(84);
+    pub const SO_CHAR_EXP: Self = Self(85);
+    pub const GIFTPACKAGE_TKT: Self = Self(86);
+    pub const VOUCHER_SKIN_V2: Self = Self(87);
+    pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
+    pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
+    pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 84;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -749,6 +867,14 @@ impl enum__Torappu_ItemType {
         Self::EMOTICON_SET,
         Self::EXCLUSIVE_TKT_GACHA,
         Self::EXCLUSIVE_TKT_GACHA_10,
+        Self::SO_CHAR_EXP,
+        Self::GIFTPACKAGE_TKT,
+        Self::VOUCHER_SKIN_V2,
+        Self::RANDOM_VOUCHER_SKIN,
+        Self::ACT1VHALFIDLE_ITEM,
+        Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -838,6 +964,14 @@ impl enum__Torappu_ItemType {
             Self::EMOTICON_SET => Some("EMOTICON_SET"),
             Self::EXCLUSIVE_TKT_GACHA => Some("EXCLUSIVE_TKT_GACHA"),
             Self::EXCLUSIVE_TKT_GACHA_10 => Some("EXCLUSIVE_TKT_GACHA_10"),
+            Self::SO_CHAR_EXP => Some("SO_CHAR_EXP"),
+            Self::GIFTPACKAGE_TKT => Some("GIFTPACKAGE_TKT"),
+            Self::VOUCHER_SKIN_V2 => Some("VOUCHER_SKIN_V2"),
+            Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
+            Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
+            Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -851,6 +985,7 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ItemType {
     type Inner = Self;
     #[inline]
@@ -946,6 +1081,7 @@ impl core::fmt::Debug for enum__Torappu_CharacterData_PotentialRank_TypeEnum {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CharacterData_PotentialRank_TypeEnum {
     type Inner = Self;
     #[inline]
@@ -1000,13 +1136,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 42;
+pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 44;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 43] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 45] = [
     enum__Torappu_AbnormalFlag::STUNNED,
     enum__Torappu_AbnormalFlag::SP_RECOVER_STOPPED,
     enum__Torappu_AbnormalFlag::TARGET_FREE,
@@ -1049,6 +1185,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 
     enum__Torappu_AbnormalFlag::PALSY,
     enum__Torappu_AbnormalFlag::PALSYING,
     enum__Torappu_AbnormalFlag::ATTRACTED,
+    enum__Torappu_AbnormalFlag::FEARED_PRIVATE,
+    enum__Torappu_AbnormalFlag::DOZE,
     enum__Torappu_AbnormalFlag::E_NUM,
 ];
 
@@ -1099,10 +1237,12 @@ impl enum__Torappu_AbnormalFlag {
     pub const PALSY: Self = Self(39);
     pub const PALSYING: Self = Self(40);
     pub const ATTRACTED: Self = Self(41);
-    pub const E_NUM: Self = Self(42);
+    pub const FEARED_PRIVATE: Self = Self(42);
+    pub const DOZE: Self = Self(43);
+    pub const E_NUM: Self = Self(44);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 42;
+    pub const ENUM_MAX: i32 = 44;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::STUNNED,
         Self::SP_RECOVER_STOPPED,
@@ -1146,6 +1286,8 @@ impl enum__Torappu_AbnormalFlag {
         Self::PALSY,
         Self::PALSYING,
         Self::ATTRACTED,
+        Self::FEARED_PRIVATE,
+        Self::DOZE,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -1197,6 +1339,8 @@ impl enum__Torappu_AbnormalFlag {
             Self::PALSY => Some("PALSY"),
             Self::PALSYING => Some("PALSYING"),
             Self::ATTRACTED => Some("ATTRACTED"),
+            Self::FEARED_PRIVATE => Some("FEARED_PRIVATE"),
+            Self::DOZE => Some("DOZE"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -1211,6 +1355,7 @@ impl core::fmt::Debug for enum__Torappu_AbnormalFlag {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AbnormalFlag {
     type Inner = Self;
     #[inline]
@@ -1308,6 +1453,7 @@ impl core::fmt::Debug for enum__Torappu_AbnormalCombo {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AbnormalCombo {
     type Inner = Self;
     #[inline]
@@ -1547,6 +1693,7 @@ impl core::fmt::Debug for enum__Torappu_AttributeType {
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AttributeType {
     type Inner = Self;
     #[inline]
@@ -1655,6 +1802,7 @@ impl core::fmt::Debug for enum__Torappu_AttributeModifierData_AttributeModifier_
         }
     }
 }
+
 impl<'a> flatbuffers::Follow<'a>
     for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType
 {
@@ -8329,37 +8477,39 @@ impl<'a> clz_Torappu_CharacterData<'a> {
     pub const VT_NAME: flatbuffers::VOffsetT = 4;
     pub const VT_DESCRIPTION: flatbuffers::VOffsetT = 6;
     pub const VT_SORTINDEX: flatbuffers::VOffsetT = 8;
-    pub const VT_CANUSEGENERALPOTENTIALITEM: flatbuffers::VOffsetT = 10;
-    pub const VT_CANUSEACTIVITYPOTENTIALITEM: flatbuffers::VOffsetT = 12;
-    pub const VT_POTENTIALITEMID: flatbuffers::VOffsetT = 14;
-    pub const VT_ACTIVITYPOTENTIALITEMID: flatbuffers::VOffsetT = 16;
-    pub const VT_CLASSICPOTENTIALITEMID: flatbuffers::VOffsetT = 18;
-    pub const VT_NATIONID: flatbuffers::VOffsetT = 20;
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 22;
-    pub const VT_TEAMID: flatbuffers::VOffsetT = 24;
-    pub const VT_MAINPOWER: flatbuffers::VOffsetT = 26;
-    pub const VT_SUBPOWER: flatbuffers::VOffsetT = 28;
-    pub const VT_DISPLAYNUMBER: flatbuffers::VOffsetT = 30;
-    pub const VT_APPELLATION: flatbuffers::VOffsetT = 32;
-    pub const VT_POSITION: flatbuffers::VOffsetT = 34;
-    pub const VT_TAGLIST: flatbuffers::VOffsetT = 36;
-    pub const VT_ITEMUSAGE: flatbuffers::VOffsetT = 38;
-    pub const VT_ITEMDESC: flatbuffers::VOffsetT = 40;
-    pub const VT_ITEMOBTAINAPPROACH: flatbuffers::VOffsetT = 42;
-    pub const VT_ISNOTOBTAINABLE: flatbuffers::VOffsetT = 44;
-    pub const VT_ISSPCHAR: flatbuffers::VOffsetT = 46;
-    pub const VT_MAXPOTENTIALLEVEL: flatbuffers::VOffsetT = 48;
-    pub const VT_RARITY: flatbuffers::VOffsetT = 50;
-    pub const VT_PROFESSION: flatbuffers::VOffsetT = 52;
-    pub const VT_SUBPROFESSIONID: flatbuffers::VOffsetT = 54;
-    pub const VT_TRAIT_: flatbuffers::VOffsetT = 56;
-    pub const VT_PHASES: flatbuffers::VOffsetT = 58;
-    pub const VT_SKILLS: flatbuffers::VOffsetT = 60;
-    pub const VT_DISPLAYTOKENDICT: flatbuffers::VOffsetT = 62;
-    pub const VT_TALENTS: flatbuffers::VOffsetT = 64;
-    pub const VT_POTENTIALRANKS: flatbuffers::VOffsetT = 66;
-    pub const VT_FAVORKEYFRAMES: flatbuffers::VOffsetT = 68;
-    pub const VT_ALLSKILLLVLUP: flatbuffers::VOffsetT = 70;
+    pub const VT_SPTARGETTYPE: flatbuffers::VOffsetT = 10;
+    pub const VT_SPTARGETID: flatbuffers::VOffsetT = 12;
+    pub const VT_CANUSEGENERALPOTENTIALITEM: flatbuffers::VOffsetT = 14;
+    pub const VT_CANUSEACTIVITYPOTENTIALITEM: flatbuffers::VOffsetT = 16;
+    pub const VT_POTENTIALITEMID: flatbuffers::VOffsetT = 18;
+    pub const VT_ACTIVITYPOTENTIALITEMID: flatbuffers::VOffsetT = 20;
+    pub const VT_CLASSICPOTENTIALITEMID: flatbuffers::VOffsetT = 22;
+    pub const VT_NATIONID: flatbuffers::VOffsetT = 24;
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 26;
+    pub const VT_TEAMID: flatbuffers::VOffsetT = 28;
+    pub const VT_MAINPOWER: flatbuffers::VOffsetT = 30;
+    pub const VT_SUBPOWER: flatbuffers::VOffsetT = 32;
+    pub const VT_DISPLAYNUMBER: flatbuffers::VOffsetT = 34;
+    pub const VT_APPELLATION: flatbuffers::VOffsetT = 36;
+    pub const VT_POSITION: flatbuffers::VOffsetT = 38;
+    pub const VT_TAGLIST: flatbuffers::VOffsetT = 40;
+    pub const VT_ITEMUSAGE: flatbuffers::VOffsetT = 42;
+    pub const VT_ITEMDESC: flatbuffers::VOffsetT = 44;
+    pub const VT_ITEMOBTAINAPPROACH: flatbuffers::VOffsetT = 46;
+    pub const VT_ISNOTOBTAINABLE: flatbuffers::VOffsetT = 48;
+    pub const VT_ISSPCHAR: flatbuffers::VOffsetT = 50;
+    pub const VT_MAXPOTENTIALLEVEL: flatbuffers::VOffsetT = 52;
+    pub const VT_RARITY: flatbuffers::VOffsetT = 54;
+    pub const VT_PROFESSION: flatbuffers::VOffsetT = 56;
+    pub const VT_SUBPROFESSIONID: flatbuffers::VOffsetT = 58;
+    pub const VT_TRAIT_: flatbuffers::VOffsetT = 60;
+    pub const VT_PHASES: flatbuffers::VOffsetT = 62;
+    pub const VT_SKILLS: flatbuffers::VOffsetT = 64;
+    pub const VT_DISPLAYTOKENDICT: flatbuffers::VOffsetT = 66;
+    pub const VT_TALENTS: flatbuffers::VOffsetT = 68;
+    pub const VT_POTENTIALRANKS: flatbuffers::VOffsetT = 70;
+    pub const VT_FAVORKEYFRAMES: flatbuffers::VOffsetT = 72;
+    pub const VT_ALLSKILLLVLUP: flatbuffers::VOffsetT = 74;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -8444,6 +8594,10 @@ impl<'a> clz_Torappu_CharacterData<'a> {
         if let Some(x) = args.potentialItemId {
             builder.add_potentialItemId(x);
         }
+        if let Some(x) = args.spTargetId {
+            builder.add_spTargetId(x);
+        }
+        builder.add_spTargetType(args.spTargetType);
         builder.add_sortIndex(args.sortIndex);
         if let Some(x) = args.description {
             builder.add_description(x);
@@ -8462,6 +8616,8 @@ impl<'a> clz_Torappu_CharacterData<'a> {
         let name = self.name().map(|x| x.to_string());
         let description = self.description().map(|x| x.to_string());
         let sortIndex = self.sortIndex();
+        let spTargetType = self.spTargetType();
+        let spTargetId = self.spTargetId().map(|x| x.to_string());
         let canUseGeneralPotentialItem = self.canUseGeneralPotentialItem();
         let canUseActivityPotentialItem = self.canUseActivityPotentialItem();
         let potentialItemId = self.potentialItemId().map(|x| x.to_string());
@@ -8515,6 +8671,8 @@ impl<'a> clz_Torappu_CharacterData<'a> {
             name,
             description,
             sortIndex,
+            spTargetType,
+            spTargetId,
             canUseGeneralPotentialItem,
             canUseActivityPotentialItem,
             potentialItemId,
@@ -8580,6 +8738,32 @@ impl<'a> clz_Torappu_CharacterData<'a> {
             self._tab
                 .get::<i32>(clz_Torappu_CharacterData::VT_SORTINDEX, Some(0))
                 .unwrap()
+        }
+    }
+    #[inline]
+    pub fn spTargetType(&self) -> enum__Torappu_SpecialOperatorTargetType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_SpecialOperatorTargetType>(
+                    clz_Torappu_CharacterData::VT_SPTARGETTYPE,
+                    Some(enum__Torappu_SpecialOperatorTargetType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn spTargetId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CharacterData::VT_SPTARGETID,
+                None,
+            )
         }
     }
     #[inline]
@@ -9029,6 +9213,8 @@ impl flatbuffers::Verifiable for clz_Torappu_CharacterData<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("description", Self::VT_DESCRIPTION, false)?
      .visit_field::<i32>("sortIndex", Self::VT_SORTINDEX, false)?
+     .visit_field::<enum__Torappu_SpecialOperatorTargetType>("spTargetType", Self::VT_SPTARGETTYPE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("spTargetId", Self::VT_SPTARGETID, false)?
      .visit_field::<bool>("canUseGeneralPotentialItem", Self::VT_CANUSEGENERALPOTENTIALITEM, false)?
      .visit_field::<bool>("canUseActivityPotentialItem", Self::VT_CANUSEACTIVITYPOTENTIALITEM, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<&str>>("potentialItemId", Self::VT_POTENTIALITEMID, false)?
@@ -9068,6 +9254,8 @@ pub struct clz_Torappu_CharacterDataArgs<'a> {
     pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub description: Option<flatbuffers::WIPOffset<&'a str>>,
     pub sortIndex: i32,
+    pub spTargetType: enum__Torappu_SpecialOperatorTargetType,
+    pub spTargetId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub canUseGeneralPotentialItem: bool,
     pub canUseActivityPotentialItem: bool,
     pub potentialItemId: Option<flatbuffers::WIPOffset<&'a str>>,
@@ -9107,6 +9295,8 @@ impl<'a> Default for clz_Torappu_CharacterDataArgs<'a> {
             name: None,
             description: None,
             sortIndex: 0,
+            spTargetType: enum__Torappu_SpecialOperatorTargetType::NONE,
+            spTargetId: None,
             canUseGeneralPotentialItem: false,
             canUseActivityPotentialItem: false,
             potentialItemId: None,
@@ -9165,6 +9355,22 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CharacterDataBuilde
     pub fn add_sortIndex(&mut self, sortIndex: i32) {
         self.fbb_
             .push_slot::<i32>(clz_Torappu_CharacterData::VT_SORTINDEX, sortIndex, 0);
+    }
+    #[inline]
+    pub fn add_spTargetType(&mut self, spTargetType: enum__Torappu_SpecialOperatorTargetType) {
+        self.fbb_
+            .push_slot::<enum__Torappu_SpecialOperatorTargetType>(
+                clz_Torappu_CharacterData::VT_SPTARGETTYPE,
+                spTargetType,
+                enum__Torappu_SpecialOperatorTargetType::NONE,
+            );
+    }
+    #[inline]
+    pub fn add_spTargetId(&mut self, spTargetId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CharacterData::VT_SPTARGETID,
+            spTargetId,
+        );
     }
     #[inline]
     pub fn add_canUseGeneralPotentialItem(&mut self, canUseGeneralPotentialItem: bool) {
@@ -9486,6 +9692,8 @@ impl core::fmt::Debug for clz_Torappu_CharacterData<'_> {
         ds.field("name", &self.name());
         ds.field("description", &self.description());
         ds.field("sortIndex", &self.sortIndex());
+        ds.field("spTargetType", &self.spTargetType());
+        ds.field("spTargetId", &self.spTargetId());
         ds.field(
             "canUseGeneralPotentialItem",
             &self.canUseGeneralPotentialItem(),
@@ -9532,6 +9740,8 @@ pub struct clz_Torappu_CharacterDataT {
     pub name: Option<String>,
     pub description: Option<String>,
     pub sortIndex: i32,
+    pub spTargetType: enum__Torappu_SpecialOperatorTargetType,
+    pub spTargetId: Option<String>,
     pub canUseGeneralPotentialItem: bool,
     pub canUseActivityPotentialItem: bool,
     pub potentialItemId: Option<String>,
@@ -9572,6 +9782,8 @@ impl Default for clz_Torappu_CharacterDataT {
             name: None,
             description: None,
             sortIndex: 0,
+            spTargetType: enum__Torappu_SpecialOperatorTargetType::NONE,
+            spTargetId: None,
             canUseGeneralPotentialItem: false,
             canUseActivityPotentialItem: false,
             potentialItemId: None,
@@ -9614,6 +9826,8 @@ impl clz_Torappu_CharacterDataT {
         let name = self.name.as_ref().map(|x| _fbb.create_string(x));
         let description = self.description.as_ref().map(|x| _fbb.create_string(x));
         let sortIndex = self.sortIndex;
+        let spTargetType = self.spTargetType;
+        let spTargetId = self.spTargetId.as_ref().map(|x| _fbb.create_string(x));
         let canUseGeneralPotentialItem = self.canUseGeneralPotentialItem;
         let canUseActivityPotentialItem = self.canUseActivityPotentialItem;
         let potentialItemId = self.potentialItemId.as_ref().map(|x| _fbb.create_string(x));
@@ -9687,6 +9901,8 @@ impl clz_Torappu_CharacterDataT {
                 name,
                 description,
                 sortIndex,
+                spTargetType,
+                spTargetId,
                 canUseGeneralPotentialItem,
                 canUseActivityPotentialItem,
                 potentialItemId,

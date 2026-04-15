@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -59,18 +58,6 @@ impl core::fmt::Debug for enum__Torappu_SpCharMissionCondType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SpCharMissionCondType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SpCharMissionCondType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -128,13 +115,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -226,6 +213,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -324,9 +313,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -419,6 +410,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -514,6 +507,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -525,18 +520,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -635,18 +618,6 @@ impl core::fmt::Debug for enum__Torappu_CharMasterType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CharMasterType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CharMasterType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -809,22 +780,6 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1019,23 +974,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -1322,38 +1260,6 @@ impl<'a> Default for clz_Torappu_SpCharMissionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpCharMissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpCharMissionData", 6)?;
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.missionId() {
-            s.serialize_field("missionId", &f)?;
-        } else {
-            s.skip_field("missionId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("condType", &self.condType())?;
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpCharMissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1611,23 +1517,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpCharMissionDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpCharMissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_SpCharMissionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpCharMissionDataBuilder<
     'a: 'b,
     'b,
@@ -1862,25 +1751,6 @@ impl<'a> Default for dict__string__list_dict__string__clz_Torappu_SpCharMissionD
     }
 }
 
-impl Serialize for dict__string__list_dict__string__clz_Torappu_SpCharMissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__list_dict__string__clz_Torappu_SpCharMissionData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_dict__string__clz_Torappu_SpCharMissionDataBuilder<
     'a: 'b,
     'b,
@@ -2088,18 +1958,6 @@ impl<'a> Default for dict__string__longArgs<'a> {
             key: None, // required field
             value: 0,
         }
-    }
-}
-
-impl Serialize for dict__string__long<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__long", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
     }
 }
 
@@ -2318,32 +2176,6 @@ impl<'a> Default for clz_Torappu_CharMasterLevelDataArgs<'a> {
             description: None,
             conditionDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharMasterLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharMasterLevelData", 4)?;
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.conditionDesc() {
-            s.serialize_field("conditionDesc", &f)?;
-        } else {
-            s.skip_field("conditionDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -2630,33 +2462,6 @@ impl<'a> Default for clz_Torappu_CharMasterBasicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharMasterBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharMasterBasicData", 5)?;
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.masterId() {
-            s.serialize_field("masterId", &f)?;
-        } else {
-            s.skip_field("masterId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("masterType", &self.masterType())?;
-        if let Some(f) = self.levelList() {
-            s.serialize_field("levelList", &f)?;
-        } else {
-            s.skip_field("levelList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharMasterBasicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2894,23 +2699,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharMasterBasicDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_CharMasterBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CharMasterBasicData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3255,41 +3043,6 @@ impl<'a> Default for clz_Torappu_CharMetaTableArgs<'a> {
             charIdMasterListMap: None,
             charMasterDataMap: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharMetaTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharMetaTable", 5)?;
-        if let Some(f) = self.spCharGroups() {
-            s.serialize_field("spCharGroups", &f)?;
-        } else {
-            s.skip_field("spCharGroups")?;
-        }
-        if let Some(f) = self.spCharMissions() {
-            s.serialize_field("spCharMissions", &f)?;
-        } else {
-            s.skip_field("spCharMissions")?;
-        }
-        if let Some(f) = self.spCharVoucherSkinTime() {
-            s.serialize_field("spCharVoucherSkinTime", &f)?;
-        } else {
-            s.skip_field("spCharVoucherSkinTime")?;
-        }
-        if let Some(f) = self.charIdMasterListMap() {
-            s.serialize_field("charIdMasterListMap", &f)?;
-        } else {
-            s.skip_field("charIdMasterListMap")?;
-        }
-        if let Some(f) = self.charMasterDataMap() {
-            s.serialize_field("charMasterDataMap", &f)?;
-        } else {
-            s.skip_field("charMasterDataMap")?;
-        }
-        s.end()
     }
 }
 

@@ -24,25 +24,25 @@ export function UserMenu({ user, loading, logout }: UserMenuProps) {
         );
     }
 
-    if (user?.status) {
+    if (user) {
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button className="flex h-8 items-center gap-2 rounded-md border border-border bg-transparent px-2 text-foreground text-sm transition-colors hover:bg-secondary" variant="ghost">
                         <Avatar className="h-5 w-5">
                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
-                            <AvatarFallback className="text-[0.625rem]">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
+                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
-                        <span className="max-w-24 truncate font-medium">{user.status.nickName}</span>
+                        <span className="max-w-24 truncate font-medium">{(user.nickname ?? "Doctor")}</span>
                         <ChevronDown className="h-3 w-3" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 pb-1.5">
-                        <Link className="font-medium text-sm hover:underline" href={`/user/${user.status.uid}`}>
-                            {user.status.nickName}
+                        <Link className="font-medium text-sm hover:underline" href={`/user/${user.uid}`}>
+                            {(user.nickname ?? "Doctor")}
                         </Link>
-                        <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
+                        <p className="text-muted-foreground text-xs">Level {user.level}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="cursor-pointer">

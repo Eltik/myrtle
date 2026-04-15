@@ -70,7 +70,7 @@ export function TierListView({ tierListData, operatorsData, versions }: TierList
 
     // Check if user can report this tier list
     const isCommunityTierList = tierListData.tier_list.tier_list_type === "community";
-    const isOwner = user?.status.uid === tierListData.tier_list.created_by;
+    const isOwner = user?.uid === tierListData.tier_list.created_by;
     const canReport = user && isCommunityTierList && !isOwner;
 
     return (

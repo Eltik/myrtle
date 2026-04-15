@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -118,6 +117,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -216,9 +217,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -311,6 +314,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -406,6 +411,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -417,18 +424,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -589,23 +584,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -798,26 +776,6 @@ impl<'a> Default for clz_Torappu_ReplicateDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ReplicateData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReplicateData", 2)?;
-        if let Some(f) = self.item() {
-            s.serialize_field("item", &f)?;
-        } else {
-            s.skip_field("item")?;
-        }
-        if let Some(f) = self.replicateTokenItem() {
-            s.serialize_field("replicateTokenItem", &f)?;
-        } else {
-            s.skip_field("replicateTokenItem")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ReplicateDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -984,21 +942,6 @@ impl<'a> Default for clz_Torappu_ReplicateTableArgs<'a> {
         clz_Torappu_ReplicateTableArgs {
             replicateList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ReplicateTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReplicateTable", 1)?;
-        if let Some(f) = self.replicateList() {
-            s.serialize_field("replicateList", &f)?;
-        } else {
-            s.skip_field("replicateList")?;
-        }
-        s.end()
     }
 }
 
@@ -1187,22 +1130,6 @@ impl<'a> Default for dict__string__clz_Torappu_ReplicateTableArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ReplicateTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_ReplicateTable", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ReplicateTableBuilder<
     'a: 'b,
     'b,
@@ -1387,22 +1314,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs<'a
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTableArgs { replications: None }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_ReplicateTable", 1)?;
-        if let Some(f) = self.replications() {
-            s.serialize_field("replications", &f)?;
-        } else {
-            s.skip_field("replications")?;
-        }
-        s.end()
     }
 }
 

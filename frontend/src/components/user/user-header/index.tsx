@@ -8,22 +8,8 @@ import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/shadcn/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/shadcn/card";
 import { getSecretaryAvatarURL } from "~/lib/utils";
+import type { UserProfile } from "~/types/api/impl/user";
 import { Stat } from "./impl/stat";
-
-interface UserProfile {
-    nickName: string;
-    nickNumber: string;
-    level: number;
-    resume: string;
-    avatarId: string;
-    secretary: string;
-    secretarySkinId: string;
-    gold: number;
-    diamondShard: number;
-    payDiamond: number;
-    freeDiamond: number;
-    registerTs: number;
-}
 
 interface UserHeaderProps {
     profile: UserProfile;
@@ -31,9 +17,10 @@ interface UserHeaderProps {
 
 export function UserHeader({ profile }: UserHeaderProps) {
     const [isCopied, setIsCopied] = useState(false);
+    const nickname = profile.nickname ?? "Unknown";
 
     const handleCopyUsername = () => {
-        const username = `${profile.nickName && profile.nickName.length > 0 ? profile.nickName : "Unknown"}#${profile.nickNumber}`;
+        const username = `${nickname}`;
         void navigator.clipboard.writeText(username);
         toast.success("Copied username to clipboard!");
         setIsCopied(true);
@@ -41,7 +28,7 @@ export function UserHeader({ profile }: UserHeaderProps) {
     };
 
     // Create a compatible object for getSecretaryAvatarURL
-    const avatarData = { status: { secretary: profile.secretary, secretarySkinId: profile.secretarySkinId } };
+    const avatarData = { secretary: profile.secretary ?? "", secretary_skin_id: profile.secretary_skin_id ?? "" };
 
     return (
         <InView
@@ -56,8 +43,8 @@ export function UserHeader({ profile }: UserHeaderProps) {
                 <CardHeader>
                     <div className="flex items-center space-x-4 overflow-hidden">
                         <Avatar className="h-20 w-20">
-                            <AvatarImage alt={profile.nickName ?? "User"} src={getSecretaryAvatarURL(avatarData)} />
-                            <AvatarFallback>{profile.nickName?.slice(0, 1) ?? "E"}</AvatarFallback>
+                            <AvatarImage alt={nickname} src={getSecretaryAvatarURL(avatarData)} />
+                            <AvatarFallback>{nickname.slice(0, 1)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                             <CardTitle className="min-w-0 text-2xl">
@@ -77,8 +64,7 @@ export function UserHeader({ profile }: UserHeaderProps) {
                                         tabIndex={0}
                                         type="button"
                                     >
-                                        {profile.nickName && profile.nickName.length > 0 ? profile.nickName : "Unknown"}
-                                        <span className="text-muted-foreground">#{profile.nickNumber}</span>
+                                        {nickname}
                                     </button>
                                     <motion.button
                                         animate={{ scale: isCopied ? [1, 0.85, 1] : 1 }}
@@ -106,7 +92,7 @@ export function UserHeader({ profile }: UserHeaderProps) {
                             <CardDescription>
                                 <div className="flex flex-col">
                                     <span>Level {profile.level}</span>
-                                    <span>{profile.resume}</span>
+                                    {profile.resume && <span>{profile.resume}</span>}
                                 </div>
                             </CardDescription>
                         </div>
@@ -114,11 +100,11 @@ export function UserHeader({ profile }: UserHeaderProps) {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                        <Stat label="LMD" value={profile.gold} />
-                        <Stat label="Orundum" value={profile.diamondShard} />
-                        <Stat label="Originium" value={profile.payDiamond + profile.freeDiamond} />
+                        <Stat label="LMD" value={profile.lmd ?? 0} />
+                        <Stat label="Orundum" value={profile.orundum ?? 0} />
+                        <Stat label="Gacha Tickets" value={(profile.gacha_tickets ?? 0) + (profile.ten_pull_tickets ?? 0) * 10} />
                         <div className="text-center">
-                            <div className="font-bold text-2xl">{profile.registerTs > 0 ? new Date(profile.registerTs * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown"}</div>
+                            <div className="font-bold text-2xl">{profile.register_ts && profile.register_ts > 0 ? new Date(profile.register_ts * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Unknown"}</div>
                             <div className="text-muted-foreground text-sm">Registered</div>
                         </div>
                     </div>

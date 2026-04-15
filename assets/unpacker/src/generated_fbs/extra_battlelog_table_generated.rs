@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -321,66 +320,6 @@ impl<'a> Default for clz_Torappu_ExtraBattleLogDataKeyArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ExtraBattleLogDataKey<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ExtraBattleLogDataKey", 10)?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.sourceId() {
-            s.serialize_field("sourceId", &f)?;
-        } else {
-            s.skip_field("sourceId")?;
-        }
-        if let Some(f) = self.sourceMode() {
-            s.serialize_field("sourceMode", &f)?;
-        } else {
-            s.skip_field("sourceMode")?;
-        }
-        if let Some(f) = self.enemyId() {
-            s.serialize_field("enemyId", &f)?;
-        } else {
-            s.skip_field("enemyId")?;
-        }
-        if let Some(f) = self.enemyApplyWay() {
-            s.serialize_field("enemyApplyWay", &f)?;
-        } else {
-            s.skip_field("enemyApplyWay")?;
-        }
-        if let Some(f) = self.projectileName() {
-            s.serialize_field("projectileName", &f)?;
-        } else {
-            s.skip_field("projectileName")?;
-        }
-        if let Some(f) = self.abilityName() {
-            s.serialize_field("abilityName", &f)?;
-        } else {
-            s.skip_field("abilityName")?;
-        }
-        if let Some(f) = self.enemyLevelType() {
-            s.serialize_field("enemyLevelType", &f)?;
-        } else {
-            s.skip_field("enemyLevelType")?;
-        }
-        if let Some(f) = self.enemyTag() {
-            s.serialize_field("enemyTag", &f)?;
-        } else {
-            s.skip_field("enemyTag")?;
-        }
-        if let Some(f) = self.logAlias() {
-            s.serialize_field("logAlias", &f)?;
-        } else {
-            s.skip_field("logAlias")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ExtraBattleLogDataKeyBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -660,21 +599,6 @@ impl<'a> Default for clz_Torappu_ExtraBattleLogDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ExtraBattleLogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ExtraBattleLogData", 1)?;
-        if let Some(f) = self.data() {
-            s.serialize_field("data", &f)?;
-        } else {
-            s.skip_field("data")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ExtraBattleLogDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -858,23 +782,6 @@ impl<'a> Default for dict__string__clz_Torappu_ExtraBattleLogDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ExtraBattleLogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ExtraBattleLogData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1071,24 +978,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArg
         clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogDataArgs {
             extra_battlelogs: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_SimpleKVTable_clz_Torappu_ExtraBattleLogData",
-            1,
-        )?;
-        if let Some(f) = self.extra_battlelogs() {
-            s.serialize_field("extra_battlelogs", &f)?;
-        } else {
-            s.skip_field("extra_battlelogs")?;
-        }
-        s.end()
     }
 }
 

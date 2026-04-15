@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -59,18 +58,6 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorTargetType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SpecialOperatorTargetType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SpecialOperatorTargetType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -188,18 +175,6 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorDetailNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_SpecialOperatorDetailNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SpecialOperatorDetailNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_SpecialOperatorDetailNodeType {
     type Inner = Self;
@@ -310,18 +285,6 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
-impl Serialize for enum__Torappu_EvolvePhase {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EvolvePhase",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
@@ -416,18 +379,6 @@ impl core::fmt::Debug for enum__Torappu_SpecialOperatorConditionViewType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SpecialOperatorConditionViewType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SpecialOperatorConditionViewType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -568,18 +519,6 @@ impl core::fmt::Debug for enum__Torappu_MissionType {
         }
     }
 }
-impl Serialize for enum__Torappu_MissionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionType {
     type Inner = Self;
@@ -678,18 +617,6 @@ impl core::fmt::Debug for enum__Torappu_MissionItemBgType {
         }
     }
 }
-impl Serialize for enum__Torappu_MissionItemBgType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionItemBgType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
     type Inner = Self;
@@ -745,13 +672,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -843,6 +770,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -941,9 +870,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -1036,6 +967,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1131,6 +1064,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -1142,18 +1077,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1477,53 +1400,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorBasicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorBasicData", 9)?;
-        if let Some(f) = self.soCharId() {
-            s.serialize_field("soCharId", &f)?;
-        } else {
-            s.skip_field("soCharId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("targetType", &self.targetType())?;
-        if let Some(f) = self.targetId() {
-            s.serialize_field("targetId", &f)?;
-        } else {
-            s.skip_field("targetId")?;
-        }
-        if let Some(f) = self.targetTopicName() {
-            s.serialize_field("targetTopicName", &f)?;
-        } else {
-            s.skip_field("targetTopicName")?;
-        }
-        if let Some(f) = self.bgId() {
-            s.serialize_field("bgId", &f)?;
-        } else {
-            s.skip_field("bgId")?;
-        }
-        if let Some(f) = self.bgEffectId() {
-            s.serialize_field("bgEffectId", &f)?;
-        } else {
-            s.skip_field("bgEffectId")?;
-        }
-        if let Some(f) = self.charEffectId() {
-            s.serialize_field("charEffectId", &f)?;
-        } else {
-            s.skip_field("charEffectId")?;
-        }
-        if let Some(f) = self.typeIconId() {
-            s.serialize_field("typeIconId", &f)?;
-        } else {
-            s.skip_field("typeIconId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorBasicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1807,23 +1683,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorBasicDataArgs<'a> 
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_SpecialOperatorBasicData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorBasicDataBuilder<
     'a: 'b,
     'b,
@@ -1998,21 +1857,6 @@ impl<'a> Default for list_intArgs<'a> {
     }
 }
 
-impl Serialize for list_int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("list_int", 1)?;
-        if let Some(f) = self.values() {
-            s.serialize_field("values", &f)?;
-        } else {
-            s.skip_field("values")?;
-        }
-        s.end()
-    }
-}
-
 pub struct list_intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2145,21 +1989,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailConstDataArgs<'a> {
         clz_Torappu_SpecialOperatorDetailConstDataArgs {
             nextRoundBuffToast: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorDetailConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailConstData", 1)?;
-        if let Some(f) = self.nextRoundBuffToast() {
-            s.serialize_field("nextRoundBuffToast", &f)?;
-        } else {
-            s.skip_field("nextRoundBuffToast")?;
-        }
-        s.end()
     }
 }
 
@@ -2382,28 +2211,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailTabDataArgs<'a> {
             soTabSortId: 0,
             nodeType: enum__Torappu_SpecialOperatorDetailNodeType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorDetailTabData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailTabData", 4)?;
-        if let Some(f) = self.soTabId() {
-            s.serialize_field("soTabId", &f)?;
-        } else {
-            s.skip_field("soTabId")?;
-        }
-        if let Some(f) = self.soTabName() {
-            s.serialize_field("soTabName", &f)?;
-        } else {
-            s.skip_field("soTabName")?;
-        }
-        s.serialize_field("soTabSortId", &self.soTabSortId())?;
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.end()
     }
 }
 
@@ -2634,23 +2441,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailTabDataArgs<
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailTabData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDetailTabData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3036,39 +2826,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailNodeUnlockDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailNodeUnlockData", 10)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.serialize_field("isInGameMechanics", &self.isInGameMechanics())?;
-        s.serialize_field("unlockEvolvePhase", &self.unlockEvolvePhase())?;
-        s.serialize_field("unlockLevel", &self.unlockLevel())?;
-        if let Some(f) = self.unlockTaskId() {
-            s.serialize_field("unlockTaskId", &f)?;
-        } else {
-            s.skip_field("unlockTaskId")?;
-        }
-        if let Some(f) = self.frontNodeId() {
-            s.serialize_field("frontNodeId", &f)?;
-        } else {
-            s.skip_field("frontNodeId")?;
-        }
-        s.serialize_field("ifAutoUnlock", &self.ifAutoUnlock())?;
-        s.serialize_field("conditionViewType", &self.conditionViewType())?;
-        s.serialize_field("topoOrder", &self.topoOrder())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDetailNodeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -3378,25 +3135,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDa
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailNodeUnlockDataBuilder<
     'a: 'b,
     'b,
@@ -3591,23 +3329,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailEvolveNodeDataArgs<'a> {
             nodeId: None,
             toEvolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailEvolveNodeData", 2)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        s.serialize_field("toEvolvePhase", &self.toEvolvePhase())?;
-        s.end()
     }
 }
 
@@ -3810,25 +3531,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeDa
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailEvolveNodeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4071,29 +3773,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailSkillNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailSkillNodeData", 4)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        if let Some(f) = self.skillKey() {
-            s.serialize_field("skillKey", &f)?;
-        } else {
-            s.skip_field("skillKey")?;
-        }
-        s.serialize_field("skillLevel", &self.skillLevel())?;
-        s.serialize_field("skillSpLevel", &self.skillSpLevel())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDetailSkillNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4321,25 +4000,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDat
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailSkillNodeDataBuilder<
     'a: 'b,
     'b,
@@ -4550,24 +4210,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailTalentNodeDataArgs<'a> {
             talentIndex: 0,
             updateCount: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailTalentNodeData", 3)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        s.serialize_field("talentIndex", &self.talentIndex())?;
-        s.serialize_field("updateCount", &self.updateCount())?;
-        s.end()
     }
 }
 
@@ -4783,25 +4425,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeDa
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailTalentNodeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5023,28 +4646,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailMasterNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailMasterNodeData", 3)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        if let Some(f) = self.masterId() {
-            s.serialize_field("masterId", &f)?;
-        } else {
-            s.skip_field("masterId")?;
-        }
-        s.serialize_field("level", &self.level())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDetailMasterNodeDataBuilder<
     'a: 'b,
     'b,
@@ -5256,25 +4857,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeDa
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailMasterNodeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5496,28 +5078,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailUniEquipNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailUniEquipNodeData", 3)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        if let Some(f) = self.uniEquipId() {
-            s.serialize_field("uniEquipId", &f)?;
-        } else {
-            s.skip_field("uniEquipId")?;
-        }
-        s.serialize_field("equipLevel", &self.equipLevel())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDetailUniEquipNodeDataBuilder<
     'a: 'b,
     'b,
@@ -5736,25 +5296,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNode
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailUniEquipNodeDataBuilder<
     'a: 'b,
     'b,
@@ -5936,18 +5477,6 @@ impl<'a> Default for clz_UnityEngine_Vector2Args {
     }
 }
 
-impl Serialize for clz_UnityEngine_Vector2<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_UnityEngine_Vector2", 2)?;
-        s.serialize_field("x", &self.x())?;
-        s.serialize_field("y", &self.y())?;
-        s.end()
-    }
-}
-
 pub struct clz_UnityEngine_Vector2Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6089,21 +5618,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorPointPosDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialOperatorPointPosDataArgs { pos: None }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorPointPosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorPointPosData", 1)?;
-        if let Some(f) = self.pos() {
-            s.serialize_field("pos", &f)?;
-        } else {
-            s.skip_field("pos")?;
-        }
-        s.end()
     }
 }
 
@@ -6295,23 +5809,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorPointPosDataArgs<'
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorPointPosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorPointPosData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorPointPosDataBuilder<
     'a: 'b,
     'b,
@@ -6478,21 +5975,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorNodePointDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SpecialOperatorNodePointDataArgs { nodeId: None }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorNodePointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorNodePointData", 1)?;
-        if let Some(f) = self.nodeId() {
-            s.serialize_field("nodeId", &f)?;
-        } else {
-            s.skip_field("nodeId")?;
-        }
-        s.end()
     }
 }
 
@@ -6683,23 +6165,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorNodePointDataArgs<
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorNodePointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorNodePointData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorNodePointDataBuilder<
     'a: 'b,
     'b,
@@ -6868,17 +6333,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorElitePointDataArgs {
         clz_Torappu_SpecialOperatorElitePointDataArgs {
             evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorElitePointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorElitePointData", 1)?;
-        s.serialize_field("evolvePhase", &self.evolvePhase())?;
-        s.end()
     }
 }
 
@@ -7073,23 +6527,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorElitePointDataArgs
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorElitePointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorElitePointData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorElitePointDataBuilder<
     'a: 'b,
     'b,
@@ -7275,18 +6712,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLevelPointDataArgs {
             evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
             level: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorLevelPointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorLevelPointData", 2)?;
-        s.serialize_field("evolvePhase", &self.evolvePhase())?;
-        s.serialize_field("level", &self.level())?;
-        s.end()
     }
 }
 
@@ -7493,23 +6918,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLevelPointDataArgs
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorLevelPointData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorLevelPointData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorLevelPointDataBuilder<
     'a: 'b,
     'b,
@@ -7711,26 +7119,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLinePosDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorLinePosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorLinePosData", 2)?;
-        if let Some(f) = self.startPos() {
-            s.serialize_field("startPos", &f)?;
-        } else {
-            s.skip_field("startPos")?;
-        }
-        if let Some(f) = self.endPos() {
-            s.serialize_field("endPos", &f)?;
-        } else {
-            s.skip_field("endPos")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorLinePosDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -7927,23 +7315,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLinePosDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorLinePosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorLinePosData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -8161,27 +7532,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorLineRelationDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorLineRelationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SpecialOperatorLineRelationData", 2)?;
-        if let Some(f) = self.startPointList() {
-            s.serialize_field("startPointList", &f)?;
-        } else {
-            s.skip_field("startPointList")?;
-        }
-        if let Some(f) = self.endPointList() {
-            s.serialize_field("endPointList", &f)?;
-        } else {
-            s.skip_field("endPointList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorLineRelationDataBuilder<
     'a: 'b,
     'b,
@@ -8396,25 +7746,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorLineRelationDataAr
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorLineRelationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SpecialOperatorLineRelationData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -8928,48 +8259,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDiagramDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDiagramData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDiagramData", 8)?;
-        s.serialize_field("width", &self.width())?;
-        s.serialize_field("height", &self.height())?;
-        if let Some(f) = self.pointPosDataMap() {
-            s.serialize_field("pointPosDataMap", &f)?;
-        } else {
-            s.skip_field("pointPosDataMap")?;
-        }
-        if let Some(f) = self.nodePointDataMap() {
-            s.serialize_field("nodePointDataMap", &f)?;
-        } else {
-            s.skip_field("nodePointDataMap")?;
-        }
-        if let Some(f) = self.elitePointDataMap() {
-            s.serialize_field("elitePointDataMap", &f)?;
-        } else {
-            s.skip_field("elitePointDataMap")?;
-        }
-        if let Some(f) = self.levelPointDataMap() {
-            s.serialize_field("levelPointDataMap", &f)?;
-        } else {
-            s.skip_field("levelPointDataMap")?;
-        }
-        if let Some(f) = self.linePosDataMap() {
-            s.serialize_field("linePosDataMap", &f)?;
-        } else {
-            s.skip_field("linePosDataMap")?;
-        }
-        if let Some(f) = self.lineRelationDataMap() {
-            s.serialize_field("lineRelationDataMap", &f)?;
-        } else {
-            s.skip_field("lineRelationDataMap")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDiagramDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -9317,23 +8606,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDiagramDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDiagramData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDiagramData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -9920,66 +9192,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorDetailDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorDetailData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorDetailData", 10)?;
-        if let Some(f) = self.specialOperatorExpMap() {
-            s.serialize_field("specialOperatorExpMap", &f)?;
-        } else {
-            s.skip_field("specialOperatorExpMap")?;
-        }
-        if let Some(f) = self.detailConstData() {
-            s.serialize_field("detailConstData", &f)?;
-        } else {
-            s.skip_field("detailConstData")?;
-        }
-        if let Some(f) = self.tabData() {
-            s.serialize_field("tabData", &f)?;
-        } else {
-            s.skip_field("tabData")?;
-        }
-        if let Some(f) = self.nodeUnlockData() {
-            s.serialize_field("nodeUnlockData", &f)?;
-        } else {
-            s.skip_field("nodeUnlockData")?;
-        }
-        if let Some(f) = self.evolveNodeData() {
-            s.serialize_field("evolveNodeData", &f)?;
-        } else {
-            s.skip_field("evolveNodeData")?;
-        }
-        if let Some(f) = self.skillNodeData() {
-            s.serialize_field("skillNodeData", &f)?;
-        } else {
-            s.skip_field("skillNodeData")?;
-        }
-        if let Some(f) = self.talentNodeData() {
-            s.serialize_field("talentNodeData", &f)?;
-        } else {
-            s.skip_field("talentNodeData")?;
-        }
-        if let Some(f) = self.masterNodeData() {
-            s.serialize_field("masterNodeData", &f)?;
-        } else {
-            s.skip_field("masterNodeData")?;
-        }
-        if let Some(f) = self.uniEquipNodeData() {
-            s.serialize_field("uniEquipNodeData", &f)?;
-        } else {
-            s.skip_field("uniEquipNodeData")?;
-        }
-        if let Some(f) = self.nodeDiagramMap() {
-            s.serialize_field("nodeDiagramMap", &f)?;
-        } else {
-            s.skip_field("nodeDiagramMap")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorDetailDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -10393,23 +9605,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialOperatorDetailDataArgs<'a>
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialOperatorDetailData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialOperatorDetailData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialOperatorDetailDataBuilder<
     'a: 'b,
     'b,
@@ -10605,22 +9800,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorModeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialOperatorModeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorModeData", 2)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.typeName() {
-            s.serialize_field("typeName", &f)?;
-        } else {
-            s.skip_field("typeName")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialOperatorModeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10810,23 +9989,6 @@ impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
             id: None,
             count: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MissionDisplayRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionDisplayRewards", 3)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.end()
     }
 }
 
@@ -11432,87 +10594,6 @@ impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionData", 19)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("itemBgType", &self.itemBgType())?;
-        if let Some(f) = self.preMissionIds() {
-            s.serialize_field("preMissionIds", &f)?;
-        } else {
-            s.skip_field("preMissionIds")?;
-        }
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.templateType() {
-            s.serialize_field("templateType", &f)?;
-        } else {
-            s.skip_field("templateType")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.unlockCondition() {
-            s.serialize_field("unlockCondition", &f)?;
-        } else {
-            s.skip_field("unlockCondition")?;
-        }
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        if let Some(f) = self.missionGroup() {
-            s.serialize_field("missionGroup", &f)?;
-        } else {
-            s.skip_field("missionGroup")?;
-        }
-        if let Some(f) = self.toPage() {
-            s.serialize_field("toPage", &f)?;
-        } else {
-            s.skip_field("toPage")?;
-        }
-        s.serialize_field("periodicalPoint", &self.periodicalPoint())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.backImagePath() {
-            s.serialize_field("backImagePath", &f)?;
-        } else {
-            s.skip_field("backImagePath")?;
-        }
-        if let Some(f) = self.foldId() {
-            s.serialize_field("foldId", &f)?;
-        } else {
-            s.skip_field("foldId")?;
-        }
-        s.serialize_field("haveSubMissionToUnlock", &self.haveSubMissionToUnlock())?;
-        s.serialize_field("countEndTs", &self.countEndTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11944,22 +11025,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -12319,49 +11384,6 @@ impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionGroup", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.preMissionGroup() {
-            s.serialize_field("preMissionGroup", &f)?;
-        } else {
-            s.skip_field("preMissionGroup")?;
-        }
-        if let Some(f) = self.period() {
-            s.serialize_field("period", &f)?;
-        } else {
-            s.skip_field("period")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.missionIds() {
-            s.serialize_field("missionIds", &f)?;
-        } else {
-            s.skip_field("missionIds")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12651,22 +11673,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionGroupArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_MissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionGroup", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -12983,51 +11989,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorConstDataArgs<'a> {
             evolveTabExpNotice: None,
             pinnedSpecialOperator: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorConstData", 7)?;
-        if let Some(f) = self.weeklyTaskBoardUnlock() {
-            s.serialize_field("weeklyTaskBoardUnlock", &f)?;
-        } else {
-            s.skip_field("weeklyTaskBoardUnlock")?;
-        }
-        if let Some(f) = self.taskPinOnToast() {
-            s.serialize_field("taskPinOnToast", &f)?;
-        } else {
-            s.skip_field("taskPinOnToast")?;
-        }
-        if let Some(f) = self.noFrontNodeToast() {
-            s.serialize_field("noFrontNodeToast", &f)?;
-        } else {
-            s.skip_field("noFrontNodeToast")?;
-        }
-        if let Some(f) = self.noFrontTaskToast() {
-            s.serialize_field("noFrontTaskToast", &f)?;
-        } else {
-            s.skip_field("noFrontTaskToast")?;
-        }
-        if let Some(f) = self.skillGotoToast() {
-            s.serialize_field("skillGotoToast", &f)?;
-        } else {
-            s.skip_field("skillGotoToast")?;
-        }
-        if let Some(f) = self.evolveTabExpNotice() {
-            s.serialize_field("evolveTabExpNotice", &f)?;
-        } else {
-            s.skip_field("evolveTabExpNotice")?;
-        }
-        if let Some(f) = self.pinnedSpecialOperator() {
-            s.serialize_field("pinnedSpecialOperator", &f)?;
-        } else {
-            s.skip_field("pinnedSpecialOperator")?;
-        }
-        s.end()
     }
 }
 
@@ -13521,46 +12482,6 @@ impl<'a> Default for clz_Torappu_SpecialOperatorTableArgs<'a> {
             nodeUnlockMissionGroup: None,
             constData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpecialOperatorTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialOperatorTable", 6)?;
-        if let Some(f) = self.operatorBasicData() {
-            s.serialize_field("operatorBasicData", &f)?;
-        } else {
-            s.skip_field("operatorBasicData")?;
-        }
-        if let Some(f) = self.operatorDetailData() {
-            s.serialize_field("operatorDetailData", &f)?;
-        } else {
-            s.skip_field("operatorDetailData")?;
-        }
-        if let Some(f) = self.modeData() {
-            s.serialize_field("modeData", &f)?;
-        } else {
-            s.skip_field("modeData")?;
-        }
-        if let Some(f) = self.nodeUnlockMissionData() {
-            s.serialize_field("nodeUnlockMissionData", &f)?;
-        } else {
-            s.skip_field("nodeUnlockMissionData")?;
-        }
-        if let Some(f) = self.nodeUnlockMissionGroup() {
-            s.serialize_field("nodeUnlockMissionGroup", &f)?;
-        } else {
-            s.skip_field("nodeUnlockMissionGroup")?;
-        }
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        s.end()
     }
 }
 

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import type { CharacterData } from "~/types/api/impl/user";
+import type { EnrichedRosterEntry } from "~/types/api/impl/user";
 
 interface UseUserCharactersResult {
-    characters: Record<string, CharacterData> | null;
+    characters: EnrichedRosterEntry[] | null;
     isLoading: boolean;
     error: string | null;
     refetch: () => void;
@@ -11,9 +11,10 @@ interface UseUserCharactersResult {
 /**
  * Hook to fetch user character data client-side.
  * Used to lazy-load the Characters tab instead of passing data from SSR.
+ * v3: Returns EnrichedRosterEntry[] (RosterEntry + static data) instead of Record<string, CharacterData>.
  */
 export function useUserCharacters(userId: string): UseUserCharactersResult {
-    const [characters, setCharacters] = useState<Record<string, CharacterData> | null>(null);
+    const [characters, setCharacters] = useState<EnrichedRosterEntry[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 

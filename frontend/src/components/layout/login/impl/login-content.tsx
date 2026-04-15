@@ -12,7 +12,17 @@ import { Label } from "~/components/ui/shadcn/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/shadcn/select";
 import { useAuth } from "~/hooks/use-auth";
 import type { AKServer } from "~/types/api";
-import type { LoginResponse, SendCodeResponse } from "~/types/api/impl/auth";
+/** Frontend /api/auth/send-code response shape */
+interface SendCodeApiResponse {
+    success: boolean;
+    error?: string;
+}
+
+/** Frontend /api/auth/login response shape (returned by useAuth login) */
+interface LoginApiResponse {
+    success: boolean;
+    error?: string;
+}
 import { SERVER_OPTIONS } from "./constants";
 
 interface LoginContentProps {
@@ -48,7 +58,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
                 body: JSON.stringify({ email, server }),
             });
 
-            const data: SendCodeResponse = await response.json();
+            const data: SendCodeApiResponse = await response.json();
 
             if (!data.success) {
                 throw new Error(data.error ?? "Failed to send OTP");
@@ -98,7 +108,7 @@ export function LoginContent({ onSuccess }: LoginContentProps) {
 
         setIsLoggingIn(true);
         try {
-            const result: LoginResponse = await login(email, otp, server);
+            const result: LoginApiResponse = await login(email, otp, server);
 
             if (!result.success) {
                 throw new Error(result.error ?? "Login failed");

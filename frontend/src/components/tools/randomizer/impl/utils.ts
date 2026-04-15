@@ -1,5 +1,5 @@
 import type { Stage } from "~/types/api/impl/stage";
-import type { User } from "~/types/api/impl/user";
+import type { GameUserData } from "./types";
 import type { Zone } from "~/types/api/impl/zone";
 import type { RandomizerOperator } from "../index";
 import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen, PERMANENT_EVENTS } from "./activity-names";
@@ -86,7 +86,7 @@ const CHALLENGES: Challenge[] = [
     { type: "objective", title: "Trust Farm", description: "Fill unused slots with operators for trust farming" },
 ];
 
-export function selectRandomStage(stages: Stage[], zones: Zone[], allowedZoneTypes: string[] = [], user?: User | null, onlyCompleted = false, selectedStages: string[] = [], onlyAvailableStages = false): Stage | null {
+export function selectRandomStage(stages: Stage[], zones: Zone[], allowedZoneTypes: string[] = [], user?: GameUserData | null, onlyCompleted = false, selectedStages: string[] = [], onlyAvailableStages = false): Stage | null {
     if (stages.length === 0) return null;
 
     let filteredStages = stages;

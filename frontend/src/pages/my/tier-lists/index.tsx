@@ -43,7 +43,7 @@ function MyTierListsPageContent() {
     }, []);
 
     useEffect(() => {
-        if (user?.status) {
+        if (user?.uid) {
             fetchTierLists();
         } else if (!authLoading) {
             setLoading(false);

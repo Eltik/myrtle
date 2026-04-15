@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -64,18 +63,6 @@ impl core::fmt::Debug for enum__Torappu_EnemyLevelType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_EnemyLevelType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EnemyLevelType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -175,18 +162,6 @@ impl core::fmt::Debug for enum__Torappu_EnemyHandBookData_TextFormat {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_EnemyHandBookData_TextFormat {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EnemyHandBookData_TextFormat",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -290,18 +265,6 @@ impl core::fmt::Debug for enum__Torappu_EnemyHandBookDamageType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_EnemyHandBookDamageType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EnemyHandBookDamageType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -444,19 +407,6 @@ impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_EnemyHandbookLevelInfoData_RangePairArgs { min: 0.0, max: 0.0 }
-    }
-}
-
-impl Serialize for clz_Torappu_EnemyHandbookLevelInfoData_RangePair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_EnemyHandbookLevelInfoData_RangePair", 2)?;
-        s.serialize_field("min", &self.min())?;
-        s.serialize_field("max", &self.max())?;
-        s.end()
     }
 }
 
@@ -770,61 +720,6 @@ impl<'a> Default for clz_Torappu_EnemyHandbookLevelInfoDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_EnemyHandbookLevelInfoData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandbookLevelInfoData", 9)?;
-        if let Some(f) = self.classLevel() {
-            s.serialize_field("classLevel", &f)?;
-        } else {
-            s.skip_field("classLevel")?;
-        }
-        if let Some(f) = self.attack() {
-            s.serialize_field("attack", &f)?;
-        } else {
-            s.skip_field("attack")?;
-        }
-        if let Some(f) = self.def() {
-            s.serialize_field("def", &f)?;
-        } else {
-            s.skip_field("def")?;
-        }
-        if let Some(f) = self.magicRes() {
-            s.serialize_field("magicRes", &f)?;
-        } else {
-            s.skip_field("magicRes")?;
-        }
-        if let Some(f) = self.maxHP() {
-            s.serialize_field("maxHP", &f)?;
-        } else {
-            s.skip_field("maxHP")?;
-        }
-        if let Some(f) = self.moveSpeed() {
-            s.serialize_field("moveSpeed", &f)?;
-        } else {
-            s.skip_field("moveSpeed")?;
-        }
-        if let Some(f) = self.attackSpeed() {
-            s.serialize_field("attackSpeed", &f)?;
-        } else {
-            s.skip_field("attackSpeed")?;
-        }
-        if let Some(f) = self.enemyDamageRes() {
-            s.serialize_field("enemyDamageRes", &f)?;
-        } else {
-            s.skip_field("enemyDamageRes")?;
-        }
-        if let Some(f) = self.enemyRes() {
-            s.serialize_field("enemyRes", &f)?;
-        } else {
-            s.skip_field("enemyRes")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_EnemyHandbookLevelInfoDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -1097,18 +992,6 @@ impl<'a> Default for dict__string__intArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__int", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
-    }
-}
-
 pub struct dict__string__intBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1278,22 +1161,6 @@ impl<'a> Default for clz_Torappu_EnemyHandBookData_AbiltyArgs<'a> {
             text: None,
             textFormat: enum__Torappu_EnemyHandBookData_TextFormat::NORMAL,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_EnemyHandBookData_Abilty<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookData_Abilty", 2)?;
-        if let Some(f) = self.text() {
-            s.serialize_field("text", &f)?;
-        } else {
-            s.skip_field("text")?;
-        }
-        s.serialize_field("textFormat", &self.textFormat())?;
-        s.end()
     }
 }
 
@@ -1847,77 +1714,6 @@ impl<'a> Default for clz_Torappu_EnemyHandBookDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_EnemyHandBookData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookData", 17)?;
-        if let Some(f) = self.enemyId() {
-            s.serialize_field("enemyId", &f)?;
-        } else {
-            s.skip_field("enemyId")?;
-        }
-        if let Some(f) = self.enemyIndex() {
-            s.serialize_field("enemyIndex", &f)?;
-        } else {
-            s.skip_field("enemyIndex")?;
-        }
-        if let Some(f) = self.enemyTags() {
-            s.serialize_field("enemyTags", &f)?;
-        } else {
-            s.skip_field("enemyTags")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.serialize_field("enemyLevel", &self.enemyLevel())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.attackType() {
-            s.serialize_field("attackType", &f)?;
-        } else {
-            s.skip_field("attackType")?;
-        }
-        if let Some(f) = self.ability() {
-            s.serialize_field("ability", &f)?;
-        } else {
-            s.skip_field("ability")?;
-        }
-        s.serialize_field("isInvalidKilled", &self.isInvalidKilled())?;
-        if let Some(f) = self.overrideKillCntInfos() {
-            s.serialize_field("overrideKillCntInfos", &f)?;
-        } else {
-            s.skip_field("overrideKillCntInfos")?;
-        }
-        s.serialize_field("hideInHandbook", &self.hideInHandbook())?;
-        s.serialize_field("hideInStage", &self.hideInStage())?;
-        if let Some(f) = self.abilityList() {
-            s.serialize_field("abilityList", &f)?;
-        } else {
-            s.skip_field("abilityList")?;
-        }
-        if let Some(f) = self.linkEnemies() {
-            s.serialize_field("linkEnemies", &f)?;
-        } else {
-            s.skip_field("linkEnemies")?;
-        }
-        if let Some(f) = self.damageType() {
-            s.serialize_field("damageType", &f)?;
-        } else {
-            s.skip_field("damageType")?;
-        }
-        s.serialize_field("invisibleDetail", &self.invisibleDetail())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_EnemyHandBookDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2335,23 +2131,6 @@ impl<'a> Default for dict__string__clz_Torappu_EnemyHandBookDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_EnemyHandBookData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_EnemyHandBookData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_EnemyHandBookDataBuilder<
     'a: 'b,
     'b,
@@ -2563,27 +2342,6 @@ impl<'a> Default for clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_EnemyHandbookRaceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandbookRaceData", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.raceName() {
-            s.serialize_field("raceName", &f)?;
-        } else {
-            s.skip_field("raceName")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_EnemyHandbookRaceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2790,23 +2548,6 @@ impl<'a> Default for dict__string__clz_Torappu_EnemyHandbookRaceDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_EnemyHandbookRaceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_EnemyHandbookRaceData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3091,31 +2832,6 @@ impl<'a> Default for clz_Torappu_EnemyHandBookDataGroupArgs<'a> {
             enemyData: None,
             raceData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_EnemyHandBookDataGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_EnemyHandBookDataGroup", 3)?;
-        if let Some(f) = self.levelInfoList() {
-            s.serialize_field("levelInfoList", &f)?;
-        } else {
-            s.skip_field("levelInfoList")?;
-        }
-        if let Some(f) = self.enemyData() {
-            s.serialize_field("enemyData", &f)?;
-        } else {
-            s.skip_field("enemyData")?;
-        }
-        if let Some(f) = self.raceData() {
-            s.serialize_field("raceData", &f)?;
-        } else {
-            s.skip_field("raceData")?;
-        }
-        s.end()
     }
 }
 

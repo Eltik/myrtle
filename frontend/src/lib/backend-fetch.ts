@@ -2,6 +2,8 @@ import { env } from "~/env";
 
 export interface BackendFetchOptions extends Omit<RequestInit, "headers"> {
     headers?: HeadersInit;
+    /** JWT Bearer token for authenticated requests */
+    bearerToken?: string;
 }
 
 /**
@@ -9,12 +11,12 @@ export interface BackendFetchOptions extends Omit<RequestInit, "headers"> {
  * the internal service key header for rate limit bypass.
  *
  * @param path - The path to append to BACKEND_URL (e.g., "/leaderboard")
- * @param options - Standard fetch options
+ * @param options - Standard fetch options, plus optional bearerToken for auth
  */
 export async function backendFetch(path: string, options: BackendFetchOptions = {}): Promise<Response> {
-    const { headers: customHeaders, ...restOptions } = options;
+    const { headers: customHeaders, bearerToken, ...restOptions } = options;
 
-    const url = new URL(path, env.BACKEND_URL);
+    const url = new URL(`/api${path}`, env.BACKEND_URL);
 
     const headers = new Headers(customHeaders);
 
@@ -25,6 +27,11 @@ export async function backendFetch(path: string, options: BackendFetchOptions = 
 
     // Include service key for rate limit bypass
     headers.set("X-Internal-Service-Key", env.INTERNAL_SERVICE_KEY);
+
+    // Include Bearer token for authenticated requests
+    if (bearerToken) {
+        headers.set("Authorization", `Bearer ${bearerToken}`);
+    }
 
     return fetch(url.toString(), {
         ...restOptions,

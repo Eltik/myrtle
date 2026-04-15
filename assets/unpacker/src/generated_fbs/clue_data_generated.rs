@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -158,32 +157,6 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ClueDataArgs<'a> {
             clueType: None,
             number: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MeetingClueData_ClueData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData_ClueData", 4)?;
-        if let Some(f) = self.clueId() {
-            s.serialize_field("clueId", &f)?;
-        } else {
-            s.skip_field("clueId")?;
-        }
-        if let Some(f) = self.clueName() {
-            s.serialize_field("clueName", &f)?;
-        } else {
-            s.skip_field("clueName")?;
-        }
-        if let Some(f) = self.clueType() {
-            s.serialize_field("clueType", &f)?;
-        } else {
-            s.skip_field("clueType")?;
-        }
-        s.serialize_field("number", &self.number())?;
-        s.end()
     }
 }
 
@@ -392,22 +365,6 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ClueTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MeetingClueData_ClueTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData_ClueTypeData", 2)?;
-        if let Some(f) = self.clueType() {
-            s.serialize_field("clueType", &f)?;
-        } else {
-            s.skip_field("clueType")?;
-        }
-        s.serialize_field("clueNumber", &self.clueNumber())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MeetingClueData_ClueTypeDataBuilder<
     'a: 'b,
     'b,
@@ -589,19 +546,6 @@ impl<'a> Default for clz_Torappu_MeetingClueData_ReceiveTimeBonusArgs {
             receiveTimes: 0,
             receiveBonus: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MeetingClueData_ReceiveTimeBonus<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_MeetingClueData_ReceiveTimeBonus", 2)?;
-        s.serialize_field("receiveTimes", &self.receiveTimes())?;
-        s.serialize_field("receiveBonus", &self.receiveBonus())?;
-        s.end()
     }
 }
 
@@ -931,41 +875,6 @@ impl<'a> Default for clz_Torappu_MeetingClueData_MessageLeaveBoardConstDataArgs<
             recordsTextBonus: None,
             recordsTextTip: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MeetingClueData_MessageLeaveBoardConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_MeetingClueData_MessageLeaveBoardConstData", 8)?;
-        s.serialize_field("visitorBonus", &self.visitorBonus())?;
-        s.serialize_field("visitorBonusLimit", &self.visitorBonusLimit())?;
-        s.serialize_field("visitorToWeek", &self.visitorToWeek())?;
-        s.serialize_field("visitorPreWeek", &self.visitorPreWeek())?;
-        if let Some(f) = self.bonusToast() {
-            s.serialize_field("bonusToast", &f)?;
-        } else {
-            s.skip_field("bonusToast")?;
-        }
-        if let Some(f) = self.bonusLimitText() {
-            s.serialize_field("bonusLimitText", &f)?;
-        } else {
-            s.skip_field("bonusLimitText")?;
-        }
-        if let Some(f) = self.recordsTextBonus() {
-            s.serialize_field("recordsTextBonus", &f)?;
-        } else {
-            s.skip_field("recordsTextBonus")?;
-        }
-        if let Some(f) = self.recordsTextTip() {
-            s.serialize_field("recordsTextTip", &f)?;
-        } else {
-            s.skip_field("recordsTextTip")?;
-        }
-        s.end()
     }
 }
 
@@ -1553,48 +1462,6 @@ impl<'a> Default for clz_Torappu_MeetingClueDataArgs<'a> {
             participantsBonus: 0,
             commuFoldDuration: 0.0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MeetingClueData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MeetingClueData", 16)?;
-        if let Some(f) = self.clues() {
-            s.serialize_field("clues", &f)?;
-        } else {
-            s.skip_field("clues")?;
-        }
-        if let Some(f) = self.clueTypes() {
-            s.serialize_field("clueTypes", &f)?;
-        } else {
-            s.skip_field("clueTypes")?;
-        }
-        if let Some(f) = self.receiveTimeBonus() {
-            s.serialize_field("receiveTimeBonus", &f)?;
-        } else {
-            s.skip_field("receiveTimeBonus")?;
-        }
-        if let Some(f) = self.messageLeaveBoardConstData() {
-            s.serialize_field("messageLeaveBoardConstData", &f)?;
-        } else {
-            s.skip_field("messageLeaveBoardConstData")?;
-        }
-        s.serialize_field("inventoryLimit", &self.inventoryLimit())?;
-        s.serialize_field("outputBasicBonus", &self.outputBasicBonus())?;
-        s.serialize_field("outputOperatorsBonus", &self.outputOperatorsBonus())?;
-        s.serialize_field("cluePointLimit", &self.cluePointLimit())?;
-        s.serialize_field("expiredDays", &self.expiredDays())?;
-        s.serialize_field("transferBonus", &self.transferBonus())?;
-        s.serialize_field("recycleBonus", &self.recycleBonus())?;
-        s.serialize_field("expiredBonus", &self.expiredBonus())?;
-        s.serialize_field("communicationDuration", &self.communicationDuration())?;
-        s.serialize_field("initiatorBonus", &self.initiatorBonus())?;
-        s.serialize_field("participantsBonus", &self.participantsBonus())?;
-        s.serialize_field("commuFoldDuration", &self.commuFoldDuration())?;
-        s.end()
     }
 }
 

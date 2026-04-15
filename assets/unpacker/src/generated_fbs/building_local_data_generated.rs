@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -74,18 +73,6 @@ impl core::fmt::Debug for enum__Torappu_BuildingData_LODLEVEL {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_BuildingData_LODLEVEL {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BuildingData_LODLEVEL",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -222,18 +209,6 @@ impl<'a> Default for clz_Torappu_GridPositionArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GridPositionArgs { row: 0, col: 0 }
-    }
-}
-
-impl Serialize for clz_Torappu_GridPosition<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GridPosition", 2)?;
-        s.serialize_field("row", &self.row())?;
-        s.serialize_field("col", &self.col())?;
-        s.end()
     }
 }
 
@@ -403,22 +378,6 @@ impl<'a> Default for clz_Torappu_BuildingData_ObstaclePointArgs<'a> {
             offset: None,
             edgeWalkableMask: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_BuildingData_ObstaclePoint<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_ObstaclePoint", 2)?;
-        if let Some(f) = self.offset() {
-            s.serialize_field("offset", &f)?;
-        } else {
-            s.skip_field("offset")?;
-        }
-        s.serialize_field("edgeWalkableMask", &self.edgeWalkableMask())?;
-        s.end()
     }
 }
 
@@ -656,26 +615,6 @@ impl<'a> Default for clz_Torappu_BuildingData_ObstacleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_BuildingData_ObstacleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_ObstacleData", 2)?;
-        if let Some(f) = self.floorObstacles() {
-            s.serialize_field("floorObstacles", &f)?;
-        } else {
-            s.skip_field("floorObstacles")?;
-        }
-        if let Some(f) = self.backwallObstacles() {
-            s.serialize_field("backwallObstacles", &f)?;
-        } else {
-            s.skip_field("backwallObstacles")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BuildingData_ObstacleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -898,23 +837,6 @@ impl<'a> Default for dict__string__clz_Torappu_BuildingData_ObstacleDataArgs<'a>
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_BuildingData_ObstacleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_BuildingData_ObstacleData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_BuildingData_ObstacleDataBuilder<
     'a: 'b,
     'b,
@@ -1127,23 +1049,6 @@ impl<'a> Default for dict__enum__Torappu_BuildingData_LODLEVEL__list_stringArgs<
             key: enum__Torappu_BuildingData_LODLEVEL::HIGHEST,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__enum__Torappu_BuildingData_LODLEVEL__list_string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__enum__Torappu_BuildingData_LODLEVEL__list_string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1372,23 +1277,6 @@ impl<'a> Default for clz_Torappu_BuildingData_FurnitureLODConfigArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_BuildingData_FurnitureLODConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_BuildingData_FurnitureLODConfig", 2)?;
-        if let Some(f) = self.showedObjNames() {
-            s.serialize_field("showedObjNames", &f)?;
-        } else {
-            s.skip_field("showedObjNames")?;
-        }
-        s.serialize_field("isOverWrite", &self.isOverWrite())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BuildingData_FurnitureLODConfigBuilder<
     'a: 'b,
     'b,
@@ -1601,25 +1489,6 @@ impl<'a> Default for dict__string__clz_Torappu_BuildingData_FurnitureLODConfigAr
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_BuildingData_FurnitureLODConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_BuildingData_FurnitureLODConfig",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1933,31 +1802,6 @@ impl<'a> Default for clz_Torappu_BuildingData_BuildingLocalDataArgs<'a> {
             roomObstacleData: None,
             furnitureLODConfig: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_BuildingData_BuildingLocalData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BuildingData_BuildingLocalData", 3)?;
-        if let Some(f) = self.furnitureObstacleData() {
-            s.serialize_field("furnitureObstacleData", &f)?;
-        } else {
-            s.skip_field("furnitureObstacleData")?;
-        }
-        if let Some(f) = self.roomObstacleData() {
-            s.serialize_field("roomObstacleData", &f)?;
-        } else {
-            s.skip_field("roomObstacleData")?;
-        }
-        if let Some(f) = self.furnitureLODConfig() {
-            s.serialize_field("furnitureLODConfig", &f)?;
-        } else {
-            s.skip_field("furnitureLODConfig")?;
-        }
-        s.end()
     }
 }
 

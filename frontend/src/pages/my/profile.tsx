@@ -12,8 +12,8 @@ export default function ProfilePage() {
     useEffect(() => {
         if (loading) return;
 
-        if (user?.status?.uid) {
-            router.replace(`/user/${user.status.uid}`);
+        if (user?.uid) {
+            router.replace(`/user/${user.uid}`);
         }
     }, [user, loading, router]);
 
@@ -32,7 +32,7 @@ export default function ProfilePage() {
     }
 
     // If not logged in, show 404-style page
-    if (!user?.status?.uid) {
+    if (!user?.uid) {
         return (
             <>
                 <SEO description="Profile not found. You need to be logged in to view your profile." noIndex path="/my/profile" title="Profile Not Found" />

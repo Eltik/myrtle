@@ -1,14 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { z } from "zod";
-import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import type { GachaSettings } from "~/types/api";
-
-// Schema for updating gacha settings
-const UpdateGachaSettingsSchema = z.object({
-    storeRecords: z.boolean().optional(),
-    shareAnonymousStats: z.boolean().optional(),
-});
 
 interface SuccessResponse {
     success: true;
@@ -23,91 +16,58 @@ interface ErrorResponse {
 type ApiResponse = SuccessResponse | ErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-    const token = getSiteToken(req);
-    const session = getSessionFromCookie(req);
-
-    if (!token || !session) {
-        return res.status(401).json({
-            success: false,
-            error: "Not authenticated",
-        });
+    const token = getToken(req);
+    if (!token) {
+        return res.status(401).json({ success: false, error: "Not authenticated" });
     }
 
-    // GET - Fetch current gacha settings
     if (req.method === "GET") {
         try {
-            const response = await backendFetch(`/gacha/settings?token=${encodeURIComponent(token)}`);
+            const response = await backendFetch("/gacha/settings", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`Backend gacha settings fetch failed: ${response.status} - ${errorText}`);
-
-                return res.status(500).json({
-                    success: false,
-                    error: "Failed to fetch gacha settings",
-                });
+                return res.status(500).json({ success: false, error: "Failed to fetch gacha settings" });
             }
 
             const settings: GachaSettings = await response.json();
-
-            return res.status(200).json({
-                success: true,
-                settings,
-            });
+            return res.status(200).json({ success: true, settings });
         } catch (error) {
             console.error("Error fetching gacha settings:", error);
-            return res.status(500).json({
-                success: false,
-                error: "An internal server error occurred",
-            });
+            return res.status(500).json({ success: false, error: "An internal server error occurred" });
         }
     }
 
-    // POST - Update gacha settings
     if (req.method === "POST") {
         try {
-            const parseResult = UpdateGachaSettingsSchema.safeParse(req.body);
-
-            if (!parseResult.success) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Invalid request body",
-                });
-            }
-
-            const { storeRecords, shareAnonymousStats } = parseResult.data;
+            const body = req.body as { storeRecords?: boolean; shareAnonymousStats?: boolean };
+            const payload: Record<string, unknown> = {};
+            if (typeof body.storeRecords === "boolean") payload.store_records = body.storeRecords;
+            if (typeof body.shareAnonymousStats === "boolean") payload.share_anonymous_stats = body.shareAnonymousStats;
 
             const response = await backendFetch("/gacha/settings", {
                 method: "POST",
-                body: JSON.stringify({
-                    token,
-                    store_records: storeRecords,
-                    share_anonymous_stats: shareAnonymousStats,
-                }),
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`Backend gacha settings update failed: ${response.status} - ${errorText}`);
-
-                return res.status(500).json({
-                    success: false,
-                    error: "Failed to update gacha settings",
-                });
+                return res.status(500).json({ success: false, error: "Failed to update gacha settings" });
             }
 
             const settings: GachaSettings = await response.json();
-
-            return res.status(200).json({
-                success: true,
-                settings,
-            });
+            return res.status(200).json({ success: true, settings });
         } catch (error) {
             console.error("Error updating gacha settings:", error);
-            return res.status(500).json({
-                success: false,
-                error: "An internal server error occurred",
-            });
+            return res.status(500).json({ success: false, error: "An internal server error occurred" });
         }
     }
 

@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -118,6 +117,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -216,9 +217,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -311,6 +314,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -406,6 +411,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -417,18 +424,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -531,18 +526,6 @@ impl core::fmt::Debug for enum__Torappu_CampaignStageType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CampaignStageType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CampaignStageType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -687,18 +670,6 @@ impl core::fmt::Debug for enum__Torappu_StageDropType {
         }
     }
 }
-impl Serialize for enum__Torappu_StageDropType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageDropType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageDropType {
     type Inner = Self;
@@ -815,18 +786,6 @@ impl core::fmt::Debug for enum__Torappu_OccPer {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_OccPer {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_OccPer",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -987,23 +946,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -1214,23 +1156,6 @@ impl<'a> Default for clz_Torappu_CampaignData_BreakRewardLadderArgs<'a> {
             breakFeeAdd: 0,
             rewards: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CampaignData_BreakRewardLadder<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData_BreakRewardLadder", 3)?;
-        s.serialize_field("killCnt", &self.killCnt())?;
-        s.serialize_field("breakFeeAdd", &self.breakFeeAdd())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.end()
     }
 }
 
@@ -1496,25 +1421,6 @@ impl<'a> Default for clz_Torappu_WeightItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_WeightItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_WeightItemBundle", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("dropType", &self.dropType())?;
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_WeightItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1707,21 +1613,6 @@ impl<'a> Default for list_clz_Torappu_WeightItemBundleArgs<'a> {
     #[inline]
     fn default() -> Self {
         list_clz_Torappu_WeightItemBundleArgs { values: None }
-    }
-}
-
-impl Serialize for list_clz_Torappu_WeightItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("list_clz_Torappu_WeightItemBundle", 1)?;
-        if let Some(f) = self.values() {
-            s.serialize_field("values", &f)?;
-        } else {
-            s.skip_field("values")?;
-        }
-        s.end()
     }
 }
 
@@ -1935,24 +1826,6 @@ impl<'a> Default for clz_Torappu_StageData_DisplayDetailRewardsArgs<'a> {
             id: None,
             dropType: enum__Torappu_StageDropType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_DisplayDetailRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayDetailRewards", 4)?;
-        s.serialize_field("occPercent", &self.occPercent())?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("dropType", &self.dropType())?;
-        s.end()
     }
 }
 
@@ -2252,31 +2125,6 @@ impl<'a> Default for clz_Torappu_CampaignData_CampaignDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignData_CampaignDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData_CampaignDropInfo", 3)?;
-        if let Some(f) = self.firstPassRewards() {
-            s.serialize_field("firstPassRewards", &f)?;
-        } else {
-            s.skip_field("firstPassRewards")?;
-        }
-        if let Some(f) = self.passRewards() {
-            s.serialize_field("passRewards", &f)?;
-        } else {
-            s.skip_field("passRewards")?;
-        }
-        if let Some(f) = self.displayDetailRewards() {
-            s.serialize_field("displayDetailRewards", &f)?;
-        } else {
-            s.skip_field("displayDetailRewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignData_CampaignDropInfoBuilder<
     'a: 'b,
     'b,
@@ -2498,22 +2346,6 @@ impl<'a> Default for clz_Torappu_CampaignData_DropLadderArgs<'a> {
             killCnt: 0,
             dropInfo: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CampaignData_DropLadder<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData_DropLadder", 2)?;
-        s.serialize_field("killCnt", &self.killCnt())?;
-        if let Some(f) = self.dropInfo() {
-            s.serialize_field("dropInfo", &f)?;
-        } else {
-            s.skip_field("dropInfo")?;
-        }
-        s.end()
     }
 }
 
@@ -2767,22 +2599,6 @@ impl<'a> Default for clz_Torappu_CampaignData_GainLadderArgs {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignData_GainLadder<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData_GainLadder", 6)?;
-        s.serialize_field("killCnt", &self.killCnt())?;
-        s.serialize_field("apFailReturn", &self.apFailReturn())?;
-        s.serialize_field("favor", &self.favor())?;
-        s.serialize_field("expGain", &self.expGain())?;
-        s.serialize_field("goldGain", &self.goldGain())?;
-        s.serialize_field("displayDiamondShdNum", &self.displayDiamondShdNum())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignData_GainLadderBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3025,23 +2841,6 @@ impl<'a> Default for clz_Torappu_StageData_DisplayRewardsArgs<'a> {
             id: None,
             dropType: enum__Torappu_StageDropType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_DisplayRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayRewards", 3)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("dropType", &self.dropType())?;
-        s.end()
     }
 }
 
@@ -3378,36 +3177,6 @@ impl<'a> Default for clz_Torappu_CampaignData_DropGainInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignData_DropGainInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData_DropGainInfo", 4)?;
-        if let Some(f) = self.dropLadders() {
-            s.serialize_field("dropLadders", &f)?;
-        } else {
-            s.skip_field("dropLadders")?;
-        }
-        if let Some(f) = self.gainLadders() {
-            s.serialize_field("gainLadders", &f)?;
-        } else {
-            s.skip_field("gainLadders")?;
-        }
-        if let Some(f) = self.displayRewards() {
-            s.serialize_field("displayRewards", &f)?;
-        } else {
-            s.skip_field("displayRewards")?;
-        }
-        if let Some(f) = self.displayDetailRewards() {
-            s.serialize_field("displayDetailRewards", &f)?;
-        } else {
-            s.skip_field("displayDetailRewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignData_DropGainInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -3672,27 +3441,6 @@ impl<'a> Default
             key: enum__Torappu_CampaignStageType::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize
-    for dict__enum__Torappu_CampaignStageType__clz_Torappu_CampaignData_DropGainInfo<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_CampaignStageType__clz_Torappu_CampaignData_DropGainInfo",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3992,33 +3740,6 @@ impl<'a> Default for clz_Torappu_CampaignDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignData", 5)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.serialize_field("isSmallScale", &self.isSmallScale())?;
-        if let Some(f) = self.breakLadders() {
-            s.serialize_field("breakLadders", &f)?;
-        } else {
-            s.skip_field("breakLadders")?;
-        }
-        s.serialize_field("isCustomized", &self.isCustomized())?;
-        if let Some(f) = self.dropGains() {
-            s.serialize_field("dropGains", &f)?;
-        } else {
-            s.skip_field("dropGains")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4275,22 +3996,6 @@ impl<'a> Default for dict__string__clz_Torappu_CampaignDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CampaignData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_CampaignData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CampaignDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -4517,28 +4222,6 @@ impl<'a> Default for clz_Torappu_CampaignGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignGroupData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.activeCamps() {
-            s.serialize_field("activeCamps", &f)?;
-        } else {
-            s.skip_field("activeCamps")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4761,23 +4444,6 @@ impl<'a> Default for dict__string__clz_Torappu_CampaignGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CampaignGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CampaignGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CampaignGroupDataBuilder<
     'a: 'b,
     'b,
@@ -4958,22 +4624,6 @@ impl<'a> Default for clz_Torappu_CampaignRegionDataArgs<'a> {
             id: None,
             isUnknwon: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CampaignRegionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignRegionData", 2)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("isUnknwon", &self.isUnknwon())?;
-        s.end()
     }
 }
 
@@ -5163,23 +4813,6 @@ impl<'a> Default for dict__string__clz_Torappu_CampaignRegionDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_CampaignRegionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CampaignRegionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5424,36 +5057,6 @@ impl<'a> Default for clz_Torappu_CampaignZoneDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignZoneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignZoneData", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.regionId() {
-            s.serialize_field("regionId", &f)?;
-        } else {
-            s.skip_field("regionId")?;
-        }
-        if let Some(f) = self.templateId() {
-            s.serialize_field("templateId", &f)?;
-        } else {
-            s.skip_field("templateId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignZoneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5667,22 +5270,6 @@ impl<'a> Default for dict__string__clz_Torappu_CampaignZoneDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_CampaignZoneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_CampaignZoneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5938,33 +5525,6 @@ impl<'a> Default for clz_Torappu_CampaignMissionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignMissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignMissionData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("breakFeeAdd", &self.breakFeeAdd())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignMissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6202,23 +5762,6 @@ impl<'a> Default for dict__string__clz_Torappu_CampaignMissionDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CampaignMissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CampaignMissionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CampaignMissionDataBuilder<
     'a: 'b,
     'b,
@@ -6416,18 +5959,6 @@ impl<'a> Default for dict__string__intArgs<'a> {
             key: None, // required field
             value: 0,
         }
-    }
-}
-
-impl Serialize for dict__string__int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__int", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
     }
 }
 
@@ -6693,38 +6224,6 @@ impl<'a> Default for clz_Torappu_CampaignConstTableArgs<'a> {
             firstRotateRegion: None,
             sweepStartTime: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CampaignConstTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignConstTable", 6)?;
-        if let Some(f) = self.systemPreposedStage() {
-            s.serialize_field("systemPreposedStage", &f)?;
-        } else {
-            s.skip_field("systemPreposedStage")?;
-        }
-        s.serialize_field("rotateStartTime", &self.rotateStartTime())?;
-        if let Some(f) = self.rotatePreposedStage() {
-            s.serialize_field("rotatePreposedStage", &f)?;
-        } else {
-            s.skip_field("rotatePreposedStage")?;
-        }
-        if let Some(f) = self.zoneUnlockStage() {
-            s.serialize_field("zoneUnlockStage", &f)?;
-        } else {
-            s.skip_field("zoneUnlockStage")?;
-        }
-        if let Some(f) = self.firstRotateRegion() {
-            s.serialize_field("firstRotateRegion", &f)?;
-        } else {
-            s.skip_field("firstRotateRegion")?;
-        }
-        s.serialize_field("sweepStartTime", &self.sweepStartTime())?;
-        s.end()
     }
 }
 
@@ -7076,39 +6575,6 @@ impl<'a> Default for clz_Torappu_CampaignRotateOpenTimeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignRotateOpenTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignRotateOpenTimeData", 7)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.mapId() {
-            s.serialize_field("mapId", &f)?;
-        } else {
-            s.skip_field("mapId")?;
-        }
-        if let Some(f) = self.unknownRegions() {
-            s.serialize_field("unknownRegions", &f)?;
-        } else {
-            s.skip_field("unknownRegions")?;
-        }
-        s.serialize_field("duration", &self.duration())?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignRotateOpenTimeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -7401,28 +6867,6 @@ impl<'a> Default for clz_Torappu_CampaignTrainingOpenTimeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignTrainingOpenTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignTrainingOpenTimeData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.stages() {
-            s.serialize_field("stages", &f)?;
-        } else {
-            s.skip_field("stages")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignTrainingOpenTimeDataBuilder<
     'a: 'b,
     'b,
@@ -7658,24 +7102,6 @@ impl<'a> Default for clz_Torappu_CampaignTrainingAllOpenTimeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CampaignTrainingAllOpenTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_CampaignTrainingAllOpenTimeData", 3)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CampaignTrainingAllOpenTimeDataBuilder<
     'a: 'b,
     'b,
@@ -7770,6 +7196,766 @@ impl clz_Torappu_CampaignTrainingAllOpenTimeDataT {
         )
     }
 }
+pub enum clz_UnityEngine_Vector2Offset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_UnityEngine_Vector2<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_UnityEngine_Vector2<'a> {
+    type Inner = clz_UnityEngine_Vector2<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_UnityEngine_Vector2<'a> {
+    pub const VT_X: flatbuffers::VOffsetT = 4;
+    pub const VT_Y: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_UnityEngine_Vector2 { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_UnityEngine_Vector2Args,
+    ) -> flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'bldr>> {
+        let mut builder = clz_UnityEngine_Vector2Builder::new(_fbb);
+        builder.add_y(args.y);
+        builder.add_x(args.x);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_UnityEngine_Vector2T {
+        let x = self.x();
+        let y = self.y();
+        clz_UnityEngine_Vector2T { x, y }
+    }
+
+    #[inline]
+    pub fn x(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(clz_UnityEngine_Vector2::VT_X, Some(0.0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn y(&self) -> f32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<f32>(clz_UnityEngine_Vector2::VT_Y, Some(0.0))
+                .unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_UnityEngine_Vector2<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<f32>("x", Self::VT_X, false)?
+            .visit_field::<f32>("y", Self::VT_Y, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_UnityEngine_Vector2Args {
+    pub x: f32,
+    pub y: f32,
+}
+impl<'a> Default for clz_UnityEngine_Vector2Args {
+    #[inline]
+    fn default() -> Self {
+        clz_UnityEngine_Vector2Args { x: 0.0, y: 0.0 }
+    }
+}
+
+pub struct clz_UnityEngine_Vector2Builder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_UnityEngine_Vector2Builder<'a, 'b, A> {
+    #[inline]
+    pub fn add_x(&mut self, x: f32) {
+        self.fbb_
+            .push_slot::<f32>(clz_UnityEngine_Vector2::VT_X, x, 0.0);
+    }
+    #[inline]
+    pub fn add_y(&mut self, y: f32) {
+        self.fbb_
+            .push_slot::<f32>(clz_UnityEngine_Vector2::VT_Y, y, 0.0);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_UnityEngine_Vector2Builder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_UnityEngine_Vector2Builder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_UnityEngine_Vector2<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_UnityEngine_Vector2");
+        ds.field("x", &self.x());
+        ds.field("y", &self.y());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_UnityEngine_Vector2T {
+    pub x: f32,
+    pub y: f32,
+}
+impl Default for clz_UnityEngine_Vector2T {
+    fn default() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+}
+impl clz_UnityEngine_Vector2T {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'b>> {
+        let x = self.x;
+        let y = self.y;
+        clz_UnityEngine_Vector2::create(_fbb, &clz_UnityEngine_Vector2Args { x, y })
+    }
+}
+pub enum clz_Torappu_CampaignStageMapDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_CampaignStageMapData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CampaignStageMapData<'a> {
+    type Inner = clz_Torappu_CampaignStageMapData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_CampaignStageMapData<'a> {
+    pub const VT_POSITION: flatbuffers::VOffsetT = 4;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CampaignStageMapData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CampaignStageMapDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData<'bldr>> {
+        let mut builder = clz_Torappu_CampaignStageMapDataBuilder::new(_fbb);
+        if let Some(x) = args.position {
+            builder.add_position(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CampaignStageMapDataT {
+        let position = self.position().map(|x| Box::new(x.unpack()));
+        clz_Torappu_CampaignStageMapDataT { position }
+    }
+
+    #[inline]
+    pub fn position(&self) -> Option<clz_UnityEngine_Vector2<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_UnityEngine_Vector2>>(
+                    clz_Torappu_CampaignStageMapData::VT_POSITION,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_CampaignStageMapData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_UnityEngine_Vector2>>(
+                "position",
+                Self::VT_POSITION,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_CampaignStageMapDataArgs<'a> {
+    pub position: Option<flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'a>>>,
+}
+impl<'a> Default for clz_Torappu_CampaignStageMapDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CampaignStageMapDataArgs { position: None }
+    }
+}
+
+pub struct clz_Torappu_CampaignStageMapDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_position(&mut self, position: flatbuffers::WIPOffset<clz_UnityEngine_Vector2<'b>>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_UnityEngine_Vector2>>(
+                clz_Torappu_CampaignStageMapData::VT_POSITION,
+                position,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_CampaignStageMapDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_CampaignStageMapData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CampaignStageMapData");
+        ds.field("position", &self.position());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CampaignStageMapDataT {
+    pub position: Option<Box<clz_UnityEngine_Vector2T>>,
+}
+impl Default for clz_Torappu_CampaignStageMapDataT {
+    fn default() -> Self {
+        Self { position: None }
+    }
+}
+impl clz_Torappu_CampaignStageMapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData<'b>> {
+        let position = self.position.as_ref().map(|x| x.pack(_fbb));
+        clz_Torappu_CampaignStageMapData::create(
+            _fbb,
+            &clz_Torappu_CampaignStageMapDataArgs { position },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_CampaignStageMapDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_CampaignStageMapData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CampaignStageMapData<'a> {
+    type Inner = dict__string__clz_Torappu_CampaignStageMapData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_CampaignStageMapData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CampaignStageMapData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CampaignStageMapDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CampaignStageMapData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CampaignStageMapDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CampaignStageMapDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CampaignStageMapDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_CampaignStageMapData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_CampaignStageMapData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_CampaignStageMapData>>(
+                    dict__string__clz_Torappu_CampaignStageMapData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_CampaignStageMapData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CampaignStageMapData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_CampaignStageMapDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_CampaignStageMapDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CampaignStageMapDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_CampaignStageMapDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_CampaignStageMapData>>(
+                dict__string__clz_Torappu_CampaignStageMapData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CampaignStageMapDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CampaignStageMapData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_CampaignStageMapData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CampaignStageMapData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CampaignStageMapDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CampaignStageMapDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CampaignStageMapDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CampaignStageMapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CampaignStageMapData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CampaignStageMapData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CampaignStageMapDataArgs { key, value },
+        )
+    }
+}
+pub enum dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a>
+    for dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a>
+{
+    type Inner = dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'bldr>,
+    > {
+        let mut builder =
+            dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__list_dict__string__clz_Torappu_CampaignStageMapData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CampaignStageMapData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CampaignStageMapData>,
+                >,
+            >>(
+                dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::VT_VALUE,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable
+    for dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'_>
+{
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CampaignStageMapData>,
+                >,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CampaignStageMapData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CampaignStageMapData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::VT_VALUE,
+            value,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a>>
+    {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds =
+            f.debug_struct("dict__string__list_dict__string__clz_Torappu_CampaignStageMapData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT {
+    pub key: String,
+    pub value: Option<Vec<dict__string__clz_Torappu_CampaignStageMapDataT>>,
+}
+impl Default for dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'b>>
+    {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__string__list_dict__string__clz_Torappu_CampaignStageMapData::create(
+            _fbb,
+            &dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_CampaignTableOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -7798,6 +7984,7 @@ impl<'a> clz_Torappu_CampaignTable<'a> {
     pub const VT_CAMPAIGNROTATESTAGEOPENTIMES: flatbuffers::VOffsetT = 18;
     pub const VT_CAMPAIGNTRAININGSTAGEOPENTIMES: flatbuffers::VOffsetT = 20;
     pub const VT_CAMPAIGNTRAININGALLOPENTIMES: flatbuffers::VOffsetT = 22;
+    pub const VT_CAMPAIGNZONEMAPDATA: flatbuffers::VOffsetT = 24;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -7809,6 +7996,9 @@ impl<'a> clz_Torappu_CampaignTable<'a> {
         args: &'args clz_Torappu_CampaignTableArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_CampaignTable<'bldr>> {
         let mut builder = clz_Torappu_CampaignTableBuilder::new(_fbb);
+        if let Some(x) = args.campaignZoneMapData {
+            builder.add_campaignZoneMapData(x);
+        }
         if let Some(x) = args.campaignTrainingAllOpenTimes {
             builder.add_campaignTrainingAllOpenTimes(x);
         }
@@ -7871,6 +8061,9 @@ impl<'a> clz_Torappu_CampaignTable<'a> {
         let campaignTrainingAllOpenTimes = self
             .campaignTrainingAllOpenTimes()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let campaignZoneMapData = self
+            .campaignZoneMapData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_CampaignTableT {
             campaigns,
             campaignGroups,
@@ -7882,6 +8075,7 @@ impl<'a> clz_Torappu_CampaignTable<'a> {
             campaignRotateStageOpenTimes,
             campaignTrainingStageOpenTimes,
             campaignTrainingAllOpenTimes,
+            campaignZoneMapData,
         }
     }
 
@@ -8088,6 +8282,31 @@ impl<'a> clz_Torappu_CampaignTable<'a> {
             )
         }
     }
+    #[inline]
+    pub fn campaignZoneMapData(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<
+                dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a>,
+            >,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__list_dict__string__clz_Torappu_CampaignStageMapData,
+                    >,
+                >,
+            >>(clz_Torappu_CampaignTable::VT_CAMPAIGNZONEMAPDATA, None)
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_CampaignTable<'_> {
@@ -8166,6 +8385,14 @@ impl flatbuffers::Verifiable for clz_Torappu_CampaignTable<'_> {
                 Self::VT_CAMPAIGNTRAININGALLOPENTIMES,
                 false,
             )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__list_dict__string__clz_Torappu_CampaignStageMapData,
+                    >,
+                >,
+            >>("campaignZoneMapData", Self::VT_CAMPAIGNZONEMAPDATA, false)?
             .finish();
         Ok(())
     }
@@ -8241,6 +8468,16 @@ pub struct clz_Torappu_CampaignTableArgs<'a> {
             >,
         >,
     >,
+    pub campaignZoneMapData: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'a>,
+                >,
+            >,
+        >,
+    >,
 }
 impl<'a> Default for clz_Torappu_CampaignTableArgs<'a> {
     #[inline]
@@ -8256,67 +8493,8 @@ impl<'a> Default for clz_Torappu_CampaignTableArgs<'a> {
             campaignRotateStageOpenTimes: None,
             campaignTrainingStageOpenTimes: None,
             campaignTrainingAllOpenTimes: None,
+            campaignZoneMapData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CampaignTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CampaignTable", 10)?;
-        if let Some(f) = self.campaigns() {
-            s.serialize_field("campaigns", &f)?;
-        } else {
-            s.skip_field("campaigns")?;
-        }
-        if let Some(f) = self.campaignGroups() {
-            s.serialize_field("campaignGroups", &f)?;
-        } else {
-            s.skip_field("campaignGroups")?;
-        }
-        if let Some(f) = self.campaignRegions() {
-            s.serialize_field("campaignRegions", &f)?;
-        } else {
-            s.skip_field("campaignRegions")?;
-        }
-        if let Some(f) = self.campaignZones() {
-            s.serialize_field("campaignZones", &f)?;
-        } else {
-            s.skip_field("campaignZones")?;
-        }
-        if let Some(f) = self.campaignMissions() {
-            s.serialize_field("campaignMissions", &f)?;
-        } else {
-            s.skip_field("campaignMissions")?;
-        }
-        if let Some(f) = self.stageIndexInZoneMap() {
-            s.serialize_field("stageIndexInZoneMap", &f)?;
-        } else {
-            s.skip_field("stageIndexInZoneMap")?;
-        }
-        if let Some(f) = self.campaignConstTable() {
-            s.serialize_field("campaignConstTable", &f)?;
-        } else {
-            s.skip_field("campaignConstTable")?;
-        }
-        if let Some(f) = self.campaignRotateStageOpenTimes() {
-            s.serialize_field("campaignRotateStageOpenTimes", &f)?;
-        } else {
-            s.skip_field("campaignRotateStageOpenTimes")?;
-        }
-        if let Some(f) = self.campaignTrainingStageOpenTimes() {
-            s.serialize_field("campaignTrainingStageOpenTimes", &f)?;
-        } else {
-            s.skip_field("campaignTrainingStageOpenTimes")?;
-        }
-        if let Some(f) = self.campaignTrainingAllOpenTimes() {
-            s.serialize_field("campaignTrainingAllOpenTimes", &f)?;
-        } else {
-            s.skip_field("campaignTrainingAllOpenTimes")?;
-        }
-        s.end()
     }
 }
 
@@ -8469,6 +8647,23 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CampaignTableBuilde
         );
     }
     #[inline]
+    pub fn add_campaignZoneMapData(
+        &mut self,
+        campaignZoneMapData: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__list_dict__string__clz_Torappu_CampaignStageMapData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CampaignTable::VT_CAMPAIGNZONEMAPDATA,
+            campaignZoneMapData,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_CampaignTableBuilder<'a, 'b, A> {
@@ -8507,6 +8702,7 @@ impl core::fmt::Debug for clz_Torappu_CampaignTable<'_> {
             "campaignTrainingAllOpenTimes",
             &self.campaignTrainingAllOpenTimes(),
         );
+        ds.field("campaignZoneMapData", &self.campaignZoneMapData());
         ds.finish()
     }
 }
@@ -8523,6 +8719,8 @@ pub struct clz_Torappu_CampaignTableT {
     pub campaignRotateStageOpenTimes: Option<Vec<clz_Torappu_CampaignRotateOpenTimeDataT>>,
     pub campaignTrainingStageOpenTimes: Option<Vec<clz_Torappu_CampaignTrainingOpenTimeDataT>>,
     pub campaignTrainingAllOpenTimes: Option<Vec<clz_Torappu_CampaignTrainingAllOpenTimeDataT>>,
+    pub campaignZoneMapData:
+        Option<Vec<dict__string__list_dict__string__clz_Torappu_CampaignStageMapDataT>>,
 }
 impl Default for clz_Torappu_CampaignTableT {
     fn default() -> Self {
@@ -8537,6 +8735,7 @@ impl Default for clz_Torappu_CampaignTableT {
             campaignRotateStageOpenTimes: None,
             campaignTrainingStageOpenTimes: None,
             campaignTrainingAllOpenTimes: None,
+            campaignZoneMapData: None,
         }
     }
 }
@@ -8583,6 +8782,10 @@ impl clz_Torappu_CampaignTableT {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let campaignZoneMapData = self.campaignZoneMapData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         clz_Torappu_CampaignTable::create(
             _fbb,
             &clz_Torappu_CampaignTableArgs {
@@ -8596,6 +8799,7 @@ impl clz_Torappu_CampaignTableT {
                 campaignRotateStageOpenTimes,
                 campaignTrainingStageOpenTimes,
                 campaignTrainingAllOpenTimes,
+                campaignZoneMapData,
             },
         )
     }

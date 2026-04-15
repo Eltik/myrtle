@@ -7,7 +7,7 @@ import { Button } from "~/components/ui/shadcn/button";
 import { useAuth } from "~/hooks/use-auth";
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "~/types/api/impl/operator";
 import type { Stage } from "~/types/api/impl/stage";
-import type { User } from "~/types/api/impl/user";
+import type { GameUserData } from "./impl/types";
 import type { Zone } from "~/types/api/impl/zone";
 import { ChallengeDisplay } from "./impl/challenge-display";
 import { FilterPanel } from "./impl/filter-panel";
@@ -102,7 +102,7 @@ function migrateSettings(saved: RandomizerSettings & { _version?: number }): Ran
     return settings as RandomizerSettings;
 }
 
-function isFullUser(user: unknown): user is User {
+function isFullUser(user: unknown): user is GameUserData {
     return user !== null && typeof user === "object" && "troop" in user && user.troop !== null && typeof user.troop === "object" && "chars" in user.troop;
 }
 

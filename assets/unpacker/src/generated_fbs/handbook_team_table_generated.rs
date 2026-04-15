@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -233,40 +232,6 @@ impl<'a> Default for clz_Torappu_HandbookTeamDataArgs<'a> {
             isLimited: false,
             isRaw: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_HandbookTeamData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_HandbookTeamData", 8)?;
-        if let Some(f) = self.powerId() {
-            s.serialize_field("powerId", &f)?;
-        } else {
-            s.skip_field("powerId")?;
-        }
-        s.serialize_field("orderNum", &self.orderNum())?;
-        s.serialize_field("powerLevel", &self.powerLevel())?;
-        if let Some(f) = self.powerName() {
-            s.serialize_field("powerName", &f)?;
-        } else {
-            s.skip_field("powerName")?;
-        }
-        if let Some(f) = self.powerCode() {
-            s.serialize_field("powerCode", &f)?;
-        } else {
-            s.skip_field("powerCode")?;
-        }
-        if let Some(f) = self.color() {
-            s.serialize_field("color", &f)?;
-        } else {
-            s.skip_field("color")?;
-        }
-        s.serialize_field("isLimited", &self.isLimited())?;
-        s.serialize_field("isRaw", &self.isRaw())?;
-        s.end()
     }
 }
 
@@ -528,22 +493,6 @@ impl<'a> Default for dict__string__clz_Torappu_HandbookTeamDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_HandbookTeamData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_HandbookTeamData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_HandbookTeamDataBuilder<
     'a: 'b,
     'b,
@@ -730,22 +679,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs<
         clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamDataArgs {
             handbook_teams: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_HandbookTeamData", 1)?;
-        if let Some(f) = self.handbook_teams() {
-            s.serialize_field("handbook_teams", &f)?;
-        } else {
-            s.skip_field("handbook_teams")?;
-        }
-        s.end()
     }
 }
 

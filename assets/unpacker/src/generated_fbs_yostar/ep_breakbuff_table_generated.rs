@@ -5,6 +5,8 @@
 use core::cmp::Ordering;
 use core::mem;
 
+extern crate serde;
+
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
 

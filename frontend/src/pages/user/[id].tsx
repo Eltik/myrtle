@@ -3,30 +3,11 @@ import { SEO } from "~/components/seo";
 import { InView } from "~/components/ui/motion-primitives/in-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/shadcn/tabs";
 import { CharactersGrid } from "~/components/user/characters-grid";
-import { ItemsGrid } from "~/components/user/items-grid";
 import { ScoreView } from "~/components/user/score-view";
 import { StatsView } from "~/components/user/stats-view";
 import { UserHeader } from "~/components/user/user-header";
 import { env } from "~/env";
-import type { StoredUser } from "~/types/api/impl/user";
-
-/**
- * Minimal profile data for SSR - reduces payload from 2-5MB to ~30KB
- */
-interface UserProfile {
-    nickName: string;
-    nickNumber: string;
-    level: number;
-    resume: string;
-    avatarId: string;
-    secretary: string;
-    secretarySkinId: string;
-    gold: number;
-    diamondShard: number;
-    payDiamond: number;
-    freeDiamond: number;
-    registerTs: number;
-}
+import type { UserProfile } from "~/types/api/impl/user";
 
 interface UserPageProps {
     profile: UserProfile | null;
@@ -50,7 +31,7 @@ export default function UserPage({ profile, userId, baseUrl, error }: UserPagePr
         );
     }
 
-    const nickName = profile.nickName ?? "Unknown";
+    const nickName = profile.nickname ?? "Unknown";
     const possessive = nickName.endsWith("s") ? `${nickName}'` : `${nickName}'s`;
 
     return (
@@ -77,7 +58,6 @@ export default function UserPage({ profile, userId, baseUrl, error }: UserPagePr
                     <Tabs className="space-y-4" defaultValue="characters">
                         <TabsList>
                             <TabsTrigger value="characters">Characters</TabsTrigger>
-                            <TabsTrigger value="items">Items</TabsTrigger>
                             <TabsTrigger value="stats">Stats</TabsTrigger>
                             <TabsTrigger value="score">Score</TabsTrigger>
                         </TabsList>
@@ -85,11 +65,6 @@ export default function UserPage({ profile, userId, baseUrl, error }: UserPagePr
                         <TabsContent className="space-y-4" value="characters">
                             <h2 className="font-bold text-2xl">Characters</h2>
                             <CharactersGrid userId={userId} />
-                        </TabsContent>
-
-                        <TabsContent className="space-y-4" value="items">
-                            <h2 className="font-bold text-2xl">Items</h2>
-                            <ItemsGrid userId={userId} />
                         </TabsContent>
 
                         <TabsContent className="space-y-4" value="stats">
@@ -119,16 +94,9 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
 
     try {
         const { env } = await import("~/env");
+        const { backendFetch } = await import("~/lib/backend-fetch");
 
-        const backendURL = new URL("/get-user", env.BACKEND_URL);
-        backendURL.searchParams.set("uid", id);
-
-        const response = await fetch(backendURL.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await backendFetch(`/get-user?uid=${encodeURIComponent(id)}`);
 
         if (!response.ok) {
             if (response.status === 404) {
@@ -153,9 +121,9 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
             };
         }
 
-        const userData: StoredUser = await response.json();
+        const profile: UserProfile = await response.json();
 
-        if (!userData || !userData.data || !userData.data.status) {
+        if (!profile || !profile.uid) {
             return {
                 props: {
                     profile: null,
@@ -165,23 +133,6 @@ export const getServerSideProps: GetServerSideProps<UserPageProps> = async (cont
                 },
             };
         }
-
-        // Extract only essential profile data for SSR (reduces payload from 2-5MB to ~30KB)
-        const status = userData.data.status;
-        const profile: UserProfile = {
-            nickName: status.nickName,
-            nickNumber: status.nickNumber,
-            level: status.level,
-            resume: status.resume,
-            avatarId: status.avatarId,
-            secretary: status.secretary,
-            secretarySkinId: status.secretarySkinId,
-            gold: status.gold,
-            diamondShard: status.diamondShard,
-            payDiamond: status.payDiamond,
-            freeDiamond: status.freeDiamond,
-            registerTs: status.registerTs,
-        };
 
         return {
             props: {

@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -82,18 +81,6 @@ impl core::fmt::Debug for enum__Torappu_CrisisV2AppraiseType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CrisisV2AppraiseType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CrisisV2AppraiseType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -230,18 +217,6 @@ impl core::fmt::Debug for enum__Torappu_ProfessionCategory {
         }
     }
 }
-impl Serialize for enum__Torappu_ProfessionCategory {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ProfessionCategory",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionCategory {
     type Inner = Self;
@@ -343,18 +318,6 @@ impl core::fmt::Debug for enum__Torappu_BuildableType {
         }
     }
 }
-impl Serialize for enum__Torappu_BuildableType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BuildableType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuildableType {
     type Inner = Self;
@@ -454,18 +417,6 @@ impl core::fmt::Debug for enum__Torappu_PlayerSideMask {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_PlayerSideMask {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_PlayerSideMask",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -582,18 +533,6 @@ impl core::fmt::Debug for enum__Torappu_Battle_SideType {
         }
     }
 }
-impl Serialize for enum__Torappu_Battle_SideType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Battle_SideType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_Battle_SideType {
     type Inner = Self;
@@ -697,18 +636,6 @@ impl core::fmt::Debug for enum__Torappu_TileData_HeightTypeMask {
         }
     }
 }
-impl Serialize for enum__Torappu_TileData_HeightTypeMask {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_TileData_HeightTypeMask",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_TileData_HeightTypeMask {
     type Inner = Self;
@@ -764,13 +691,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -862,6 +789,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -960,9 +889,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -1055,6 +986,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1150,6 +1083,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -1161,18 +1096,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1560,68 +1483,6 @@ impl<'a> Default for clz_Torappu_CrisisV2SeasonInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CrisisV2SeasonInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisV2SeasonInfo", 12)?;
-        if let Some(f) = self.seasonId() {
-            s.serialize_field("seasonId", &f)?;
-        } else {
-            s.skip_field("seasonId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        if let Some(f) = self.medalGroupId() {
-            s.serialize_field("medalGroupId", &f)?;
-        } else {
-            s.skip_field("medalGroupId")?;
-        }
-        if let Some(f) = self.medalId() {
-            s.serialize_field("medalId", &f)?;
-        } else {
-            s.skip_field("medalId")?;
-        }
-        if let Some(f) = self.themeColor1() {
-            s.serialize_field("themeColor1", &f)?;
-        } else {
-            s.skip_field("themeColor1")?;
-        }
-        if let Some(f) = self.themeColor2() {
-            s.serialize_field("themeColor2", &f)?;
-        } else {
-            s.skip_field("themeColor2")?;
-        }
-        if let Some(f) = self.themeColor3() {
-            s.serialize_field("themeColor3", &f)?;
-        } else {
-            s.skip_field("themeColor3")?;
-        }
-        if let Some(f) = self.seasonBgm() {
-            s.serialize_field("seasonBgm", &f)?;
-        } else {
-            s.skip_field("seasonBgm")?;
-        }
-        if let Some(f) = self.seasonBgmChallenge() {
-            s.serialize_field("seasonBgmChallenge", &f)?;
-        } else {
-            s.skip_field("seasonBgmChallenge")?;
-        }
-        if let Some(f) = self.crisisV2SeasonCode() {
-            s.serialize_field("crisisV2SeasonCode", &f)?;
-        } else {
-            s.skip_field("crisisV2SeasonCode")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CrisisV2SeasonInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1938,23 +1799,6 @@ impl<'a> Default for dict__string__clz_Torappu_CrisisV2SeasonInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CrisisV2SeasonInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CrisisV2SeasonInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CrisisV2SeasonInfoBuilder<
     'a: 'b,
     'b,
@@ -2124,17 +1968,6 @@ impl<'a> Default for clz_Torappu_CrisisV2AppraiseWrapArgs {
         clz_Torappu_CrisisV2AppraiseWrapArgs {
             appraiseType: enum__Torappu_CrisisV2AppraiseType::RANK_D,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CrisisV2AppraiseWrap<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisV2AppraiseWrap", 1)?;
-        s.serialize_field("appraiseType", &self.appraiseType())?;
-        s.end()
     }
 }
 
@@ -2310,23 +2143,6 @@ impl<'a> Default for dict__int__clz_Torappu_CrisisV2AppraiseWrapArgs<'a> {
             key: 0,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__int__clz_Torappu_CrisisV2AppraiseWrap<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__int__clz_Torappu_CrisisV2AppraiseWrap", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2687,34 +2503,6 @@ impl<'a> Default for clz_Torappu_CrisisV2ConstDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CrisisV2ConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisV2ConstData", 10)?;
-        s.serialize_field("sysStartTime", &self.sysStartTime())?;
-        s.serialize_field("blackScoreThreshold", &self.blackScoreThreshold())?;
-        s.serialize_field("redScoreThreshold", &self.redScoreThreshold())?;
-        s.serialize_field("detailBkgRedThreshold", &self.detailBkgRedThreshold())?;
-        s.serialize_field("voiceGrade", &self.voiceGrade())?;
-        s.serialize_field("seasonButtonUnlockInfo", &self.seasonButtonUnlockInfo())?;
-        if let Some(f) = self.shopCoinId() {
-            s.serialize_field("shopCoinId", &f)?;
-        } else {
-            s.skip_field("shopCoinId")?;
-        }
-        s.serialize_field("hardBgmSwitchScore", &self.hardBgmSwitchScore())?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.serialize_field("hideTodoWhenStageFinish", &self.hideTodoWhenStageFinish())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CrisisV2ConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2913,18 +2701,19 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
     pub const VT_PLAYERSIDEMASK: flatbuffers::VOffsetT = 8;
     pub const VT_SIDETYPE: flatbuffers::VOffsetT = 10;
     pub const VT_CHARIDFILTER: flatbuffers::VOffsetT = 12;
-    pub const VT_ENEMYIDFILTER: flatbuffers::VOffsetT = 14;
-    pub const VT_ENEMYIDEXCLUDEFILTER: flatbuffers::VOffsetT = 16;
-    pub const VT_ENEMYLEVELTYPEFILTER: flatbuffers::VOffsetT = 18;
-    pub const VT_ENEMYACTIONHIDDENGROUPFILTER: flatbuffers::VOffsetT = 20;
-    pub const VT_SKILLIDFILTER: flatbuffers::VOffsetT = 22;
-    pub const VT_TILEKEYFILTER: flatbuffers::VOffsetT = 24;
-    pub const VT_GROUPTAGFILTER: flatbuffers::VOffsetT = 26;
-    pub const VT_FILTERTAGFILTER: flatbuffers::VOffsetT = 28;
-    pub const VT_FILTERTAGEXCLUDEFILTER: flatbuffers::VOffsetT = 30;
-    pub const VT_SUBPROFESSIONEXCLUDEFILTER: flatbuffers::VOffsetT = 32;
-    pub const VT_MAPTAGFILTER: flatbuffers::VOffsetT = 34;
-    pub const VT_HEIGHTTYPEMASK: flatbuffers::VOffsetT = 36;
+    pub const VT_CHARIDEXCLUDEFILTER: flatbuffers::VOffsetT = 14;
+    pub const VT_ENEMYIDFILTER: flatbuffers::VOffsetT = 16;
+    pub const VT_ENEMYIDEXCLUDEFILTER: flatbuffers::VOffsetT = 18;
+    pub const VT_ENEMYLEVELTYPEFILTER: flatbuffers::VOffsetT = 20;
+    pub const VT_ENEMYACTIONHIDDENGROUPFILTER: flatbuffers::VOffsetT = 22;
+    pub const VT_SKILLIDFILTER: flatbuffers::VOffsetT = 24;
+    pub const VT_TILEKEYFILTER: flatbuffers::VOffsetT = 26;
+    pub const VT_GROUPTAGFILTER: flatbuffers::VOffsetT = 28;
+    pub const VT_FILTERTAGFILTER: flatbuffers::VOffsetT = 30;
+    pub const VT_FILTERTAGEXCLUDEFILTER: flatbuffers::VOffsetT = 32;
+    pub const VT_SUBPROFESSIONEXCLUDEFILTER: flatbuffers::VOffsetT = 34;
+    pub const VT_MAPTAGFILTER: flatbuffers::VOffsetT = 36;
+    pub const VT_HEIGHTTYPEMASK: flatbuffers::VOffsetT = 38;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -2970,6 +2759,9 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
         if let Some(x) = args.enemyIdFilter {
             builder.add_enemyIdFilter(x);
         }
+        if let Some(x) = args.charIdExcludeFilter {
+            builder.add_charIdExcludeFilter(x);
+        }
         if let Some(x) = args.charIdFilter {
             builder.add_charIdFilter(x);
         }
@@ -2987,6 +2779,9 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
         let sideType = self.sideType();
         let charIdFilter = self
             .charIdFilter()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let charIdExcludeFilter = self
+            .charIdExcludeFilter()
             .map(|x| x.iter().map(|s| s.to_string()).collect());
         let enemyIdFilter = self
             .enemyIdFilter()
@@ -3028,6 +2823,7 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
             playerSideMask,
             sideType,
             charIdFilter,
+            charIdExcludeFilter,
             enemyIdFilter,
             enemyIdExcludeFilter,
             enemyLevelTypeFilter,
@@ -3110,6 +2906,19 @@ impl<'a> clz_Torappu_RuneData_Selector<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
             >>(clz_Torappu_RuneData_Selector::VT_CHARIDFILTER, None)
+        }
+    }
+    #[inline]
+    pub fn charIdExcludeFilter(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER, None)
         }
     }
     #[inline]
@@ -3309,6 +3118,9 @@ impl flatbuffers::Verifiable for clz_Torappu_RuneData_Selector<'_> {
             >>("charIdFilter", Self::VT_CHARIDFILTER, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("charIdExcludeFilter", Self::VT_CHARIDEXCLUDEFILTER, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
             >>("enemyIdFilter", Self::VT_ENEMYIDFILTER, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
@@ -3369,6 +3181,9 @@ pub struct clz_Torappu_RuneData_SelectorArgs<'a> {
     pub charIdFilter: Option<
         flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
     >,
+    pub charIdExcludeFilter: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
     pub enemyIdFilter: Option<
         flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
     >,
@@ -3413,6 +3228,7 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
             playerSideMask: enum__Torappu_PlayerSideMask::ALL,
             sideType: enum__Torappu_Battle_SideType::NONE,
             charIdFilter: None,
+            charIdExcludeFilter: None,
             enemyIdFilter: None,
             enemyIdExcludeFilter: None,
             enemyLevelTypeFilter: None,
@@ -3426,81 +3242,6 @@ impl<'a> Default for clz_Torappu_RuneData_SelectorArgs<'a> {
             mapTagFilter: None,
             heightTypeMask: enum__Torappu_TileData_HeightTypeMask::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RuneData_Selector<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RuneData_Selector", 17)?;
-        s.serialize_field("professionMask", &self.professionMask())?;
-        s.serialize_field("buildableMask", &self.buildableMask())?;
-        s.serialize_field("playerSideMask", &self.playerSideMask())?;
-        s.serialize_field("sideType", &self.sideType())?;
-        if let Some(f) = self.charIdFilter() {
-            s.serialize_field("charIdFilter", &f)?;
-        } else {
-            s.skip_field("charIdFilter")?;
-        }
-        if let Some(f) = self.enemyIdFilter() {
-            s.serialize_field("enemyIdFilter", &f)?;
-        } else {
-            s.skip_field("enemyIdFilter")?;
-        }
-        if let Some(f) = self.enemyIdExcludeFilter() {
-            s.serialize_field("enemyIdExcludeFilter", &f)?;
-        } else {
-            s.skip_field("enemyIdExcludeFilter")?;
-        }
-        if let Some(f) = self.enemyLevelTypeFilter() {
-            s.serialize_field("enemyLevelTypeFilter", &f)?;
-        } else {
-            s.skip_field("enemyLevelTypeFilter")?;
-        }
-        if let Some(f) = self.enemyActionHiddenGroupFilter() {
-            s.serialize_field("enemyActionHiddenGroupFilter", &f)?;
-        } else {
-            s.skip_field("enemyActionHiddenGroupFilter")?;
-        }
-        if let Some(f) = self.skillIdFilter() {
-            s.serialize_field("skillIdFilter", &f)?;
-        } else {
-            s.skip_field("skillIdFilter")?;
-        }
-        if let Some(f) = self.tileKeyFilter() {
-            s.serialize_field("tileKeyFilter", &f)?;
-        } else {
-            s.skip_field("tileKeyFilter")?;
-        }
-        if let Some(f) = self.groupTagFilter() {
-            s.serialize_field("groupTagFilter", &f)?;
-        } else {
-            s.skip_field("groupTagFilter")?;
-        }
-        if let Some(f) = self.filterTagFilter() {
-            s.serialize_field("filterTagFilter", &f)?;
-        } else {
-            s.skip_field("filterTagFilter")?;
-        }
-        if let Some(f) = self.filterTagExcludeFilter() {
-            s.serialize_field("filterTagExcludeFilter", &f)?;
-        } else {
-            s.skip_field("filterTagExcludeFilter")?;
-        }
-        if let Some(f) = self.subProfessionExcludeFilter() {
-            s.serialize_field("subProfessionExcludeFilter", &f)?;
-        } else {
-            s.skip_field("subProfessionExcludeFilter")?;
-        }
-        if let Some(f) = self.mapTagFilter() {
-            s.serialize_field("mapTagFilter", &f)?;
-        } else {
-            s.skip_field("mapTagFilter")?;
-        }
-        s.serialize_field("heightTypeMask", &self.heightTypeMask())?;
-        s.end()
     }
 }
 
@@ -3551,6 +3292,18 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_RuneData_SelectorBu
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
             clz_Torappu_RuneData_Selector::VT_CHARIDFILTER,
             charIdFilter,
+        );
+    }
+    #[inline]
+    pub fn add_charIdExcludeFilter(
+        &mut self,
+        charIdExcludeFilter: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RuneData_Selector::VT_CHARIDEXCLUDEFILTER,
+            charIdExcludeFilter,
         );
     }
     #[inline]
@@ -3719,6 +3472,7 @@ impl core::fmt::Debug for clz_Torappu_RuneData_Selector<'_> {
         ds.field("playerSideMask", &self.playerSideMask());
         ds.field("sideType", &self.sideType());
         ds.field("charIdFilter", &self.charIdFilter());
+        ds.field("charIdExcludeFilter", &self.charIdExcludeFilter());
         ds.field("enemyIdFilter", &self.enemyIdFilter());
         ds.field("enemyIdExcludeFilter", &self.enemyIdExcludeFilter());
         ds.field("enemyLevelTypeFilter", &self.enemyLevelTypeFilter());
@@ -3748,6 +3502,7 @@ pub struct clz_Torappu_RuneData_SelectorT {
     pub playerSideMask: enum__Torappu_PlayerSideMask,
     pub sideType: enum__Torappu_Battle_SideType,
     pub charIdFilter: Option<Vec<String>>,
+    pub charIdExcludeFilter: Option<Vec<String>>,
     pub enemyIdFilter: Option<Vec<String>>,
     pub enemyIdExcludeFilter: Option<Vec<String>>,
     pub enemyLevelTypeFilter: Option<Vec<String>>,
@@ -3769,6 +3524,7 @@ impl Default for clz_Torappu_RuneData_SelectorT {
             playerSideMask: enum__Torappu_PlayerSideMask::ALL,
             sideType: enum__Torappu_Battle_SideType::NONE,
             charIdFilter: None,
+            charIdExcludeFilter: None,
             enemyIdFilter: None,
             enemyIdExcludeFilter: None,
             enemyLevelTypeFilter: None,
@@ -3794,6 +3550,10 @@ impl clz_Torappu_RuneData_SelectorT {
         let playerSideMask = self.playerSideMask;
         let sideType = self.sideType;
         let charIdFilter = self.charIdFilter.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let charIdExcludeFilter = self.charIdExcludeFilter.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
             _fbb.create_vector(&w)
         });
@@ -3850,6 +3610,7 @@ impl clz_Torappu_RuneData_SelectorT {
                 playerSideMask,
                 sideType,
                 charIdFilter,
+                charIdExcludeFilter,
                 enemyIdFilter,
                 enemyIdExcludeFilter,
                 enemyLevelTypeFilter,
@@ -3988,27 +3749,6 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
             value: 0.0,
             valueStr: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        s.serialize_field("value", &self.value())?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.end()
     }
 }
 
@@ -4243,31 +3983,6 @@ impl<'a> Default for clz_Torappu_RuneDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RuneData", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        if let Some(f) = self.selector() {
-            s.serialize_field("selector", &f)?;
-        } else {
-            s.skip_field("selector")?;
-        }
-        if let Some(f) = self.blackboard() {
-            s.serialize_field("blackboard", &f)?;
-        } else {
-            s.skip_field("blackboard")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4490,22 +4205,6 @@ impl<'a> Default for dict__string__list_clz_Torappu_RuneDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__list_clz_Torappu_RuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_clz_Torappu_RuneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_clz_Torappu_RuneDataBuilder<
     'a: 'b,
     'b,
@@ -4708,23 +4407,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -4980,37 +4662,6 @@ impl<'a> Default for clz_Torappu_RuneTable_PackedRuneDataArgs<'a> {
             description: None,
             runes: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RuneTable_PackedRuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RuneTable_PackedRuneData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("points", &self.points())?;
-        if let Some(f) = self.mutexGroupKey() {
-            s.serialize_field("mutexGroupKey", &f)?;
-        } else {
-            s.skip_field("mutexGroupKey")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.runes() {
-            s.serialize_field("runes", &f)?;
-        } else {
-            s.skip_field("runes")?;
-        }
-        s.end()
     }
 }
 
@@ -5344,39 +4995,6 @@ impl<'a> Default for clz_Torappu_RecalRuneRuneDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RecalRuneRuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecalRuneRuneData", 7)?;
-        if let Some(f) = self.runeId() {
-            s.serialize_field("runeId", &f)?;
-        } else {
-            s.skip_field("runeId")?;
-        }
-        s.serialize_field("score", &self.score())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("essential", &self.essential())?;
-        if let Some(f) = self.exclusiveGroupId() {
-            s.serialize_field("exclusiveGroupId", &f)?;
-        } else {
-            s.skip_field("exclusiveGroupId")?;
-        }
-        if let Some(f) = self.runeIcon() {
-            s.serialize_field("runeIcon", &f)?;
-        } else {
-            s.skip_field("runeIcon")?;
-        }
-        if let Some(f) = self.packedRune() {
-            s.serialize_field("packedRune", &f)?;
-        } else {
-            s.skip_field("packedRune")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RecalRuneRuneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5632,23 +5250,6 @@ impl<'a> Default for dict__string__clz_Torappu_RecalRuneRuneDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RecalRuneRuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RecalRuneRuneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -6208,89 +5809,6 @@ impl<'a> Default for clz_Torappu_RecalRuneStageDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RecalRuneStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecalRuneStageData", 17)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.levelId() {
-            s.serialize_field("levelId", &f)?;
-        } else {
-            s.skip_field("levelId")?;
-        }
-        if let Some(f) = self.juniorMedalId() {
-            s.serialize_field("juniorMedalId", &f)?;
-        } else {
-            s.skip_field("juniorMedalId")?;
-        }
-        if let Some(f) = self.seniorMedalId() {
-            s.serialize_field("seniorMedalId", &f)?;
-        } else {
-            s.skip_field("seniorMedalId")?;
-        }
-        s.serialize_field("juniorMedalScore", &self.juniorMedalScore())?;
-        s.serialize_field("seniorMedalScore", &self.seniorMedalScore())?;
-        if let Some(f) = self.runes() {
-            s.serialize_field("runes", &f)?;
-        } else {
-            s.skip_field("runes")?;
-        }
-        if let Some(f) = self.sourceName() {
-            s.serialize_field("sourceName", &f)?;
-        } else {
-            s.skip_field("sourceName")?;
-        }
-        if let Some(f) = self.sourceType() {
-            s.serialize_field("sourceType", &f)?;
-        } else {
-            s.skip_field("sourceType")?;
-        }
-        s.serialize_field("useName", &self.useName())?;
-        if let Some(f) = self.levelName() {
-            s.serialize_field("levelName", &f)?;
-        } else {
-            s.skip_field("levelName")?;
-        }
-        if let Some(f) = self.levelCode() {
-            s.serialize_field("levelCode", &f)?;
-        } else {
-            s.skip_field("levelCode")?;
-        }
-        if let Some(f) = self.levelDesc() {
-            s.serialize_field("levelDesc", &f)?;
-        } else {
-            s.skip_field("levelDesc")?;
-        }
-        if let Some(f) = self.fixedRuneSeriesName() {
-            s.serialize_field("fixedRuneSeriesName", &f)?;
-        } else {
-            s.skip_field("fixedRuneSeriesName")?;
-        }
-        if let Some(f) = self.logoId() {
-            s.serialize_field("logoId", &f)?;
-        } else {
-            s.skip_field("logoId")?;
-        }
-        if let Some(f) = self.mainPicId() {
-            s.serialize_field("mainPicId", &f)?;
-        } else {
-            s.skip_field("mainPicId")?;
-        }
-        if let Some(f) = self.loadingPicId() {
-            s.serialize_field("loadingPicId", &f)?;
-        } else {
-            s.skip_field("loadingPicId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RecalRuneStageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6679,23 +6197,6 @@ impl<'a> Default for dict__string__clz_Torappu_RecalRuneStageDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RecalRuneStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RecalRuneStageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -7101,58 +6602,6 @@ impl<'a> Default for clz_Torappu_RecalRuneSeasonDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RecalRuneSeasonData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecalRuneSeasonData", 10)?;
-        if let Some(f) = self.seasonId() {
-            s.serialize_field("seasonId", &f)?;
-        } else {
-            s.skip_field("seasonId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("startTs", &self.startTs())?;
-        if let Some(f) = self.seasonCode() {
-            s.serialize_field("seasonCode", &f)?;
-        } else {
-            s.skip_field("seasonCode")?;
-        }
-        if let Some(f) = self.juniorReward() {
-            s.serialize_field("juniorReward", &f)?;
-        } else {
-            s.skip_field("juniorReward")?;
-        }
-        if let Some(f) = self.seniorReward() {
-            s.serialize_field("seniorReward", &f)?;
-        } else {
-            s.skip_field("seniorReward")?;
-        }
-        if let Some(f) = self.seniorRewardHint() {
-            s.serialize_field("seniorRewardHint", &f)?;
-        } else {
-            s.skip_field("seniorRewardHint")?;
-        }
-        if let Some(f) = self.mainMedalId() {
-            s.serialize_field("mainMedalId", &f)?;
-        } else {
-            s.skip_field("mainMedalId")?;
-        }
-        if let Some(f) = self.picId() {
-            s.serialize_field("picId", &f)?;
-        } else {
-            s.skip_field("picId")?;
-        }
-        if let Some(f) = self.stages() {
-            s.serialize_field("stages", &f)?;
-        } else {
-            s.skip_field("stages")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RecalRuneSeasonDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7461,23 +6910,6 @@ impl<'a> Default for dict__string__clz_Torappu_RecalRuneSeasonDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RecalRuneSeasonData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RecalRuneSeasonData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RecalRuneSeasonDataBuilder<
     'a: 'b,
     'b,
@@ -7729,24 +7161,6 @@ impl<'a> Default for clz_Torappu_RecalRuneConstDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RecalRuneConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecalRuneConstData", 4)?;
-        s.serialize_field("stageCountPerSeason", &self.stageCountPerSeason())?;
-        s.serialize_field("juniorRewardMedalCount", &self.juniorRewardMedalCount())?;
-        s.serialize_field("seniorRewardMedalCount", &self.seniorRewardMedalCount())?;
-        if let Some(f) = self.unlockLevelIds() {
-            s.serialize_field("unlockLevelIds", &f)?;
-        } else {
-            s.skip_field("unlockLevelIds")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RecalRuneConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -7981,26 +7395,6 @@ impl<'a> Default for clz_Torappu_RecalRuneSharedDataArgs<'a> {
             seasons: None,
             constData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RecalRuneSharedData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecalRuneSharedData", 2)?;
-        if let Some(f) = self.seasons() {
-            s.serialize_field("seasons", &f)?;
-        } else {
-            s.skip_field("seasons")?;
-        }
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        s.end()
     }
 }
 
@@ -8346,41 +7740,6 @@ impl<'a> Default for clz_Torappu_CrisisV2SharedDataArgs<'a> {
             battleCommentRuneData: None,
             recalRuneData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CrisisV2SharedData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisV2SharedData", 5)?;
-        if let Some(f) = self.seasonInfoDataMap() {
-            s.serialize_field("seasonInfoDataMap", &f)?;
-        } else {
-            s.skip_field("seasonInfoDataMap")?;
-        }
-        if let Some(f) = self.scoreLevelToAppraiseDataMap() {
-            s.serialize_field("scoreLevelToAppraiseDataMap", &f)?;
-        } else {
-            s.skip_field("scoreLevelToAppraiseDataMap")?;
-        }
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        if let Some(f) = self.battleCommentRuneData() {
-            s.serialize_field("battleCommentRuneData", &f)?;
-        } else {
-            s.skip_field("battleCommentRuneData")?;
-        }
-        if let Some(f) = self.recalRuneData() {
-            s.serialize_field("recalRuneData", &f)?;
-        } else {
-            s.skip_field("recalRuneData")?;
-        }
-        s.end()
     }
 }
 

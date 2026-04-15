@@ -1,78 +1,61 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { GachaRecords } from "~/types/api";
 
-interface SuccessResponse {
-    success: true;
-    data: GachaRecords;
-}
-
-interface ErrorResponse {
-    success: false;
-    error: string;
-}
-
-type ApiResponse = SuccessResponse | ErrorResponse;
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-    if (req.method !== "GET") {
+/**
+ * GET /api/gacha — trigger a live Yostar gacha fetch and return the newly-grouped records.
+ *                  Returns {success, data: GachaRecords} on success, matching the old frontend shape.
+ * POST /api/gacha — same, backwards-compatible raw fetch-result.
+ */
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (req.method !== "GET" && req.method !== "POST") {
         return res.status(405).json({ success: false, error: "Method not allowed" });
     }
 
     try {
-        const session = getSessionFromCookie(req);
-
-        if (!session) {
-            return res.status(401).json({
-                success: false,
-                error: "Not authenticated",
-            });
+        const token = getToken(req);
+        if (!token) {
+            return res.status(401).json({ success: false, error: "Not authenticated" });
         }
 
-        const { yssid, yssid_sig } = session;
+        // Trigger a backend fetch. This pulls from Yostar and stores records.
+        const fetchResponse = await backendFetch("/gacha/fetch", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        });
 
-        if (!yssid || !yssid_sig) {
-            return res.status(400).json({
-                success: false,
-                error: "Gacha data not available. Please log in again to sync your Yostar account.",
-            });
-        }
-
-        // Call backend /gacha endpoint
-        // Include token for automatic gacha record storage (opt-out model)
-        const token = getSiteToken(req);
-
-        const params = new URLSearchParams();
-        params.set("yssid", yssid);
-        params.set("yssid_sig", yssid_sig);
-        if (token) {
-            params.set("token", token);
-        }
-
-        const gachaResponse = await backendFetch(`/gacha?${params.toString()}`);
-
-        if (!gachaResponse.ok) {
-            const errorText = await gachaResponse.text();
-            console.error(`Backend gacha fetch failed: ${gachaResponse.status} - ${errorText}`);
-
-            return res.status(500).json({
+        if (!fetchResponse.ok) {
+            const errorText = await fetchResponse.text();
+            console.error(`Backend gacha fetch failed: ${fetchResponse.status} - ${errorText}`);
+            return res.status(fetchResponse.status).json({
                 success: false,
                 error: "Failed to fetch gacha records",
             });
         }
 
-        const gachaData: GachaRecords = await gachaResponse.json();
+        if (req.method === "POST") {
+            const data = await fetchResponse.json();
+            return res.status(200).json(data);
+        }
 
-        return res.status(200).json({
-            success: true,
-            data: gachaData,
+        // GET: after the sync, return the stored grouped records.
+        const storedResponse = await backendFetch("/gacha/stored-records", {
+            headers: { Authorization: `Bearer ${token}` },
         });
+
+        if (!storedResponse.ok) {
+            const errorText = await storedResponse.text();
+            console.error(`Backend stored-records fetch failed: ${storedResponse.status} - ${errorText}`);
+            return res.status(storedResponse.status).json({
+                success: false,
+                error: "Failed to fetch stored records",
+            });
+        }
+
+        const data = await storedResponse.json();
+        return res.status(200).json({ success: true, data });
     } catch (error) {
         console.error("Error fetching gacha records:", error);
-        return res.status(500).json({
-            success: false,
-            error: "An internal server error occurred",
-        });
+        return res.status(500).json({ success: false, error: "An internal server error occurred" });
     }
 }

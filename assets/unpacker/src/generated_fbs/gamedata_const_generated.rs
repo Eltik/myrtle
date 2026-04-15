@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -118,6 +117,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -216,9 +217,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -311,6 +314,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -406,6 +411,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -417,18 +424,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -532,18 +527,6 @@ impl core::fmt::Debug for enum__Torappu_SubProfessionAttackType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SubProfessionAttackType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SubProfessionAttackType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -672,21 +655,6 @@ impl<'a> Default for list_intArgs<'a> {
     #[inline]
     fn default() -> Self {
         list_intArgs { values: None }
-    }
-}
-
-impl Serialize for list_int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("list_int", 1)?;
-        if let Some(f) = self.values() {
-            s.serialize_field("values", &f)?;
-        } else {
-            s.skip_field("values")?;
-        }
-        s.end()
     }
 }
 
@@ -848,22 +816,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -1029,19 +981,6 @@ impl<'a> Default for clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_GameDataConsts_CharAssistRefreshTimeStateArgs { Hour: 0, Minute: 0 }
-    }
-}
-
-impl Serialize for clz_Torappu_GameDataConsts_CharAssistRefreshTimeState<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_GameDataConsts_CharAssistRefreshTimeState", 2)?;
-        s.serialize_field("Hour", &self.Hour())?;
-        s.serialize_field("Minute", &self.Minute())?;
-        s.end()
     }
 }
 
@@ -1238,23 +1177,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1429,18 +1351,6 @@ impl<'a> Default for dict__int__intArgs {
     #[inline]
     fn default() -> Self {
         dict__int__intArgs { key: 0, value: 0 }
-    }
-}
-
-impl Serialize for dict__int__int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__int", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
     }
 }
 
@@ -1633,31 +1543,6 @@ impl<'a> Default for clz_Torappu_TermDescriptionDataArgs<'a> {
             termName: None,
             description: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TermDescriptionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TermDescriptionData", 3)?;
-        if let Some(f) = self.termId() {
-            s.serialize_field("termId", &f)?;
-        } else {
-            s.skip_field("termId")?;
-        }
-        if let Some(f) = self.termName() {
-            s.serialize_field("termName", &f)?;
-        } else {
-            s.skip_field("termName")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.end()
     }
 }
 
@@ -1864,23 +1749,6 @@ impl<'a> Default for dict__string__clz_Torappu_TermDescriptionDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_TermDescriptionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_TermDescriptionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2093,19 +1961,6 @@ impl<'a> Default for dict__string__enum__Torappu_SubProfessionAttackTypeArgs<'a>
     }
 }
 
-impl Serialize for dict__string__enum__Torappu_SubProfessionAttackType<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__enum__Torappu_SubProfessionAttackType", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
-    }
-}
-
 pub struct dict__string__enum__Torappu_SubProfessionAttackTypeBuilder<
     'a: 'b,
     'b,
@@ -2298,18 +2153,6 @@ impl<'a> Default for clz_Torappu_GameDataConsts_FeverGameDataArgs {
     }
 }
 
-impl Serialize for clz_Torappu_GameDataConsts_FeverGameData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GameDataConsts_FeverGameData", 2)?;
-        s.serialize_field("feverDuration", &self.feverDuration())?;
-        s.serialize_field("feverNeed", &self.feverNeed())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GameDataConsts_FeverGameDataBuilder<
     'a: 'b,
     'b,
@@ -2388,6 +2231,227 @@ impl clz_Torappu_GameDataConsts_FeverGameDataT {
             &clz_Torappu_GameDataConsts_FeverGameDataArgs {
                 feverDuration,
                 feverNeed,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
+    type Inner = clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a> {
+    pub const VT_DEFAULTREADERFONTSIZE: flatbuffers::VOffsetT = 4;
+    pub const VT_DEFAULTREADERLINESPACE: flatbuffers::VOffsetT = 6;
+    pub const VT_DEFAULTREADERBACKGROUNDALPHA: flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'bldr>> {
+        let mut builder = clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder::new(_fbb);
+        builder.add_defaultReaderBackgroundAlpha(args.defaultReaderBackgroundAlpha);
+        builder.add_defaultReaderLinespace(args.defaultReaderLinespace);
+        builder.add_defaultReaderFontsize(args.defaultReaderFontsize);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
+        let defaultReaderFontsize = self.defaultReaderFontsize();
+        let defaultReaderLinespace = self.defaultReaderLinespace();
+        let defaultReaderBackgroundAlpha = self.defaultReaderBackgroundAlpha();
+        clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
+            defaultReaderFontsize,
+            defaultReaderLinespace,
+            defaultReaderBackgroundAlpha,
+        }
+    }
+
+    #[inline]
+    pub fn defaultReaderFontsize(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERFONTSIZE, Some(0)).unwrap()
+        }
+    }
+    #[inline]
+    pub fn defaultReaderLinespace(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERLINESPACE, Some(0)).unwrap()
+        }
+    }
+    #[inline]
+    pub fn defaultReaderBackgroundAlpha(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<i32>(clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERBACKGROUNDALPHA, Some(0)).unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<i32>(
+                "defaultReaderFontsize",
+                Self::VT_DEFAULTREADERFONTSIZE,
+                false,
+            )?
+            .visit_field::<i32>(
+                "defaultReaderLinespace",
+                Self::VT_DEFAULTREADERLINESPACE,
+                false,
+            )?
+            .visit_field::<i32>(
+                "defaultReaderBackgroundAlpha",
+                Self::VT_DEFAULTREADERBACKGROUNDALPHA,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
+    pub defaultReaderFontsize: i32,
+    pub defaultReaderLinespace: i32,
+    pub defaultReaderBackgroundAlpha: i32,
+}
+impl<'a> Default for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
+            defaultReaderFontsize: 0,
+            defaultReaderLinespace: 0,
+            defaultReaderBackgroundAlpha: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_defaultReaderFontsize(&mut self, defaultReaderFontsize: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERFONTSIZE,
+            defaultReaderFontsize,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_defaultReaderLinespace(&mut self, defaultReaderLinespace: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERLINESPACE,
+            defaultReaderLinespace,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_defaultReaderBackgroundAlpha(&mut self, defaultReaderBackgroundAlpha: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::VT_DEFAULTREADERBACKGROUNDALPHA,
+            defaultReaderBackgroundAlpha,
+            0,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting");
+        ds.field("defaultReaderFontsize", &self.defaultReaderFontsize());
+        ds.field("defaultReaderLinespace", &self.defaultReaderLinespace());
+        ds.field(
+            "defaultReaderBackgroundAlpha",
+            &self.defaultReaderBackgroundAlpha(),
+        );
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
+    pub defaultReaderFontsize: i32,
+    pub defaultReaderLinespace: i32,
+    pub defaultReaderBackgroundAlpha: i32,
+}
+impl Default for clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
+    fn default() -> Self {
+        Self {
+            defaultReaderFontsize: 0,
+            defaultReaderLinespace: 0,
+            defaultReaderBackgroundAlpha: 0,
+        }
+    }
+}
+impl clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'b>> {
+        let defaultReaderFontsize = self.defaultReaderFontsize;
+        let defaultReaderLinespace = self.defaultReaderLinespace;
+        let defaultReaderBackgroundAlpha = self.defaultReaderBackgroundAlpha;
+        clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting::create(
+            _fbb,
+            &clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingArgs {
+                defaultReaderFontsize,
+                defaultReaderLinespace,
+                defaultReaderBackgroundAlpha,
             },
         )
     }
@@ -2534,6 +2598,7 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
     pub const VT_BIRTHDAYSETTINGSHOWSTAGEID: flatbuffers::VOffsetT = 246;
     pub const VT_ISBIRTHDAYFUNCENABLED: flatbuffers::VOffsetT = 248;
     pub const VT_ISSOCHARENABLED: flatbuffers::VOffsetT = 250;
+    pub const VT_AVGREADERMODEDEFAULTSETTING: flatbuffers::VOffsetT = 252;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -2557,6 +2622,9 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
         builder.add_charRotationPresetTrackTs(args.charRotationPresetTrackTs);
         builder.add_rejectSpCharMission(args.rejectSpCharMission);
         builder.add_friendStarEditTrackTs(args.friendStarEditTrackTs);
+        if let Some(x) = args.avgReaderModeDefaultSetting {
+            builder.add_avgReaderModeDefaultSetting(x);
+        }
         if let Some(x) = args.birthdaySettingShowStageId {
             builder.add_birthdaySettingShowStageId(x);
         }
@@ -2933,6 +3001,9 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
         let birthdaySettingShowStageId = self.birthdaySettingShowStageId().map(|x| x.to_string());
         let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled();
         let isSoCharEnabled = self.isSoCharEnabled();
+        let avgReaderModeDefaultSetting = self
+            .avgReaderModeDefaultSetting()
+            .map(|x| Box::new(x.unpack()));
         clz_Torappu_GameDataConstsT {
             maxPlayerLevel,
             playerExpMap,
@@ -3058,6 +3129,7 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
             birthdaySettingShowStageId,
             isBirthdayFuncEnabled,
             isSoCharEnabled,
+            avgReaderModeDefaultSetting,
         }
     }
 
@@ -4642,6 +4714,22 @@ impl<'a> clz_Torappu_GameDataConsts<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn avgReaderModeDefaultSetting(
+        &self,
+    ) -> Option<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting,
+            >>(
+                clz_Torappu_GameDataConsts::VT_AVGREADERMODEDEFAULTSETTING,
+                None,
+            )
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
@@ -4652,462 +4740,132 @@ impl flatbuffers::Verifiable for clz_Torappu_GameDataConsts<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<i32>("maxPlayerLevel", Self::VT_MAXPLAYERLEVEL, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
-                "playerExpMap",
-                Self::VT_PLAYEREXPMAP,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
-                "playerApMap",
-                Self::VT_PLAYERAPMAP,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>,
-            >>("maxLevel", Self::VT_MAXLEVEL, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>,
-            >>("characterExpMap", Self::VT_CHARACTEREXPMAP, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>,
-            >>(
-                "characterUpgradeCostMap",
-                Self::VT_CHARACTERUPGRADECOSTMAP,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>,
-            >>("evolveGoldCost", Self::VT_EVOLVEGOLDCOST, false)?
-            .visit_field::<f32>("completeGainBonus", Self::VT_COMPLETEGAINBONUS, false)?
-            .visit_field::<i32>("playerApRegenSpeed", Self::VT_PLAYERAPREGENSPEED, false)?
-            .visit_field::<i32>("maxPracticeTicket", Self::VT_MAXPRACTICETICKET, false)?
-            .visit_field::<i32>(
-                "advancedGachaCrystalCost",
-                Self::VT_ADVANCEDGACHACRYSTALCOST,
-                false,
-            )?
-            .visit_field::<i32>("completeCrystalBonus", Self::VT_COMPLETECRYSTALBONUS, false)?
-            .visit_field::<i32>("initPlayerGold", Self::VT_INITPLAYERGOLD, false)?
-            .visit_field::<i32>(
-                "initPlayerDiamondShard",
-                Self::VT_INITPLAYERDIAMONDSHARD,
-                false,
-            )?
-            .visit_field::<i32>("initCampaignTotalFee", Self::VT_INITCAMPAIGNTOTALFEE, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
-                "initRecruitTagList",
-                Self::VT_INITRECRUITTAGLIST,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("initCharIdList", Self::VT_INITCHARIDLIST, false)?
-            .visit_field::<f32>("attackMax", Self::VT_ATTACKMAX, false)?
-            .visit_field::<f32>("defMax", Self::VT_DEFMAX, false)?
-            .visit_field::<f32>("hpMax", Self::VT_HPMAX, false)?
-            .visit_field::<f32>("reMax", Self::VT_REMAX, false)?
-            .visit_field::<i32>("diamondToShdRate", Self::VT_DIAMONDTOSHDRATE, false)?
-            .visit_field::<i32>("requestSameFriendCD", Self::VT_REQUESTSAMEFRIENDCD, false)?
-            .visit_field::<i32>("baseMaxFriendNum", Self::VT_BASEMAXFRIENDNUM, false)?
-            .visit_field::<i32>("maxStarFriendNum", Self::VT_MAXSTARFRIENDNUM, false)?
-            .visit_field::<i32>(
-                "maxSquadAssistDisplayNum",
-                Self::VT_MAXSQUADASSISTDISPLAYNUM,
-                false,
-            )?
-            .visit_field::<i64>(
-                "friendStarEditTrackTs",
-                Self::VT_FRIENDSTAREDITTRACKTS,
-                false,
-            )?
-            .visit_field::<i32>("hardDiamondDrop", Self::VT_HARDDIAMONDDROP, false)?
-            .visit_field::<i32>("instFinDmdShdCost", Self::VT_INSTFINDMDSHDCOST, false)?
-            .visit_field::<i32>("easyCrystalBonus", Self::VT_EASYCRYSTALBONUS, false)?
-            .visit_field::<i32>(
-                "diamondMaterialToShardExchangeRatio",
-                Self::VT_DIAMONDMATERIALTOSHARDEXCHANGERATIO,
-                false,
-            )?
-            .visit_field::<i32>(
-                "diamondHandbookStageGain",
-                Self::VT_DIAMONDHANDBOOKSTAGEGAIN,
-                false,
-            )?
-            .visit_field::<i32>("apBuyCost", Self::VT_APBUYCOST, false)?
-            .visit_field::<i32>("apBuyThreshold", Self::VT_APBUYTHRESHOLD, false)?
-            .visit_field::<i32>("creditLimit", Self::VT_CREDITLIMIT, false)?
-            .visit_field::<i32>(
-                "monthlySubRemainTimeLimitDays",
-                Self::VT_MONTHLYSUBREMAINTIMELIMITDAYS,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
-                "friendAssistRarityLimit",
-                Self::VT_FRIENDASSISTRARITYLIMIT,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "mainlineCompatibleDesc",
-                Self::VT_MAINLINECOMPATIBLEDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "mainlineToughDesc",
-                Self::VT_MAINLINETOUGHDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "mainlineEasyDesc",
-                Self::VT_MAINLINEEASYDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "mainlineNormalDesc",
-                Self::VT_MAINLINENORMALDESC,
-                false,
-            )?
-            .visit_field::<i64>("rejectSpCharMission", Self::VT_REJECTSPCHARMISSION, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "addedRewardDisplayZone",
-                Self::VT_ADDEDREWARDDISPLAYZONE,
-                false,
-            )?
-            .visit_field::<i32>("oneDiamondAp", Self::VT_ONEDIAMONDAP, false)?
-            .visit_field::<i32>(
-                "charRotationPresetMaxCnt",
-                Self::VT_CHARROTATIONPRESETMAXCNT,
-                false,
-            )?
-            .visit_field::<i32>(
-                "charRotationSkinListMaxCnt",
-                Self::VT_CHARROTATIONSKINLISTMAXCNT,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultCRPresetCharId",
-                Self::VT_DEFAULTCRPRESETCHARID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultCRPresetCharSkinId",
-                Self::VT_DEFAULTCRPRESETCHARSKINID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultCRPresetBGId",
-                Self::VT_DEFAULTCRPRESETBGID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultCRPresetThemeId",
-                Self::VT_DEFAULTCRPRESETTHEMEID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultCRPresetName",
-                Self::VT_DEFAULTCRPRESETNAME,
-                false,
-            )?
-            .visit_field::<i64>(
-                "charRotationPresetTrackTs",
-                Self::VT_CHARROTATIONPRESETTRACKTS,
-                false,
-            )?
-            .visit_field::<i64>(
-                "uniequipArchiveSysTrackTs",
-                Self::VT_UNIEQUIPARCHIVESYSTRACKTS,
-                false,
-            )?
-            .visit_field::<i32>("manufactPromptTime", Self::VT_MANUFACTPROMPTTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "mainGuideActivedStageId",
-                Self::VT_MAINGUIDEACTIVEDSTAGEID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__string>>,
-            >>("richTextStyles", Self::VT_RICHTEXTSTYLES, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<
-                        clz_Torappu_GameDataConsts_CharAssistRefreshTimeState,
-                    >,
-                >,
-            >>(
-                "charAssistRefreshTime",
-                Self::VT_CHARASSISTREFRESHTIME,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>(
-                "normalRecruitLockedString",
-                Self::VT_NORMALRECRUITLOCKEDSTRING,
-                false,
-            )?
-            .visit_field::<i32>(
-                "commonPotentialLvlUpCount",
-                Self::VT_COMMONPOTENTIALLVLUPCOUNT,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "weeklyOverrideDesc",
-                Self::VT_WEEKLYOVERRIDEDESC,
-                false,
-            )?
-            .visit_field::<i32>("voucherDiv", Self::VT_VOUCHERDIV, false)?
-            .visit_field::<i32>("recruitPoolVersion", Self::VT_RECRUITPOOLVERSION, false)?
-            .visit_field::<i64>(
-                "v006RecruitTimeStep1Refresh",
-                Self::VT_V006RECRUITTIMESTEP1REFRESH,
-                false,
-            )?
-            .visit_field::<i64>(
-                "v006RecruitTimeStep2Check",
-                Self::VT_V006RECRUITTIMESTEP2CHECK,
-                false,
-            )?
-            .visit_field::<i64>(
-                "v006RecruitTimeStep2Flush",
-                Self::VT_V006RECRUITTIMESTEP2FLUSH,
-                false,
-            )?
-            .visit_field::<bool>("buyApTimeNoLimitFlag", Self::VT_BUYAPTIMENOLIMITFLAG, false)?
-            .visit_field::<bool>("isLMGTSEnabled", Self::VT_ISLMGTSENABLED, false)?
-            .visit_field::<i64>("legacyTime", Self::VT_LEGACYTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("legacyItemList", Self::VT_LEGACYITEMLIST, false)?
-            .visit_field::<i32>("useAssistSocialPt", Self::VT_USEASSISTSOCIALPT, false)?
-            .visit_field::<i32>(
-                "useAssistSocialPtMaxCount",
-                Self::VT_USEASSISTSOCIALPTMAXCOUNT,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__int__int>>,
-            >>("assistBeUsedSocialPt", Self::VT_ASSISTBEUSEDSOCIALPT, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, f32>>>(
-                "pushForces",
-                Self::VT_PUSHFORCES,
-                false,
-            )?
-            .visit_field::<i32>("pushForceZeroIndex", Self::VT_PUSHFORCEZEROINDEX, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
-                "normalGachaUnlockPrice",
-                Self::VT_NORMALGACHAUNLOCKPRICE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, f32>>>(
-                "pullForces",
-                Self::VT_PULLFORCES,
-                false,
-            )?
-            .visit_field::<i32>("pullForceZeroIndex", Self::VT_PULLFORCEZEROINDEX, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("multiInComeByRank", Self::VT_MULTIINCOMEBYRANK, false)?
-            .visit_field::<i32>("LMTGSToEPGSRatio", Self::VT_LMTGSTOEPGSRATIO, false)?
-            .visit_field::<i32>("newBeeGiftEPGS", Self::VT_NEWBEEGIFTEPGS, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "lMTGSDescConstOne",
-                Self::VT_LMTGSDESCCONSTONE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "lMTGSDescConstTwo",
-                Self::VT_LMTGSDESCCONSTTWO,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defCDPrimColor",
-                Self::VT_DEFCDPRIMCOLOR,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defCDSecColor",
-                Self::VT_DEFCDSECCOLOR,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("mailBannerType", Self::VT_MAILBANNERTYPE, false)?
-            .visit_field::<i64>(
-                "monthlySubWarningTime",
-                Self::VT_MONTHLYSUBWARNINGTIME,
-                false,
-            )?
-            .visit_field::<i64>("UnlimitSkinOutOfTime", Self::VT_UNLIMITSKINOUTOFTIME, false)?
-            .visit_field::<i64>(
-                "replicateShopStartTime",
-                Self::VT_REPLICATESHOPSTARTTIME,
-                false,
-            )?
-            .visit_field::<i64>("TSO", Self::VT_TSO, false)?
-            .visit_field::<bool>("isDynIllustEnabled", Self::VT_ISDYNILLUSTENABLED, false)?
-            .visit_field::<bool>(
-                "isDynIllustStartEnabled",
-                Self::VT_ISDYNILLUSTSTARTENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isClassicQCShopEnabled",
-                Self::VT_ISCLASSICQCSHOPENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isRoguelikeTopicFuncEnabled",
-                Self::VT_ISROGUELIKETOPICFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isSandboxPermFuncEnabled",
-                Self::VT_ISSANDBOXPERMFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isRoguelikeAvgAchieveFuncEnabled",
-                Self::VT_ISROGUELIKEAVGACHIEVEFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isClassicPotentialItemFuncEnabled",
-                Self::VT_ISCLASSICPOTENTIALITEMFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isClassicGachaPoolFuncEnabled",
-                Self::VT_ISCLASSICGACHAPOOLFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isSpecialGachaPoolFuncEnabled",
-                Self::VT_ISSPECIALGACHAPOOLFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isVoucherClassicItemDistinguishable",
-                Self::VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isRecalRuneFuncEnabled",
-                Self::VT_ISRECALRUNEFUNCENABLED,
-                false,
-            )?
-            .visit_field::<i32>("voucherSkinRedeem", Self::VT_VOUCHERSKINREDEEM, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "voucherSkinDesc",
-                Self::VT_VOUCHERSKINDESC,
-                false,
-            )?
-            .visit_field::<i32>("charmEquipCount", Self::VT_CHARMEQUIPCOUNT, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_TermDescriptionData>,
-                >,
-            >>("termDescriptionDict", Self::VT_TERMDESCRIPTIONDICT, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "storyReviewUnlockItemLackTip",
-                Self::VT_STORYREVIEWUNLOCKITEMLACKTIP,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "dataVersion",
-                Self::VT_DATAVERSION,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "resPrefVersion",
-                Self::VT_RESPREFVERSION,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "announceWebBusType",
-                Self::VT_ANNOUNCEWEBBUSTYPE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "videoPlayerWebBusType",
-                Self::VT_VIDEOPLAYERWEBBUSTYPE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "gachaLogBusType",
-                Self::VT_GACHALOGBUSTYPE,
-                false,
-            )?
-            .visit_field::<i32>(
-                "defaultMinMultipleBattleTimes",
-                Self::VT_DEFAULTMINMULTIPLEBATTLETIMES,
-                false,
-            )?
-            .visit_field::<i32>(
-                "defaultMaxMultipleBattleTimes",
-                Self::VT_DEFAULTMAXMULTIPLEBATTLETIMES,
-                false,
-            )?
-            .visit_field::<bool>("multipleActionOpen", Self::VT_MULTIPLEACTIONOPEN, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<
-                        dict__string__enum__Torappu_SubProfessionAttackType,
-                    >,
-                >,
-            >>(
-                "subProfessionDamageTypePairs",
-                Self::VT_SUBPROFESSIONDAMAGETYPEPAIRS,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("classicProtectChar", Self::VT_CLASSICPROTECTCHAR, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_FeverGameData>>(
-                "feverGameData",
-                Self::VT_FEVERGAMEDATA,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "birthdaySettingDesc",
-                Self::VT_BIRTHDAYSETTINGDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "birthdaySettingConfirmDesc",
-                Self::VT_BIRTHDAYSETTINGCONFIRMDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "birthdaySettingLeapConfirmDesc",
-                Self::VT_BIRTHDAYSETTINGLEAPCONFIRMDESC,
-                false,
-            )?
-            .visit_field::<i32>(
-                "leapBirthdayRewardMonth",
-                Self::VT_LEAPBIRTHDAYREWARDMONTH,
-                false,
-            )?
-            .visit_field::<i32>(
-                "leapBirthdayRewardDay",
-                Self::VT_LEAPBIRTHDAYREWARDDAY,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "birthdaySettingShowStageId",
-                Self::VT_BIRTHDAYSETTINGSHOWSTAGEID,
-                false,
-            )?
-            .visit_field::<bool>(
-                "isBirthdayFuncEnabled",
-                Self::VT_ISBIRTHDAYFUNCENABLED,
-                false,
-            )?
-            .visit_field::<bool>("isSoCharEnabled", Self::VT_ISSOCHARENABLED, false)?
-            .finish();
+     .visit_field::<i32>("maxPlayerLevel", Self::VT_MAXPLAYERLEVEL, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>("playerExpMap", Self::VT_PLAYEREXPMAP, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>("playerApMap", Self::VT_PLAYERAPMAP, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>>>("maxLevel", Self::VT_MAXLEVEL, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>>>("characterExpMap", Self::VT_CHARACTEREXPMAP, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>>>("characterUpgradeCostMap", Self::VT_CHARACTERUPGRADECOSTMAP, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<list_int>>>>("evolveGoldCost", Self::VT_EVOLVEGOLDCOST, false)?
+     .visit_field::<f32>("completeGainBonus", Self::VT_COMPLETEGAINBONUS, false)?
+     .visit_field::<i32>("playerApRegenSpeed", Self::VT_PLAYERAPREGENSPEED, false)?
+     .visit_field::<i32>("maxPracticeTicket", Self::VT_MAXPRACTICETICKET, false)?
+     .visit_field::<i32>("advancedGachaCrystalCost", Self::VT_ADVANCEDGACHACRYSTALCOST, false)?
+     .visit_field::<i32>("completeCrystalBonus", Self::VT_COMPLETECRYSTALBONUS, false)?
+     .visit_field::<i32>("initPlayerGold", Self::VT_INITPLAYERGOLD, false)?
+     .visit_field::<i32>("initPlayerDiamondShard", Self::VT_INITPLAYERDIAMONDSHARD, false)?
+     .visit_field::<i32>("initCampaignTotalFee", Self::VT_INITCAMPAIGNTOTALFEE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>("initRecruitTagList", Self::VT_INITRECRUITTAGLIST, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>>>("initCharIdList", Self::VT_INITCHARIDLIST, false)?
+     .visit_field::<f32>("attackMax", Self::VT_ATTACKMAX, false)?
+     .visit_field::<f32>("defMax", Self::VT_DEFMAX, false)?
+     .visit_field::<f32>("hpMax", Self::VT_HPMAX, false)?
+     .visit_field::<f32>("reMax", Self::VT_REMAX, false)?
+     .visit_field::<i32>("diamondToShdRate", Self::VT_DIAMONDTOSHDRATE, false)?
+     .visit_field::<i32>("requestSameFriendCD", Self::VT_REQUESTSAMEFRIENDCD, false)?
+     .visit_field::<i32>("baseMaxFriendNum", Self::VT_BASEMAXFRIENDNUM, false)?
+     .visit_field::<i32>("maxStarFriendNum", Self::VT_MAXSTARFRIENDNUM, false)?
+     .visit_field::<i32>("maxSquadAssistDisplayNum", Self::VT_MAXSQUADASSISTDISPLAYNUM, false)?
+     .visit_field::<i64>("friendStarEditTrackTs", Self::VT_FRIENDSTAREDITTRACKTS, false)?
+     .visit_field::<i32>("hardDiamondDrop", Self::VT_HARDDIAMONDDROP, false)?
+     .visit_field::<i32>("instFinDmdShdCost", Self::VT_INSTFINDMDSHDCOST, false)?
+     .visit_field::<i32>("easyCrystalBonus", Self::VT_EASYCRYSTALBONUS, false)?
+     .visit_field::<i32>("diamondMaterialToShardExchangeRatio", Self::VT_DIAMONDMATERIALTOSHARDEXCHANGERATIO, false)?
+     .visit_field::<i32>("diamondHandbookStageGain", Self::VT_DIAMONDHANDBOOKSTAGEGAIN, false)?
+     .visit_field::<i32>("apBuyCost", Self::VT_APBUYCOST, false)?
+     .visit_field::<i32>("apBuyThreshold", Self::VT_APBUYTHRESHOLD, false)?
+     .visit_field::<i32>("creditLimit", Self::VT_CREDITLIMIT, false)?
+     .visit_field::<i32>("monthlySubRemainTimeLimitDays", Self::VT_MONTHLYSUBREMAINTIMELIMITDAYS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>("friendAssistRarityLimit", Self::VT_FRIENDASSISTRARITYLIMIT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("mainlineCompatibleDesc", Self::VT_MAINLINECOMPATIBLEDESC, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("mainlineToughDesc", Self::VT_MAINLINETOUGHDESC, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("mainlineEasyDesc", Self::VT_MAINLINEEASYDESC, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("mainlineNormalDesc", Self::VT_MAINLINENORMALDESC, false)?
+     .visit_field::<i64>("rejectSpCharMission", Self::VT_REJECTSPCHARMISSION, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("addedRewardDisplayZone", Self::VT_ADDEDREWARDDISPLAYZONE, false)?
+     .visit_field::<i32>("oneDiamondAp", Self::VT_ONEDIAMONDAP, false)?
+     .visit_field::<i32>("charRotationPresetMaxCnt", Self::VT_CHARROTATIONPRESETMAXCNT, false)?
+     .visit_field::<i32>("charRotationSkinListMaxCnt", Self::VT_CHARROTATIONSKINLISTMAXCNT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defaultCRPresetCharId", Self::VT_DEFAULTCRPRESETCHARID, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defaultCRPresetCharSkinId", Self::VT_DEFAULTCRPRESETCHARSKINID, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defaultCRPresetBGId", Self::VT_DEFAULTCRPRESETBGID, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defaultCRPresetThemeId", Self::VT_DEFAULTCRPRESETTHEMEID, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defaultCRPresetName", Self::VT_DEFAULTCRPRESETNAME, false)?
+     .visit_field::<i64>("charRotationPresetTrackTs", Self::VT_CHARROTATIONPRESETTRACKTS, false)?
+     .visit_field::<i64>("uniequipArchiveSysTrackTs", Self::VT_UNIEQUIPARCHIVESYSTRACKTS, false)?
+     .visit_field::<i32>("manufactPromptTime", Self::VT_MANUFACTPROMPTTIME, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("mainGuideActivedStageId", Self::VT_MAINGUIDEACTIVEDSTAGEID, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__string>>>>("richTextStyles", Self::VT_RICHTEXTSTYLES, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_CharAssistRefreshTimeState>>>>("charAssistRefreshTime", Self::VT_CHARASSISTREFRESHTIME, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>>>("normalRecruitLockedString", Self::VT_NORMALRECRUITLOCKEDSTRING, false)?
+     .visit_field::<i32>("commonPotentialLvlUpCount", Self::VT_COMMONPOTENTIALLVLUPCOUNT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("weeklyOverrideDesc", Self::VT_WEEKLYOVERRIDEDESC, false)?
+     .visit_field::<i32>("voucherDiv", Self::VT_VOUCHERDIV, false)?
+     .visit_field::<i32>("recruitPoolVersion", Self::VT_RECRUITPOOLVERSION, false)?
+     .visit_field::<i64>("v006RecruitTimeStep1Refresh", Self::VT_V006RECRUITTIMESTEP1REFRESH, false)?
+     .visit_field::<i64>("v006RecruitTimeStep2Check", Self::VT_V006RECRUITTIMESTEP2CHECK, false)?
+     .visit_field::<i64>("v006RecruitTimeStep2Flush", Self::VT_V006RECRUITTIMESTEP2FLUSH, false)?
+     .visit_field::<bool>("buyApTimeNoLimitFlag", Self::VT_BUYAPTIMENOLIMITFLAG, false)?
+     .visit_field::<bool>("isLMGTSEnabled", Self::VT_ISLMGTSENABLED, false)?
+     .visit_field::<i64>("legacyTime", Self::VT_LEGACYTIME, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>>>("legacyItemList", Self::VT_LEGACYITEMLIST, false)?
+     .visit_field::<i32>("useAssistSocialPt", Self::VT_USEASSISTSOCIALPT, false)?
+     .visit_field::<i32>("useAssistSocialPtMaxCount", Self::VT_USEASSISTSOCIALPTMAXCOUNT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__int__int>>>>("assistBeUsedSocialPt", Self::VT_ASSISTBEUSEDSOCIALPT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, f32>>>("pushForces", Self::VT_PUSHFORCES, false)?
+     .visit_field::<i32>("pushForceZeroIndex", Self::VT_PUSHFORCEZEROINDEX, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>("normalGachaUnlockPrice", Self::VT_NORMALGACHAUNLOCKPRICE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, f32>>>("pullForces", Self::VT_PULLFORCES, false)?
+     .visit_field::<i32>("pullForceZeroIndex", Self::VT_PULLFORCEZEROINDEX, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>>>("multiInComeByRank", Self::VT_MULTIINCOMEBYRANK, false)?
+     .visit_field::<i32>("LMTGSToEPGSRatio", Self::VT_LMTGSTOEPGSRATIO, false)?
+     .visit_field::<i32>("newBeeGiftEPGS", Self::VT_NEWBEEGIFTEPGS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("lMTGSDescConstOne", Self::VT_LMTGSDESCCONSTONE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("lMTGSDescConstTwo", Self::VT_LMTGSDESCCONSTTWO, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defCDPrimColor", Self::VT_DEFCDPRIMCOLOR, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("defCDSecColor", Self::VT_DEFCDSECCOLOR, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>>>("mailBannerType", Self::VT_MAILBANNERTYPE, false)?
+     .visit_field::<i64>("monthlySubWarningTime", Self::VT_MONTHLYSUBWARNINGTIME, false)?
+     .visit_field::<i64>("UnlimitSkinOutOfTime", Self::VT_UNLIMITSKINOUTOFTIME, false)?
+     .visit_field::<i64>("replicateShopStartTime", Self::VT_REPLICATESHOPSTARTTIME, false)?
+     .visit_field::<i64>("TSO", Self::VT_TSO, false)?
+     .visit_field::<bool>("isDynIllustEnabled", Self::VT_ISDYNILLUSTENABLED, false)?
+     .visit_field::<bool>("isDynIllustStartEnabled", Self::VT_ISDYNILLUSTSTARTENABLED, false)?
+     .visit_field::<bool>("isClassicQCShopEnabled", Self::VT_ISCLASSICQCSHOPENABLED, false)?
+     .visit_field::<bool>("isRoguelikeTopicFuncEnabled", Self::VT_ISROGUELIKETOPICFUNCENABLED, false)?
+     .visit_field::<bool>("isSandboxPermFuncEnabled", Self::VT_ISSANDBOXPERMFUNCENABLED, false)?
+     .visit_field::<bool>("isRoguelikeAvgAchieveFuncEnabled", Self::VT_ISROGUELIKEAVGACHIEVEFUNCENABLED, false)?
+     .visit_field::<bool>("isClassicPotentialItemFuncEnabled", Self::VT_ISCLASSICPOTENTIALITEMFUNCENABLED, false)?
+     .visit_field::<bool>("isClassicGachaPoolFuncEnabled", Self::VT_ISCLASSICGACHAPOOLFUNCENABLED, false)?
+     .visit_field::<bool>("isSpecialGachaPoolFuncEnabled", Self::VT_ISSPECIALGACHAPOOLFUNCENABLED, false)?
+     .visit_field::<bool>("isVoucherClassicItemDistinguishable", Self::VT_ISVOUCHERCLASSICITEMDISTINGUISHABLE, false)?
+     .visit_field::<bool>("isRecalRuneFuncEnabled", Self::VT_ISRECALRUNEFUNCENABLED, false)?
+     .visit_field::<i32>("voucherSkinRedeem", Self::VT_VOUCHERSKINREDEEM, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("voucherSkinDesc", Self::VT_VOUCHERSKINDESC, false)?
+     .visit_field::<i32>("charmEquipCount", Self::VT_CHARMEQUIPCOUNT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_TermDescriptionData>>>>("termDescriptionDict", Self::VT_TERMDESCRIPTIONDICT, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("storyReviewUnlockItemLackTip", Self::VT_STORYREVIEWUNLOCKITEMLACKTIP, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("dataVersion", Self::VT_DATAVERSION, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("resPrefVersion", Self::VT_RESPREFVERSION, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("announceWebBusType", Self::VT_ANNOUNCEWEBBUSTYPE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("videoPlayerWebBusType", Self::VT_VIDEOPLAYERWEBBUSTYPE, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("gachaLogBusType", Self::VT_GACHALOGBUSTYPE, false)?
+     .visit_field::<i32>("defaultMinMultipleBattleTimes", Self::VT_DEFAULTMINMULTIPLEBATTLETIMES, false)?
+     .visit_field::<i32>("defaultMaxMultipleBattleTimes", Self::VT_DEFAULTMAXMULTIPLEBATTLETIMES, false)?
+     .visit_field::<bool>("multipleActionOpen", Self::VT_MULTIPLEACTIONOPEN, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__enum__Torappu_SubProfessionAttackType>>>>("subProfessionDamageTypePairs", Self::VT_SUBPROFESSIONDAMAGETYPEPAIRS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>>>("classicProtectChar", Self::VT_CLASSICPROTECTCHAR, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_FeverGameData>>("feverGameData", Self::VT_FEVERGAMEDATA, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("birthdaySettingDesc", Self::VT_BIRTHDAYSETTINGDESC, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("birthdaySettingConfirmDesc", Self::VT_BIRTHDAYSETTINGCONFIRMDESC, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("birthdaySettingLeapConfirmDesc", Self::VT_BIRTHDAYSETTINGLEAPCONFIRMDESC, false)?
+     .visit_field::<i32>("leapBirthdayRewardMonth", Self::VT_LEAPBIRTHDAYREWARDMONTH, false)?
+     .visit_field::<i32>("leapBirthdayRewardDay", Self::VT_LEAPBIRTHDAYREWARDDAY, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<&str>>("birthdaySettingShowStageId", Self::VT_BIRTHDAYSETTINGSHOWSTAGEID, false)?
+     .visit_field::<bool>("isBirthdayFuncEnabled", Self::VT_ISBIRTHDAYFUNCENABLED, false)?
+     .visit_field::<bool>("isSoCharEnabled", Self::VT_ISSOCHARENABLED, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>("avgReaderModeDefaultSetting", Self::VT_AVGREADERMODEDEFAULTSETTING, false)?
+     .finish();
         Ok(())
     }
 }
@@ -5291,6 +5049,8 @@ pub struct clz_Torappu_GameDataConstsArgs<'a> {
     pub birthdaySettingShowStageId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub isBirthdayFuncEnabled: bool,
     pub isSoCharEnabled: bool,
+    pub avgReaderModeDefaultSetting:
+        Option<flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'a>>>,
 }
 impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
     #[inline]
@@ -5420,395 +5180,8 @@ impl<'a> Default for clz_Torappu_GameDataConstsArgs<'a> {
             birthdaySettingShowStageId: None,
             isBirthdayFuncEnabled: false,
             isSoCharEnabled: false,
+            avgReaderModeDefaultSetting: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_GameDataConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GameDataConsts", 124)?;
-        s.serialize_field("maxPlayerLevel", &self.maxPlayerLevel())?;
-        if let Some(f) = self.playerExpMap() {
-            s.serialize_field("playerExpMap", &f)?;
-        } else {
-            s.skip_field("playerExpMap")?;
-        }
-        if let Some(f) = self.playerApMap() {
-            s.serialize_field("playerApMap", &f)?;
-        } else {
-            s.skip_field("playerApMap")?;
-        }
-        if let Some(f) = self.maxLevel() {
-            s.serialize_field("maxLevel", &f)?;
-        } else {
-            s.skip_field("maxLevel")?;
-        }
-        if let Some(f) = self.characterExpMap() {
-            s.serialize_field("characterExpMap", &f)?;
-        } else {
-            s.skip_field("characterExpMap")?;
-        }
-        if let Some(f) = self.characterUpgradeCostMap() {
-            s.serialize_field("characterUpgradeCostMap", &f)?;
-        } else {
-            s.skip_field("characterUpgradeCostMap")?;
-        }
-        if let Some(f) = self.evolveGoldCost() {
-            s.serialize_field("evolveGoldCost", &f)?;
-        } else {
-            s.skip_field("evolveGoldCost")?;
-        }
-        s.serialize_field("completeGainBonus", &self.completeGainBonus())?;
-        s.serialize_field("playerApRegenSpeed", &self.playerApRegenSpeed())?;
-        s.serialize_field("maxPracticeTicket", &self.maxPracticeTicket())?;
-        s.serialize_field("advancedGachaCrystalCost", &self.advancedGachaCrystalCost())?;
-        s.serialize_field("completeCrystalBonus", &self.completeCrystalBonus())?;
-        s.serialize_field("initPlayerGold", &self.initPlayerGold())?;
-        s.serialize_field("initPlayerDiamondShard", &self.initPlayerDiamondShard())?;
-        s.serialize_field("initCampaignTotalFee", &self.initCampaignTotalFee())?;
-        if let Some(f) = self.initRecruitTagList() {
-            s.serialize_field("initRecruitTagList", &f)?;
-        } else {
-            s.skip_field("initRecruitTagList")?;
-        }
-        if let Some(f) = self.initCharIdList() {
-            s.serialize_field("initCharIdList", &f)?;
-        } else {
-            s.skip_field("initCharIdList")?;
-        }
-        s.serialize_field("attackMax", &self.attackMax())?;
-        s.serialize_field("defMax", &self.defMax())?;
-        s.serialize_field("hpMax", &self.hpMax())?;
-        s.serialize_field("reMax", &self.reMax())?;
-        s.serialize_field("diamondToShdRate", &self.diamondToShdRate())?;
-        s.serialize_field("requestSameFriendCD", &self.requestSameFriendCD())?;
-        s.serialize_field("baseMaxFriendNum", &self.baseMaxFriendNum())?;
-        s.serialize_field("maxStarFriendNum", &self.maxStarFriendNum())?;
-        s.serialize_field("maxSquadAssistDisplayNum", &self.maxSquadAssistDisplayNum())?;
-        s.serialize_field("friendStarEditTrackTs", &self.friendStarEditTrackTs())?;
-        s.serialize_field("hardDiamondDrop", &self.hardDiamondDrop())?;
-        s.serialize_field("instFinDmdShdCost", &self.instFinDmdShdCost())?;
-        s.serialize_field("easyCrystalBonus", &self.easyCrystalBonus())?;
-        s.serialize_field(
-            "diamondMaterialToShardExchangeRatio",
-            &self.diamondMaterialToShardExchangeRatio(),
-        )?;
-        s.serialize_field("diamondHandbookStageGain", &self.diamondHandbookStageGain())?;
-        s.serialize_field("apBuyCost", &self.apBuyCost())?;
-        s.serialize_field("apBuyThreshold", &self.apBuyThreshold())?;
-        s.serialize_field("creditLimit", &self.creditLimit())?;
-        s.serialize_field(
-            "monthlySubRemainTimeLimitDays",
-            &self.monthlySubRemainTimeLimitDays(),
-        )?;
-        if let Some(f) = self.friendAssistRarityLimit() {
-            s.serialize_field("friendAssistRarityLimit", &f)?;
-        } else {
-            s.skip_field("friendAssistRarityLimit")?;
-        }
-        if let Some(f) = self.mainlineCompatibleDesc() {
-            s.serialize_field("mainlineCompatibleDesc", &f)?;
-        } else {
-            s.skip_field("mainlineCompatibleDesc")?;
-        }
-        if let Some(f) = self.mainlineToughDesc() {
-            s.serialize_field("mainlineToughDesc", &f)?;
-        } else {
-            s.skip_field("mainlineToughDesc")?;
-        }
-        if let Some(f) = self.mainlineEasyDesc() {
-            s.serialize_field("mainlineEasyDesc", &f)?;
-        } else {
-            s.skip_field("mainlineEasyDesc")?;
-        }
-        if let Some(f) = self.mainlineNormalDesc() {
-            s.serialize_field("mainlineNormalDesc", &f)?;
-        } else {
-            s.skip_field("mainlineNormalDesc")?;
-        }
-        s.serialize_field("rejectSpCharMission", &self.rejectSpCharMission())?;
-        if let Some(f) = self.addedRewardDisplayZone() {
-            s.serialize_field("addedRewardDisplayZone", &f)?;
-        } else {
-            s.skip_field("addedRewardDisplayZone")?;
-        }
-        s.serialize_field("oneDiamondAp", &self.oneDiamondAp())?;
-        s.serialize_field("charRotationPresetMaxCnt", &self.charRotationPresetMaxCnt())?;
-        s.serialize_field(
-            "charRotationSkinListMaxCnt",
-            &self.charRotationSkinListMaxCnt(),
-        )?;
-        if let Some(f) = self.defaultCRPresetCharId() {
-            s.serialize_field("defaultCRPresetCharId", &f)?;
-        } else {
-            s.skip_field("defaultCRPresetCharId")?;
-        }
-        if let Some(f) = self.defaultCRPresetCharSkinId() {
-            s.serialize_field("defaultCRPresetCharSkinId", &f)?;
-        } else {
-            s.skip_field("defaultCRPresetCharSkinId")?;
-        }
-        if let Some(f) = self.defaultCRPresetBGId() {
-            s.serialize_field("defaultCRPresetBGId", &f)?;
-        } else {
-            s.skip_field("defaultCRPresetBGId")?;
-        }
-        if let Some(f) = self.defaultCRPresetThemeId() {
-            s.serialize_field("defaultCRPresetThemeId", &f)?;
-        } else {
-            s.skip_field("defaultCRPresetThemeId")?;
-        }
-        if let Some(f) = self.defaultCRPresetName() {
-            s.serialize_field("defaultCRPresetName", &f)?;
-        } else {
-            s.skip_field("defaultCRPresetName")?;
-        }
-        s.serialize_field(
-            "charRotationPresetTrackTs",
-            &self.charRotationPresetTrackTs(),
-        )?;
-        s.serialize_field(
-            "uniequipArchiveSysTrackTs",
-            &self.uniequipArchiveSysTrackTs(),
-        )?;
-        s.serialize_field("manufactPromptTime", &self.manufactPromptTime())?;
-        if let Some(f) = self.mainGuideActivedStageId() {
-            s.serialize_field("mainGuideActivedStageId", &f)?;
-        } else {
-            s.skip_field("mainGuideActivedStageId")?;
-        }
-        if let Some(f) = self.richTextStyles() {
-            s.serialize_field("richTextStyles", &f)?;
-        } else {
-            s.skip_field("richTextStyles")?;
-        }
-        if let Some(f) = self.charAssistRefreshTime() {
-            s.serialize_field("charAssistRefreshTime", &f)?;
-        } else {
-            s.skip_field("charAssistRefreshTime")?;
-        }
-        if let Some(f) = self.normalRecruitLockedString() {
-            s.serialize_field("normalRecruitLockedString", &f)?;
-        } else {
-            s.skip_field("normalRecruitLockedString")?;
-        }
-        s.serialize_field(
-            "commonPotentialLvlUpCount",
-            &self.commonPotentialLvlUpCount(),
-        )?;
-        if let Some(f) = self.weeklyOverrideDesc() {
-            s.serialize_field("weeklyOverrideDesc", &f)?;
-        } else {
-            s.skip_field("weeklyOverrideDesc")?;
-        }
-        s.serialize_field("voucherDiv", &self.voucherDiv())?;
-        s.serialize_field("recruitPoolVersion", &self.recruitPoolVersion())?;
-        s.serialize_field(
-            "v006RecruitTimeStep1Refresh",
-            &self.v006RecruitTimeStep1Refresh(),
-        )?;
-        s.serialize_field(
-            "v006RecruitTimeStep2Check",
-            &self.v006RecruitTimeStep2Check(),
-        )?;
-        s.serialize_field(
-            "v006RecruitTimeStep2Flush",
-            &self.v006RecruitTimeStep2Flush(),
-        )?;
-        s.serialize_field("buyApTimeNoLimitFlag", &self.buyApTimeNoLimitFlag())?;
-        s.serialize_field("isLMGTSEnabled", &self.isLMGTSEnabled())?;
-        s.serialize_field("legacyTime", &self.legacyTime())?;
-        if let Some(f) = self.legacyItemList() {
-            s.serialize_field("legacyItemList", &f)?;
-        } else {
-            s.skip_field("legacyItemList")?;
-        }
-        s.serialize_field("useAssistSocialPt", &self.useAssistSocialPt())?;
-        s.serialize_field(
-            "useAssistSocialPtMaxCount",
-            &self.useAssistSocialPtMaxCount(),
-        )?;
-        if let Some(f) = self.assistBeUsedSocialPt() {
-            s.serialize_field("assistBeUsedSocialPt", &f)?;
-        } else {
-            s.skip_field("assistBeUsedSocialPt")?;
-        }
-        if let Some(f) = self.pushForces() {
-            s.serialize_field("pushForces", &f)?;
-        } else {
-            s.skip_field("pushForces")?;
-        }
-        s.serialize_field("pushForceZeroIndex", &self.pushForceZeroIndex())?;
-        if let Some(f) = self.normalGachaUnlockPrice() {
-            s.serialize_field("normalGachaUnlockPrice", &f)?;
-        } else {
-            s.skip_field("normalGachaUnlockPrice")?;
-        }
-        if let Some(f) = self.pullForces() {
-            s.serialize_field("pullForces", &f)?;
-        } else {
-            s.skip_field("pullForces")?;
-        }
-        s.serialize_field("pullForceZeroIndex", &self.pullForceZeroIndex())?;
-        if let Some(f) = self.multiInComeByRank() {
-            s.serialize_field("multiInComeByRank", &f)?;
-        } else {
-            s.skip_field("multiInComeByRank")?;
-        }
-        s.serialize_field("LMTGSToEPGSRatio", &self.LMTGSToEPGSRatio())?;
-        s.serialize_field("newBeeGiftEPGS", &self.newBeeGiftEPGS())?;
-        if let Some(f) = self.lMTGSDescConstOne() {
-            s.serialize_field("lMTGSDescConstOne", &f)?;
-        } else {
-            s.skip_field("lMTGSDescConstOne")?;
-        }
-        if let Some(f) = self.lMTGSDescConstTwo() {
-            s.serialize_field("lMTGSDescConstTwo", &f)?;
-        } else {
-            s.skip_field("lMTGSDescConstTwo")?;
-        }
-        if let Some(f) = self.defCDPrimColor() {
-            s.serialize_field("defCDPrimColor", &f)?;
-        } else {
-            s.skip_field("defCDPrimColor")?;
-        }
-        if let Some(f) = self.defCDSecColor() {
-            s.serialize_field("defCDSecColor", &f)?;
-        } else {
-            s.skip_field("defCDSecColor")?;
-        }
-        if let Some(f) = self.mailBannerType() {
-            s.serialize_field("mailBannerType", &f)?;
-        } else {
-            s.skip_field("mailBannerType")?;
-        }
-        s.serialize_field("monthlySubWarningTime", &self.monthlySubWarningTime())?;
-        s.serialize_field("UnlimitSkinOutOfTime", &self.UnlimitSkinOutOfTime())?;
-        s.serialize_field("replicateShopStartTime", &self.replicateShopStartTime())?;
-        s.serialize_field("TSO", &self.TSO())?;
-        s.serialize_field("isDynIllustEnabled", &self.isDynIllustEnabled())?;
-        s.serialize_field("isDynIllustStartEnabled", &self.isDynIllustStartEnabled())?;
-        s.serialize_field("isClassicQCShopEnabled", &self.isClassicQCShopEnabled())?;
-        s.serialize_field(
-            "isRoguelikeTopicFuncEnabled",
-            &self.isRoguelikeTopicFuncEnabled(),
-        )?;
-        s.serialize_field("isSandboxPermFuncEnabled", &self.isSandboxPermFuncEnabled())?;
-        s.serialize_field(
-            "isRoguelikeAvgAchieveFuncEnabled",
-            &self.isRoguelikeAvgAchieveFuncEnabled(),
-        )?;
-        s.serialize_field(
-            "isClassicPotentialItemFuncEnabled",
-            &self.isClassicPotentialItemFuncEnabled(),
-        )?;
-        s.serialize_field(
-            "isClassicGachaPoolFuncEnabled",
-            &self.isClassicGachaPoolFuncEnabled(),
-        )?;
-        s.serialize_field(
-            "isSpecialGachaPoolFuncEnabled",
-            &self.isSpecialGachaPoolFuncEnabled(),
-        )?;
-        s.serialize_field(
-            "isVoucherClassicItemDistinguishable",
-            &self.isVoucherClassicItemDistinguishable(),
-        )?;
-        s.serialize_field("isRecalRuneFuncEnabled", &self.isRecalRuneFuncEnabled())?;
-        s.serialize_field("voucherSkinRedeem", &self.voucherSkinRedeem())?;
-        if let Some(f) = self.voucherSkinDesc() {
-            s.serialize_field("voucherSkinDesc", &f)?;
-        } else {
-            s.skip_field("voucherSkinDesc")?;
-        }
-        s.serialize_field("charmEquipCount", &self.charmEquipCount())?;
-        if let Some(f) = self.termDescriptionDict() {
-            s.serialize_field("termDescriptionDict", &f)?;
-        } else {
-            s.skip_field("termDescriptionDict")?;
-        }
-        if let Some(f) = self.storyReviewUnlockItemLackTip() {
-            s.serialize_field("storyReviewUnlockItemLackTip", &f)?;
-        } else {
-            s.skip_field("storyReviewUnlockItemLackTip")?;
-        }
-        if let Some(f) = self.dataVersion() {
-            s.serialize_field("dataVersion", &f)?;
-        } else {
-            s.skip_field("dataVersion")?;
-        }
-        if let Some(f) = self.resPrefVersion() {
-            s.serialize_field("resPrefVersion", &f)?;
-        } else {
-            s.skip_field("resPrefVersion")?;
-        }
-        if let Some(f) = self.announceWebBusType() {
-            s.serialize_field("announceWebBusType", &f)?;
-        } else {
-            s.skip_field("announceWebBusType")?;
-        }
-        if let Some(f) = self.videoPlayerWebBusType() {
-            s.serialize_field("videoPlayerWebBusType", &f)?;
-        } else {
-            s.skip_field("videoPlayerWebBusType")?;
-        }
-        if let Some(f) = self.gachaLogBusType() {
-            s.serialize_field("gachaLogBusType", &f)?;
-        } else {
-            s.skip_field("gachaLogBusType")?;
-        }
-        s.serialize_field(
-            "defaultMinMultipleBattleTimes",
-            &self.defaultMinMultipleBattleTimes(),
-        )?;
-        s.serialize_field(
-            "defaultMaxMultipleBattleTimes",
-            &self.defaultMaxMultipleBattleTimes(),
-        )?;
-        s.serialize_field("multipleActionOpen", &self.multipleActionOpen())?;
-        if let Some(f) = self.subProfessionDamageTypePairs() {
-            s.serialize_field("subProfessionDamageTypePairs", &f)?;
-        } else {
-            s.skip_field("subProfessionDamageTypePairs")?;
-        }
-        if let Some(f) = self.classicProtectChar() {
-            s.serialize_field("classicProtectChar", &f)?;
-        } else {
-            s.skip_field("classicProtectChar")?;
-        }
-        if let Some(f) = self.feverGameData() {
-            s.serialize_field("feverGameData", &f)?;
-        } else {
-            s.skip_field("feverGameData")?;
-        }
-        if let Some(f) = self.birthdaySettingDesc() {
-            s.serialize_field("birthdaySettingDesc", &f)?;
-        } else {
-            s.skip_field("birthdaySettingDesc")?;
-        }
-        if let Some(f) = self.birthdaySettingConfirmDesc() {
-            s.serialize_field("birthdaySettingConfirmDesc", &f)?;
-        } else {
-            s.skip_field("birthdaySettingConfirmDesc")?;
-        }
-        if let Some(f) = self.birthdaySettingLeapConfirmDesc() {
-            s.serialize_field("birthdaySettingLeapConfirmDesc", &f)?;
-        } else {
-            s.skip_field("birthdaySettingLeapConfirmDesc")?;
-        }
-        s.serialize_field("leapBirthdayRewardMonth", &self.leapBirthdayRewardMonth())?;
-        s.serialize_field("leapBirthdayRewardDay", &self.leapBirthdayRewardDay())?;
-        if let Some(f) = self.birthdaySettingShowStageId() {
-            s.serialize_field("birthdaySettingShowStageId", &f)?;
-        } else {
-            s.skip_field("birthdaySettingShowStageId")?;
-        }
-        s.serialize_field("isBirthdayFuncEnabled", &self.isBirthdayFuncEnabled())?;
-        s.serialize_field("isSoCharEnabled", &self.isSoCharEnabled())?;
-        s.end()
     }
 }
 
@@ -6894,6 +6267,15 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_GameDataConstsBuild
         );
     }
     #[inline]
+    pub fn add_avgReaderModeDefaultSetting(
+        &mut self,
+        avgReaderModeDefaultSetting: flatbuffers::WIPOffset<
+            clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting<'b>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSetting>>(clz_Torappu_GameDataConsts::VT_AVGREADERMODEDEFAULTSETTING, avgReaderModeDefaultSetting);
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_GameDataConstsBuilder<'a, 'b, A> {
@@ -7112,6 +6494,10 @@ impl core::fmt::Debug for clz_Torappu_GameDataConsts<'_> {
         );
         ds.field("isBirthdayFuncEnabled", &self.isBirthdayFuncEnabled());
         ds.field("isSoCharEnabled", &self.isSoCharEnabled());
+        ds.field(
+            "avgReaderModeDefaultSetting",
+            &self.avgReaderModeDefaultSetting(),
+        );
         ds.finish()
     }
 }
@@ -7243,6 +6629,8 @@ pub struct clz_Torappu_GameDataConstsT {
     pub birthdaySettingShowStageId: Option<String>,
     pub isBirthdayFuncEnabled: bool,
     pub isSoCharEnabled: bool,
+    pub avgReaderModeDefaultSetting:
+        Option<Box<clz_Torappu_GameDataConsts_AVGReaderModeDefaultSettingT>>,
 }
 impl Default for clz_Torappu_GameDataConstsT {
     fn default() -> Self {
@@ -7371,6 +6759,7 @@ impl Default for clz_Torappu_GameDataConstsT {
             birthdaySettingShowStageId: None,
             isBirthdayFuncEnabled: false,
             isSoCharEnabled: false,
+            avgReaderModeDefaultSetting: None,
         }
     }
 }
@@ -7620,6 +7009,10 @@ impl clz_Torappu_GameDataConstsT {
             .map(|x| _fbb.create_string(x));
         let isBirthdayFuncEnabled = self.isBirthdayFuncEnabled;
         let isSoCharEnabled = self.isSoCharEnabled;
+        let avgReaderModeDefaultSetting = self
+            .avgReaderModeDefaultSetting
+            .as_ref()
+            .map(|x| x.pack(_fbb));
         clz_Torappu_GameDataConsts::create(
             _fbb,
             &clz_Torappu_GameDataConstsArgs {
@@ -7747,6 +7140,7 @@ impl clz_Torappu_GameDataConstsT {
                 birthdaySettingShowStageId,
                 isBirthdayFuncEnabled,
                 isSoCharEnabled,
+                avgReaderModeDefaultSetting,
             },
         )
     }

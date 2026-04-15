@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 
 /**
  * PUT /api/operator-notes/{operator_id}/update
  * Updates operator notes (requires auth)
+ * v3: calls PUT /operator-notes/{id} (no /update suffix)
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "PUT") {
@@ -17,8 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Operator ID is required" });
     }
 
-    const siteToken = getSiteToken(req);
-    if (!siteToken) {
+    const token = getToken(req);
+    if (!token) {
         return res.status(401).json({ error: "Not authenticated" });
     }
 
@@ -26,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const response = await backendFetch(`/operator-notes/${operator_id}`, {
             method: "PUT",
             headers: {
-                Authorization: `Bearer ${siteToken}`,
+                Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify(req.body),
         });

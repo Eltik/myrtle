@@ -35,7 +35,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         async function checkPermissions() {
-            if (!user?.status) {
+            if (!user?.uid) {
                 setAuthorized(false);
                 return;
             }

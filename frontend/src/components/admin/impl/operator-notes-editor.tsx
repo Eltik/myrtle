@@ -17,6 +17,16 @@ interface OperatorNotesEditorProps {
     role: AdminRole;
 }
 
+// Backend seeds an `operator_notes` row on first edit and keeps the row even
+// when its fields are cleared, so presence alone isn't proof of content.
+// Badge the operator only when the row actually has something displayable.
+function hasActualContent(note: OperatorNote | undefined): boolean {
+    if (!note) return false;
+    const anyText = [note.summary, note.pros, note.cons, note.notes, note.trivia].some((v) => typeof v === "string" && v.trim().length > 0);
+    const anyTags = Array.isArray(note.tags) && note.tags.length > 0;
+    return anyText || anyTags;
+}
+
 export function OperatorNotesEditor({ role }: OperatorNotesEditorProps) {
     const [operators, setOperators] = useState<OperatorFromList[]>([]);
     const [existingNotes, setExistingNotes] = useState<Record<string, OperatorNote>>({});
@@ -220,7 +230,7 @@ export function OperatorNotesEditor({ role }: OperatorNotesEditorProps) {
                                 filteredOperators.map((op) => (
                                     <button className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-secondary/50 ${selectedOperatorId === op.id ? "bg-secondary" : ""}`} key={op.id} onClick={() => op.id && selectOperator(op.id)} type="button">
                                         <span className="truncate">{op.name}</span>
-                                        {op.id && existingNotes[op.id] && <Badge variant="secondary">Has notes</Badge>}
+                                        {op.id && existingNotes[op.id] && hasActualContent(existingNotes[op.id]) && <Badge variant="secondary">Has notes</Badge>}
                                     </button>
                                 ))
                             )}

@@ -1,40 +1,41 @@
 export interface StatsResponse {
     users: {
         total: number;
-        byServer: Record<string, number>;
-        recentSignups7d: number;
-        recentSignups30d: number;
+        byServer: {
+            en: number;
+            jp: number;
+            kr: number;
+            cn: number;
+            bili: number;
+            tw: number;
+        };
+        signups7d: number;
+        signups30d: number;
         publicProfiles: number;
     };
     gacha: {
         totalPulls: number;
         contributingUsers: number;
-        pullRates: {
-            sixStarRate: number;
-            fiveStarRate: number;
-            fourStarRate: number;
-            threeStarRate: number;
-        };
+        sixStarCount: number;
+        fiveStarCount: number;
+        fourStarCount: number;
     };
     gameData: {
         operators: number;
         skills: number;
         modules: number;
         skins: number;
-        items: number;
         stages: number;
+        zones: number;
         enemies: number;
-        gachaPools: number;
     };
     tierLists: {
         total: number;
         active: number;
         totalVersions: number;
         totalPlacements: number;
-        communityCount: number;
     };
     computedAt: string;
-    cached: boolean;
 }
 
 // ==================== User Stats Types ====================

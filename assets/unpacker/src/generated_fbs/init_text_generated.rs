@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -118,22 +117,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -290,21 +273,6 @@ impl<'a> Default for clz_Torappu_LanguageDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_LanguageDataArgs { strings: None }
-    }
-}
-
-impl Serialize for clz_Torappu_LanguageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_LanguageData", 1)?;
-        if let Some(f) = self.strings() {
-            s.serialize_field("strings", &f)?;
-        } else {
-            s.skip_field("strings")?;
-        }
-        s.end()
     }
 }
 

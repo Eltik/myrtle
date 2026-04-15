@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -78,18 +77,6 @@ impl core::fmt::Debug for enum__Torappu_Audio_MixerDesc_Category {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_Audio_MixerDesc_Category {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Audio_MixerDesc_Category",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -219,18 +206,6 @@ impl core::fmt::Debug for enum__Torappu_BattleVoiceOption_BattleVoiceType {
         }
     }
 }
-impl Serialize for enum__Torappu_BattleVoiceOption_BattleVoiceType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BattleVoiceOption_BattleVoiceType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BattleVoiceOption_BattleVoiceType {
     type Inner = Self;
@@ -325,18 +300,6 @@ impl core::fmt::Debug for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_Audio_Middleware_Data_AudioFadeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Audio_Middleware_Data_AudioFadeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -475,18 +438,6 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_VoiceLangType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_VoiceLangType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -744,39 +695,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_BGMBankArgs<'a> {
             fadeStyleId: None,
             name: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_Middleware_Data_BGMBank<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_BGMBank", 7)?;
-        if let Some(f) = self.intro() {
-            s.serialize_field("intro", &f)?;
-        } else {
-            s.skip_field("intro")?;
-        }
-        if let Some(f) = self.loop_() {
-            s.serialize_field("loop_", &f)?;
-        } else {
-            s.skip_field("loop_")?;
-        }
-        s.serialize_field("volume", &self.volume())?;
-        s.serialize_field("crossfade", &self.crossfade())?;
-        s.serialize_field("delay", &self.delay())?;
-        if let Some(f) = self.fadeStyleId() {
-            s.serialize_field("fadeStyleId", &f)?;
-        } else {
-            s.skip_field("fadeStyleId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.end()
     }
 }
 
@@ -1194,31 +1112,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXArgs<'
     }
 }
 
-impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFX", 10)?;
-        if let Some(f) = self.asset() {
-            s.serialize_field("asset", &f)?;
-        } else {
-            s.skip_field("asset")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.serialize_field("important", &self.important())?;
-        s.serialize_field("is2D", &self.is2D())?;
-        s.serialize_field("delay", &self.delay())?;
-        s.serialize_field("minPitch", &self.minPitch())?;
-        s.serialize_field("maxPitch", &self.maxPitch())?;
-        s.serialize_field("minVolume", &self.minVolume())?;
-        s.serialize_field("maxVolume", &self.maxVolume())?;
-        s.serialize_field("ignoreTimeScale", &self.ignoreTimeScale())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBank_SoundFXBuilder<
     'a: 'b,
     'b,
@@ -1532,23 +1425,6 @@ impl<'a> Default for clz_Torappu_Audio_MixerDescArgs<'a> {
             customGroup: None,
             important: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_MixerDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Audio_MixerDesc", 3)?;
-        s.serialize_field("category", &self.category())?;
-        if let Some(f) = self.customGroup() {
-            s.serialize_field("customGroup", &f)?;
-        } else {
-            s.skip_field("customGroup")?;
-        }
-        s.serialize_field("important", &self.important())?;
-        s.end()
     }
 }
 
@@ -1887,40 +1763,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXBankArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXBank<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXBank", 7)?;
-        if let Some(f) = self.sounds() {
-            s.serialize_field("sounds", &f)?;
-        } else {
-            s.skip_field("sounds")?;
-        }
-        s.serialize_field("maxSoundAllowed", &self.maxSoundAllowed())?;
-        s.serialize_field("popOldest", &self.popOldest())?;
-        if let Some(f) = self.customMixerGroup() {
-            s.serialize_field("customMixerGroup", &f)?;
-        } else {
-            s.skip_field("customMixerGroup")?;
-        }
-        s.serialize_field("loop_", &self.loop_())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.mixerDesc() {
-            s.serialize_field("mixerDesc", &f)?;
-        } else {
-            s.skip_field("mixerDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXBankBuilder<
     'a: 'b,
     'b,
@@ -2235,29 +2077,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBank", 4)?;
-        if let Some(f) = self.targetBank() {
-            s.serialize_field("targetBank", &f)?;
-        } else {
-            s.skip_field("targetBank")?;
-        }
-        s.serialize_field("ctrlStop", &self.ctrlStop())?;
-        s.serialize_field("ctrlStopFadetime", &self.ctrlStopFadetime())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Audio_Middleware_Data_SoundFXCtrlBankBuilder<
     'a: 'b,
     'b,
@@ -2537,34 +2356,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_SnapshotBankArgs<'a> {
             duration: 0.0,
             name: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_Middleware_Data_SnapshotBank<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_SnapshotBank", 5)?;
-        if let Some(f) = self.targetSnapshot() {
-            s.serialize_field("targetSnapshot", &f)?;
-        } else {
-            s.skip_field("targetSnapshot")?;
-        }
-        if let Some(f) = self.hookSoundFxBank() {
-            s.serialize_field("hookSoundFxBank", &f)?;
-        } else {
-            s.skip_field("hookSoundFxBank")?;
-        }
-        s.serialize_field("delay", &self.delay())?;
-        s.serialize_field("duration", &self.duration())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.end()
     }
 }
 
@@ -2853,21 +2644,6 @@ impl<'a> Default for clz_Torappu_BattleVoiceOptionArgs {
     }
 }
 
-impl Serialize for clz_Torappu_BattleVoiceOption<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BattleVoiceOption", 5)?;
-        s.serialize_field("voiceType", &self.voiceType())?;
-        s.serialize_field("priority", &self.priority())?;
-        s.serialize_field("overlapIfSamePriority", &self.overlapIfSamePriority())?;
-        s.serialize_field("cooldown", &self.cooldown())?;
-        s.serialize_field("delay", &self.delay())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BattleVoiceOptionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3145,30 +2921,6 @@ impl<'a> Default for clz_Torappu_BattleVoiceDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_BattleVoiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BattleVoiceData", 4)?;
-        s.serialize_field("crossfade", &self.crossfade())?;
-        s.serialize_field(
-            "minTimeDeltaForEnemyEncounter",
-            &self.minTimeDeltaForEnemyEncounter(),
-        )?;
-        s.serialize_field(
-            "minSpCostForImportantPassiveSkill",
-            &self.minSpCostForImportantPassiveSkill(),
-        )?;
-        if let Some(f) = self.voiceTypeOptions() {
-            s.serialize_field("voiceTypeOptions", &f)?;
-        } else {
-            s.skip_field("voiceTypeOptions")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BattleVoiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3404,32 +3156,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_MusicDataArgs<'a> {
             name: None,
             bank: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_Middleware_Data_MusicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_MusicData", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.bank() {
-            s.serialize_field("bank", &f)?;
-        } else {
-            s.skip_field("bank")?;
-        }
-        s.end()
     }
 }
 
@@ -3688,30 +3414,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_DuckingDataArgs<'a> {
             delay: 0.0,
             fadeStyleId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_Middleware_Data_DuckingData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_DuckingData", 5)?;
-        if let Some(f) = self.bank() {
-            s.serialize_field("bank", &f)?;
-        } else {
-            s.skip_field("bank")?;
-        }
-        s.serialize_field("volume", &self.volume())?;
-        s.serialize_field("fadeTime", &self.fadeTime())?;
-        s.serialize_field("delay", &self.delay())?;
-        if let Some(f) = self.fadeStyleId() {
-            s.serialize_field("fadeStyleId", &f)?;
-        } else {
-            s.skip_field("fadeStyleId")?;
-        }
-        s.end()
     }
 }
 
@@ -4014,26 +3716,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_FadeStyleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Audio_Middleware_Data_FadeStyleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Audio_Middleware_Data_FadeStyleData", 5)?;
-        if let Some(f) = self.styleName() {
-            s.serialize_field("styleName", &f)?;
-        } else {
-            s.skip_field("styleName")?;
-        }
-        s.serialize_field("fadeinTime", &self.fadeinTime())?;
-        s.serialize_field("fadeoutTime", &self.fadeoutTime())?;
-        s.serialize_field("fadeinType", &self.fadeinType())?;
-        s.serialize_field("fadeoutType", &self.fadeoutType())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Audio_Middleware_Data_FadeStyleDataBuilder<
     'a: 'b,
     'b,
@@ -4277,22 +3959,6 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__enum__Torappu_VoiceLangType__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__enum__Torappu_VoiceLangType__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_VoiceLangType__stringBuilder<
     'a: 'b,
     'b,
@@ -4514,25 +4180,6 @@ impl<'a> Default for dict__string__list_dict__enum__Torappu_VoiceLangType__strin
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_dict__enum__Torappu_VoiceLangType__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__list_dict__enum__Torappu_VoiceLangType__string",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4787,27 +4434,6 @@ impl<'a> Default
     }
 }
 
-impl Serialize
-    for dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__string",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_dict__string__list_dict__enum__Torappu_VoiceLangType__stringBuilder<
     'a: 'b,
     'b,
@@ -5031,22 +4657,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5564,67 +5174,6 @@ impl<'a> Default for clz_Torappu_Audio_Middleware_Data_TorappuAudioDataArgs<'a> 
             soundFxVoiceLang: None,
             bankAlias: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Audio_Middleware_Data_TorappuAudioData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_Audio_Middleware_Data_TorappuAudioData", 10)?;
-        if let Some(f) = self.bgmBanks() {
-            s.serialize_field("bgmBanks", &f)?;
-        } else {
-            s.skip_field("bgmBanks")?;
-        }
-        if let Some(f) = self.soundFXBanks() {
-            s.serialize_field("soundFXBanks", &f)?;
-        } else {
-            s.skip_field("soundFXBanks")?;
-        }
-        if let Some(f) = self.soundFXCtrlBanks() {
-            s.serialize_field("soundFXCtrlBanks", &f)?;
-        } else {
-            s.skip_field("soundFXCtrlBanks")?;
-        }
-        if let Some(f) = self.snapshotBanks() {
-            s.serialize_field("snapshotBanks", &f)?;
-        } else {
-            s.skip_field("snapshotBanks")?;
-        }
-        if let Some(f) = self.battleVoice() {
-            s.serialize_field("battleVoice", &f)?;
-        } else {
-            s.skip_field("battleVoice")?;
-        }
-        if let Some(f) = self.musics() {
-            s.serialize_field("musics", &f)?;
-        } else {
-            s.skip_field("musics")?;
-        }
-        if let Some(f) = self.duckings() {
-            s.serialize_field("duckings", &f)?;
-        } else {
-            s.skip_field("duckings")?;
-        }
-        if let Some(f) = self.fadeStyles() {
-            s.serialize_field("fadeStyles", &f)?;
-        } else {
-            s.skip_field("fadeStyles")?;
-        }
-        if let Some(f) = self.soundFxVoiceLang() {
-            s.serialize_field("soundFxVoiceLang", &f)?;
-        } else {
-            s.skip_field("soundFxVoiceLang")?;
-        }
-        if let Some(f) = self.bankAlias() {
-            s.serialize_field("bankAlias", &f)?;
-        } else {
-            s.skip_field("bankAlias")?;
-        }
-        s.end()
     }
 }
 

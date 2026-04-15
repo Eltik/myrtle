@@ -53,10 +53,10 @@ function SettingsPageContent() {
     }, []);
 
     useEffect(() => {
-        if (user?.status) {
+        if (user?.uid) {
             fetchGachaSettings();
         }
-    }, [user?.status, fetchGachaSettings]);
+    }, [user?.uid, fetchGachaSettings]);
 
     // Handle gacha storage toggle
     const handleGachaStorageToggle = async (checked: boolean) => {

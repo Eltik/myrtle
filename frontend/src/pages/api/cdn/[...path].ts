@@ -1,22 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { env } from "../../../env";
-
-console.log("[CDN Proxy] Module loaded, BACKEND_URL:", env.BACKEND_URL ? "set" : "missing");
-
-/**
- * API route that proxies requests to the backend CDN service
- * Features:
- * - Aggressive caching with stale-while-revalidate
- * - ETag/conditional request support for revalidation
- */
-
-interface CachedResponse {
-    status: number;
-    contentType: string;
-    etag: string | null;
-    lastModified: string | null;
-    buffer: Buffer;
-}
+import { backendFetch } from "~/lib/backend-fetch";
 
 export const config = {
     api: {
@@ -24,32 +8,7 @@ export const config = {
     },
 };
 
-async function fetchAndBuffer(url: string, headers: Record<string, string>): Promise<CachedResponse | null> {
-    try {
-        const response = await fetch(url, { headers });
-
-        if (response.status === 304) {
-            return null;
-        }
-
-        const buffer = Buffer.from(await response.arrayBuffer());
-
-        return {
-            status: response.status,
-            contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
-            etag: response.headers.get("ETag"),
-            lastModified: response.headers.get("Last-Modified"),
-            buffer,
-        };
-    } catch (error) {
-        console.error("fetchAndBuffer error:", { url, error: error instanceof Error ? error.message : String(error) });
-        throw error;
-    }
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    console.log("[CDN Proxy] Handler called:", req.method, req.url);
-
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Method not allowed" });
     }
@@ -57,86 +16,127 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const isDevelopment = env.NODE_ENV === "development";
 
     try {
-        const rawURL = req.url ?? "";
-        const urlParts = rawURL.split("/api/cdn/")[1];
-        if (!urlParts) {
+        const pathSegments = req.query.path;
+        if (!pathSegments || !Array.isArray(pathSegments) || pathSegments.length === 0) {
             return res.status(400).json({ error: "Invalid path" });
         }
 
-        const [pathPart, queryPart] = urlParts.split("?");
+        const fullPath = pathSegments.join("/");
 
-        const encodedPath = pathPart
-            ? pathPart
-                  .split("/")
-                  .map((segment) => {
-                      if (segment.includes("%")) {
-                          return segment;
-                      }
-                      return encodeURIComponent(segment);
-                  })
-                  .join("/")
-            : "";
-        const backendURL = `${env.BACKEND_URL ?? ""}/cdn/${encodedPath}`;
-        const fullURL = queryPart ? `${backendURL}?${queryPart}` : backendURL;
+        // Route avatar and portrait paths to dedicated backend endpoints
+        const avatarMatch = fullPath.match(/^avatar[s]?\/(.+)$/);
+        const portraitMatch = fullPath.match(/^portrait[s]?\/(.+)$/);
 
-        // Don't forward Accept-Encoding to avoid decompression issues with buffered responses
-        const fetchHeaders: Record<string, string> = {
-            Accept: req.headers.accept ?? "*/*",
-            "User-Agent": req.headers["user-agent"] ?? "",
-            "X-Forwarded-For": (req.headers["x-forwarded-for"] as string) ?? req.socket.remoteAddress ?? "",
-            "X-Internal-Service-Key": env.INTERNAL_SERVICE_KEY,
-        };
-        if (req.headers["if-none-match"]) {
-            fetchHeaders["If-None-Match"] = req.headers["if-none-match"] as string;
-        }
-        if (req.headers["if-modified-since"]) {
-            fetchHeaders["If-Modified-Since"] = req.headers["if-modified-since"] as string;
+        if (avatarMatch?.[1]) {
+            // Strip .png extension - backend looks up by asset name.
+            // Encode so `#` etc. survive URL parsing in backendFetch.
+            const id = avatarMatch[1].replace(/\.png$/i, "");
+            const response = await backendFetch(`/avatar/${encodeURIComponent(id)}`);
+
+            if (!response.ok) {
+                return res.status(response.status).json({ error: "Failed to fetch avatar" });
+            }
+
+            const buffer = Buffer.from(await response.arrayBuffer());
+            const contentType = response.headers.get("Content-Type") ?? "image/png";
+
+            res.setHeader("Content-Type", contentType);
+            res.setHeader("Content-Length", buffer.length);
+            if (!isDevelopment) {
+                res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+            }
+            return res.status(200).send(buffer);
         }
 
-        // Disable request coalescing temporarily - it may be causing 500 errors with concurrent requests
-        // TODO: Re-enable after fixing the underlying issue
-        const cachedResponse = await fetchAndBuffer(fullURL, fetchHeaders);
+        const portraitId = portraitMatch?.[1];
+        if (portraitId) {
+            // Strip .png extension and _1/_2 suffix - backend appends these internally.
+            // Encode so special chars like `#` survive URL parsing.
+            const rawId = portraitId.replace(/\.png$/i, "").replace(/_(1\+?|2)$/, "");
+            const response = await backendFetch(`/portrait/${encodeURIComponent(rawId)}`);
 
-        if (cachedResponse === null) {
-            return res.status(304).end();
+            if (!response.ok) {
+                return res.status(response.status).json({ error: "Failed to fetch portrait" });
+            }
+
+            const buffer = Buffer.from(await response.arrayBuffer());
+            const contentType = response.headers.get("Content-Type") ?? "image/png";
+
+            res.setHeader("Content-Type", contentType);
+            res.setHeader("Content-Length", buffer.length);
+            if (!isDevelopment) {
+                res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+            }
+            return res.status(200).send(buffer);
         }
 
-        if (cachedResponse.status < 200 || cachedResponse.status >= 300) {
-            console.error("Backend request failed:", {
-                status: cachedResponse.status,
-                url: fullURL,
-            });
-            return res.status(cachedResponse.status).json({
-                error: "Failed to fetch asset",
-                status: cachedResponse.status,
-            });
+        // Route known asset types to dedicated backend endpoints
+        const skillIconMatch = fullPath.match(/^(?:skill[_-]?icons?|upk\/.*skill.*?)\/(.+?)(?:\.png)?$/i);
+        const moduleIconMatch = fullPath.match(/^(?:module[_-]?icons?|upk\/.*equip_small.*?)\/(.+?)(?:\.png)?$/i);
+        const moduleBigMatch = fullPath.match(/^(?:module[_-]?big|upk\/.*equip_big.*?)\/(.+?)(?:\.png)?$/i);
+        const enemyIconMatch = fullPath.match(/^(?:enemy[_-]?icons?|upk\/.*icon_enemies.*?)\/(.+?)(?:\.png)?$/i);
+        const itemIconMatch = fullPath.match(/^(?:item[_-]?icons?|upk\/.*ui_item.*?)\/(.+?)(?:\.png)?$/i);
+        const skinPortraitMatch = fullPath.match(/^(?:skin[_-]?portraits?|upk\/.*skin_portrait.*?)\/(.+?)(?:\.png)?$/i);
+        const charartMatch = fullPath.match(/^(?:chararts?|upk\/.*chararts.*?)\/(.+?)(?:\.png)?$/i);
+
+        const assetMatch = skillIconMatch ? { route: "skill-icon", id: skillIconMatch[1] }
+            : moduleIconMatch ? { route: "module-icon", id: moduleIconMatch[1] }
+            : moduleBigMatch ? { route: "module-big", id: moduleBigMatch[1] }
+            : enemyIconMatch ? { route: "enemy-icon", id: enemyIconMatch[1] }
+            : itemIconMatch ? { route: "item-icon", id: itemIconMatch[1] }
+            : skinPortraitMatch ? { route: "skin-portrait", id: skinPortraitMatch[1] }
+            : charartMatch ? { route: "charart", id: charartMatch[1] }
+            : null;
+
+        if (assetMatch?.id) {
+            const response = await backendFetch(`/${assetMatch.route}/${encodeURIComponent(assetMatch.id)}`);
+            if (response.ok) {
+                const buffer = Buffer.from(await response.arrayBuffer());
+                const contentType = response.headers.get("Content-Type") ?? "image/png";
+                res.setHeader("Content-Type", contentType);
+                res.setHeader("Content-Length", buffer.length);
+                if (!isDevelopment) {
+                    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+                }
+                return res.status(200).send(buffer);
+            }
+            // Fall through to generic assets endpoint if dedicated route fails
         }
 
-        const isImage = cachedResponse.contentType.startsWith("image/");
+        // Fallback: proxy to generic /assets/ endpoint
+        // Map legacy "upk/" prefix to "textures/" which is the actual directory name in v3
+        // Encode each segment to handle special chars like # in skin names
+        let mappedSegments = [...pathSegments];
+        if (mappedSegments[0] === "upk") {
+            mappedSegments[0] = "textures";
+        }
+        const assetPath = mappedSegments.map((s) => encodeURIComponent(s)).join("/");
+        const response = await backendFetch(`/assets/${assetPath}`);
 
-        res.setHeader("Content-Type", cachedResponse.contentType);
-        res.setHeader("Content-Length", cachedResponse.buffer.length);
+        if (!response.ok) {
+            return res.status(response.status).json({ error: "Asset not found" });
+        }
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const contentType = response.headers.get("Content-Type") ?? "application/octet-stream";
+        const etag = response.headers.get("ETag");
+        const lastModified = response.headers.get("Last-Modified");
+
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Content-Length", buffer.length);
+        if (etag) res.setHeader("ETag", etag);
+        if (lastModified) res.setHeader("Last-Modified", lastModified);
 
         if (isDevelopment) {
             res.setHeader("Cache-Control", "no-store, max-age=0");
-        } else if (isImage) {
-            res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
         } else {
-            res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+            res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
         }
 
-        if (cachedResponse.etag) res.setHeader("ETag", cachedResponse.etag);
-        if (cachedResponse.lastModified) res.setHeader("Last-Modified", cachedResponse.lastModified);
-
-        res.status(cachedResponse.status).send(cachedResponse.buffer);
+        return res.status(200).send(buffer);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorStack = error instanceof Error ? error.stack : undefined;
-        console.error("Error proxying to CDN:", {
-            message: errorMessage,
-            stack: errorStack,
-            url: req.url,
-        });
-        res.status(500).json({ error: "Internal server error", details: errorMessage });
+        console.error("Error proxying to CDN:", { message: errorMessage, url: req.url });
+        res.status(500).json({ error: "Internal server error" });
     }
 }

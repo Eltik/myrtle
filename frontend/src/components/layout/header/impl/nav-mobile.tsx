@@ -87,18 +87,18 @@ export function NavMobile({ pathname, user, loading, logout, mobileMenuOpen, set
                         <div className="flex h-10 w-full items-center justify-center">
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                         </div>
-                    ) : user?.status ? (
+                    ) : user ? (
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 rounded-md bg-secondary/50 px-3 py-2">
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
-                                    <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.status.nickName.slice(0, 1) ?? "E"}</AvatarFallback>
+                                    <AvatarFallback className="bg-primary/20 text-primary text-xs">{user.nickname?.slice(0, 1) ?? "E"}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 overflow-hidden">
-                                    <Link className="truncate font-medium text-sm hover:underline" href={`/user/${user.status.uid}`} prefetch={false}>
-                                        {user.status.nickName}
+                                    <Link className="truncate font-medium text-sm hover:underline" href={`/user/${user.uid}`} prefetch={false}>
+                                        {user.nickname}
                                     </Link>
-                                    <p className="text-muted-foreground text-xs">Level {user.status.level}</p>
+                                    <p className="text-muted-foreground text-xs">Level {user.level}</p>
                                 </div>
                             </div>
                             <Link className="flex w-full items-center justify-start rounded-md border border-input bg-background px-4 py-2 font-medium text-foreground text-sm hover:bg-secondary" href="/my/tier-lists" onClick={() => setMobileMenuOpen(false)} prefetch={false}>

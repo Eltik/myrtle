@@ -4,7 +4,6 @@ import { backendFetch } from "~/lib/backend-fetch";
 import { formatSubProfession } from "~/lib/utils";
 import type { Skin } from "~/types/api/impl/skin";
 import type { ProfessionStat, SubProfessionStat, UserStatsResponse } from "~/types/api/impl/stats";
-import type { StoredUser } from "~/types/api/impl/user";
 
 const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
 
@@ -13,12 +12,25 @@ interface StaticOperator {
     profession: string;
     subProfessionId?: string;
     isNotObtainable?: boolean;
+    rarity?: string;
+}
+
+// Raw shape of one entry from backend's `v_user_roster` view. The jsonb
+// aggregates use short keys (`index`/`mastery`, `id`/`level`/`locked`)
+// which are NOT the same as the frontend's `RosterEntry` type (which is
+// post-transform — see /api/user/[id]/characters.ts for the mapping).
+interface RawRosterEntry {
+    operator_id: string;
+    elite: number;
+    skin_id: string | null;
+    masteries: Array<{ index: number; mastery: number }> | null;
+    modules: Array<{ id: string; level: number; locked?: boolean }> | null;
 }
 
 /**
  * GET /api/user/{userId}/stats
  * Returns computed account stats for the Stats tab.
- * Computes all stats server-side to avoid sending multi-MB character data to the client.
+ * v3: Fetches from /roster endpoint for character data.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "GET") {
@@ -32,35 +44,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        // Parallel fetch: user data + static operators + static skins
-        const [userResponse, operatorsResponse, skinsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,subProfessionId,isNotObtainable"), backendFetch("/static/skins?limit=5000")]);
+        // Parallel fetch: roster + static operators + static skins
+        const [rosterResponse, operatorsResponse, skinsResponse] = await Promise.all([backendFetch(`/roster?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,profession,subProfessionId,isNotObtainable,rarity"), backendFetch("/static/skins?limit=5000")]);
 
-        if (!userResponse.ok) {
-            if (userResponse.status === 404) {
+        if (!rosterResponse.ok) {
+            if (rosterResponse.status === 404) {
                 return res.status(404).json({ error: "User not found" });
             }
-            return res.status(userResponse.status).json({ error: "Failed to fetch user data" });
+            return res.status(rosterResponse.status).json({ error: "Failed to fetch roster data" });
         }
 
-        const userData: StoredUser = await userResponse.json();
-        const chars = userData?.data?.troop?.chars;
+        const roster: RawRosterEntry[] = await rosterResponse.json();
 
-        if (!chars) {
-            return res.status(404).json({ error: "Character data not found" });
-        }
-
-        // Build per-profession and per-sub-profession totals from static operators
+        // Build static operator lookup: id -> StaticOperator
+        const staticOperatorMap = new Map<string, StaticOperator>();
         const totalByProfession: Record<string, number> = {};
-        // Map: profession -> subProfessionId -> total count
         const totalBySubProfession: Record<string, Record<string, number>> = {};
         let totalAvailable = 0;
 
         if (operatorsResponse.ok) {
-            const operatorsJson = (await operatorsResponse.json()) as { operators?: StaticOperator[] };
-            const allOperators = operatorsJson.operators ?? [];
+            // Backend serializes the operators table as a bare `Record<id, Operator>`
+            // object (see backend::app::services::static_data). An earlier revision
+            // wrapped it as `{ operators: [...] }`, which is why this handler used
+            // to read `.operators` — and got `undefined`, zeroing every counter.
+            const operatorsJson = (await operatorsResponse.json()) as Record<string, StaticOperator>;
+            const allOperators: StaticOperator[] = Object.entries(operatorsJson).map(([id, op]) => ({
+                ...op,
+                id: op.id ?? id,
+            }));
 
             for (const op of allOperators) {
                 if (!op.profession || EXCLUDED_PROFESSIONS.has(op.profession)) continue;
+                staticOperatorMap.set(op.id, op);
+
                 if (op.isNotObtainable) continue;
                 totalByProfession[op.profession] = (totalByProfession[op.profession] ?? 0) + 1;
                 totalAvailable++;
@@ -76,9 +92,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         }
 
-        // Process user's characters
+        // Process user's roster
         const ownedByProfession: Record<string, number> = {};
-        // Map: profession -> subProfessionId -> owned count
         const ownedBySubProfession: Record<string, Record<string, number>> = {};
         let e0 = 0;
         let e1 = 0;
@@ -93,14 +108,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let totalModulesAvailable = 0;
         let totalOwned = 0;
 
-        for (const char of Object.values(chars)) {
-            const profession = char.static?.profession;
+        for (const entry of roster) {
+            const staticOp = staticOperatorMap.get(entry.operator_id);
+            const profession = staticOp?.profession;
             if (!profession || EXCLUDED_PROFESSIONS.has(profession)) continue;
 
             totalOwned++;
             ownedByProfession[profession] = (ownedByProfession[profession] ?? 0) + 1;
 
-            const subProfId = char.static?.subProfessionId;
+            const subProfId = staticOp?.subProfessionId;
             if (subProfId) {
                 let profSubs = ownedBySubProfession[profession];
                 if (!profSubs) {
@@ -111,38 +127,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
 
             // Elite breakdown
-            if (char.evolvePhase === 2) e2++;
-            else if (char.evolvePhase === 1) e1++;
+            if (entry.elite === 2) e2++;
+            else if (entry.elite === 1) e1++;
             else e0++;
 
-            // Mastery stats: M3 = at least 1, M6 = exactly 2, M9 = exactly 3 skills at M3
-            const skills = char.skills ?? [];
+            // Mastery stats. Backend jsonb uses the short key `mastery`
+            // (values 0–3) rather than `specialize_level`.
+            const masteries = entry.masteries ?? [];
             let skillsAtM3 = 0;
-            for (const skill of skills) {
-                totalMasteryLevels += skill.specializeLevel;
-                if (skill.specializeLevel === 3) skillsAtM3++;
+            for (const mastery of masteries) {
+                totalMasteryLevels += mastery.mastery;
+                if (mastery.mastery === 3) skillsAtM3++;
             }
             if (skillsAtM3 >= 1) m3Count++;
-            if (skillsAtM3 === 2) m6Count++;
-            if (skillsAtM3 === 3) m9Count++;
+            if (skillsAtM3 >= 2) m6Count++;
+            if (skillsAtM3 >= 3) m9Count++;
 
             // Max possible mastery: only E2 operators can have masteries
-            if (char.evolvePhase === 2) {
-                maxPossibleMasteryLevels += skills.length * 3;
+            if (entry.elite === 2) {
+                maxPossibleMasteryLevels += masteries.length * 3;
             }
 
-            // Module stats — only count non-default (ADVANCED) modules
-            const staticModules = char.static?.modules ?? [];
-            for (const mod of staticModules) {
-                // Skip default modules: check both type field and ID pattern as safeguard
-                if (mod.type === "INITIAL" || mod.type === "ORIGINAL") continue;
-                if (mod.uniEquipId?.includes("_001_")) continue;
+            // Module stats — exclude INITIAL modules (`uniequip_001` pattern).
+            // Backend jsonb calls the equip identifier `id`, not `equip_id`.
+            const modules = entry.modules ?? [];
+            for (const mod of modules) {
+                if (mod.id.includes("uniequip_001")) continue;
+
                 totalModulesAvailable++;
 
-                const equipData = char.equip?.[mod.uniEquipId];
-                if (equipData && equipData.level > 0 && equipData.locked !== 1) {
+                if (mod.level > 0) {
                     modulesUnlocked++;
-                    if (equipData.level === 3) modulesAtMax++;
+                    if (mod.level === 3) modulesAtMax++;
                 }
             }
         }
@@ -153,7 +169,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const owned = ownedByProfession[prof] ?? 0;
                 const total = totalByProfession[prof] ?? 0;
 
-                // Build sub-profession stats for this profession
                 const subProfTotals = totalBySubProfession[prof] ?? {};
                 const subProfOwned = ownedBySubProfession[prof] ?? {};
                 const allSubProfIds = new Set([...Object.keys(subProfTotals), ...Object.keys(subProfOwned)]);
@@ -183,25 +198,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             })
             .sort((a, b) => (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99));
 
-        // Skin stats: count non-default skins from static data + user's owned skins
-        // Default skins (e.g. char_002_amiya#1) don't contain "@"
-        // Non-default skins (e.g. char_002_amiya@winter#1) always contain "@"
+        // Skin stats. Backend serializes SkinData as
+        //   { charSkins: Record<skinId, Skin>, ... }
+        // so treat the response as SkinData and walk charSkins.
         let totalSkinsAvailable = 0;
         if (skinsResponse.ok) {
-            const skinsJson = (await skinsResponse.json()) as { skins?: Skin[] };
-            const allSkins = skinsJson.skins ?? [];
-            for (const skin of allSkins) {
-                if (!skin.skinId.includes("@")) continue;
+            const skinsJson = (await skinsResponse.json()) as { charSkins?: Record<string, Skin> };
+            for (const skin of Object.values(skinsJson.charSkins ?? {})) {
+                if (!skin.skinId?.includes("@")) continue;
                 totalSkinsAvailable++;
             }
         }
 
-        const userSkins = userData.data?.skin?.characterSkins ?? {};
-        let userSkinsOwned = 0;
-        for (const skinId of Object.keys(userSkins)) {
-            if (!skinId.includes("@")) continue;
-            userSkinsOwned++;
+        // Count non-default skins from roster entries
+        const userSkinIds = new Set<string>();
+        for (const entry of roster) {
+            if (entry.skin_id && entry.skin_id.includes("@")) {
+                userSkinIds.add(entry.skin_id);
+            }
         }
+        const userSkinsOwned = userSkinIds.size;
 
         const skinPercentage = totalSkinsAvailable > 0 ? (userSkinsOwned / totalSkinsAvailable) * 100 : 0;
 

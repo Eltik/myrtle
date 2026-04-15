@@ -1,44 +1,32 @@
-use anyhow::{Context, Result};
-use serde_json::{json, Value};
+//! Auto-generated FlatBuffer decode dispatch
+//! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs
+
+use serde_json::{Value, json};
 use std::panic::{self, AssertUnwindSafe};
-use std::path::Path;
 
 /// Check if data is likely a FlatBuffer
 pub fn is_flatbuffer(data: &[u8]) -> bool {
     if data.len() < 8 {
         return false;
     }
-
-    // FlatBuffer starts with root table offset (4 bytes, little endian)
     let root_offset = u32::from_le_bytes([data[0], data[1], data[2], data[3]]) as usize;
-
-    // Root offset should point within the buffer
     if root_offset >= data.len() || root_offset < 4 {
         return false;
     }
-
-    // At root offset, there should be a vtable offset (signed)
     if root_offset + 4 > data.len() {
         return false;
     }
-
     let vtable_offset = i32::from_le_bytes([
         data[root_offset],
         data[root_offset + 1],
         data[root_offset + 2],
         data[root_offset + 3],
     ]);
-
-    // vtable should be before the root table
     let vtable_pos = (root_offset as i32 - vtable_offset) as usize;
     if vtable_pos >= data.len() || vtable_pos < 4 {
         return false;
     }
-
-    // vtable starts with its size (2 bytes)
     let vtable_size = u16::from_le_bytes([data[vtable_pos], data[vtable_pos + 1]]) as usize;
-
-    // Sanity check vtable size
     (4..1000).contains(&vtable_size) && vtable_pos + vtable_size <= data.len()
 }
 
@@ -46,10 +34,7 @@ pub fn is_flatbuffer(data: &[u8]) -> bool {
 fn guess_root_type(filename: &str) -> &'static str {
     let lower = filename.to_lowercase();
 
-    // Order matters - more specific patterns first
-    // Level data files must be checked BEFORE other patterns that might match (e.g., crisis_v2)
     if lower.starts_with("level_") {
-        // Level data files (prts___levels schema)
         "level_data"
     } else if lower.contains("enemy_database") {
         "enemy_database"
@@ -88,7 +73,6 @@ fn guess_root_type(filename: &str) -> &'static str {
     } else if lower.contains("audio_data") {
         "audio_data"
     } else if lower.contains("building_local") {
-        // building_local_data must be before building_data
         "building_local_data"
     } else if lower.contains("building_data") {
         "building_data"
@@ -147,7 +131,6 @@ fn guess_root_type(filename: &str) -> &'static str {
     } else if lower.contains("zone_table") {
         "zone_table"
     } else if lower.contains("ep_breakbuff") {
-        // ep_breakbuff must be before buff_table
         "ep_breakbuff_table"
     } else if lower.contains("buff_table") {
         "buff_table"
@@ -172,22 +155,19 @@ fn guess_root_type(filename: &str) -> &'static str {
 fn has_yostar_schema(schema_type: &str) -> bool {
     matches!(
         schema_type,
-        "character_table" | "battle_equip_table" | "token_table" | "ep_breakbuff_table"
+        "token_table" | "battle_equip_table" | "character_table" | "ep_breakbuff_table"
     )
 }
 
-/// Try decoding with Yostar-specific schemas (EN/Global version)
-/// These differ from CN schemas in field structure
-fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value> {
+/// Try decoding with Yostar-specific schemas
+fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
-
     let data_clone = data.to_vec();
-
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
-        let result: Result<Value> = match schema_type {
-            "character_table" => {
-                use crate::generated_fbs_yostar::character_table_generated::*;
+        match schema_type {
+            "token_table" => {
+                use crate::generated_fbs_yostar::token_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
@@ -200,8 +180,8 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value> {
                 };
                 Ok(root.to_json())
             }
-            "token_table" => {
-                use crate::generated_fbs_yostar::token_table_generated::*;
+            "character_table" => {
+                use crate::generated_fbs_yostar::character_table_generated::*;
                 let root = unsafe {
                     root_as_clz_torappu_simple_kvtable_clz_torappu_character_data_unchecked(data)
                 };
@@ -214,50 +194,36 @@ fn decode_flatbuffer_yostar(data: &[u8], schema_type: &str) -> Result<Value> {
                 };
                 Ok(root.to_json())
             }
-            _ => anyhow::bail!("No Yostar schema for {}", schema_type),
-        };
-        result
+            _ => Err(format!("No Yostar schema for {}", schema_type)),
+        }
     }));
-
     match decode_result {
         Ok(Ok(value)) => {
-            if let Some(obj) = value.as_object() {
-                if obj.is_empty() {
-                    anyhow::bail!("Yostar schema decode returned empty result");
-                }
+            if value.as_object().is_some_and(|o| o.is_empty()) {
+                Err("Yostar decode returned empty".to_string())
+            } else {
+                Ok(value)
             }
-            Ok(value)
         }
-        Ok(Err(e)) => anyhow::bail!("Yostar schema decode error: {:?}", e),
-        Err(_) => anyhow::bail!("Yostar schema decode panic"),
+        Ok(Err(e)) => Err(e),
+        Err(_) => Err("Yostar decode panic".to_string()),
     }
 }
 
-/// Decode FlatBuffer with schema-based decoding
-pub fn decode_flatbuffer_generic(data: &[u8]) -> Result<Value> {
-    decode_flatbuffer(data, "")
-}
-
-/// Main decode function - uses auto-generated FlatBufferToJson implementations
-/// These handle unknown enum values gracefully (unlike serde::Serialize)
-pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
+/// Decode FlatBuffer data to JSON using schema-based decoding
+pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {
     use crate::fb_json_macros::FlatBufferToJson;
 
     if !is_flatbuffer(data) {
-        anyhow::bail!("Data is not a valid FlatBuffer");
+        return Err("Data is not a valid FlatBuffer".to_string());
     }
 
     let schema_type = guess_root_type(filename);
-
-    // Use catch_unwind to handle schema mismatches gracefully
-    // Some files match filename patterns but use different schemas
-    // NOTE: Panic output is suppressed globally in decode_textasset.rs before parallel processing
     let data_clone = data.to_vec();
 
     let decode_result = panic::catch_unwind(AssertUnwindSafe(|| {
         let data = &data_clone;
-        // Use auto-generated implementations that handle unknown enum values
-        let result: Result<Value> = match schema_type {
+        match schema_type {
             "character_table" => {
                 use crate::generated_fbs::character_table_generated::*;
                 let root = unsafe {
@@ -577,82 +543,62 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
                 let root = unsafe { root_as_clz_torappu_level_data_unchecked(data) };
                 Ok(root.to_json())
             }
-            _ => Err(anyhow::anyhow!("Unknown schema type: {}", schema_type)),
-        };
-        result
+            _ => Err(format!("Unknown schema type: {}", schema_type)),
+        }
     }));
 
-    // Handle the result from catch_unwind
     match decode_result {
         Ok(Ok(value)) => {
-            // Check if the result is an empty object - if so, this is likely not a FlatBuffer
-            // or a complete schema mismatch. Try Yostar schema first, then return error.
-            if let Some(obj) = value.as_object() {
-                if obj.is_empty() {
-                    log::debug!(
-                        "CN schema decode returned empty result for {}, trying Yostar schema",
-                        schema_type
-                    );
-                    // Try Yostar schema if available
-                    if has_yostar_schema(schema_type) {
-                        if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
-                            log::debug!("Yostar schema decode succeeded for {}", schema_type);
-                            return Ok(yostar_value);
-                        }
-                    }
-                    anyhow::bail!(
-                        "FlatBuffer schema mismatch for {} (empty result)",
-                        schema_type
-                    );
-                } else {
-                    Ok(value)
+            // A result is "useless" if either:
+            //   (a) the top-level object has no keys at all, or
+            //   (b) the root collection is present but empty because every
+            //       element was dropped by the filter_map safety net.
+            // Case (b) happens when the CN schema has fields the binary
+            // doesn't (e.g., validModeIndices in EquipTalentData for the
+            // Apr 2026 CN binary) and every element panics on decode.
+            // Without this check the Yostar fallback never fires.
+            let is_content_empty = match schema_type {
+                "battle_equip_table" => value
+                    .get("Equips")
+                    .and_then(|v| v.as_array())
+                    .is_some_and(|a| a.is_empty()),
+                _ => false,
+            };
+            if value.as_object().is_some_and(|o| o.is_empty()) || is_content_empty {
+                if has_yostar_schema(schema_type)
+                    && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
+                {
+                    return Ok(v);
                 }
+                Err(format!(
+                    "Schema mismatch for {} (empty result)",
+                    schema_type
+                ))
             } else {
                 Ok(value)
             }
         }
         Ok(Err(e)) => {
-            log::debug!("CN schema decode error for {}: {:?}", schema_type, e);
-            // Try Yostar schema if available
-            if has_yostar_schema(schema_type) {
-                if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
-                    log::debug!("Yostar schema decode succeeded for {}", schema_type);
-                    return Ok(yostar_value);
-                }
+            if has_yostar_schema(schema_type)
+                && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
+            {
+                return Ok(v);
             }
-            // For "unknown" schema type, try string extraction
             if schema_type == "unknown" {
                 let strings = extract_strings(data);
-                if strings.is_empty() {
-                    anyhow::bail!("Unknown FlatBuffer schema and no strings extractable");
+                if !strings.is_empty() {
+                    return Ok(json!({ "type": "unknown", "strings": strings }));
                 }
-                return Ok(json!({
-                    "type": "unknown",
-                    "strings": strings
-                }));
             }
-            // For known schema that failed, let caller try AES fallback
-            anyhow::bail!("FlatBuffer decode failed for {}: {:?}", schema_type, e);
+            Err(format!("Decode failed for {}: {}", schema_type, e))
         }
-        Err(e) => {
-            // Get panic message if it's a string
-            let panic_msg = if let Some(s) = e.downcast_ref::<&str>() {
-                s.to_string()
-            } else if let Some(s) = e.downcast_ref::<String>() {
-                s.clone()
-            } else {
-                format!("{:?}", e)
-            };
-            log::debug!("CN schema decode panic for {}: {}", schema_type, panic_msg);
-            // Try Yostar schema if available
-            if has_yostar_schema(schema_type) {
-                if let Ok(yostar_value) = decode_flatbuffer_yostar(data, schema_type) {
-                    log::debug!("Yostar schema decode succeeded for {}", schema_type);
-                    return Ok(yostar_value);
-                }
+        Err(_) => {
+            if has_yostar_schema(schema_type)
+                && let Ok(v) = decode_flatbuffer_yostar(data, schema_type)
+            {
+                return Ok(v);
             }
-            // Let caller try AES fallback
-            anyhow::bail!("FlatBuffer decode panic for {}: {}", schema_type, panic_msg);
+            Err(format!("Decode panic for {}", schema_type))
         }
     }
 }
@@ -661,39 +607,19 @@ pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value> {
 pub fn extract_strings(data: &[u8]) -> Vec<String> {
     let mut strings = Vec::new();
     let mut i = 0;
-
     while i + 4 < data.len() {
-        let potential_len =
-            u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]) as usize;
-
-        if potential_len > 0 && potential_len < 1000 && i + 4 + potential_len <= data.len() {
-            let str_data = &data[i + 4..i + 4 + potential_len];
-
-            if let Ok(s) = std::str::from_utf8(str_data) {
-                if s.chars()
-                    .all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace() || !c.is_ascii())
-                    && s.len() >= 2
-                {
-                    strings.push(s.to_string());
-                }
-            }
+        let len = u32::from_le_bytes([data[i], data[i + 1], data[i + 2], data[i + 3]]) as usize;
+        if len > 0
+            && len < 1000
+            && i + 4 + len <= data.len()
+            && let Ok(s) = std::str::from_utf8(&data[i + 4..i + 4 + len])
+            && s.len() >= 2
+            && s.chars()
+                .all(|c| c.is_ascii_graphic() || c.is_ascii_whitespace() || !c.is_ascii())
+        {
+            strings.push(s.to_string());
         }
         i += 1;
     }
-
     strings
-}
-
-/// Decode and save FlatBuffer file
-pub fn decode_flatbuffer_file(input: &Path, output: &Path) -> Result<()> {
-    let data = std::fs::read(input).with_context(|| format!("Failed to read {:?}", input))?;
-
-    let filename = input.file_name().and_then(|s| s.to_str()).unwrap_or("");
-
-    let decoded = decode_flatbuffer(&data, filename)?;
-
-    let json_str = serde_json::to_string_pretty(&decoded)?;
-    std::fs::write(output, json_str).with_context(|| format!("Failed to write {:?}", output))?;
-
-    Ok(())
 }

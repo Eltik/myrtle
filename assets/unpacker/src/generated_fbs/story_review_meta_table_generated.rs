@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -64,18 +63,6 @@ impl core::fmt::Debug for enum__Torappu_MiniActTrialData_RuleType {
         }
     }
 }
-impl Serialize for enum__Torappu_MiniActTrialData_RuleType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MiniActTrialData_RuleType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MiniActTrialData_RuleType {
     type Inner = Self;
@@ -131,13 +118,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -229,6 +216,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -327,9 +316,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -422,6 +413,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -517,6 +510,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -528,18 +523,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -648,18 +631,6 @@ impl core::fmt::Debug for enum__Torappu_ActArchivePicType {
         }
     }
 }
-impl Serialize for enum__Torappu_ActArchivePicType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ActArchivePicType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ActArchivePicType {
     type Inner = Self;
@@ -754,18 +725,6 @@ impl core::fmt::Debug for enum__Torappu_ActArchiveResData_ArchiveNewsLineType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ActArchiveResData_ArchiveNewsLineType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ActArchiveResData_ArchiveNewsLineType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -865,18 +824,6 @@ impl core::fmt::Debug for enum__Torappu_Act17sideData_ChapterIconType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_Act17sideData_ChapterIconType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Act17sideData_ChapterIconType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1030,22 +977,6 @@ impl<'a> Default for clz_Torappu_MiniActTrialData_RuleDataArgs<'a> {
             ruleType: enum__Torappu_MiniActTrialData_RuleType::NONE,
             ruleText: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MiniActTrialData_RuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MiniActTrialData_RuleData", 2)?;
-        s.serialize_field("ruleType", &self.ruleType())?;
-        if let Some(f) = self.ruleText() {
-            s.serialize_field("ruleText", &f)?;
-        } else {
-            s.skip_field("ruleText")?;
-        }
-        s.end()
     }
 }
 
@@ -1237,23 +1168,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -1505,34 +1419,6 @@ impl<'a> Default for clz_Torappu_MiniActTrialData_MiniActTrialRewardDataArgs<'a>
             targetStoryCount: 0,
             item: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MiniActTrialData_MiniActTrialRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_MiniActTrialData_MiniActTrialRewardData", 5)?;
-        if let Some(f) = self.trialRewardId() {
-            s.serialize_field("trialRewardId", &f)?;
-        } else {
-            s.skip_field("trialRewardId")?;
-        }
-        s.serialize_field("orderId", &self.orderId())?;
-        if let Some(f) = self.actId() {
-            s.serialize_field("actId", &f)?;
-        } else {
-            s.skip_field("actId")?;
-        }
-        s.serialize_field("targetStoryCount", &self.targetStoryCount())?;
-        if let Some(f) = self.item() {
-            s.serialize_field("item", &f)?;
-        } else {
-            s.skip_field("item")?;
-        }
-        s.end()
     }
 }
 
@@ -1838,33 +1724,6 @@ impl<'a> Default for clz_Torappu_MiniActTrialData_MiniActTrialSingleDataArgs<'a>
     }
 }
 
-impl Serialize for clz_Torappu_MiniActTrialData_MiniActTrialSingleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_MiniActTrialData_MiniActTrialSingleData", 4)?;
-        if let Some(f) = self.actId() {
-            s.serialize_field("actId", &f)?;
-        } else {
-            s.skip_field("actId")?;
-        }
-        s.serialize_field("rewardStartTime", &self.rewardStartTime())?;
-        if let Some(f) = self.themeColor() {
-            s.serialize_field("themeColor", &f)?;
-        } else {
-            s.skip_field("themeColor")?;
-        }
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MiniActTrialData_MiniActTrialSingleDataBuilder<
     'a: 'b,
     'b,
@@ -2110,25 +1969,6 @@ impl<'a> Default for dict__string__clz_Torappu_MiniActTrialData_MiniActTrialSing
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_MiniActTrialData_MiniActTrialSingleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_MiniActTrialData_MiniActTrialSingleData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2394,27 +2234,6 @@ impl<'a> Default for clz_Torappu_MiniActTrialDataArgs<'a> {
             ruleDataList: None,
             miniActTrialDataMap: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MiniActTrialData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MiniActTrialData", 3)?;
-        s.serialize_field("preShowDays", &self.preShowDays())?;
-        if let Some(f) = self.ruleDataList() {
-            s.serialize_field("ruleDataList", &f)?;
-        } else {
-            s.skip_field("ruleDataList")?;
-        }
-        if let Some(f) = self.miniActTrialDataMap() {
-            s.serialize_field("miniActTrialDataMap", &f)?;
-        } else {
-            s.skip_field("miniActTrialDataMap")?;
-        }
-        s.end()
     }
 }
 
@@ -2743,48 +2562,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_PicArchiveResItemDataArgs<'a>
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_PicArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_PicArchiveResItemData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.assetPath() {
-            s.serialize_field("assetPath", &f)?;
-        } else {
-            s.skip_field("assetPath")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.subType() {
-            s.serialize_field("subType", &f)?;
-        } else {
-            s.skip_field("subType")?;
-        }
-        if let Some(f) = self.picDescription() {
-            s.serialize_field("picDescription", &f)?;
-        } else {
-            s.skip_field("picDescription")?;
-        }
-        if let Some(f) = self.kvId() {
-            s.serialize_field("kvId", &f)?;
-        } else {
-            s.skip_field("kvId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_PicArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -3056,25 +2833,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_PicArchiveResIt
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_PicArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_PicArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveResData_PicArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -3282,32 +3040,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_AudioArchiveResItemDataArgs<'
             desc: None,
             name: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveResData_AudioArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_AudioArchiveResItemData", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.end()
     }
 }
 
@@ -3526,25 +3258,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_AudioArchiveRes
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_AudioArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_AudioArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3868,52 +3581,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_AvgArchiveResItemDataArgs<'a>
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_AvgArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_AvgArchiveResItemData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.breifPath() {
-            s.serialize_field("breifPath", &f)?;
-        } else {
-            s.skip_field("breifPath")?;
-        }
-        if let Some(f) = self.contentPath() {
-            s.serialize_field("contentPath", &f)?;
-        } else {
-            s.skip_field("contentPath")?;
-        }
-        if let Some(f) = self.imagePath() {
-            s.serialize_field("imagePath", &f)?;
-        } else {
-            s.skip_field("imagePath")?;
-        }
-        if let Some(f) = self.rawBrief() {
-            s.serialize_field("rawBrief", &f)?;
-        } else {
-            s.skip_field("rawBrief")?;
-        }
-        if let Some(f) = self.titleIconPath() {
-            s.serialize_field("titleIconPath", &f)?;
-        } else {
-            s.skip_field("titleIconPath")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_AvgArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -4181,25 +3848,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_AvgArchiveResIt
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_AvgArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_AvgArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4484,47 +4132,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_StoryArchiveResItemDataArgs<'
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_StoryArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_StoryArchiveResItemData", 6)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.date() {
-            s.serialize_field("date", &f)?;
-        } else {
-            s.skip_field("date")?;
-        }
-        if let Some(f) = self.pic() {
-            s.serialize_field("pic", &f)?;
-        } else {
-            s.skip_field("pic")?;
-        }
-        if let Some(f) = self.text() {
-            s.serialize_field("text", &f)?;
-        } else {
-            s.skip_field("text")?;
-        }
-        if let Some(f) = self.titlePic() {
-            s.serialize_field("titlePic", &f)?;
-        } else {
-            s.skip_field("titlePic")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_StoryArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -4780,25 +4387,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_StoryArchiveRes
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_StoryArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_StoryArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5076,42 +4664,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_NewsFormatDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_NewsFormatData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_ActArchiveResData_NewsFormatData", 5)?;
-        if let Some(f) = self.typeId() {
-            s.serialize_field("typeId", &f)?;
-        } else {
-            s.skip_field("typeId")?;
-        }
-        if let Some(f) = self.typeName() {
-            s.serialize_field("typeName", &f)?;
-        } else {
-            s.skip_field("typeName")?;
-        }
-        if let Some(f) = self.typeLogo() {
-            s.serialize_field("typeLogo", &f)?;
-        } else {
-            s.skip_field("typeLogo")?;
-        }
-        if let Some(f) = self.typeMainLogo() {
-            s.serialize_field("typeMainLogo", &f)?;
-        } else {
-            s.skip_field("typeMainLogo")?;
-        }
-        if let Some(f) = self.typeMainSealing() {
-            s.serialize_field("typeMainSealing", &f)?;
-        } else {
-            s.skip_field("typeMainSealing")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_NewsFormatDataBuilder<
     'a: 'b,
     'b,
@@ -5331,23 +4883,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_ActivityNewsLineArgs<'a> {
             lineType: enum__Torappu_ActArchiveResData_ArchiveNewsLineType::TextContent,
             content: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveResData_ActivityNewsLine<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_ActArchiveResData_ActivityNewsLine", 2)?;
-        s.serialize_field("lineType", &self.lineType())?;
-        if let Some(f) = self.content() {
-            s.serialize_field("content", &f)?;
-        } else {
-            s.skip_field("content")?;
-        }
-        s.end()
     }
 }
 
@@ -5726,55 +5261,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_NewsArchiveResItemDataArgs<'a
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_NewsArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_NewsArchiveResItemData", 10)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.newsType() {
-            s.serialize_field("newsType", &f)?;
-        } else {
-            s.skip_field("newsType")?;
-        }
-        if let Some(f) = self.newsFormat() {
-            s.serialize_field("newsFormat", &f)?;
-        } else {
-            s.skip_field("newsFormat")?;
-        }
-        if let Some(f) = self.newsText() {
-            s.serialize_field("newsText", &f)?;
-        } else {
-            s.skip_field("newsText")?;
-        }
-        if let Some(f) = self.newsAuthor() {
-            s.serialize_field("newsAuthor", &f)?;
-        } else {
-            s.skip_field("newsAuthor")?;
-        }
-        s.serialize_field("paramP0", &self.paramP0())?;
-        s.serialize_field("paramK", &self.paramK())?;
-        s.serialize_field("paramR", &self.paramR())?;
-        if let Some(f) = self.newsLines() {
-            s.serialize_field("newsLines", &f)?;
-        } else {
-            s.skip_field("newsLines")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_NewsArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -6095,25 +5581,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_NewsArchiveResI
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_NewsArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_NewsArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveResData_NewsArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -6394,44 +5861,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_LandmarkArchiveResItemDataArg
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_LandmarkArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_ActArchiveResData_LandmarkArchiveResItemData",
-            5,
-        )?;
-        if let Some(f) = self.landmarkId() {
-            s.serialize_field("landmarkId", &f)?;
-        } else {
-            s.skip_field("landmarkId")?;
-        }
-        if let Some(f) = self.landmarkName() {
-            s.serialize_field("landmarkName", &f)?;
-        } else {
-            s.skip_field("landmarkName")?;
-        }
-        if let Some(f) = self.landmarkPic() {
-            s.serialize_field("landmarkPic", &f)?;
-        } else {
-            s.skip_field("landmarkPic")?;
-        }
-        if let Some(f) = self.landmarkDesc() {
-            s.serialize_field("landmarkDesc", &f)?;
-        } else {
-            s.skip_field("landmarkDesc")?;
-        }
-        if let Some(f) = self.landmarkEngName() {
-            s.serialize_field("landmarkEngName", &f)?;
-        } else {
-            s.skip_field("landmarkEngName")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_LandmarkArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -6687,25 +6116,6 @@ impl<'a> Default
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_LandmarkArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_LandmarkArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveResData_LandmarkArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -6901,27 +6311,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_LogArchiveResItemDataArgs<'a>
             logId: None,
             logDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveResData_LogArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_ActArchiveResData_LogArchiveResItemData", 2)?;
-        if let Some(f) = self.logId() {
-            s.serialize_field("logId", &f)?;
-        } else {
-            s.skip_field("logId")?;
-        }
-        if let Some(f) = self.logDesc() {
-            s.serialize_field("logDesc", &f)?;
-        } else {
-            s.skip_field("logDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -7129,25 +6518,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveResData_LogArchiveResIt
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_LogArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_LogArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -7398,39 +6768,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemDa
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemData",
-            4,
-        )?;
-        if let Some(f) = self.storyId() {
-            s.serialize_field("storyId", &f)?;
-        } else {
-            s.skip_field("storyId")?;
-        }
-        if let Some(f) = self.titleName() {
-            s.serialize_field("titleName", &f)?;
-        } else {
-            s.skip_field("titleName")?;
-        }
-        if let Some(f) = self.storyName() {
-            s.serialize_field("storyName", &f)?;
-        } else {
-            s.skip_field("storyName")?;
-        }
-        if let Some(f) = self.textId() {
-            s.serialize_field("textId", &f)?;
-        } else {
-            s.skip_field("textId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemDataBuilder<
     'a: 'b,
     'b,
@@ -7666,25 +7003,6 @@ impl<'a> Default
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveResData_ChallengeBookArchiveResItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -8263,56 +7581,6 @@ impl<'a> Default for clz_Torappu_ActArchiveResDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveResData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveResData", 8)?;
-        if let Some(f) = self.pics() {
-            s.serialize_field("pics", &f)?;
-        } else {
-            s.skip_field("pics")?;
-        }
-        if let Some(f) = self.audios() {
-            s.serialize_field("audios", &f)?;
-        } else {
-            s.skip_field("audios")?;
-        }
-        if let Some(f) = self.avgs() {
-            s.serialize_field("avgs", &f)?;
-        } else {
-            s.skip_field("avgs")?;
-        }
-        if let Some(f) = self.stories() {
-            s.serialize_field("stories", &f)?;
-        } else {
-            s.skip_field("stories")?;
-        }
-        if let Some(f) = self.news() {
-            s.serialize_field("news", &f)?;
-        } else {
-            s.skip_field("news")?;
-        }
-        if let Some(f) = self.landmarks() {
-            s.serialize_field("landmarks", &f)?;
-        } else {
-            s.skip_field("landmarks")?;
-        }
-        if let Some(f) = self.logs() {
-            s.serialize_field("logs", &f)?;
-        } else {
-            s.skip_field("logs")?;
-        }
-        if let Some(f) = self.challengeBooks() {
-            s.serialize_field("challengeBooks", &f)?;
-        } else {
-            s.skip_field("challengeBooks")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveResDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8862,57 +8130,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTimelineItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveTimelineItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTimelineItemData", 9)?;
-        if let Some(f) = self.timelineId() {
-            s.serialize_field("timelineId", &f)?;
-        } else {
-            s.skip_field("timelineId")?;
-        }
-        s.serialize_field("timelineSortId", &self.timelineSortId())?;
-        if let Some(f) = self.timelineTitle() {
-            s.serialize_field("timelineTitle", &f)?;
-        } else {
-            s.skip_field("timelineTitle")?;
-        }
-        if let Some(f) = self.timelineDes() {
-            s.serialize_field("timelineDes", &f)?;
-        } else {
-            s.skip_field("timelineDes")?;
-        }
-        if let Some(f) = self.picIdList() {
-            s.serialize_field("picIdList", &f)?;
-        } else {
-            s.skip_field("picIdList")?;
-        }
-        if let Some(f) = self.audioIdList() {
-            s.serialize_field("audioIdList", &f)?;
-        } else {
-            s.skip_field("audioIdList")?;
-        }
-        if let Some(f) = self.avgIdList() {
-            s.serialize_field("avgIdList", &f)?;
-        } else {
-            s.skip_field("avgIdList")?;
-        }
-        if let Some(f) = self.storyIdList() {
-            s.serialize_field("storyIdList", &f)?;
-        } else {
-            s.skip_field("storyIdList")?;
-        }
-        if let Some(f) = self.newsIdList() {
-            s.serialize_field("newsIdList", &f)?;
-        } else {
-            s.skip_field("newsIdList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveTimelineItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -9216,21 +8433,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTimelineDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveTimelineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTimelineData", 1)?;
-        if let Some(f) = self.timelineList() {
-            s.serialize_field("timelineList", &f)?;
-        } else {
-            s.skip_field("timelineList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveTimelineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9399,22 +8601,6 @@ impl<'a> Default for clz_Torappu_ActArchiveMusicItemDataArgs<'a> {
             musicId: None,
             musicSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveMusicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveMusicItemData", 2)?;
-        if let Some(f) = self.musicId() {
-            s.serialize_field("musicId", &f)?;
-        } else {
-            s.skip_field("musicId")?;
-        }
-        s.serialize_field("musicSortId", &self.musicSortId())?;
-        s.end()
     }
 }
 
@@ -9618,23 +8804,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveMusicItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveMusicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveMusicItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveMusicItemDataBuilder<
     'a: 'b,
     'b,
@@ -9827,21 +8996,6 @@ impl<'a> Default for clz_Torappu_ActArchiveMusicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveMusicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveMusicData", 1)?;
-        if let Some(f) = self.musics() {
-            s.serialize_field("musics", &f)?;
-        } else {
-            s.skip_field("musics")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveMusicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10005,22 +9159,6 @@ impl<'a> Default for clz_Torappu_ActArchivePicItemDataArgs<'a> {
             picId: None,
             picSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchivePicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchivePicItemData", 2)?;
-        if let Some(f) = self.picId() {
-            s.serialize_field("picId", &f)?;
-        } else {
-            s.skip_field("picId")?;
-        }
-        s.serialize_field("picSortId", &self.picSortId())?;
-        s.end()
     }
 }
 
@@ -10221,23 +9359,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchivePicItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchivePicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchivePicItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchivePicItemDataBuilder<
     'a: 'b,
     'b,
@@ -10428,21 +9549,6 @@ impl<'a> Default for clz_Torappu_ActArchivePicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchivePicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchivePicData", 1)?;
-        if let Some(f) = self.pics() {
-            s.serialize_field("pics", &f)?;
-        } else {
-            s.skip_field("pics")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchivePicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10606,22 +9712,6 @@ impl<'a> Default for clz_Torappu_ActArchiveStoryItemDataArgs<'a> {
             storyId: None,
             storySortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveStoryItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveStoryItemData", 2)?;
-        if let Some(f) = self.storyId() {
-            s.serialize_field("storyId", &f)?;
-        } else {
-            s.skip_field("storyId")?;
-        }
-        s.serialize_field("storySortId", &self.storySortId())?;
-        s.end()
     }
 }
 
@@ -10825,23 +9915,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveStoryItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveStoryItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveStoryItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveStoryItemDataBuilder<
     'a: 'b,
     'b,
@@ -11034,21 +10107,6 @@ impl<'a> Default for clz_Torappu_ActArchiveStoryDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveStoryData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveStoryData", 1)?;
-        if let Some(f) = self.stories() {
-            s.serialize_field("stories", &f)?;
-        } else {
-            s.skip_field("stories")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveStoryDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11212,22 +10270,6 @@ impl<'a> Default for clz_Torappu_ActArchiveAvgItemDataArgs<'a> {
             avgId: None,
             avgSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveAvgItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveAvgItemData", 2)?;
-        if let Some(f) = self.avgId() {
-            s.serialize_field("avgId", &f)?;
-        } else {
-            s.skip_field("avgId")?;
-        }
-        s.serialize_field("avgSortId", &self.avgSortId())?;
-        s.end()
     }
 }
 
@@ -11428,23 +10470,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveAvgItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveAvgItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveAvgItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveAvgItemDataBuilder<
     'a: 'b,
     'b,
@@ -11635,21 +10660,6 @@ impl<'a> Default for clz_Torappu_ActArchiveAvgDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveAvgData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveAvgData", 1)?;
-        if let Some(f) = self.avgs() {
-            s.serialize_field("avgs", &f)?;
-        } else {
-            s.skip_field("avgs")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveAvgDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11810,22 +10820,6 @@ impl<'a> Default for clz_Torappu_ActArchiveNewsItemDataArgs<'a> {
             newsId: None,
             newsSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveNewsItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveNewsItemData", 2)?;
-        if let Some(f) = self.newsId() {
-            s.serialize_field("newsId", &f)?;
-        } else {
-            s.skip_field("newsId")?;
-        }
-        s.serialize_field("newsSortId", &self.newsSortId())?;
-        s.end()
     }
 }
 
@@ -12026,23 +11020,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveNewsItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveNewsItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveNewsItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveNewsItemDataBuilder<
     'a: 'b,
     'b,
@@ -12233,21 +11210,6 @@ impl<'a> Default for clz_Torappu_ActArchiveNewsDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveNewsData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveNewsData", 1)?;
-        if let Some(f) = self.news() {
-            s.serialize_field("news", &f)?;
-        } else {
-            s.skip_field("news")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveNewsDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12418,22 +11380,6 @@ impl<'a> Default for clz_Torappu_ActArchiveLandmarkItemDataArgs<'a> {
             landmarkId: None,
             landmarkSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveLandmarkItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveLandmarkItemData", 2)?;
-        if let Some(f) = self.landmarkId() {
-            s.serialize_field("landmarkId", &f)?;
-        } else {
-            s.skip_field("landmarkId")?;
-        }
-        s.serialize_field("landmarkSortId", &self.landmarkSortId())?;
-        s.end()
     }
 }
 
@@ -12635,23 +11581,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveLandmarkItemDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveLandmarkItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_ActArchiveLandmarkItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -12933,37 +11862,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChapterLogDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveChapterLogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChapterLogData", 5)?;
-        if let Some(f) = self.chapterName() {
-            s.serialize_field("chapterName", &f)?;
-        } else {
-            s.skip_field("chapterName")?;
-        }
-        if let Some(f) = self.displayId() {
-            s.serialize_field("displayId", &f)?;
-        } else {
-            s.skip_field("displayId")?;
-        }
-        if let Some(f) = self.unlockDes() {
-            s.serialize_field("unlockDes", &f)?;
-        } else {
-            s.skip_field("unlockDes")?;
-        }
-        if let Some(f) = self.logs() {
-            s.serialize_field("logs", &f)?;
-        } else {
-            s.skip_field("logs")?;
-        }
-        s.serialize_field("chapterIcon", &self.chapterIcon())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveChapterLogDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13209,23 +12107,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveChapterLogDataArgs<'a> 
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveChapterLogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveChapterLogData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveChapterLogDataBuilder<
     'a: 'b,
     'b,
@@ -13414,23 +12295,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChallengeBookItemDataArgs<'a> {
             storyId: None,
             sortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChallengeBookItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_ActArchiveChallengeBookItemData", 2)?;
-        if let Some(f) = self.storyId() {
-            s.serialize_field("storyId", &f)?;
-        } else {
-            s.skip_field("storyId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
     }
 }
 
@@ -13633,25 +12497,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveChallengeBookItemDataAr
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveChallengeBookItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveChallengeBookItemData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveChallengeBookItemDataBuilder<
     'a: 'b,
     'b,
@@ -13845,21 +12690,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChallengeBookDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveChallengeBookDataArgs { stories: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChallengeBookData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChallengeBookData", 1)?;
-        if let Some(f) = self.stories() {
-            s.serialize_field("stories", &f)?;
-        } else {
-            s.skip_field("stories")?;
-        }
-        s.end()
     }
 }
 
@@ -14281,61 +13111,6 @@ impl<'a> Default for clz_Torappu_ActArchiveComponentDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveComponentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveComponentData", 9)?;
-        if let Some(f) = self.timeline() {
-            s.serialize_field("timeline", &f)?;
-        } else {
-            s.skip_field("timeline")?;
-        }
-        if let Some(f) = self.music() {
-            s.serialize_field("music", &f)?;
-        } else {
-            s.skip_field("music")?;
-        }
-        if let Some(f) = self.pic() {
-            s.serialize_field("pic", &f)?;
-        } else {
-            s.skip_field("pic")?;
-        }
-        if let Some(f) = self.story() {
-            s.serialize_field("story", &f)?;
-        } else {
-            s.skip_field("story")?;
-        }
-        if let Some(f) = self.avg() {
-            s.serialize_field("avg", &f)?;
-        } else {
-            s.skip_field("avg")?;
-        }
-        if let Some(f) = self.news() {
-            s.serialize_field("news", &f)?;
-        } else {
-            s.skip_field("news")?;
-        }
-        if let Some(f) = self.landmark() {
-            s.serialize_field("landmark", &f)?;
-        } else {
-            s.skip_field("landmark")?;
-        }
-        if let Some(f) = self.log() {
-            s.serialize_field("log", &f)?;
-        } else {
-            s.skip_field("log")?;
-        }
-        if let Some(f) = self.challengeBook() {
-            s.serialize_field("challengeBook", &f)?;
-        } else {
-            s.skip_field("challengeBook")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveComponentDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14664,23 +13439,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveComponentDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveComponentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveComponentData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveComponentDataBuilder<
     'a: 'b,
     'b,
@@ -14870,21 +13628,6 @@ impl<'a> Default for clz_Torappu_ActArchiveComponentTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveComponentTableArgs { components: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveComponentTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveComponentTable", 1)?;
-        if let Some(f) = self.components() {
-            s.serialize_field("components", &f)?;
-        } else {
-            s.skip_field("components")?;
-        }
-        s.end()
     }
 }
 
@@ -15240,58 +13983,6 @@ impl<'a> Default for clz_Torappu_TrainingCampStageDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TrainingCampStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TrainingCampStageData", 10)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.stageIconId() {
-            s.serialize_field("stageIconId", &f)?;
-        } else {
-            s.skip_field("stageIconId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.levelId() {
-            s.serialize_field("levelId", &f)?;
-        } else {
-            s.skip_field("levelId")?;
-        }
-        if let Some(f) = self.code() {
-            s.serialize_field("code", &f)?;
-        } else {
-            s.skip_field("code")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.loadingPicId() {
-            s.serialize_field("loadingPicId", &f)?;
-        } else {
-            s.skip_field("loadingPicId")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.endCharId() {
-            s.serialize_field("endCharId", &f)?;
-        } else {
-            s.skip_field("endCharId")?;
-        }
-        s.serialize_field("updateTs", &self.updateTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TrainingCampStageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15583,23 +14274,6 @@ impl<'a> Default for dict__string__clz_Torappu_TrainingCampStageDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_TrainingCampStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_TrainingCampStageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_TrainingCampStageDataBuilder<
     'a: 'b,
     'b,
@@ -15790,22 +14464,6 @@ impl<'a> Default for clz_Torappu_NewTrainingCampStageDataArgs<'a> {
             updateTs: 0,
             stages: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_NewTrainingCampStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_NewTrainingCampStageData", 2)?;
-        s.serialize_field("updateTs", &self.updateTs())?;
-        if let Some(f) = self.stages() {
-            s.serialize_field("stages", &f)?;
-        } else {
-            s.skip_field("stages")?;
-        }
-        s.end()
     }
 }
 
@@ -16025,31 +14683,6 @@ impl<'a> Default for clz_Torappu_TrainingCampConstsArgs<'a> {
             updateDesc: None,
             rewardItem: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TrainingCampConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TrainingCampConsts", 3)?;
-        if let Some(f) = self.unlockStageId() {
-            s.serialize_field("unlockStageId", &f)?;
-        } else {
-            s.skip_field("unlockStageId")?;
-        }
-        if let Some(f) = self.updateDesc() {
-            s.serialize_field("updateDesc", &f)?;
-        } else {
-            s.skip_field("updateDesc")?;
-        }
-        if let Some(f) = self.rewardItem() {
-            s.serialize_field("rewardItem", &f)?;
-        } else {
-            s.skip_field("rewardItem")?;
-        }
-        s.end()
     }
 }
 
@@ -16319,31 +14952,6 @@ impl<'a> Default for clz_Torappu_TrainingCampDataArgs<'a> {
             newTrainingCampStages: None,
             consts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TrainingCampData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TrainingCampData", 3)?;
-        if let Some(f) = self.stageData() {
-            s.serialize_field("stageData", &f)?;
-        } else {
-            s.skip_field("stageData")?;
-        }
-        if let Some(f) = self.newTrainingCampStages() {
-            s.serialize_field("newTrainingCampStages", &f)?;
-        } else {
-            s.skip_field("newTrainingCampStages")?;
-        }
-        if let Some(f) = self.consts() {
-            s.serialize_field("consts", &f)?;
-        } else {
-            s.skip_field("consts")?;
-        }
-        s.end()
     }
 }
 
@@ -16621,36 +15229,6 @@ impl<'a> Default for clz_Torappu_StoryReviewMetaTableArgs<'a> {
             actArchiveData: None,
             trainingCampData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StoryReviewMetaTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StoryReviewMetaTable", 4)?;
-        if let Some(f) = self.miniActTrialData() {
-            s.serialize_field("miniActTrialData", &f)?;
-        } else {
-            s.skip_field("miniActTrialData")?;
-        }
-        if let Some(f) = self.actArchiveResData() {
-            s.serialize_field("actArchiveResData", &f)?;
-        } else {
-            s.skip_field("actArchiveResData")?;
-        }
-        if let Some(f) = self.actArchiveData() {
-            s.serialize_field("actArchiveData", &f)?;
-        } else {
-            s.skip_field("actArchiveData")?;
-        }
-        if let Some(f) = self.trainingCampData() {
-            s.serialize_field("trainingCampData", &f)?;
-        } else {
-            s.skip_field("trainingCampData")?;
-        }
-        s.end()
     }
 }
 

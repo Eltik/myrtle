@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -123,19 +122,6 @@ impl<'a> Default for clz_Torappu_FavorDataArgs {
             percent: 0,
             battlePhase: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_FavorData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FavorData", 3)?;
-        s.serialize_field("favorPoint", &self.favorPoint())?;
-        s.serialize_field("percent", &self.percent())?;
-        s.serialize_field("battlePhase", &self.battlePhase())?;
-        s.end()
     }
 }
 
@@ -330,25 +316,6 @@ impl<'a> Default for clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_
             level: 0,
             data: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_KeyFrames_2_KeyFrame_Torappu_FavorData_Torappu_FavorData_",
-            2,
-        )?;
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.data() {
-            s.serialize_field("data", &f)?;
-        } else {
-            s.skip_field("data")?;
-        }
-        s.end()
     }
 }
 
@@ -572,22 +539,6 @@ impl<'a> Default for clz_Torappu_FavorTableArgs<'a> {
             maxFavor: 0,
             favorFrames: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_FavorTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FavorTable", 2)?;
-        s.serialize_field("maxFavor", &self.maxFavor())?;
-        if let Some(f) = self.favorFrames() {
-            s.serialize_field("favorFrames", &f)?;
-        } else {
-            s.skip_field("favorFrames")?;
-        }
-        s.end()
     }
 }
 

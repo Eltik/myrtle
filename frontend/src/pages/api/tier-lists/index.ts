@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import { isAdminRole } from "~/lib/permissions";
 import type { TierListType } from "~/types/api/impl/tier-list";
@@ -45,9 +45,12 @@ interface VerifyResponse {
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -86,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             // POST /tier-lists - Create a new tier list
             // - Any authenticated user can create community tier lists
             // - Only admins can create official tier lists
-            const siteToken = getSiteToken(req);
+            const siteToken = getToken(req);
 
             if (!siteToken) {
                 return res.status(401).json({
@@ -121,6 +124,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             // Only admins can create active official tier lists
             const effectiveActive = effectiveType === "official" ? (is_active ?? false) : true;
 
+            // Backend `POST /tier-lists` expects `{ name, description, list_type }`
+            // and returns a bare `TierList`. It derives slug/is_active server-side.
+            // (Kept the frontend form fields unchanged; `slug` and `is_active`
+            // from the request body are informational here and not forwarded.)
+            void slug;
+            void effectiveActive;
             const response = await backendFetch("/tier-lists", {
                 method: "POST",
                 headers: {
@@ -128,10 +137,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 },
                 body: JSON.stringify({
                     name,
-                    slug,
                     description: description || null,
-                    is_active: effectiveActive,
-                    tier_list_type: effectiveType,
+                    list_type: effectiveType,
                 }),
             });
 
@@ -144,10 +151,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 });
             }
 
-            const data: CreateResponse = await response.json();
+            // Backend returns the bare TierList; tolerate a `{ tier_list }` envelope too.
+            const raw = (await response.json()) as TierListFromBackend | CreateResponse;
+            const created: TierListFromBackend = "tier_list" in raw ? raw.tier_list : raw;
             return res.status(201).json({
                 success: true,
-                tier_list: data.tier_list,
+                tier_list: created,
             });
         }
 

@@ -1,8 +1,6 @@
 import { getRarityStarCount } from "~/lib/utils";
-import type { CharacterData, DisplayCharacter } from "~/types/api/impl/user";
+import type { DisplayCharacter, EnrichedRosterEntry } from "~/types/api/impl/user";
 import type { RarityFilter, SortBy, SortOrder } from "~/types/frontend/impl/user";
-
-type CharacterWithStatic = CharacterData & { static?: { name?: string; rarity?: string } };
 
 function getCharName(char: DisplayCharacter): string {
     if (!char.isOwned) return char.name;
@@ -14,7 +12,7 @@ function getCharRarity(char: DisplayCharacter): string {
     return char.static?.rarity ?? "TIER_1";
 }
 
-export function filterCharacters(chars: CharacterWithStatic[], filterRarity: RarityFilter, searchTerm: string): CharacterWithStatic[] {
+export function filterCharacters(chars: EnrichedRosterEntry[], filterRarity: RarityFilter, searchTerm: string): EnrichedRosterEntry[] {
     return chars.filter((char) => {
         const charRarity = (char.static?.rarity ?? "TIER_1") as string;
         const charName = (char.static?.name ?? "").toLowerCase();
@@ -24,13 +22,13 @@ export function filterCharacters(chars: CharacterWithStatic[], filterRarity: Rar
     });
 }
 
-export function sortCharacters(chars: CharacterWithStatic[], sortBy: SortBy, sortOrder: SortOrder): CharacterWithStatic[] {
+export function sortCharacters(chars: EnrichedRosterEntry[], sortBy: SortBy, sortOrder: SortOrder): EnrichedRosterEntry[] {
     return [...chars].sort((a, b) => {
         let comparison = 0;
         switch (sortBy) {
             case "level":
-                if (b.evolvePhase !== a.evolvePhase) {
-                    comparison = b.evolvePhase - a.evolvePhase;
+                if (b.elite !== a.elite) {
+                    comparison = b.elite - a.elite;
                 } else {
                     comparison = b.level - a.level;
                 }
@@ -39,17 +37,17 @@ export function sortCharacters(chars: CharacterWithStatic[], sortBy: SortBy, sor
                 comparison = getRarityStarCount(b.static?.rarity ?? "TIER_1") - getRarityStarCount(a.static?.rarity ?? "TIER_1");
                 break;
             case "obtained":
-                comparison = b.gainTime - a.gainTime;
+                comparison = (b.obtained_at ?? 0) - (a.obtained_at ?? 0);
                 break;
             case "potential":
-                comparison = (b.potentialRank ?? 0) - (a.potentialRank ?? 0);
+                comparison = (b.potential ?? 0) - (a.potential ?? 0);
                 break;
         }
         return sortOrder === "asc" ? -comparison : comparison;
     });
 }
 
-export function filterAndSortCharacters(chars: CharacterWithStatic[], sortBy: SortBy, sortOrder: SortOrder, filterRarity: RarityFilter, searchTerm: string): CharacterWithStatic[] {
+export function filterAndSortCharacters(chars: EnrichedRosterEntry[], sortBy: SortBy, sortOrder: SortOrder, filterRarity: RarityFilter, searchTerm: string): EnrichedRosterEntry[] {
     const filtered = filterCharacters(chars, filterRarity, searchTerm);
     return sortCharacters(filtered, sortBy, sortOrder);
 }
@@ -85,8 +83,8 @@ export function sortDisplayCharacters(chars: DisplayCharacter[], sortBy: SortBy,
         switch (sortBy) {
             case "level":
                 if (aOwned && bOwned) {
-                    if (b.evolvePhase !== a.evolvePhase) {
-                        comparison = b.evolvePhase - a.evolvePhase;
+                    if (b.elite !== a.elite) {
+                        comparison = b.elite - a.elite;
                     } else {
                         comparison = b.level - a.level;
                     }
@@ -97,12 +95,12 @@ export function sortDisplayCharacters(chars: DisplayCharacter[], sortBy: SortBy,
                 break;
             case "obtained":
                 if (aOwned && bOwned) {
-                    comparison = b.gainTime - a.gainTime;
+                    comparison = (b.obtained_at ?? 0) - (a.obtained_at ?? 0);
                 }
                 break;
             case "potential":
                 if (aOwned && bOwned) {
-                    comparison = (b.potentialRank ?? 0) - (a.potentialRank ?? 0);
+                    comparison = (b.potential ?? 0) - (a.potential ?? 0);
                 }
                 break;
         }

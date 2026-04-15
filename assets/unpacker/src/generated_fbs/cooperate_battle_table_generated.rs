@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -66,18 +65,6 @@ impl core::fmt::Debug for enum__Torappu_Battle_Cooperate_EndTileType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_Battle_Cooperate_EndTileType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Battle_Cooperate_EndTileType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -174,18 +161,6 @@ impl core::fmt::Debug for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_Battle_Cooperate_LASTROUNDRESULT {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_Battle_Cooperate_LASTROUNDRESULT",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -335,27 +310,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateEndTileInfoArgs<'a> {
             name: None,
             description: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateEndTileInfo", 2)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.end()
     }
 }
 
@@ -542,22 +496,6 @@ impl<'a> Default for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torap
   }
 }
 
-impl Serialize for dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo<'_> {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut s = serializer.serialize_struct("dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfo", 2)?;
-      s.serialize_field("key", &self.key())?;
-      if let Some(f) = self.value() {
-        s.serialize_field("value", &f)?;
-      } else {
-        s.skip_field("value")?;
-      }
-    s.end()
-  }
-}
-
 pub struct dict__enum__Torappu_Battle_Cooperate_EndTileType__clz_Torappu_Battle_Cooperate_CooperateEndTileInfoBuilder<
     'a: 'b,
     'b,
@@ -725,19 +663,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateAheadGoalDataArgs {
             aheadCnt: 0,
             level: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateAheadGoalData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_Battle_Cooperate_CooperateAheadGoalData", 2)?;
-        s.serialize_field("aheadCnt", &self.aheadCnt())?;
-        s.serialize_field("level", &self.level())?;
-        s.end()
     }
 }
 
@@ -944,21 +869,6 @@ impl<'a> Default for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intAr
     }
 }
 
-impl Serialize for dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__int",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_Battle_Cooperate_LASTROUNDRESULT__intBuilder<
     'a: 'b,
     'b,
@@ -1135,19 +1045,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateWaveWeightArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_Battle_Cooperate_CooperateWaveWeightArgs { wave: 0, weight: 0 }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateWaveWeight", 2)?;
-        s.serialize_field("wave", &self.wave())?;
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
     }
 }
 
@@ -1373,25 +1270,6 @@ impl<'a> Default for dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveW
     }
 }
 
-impl Serialize for dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeight",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__list_clz_Torappu_Battle_Cooperate_CooperateWaveWeightBuilder<
     'a: 'b,
     'b,
@@ -1587,23 +1465,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateTeamWeightArgs<'a> {
             teamName: None,
             weight: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateTeamWeight<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateTeamWeight", 2)?;
-        if let Some(f) = self.teamName() {
-            s.serialize_field("teamName", &f)?;
-        } else {
-            s.skip_field("teamName")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
     }
 }
 
@@ -1816,32 +1677,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateTeamPlayerArgs<'a> {
             goalkeeper: None,
             muscleman: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Battle_Cooperate_CooperateTeamPlayer", 3)?;
-        if let Some(f) = self.forward() {
-            s.serialize_field("forward", &f)?;
-        } else {
-            s.skip_field("forward")?;
-        }
-        if let Some(f) = self.goalkeeper() {
-            s.serialize_field("goalkeeper", &f)?;
-        } else {
-            s.skip_field("goalkeeper")?;
-        }
-        if let Some(f) = self.muscleman() {
-            s.serialize_field("muscleman", &f)?;
-        } else {
-            s.skip_field("muscleman")?;
-        }
-        s.end()
     }
 }
 
@@ -2060,25 +1895,6 @@ impl<'a> Default for dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPla
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayer",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_Battle_Cooperate_CooperateTeamPlayerBuilder<
     'a: 'b,
     'b,
@@ -2276,22 +2092,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2706,55 +2506,6 @@ impl<'a> Default for clz_Torappu_Battle_Cooperate_CooperateModeBattleDataArgs<'a
             footballTeamPlayers: None,
             footballPlayersName: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_Cooperate_CooperateModeBattleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_Battle_Cooperate_CooperateModeBattleData", 10)?;
-        s.serialize_field("costTransferred", &self.costTransferred())?;
-        s.serialize_field("getMaxMsgCntInOneUpdate", &self.getMaxMsgCntInOneUpdate())?;
-        if let Some(f) = self.endTileInfo() {
-            s.serialize_field("endTileInfo", &f)?;
-        } else {
-            s.skip_field("endTileInfo")?;
-        }
-        if let Some(f) = self.footballAheadGoalCntFactor() {
-            s.serialize_field("footballAheadGoalCntFactor", &f)?;
-        } else {
-            s.skip_field("footballAheadGoalCntFactor")?;
-        }
-        s.serialize_field("footballHardTypeFactor", &self.footballHardTypeFactor())?;
-        if let Some(f) = self.footballLastRoundResultFactor() {
-            s.serialize_field("footballLastRoundResultFactor", &f)?;
-        } else {
-            s.skip_field("footballLastRoundResultFactor")?;
-        }
-        if let Some(f) = self.footballLevelOfWaveFactor() {
-            s.serialize_field("footballLevelOfWaveFactor", &f)?;
-        } else {
-            s.skip_field("footballLevelOfWaveFactor")?;
-        }
-        if let Some(f) = self.footballTeamWeights() {
-            s.serialize_field("footballTeamWeights", &f)?;
-        } else {
-            s.skip_field("footballTeamWeights")?;
-        }
-        if let Some(f) = self.footballTeamPlayers() {
-            s.serialize_field("footballTeamPlayers", &f)?;
-        } else {
-            s.skip_field("footballTeamPlayers")?;
-        }
-        if let Some(f) = self.footballPlayersName() {
-            s.serialize_field("footballPlayersName", &f)?;
-        } else {
-            s.skip_field("footballPlayersName")?;
-        }
-        s.end()
     }
 }
 

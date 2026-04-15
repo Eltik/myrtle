@@ -1,3 +1,23 @@
+/**
+ * Raw game data shape used by the randomizer for stage completion
+ * and operator E2 checks. This data comes from the old game sync
+ * and may not be available in v3 (AuthUser is a flat UserProfile).
+ */
+export interface GameUserData {
+    troop: {
+        chars: Record<
+            string,
+            {
+                charId: string;
+                evolvePhase: number;
+            }
+        >;
+    };
+    dungeon: {
+        stages: Record<string, { completeTimes: number }>;
+    };
+}
+
 export interface RandomizerSettings {
     allowedClasses: string[];
     allowedRarities: number[];

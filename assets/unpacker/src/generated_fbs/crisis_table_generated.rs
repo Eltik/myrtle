@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -118,6 +117,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -216,9 +217,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -311,6 +314,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -406,6 +411,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -417,18 +424,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -589,23 +584,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -945,49 +923,6 @@ impl<'a> Default for clz_Torappu_CrisisClientData_SeasonInfoArgs<'a> {
             bgmHardPoint: 0,
             permBgmHard: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CrisisClientData_SeasonInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisClientData_SeasonInfo", 9)?;
-        if let Some(f) = self.seasonId() {
-            s.serialize_field("seasonId", &f)?;
-        } else {
-            s.skip_field("seasonId")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.crisisRuneCoinUnlockItem() {
-            s.serialize_field("crisisRuneCoinUnlockItem", &f)?;
-        } else {
-            s.skip_field("crisisRuneCoinUnlockItem")?;
-        }
-        if let Some(f) = self.permBgm() {
-            s.serialize_field("permBgm", &f)?;
-        } else {
-            s.skip_field("permBgm")?;
-        }
-        if let Some(f) = self.medalGroupId() {
-            s.serialize_field("medalGroupId", &f)?;
-        } else {
-            s.skip_field("medalGroupId")?;
-        }
-        s.serialize_field("bgmHardPoint", &self.bgmHardPoint())?;
-        if let Some(f) = self.permBgmHard() {
-            s.serialize_field("permBgmHard", &f)?;
-        } else {
-            s.skip_field("permBgmHard")?;
-        }
-        s.end()
     }
 }
 
@@ -1406,40 +1341,6 @@ impl<'a> Default for clz_Torappu_CrisisClientDataArgs<'a> {
             crisisRuneCoinUnlockItemTitle: None,
             crisisRuneCoinUnlockItemDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CrisisClientData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrisisClientData", 8)?;
-        if let Some(f) = self.seasonInfo() {
-            s.serialize_field("seasonInfo", &f)?;
-        } else {
-            s.skip_field("seasonInfo")?;
-        }
-        if let Some(f) = self.meta() {
-            s.serialize_field("meta", &f)?;
-        } else {
-            s.skip_field("meta")?;
-        }
-        s.serialize_field("unlockCoinLv3", &self.unlockCoinLv3())?;
-        s.serialize_field("hardPointPerm", &self.hardPointPerm())?;
-        s.serialize_field("hardPointTemp", &self.hardPointTemp())?;
-        s.serialize_field("voiceGrade", &self.voiceGrade())?;
-        if let Some(f) = self.crisisRuneCoinUnlockItemTitle() {
-            s.serialize_field("crisisRuneCoinUnlockItemTitle", &f)?;
-        } else {
-            s.skip_field("crisisRuneCoinUnlockItemTitle")?;
-        }
-        if let Some(f) = self.crisisRuneCoinUnlockItemDesc() {
-            s.serialize_field("crisisRuneCoinUnlockItemDesc", &f)?;
-        } else {
-            s.skip_field("crisisRuneCoinUnlockItemDesc")?;
-        }
-        s.end()
     }
 }
 

@@ -6,7 +6,8 @@ import { useState } from "react";
 import { ImageWithSkeleton } from "~/components/ui/image-with-skeleton";
 import { MorphingDialogClose, MorphingDialogContainer, MorphingDialogContent } from "~/components/ui/motion-primitives/morphing-dialog";
 import { Separator } from "~/components/ui/shadcn/separator";
-import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
+import type { CharacterStatic, EnrichedRosterEntry } from "~/types/api/impl/user";
+import { getTrustPercent } from "./helpers";
 import { ModuleItem } from "./module-item";
 import { SkillItem } from "./skill-item";
 
@@ -25,7 +26,7 @@ function StatItem({ label, value }: StatItemProps) {
 }
 
 interface CharacterDialogProps {
-    data: CharacterData;
+    data: EnrichedRosterEntry;
     operator: CharacterStatic | null;
     operatorName: string;
     operatorProfession: string;
@@ -57,6 +58,30 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
     // Text fades out as user scrolls
     const heroContentOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
     const heroContentY = useTransform(scrollYProgress, [0, 0.15], [0, -15]);
+
+    // Build skill display data by merging roster masteries with static skill data
+    const skillDisplayData = (operator?.skills ?? []).map((staticSkill, index) => {
+        const mastery = data.masteries.find((m) => m.skill_id === staticSkill.skillId);
+        return {
+            skillId: staticSkill.skillId,
+            specializeLevel: mastery?.specialize_level ?? 0,
+            skillStatic: staticSkill.static ?? null,
+            index,
+        };
+    });
+
+    // Build module display data
+    const moduleDisplayData = (operator?.modules ?? [])
+        .filter((mod) => mod.typeName1 !== "ORIGINAL")
+        .map((mod) => {
+            const rosterMod = data.modules.find((m) => m.equip_id === mod.uniEquipId);
+            return {
+                module: mod,
+                level: rosterMod?.level ?? 0,
+                isEquipped: data.current_equip === mod.uniEquipId,
+            };
+        })
+        .filter((m) => m.level > 0);
 
     return (
         <MorphingDialogContainer>
@@ -95,18 +120,18 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                     {/* Quick Stats */}
                     <div className="mb-5 grid grid-cols-4 gap-1.5">
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
-                            <Image alt={`Elite ${data.evolvePhase}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
+                            <Image alt={`Elite ${data.elite}`} className="icon-theme-aware h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[0.625rem] text-muted-foreground sm:text-xs">Lvl</span>
                             <span className="font-medium text-sm tabular-nums">{data.level}</span>
                         </div>
                         <div className="flex items-center justify-center rounded-md bg-muted/30 py-2">
-                            <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
+                            <Image alt={`Potential ${data.potential + 1}`} className="h-6 w-6 object-contain" height={24} loading="eager" src={`/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`} unoptimized width={24} />
                         </div>
                         <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 px-2.5 py-1.5 sm:flex-row sm:justify-between">
                             <span className="text-[0.625rem] text-muted-foreground sm:text-xs">Trust</span>
-                            <span className="font-medium text-sm tabular-nums">{operator?.trust ?? 0}%</span>
+                            <span className="font-medium text-sm tabular-nums">{getTrustPercent(data.favor_point ?? 0)}%</span>
                         </div>
                     </div>
 
@@ -132,13 +157,13 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                     <div className="mb-5">
                         <div className="mb-2.5 flex items-center gap-2">
                             <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Skills</h3>
-                            <span className="text-muted-foreground/60 text-xs">Lv.{data.mainSkillLvl}</span>
+                            <span className="text-muted-foreground/60 text-xs">Lv.{data.skill_level}</span>
                             <Separator className="flex-1" />
                         </div>
-                        {data.skills && data.skills.length > 0 ? (
+                        {skillDisplayData.length > 0 ? (
                             <div className="space-y-1.5">
-                                {data.skills.map((skill, index) => (
-                                    <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="large" skill={skill} />
+                                {skillDisplayData.map((skill) => (
+                                    <SkillItem index={skill.index} isDefaultSkill={data.default_skill === skill.index} key={skill.skillId} mainSkillLvl={data.skill_level} skillId={skill.skillId} skillStatic={skill.skillStatic} specializeLevel={skill.specializeLevel} size="large" />
                                 ))}
                             </div>
                         ) : (
@@ -152,32 +177,14 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                             <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Modules</h3>
                             <Separator className="flex-1" />
                         </div>
-                        {operator?.modules && operator.modules.length > 0 ? (
-                            operator.modules.some((module) => {
-                                const equipData = data.equip[module.uniEquipId];
-                                const moduleLevel = equipData?.level ?? 0;
-                                const isLocked = equipData?.locked === 1;
-                                return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
-                            }) ? (
-                                <div className="space-y-1.5">
-                                    {operator.modules
-                                        .map((module) => {
-                                            const equipData = data.equip[module.uniEquipId];
-                                            const moduleLevel = equipData?.level ?? 0;
-                                            const isEquipped = data.currentEquip === module.uniEquipId;
-                                            const isLocked = equipData?.locked === 1;
-
-                                            if (module.typeName1 === "ORIGINAL" || moduleLevel === 0 || isLocked) {
-                                                return null;
-                                            }
-
-                                            return <ModuleItem isEquipped={isEquipped} key={module.uniEquipId} module={module} moduleLevel={moduleLevel} size="large" />;
-                                        })
-                                        .filter(Boolean)}
-                                </div>
-                            ) : (
-                                <p className="text-muted-foreground text-xs">No modules unlocked.</p>
-                            )
+                        {moduleDisplayData.length > 0 ? (
+                            <div className="space-y-1.5">
+                                {moduleDisplayData.map((mod) => (
+                                    <ModuleItem isEquipped={mod.isEquipped} key={mod.module.uniEquipId} module={mod.module} moduleLevel={mod.level} size="large" />
+                                ))}
+                            </div>
+                        ) : operator?.modules && operator.modules.some((m) => m.typeName1 !== "ORIGINAL") ? (
+                            <p className="text-muted-foreground text-xs">No modules unlocked.</p>
                         ) : (
                             <p className="text-muted-foreground text-xs">No modules available.</p>
                         )}
@@ -192,11 +199,11 @@ export function CharacterDialog({ data, operator, operatorName, operatorProfessi
                         <div className="grid grid-cols-2 gap-1.5">
                             <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
                                 <span className="text-muted-foreground text-xs">Recruited</span>
-                                <span className="font-medium text-sm">{new Date(data.gainTime * 1000).toLocaleDateString()}</span>
+                                <span className="font-medium text-sm">{data.obtained_at ? new Date(data.obtained_at * 1000).toLocaleDateString() : "Unknown"}</span>
                             </div>
                             <div className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
                                 <span className="text-muted-foreground text-xs">Voice</span>
-                                <span className="font-medium text-sm">{data.voiceLan === "JP" ? "Japanese" : data.voiceLan === "CN_MANDARIN" ? "Chinese" : data.voiceLan === "EN" ? "English" : data.voiceLan === "KR" ? "Korean" : (data.voiceLan?.toLowerCase().replace("_", " ") ?? "Japanese")}</span>
+                                <span className="font-medium text-sm">{data.voice_lan === "JP" ? "Japanese" : data.voice_lan === "CN_MANDARIN" ? "Chinese" : data.voice_lan === "EN" ? "English" : data.voice_lan === "KR" ? "Korean" : (data.voice_lan?.toLowerCase().replace("_", " ") ?? "Japanese")}</span>
                             </div>
                         </div>
                     </div>

@@ -1,17 +1,7 @@
 // Re-export pagination utilities from shared
 
-import type { SearchResultEntry } from "~/types/api";
-
 export type { PaginationItem } from "../../shared/pagination";
 export { generatePaginationItems } from "../../shared/pagination";
-
-/**
- * Extract status data from the result's data field
- */
-export function getStatusData(result: SearchResultEntry) {
-    const data = result.data as Record<string, unknown> | undefined;
-    return data?.status as Record<string, unknown> | undefined;
-}
 
 /**
  * Formats an account age from a timestamp
@@ -56,12 +46,12 @@ export function formatSecretaryName(secretary: string | null | undefined): strin
 }
 
 /**
- * Formats a date string into a human-readable relative time string.
- * @param dateString - ISO date string to format
+ * Formats a date/timestamp into a human-readable relative time string.
+ * @param value - ISO date string or Unix timestamp (seconds) to format
  * @returns Relative time string (e.g., "Today", "Yesterday", "3 days ago")
  */
-export function formatRelativeTime(dateString: string): string {
-    const date = new Date(dateString);
+export function formatRelativeTime(value: string | number): string {
+    const date = typeof value === "number" ? new Date(value * 1000) : new Date(value);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -87,17 +77,6 @@ export function formatScore(score: number): string {
         return `${(score / 1_000).toFixed(1)}K`;
     }
     return score.toString();
-}
-
-/**
- * Gets the operator count from result data
- */
-export function getOperatorCount(result: SearchResultEntry): number | null {
-    const data = result.data as Record<string, unknown> | undefined;
-    const troop = data?.troop as Record<string, unknown> | undefined;
-    const chars = troop?.chars as Record<string, unknown> | undefined;
-    if (!chars) return null;
-    return Object.keys(chars).length;
 }
 
 /**

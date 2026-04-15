@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import type { ReportReason, TierListReport } from "~/types/api/impl/tier-list";
 
@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const siteToken = getSiteToken(req);
+        const siteToken = getToken(req);
 
         if (!siteToken) {
             return res.status(401).json({

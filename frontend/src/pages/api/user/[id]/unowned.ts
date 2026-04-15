@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { StoredUser, UnownedOperator } from "~/types/api/impl/user";
+import type { RosterEntry, UnownedOperator } from "~/types/api/impl/user";
 
 const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
 
@@ -18,6 +18,7 @@ interface StaticOperator {
 /**
  * GET /api/user/{userId}/unowned
  * Returns operators the user does not own.
+ * v3: Fetches from /roster endpoint for owned operator IDs.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "GET") {
@@ -31,26 +32,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-        const [userResponse, operatorsResponse] = await Promise.all([backendFetch(`/get-user?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,name,rarity,profession,subProfessionId,portrait,position,isNotObtainable")]);
+        const [rosterResponse, operatorsResponse] = await Promise.all([backendFetch(`/roster?uid=${id}`), backendFetch("/static/operators?limit=1000&fields=id,name,rarity,profession,subProfessionId,portrait,position,isNotObtainable")]);
 
-        if (!userResponse.ok) {
-            if (userResponse.status === 404) {
+        if (!rosterResponse.ok) {
+            if (rosterResponse.status === 404) {
                 return res.status(404).json({ error: "User not found" });
             }
-            return res.status(userResponse.status).json({ error: "Failed to fetch user data" });
+            return res.status(rosterResponse.status).json({ error: "Failed to fetch roster data" });
         }
 
-        const userData: StoredUser = await userResponse.json();
-        const chars = userData?.data?.troop?.chars;
+        const roster: RosterEntry[] = await rosterResponse.json();
 
-        if (!chars) {
-            return res.status(404).json({ error: "Character data not found" });
-        }
-
-        // Build set of owned character IDs
+        // Build set of owned operator IDs
         const ownedIds = new Set<string>();
-        for (const char of Object.values(chars)) {
-            ownedIds.add(char.charId);
+        for (const entry of roster) {
+            ownedIds.add(entry.operator_id);
         }
 
         const unowned: UnownedOperator[] = [];
