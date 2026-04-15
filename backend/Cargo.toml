@@ -15,6 +15,10 @@ path = "src/bin/export_database.rs"
 name = "import-database"
 path = "src/bin/import_database.rs"
 
+[[bin]]
+name = "translate-backup"
+path = "src/bin/translate_backup.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"

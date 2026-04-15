@@ -239,7 +239,14 @@ fn process_bundle(
         HashSet::new()
     };
 
-    // Phase 1.5: Portrait extraction from SpritePacker atlases
+    // Phase 1.5: Portrait extraction.
+    //
+    // Supports two layouts:
+    //   - Unity Sprite (class 213) atlases — current hot-update bundles
+    //     (`spritepack/char_portrait_*.ab`). Each Sprite references an RGB
+    //     Texture2D (and optionally a separate alpha Texture2D) by path_id.
+    //   - Legacy SpritePacker MonoBehaviour (class 114) with `_sprites` +
+    //     `_atlas` — older `charportraits/portraits_hub.ab` style bundles.
     let portrait_claimed_pids: HashSet<i64> = if is_portrait_bundle {
         let mut all_objects: HashMap<i64, (i32, serde_json::Value)> = HashMap::new();
 
@@ -252,7 +259,8 @@ fn process_bundle(
                 Err(_) => continue,
             };
             for obj in &sf.objects {
-                if obj.class_id == 114 || obj.class_id == 28 {
+                // 114 = MonoBehaviour (legacy SpritePacker), 213 = Sprite, 28 = Texture2D
+                if obj.class_id == 114 || obj.class_id == 213 || obj.class_id == 28 {
                     let val = match read_object(&sf, obj) {
                         Ok(v) => v,
                         Err(_) => continue,
@@ -262,25 +270,45 @@ fn process_bundle(
             }
         }
 
-        // Parse SpritePacker MonoBehaviours
-        let mut packers = Vec::new();
         let mut claimed = HashSet::new();
+
+        // Preferred path: Unity Sprite (class 213) objects.
+        let mut sprites = Vec::new();
+        for (pid, (class_id, val)) in &all_objects {
+            if *class_id == 213
+                && let Some(sprite) = portrait::parse_sprite(val)
+            {
+                claimed.insert(*pid);
+                claimed.insert(sprite.texture_pid);
+                if sprite.alpha_pid != 0 {
+                    claimed.insert(sprite.alpha_pid);
+                }
+                sprites.push(sprite);
+            }
+        }
+
+        // Fallback / additional path: legacy SpritePacker MonoBehaviours.
+        let mut packers = Vec::new();
         for (pid, (class_id, val)) in &all_objects {
             if *class_id == 114
                 && let Some(packer) = portrait::parse_sprite_packer(val)
             {
                 claimed.insert(*pid);
                 claimed.insert(packer.texture_pid);
-                claimed.insert(packer.alpha_pid);
+                if packer.alpha_pid != 0 {
+                    claimed.insert(packer.alpha_pid);
+                }
                 packers.push(packer);
             }
         }
 
-        if !packers.is_empty() {
-            // Decode all textures referenced by packers (RGB + alpha)
+        if !sprites.is_empty() || !packers.is_empty() {
+            // Decode every Texture2D claimed by either path. Also decode all
+            // Texture2Ds so the `{name}a` alpha-fallback lookup can resolve
+            // alpha atlases that aren't referenced by explicit path_id.
             let mut decoded: HashMap<i64, export::texture::DecodedTexture> = HashMap::new();
             for (pid, (class_id, val)) in &all_objects {
-                if *class_id == 28 && claimed.contains(pid) {
+                if *class_id == 28 {
                     match decode_texture_object(val, &resources) {
                         Ok(Some(tex)) => {
                             decoded.insert(*pid, tex);
@@ -293,7 +321,18 @@ fn process_bundle(
 
             let dir = output_dir.join("portraits");
             std::fs::create_dir_all(&dir).ok();
-            exported += portrait::extract_portraits(&packers, &decoded, &dir);
+            if !sprites.is_empty() {
+                exported += portrait::extract_sprites(&sprites, &decoded, &dir);
+            }
+            if !packers.is_empty() {
+                exported += portrait::extract_portraits(&packers, &decoded, &dir);
+            }
+
+            // Claim every Texture2D we decoded so Phase 2 doesn't also emit
+            // them as raw atlas dumps.
+            for pid in decoded.keys() {
+                claimed.insert(*pid);
+            }
         }
 
         drop(all_objects);

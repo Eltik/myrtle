@@ -393,23 +393,40 @@ function runUnpack({
 		activeChildren.add(child);
 		child.on("close", () => activeChildren.delete(child));
 
-		let stdoutBuf = "";
-		let stderrRaw = "";
+		const MAX_TAIL = 256 * 1024; // bounded rolling buffer for error diagnostics
+		let stdoutTail = "";
+		let stderrTail = "";
+		let stdoutPartial = ""; // incomplete trailing line between chunks
+		let stderrPartial = "";
 		let totalExported = 0;
+		let exportedSum = 0;
+
+		const appendTail = (tail, s) => {
+			const combined = tail + s;
+			return combined.length > MAX_TAIL ? combined.slice(-MAX_TAIL) : combined;
+		};
 
 		child.stdout.on("data", (chunk) => {
-			stdoutBuf += chunk.toString();
+			const text = chunk.toString();
+			stdoutTail = appendTail(stdoutTail, text);
 
-			// Parse incremental "progress: N assets" lines for live updates
+			stdoutPartial += text;
+			const lines = stdoutPartial.split("\n");
+			stdoutPartial = lines.pop() ?? "";
+
 			let latestProgress = totalExported;
-			for (const m of stdoutBuf.matchAll(/progress:\s*(\d+)\s+assets/g)) {
-				const n = parseInt(m[1], 10);
-				if (n > latestProgress) latestProgress = n;
-			}
-			// Also parse "Exported N ..." lines (gamedata phase + final)
-			for (const m of stdoutBuf.matchAll(/Exported\s+(\d+)\s+/g)) {
-				const n = parseInt(m[1], 10);
-				if (n > latestProgress) latestProgress = n;
+			for (const line of lines) {
+				const mp = line.match(/progress:\s*(\d+)\s+assets/);
+				if (mp) {
+					const n = parseInt(mp[1], 10);
+					if (n > latestProgress) latestProgress = n;
+				}
+				const me = line.match(/Exported\s+(\d+)\s+/);
+				if (me) {
+					const n = parseInt(me[1], 10);
+					exportedSum += n;
+					if (n > latestProgress) latestProgress = n;
+				}
 			}
 			if (latestProgress > totalExported) {
 				totalExported = latestProgress;
@@ -418,12 +435,16 @@ function runUnpack({
 		});
 
 		child.stderr.on("data", (chunk) => {
-			stderrRaw += chunk.toString();
+			stderrTail = appendTail(stderrTail, chunk.toString());
+			stderrPartial += chunk.toString();
+			if (stderrPartial.length > MAX_TAIL) {
+				stderrPartial = stderrPartial.slice(-MAX_TAIL);
+			}
 		});
 
 		child.on("close", (code) => {
 			if (code !== 0) {
-				const clean = `${stdoutBuf}\n${stderrRaw}`
+				const clean = `${stdoutTail}\n${stderrTail}`
 					.replace(ANSI_RE, "")
 					.replace(/\r/g, "\n");
 				const lines = clean
@@ -434,12 +455,12 @@ function runUnpack({
 				reject(new Error(`Unpacker exited with code ${code}\n${errOutput}`));
 				return;
 			}
-			// Sum all "Exported N" lines
-			let exported = 0;
-			for (const m of stdoutBuf.matchAll(/Exported\s+(\d+)\s+/g)) {
-				exported += parseInt(m[1], 10);
+			// Process any final line without trailing newline
+			if (stdoutPartial) {
+				const me = stdoutPartial.match(/Exported\s+(\d+)\s+/);
+				if (me) exportedSum += parseInt(me[1], 10);
 			}
-			resolve({ exported });
+			resolve({ exported: exportedSum });
 		});
 
 		child.on("error", reject);
@@ -886,50 +907,45 @@ async function runUpdate() {
 
 // ─── Option 3: WebSocket Server ─────────────────────────────────────────────
 
-async function runWebSocketServer() {
+async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {}) {
 	if (!binariesExist()) {
 		console.log(chalk.red("\nBinaries not found. Run Setup first.\n"));
 		return;
 	}
 
-	// Configuration prompt
-	const config = await inquirer.prompt([
-		{
-			type: "list",
-			name: "serverKey",
-			message: "Server region:",
-			choices: Object.entries(SERVERS).map(([key, s]) => ({
-				name: `${key} — ${s.label}`,
-				value: key,
-			})),
-			default: "en",
-		},
-		{
-			type: "input",
-			name: "savedir",
-			message: "Asset download directory:",
-			default: "./ArkAssets",
-		},
-		{
-			type: "input",
-			name: "outputDir",
-			message: "Extraction output directory:",
-			default: "./output",
-		},
-		{
-			type: "number",
-			name: "threads",
-			message: "Concurrent threads (download & unpack):",
-			default: DEFAULT_THREADS,
-		},
-		{ type: "number", name: "port", message: "WebSocket port:", default: 9160 },
-		{
-			type: "number",
-			name: "intervalMin",
-			message: "Check interval (minutes):",
-			default: 30,
-		},
-	]);
+	const defaults = {
+		serverKey: cliArgs.server ?? process.env.WS_SERVER ?? "en",
+		savedir: cliArgs.savedir ?? process.env.WS_SAVEDIR ?? "./ArkAssets",
+		outputDir: cliArgs.output ?? process.env.WS_OUTPUT ?? "./output",
+		threads: Number(cliArgs.threads ?? process.env.WS_THREADS ?? DEFAULT_THREADS),
+		port: Number(cliArgs.port ?? process.env.WS_PORT ?? 9160),
+		intervalMin: Number(cliArgs.interval ?? process.env.WS_INTERVAL ?? 30),
+	};
+
+	const config = nonInteractive
+		? defaults
+		: await inquirer.prompt([
+			{
+				type: "list",
+				name: "serverKey",
+				message: "Server region:",
+				choices: Object.entries(SERVERS).map(([key, s]) => ({
+					name: `${key} — ${s.label}`,
+					value: key,
+				})),
+				default: defaults.serverKey,
+			},
+			{ type: "input", name: "savedir", message: "Asset download directory:", default: defaults.savedir },
+			{ type: "input", name: "outputDir", message: "Extraction output directory:", default: defaults.outputDir },
+			{ type: "number", name: "threads", message: "Concurrent threads (download & unpack):", default: defaults.threads },
+			{ type: "number", name: "port", message: "WebSocket port:", default: defaults.port },
+			{ type: "number", name: "intervalMin", message: "Check interval (minutes):", default: defaults.intervalMin },
+		]);
+
+	if (!SERVERS[config.serverKey]) {
+		console.log(chalk.red(`\nUnknown server: ${config.serverKey}. Valid: ${Object.keys(SERVERS).join(", ")}\n`));
+		return;
+	}
 
 	const intervalMs = config.intervalMin * 60 * 1000;
 
@@ -1266,52 +1282,91 @@ process.on("SIGINT", () => {
 
 // ─── Main Menu ──────────────────────────────────────────────────────────────
 
-console.log(
-	boxen(chalk.bold.cyan("Arknights Asset Pipeline"), {
-		padding: 1,
-		margin: 1,
-		borderStyle: "round",
-		borderColor: "cyan",
-	}),
-);
-
-const platformLabel = isMac ? "macOS" : isWindows ? "Windows" : "Linux";
-console.log(chalk.dim(`Platform: ${platformLabel} (${process.arch})\n`));
-
-const hasBinaries = binariesExist();
-if (!hasBinaries) {
-	console.log(
-		chalk.yellow("Binaries not found. Run Setup first to build them.\n"),
-	);
+// ─── CLI argv parsing (non-interactive entry) ──────────────────────────────
+// Usage: node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
+//                        [--threads N] [--port 9160] [--interval 30]
+const argv = process.argv.slice(2);
+const cliAction = argv[0] && !argv[0].startsWith("--") ? argv[0] : null;
+const cliArgs = {};
+for (let i = cliAction ? 1 : 0; i < argv.length; i++) {
+	const a = argv[i];
+	if (!a.startsWith("--")) continue;
+	const key = a.slice(2);
+	const next = argv[i + 1];
+	if (next !== undefined && !next.startsWith("--")) {
+		cliArgs[key] = next;
+		i++;
+	} else {
+		cliArgs[key] = true;
+	}
 }
 
-const choices = [
-	{ name: "Setup (build binaries)", value: "setup" },
-	...(hasBinaries
-		? [
-				{ name: "Check for Updates & Update", value: "update" },
-				{ name: "WebSocket Server (continuous updates)", value: "ws" },
-			]
-		: []),
-];
+if (cliAction) {
+	const platformLabel = isMac ? "macOS" : isWindows ? "Windows" : "Linux";
+	console.log(chalk.dim(`Platform: ${platformLabel} (${process.arch})`));
+	switch (cliAction) {
+		case "setup":
+			await runSetup();
+			break;
+		case "update":
+			await runUpdate();
+			break;
+		case "ws":
+			await runWebSocketServer({ nonInteractive: true, cliArgs });
+			break;
+		default:
+			console.log(chalk.red(`Unknown command: ${cliAction}`));
+			console.log("Valid commands: setup, update, ws");
+			process.exit(1);
+	}
+} else {
+	console.log(
+		boxen(chalk.bold.cyan("Arknights Asset Pipeline"), {
+			padding: 1,
+			margin: 1,
+			borderStyle: "round",
+			borderColor: "cyan",
+		}),
+	);
 
-const { action } = await inquirer.prompt([
-	{
-		type: "list",
-		name: "action",
-		message: "What would you like to do?",
-		choices,
-	},
-]);
+	const platformLabel = isMac ? "macOS" : isWindows ? "Windows" : "Linux";
+	console.log(chalk.dim(`Platform: ${platformLabel} (${process.arch})\n`));
 
-switch (action) {
-	case "setup":
-		await runSetup();
-		break;
-	case "update":
-		await runUpdate();
-		break;
-	case "ws":
-		await runWebSocketServer();
-		break;
+	const hasBinaries = binariesExist();
+	if (!hasBinaries) {
+		console.log(
+			chalk.yellow("Binaries not found. Run Setup first to build them.\n"),
+		);
+	}
+
+	const choices = [
+		{ name: "Setup (build binaries)", value: "setup" },
+		...(hasBinaries
+			? [
+					{ name: "Check for Updates & Update", value: "update" },
+					{ name: "WebSocket Server (continuous updates)", value: "ws" },
+				]
+			: []),
+	];
+
+	const { action } = await inquirer.prompt([
+		{
+			type: "list",
+			name: "action",
+			message: "What would you like to do?",
+			choices,
+		},
+	]);
+
+	switch (action) {
+		case "setup":
+			await runSetup();
+			break;
+		case "update":
+			await runUpdate();
+			break;
+		case "ws":
+			await runWebSocketServer();
+			break;
+	}
 }

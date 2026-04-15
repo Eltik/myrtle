@@ -297,7 +297,7 @@ pub struct Enemy {
     pub name: String,
     #[serde(alias = "EnemyLevel")]
     pub enemy_level: EnemyLevel,
-    #[serde(alias = "Description")]
+    #[serde(alias = "Description", default)]
     pub description: String,
     #[serde(alias = "AttackType")]
     pub attack_type: Option<String>,

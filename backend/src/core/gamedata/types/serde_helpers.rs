@@ -67,6 +67,16 @@ where
         .collect())
 }
 
+/// Deserialize a value that may be `null`, using `Default` when null/missing.
+pub fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de> + Default,
+{
+    let opt = Option::<T>::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
 /// Deserialize FlatBuffer's [{key, value}] array format into Option<HashMap>
 pub fn deserialize_fb_map_option<'de, D, K, V>(
     deserializer: D,
