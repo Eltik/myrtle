@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -59,18 +58,6 @@ impl core::fmt::Debug for enum__Torappu_HotUpdateMetaPicData_PicType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_HotUpdateMetaPicData_PicType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_HotUpdateMetaPicData_PicType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -365,41 +352,6 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaPicDataArgs<'a> {
             logoId: None,
             color: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_HotUpdateMetaPicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaPicData", 9)?;
-        if let Some(f) = self.picId() {
-            s.serialize_field("picId", &f)?;
-        } else {
-            s.skip_field("picId")?;
-        }
-        s.serialize_field("groupId", &self.groupId())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.textList() {
-            s.serialize_field("textList", &f)?;
-        } else {
-            s.skip_field("textList")?;
-        }
-        s.serialize_field("picType", &self.picType())?;
-        if let Some(f) = self.logoId() {
-            s.serialize_field("logoId", &f)?;
-        } else {
-            s.skip_field("logoId")?;
-        }
-        if let Some(f) = self.color() {
-            s.serialize_field("color", &f)?;
-        } else {
-            s.skip_field("color")?;
-        }
-        s.end()
     }
 }
 
@@ -708,28 +660,6 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaMovieDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_HotUpdateMetaMovieData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaMovieData", 4)?;
-        if let Some(f) = self.videoId() {
-            s.serialize_field("videoId", &f)?;
-        } else {
-            s.skip_field("videoId")?;
-        }
-        if let Some(f) = self.videoPath() {
-            s.serialize_field("videoPath", &f)?;
-        } else {
-            s.skip_field("videoPath")?;
-        }
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_HotUpdateMetaMovieDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -948,26 +878,6 @@ impl<'a> Default for clz_Torappu_HotUpdateMetaTableArgs<'a> {
             picList: None,
             movieInfo: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_HotUpdateMetaTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_HotUpdateMetaTable", 2)?;
-        if let Some(f) = self.picList() {
-            s.serialize_field("picList", &f)?;
-        } else {
-            s.skip_field("picList")?;
-        }
-        if let Some(f) = self.movieInfo() {
-            s.serialize_field("movieInfo", &f)?;
-        } else {
-            s.skip_field("movieInfo")?;
-        }
-        s.end()
     }
 }
 

@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -97,18 +96,6 @@ impl core::fmt::Debug for enum__Torappu_StageType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_StageType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -225,18 +212,6 @@ impl core::fmt::Debug for enum__Torappu_LevelData_Difficulty {
         }
     }
 }
-impl Serialize for enum__Torappu_LevelData_Difficulty {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_LevelData_Difficulty",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_LevelData_Difficulty {
     type Inner = Self;
@@ -331,18 +306,6 @@ impl core::fmt::Debug for enum__Torappu_StageData_PerformanceStageFlag {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_StageData_PerformanceStageFlag {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageData_PerformanceStageFlag",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -450,18 +413,6 @@ impl core::fmt::Debug for enum__Torappu_StageDiffGroup {
         }
     }
 }
-impl Serialize for enum__Torappu_StageDiffGroup {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageDiffGroup",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageDiffGroup {
     type Inner = Self;
@@ -562,18 +513,6 @@ impl core::fmt::Debug for enum__Torappu_PlayerBattleRank {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_PlayerBattleRank {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_PlayerBattleRank",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -694,18 +633,6 @@ impl core::fmt::Debug for enum__Torappu_AppearanceStyle {
         }
     }
 }
-impl Serialize for enum__Torappu_AppearanceStyle {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AppearanceStyle",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AppearanceStyle {
     type Inner = Self;
@@ -761,13 +688,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -859,6 +786,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -957,9 +886,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -1052,6 +983,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -1147,6 +1080,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -1158,18 +1093,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1314,18 +1237,6 @@ impl core::fmt::Debug for enum__Torappu_StageDropType {
         }
     }
 }
-impl Serialize for enum__Torappu_StageDropType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageDropType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageDropType {
     type Inner = Self;
@@ -1444,18 +1355,6 @@ impl core::fmt::Debug for enum__Torappu_OccPer {
         }
     }
 }
-impl Serialize for enum__Torappu_OccPer {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_OccPer",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_OccPer {
     type Inner = Self;
@@ -1552,18 +1451,6 @@ impl core::fmt::Debug for enum__Torappu_StageData_SpecialStageUnlockProgressType
         }
     }
 }
-impl Serialize for enum__Torappu_StageData_SpecialStageUnlockProgressType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageData_SpecialStageUnlockProgressType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StageData_SpecialStageUnlockProgressType {
     type Inner = Self;
@@ -1655,18 +1542,6 @@ impl core::fmt::Debug for enum__Torappu_FogType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_FogType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_FogType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1763,18 +1638,6 @@ impl core::fmt::Debug for enum__Torappu_StageButtonInFogRenderType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_StageButtonInFogRenderType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StageButtonInFogRenderType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1887,18 +1750,6 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         }
     }
 }
-impl Serialize for enum__Torappu_EvolvePhase {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EvolvePhase",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_EvolvePhase {
     type Inner = Self;
@@ -1994,18 +1845,6 @@ impl core::fmt::Debug for enum__Torappu_OverrideGameMode {
         }
     }
 }
-impl Serialize for enum__Torappu_OverrideGameMode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_OverrideGameMode",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_OverrideGameMode {
     type Inner = Self;
@@ -2099,18 +1938,6 @@ impl core::fmt::Debug for enum__Torappu_StorylineType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_StorylineType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StorylineType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2220,18 +2047,6 @@ impl core::fmt::Debug for enum__Torappu_StorylineLocationType {
         }
     }
 }
-impl Serialize for enum__Torappu_StorylineLocationType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StorylineLocationType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StorylineLocationType {
     type Inner = Self;
@@ -2331,18 +2146,6 @@ impl core::fmt::Debug for enum__Torappu_StorylineStorySetType {
         }
     }
 }
-impl Serialize for enum__Torappu_StorylineStorySetType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_StorylineStorySetType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_StorylineStorySetType {
     type Inner = Self;
@@ -2393,6 +2196,207 @@ impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_StorylineStorySetType 
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
+pub const ENUM_MIN_ENUM__TORAPPU_CGGALLERY_CGSOURCE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_CGGALLERY_CGSOURCE: i32 = 2;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_CGGALLERY_CGSOURCE: [enum__Torappu_CGGalleryCGSource; 3] = [
+    enum__Torappu_CGGalleryCGSource::IMAGE,
+    enum__Torappu_CGGalleryCGSource::BACKGROUND,
+    enum__Torappu_CGGalleryCGSource::ITEM,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_CGGalleryCGSource(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_CGGalleryCGSource {
+    pub const IMAGE: Self = Self(0);
+    pub const BACKGROUND: Self = Self(1);
+    pub const ITEM: Self = Self(2);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 2;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::IMAGE, Self::BACKGROUND, Self::ITEM];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::IMAGE => Some("IMAGE"),
+            Self::BACKGROUND => Some("BACKGROUND"),
+            Self::ITEM => Some("ITEM"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_CGGalleryCGSource {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CGGalleryCGSource {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_CGGalleryCGSource {
+    type Output = enum__Torappu_CGGalleryCGSource;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_CGGalleryCGSource {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_CGGalleryCGSource {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_CGGalleryCGSource {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_CGGALLERY_CGCOMPOSITE_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_CGGALLERY_CGCOMPOSITE_TYPE: i32 = 3;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_CGGALLERY_CGCOMPOSITE_TYPE:
+    [enum__Torappu_CGGalleryCGCompositeType; 4] = [
+    enum__Torappu_CGGalleryCGCompositeType::NONE,
+    enum__Torappu_CGGalleryCGCompositeType::HORIZONTAL,
+    enum__Torappu_CGGalleryCGCompositeType::VERTICAL,
+    enum__Torappu_CGGalleryCGCompositeType::GRID,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_CGGalleryCGCompositeType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_CGGalleryCGCompositeType {
+    pub const NONE: Self = Self(0);
+    pub const HORIZONTAL: Self = Self(1);
+    pub const VERTICAL: Self = Self(2);
+    pub const GRID: Self = Self(3);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_VALUES: &'static [Self] =
+        &[Self::NONE, Self::HORIZONTAL, Self::VERTICAL, Self::GRID];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::HORIZONTAL => Some("HORIZONTAL"),
+            Self::VERTICAL => Some("VERTICAL"),
+            Self::GRID => Some("GRID"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_CGGalleryCGCompositeType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CGGalleryCGCompositeType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_CGGalleryCGCompositeType {
+    type Output = enum__Torappu_CGGalleryCGCompositeType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_CGGalleryCGCompositeType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_CGGalleryCGCompositeType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_CGGalleryCGCompositeType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
 pub const ENUM_MIN_ENUM__TORAPPU_SIX_STAR_MILESTONE_REWARD_TYPE: i32 = 0;
 #[deprecated(
     since = "2.0.0",
@@ -2437,18 +2441,6 @@ impl core::fmt::Debug for enum__Torappu_SixStarMilestoneRewardType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SixStarMilestoneRewardType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SixStarMilestoneRewardType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2541,18 +2533,6 @@ impl core::fmt::Debug for enum__Torappu_SixStarStageCompatibleDropType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SixStarStageCompatibleDropType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SixStarStageCompatibleDropType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2705,22 +2685,6 @@ impl<'a> Default for clz_Torappu_StageData_ConditionDescArgs<'a> {
             stageId: None,
             completeState: enum__Torappu_PlayerBattleRank::ERR_ZERO,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_ConditionDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_ConditionDesc", 2)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.serialize_field("completeState", &self.completeState())?;
-        s.end()
     }
 }
 
@@ -2913,23 +2877,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -3169,25 +3116,6 @@ impl<'a> Default for clz_Torappu_WeightItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_WeightItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_WeightItemBundle", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("dropType", &self.dropType())?;
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_WeightItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3383,21 +3311,6 @@ impl<'a> Default for list_clz_Torappu_WeightItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for list_clz_Torappu_WeightItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("list_clz_Torappu_WeightItemBundle", 1)?;
-        if let Some(f) = self.values() {
-            s.serialize_field("values", &f)?;
-        } else {
-            s.skip_field("values")?;
-        }
-        s.end()
-    }
-}
-
 pub struct list_clz_Torappu_WeightItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3587,23 +3500,6 @@ impl<'a> Default for clz_Torappu_StageData_DisplayRewardsArgs<'a> {
             id: None,
             dropType: enum__Torappu_StageDropType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_DisplayRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayRewards", 3)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("dropType", &self.dropType())?;
-        s.end()
     }
 }
 
@@ -3839,24 +3735,6 @@ impl<'a> Default for clz_Torappu_StageData_DisplayDetailRewardsArgs<'a> {
             id: None,
             dropType: enum__Torappu_StageDropType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_DisplayDetailRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_DisplayDetailRewards", 4)?;
-        s.serialize_field("occPercent", &self.occPercent())?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("dropType", &self.dropType())?;
-        s.end()
     }
 }
 
@@ -4278,46 +4156,6 @@ impl<'a> Default for clz_Torappu_StageData_StageDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageData_StageDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_StageDropInfo", 6)?;
-        if let Some(f) = self.firstPassRewards() {
-            s.serialize_field("firstPassRewards", &f)?;
-        } else {
-            s.skip_field("firstPassRewards")?;
-        }
-        if let Some(f) = self.firstCompleteRewards() {
-            s.serialize_field("firstCompleteRewards", &f)?;
-        } else {
-            s.skip_field("firstCompleteRewards")?;
-        }
-        if let Some(f) = self.passRewards() {
-            s.serialize_field("passRewards", &f)?;
-        } else {
-            s.skip_field("passRewards")?;
-        }
-        if let Some(f) = self.completeRewards() {
-            s.serialize_field("completeRewards", &f)?;
-        } else {
-            s.skip_field("completeRewards")?;
-        }
-        if let Some(f) = self.displayRewards() {
-            s.serialize_field("displayRewards", &f)?;
-        } else {
-            s.skip_field("displayRewards")?;
-        }
-        if let Some(f) = self.displayDetailRewards() {
-            s.serialize_field("displayDetailRewards", &f)?;
-        } else {
-            s.skip_field("displayDetailRewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageData_StageDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4637,27 +4475,6 @@ impl<'a> Default for clz_Torappu_StageData_ExtraConditionDescArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageData_ExtraConditionDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_ExtraConditionDesc", 3)?;
-        s.serialize_field("index", &self.index())?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageData_ExtraConditionDescBuilder<
     'a: 'b,
     'b,
@@ -4861,22 +4678,6 @@ impl<'a> Default for dict__int__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__int__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5054,22 +4855,6 @@ impl<'a> Default for clz_Torappu_StageData_SpecialProgressInfoArgs<'a> {
             progressType: enum__Torappu_StageData_SpecialStageUnlockProgressType::ONCE,
             descList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_SpecialProgressInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_SpecialProgressInfo", 2)?;
-        s.serialize_field("progressType", &self.progressType())?;
-        if let Some(f) = self.descList() {
-            s.serialize_field("descList", &f)?;
-        } else {
-            s.skip_field("descList")?;
-        }
-        s.end()
     }
 }
 
@@ -5373,46 +5158,6 @@ impl<'a> Default for clz_Torappu_StageData_SpecialStoryInfoArgs<'a> {
             keyItemId: None,
             unlockDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageData_SpecialStoryInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData_SpecialStoryInfo", 6)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.progressInfo() {
-            s.serialize_field("progressInfo", &f)?;
-        } else {
-            s.skip_field("progressInfo")?;
-        }
-        if let Some(f) = self.imageId() {
-            s.serialize_field("imageId", &f)?;
-        } else {
-            s.skip_field("imageId")?;
-        }
-        if let Some(f) = self.keyItemId() {
-            s.serialize_field("keyItemId", &f)?;
-        } else {
-            s.skip_field("keyItemId")?;
-        }
-        if let Some(f) = self.unlockDesc() {
-            s.serialize_field("unlockDesc", &f)?;
-        } else {
-            s.skip_field("unlockDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -6963,172 +6708,6 @@ impl<'a> Default for clz_Torappu_StageDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageData", 61)?;
-        s.serialize_field("stageType", &self.stageType())?;
-        s.serialize_field("difficulty", &self.difficulty())?;
-        s.serialize_field("performanceStageFlag", &self.performanceStageFlag())?;
-        s.serialize_field("diffGroup", &self.diffGroup())?;
-        if let Some(f) = self.unlockCondition() {
-            s.serialize_field("unlockCondition", &f)?;
-        } else {
-            s.skip_field("unlockCondition")?;
-        }
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.levelId() {
-            s.serialize_field("levelId", &f)?;
-        } else {
-            s.skip_field("levelId")?;
-        }
-        if let Some(f) = self.zoneId() {
-            s.serialize_field("zoneId", &f)?;
-        } else {
-            s.skip_field("zoneId")?;
-        }
-        if let Some(f) = self.code() {
-            s.serialize_field("code", &f)?;
-        } else {
-            s.skip_field("code")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.hardStagedId() {
-            s.serialize_field("hardStagedId", &f)?;
-        } else {
-            s.skip_field("hardStagedId")?;
-        }
-        if let Some(f) = self.sixStarStageId() {
-            s.serialize_field("sixStarStageId", &f)?;
-        } else {
-            s.skip_field("sixStarStageId")?;
-        }
-        if let Some(f) = self.dangerLevel() {
-            s.serialize_field("dangerLevel", &f)?;
-        } else {
-            s.skip_field("dangerLevel")?;
-        }
-        s.serialize_field("dangerPoint", &self.dangerPoint())?;
-        if let Some(f) = self.loadingPicId() {
-            s.serialize_field("loadingPicId", &f)?;
-        } else {
-            s.skip_field("loadingPicId")?;
-        }
-        s.serialize_field("canPractice", &self.canPractice())?;
-        s.serialize_field("canBattleReplay", &self.canBattleReplay())?;
-        s.serialize_field("apCost", &self.apCost())?;
-        s.serialize_field("apFailReturn", &self.apFailReturn())?;
-        s.serialize_field("maxSlot", &self.maxSlot())?;
-        if let Some(f) = self.etItemId() {
-            s.serialize_field("etItemId", &f)?;
-        } else {
-            s.skip_field("etItemId")?;
-        }
-        s.serialize_field("etCost", &self.etCost())?;
-        s.serialize_field("etFailReturn", &self.etFailReturn())?;
-        if let Some(f) = self.etButtonStyle() {
-            s.serialize_field("etButtonStyle", &f)?;
-        } else {
-            s.skip_field("etButtonStyle")?;
-        }
-        s.serialize_field("apProtectTimes", &self.apProtectTimes())?;
-        s.serialize_field("diamondOnceDrop", &self.diamondOnceDrop())?;
-        s.serialize_field("practiceTicketCost", &self.practiceTicketCost())?;
-        s.serialize_field("dailyStageDifficulty", &self.dailyStageDifficulty())?;
-        s.serialize_field("expGain", &self.expGain())?;
-        s.serialize_field("goldGain", &self.goldGain())?;
-        s.serialize_field("loseExpGain", &self.loseExpGain())?;
-        s.serialize_field("loseGoldGain", &self.loseGoldGain())?;
-        s.serialize_field("passFavor", &self.passFavor())?;
-        s.serialize_field("completeFavor", &self.completeFavor())?;
-        s.serialize_field("slProgress", &self.slProgress())?;
-        if let Some(f) = self.displayMainItem() {
-            s.serialize_field("displayMainItem", &f)?;
-        } else {
-            s.skip_field("displayMainItem")?;
-        }
-        s.serialize_field("hilightMark", &self.hilightMark())?;
-        s.serialize_field("bossMark", &self.bossMark())?;
-        s.serialize_field("isPredefined", &self.isPredefined())?;
-        s.serialize_field("isHardPredefined", &self.isHardPredefined())?;
-        s.serialize_field(
-            "isSkillSelectablePredefined",
-            &self.isSkillSelectablePredefined(),
-        )?;
-        s.serialize_field("isStoryOnly", &self.isStoryOnly())?;
-        s.serialize_field("appearanceStyle", &self.appearanceStyle())?;
-        if let Some(f) = self.stageDropInfo() {
-            s.serialize_field("stageDropInfo", &f)?;
-        } else {
-            s.skip_field("stageDropInfo")?;
-        }
-        s.serialize_field("canUseCharm", &self.canUseCharm())?;
-        s.serialize_field("canUseTech", &self.canUseTech())?;
-        s.serialize_field("canUseTrapTool", &self.canUseTrapTool())?;
-        s.serialize_field("canUseBattlePerformance", &self.canUseBattlePerformance())?;
-        s.serialize_field("canUseFirework", &self.canUseFirework())?;
-        s.serialize_field("canMultipleBattle", &self.canMultipleBattle())?;
-        if let Some(f) = self.startButtonOverrideId() {
-            s.serialize_field("startButtonOverrideId", &f)?;
-        } else {
-            s.skip_field("startButtonOverrideId")?;
-        }
-        s.serialize_field("isStagePatch", &self.isStagePatch())?;
-        if let Some(f) = self.mainStageId() {
-            s.serialize_field("mainStageId", &f)?;
-        } else {
-            s.skip_field("mainStageId")?;
-        }
-        if let Some(f) = self.extraCondition() {
-            s.serialize_field("extraCondition", &f)?;
-        } else {
-            s.skip_field("extraCondition")?;
-        }
-        if let Some(f) = self.extraInfo() {
-            s.serialize_field("extraInfo", &f)?;
-        } else {
-            s.skip_field("extraInfo")?;
-        }
-        if let Some(f) = self.sixStarBaseDesc() {
-            s.serialize_field("sixStarBaseDesc", &f)?;
-        } else {
-            s.skip_field("sixStarBaseDesc")?;
-        }
-        if let Some(f) = self.sixStarDisplayRewardList() {
-            s.serialize_field("sixStarDisplayRewardList", &f)?;
-        } else {
-            s.skip_field("sixStarDisplayRewardList")?;
-        }
-        if let Some(f) = self.advancedRuneIdList1() {
-            s.serialize_field("advancedRuneIdList1", &f)?;
-        } else {
-            s.skip_field("advancedRuneIdList1")?;
-        }
-        if let Some(f) = self.advancedRuneIdList2() {
-            s.serialize_field("advancedRuneIdList2", &f)?;
-        } else {
-            s.skip_field("advancedRuneIdList2")?;
-        }
-        s.serialize_field("useSpecialSizeMapPreview", &self.useSpecialSizeMapPreview())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8073,22 +7652,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8278,27 +7841,6 @@ impl<'a> Default for clz_Torappu_RuneStageGroupData_RuneStageInstArgs<'a> {
             stageId: None,
             activePackedRuneIds: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RuneStageGroupData_RuneStageInst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RuneStageGroupData_RuneStageInst", 2)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.activePackedRuneIds() {
-            s.serialize_field("activePackedRuneIds", &f)?;
-        } else {
-            s.skip_field("activePackedRuneIds")?;
-        }
-        s.end()
     }
 }
 
@@ -8554,28 +8096,6 @@ impl<'a> Default for clz_Torappu_RuneStageGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RuneStageGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RuneStageGroupData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.activeRuneStages() {
-            s.serialize_field("activeRuneStages", &f)?;
-        } else {
-            s.skip_field("activeRuneStages")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RuneStageGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -8798,23 +8318,6 @@ impl<'a> Default for dict__string__clz_Torappu_RuneStageGroupDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RuneStageGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RuneStageGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -9113,46 +8616,6 @@ impl<'a> Default for clz_Torappu_MapThemeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MapThemeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MapThemeData", 6)?;
-        if let Some(f) = self.themeId() {
-            s.serialize_field("themeId", &f)?;
-        } else {
-            s.skip_field("themeId")?;
-        }
-        if let Some(f) = self.unitColor() {
-            s.serialize_field("unitColor", &f)?;
-        } else {
-            s.skip_field("unitColor")?;
-        }
-        if let Some(f) = self.buildableColor() {
-            s.serialize_field("buildableColor", &f)?;
-        } else {
-            s.skip_field("buildableColor")?;
-        }
-        if let Some(f) = self.themeType() {
-            s.serialize_field("themeType", &f)?;
-        } else {
-            s.skip_field("themeType")?;
-        }
-        if let Some(f) = self.trapTintColor() {
-            s.serialize_field("trapTintColor", &f)?;
-        } else {
-            s.skip_field("trapTintColor")?;
-        }
-        if let Some(f) = self.emissionColor() {
-            s.serialize_field("emissionColor", &f)?;
-        } else {
-            s.skip_field("emissionColor")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MapThemeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9395,22 +8858,6 @@ impl<'a> Default for dict__string__clz_Torappu_MapThemeDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MapThemeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MapThemeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MapThemeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -9637,32 +9084,6 @@ impl<'a> Default for clz_Torappu_TileAppendInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TileAppendInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TileAppendInfo", 4)?;
-        if let Some(f) = self.tileKey() {
-            s.serialize_field("tileKey", &f)?;
-        } else {
-            s.skip_field("tileKey")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("isFunctional", &self.isFunctional())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TileAppendInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9879,22 +9300,6 @@ impl<'a> Default for dict__string__clz_Torappu_TileAppendInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_TileAppendInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_TileAppendInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -10127,28 +9532,6 @@ impl<'a> Default for clz_Torappu_WeeklyForceOpenTableArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_WeeklyForceOpenTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_WeeklyForceOpenTable", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.forceOpenList() {
-            s.serialize_field("forceOpenList", &f)?;
-        } else {
-            s.skip_field("forceOpenList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_WeeklyForceOpenTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10376,23 +9759,6 @@ impl<'a> Default for dict__string__clz_Torappu_WeeklyForceOpenTableArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_WeeklyForceOpenTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_WeeklyForceOpenTable", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_WeeklyForceOpenTableBuilder<
     'a: 'b,
     'b,
@@ -10590,18 +9956,6 @@ impl<'a> Default for dict__string__longArgs<'a> {
             key: None, // required field
             value: 0,
         }
-    }
-}
-
-impl Serialize for dict__string__long<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__long", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
     }
 }
 
@@ -11000,59 +10354,6 @@ impl<'a> Default for clz_Torappu_TimelyDropTimeInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TimelyDropTimeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TimelyDropTimeInfo", 11)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        if let Some(f) = self.stagePic() {
-            s.serialize_field("stagePic", &f)?;
-        } else {
-            s.skip_field("stagePic")?;
-        }
-        if let Some(f) = self.dropPicId() {
-            s.serialize_field("dropPicId", &f)?;
-        } else {
-            s.skip_field("dropPicId")?;
-        }
-        if let Some(f) = self.stageUnlock() {
-            s.serialize_field("stageUnlock", &f)?;
-        } else {
-            s.skip_field("stageUnlock")?;
-        }
-        if let Some(f) = self.entranceDownPicId() {
-            s.serialize_field("entranceDownPicId", &f)?;
-        } else {
-            s.skip_field("entranceDownPicId")?;
-        }
-        if let Some(f) = self.entranceUpPicId() {
-            s.serialize_field("entranceUpPicId", &f)?;
-        } else {
-            s.skip_field("entranceUpPicId")?;
-        }
-        if let Some(f) = self.timelyGroupId() {
-            s.serialize_field("timelyGroupId", &f)?;
-        } else {
-            s.skip_field("timelyGroupId")?;
-        }
-        if let Some(f) = self.weeklyPicId() {
-            s.serialize_field("weeklyPicId", &f)?;
-        } else {
-            s.skip_field("weeklyPicId")?;
-        }
-        s.serialize_field("isReplace", &self.isReplace())?;
-        if let Some(f) = self.apSupplyOutOfDateDict() {
-            s.serialize_field("apSupplyOutOfDateDict", &f)?;
-        } else {
-            s.skip_field("apSupplyOutOfDateDict")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TimelyDropTimeInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11363,23 +10664,6 @@ impl<'a> Default for dict__string__clz_Torappu_TimelyDropTimeInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_TimelyDropTimeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_TimelyDropTimeInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_TimelyDropTimeInfoBuilder<
     'a: 'b,
     'b,
@@ -11588,23 +10872,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageData_StageDropInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_StageData_StageDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_StageData_StageDropInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -12055,69 +11322,6 @@ impl<'a> Default for clz_Torappu_OverrideDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_OverrideDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OverrideDropInfo", 13)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        if let Some(f) = self.zoneRange() {
-            s.serialize_field("zoneRange", &f)?;
-        } else {
-            s.skip_field("zoneRange")?;
-        }
-        s.serialize_field("times", &self.times())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.egName() {
-            s.serialize_field("egName", &f)?;
-        } else {
-            s.skip_field("egName")?;
-        }
-        if let Some(f) = self.desc1() {
-            s.serialize_field("desc1", &f)?;
-        } else {
-            s.skip_field("desc1")?;
-        }
-        if let Some(f) = self.desc2() {
-            s.serialize_field("desc2", &f)?;
-        } else {
-            s.skip_field("desc2")?;
-        }
-        if let Some(f) = self.desc3() {
-            s.serialize_field("desc3", &f)?;
-        } else {
-            s.skip_field("desc3")?;
-        }
-        if let Some(f) = self.dropTag() {
-            s.serialize_field("dropTag", &f)?;
-        } else {
-            s.skip_field("dropTag")?;
-        }
-        if let Some(f) = self.dropTypeDesc() {
-            s.serialize_field("dropTypeDesc", &f)?;
-        } else {
-            s.skip_field("dropTypeDesc")?;
-        }
-        if let Some(f) = self.dropInfo() {
-            s.serialize_field("dropInfo", &f)?;
-        } else {
-            s.skip_field("dropInfo")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_OverrideDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -12449,22 +11653,6 @@ impl<'a> Default for dict__string__clz_Torappu_OverrideDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_OverrideDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_OverrideDropInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_OverrideDropInfoBuilder<
     'a: 'b,
     'b,
@@ -12687,23 +11875,6 @@ impl<'a> Default for dict__string__list_clz_Torappu_StageData_ConditionDescArgs<
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_clz_Torappu_StageData_ConditionDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__list_clz_Torappu_StageData_ConditionDesc", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -12975,28 +12146,6 @@ impl<'a> Default for clz_Torappu_OverrideUnlockInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_OverrideUnlockInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OverrideUnlockInfo", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.unlockDict() {
-            s.serialize_field("unlockDict", &f)?;
-        } else {
-            s.skip_field("unlockDict")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_OverrideUnlockInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13224,23 +12373,6 @@ impl<'a> Default for dict__string__clz_Torappu_OverrideUnlockInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_OverrideUnlockInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_OverrideUnlockInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_OverrideUnlockInfoBuilder<
     'a: 'b,
     'b,
@@ -13430,21 +12562,6 @@ impl<'a> Default for clz_Torappu_TimelyDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TimelyDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TimelyDropInfo", 1)?;
-        if let Some(f) = self.dropInfo() {
-            s.serialize_field("dropInfo", &f)?;
-        } else {
-            s.skip_field("dropInfo")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TimelyDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -13631,22 +12748,6 @@ impl<'a> Default for dict__string__clz_Torappu_TimelyDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_TimelyDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_TimelyDropInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_TimelyDropInfoBuilder<
     'a: 'b,
     'b,
@@ -13821,18 +12922,6 @@ impl<'a> Default for clz_Torappu_StageValidInfoArgs {
             startTs: 0,
             endTs: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageValidInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageValidInfo", 2)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
     }
 }
 
@@ -14017,22 +13106,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageValidInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_StageValidInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageValidInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -14436,58 +13509,6 @@ impl<'a> Default for clz_Torappu_StageFogInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageFogInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageFogInfo", 11)?;
-        if let Some(f) = self.lockId() {
-            s.serialize_field("lockId", &f)?;
-        } else {
-            s.skip_field("lockId")?;
-        }
-        s.serialize_field("fogType", &self.fogType())?;
-        s.serialize_field(
-            "stageButtonInFogRenderType",
-            &self.stageButtonInFogRenderType(),
-        )?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.lockName() {
-            s.serialize_field("lockName", &f)?;
-        } else {
-            s.skip_field("lockName")?;
-        }
-        if let Some(f) = self.lockDesc() {
-            s.serialize_field("lockDesc", &f)?;
-        } else {
-            s.skip_field("lockDesc")?;
-        }
-        if let Some(f) = self.unlockItemId() {
-            s.serialize_field("unlockItemId", &f)?;
-        } else {
-            s.skip_field("unlockItemId")?;
-        }
-        s.serialize_field("unlockItemType", &self.unlockItemType())?;
-        s.serialize_field("unlockItemNum", &self.unlockItemNum())?;
-        if let Some(f) = self.preposedStageId() {
-            s.serialize_field("preposedStageId", &f)?;
-        } else {
-            s.skip_field("preposedStageId")?;
-        }
-        if let Some(f) = self.preposedLockId() {
-            s.serialize_field("preposedLockId", &f)?;
-        } else {
-            s.skip_field("preposedLockId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageFogInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14798,22 +13819,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageFogInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StageFogInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageFogInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StageFogInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -14994,22 +13999,6 @@ impl<'a> Default for clz_Torappu_StageStartCond_RequireCharArgs<'a> {
             charId: None,
             evolvePhase: enum__Torappu_EvolvePhase::PHASE_0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageStartCond_RequireChar<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageStartCond_RequireChar", 2)?;
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        s.serialize_field("evolvePhase", &self.evolvePhase())?;
-        s.end()
     }
 }
 
@@ -15242,27 +14231,6 @@ impl<'a> Default for clz_Torappu_StageStartCondArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageStartCond<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageStartCond", 3)?;
-        if let Some(f) = self.requireChars() {
-            s.serialize_field("requireChars", &f)?;
-        } else {
-            s.skip_field("requireChars")?;
-        }
-        if let Some(f) = self.excludeAssists() {
-            s.serialize_field("excludeAssists", &f)?;
-        } else {
-            s.skip_field("excludeAssists")?;
-        }
-        s.serialize_field("isNotPass", &self.isNotPass())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageStartCondBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15486,22 +14454,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageStartCondArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StageStartCond<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StageStartCond", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StageStartCondBuilder<
     'a: 'b,
     'b,
@@ -15713,31 +14665,6 @@ impl<'a> Default for clz_Torappu_StageDiffGroupTableArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StageDiffGroupTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageDiffGroupTable", 3)?;
-        if let Some(f) = self.normalId() {
-            s.serialize_field("normalId", &f)?;
-        } else {
-            s.skip_field("normalId")?;
-        }
-        if let Some(f) = self.toughId() {
-            s.serialize_field("toughId", &f)?;
-        } else {
-            s.skip_field("toughId")?;
-        }
-        if let Some(f) = self.easyId() {
-            s.serialize_field("easyId", &f)?;
-        } else {
-            s.skip_field("easyId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StageDiffGroupTableBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -15941,23 +14868,6 @@ impl<'a> Default for dict__string__clz_Torappu_StageDiffGroupTableArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_StageDiffGroupTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_StageDiffGroupTable", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -16205,32 +15115,6 @@ impl<'a> Default for clz_Torappu_StoryStageShowGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StoryStageShowGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StoryStageShowGroup", 4)?;
-        if let Some(f) = self.displayRecordId() {
-            s.serialize_field("displayRecordId", &f)?;
-        } else {
-            s.skip_field("displayRecordId")?;
-        }
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.accordingStageId() {
-            s.serialize_field("accordingStageId", &f)?;
-        } else {
-            s.skip_field("accordingStageId")?;
-        }
-        s.serialize_field("diffGroup", &self.diffGroup())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StoryStageShowGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16458,25 +15342,6 @@ impl<'a> Default for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageS
             key: enum__Torappu_StageDiffGroup::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -16732,24 +15597,6 @@ impl<'a> Default
     }
 }
 
-impl Serialize
-    for dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroup", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_dict__enum__Torappu_StageDiffGroup__clz_Torappu_StoryStageShowGroupBuilder<
     'a: 'b,
     'b,
@@ -16957,22 +15804,6 @@ impl<'a> Default for clz_Torappu_SpecialBattleFinishStageDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialBattleFinishStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialBattleFinishStageData", 2)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.serialize_field("skipAccomplishPerform", &self.skipAccomplishPerform())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialBattleFinishStageDataBuilder<
     'a: 'b,
     'b,
@@ -17177,23 +16008,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpecialBattleFinishStageDataArgs<
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SpecialBattleFinishStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SpecialBattleFinishStageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SpecialBattleFinishStageDataBuilder<
     'a: 'b,
     'b,
@@ -17392,26 +16206,6 @@ impl<'a> Default for clz_Torappu_RecordRewardServerDataArgs<'a> {
             stageId: None,
             rewards: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RecordRewardServerData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RecordRewardServerData", 2)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.end()
     }
 }
 
@@ -17619,23 +16413,6 @@ impl<'a> Default for dict__string__clz_Torappu_RecordRewardServerDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RecordRewardServerData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RecordRewardServerData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RecordRewardServerDataBuilder<
     'a: 'b,
     'b,
@@ -17818,18 +16595,6 @@ impl<'a> Default for clz_Torappu_ApProtectZoneInfo_TimeRangeArgs {
             startTs: 0,
             endTs: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ApProtectZoneInfo_TimeRange<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ApProtectZoneInfo_TimeRange", 2)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
     }
 }
 
@@ -18032,26 +16797,6 @@ impl<'a> Default for clz_Torappu_ApProtectZoneInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ApProtectZoneInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ApProtectZoneInfo", 2)?;
-        if let Some(f) = self.zoneId() {
-            s.serialize_field("zoneId", &f)?;
-        } else {
-            s.skip_field("zoneId")?;
-        }
-        if let Some(f) = self.timeRanges() {
-            s.serialize_field("timeRanges", &f)?;
-        } else {
-            s.skip_field("timeRanges")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ApProtectZoneInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -18251,23 +16996,6 @@ impl<'a> Default for dict__string__clz_Torappu_ApProtectZoneInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ApProtectZoneInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ApProtectZoneInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -18474,22 +17202,6 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__list_string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -18650,17 +17362,6 @@ impl<'a> Default for clz_Torappu_ActCustomStageDataArgs {
         clz_Torappu_ActCustomStageDataArgs {
             overrideGameMode: enum__Torappu_OverrideGameMode::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActCustomStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActCustomStageData", 1)?;
-        s.serialize_field("overrideGameMode", &self.overrideGameMode())?;
-        s.end()
     }
 }
 
@@ -18842,23 +17543,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActCustomStageDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActCustomStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActCustomStageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -19047,26 +17731,6 @@ impl<'a> Default for clz_Torappu_StorylineMainlineSplitDataArgs<'a> {
             iconId: None,
             subName: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StorylineMainlineSplitData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineMainlineSplitData", 2)?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.subName() {
-            s.serialize_field("subName", &f)?;
-        } else {
-            s.skip_field("subName")?;
-        }
-        s.end()
     }
 }
 
@@ -19393,44 +18057,6 @@ impl<'a> Default for clz_Torappu_StorylineLocationDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineLocationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineLocationData", 8)?;
-        if let Some(f) = self.locationId() {
-            s.serialize_field("locationId", &f)?;
-        } else {
-            s.skip_field("locationId")?;
-        }
-        s.serialize_field("locationType", &self.locationType())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("startTime", &self.startTime())?;
-        if let Some(f) = self.presentStageId() {
-            s.serialize_field("presentStageId", &f)?;
-        } else {
-            s.skip_field("presentStageId")?;
-        }
-        if let Some(f) = self.unlockStageId() {
-            s.serialize_field("unlockStageId", &f)?;
-        } else {
-            s.skip_field("unlockStageId")?;
-        }
-        if let Some(f) = self.relevantStorySetId() {
-            s.serialize_field("relevantStorySetId", &f)?;
-        } else {
-            s.skip_field("relevantStorySetId")?;
-        }
-        if let Some(f) = self.mainlineSplitData() {
-            s.serialize_field("mainlineSplitData", &f)?;
-        } else {
-            s.skip_field("mainlineSplitData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineLocationDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -19706,23 +18332,6 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineLocationDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_StorylineLocationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_StorylineLocationData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -20126,50 +18735,6 @@ impl<'a> Default for clz_Torappu_StorylineDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineData", 10)?;
-        if let Some(f) = self.storylineId() {
-            s.serialize_field("storylineId", &f)?;
-        } else {
-            s.skip_field("storylineId")?;
-        }
-        s.serialize_field("storylineType", &self.storylineType())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.storylineName() {
-            s.serialize_field("storylineName", &f)?;
-        } else {
-            s.skip_field("storylineName")?;
-        }
-        if let Some(f) = self.storylineIconId() {
-            s.serialize_field("storylineIconId", &f)?;
-        } else {
-            s.skip_field("storylineIconId")?;
-        }
-        if let Some(f) = self.storylineLogoId() {
-            s.serialize_field("storylineLogoId", &f)?;
-        } else {
-            s.skip_field("storylineLogoId")?;
-        }
-        if let Some(f) = self.backgroundId() {
-            s.serialize_field("backgroundId", &f)?;
-        } else {
-            s.skip_field("backgroundId")?;
-        }
-        s.serialize_field("hasVideoToPlay", &self.hasVideoToPlay())?;
-        s.serialize_field("startTs", &self.startTs())?;
-        if let Some(f) = self.locations() {
-            s.serialize_field("locations", &f)?;
-        } else {
-            s.skip_field("locations")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -20469,22 +19034,6 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StorylineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StorylineData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StorylineDataBuilder<
     'a: 'b,
     'b,
@@ -20589,6 +19138,9 @@ impl<'a> clz_Torappu_StorylineMainlineData<'a> {
     pub const VT_ZONEID: flatbuffers::VOffsetT = 4;
     pub const VT_RETROID: flatbuffers::VOffsetT = 6;
     pub const VT_DECOIMAGEID: flatbuffers::VOffsetT = 8;
+    pub const VT_DESC: flatbuffers::VOffsetT = 10;
+    pub const VT_BACKGROUNDID: flatbuffers::VOffsetT = 12;
+    pub const VT_TAGS: flatbuffers::VOffsetT = 14;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -20600,6 +19152,15 @@ impl<'a> clz_Torappu_StorylineMainlineData<'a> {
         args: &'args clz_Torappu_StorylineMainlineDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineMainlineData<'bldr>> {
         let mut builder = clz_Torappu_StorylineMainlineDataBuilder::new(_fbb);
+        if let Some(x) = args.tags {
+            builder.add_tags(x);
+        }
+        if let Some(x) = args.backgroundId {
+            builder.add_backgroundId(x);
+        }
+        if let Some(x) = args.desc {
+            builder.add_desc(x);
+        }
         if let Some(x) = args.decoImageId {
             builder.add_decoImageId(x);
         }
@@ -20616,10 +19177,18 @@ impl<'a> clz_Torappu_StorylineMainlineData<'a> {
         let zoneId = self.zoneId().map(|x| x.to_string());
         let retroId = self.retroId().map(|x| x.to_string());
         let decoImageId = self.decoImageId().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let backgroundId = self.backgroundId().map(|x| x.to_string());
+        let tags = self
+            .tags()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
         clz_Torappu_StorylineMainlineDataT {
             zoneId,
             retroId,
             decoImageId,
+            desc,
+            backgroundId,
+            tags,
         }
     }
 
@@ -20659,6 +19228,41 @@ impl<'a> clz_Torappu_StorylineMainlineData<'a> {
             )
         }
     }
+    #[inline]
+    pub fn desc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_StorylineMainlineData::VT_DESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn backgroundId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_StorylineMainlineData::VT_BACKGROUNDID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn tags(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_StorylineMainlineData::VT_TAGS, None)
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_StorylineMainlineData<'_> {
@@ -20676,6 +19280,15 @@ impl flatbuffers::Verifiable for clz_Torappu_StorylineMainlineData<'_> {
                 Self::VT_DECOIMAGEID,
                 false,
             )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "backgroundId",
+                Self::VT_BACKGROUNDID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("tags", Self::VT_TAGS, false)?
             .finish();
         Ok(())
     }
@@ -20684,6 +19297,11 @@ pub struct clz_Torappu_StorylineMainlineDataArgs<'a> {
     pub zoneId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub retroId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub decoImageId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub backgroundId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub tags: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
 }
 impl<'a> Default for clz_Torappu_StorylineMainlineDataArgs<'a> {
     #[inline]
@@ -20692,32 +19310,10 @@ impl<'a> Default for clz_Torappu_StorylineMainlineDataArgs<'a> {
             zoneId: None,
             retroId: None,
             decoImageId: None,
+            desc: None,
+            backgroundId: None,
+            tags: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StorylineMainlineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineMainlineData", 3)?;
-        if let Some(f) = self.zoneId() {
-            s.serialize_field("zoneId", &f)?;
-        } else {
-            s.skip_field("zoneId")?;
-        }
-        if let Some(f) = self.retroId() {
-            s.serialize_field("retroId", &f)?;
-        } else {
-            s.skip_field("retroId")?;
-        }
-        if let Some(f) = self.decoImageId() {
-            s.serialize_field("decoImageId", &f)?;
-        } else {
-            s.skip_field("decoImageId")?;
-        }
-        s.end()
     }
 }
 
@@ -20750,6 +19346,32 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StorylineMainlineData::VT_DESC,
+            desc,
+        );
+    }
+    #[inline]
+    pub fn add_backgroundId(&mut self, backgroundId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StorylineMainlineData::VT_BACKGROUNDID,
+            backgroundId,
+        );
+    }
+    #[inline]
+    pub fn add_tags(
+        &mut self,
+        tags: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StorylineMainlineData::VT_TAGS,
+            tags,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_StorylineMainlineDataBuilder<'a, 'b, A> {
@@ -20772,6 +19394,9 @@ impl core::fmt::Debug for clz_Torappu_StorylineMainlineData<'_> {
         ds.field("zoneId", &self.zoneId());
         ds.field("retroId", &self.retroId());
         ds.field("decoImageId", &self.decoImageId());
+        ds.field("desc", &self.desc());
+        ds.field("backgroundId", &self.backgroundId());
+        ds.field("tags", &self.tags());
         ds.finish()
     }
 }
@@ -20781,6 +19406,9 @@ pub struct clz_Torappu_StorylineMainlineDataT {
     pub zoneId: Option<String>,
     pub retroId: Option<String>,
     pub decoImageId: Option<String>,
+    pub desc: Option<String>,
+    pub backgroundId: Option<String>,
+    pub tags: Option<Vec<String>>,
 }
 impl Default for clz_Torappu_StorylineMainlineDataT {
     fn default() -> Self {
@@ -20788,6 +19416,9 @@ impl Default for clz_Torappu_StorylineMainlineDataT {
             zoneId: None,
             retroId: None,
             decoImageId: None,
+            desc: None,
+            backgroundId: None,
+            tags: None,
         }
     }
 }
@@ -20799,12 +19430,21 @@ impl clz_Torappu_StorylineMainlineDataT {
         let zoneId = self.zoneId.as_ref().map(|x| _fbb.create_string(x));
         let retroId = self.retroId.as_ref().map(|x| _fbb.create_string(x));
         let decoImageId = self.decoImageId.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
+        let tags = self.tags.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
         clz_Torappu_StorylineMainlineData::create(
             _fbb,
             &clz_Torappu_StorylineMainlineDataArgs {
                 zoneId,
                 retroId,
                 decoImageId,
+                desc,
+                backgroundId,
+                tags,
             },
         )
     }
@@ -20827,15 +19467,14 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineSSData<'a> {
 }
 
 impl<'a> clz_Torappu_StorylineSSData<'a> {
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_DESC: flatbuffers::VOffsetT = 6;
-    pub const VT_BACKGROUNDID: flatbuffers::VOffsetT = 8;
-    pub const VT_TAGS: flatbuffers::VOffsetT = 10;
-    pub const VT_REOPENACTIVITYID: flatbuffers::VOffsetT = 12;
-    pub const VT_RETROACTIVITYID: flatbuffers::VOffsetT = 14;
-    pub const VT_ISRECOMMENDED: flatbuffers::VOffsetT = 16;
-    pub const VT_RECOMMENDHIDESTAGEID: flatbuffers::VOffsetT = 18;
-    pub const VT_OVERRIDESTAGELIST: flatbuffers::VOffsetT = 20;
+    pub const VT_DESC: flatbuffers::VOffsetT = 4;
+    pub const VT_BACKGROUNDID: flatbuffers::VOffsetT = 6;
+    pub const VT_TAGS: flatbuffers::VOffsetT = 8;
+    pub const VT_REOPENACTIVITYID: flatbuffers::VOffsetT = 10;
+    pub const VT_RETROACTIVITYID: flatbuffers::VOffsetT = 12;
+    pub const VT_ISRECOMMENDED: flatbuffers::VOffsetT = 14;
+    pub const VT_RECOMMENDHIDESTAGEID: flatbuffers::VOffsetT = 16;
+    pub const VT_OVERRIDESTAGELIST: flatbuffers::VOffsetT = 18;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -20868,15 +19507,11 @@ impl<'a> clz_Torappu_StorylineSSData<'a> {
         if let Some(x) = args.desc {
             builder.add_desc(x);
         }
-        if let Some(x) = args.name {
-            builder.add_name(x);
-        }
         builder.add_isRecommended(args.isRecommended);
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_StorylineSSDataT {
-        let name = self.name().map(|x| x.to_string());
         let desc = self.desc().map(|x| x.to_string());
         let backgroundId = self.backgroundId().map(|x| x.to_string());
         let tags = self
@@ -20890,7 +19525,6 @@ impl<'a> clz_Torappu_StorylineSSData<'a> {
             .overrideStageList()
             .map(|x| x.iter().map(|s| s.to_string()).collect());
         clz_Torappu_StorylineSSDataT {
-            name,
             desc,
             backgroundId,
             tags,
@@ -20902,18 +19536,6 @@ impl<'a> clz_Torappu_StorylineSSData<'a> {
         }
     }
 
-    #[inline]
-    pub fn name(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_StorylineSSData::VT_NAME,
-                None,
-            )
-        }
-    }
     #[inline]
     pub fn desc(&self) -> Option<&'a str> {
         // Safety:
@@ -21019,7 +19641,6 @@ impl flatbuffers::Verifiable for clz_Torappu_StorylineSSData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "backgroundId",
@@ -21053,7 +19674,6 @@ impl flatbuffers::Verifiable for clz_Torappu_StorylineSSData<'_> {
     }
 }
 pub struct clz_Torappu_StorylineSSDataArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
     pub backgroundId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub tags: Option<
@@ -21071,7 +19691,6 @@ impl<'a> Default for clz_Torappu_StorylineSSDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StorylineSSDataArgs {
-            name: None,
             desc: None,
             backgroundId: None,
             tags: None,
@@ -21084,69 +19703,11 @@ impl<'a> Default for clz_Torappu_StorylineSSDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineSSData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineSSData", 9)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.backgroundId() {
-            s.serialize_field("backgroundId", &f)?;
-        } else {
-            s.skip_field("backgroundId")?;
-        }
-        if let Some(f) = self.tags() {
-            s.serialize_field("tags", &f)?;
-        } else {
-            s.skip_field("tags")?;
-        }
-        if let Some(f) = self.reopenActivityId() {
-            s.serialize_field("reopenActivityId", &f)?;
-        } else {
-            s.skip_field("reopenActivityId")?;
-        }
-        if let Some(f) = self.retroActivityId() {
-            s.serialize_field("retroActivityId", &f)?;
-        } else {
-            s.skip_field("retroActivityId")?;
-        }
-        s.serialize_field("isRecommended", &self.isRecommended())?;
-        if let Some(f) = self.recommendHideStageId() {
-            s.serialize_field("recommendHideStageId", &f)?;
-        } else {
-            s.skip_field("recommendHideStageId")?;
-        }
-        if let Some(f) = self.overrideStageList() {
-            s.serialize_field("overrideStageList", &f)?;
-        } else {
-            s.skip_field("overrideStageList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineSSDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_StorylineSSDataBuilder<'a, 'b, A> {
-    #[inline]
-    pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_StorylineSSData::VT_NAME,
-            name,
-        );
-    }
     #[inline]
     pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
@@ -21237,7 +19798,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_StorylineSSDataBuil
 impl core::fmt::Debug for clz_Torappu_StorylineSSData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_StorylineSSData");
-        ds.field("name", &self.name());
         ds.field("desc", &self.desc());
         ds.field("backgroundId", &self.backgroundId());
         ds.field("tags", &self.tags());
@@ -21252,7 +19812,6 @@ impl core::fmt::Debug for clz_Torappu_StorylineSSData<'_> {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_StorylineSSDataT {
-    pub name: Option<String>,
     pub desc: Option<String>,
     pub backgroundId: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -21265,7 +19824,6 @@ pub struct clz_Torappu_StorylineSSDataT {
 impl Default for clz_Torappu_StorylineSSDataT {
     fn default() -> Self {
         Self {
-            name: None,
             desc: None,
             backgroundId: None,
             tags: None,
@@ -21282,7 +19840,6 @@ impl clz_Torappu_StorylineSSDataT {
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineSSData<'b>> {
-        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
         let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
         let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
         let tags = self.tags.as_ref().map(|x| {
@@ -21306,7 +19863,6 @@ impl clz_Torappu_StorylineSSDataT {
         clz_Torappu_StorylineSSData::create(
             _fbb,
             &clz_Torappu_StorylineSSDataArgs {
-                name,
                 desc,
                 backgroundId,
                 tags,
@@ -21337,9 +19893,8 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_StorylineCollectData<'a> {
 }
 
 impl<'a> clz_Torappu_StorylineCollectData<'a> {
-    pub const VT_NAME: flatbuffers::VOffsetT = 4;
-    pub const VT_DESC: flatbuffers::VOffsetT = 6;
-    pub const VT_BACKGROUNDID: flatbuffers::VOffsetT = 8;
+    pub const VT_DESC: flatbuffers::VOffsetT = 4;
+    pub const VT_BACKGROUNDID: flatbuffers::VOffsetT = 6;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -21357,35 +19912,15 @@ impl<'a> clz_Torappu_StorylineCollectData<'a> {
         if let Some(x) = args.desc {
             builder.add_desc(x);
         }
-        if let Some(x) = args.name {
-            builder.add_name(x);
-        }
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_StorylineCollectDataT {
-        let name = self.name().map(|x| x.to_string());
         let desc = self.desc().map(|x| x.to_string());
         let backgroundId = self.backgroundId().map(|x| x.to_string());
-        clz_Torappu_StorylineCollectDataT {
-            name,
-            desc,
-            backgroundId,
-        }
+        clz_Torappu_StorylineCollectDataT { desc, backgroundId }
     }
 
-    #[inline]
-    pub fn name(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_StorylineCollectData::VT_NAME,
-                None,
-            )
-        }
-    }
     #[inline]
     pub fn desc(&self) -> Option<&'a str> {
         // Safety:
@@ -21420,7 +19955,6 @@ impl flatbuffers::Verifiable for clz_Torappu_StorylineCollectData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "backgroundId",
@@ -21432,7 +19966,6 @@ impl flatbuffers::Verifiable for clz_Torappu_StorylineCollectData<'_> {
     }
 }
 pub struct clz_Torappu_StorylineCollectDataArgs<'a> {
-    pub name: Option<flatbuffers::WIPOffset<&'a str>>,
     pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
     pub backgroundId: Option<flatbuffers::WIPOffset<&'a str>>,
 }
@@ -21440,35 +19973,9 @@ impl<'a> Default for clz_Torappu_StorylineCollectDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StorylineCollectDataArgs {
-            name: None,
             desc: None,
             backgroundId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StorylineCollectData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineCollectData", 3)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.backgroundId() {
-            s.serialize_field("backgroundId", &f)?;
-        } else {
-            s.skip_field("backgroundId")?;
-        }
-        s.end()
     }
 }
 
@@ -21479,13 +19986,6 @@ pub struct clz_Torappu_StorylineCollectDataBuilder<'a: 'b, 'b, A: flatbuffers::A
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
     clz_Torappu_StorylineCollectDataBuilder<'a, 'b, A>
 {
-    #[inline]
-    pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_StorylineCollectData::VT_NAME,
-            name,
-        );
-    }
     #[inline]
     pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
@@ -21520,7 +20020,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 impl core::fmt::Debug for clz_Torappu_StorylineCollectData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_StorylineCollectData");
-        ds.field("name", &self.name());
         ds.field("desc", &self.desc());
         ds.field("backgroundId", &self.backgroundId());
         ds.finish()
@@ -21529,14 +20028,12 @@ impl core::fmt::Debug for clz_Torappu_StorylineCollectData<'_> {
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_StorylineCollectDataT {
-    pub name: Option<String>,
     pub desc: Option<String>,
     pub backgroundId: Option<String>,
 }
 impl Default for clz_Torappu_StorylineCollectDataT {
     fn default() -> Self {
         Self {
-            name: None,
             desc: None,
             backgroundId: None,
         }
@@ -21547,16 +20044,11 @@ impl clz_Torappu_StorylineCollectDataT {
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_StorylineCollectData<'b>> {
-        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
         let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
         let backgroundId = self.backgroundId.as_ref().map(|x| _fbb.create_string(x));
         clz_Torappu_StorylineCollectData::create(
             _fbb,
-            &clz_Torappu_StorylineCollectDataArgs {
-                name,
-                desc,
-                backgroundId,
-            },
+            &clz_Torappu_StorylineCollectDataArgs { desc, backgroundId },
         )
     }
 }
@@ -21984,71 +20476,6 @@ impl<'a> Default for clz_Torappu_StorylineStorySetDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineStorySetData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineStorySetData", 15)?;
-        if let Some(f) = self.storySetId() {
-            s.serialize_field("storySetId", &f)?;
-        } else {
-            s.skip_field("storySetId")?;
-        }
-        s.serialize_field("storySetType", &self.storySetType())?;
-        s.serialize_field("sortByYear", &self.sortByYear())?;
-        s.serialize_field("sortWithinYear", &self.sortWithinYear())?;
-        if let Some(f) = self.kvImageId() {
-            s.serialize_field("kvImageId", &f)?;
-        } else {
-            s.skip_field("kvImageId")?;
-        }
-        if let Some(f) = self.titleImageId() {
-            s.serialize_field("titleImageId", &f)?;
-        } else {
-            s.skip_field("titleImageId")?;
-        }
-        s.serialize_field("haveVideoToPlay", &self.haveVideoToPlay())?;
-        if let Some(f) = self.backgroundId() {
-            s.serialize_field("backgroundId", &f)?;
-        } else {
-            s.skip_field("backgroundId")?;
-        }
-        if let Some(f) = self.gameMusicId() {
-            s.serialize_field("gameMusicId", &f)?;
-        } else {
-            s.skip_field("gameMusicId")?;
-        }
-        s.serialize_field("coreRewardType", &self.coreRewardType())?;
-        if let Some(f) = self.coreRewardId() {
-            s.serialize_field("coreRewardId", &f)?;
-        } else {
-            s.skip_field("coreRewardId")?;
-        }
-        if let Some(f) = self.relevantActivityId() {
-            s.serialize_field("relevantActivityId", &f)?;
-        } else {
-            s.skip_field("relevantActivityId")?;
-        }
-        if let Some(f) = self.mainlineData() {
-            s.serialize_field("mainlineData", &f)?;
-        } else {
-            s.skip_field("mainlineData")?;
-        }
-        if let Some(f) = self.ssData() {
-            s.serialize_field("ssData", &f)?;
-        } else {
-            s.skip_field("ssData")?;
-        }
-        if let Some(f) = self.collectData() {
-            s.serialize_field("collectData", &f)?;
-        } else {
-            s.skip_field("collectData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineStorySetDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -22421,23 +20848,6 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineStorySetDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StorylineStorySetData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_StorylineStorySetData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StorylineStorySetDataBuilder<
     'a: 'b,
     'b,
@@ -22700,37 +21110,6 @@ impl<'a> Default for clz_Torappu_StorylineTagDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineTagData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineTagData", 5)?;
-        if let Some(f) = self.tagId() {
-            s.serialize_field("tagId", &f)?;
-        } else {
-            s.skip_field("tagId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.tagDesc() {
-            s.serialize_field("tagDesc", &f)?;
-        } else {
-            s.skip_field("tagDesc")?;
-        }
-        if let Some(f) = self.textColor() {
-            s.serialize_field("textColor", &f)?;
-        } else {
-            s.skip_field("textColor")?;
-        }
-        if let Some(f) = self.bkgColor() {
-            s.serialize_field("bkgColor", &f)?;
-        } else {
-            s.skip_field("bkgColor")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineTagDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -22959,22 +21338,6 @@ impl<'a> Default for dict__string__clz_Torappu_StorylineTagDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_StorylineTagData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_StorylineTagData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_StorylineTagDataBuilder<
     'a: 'b,
     'b,
@@ -23194,31 +21557,6 @@ impl<'a> Default for clz_Torappu_StorylineConstDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_StorylineConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StorylineConstData", 3)?;
-        if let Some(f) = self.recommendHideGuideGroupId() {
-            s.serialize_field("recommendHideGuideGroupId", &f)?;
-        } else {
-            s.skip_field("recommendHideGuideGroupId")?;
-        }
-        if let Some(f) = self.tutorialSelectStorylineId() {
-            s.serialize_field("tutorialSelectStorylineId", &f)?;
-        } else {
-            s.skip_field("tutorialSelectStorylineId")?;
-        }
-        if let Some(f) = self.mainlineStorylineId() {
-            s.serialize_field("mainlineStorylineId", &f)?;
-        } else {
-            s.skip_field("mainlineStorylineId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_StorylineConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -23326,6 +21664,1776 @@ impl clz_Torappu_StorylineConstDataT {
                 tutorialSelectStorylineId,
                 mainlineStorylineId,
             },
+        )
+    }
+}
+pub enum clz_Torappu_CGGalleryDisplayDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_CGGalleryDisplayData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CGGalleryDisplayData<'a> {
+    type Inner = clz_Torappu_CGGalleryDisplayData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_CGGalleryDisplayData<'a> {
+    pub const VT_DISPLAYID: flatbuffers::VOffsetT = 4;
+    pub const VT_CGLIST: flatbuffers::VOffsetT = 6;
+    pub const VT_CGSOURCE: flatbuffers::VOffsetT = 8;
+    pub const VT_DISPLAYNAME: flatbuffers::VOffsetT = 10;
+    pub const VT_DISPLAYDESC: flatbuffers::VOffsetT = 12;
+    pub const VT_STORYSETID: flatbuffers::VOffsetT = 14;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 16;
+    pub const VT_RELATEDSTORYID: flatbuffers::VOffsetT = 18;
+    pub const VT_RELATEDSTAGEID: flatbuffers::VOffsetT = 20;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CGGalleryDisplayData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CGGalleryDisplayDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData<'bldr>> {
+        let mut builder = clz_Torappu_CGGalleryDisplayDataBuilder::new(_fbb);
+        if let Some(x) = args.relatedStageId {
+            builder.add_relatedStageId(x);
+        }
+        if let Some(x) = args.relatedStoryId {
+            builder.add_relatedStoryId(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.storySetId {
+            builder.add_storySetId(x);
+        }
+        if let Some(x) = args.displayDesc {
+            builder.add_displayDesc(x);
+        }
+        if let Some(x) = args.displayName {
+            builder.add_displayName(x);
+        }
+        builder.add_cgSource(args.cgSource);
+        if let Some(x) = args.cgList {
+            builder.add_cgList(x);
+        }
+        if let Some(x) = args.displayId {
+            builder.add_displayId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CGGalleryDisplayDataT {
+        let displayId = self.displayId().map(|x| x.to_string());
+        let cgList = self
+            .cgList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let cgSource = self.cgSource();
+        let displayName = self.displayName().map(|x| x.to_string());
+        let displayDesc = self.displayDesc().map(|x| x.to_string());
+        let storySetId = self.storySetId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let relatedStoryId = self.relatedStoryId().map(|x| x.to_string());
+        let relatedStageId = self.relatedStageId().map(|x| x.to_string());
+        clz_Torappu_CGGalleryDisplayDataT {
+            displayId,
+            cgList,
+            cgSource,
+            displayName,
+            displayDesc,
+            storySetId,
+            sortId,
+            relatedStoryId,
+            relatedStageId,
+        }
+    }
+
+    #[inline]
+    pub fn displayId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_DISPLAYID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn cgList(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_CGGalleryDisplayData::VT_CGLIST, None)
+        }
+    }
+    #[inline]
+    pub fn cgSource(&self) -> enum__Torappu_CGGalleryCGSource {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_CGGalleryCGSource>(
+                    clz_Torappu_CGGalleryDisplayData::VT_CGSOURCE,
+                    Some(enum__Torappu_CGGalleryCGSource::IMAGE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn displayName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_DISPLAYNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn displayDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_DISPLAYDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn storySetId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_STORYSETID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CGGalleryDisplayData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn relatedStoryId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_RELATEDSTORYID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn relatedStageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryDisplayData::VT_RELATEDSTAGEID,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_CGGalleryDisplayData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "displayId",
+                Self::VT_DISPLAYID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("cgList", Self::VT_CGLIST, false)?
+            .visit_field::<enum__Torappu_CGGalleryCGSource>("cgSource", Self::VT_CGSOURCE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "displayName",
+                Self::VT_DISPLAYNAME,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "displayDesc",
+                Self::VT_DISPLAYDESC,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "storySetId",
+                Self::VT_STORYSETID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "relatedStoryId",
+                Self::VT_RELATEDSTORYID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "relatedStageId",
+                Self::VT_RELATEDSTAGEID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_CGGalleryDisplayDataArgs<'a> {
+    pub displayId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub cgList: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
+    pub cgSource: enum__Torappu_CGGalleryCGSource,
+    pub displayName: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub displayDesc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub storySetId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub relatedStoryId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub relatedStageId: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_CGGalleryDisplayDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CGGalleryDisplayDataArgs {
+            displayId: None,
+            cgList: None,
+            cgSource: enum__Torappu_CGGalleryCGSource::IMAGE,
+            displayName: None,
+            displayDesc: None,
+            storySetId: None,
+            sortId: 0,
+            relatedStoryId: None,
+            relatedStageId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_CGGalleryDisplayDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_CGGalleryDisplayDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_displayId(&mut self, displayId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_DISPLAYID,
+            displayId,
+        );
+    }
+    #[inline]
+    pub fn add_cgList(
+        &mut self,
+        cgList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_CGLIST,
+            cgList,
+        );
+    }
+    #[inline]
+    pub fn add_cgSource(&mut self, cgSource: enum__Torappu_CGGalleryCGSource) {
+        self.fbb_.push_slot::<enum__Torappu_CGGalleryCGSource>(
+            clz_Torappu_CGGalleryDisplayData::VT_CGSOURCE,
+            cgSource,
+            enum__Torappu_CGGalleryCGSource::IMAGE,
+        );
+    }
+    #[inline]
+    pub fn add_displayName(&mut self, displayName: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_DISPLAYNAME,
+            displayName,
+        );
+    }
+    #[inline]
+    pub fn add_displayDesc(&mut self, displayDesc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_DISPLAYDESC,
+            displayDesc,
+        );
+    }
+    #[inline]
+    pub fn add_storySetId(&mut self, storySetId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_STORYSETID,
+            storySetId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CGGalleryDisplayData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_relatedStoryId(&mut self, relatedStoryId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_RELATEDSTORYID,
+            relatedStoryId,
+        );
+    }
+    #[inline]
+    pub fn add_relatedStageId(&mut self, relatedStageId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryDisplayData::VT_RELATEDSTAGEID,
+            relatedStageId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CGGalleryDisplayDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_CGGalleryDisplayDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_CGGalleryDisplayData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CGGalleryDisplayData");
+        ds.field("displayId", &self.displayId());
+        ds.field("cgList", &self.cgList());
+        ds.field("cgSource", &self.cgSource());
+        ds.field("displayName", &self.displayName());
+        ds.field("displayDesc", &self.displayDesc());
+        ds.field("storySetId", &self.storySetId());
+        ds.field("sortId", &self.sortId());
+        ds.field("relatedStoryId", &self.relatedStoryId());
+        ds.field("relatedStageId", &self.relatedStageId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CGGalleryDisplayDataT {
+    pub displayId: Option<String>,
+    pub cgList: Option<Vec<String>>,
+    pub cgSource: enum__Torappu_CGGalleryCGSource,
+    pub displayName: Option<String>,
+    pub displayDesc: Option<String>,
+    pub storySetId: Option<String>,
+    pub sortId: i32,
+    pub relatedStoryId: Option<String>,
+    pub relatedStageId: Option<String>,
+}
+impl Default for clz_Torappu_CGGalleryDisplayDataT {
+    fn default() -> Self {
+        Self {
+            displayId: None,
+            cgList: None,
+            cgSource: enum__Torappu_CGGalleryCGSource::IMAGE,
+            displayName: None,
+            displayDesc: None,
+            storySetId: None,
+            sortId: 0,
+            relatedStoryId: None,
+            relatedStageId: None,
+        }
+    }
+}
+impl clz_Torappu_CGGalleryDisplayDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData<'b>> {
+        let displayId = self.displayId.as_ref().map(|x| _fbb.create_string(x));
+        let cgList = self.cgList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let cgSource = self.cgSource;
+        let displayName = self.displayName.as_ref().map(|x| _fbb.create_string(x));
+        let displayDesc = self.displayDesc.as_ref().map(|x| _fbb.create_string(x));
+        let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let relatedStoryId = self.relatedStoryId.as_ref().map(|x| _fbb.create_string(x));
+        let relatedStageId = self.relatedStageId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CGGalleryDisplayData::create(
+            _fbb,
+            &clz_Torappu_CGGalleryDisplayDataArgs {
+                displayId,
+                cgList,
+                cgSource,
+                displayName,
+                displayDesc,
+                storySetId,
+                sortId,
+                relatedStoryId,
+                relatedStageId,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_CGGalleryDisplayDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_CGGalleryDisplayData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CGGalleryDisplayData<'a> {
+    type Inner = dict__string__clz_Torappu_CGGalleryDisplayData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_CGGalleryDisplayData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CGGalleryDisplayData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CGGalleryDisplayDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CGGalleryDisplayDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CGGalleryDisplayDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CGGalleryDisplayDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CGGalleryDisplayData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_CGGalleryDisplayData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_CGGalleryDisplayData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryDisplayData>>(
+                    dict__string__clz_Torappu_CGGalleryDisplayData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_CGGalleryDisplayData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryDisplayData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_CGGalleryDisplayDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_CGGalleryDisplayDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CGGalleryDisplayDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_CGGalleryDisplayDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CGGalleryDisplayDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CGGalleryDisplayData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_CGGalleryDisplayData>>(
+                dict__string__clz_Torappu_CGGalleryDisplayData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CGGalleryDisplayDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CGGalleryDisplayDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_CGGalleryDisplayData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_CGGalleryDisplayData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CGGalleryDisplayData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CGGalleryDisplayDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CGGalleryDisplayDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CGGalleryDisplayDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CGGalleryDisplayDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CGGalleryDisplayData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CGGalleryDisplayDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_CGGalleryGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_CGGalleryGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CGGalleryGroupData<'a> {
+    type Inner = clz_Torappu_CGGalleryGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_CGGalleryGroupData<'a> {
+    pub const VT_STORYSETID: flatbuffers::VOffsetT = 4;
+    pub const VT_STORYLINEID: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CGGalleryGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CGGalleryGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'bldr>> {
+        let mut builder = clz_Torappu_CGGalleryGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.storylineId {
+            builder.add_storylineId(x);
+        }
+        if let Some(x) = args.storySetId {
+            builder.add_storySetId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CGGalleryGroupDataT {
+        let storySetId = self.storySetId().map(|x| x.to_string());
+        let storylineId = self.storylineId().map(|x| x.to_string());
+        clz_Torappu_CGGalleryGroupDataT {
+            storySetId,
+            storylineId,
+        }
+    }
+
+    #[inline]
+    pub fn storySetId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryGroupData::VT_STORYSETID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn storylineId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryGroupData::VT_STORYLINEID,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_CGGalleryGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "storySetId",
+                Self::VT_STORYSETID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "storylineId",
+                Self::VT_STORYLINEID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_CGGalleryGroupDataArgs<'a> {
+    pub storySetId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub storylineId: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_CGGalleryGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CGGalleryGroupDataArgs {
+            storySetId: None,
+            storylineId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_CGGalleryGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CGGalleryGroupDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_storySetId(&mut self, storySetId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryGroupData::VT_STORYSETID,
+            storySetId,
+        );
+    }
+    #[inline]
+    pub fn add_storylineId(&mut self, storylineId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryGroupData::VT_STORYLINEID,
+            storylineId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CGGalleryGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_CGGalleryGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_CGGalleryGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CGGalleryGroupData");
+        ds.field("storySetId", &self.storySetId());
+        ds.field("storylineId", &self.storylineId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CGGalleryGroupDataT {
+    pub storySetId: Option<String>,
+    pub storylineId: Option<String>,
+}
+impl Default for clz_Torappu_CGGalleryGroupDataT {
+    fn default() -> Self {
+        Self {
+            storySetId: None,
+            storylineId: None,
+        }
+    }
+}
+impl clz_Torappu_CGGalleryGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'b>> {
+        let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
+        let storylineId = self.storylineId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CGGalleryGroupData::create(
+            _fbb,
+            &clz_Torappu_CGGalleryGroupDataArgs {
+                storySetId,
+                storylineId,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_CGGalleryGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_CGGalleryGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CGGalleryGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_CGGalleryGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_CGGalleryGroupData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CGGalleryGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CGGalleryGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CGGalleryGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CGGalleryGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CGGalleryGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CGGalleryGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CGGalleryGroupData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_CGGalleryGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryGroupData>>(
+                    dict__string__clz_Torappu_CGGalleryGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_CGGalleryGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_CGGalleryGroupDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_CGGalleryGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CGGalleryGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_CGGalleryGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CGGalleryGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CGGalleryGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData<'b>>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_CGGalleryGroupData>>(
+                dict__string__clz_Torappu_CGGalleryGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CGGalleryGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CGGalleryGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_CGGalleryGroupData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_CGGalleryGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CGGalleryGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CGGalleryGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CGGalleryGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CGGalleryGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CGGalleryGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CGGalleryGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CGGalleryGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_CGGalleryCGCompositeDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_CGGalleryCGCompositeData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CGGalleryCGCompositeData<'a> {
+    type Inner = clz_Torappu_CGGalleryCGCompositeData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_CGGalleryCGCompositeData<'a> {
+    pub const VT_CGID: flatbuffers::VOffsetT = 4;
+    pub const VT_WIDTH: flatbuffers::VOffsetT = 6;
+    pub const VT_HEIGHT: flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CGGalleryCGCompositeData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CGGalleryCGCompositeDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGCompositeData<'bldr>> {
+        let mut builder = clz_Torappu_CGGalleryCGCompositeDataBuilder::new(_fbb);
+        builder.add_height(args.height);
+        builder.add_width(args.width);
+        if let Some(x) = args.cgId {
+            builder.add_cgId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CGGalleryCGCompositeDataT {
+        let cgId = self.cgId().map(|x| x.to_string());
+        let width = self.width();
+        let height = self.height();
+        clz_Torappu_CGGalleryCGCompositeDataT {
+            cgId,
+            width,
+            height,
+        }
+    }
+
+    #[inline]
+    pub fn cgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryCGCompositeData::VT_CGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn width(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CGGalleryCGCompositeData::VT_WIDTH, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn height(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CGGalleryCGCompositeData::VT_HEIGHT, Some(0))
+                .unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_CGGalleryCGCompositeData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("cgId", Self::VT_CGID, false)?
+            .visit_field::<i32>("width", Self::VT_WIDTH, false)?
+            .visit_field::<i32>("height", Self::VT_HEIGHT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_CGGalleryCGCompositeDataArgs<'a> {
+    pub cgId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub width: i32,
+    pub height: i32,
+}
+impl<'a> Default for clz_Torappu_CGGalleryCGCompositeDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CGGalleryCGCompositeDataArgs {
+            cgId: None,
+            width: 0,
+            height: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_CGGalleryCGCompositeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_CGGalleryCGCompositeDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_cgId(&mut self, cgId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryCGCompositeData::VT_CGID,
+            cgId,
+        );
+    }
+    #[inline]
+    pub fn add_width(&mut self, width: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CGGalleryCGCompositeData::VT_WIDTH, width, 0);
+    }
+    #[inline]
+    pub fn add_height(&mut self, height: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CGGalleryCGCompositeData::VT_HEIGHT, height, 0);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CGGalleryCGCompositeDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_CGGalleryCGCompositeDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGCompositeData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_CGGalleryCGCompositeData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CGGalleryCGCompositeData");
+        ds.field("cgId", &self.cgId());
+        ds.field("width", &self.width());
+        ds.field("height", &self.height());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CGGalleryCGCompositeDataT {
+    pub cgId: Option<String>,
+    pub width: i32,
+    pub height: i32,
+}
+impl Default for clz_Torappu_CGGalleryCGCompositeDataT {
+    fn default() -> Self {
+        Self {
+            cgId: None,
+            width: 0,
+            height: 0,
+        }
+    }
+}
+impl clz_Torappu_CGGalleryCGCompositeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGCompositeData<'b>> {
+        let cgId = self.cgId.as_ref().map(|x| _fbb.create_string(x));
+        let width = self.width;
+        let height = self.height;
+        clz_Torappu_CGGalleryCGCompositeData::create(
+            _fbb,
+            &clz_Torappu_CGGalleryCGCompositeDataArgs {
+                cgId,
+                width,
+                height,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_CGGalleryCGDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_CGGalleryCGData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_CGGalleryCGData<'a> {
+    type Inner = clz_Torappu_CGGalleryCGData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_CGGalleryCGData<'a> {
+    pub const VT_CGID: flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
+    pub const VT_COMPOSITETYPE: flatbuffers::VOffsetT = 8;
+    pub const VT_COMPOSITELIST: flatbuffers::VOffsetT = 10;
+    pub const VT_STORYSETID: flatbuffers::VOffsetT = 12;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_CGGalleryCGData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_CGGalleryCGDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData<'bldr>> {
+        let mut builder = clz_Torappu_CGGalleryCGDataBuilder::new(_fbb);
+        if let Some(x) = args.storySetId {
+            builder.add_storySetId(x);
+        }
+        if let Some(x) = args.compositeList {
+            builder.add_compositeList(x);
+        }
+        builder.add_compositeType(args.compositeType);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.cgId {
+            builder.add_cgId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_CGGalleryCGDataT {
+        let cgId = self.cgId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let compositeType = self.compositeType();
+        let compositeList = self
+            .compositeList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let storySetId = self.storySetId().map(|x| x.to_string());
+        clz_Torappu_CGGalleryCGDataT {
+            cgId,
+            sortId,
+            compositeType,
+            compositeList,
+            storySetId,
+        }
+    }
+
+    #[inline]
+    pub fn cgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryCGData::VT_CGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_CGGalleryCGData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn compositeType(&self) -> enum__Torappu_CGGalleryCGCompositeType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_CGGalleryCGCompositeType>(
+                    clz_Torappu_CGGalleryCGData::VT_COMPOSITETYPE,
+                    Some(enum__Torappu_CGGalleryCGCompositeType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn compositeList(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGCompositeData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGCompositeData>,
+                >,
+            >>(clz_Torappu_CGGalleryCGData::VT_COMPOSITELIST, None)
+        }
+    }
+    #[inline]
+    pub fn storySetId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_CGGalleryCGData::VT_STORYSETID,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_CGGalleryCGData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("cgId", Self::VT_CGID, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<enum__Torappu_CGGalleryCGCompositeType>(
+                "compositeType",
+                Self::VT_COMPOSITETYPE,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGCompositeData>,
+                >,
+            >>("compositeList", Self::VT_COMPOSITELIST, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "storySetId",
+                Self::VT_STORYSETID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_CGGalleryCGDataArgs<'a> {
+    pub cgId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub compositeType: enum__Torappu_CGGalleryCGCompositeType,
+    pub compositeList: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGCompositeData<'a>>,
+            >,
+        >,
+    >,
+    pub storySetId: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_CGGalleryCGDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_CGGalleryCGDataArgs {
+            cgId: None,
+            sortId: 0,
+            compositeType: enum__Torappu_CGGalleryCGCompositeType::NONE,
+            compositeList: None,
+            storySetId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_CGGalleryCGDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_CGGalleryCGDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_cgId(&mut self, cgId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryCGData::VT_CGID,
+            cgId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_CGGalleryCGData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_compositeType(&mut self, compositeType: enum__Torappu_CGGalleryCGCompositeType) {
+        self.fbb_
+            .push_slot::<enum__Torappu_CGGalleryCGCompositeType>(
+                clz_Torappu_CGGalleryCGData::VT_COMPOSITETYPE,
+                compositeType,
+                enum__Torappu_CGGalleryCGCompositeType::NONE,
+            );
+    }
+    #[inline]
+    pub fn add_compositeList(
+        &mut self,
+        compositeList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGCompositeData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryCGData::VT_COMPOSITELIST,
+            compositeList,
+        );
+    }
+    #[inline]
+    pub fn add_storySetId(&mut self, storySetId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_CGGalleryCGData::VT_STORYSETID,
+            storySetId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_CGGalleryCGDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_CGGalleryCGDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_CGGalleryCGData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_CGGalleryCGData");
+        ds.field("cgId", &self.cgId());
+        ds.field("sortId", &self.sortId());
+        ds.field("compositeType", &self.compositeType());
+        ds.field("compositeList", &self.compositeList());
+        ds.field("storySetId", &self.storySetId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_CGGalleryCGDataT {
+    pub cgId: Option<String>,
+    pub sortId: i32,
+    pub compositeType: enum__Torappu_CGGalleryCGCompositeType,
+    pub compositeList: Option<Vec<clz_Torappu_CGGalleryCGCompositeDataT>>,
+    pub storySetId: Option<String>,
+}
+impl Default for clz_Torappu_CGGalleryCGDataT {
+    fn default() -> Self {
+        Self {
+            cgId: None,
+            sortId: 0,
+            compositeType: enum__Torappu_CGGalleryCGCompositeType::NONE,
+            compositeList: None,
+            storySetId: None,
+        }
+    }
+}
+impl clz_Torappu_CGGalleryCGDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData<'b>> {
+        let cgId = self.cgId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let compositeType = self.compositeType;
+        let compositeList = self.compositeList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let storySetId = self.storySetId.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_CGGalleryCGData::create(
+            _fbb,
+            &clz_Torappu_CGGalleryCGDataArgs {
+                cgId,
+                sortId,
+                compositeType,
+                compositeList,
+                storySetId,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_CGGalleryCGDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_CGGalleryCGData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_CGGalleryCGData<'a> {
+    type Inner = dict__string__clz_Torappu_CGGalleryCGData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_CGGalleryCGData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_CGGalleryCGData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_CGGalleryCGDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryCGData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_CGGalleryCGDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_CGGalleryCGDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_CGGalleryCGDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_CGGalleryCGData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_CGGalleryCGData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_CGGalleryCGData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGData>>(
+                    dict__string__clz_Torappu_CGGalleryCGData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_CGGalleryCGData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_CGGalleryCGData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_CGGalleryCGDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_CGGalleryCGDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_CGGalleryCGDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_CGGalleryCGDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_CGGalleryCGDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_CGGalleryCGData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData<'b>>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_CGGalleryCGData>>(
+                dict__string__clz_Torappu_CGGalleryCGData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_CGGalleryCGDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_CGGalleryCGDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryCGData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_CGGalleryCGData::VT_KEY, "key");
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_CGGalleryCGData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_CGGalleryCGData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_CGGalleryCGDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_CGGalleryCGDataT>>,
+}
+impl Default for dict__string__clz_Torappu_CGGalleryCGDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_CGGalleryCGDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_CGGalleryCGData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_CGGalleryCGData::create(
+            _fbb,
+            &dict__string__clz_Torappu_CGGalleryCGDataArgs { key, value },
         )
     }
 }
@@ -23454,31 +23562,6 @@ impl<'a> Default for clz_Torappu_SixStarRuneDataArgs<'a> {
             runeDesc: None,
             runeKey: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SixStarRuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SixStarRuneData", 3)?;
-        if let Some(f) = self.runeId() {
-            s.serialize_field("runeId", &f)?;
-        } else {
-            s.skip_field("runeId")?;
-        }
-        if let Some(f) = self.runeDesc() {
-            s.serialize_field("runeDesc", &f)?;
-        } else {
-            s.skip_field("runeDesc")?;
-        }
-        if let Some(f) = self.runeKey() {
-            s.serialize_field("runeKey", &f)?;
-        } else {
-            s.skip_field("runeKey")?;
-        }
-        s.end()
     }
 }
 
@@ -23685,22 +23768,6 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarRuneDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SixStarRuneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SixStarRuneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -24036,44 +24103,6 @@ impl<'a> Default for clz_Torappu_SixStarMilestoneItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SixStarMilestoneItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SixStarMilestoneItemData", 8)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("nodePoint", &self.nodePoint())?;
-        s.serialize_field("rewardType", &self.rewardType())?;
-        if let Some(f) = self.unlockStageFog() {
-            s.serialize_field("unlockStageFog", &f)?;
-        } else {
-            s.skip_field("unlockStageFog")?;
-        }
-        if let Some(f) = self.unlockStageId() {
-            s.serialize_field("unlockStageId", &f)?;
-        } else {
-            s.skip_field("unlockStageId")?;
-        }
-        if let Some(f) = self.unlockStageName() {
-            s.serialize_field("unlockStageName", &f)?;
-        } else {
-            s.skip_field("unlockStageName")?;
-        }
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SixStarMilestoneItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -24388,31 +24417,6 @@ impl<'a> Default for clz_Torappu_SixStarMilestoneGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SixStarMilestoneGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SixStarMilestoneGroupData", 3)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.milestoneDataList() {
-            s.serialize_field("milestoneDataList", &f)?;
-        } else {
-            s.skip_field("milestoneDataList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SixStarMilestoneGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -24641,23 +24645,6 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarMilestoneGroupDataArgs<'a>
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SixStarMilestoneGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_SixStarMilestoneGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -24901,25 +24888,6 @@ impl<'a> Default for clz_Torappu_SixStarLinkedStageCompatibleInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SixStarLinkedStageCompatibleInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SixStarLinkedStageCompatibleInfo", 4)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.serialize_field("apCost", &self.apCost())?;
-        s.serialize_field("apFailReturn", &self.apFailReturn())?;
-        s.serialize_field("dropType", &self.dropType())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SixStarLinkedStageCompatibleInfoBuilder<
     'a: 'b,
     'b,
@@ -25153,25 +25121,6 @@ impl<'a> Default for dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoA
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfoBuilder<
     'a: 'b,
     'b,
@@ -25391,27 +25340,6 @@ impl<'a> Default for clz_Torappu_ConditionalDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ConditionalDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ConditionalDropInfo", 3)?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        s.serialize_field("countLimit", &self.countLimit())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ConditionalDropInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -25627,23 +25555,6 @@ impl<'a> Default for dict__string__clz_Torappu_ConditionalDropInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ConditionalDropInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ConditionalDropInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ConditionalDropInfoBuilder<
     'a: 'b,
     'b,
@@ -25777,10 +25688,13 @@ impl<'a> clz_Torappu_StageTable<'a> {
     pub const VT_STORYLINESTORYSETS: flatbuffers::VOffsetT = 46;
     pub const VT_STORYLINETAGS: flatbuffers::VOffsetT = 48;
     pub const VT_STORYLINECONST: flatbuffers::VOffsetT = 50;
-    pub const VT_SIXSTARRUNEDATA: flatbuffers::VOffsetT = 52;
-    pub const VT_SIXSTARMILESTONEINFO: flatbuffers::VOffsetT = 54;
-    pub const VT_SIXSTARCOMPATIBLEINFO: flatbuffers::VOffsetT = 56;
-    pub const VT_CONDITIONALDROPINFO: flatbuffers::VOffsetT = 58;
+    pub const VT_CGGALLERYDISPLAYS: flatbuffers::VOffsetT = 52;
+    pub const VT_CGGALLERYGROUPS: flatbuffers::VOffsetT = 54;
+    pub const VT_CGGALLERYCGS: flatbuffers::VOffsetT = 56;
+    pub const VT_SIXSTARRUNEDATA: flatbuffers::VOffsetT = 58;
+    pub const VT_SIXSTARMILESTONEINFO: flatbuffers::VOffsetT = 60;
+    pub const VT_SIXSTARCOMPATIBLEINFO: flatbuffers::VOffsetT = 62;
+    pub const VT_CONDITIONALDROPINFO: flatbuffers::VOffsetT = 64;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -25803,6 +25717,15 @@ impl<'a> clz_Torappu_StageTable<'a> {
         }
         if let Some(x) = args.sixStarRuneData {
             builder.add_sixStarRuneData(x);
+        }
+        if let Some(x) = args.cgGalleryCgs {
+            builder.add_cgGalleryCgs(x);
+        }
+        if let Some(x) = args.cgGalleryGroups {
+            builder.add_cgGalleryGroups(x);
+        }
+        if let Some(x) = args.cgGalleryDisplays {
+            builder.add_cgGalleryDisplays(x);
         }
         if let Some(x) = args.storylineConst {
             builder.add_storylineConst(x);
@@ -25950,6 +25873,15 @@ impl<'a> clz_Torappu_StageTable<'a> {
             .storylineTags()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
         let storylineConst = self.storylineConst().map(|x| Box::new(x.unpack()));
+        let cgGalleryDisplays = self
+            .cgGalleryDisplays()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let cgGalleryGroups = self
+            .cgGalleryGroups()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let cgGalleryCgs = self
+            .cgGalleryCgs()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         let sixStarRuneData = self
             .sixStarRuneData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
@@ -25987,6 +25919,9 @@ impl<'a> clz_Torappu_StageTable<'a> {
             storylineStorySets,
             storylineTags,
             storylineConst,
+            cgGalleryDisplays,
+            cgGalleryGroups,
+            cgGalleryCgs,
             sixStarRuneData,
             sixStarMilestoneInfo,
             sixStarCompatibleInfo,
@@ -26471,6 +26406,69 @@ impl<'a> clz_Torappu_StageTable<'a> {
         }
     }
     #[inline]
+    pub fn cgGalleryDisplays(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryDisplayData>,
+                >,
+            >>(clz_Torappu_StageTable::VT_CGGALLERYDISPLAYS, None)
+        }
+    }
+    #[inline]
+    pub fn cgGalleryGroups(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryGroupData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryGroupData>,
+                >,
+            >>(clz_Torappu_StageTable::VT_CGGALLERYGROUPS, None)
+        }
+    }
+    #[inline]
+    pub fn cgGalleryCgs(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryCGData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryCGData>,
+                >,
+            >>(clz_Torappu_StageTable::VT_CGGALLERYCGS, None)
+        }
+    }
+    #[inline]
     pub fn sixStarRuneData(
         &self,
     ) -> Option<
@@ -26594,6 +26592,9 @@ impl flatbuffers::Verifiable for clz_Torappu_StageTable<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_StorylineStorySetData>>>>("storylineStorySets", Self::VT_STORYLINESTORYSETS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_StorylineTagData>>>>("storylineTags", Self::VT_STORYLINETAGS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_StorylineConstData>>("storylineConst", Self::VT_STORYLINECONST, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryDisplayData>>>>("cgGalleryDisplays", Self::VT_CGGALLERYDISPLAYS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryGroupData>>>>("cgGalleryGroups", Self::VT_CGGALLERYGROUPS, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryCGData>>>>("cgGalleryCgs", Self::VT_CGGALLERYCGS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarRuneData>>>>("sixStarRuneData", Self::VT_SIXSTARRUNEDATA, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarMilestoneGroupData>>>>("sixStarMilestoneInfo", Self::VT_SIXSTARMILESTONEINFO, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo>>>>("sixStarCompatibleInfo", Self::VT_SIXSTARCOMPATIBLEINFO, false)?
@@ -26627,6 +26628,9 @@ pub struct clz_Torappu_StageTableArgs<'a> {
     pub storylineStorySets: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_StorylineStorySetData<'a>>>>>,
     pub storylineTags: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_StorylineTagData<'a>>>>>,
     pub storylineConst: Option<flatbuffers::WIPOffset<clz_Torappu_StorylineConstData<'a>>>,
+    pub cgGalleryDisplays: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'a>>>>>,
+    pub cgGalleryGroups: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryGroupData<'a>>>>>,
+    pub cgGalleryCgs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryCGData<'a>>>>>,
     pub sixStarRuneData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarRuneData<'a>>>>>,
     pub sixStarMilestoneInfo: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarMilestoneGroupData<'a>>>>>,
     pub sixStarCompatibleInfo: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_SixStarLinkedStageCompatibleInfo<'a>>>>>,
@@ -26660,161 +26664,14 @@ impl<'a> Default for clz_Torappu_StageTableArgs<'a> {
             storylineStorySets: None,
             storylineTags: None,
             storylineConst: None,
+            cgGalleryDisplays: None,
+            cgGalleryGroups: None,
+            cgGalleryCgs: None,
             sixStarRuneData: None,
             sixStarMilestoneInfo: None,
             sixStarCompatibleInfo: None,
             conditionalDropInfo: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_StageTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageTable", 28)?;
-        if let Some(f) = self.stages() {
-            s.serialize_field("stages", &f)?;
-        } else {
-            s.skip_field("stages")?;
-        }
-        if let Some(f) = self.runeStageGroups() {
-            s.serialize_field("runeStageGroups", &f)?;
-        } else {
-            s.skip_field("runeStageGroups")?;
-        }
-        if let Some(f) = self.mapThemes() {
-            s.serialize_field("mapThemes", &f)?;
-        } else {
-            s.skip_field("mapThemes")?;
-        }
-        if let Some(f) = self.tileInfo() {
-            s.serialize_field("tileInfo", &f)?;
-        } else {
-            s.skip_field("tileInfo")?;
-        }
-        if let Some(f) = self.forceOpenTable() {
-            s.serialize_field("forceOpenTable", &f)?;
-        } else {
-            s.skip_field("forceOpenTable")?;
-        }
-        if let Some(f) = self.timelyStageDropInfo() {
-            s.serialize_field("timelyStageDropInfo", &f)?;
-        } else {
-            s.skip_field("timelyStageDropInfo")?;
-        }
-        if let Some(f) = self.overrideDropInfo() {
-            s.serialize_field("overrideDropInfo", &f)?;
-        } else {
-            s.skip_field("overrideDropInfo")?;
-        }
-        if let Some(f) = self.overrideUnlockInfo() {
-            s.serialize_field("overrideUnlockInfo", &f)?;
-        } else {
-            s.skip_field("overrideUnlockInfo")?;
-        }
-        if let Some(f) = self.timelyTable() {
-            s.serialize_field("timelyTable", &f)?;
-        } else {
-            s.skip_field("timelyTable")?;
-        }
-        if let Some(f) = self.stageValidInfo() {
-            s.serialize_field("stageValidInfo", &f)?;
-        } else {
-            s.skip_field("stageValidInfo")?;
-        }
-        if let Some(f) = self.stageFogInfo() {
-            s.serialize_field("stageFogInfo", &f)?;
-        } else {
-            s.skip_field("stageFogInfo")?;
-        }
-        if let Some(f) = self.stageStartConds() {
-            s.serialize_field("stageStartConds", &f)?;
-        } else {
-            s.skip_field("stageStartConds")?;
-        }
-        if let Some(f) = self.diffGroupTable() {
-            s.serialize_field("diffGroupTable", &f)?;
-        } else {
-            s.skip_field("diffGroupTable")?;
-        }
-        if let Some(f) = self.storyStageShowGroup() {
-            s.serialize_field("storyStageShowGroup", &f)?;
-        } else {
-            s.skip_field("storyStageShowGroup")?;
-        }
-        if let Some(f) = self.specialBattleFinishStageData() {
-            s.serialize_field("specialBattleFinishStageData", &f)?;
-        } else {
-            s.skip_field("specialBattleFinishStageData")?;
-        }
-        if let Some(f) = self.recordRewardData() {
-            s.serialize_field("recordRewardData", &f)?;
-        } else {
-            s.skip_field("recordRewardData")?;
-        }
-        if let Some(f) = self.apProtectZoneInfo() {
-            s.serialize_field("apProtectZoneInfo", &f)?;
-        } else {
-            s.skip_field("apProtectZoneInfo")?;
-        }
-        if let Some(f) = self.antiSpoilerDict() {
-            s.serialize_field("antiSpoilerDict", &f)?;
-        } else {
-            s.skip_field("antiSpoilerDict")?;
-        }
-        if let Some(f) = self.actCustomStageDatas() {
-            s.serialize_field("actCustomStageDatas", &f)?;
-        } else {
-            s.skip_field("actCustomStageDatas")?;
-        }
-        if let Some(f) = self.spNormalStageIdFor4StarList() {
-            s.serialize_field("spNormalStageIdFor4StarList", &f)?;
-        } else {
-            s.skip_field("spNormalStageIdFor4StarList")?;
-        }
-        if let Some(f) = self.storylines() {
-            s.serialize_field("storylines", &f)?;
-        } else {
-            s.skip_field("storylines")?;
-        }
-        if let Some(f) = self.storylineStorySets() {
-            s.serialize_field("storylineStorySets", &f)?;
-        } else {
-            s.skip_field("storylineStorySets")?;
-        }
-        if let Some(f) = self.storylineTags() {
-            s.serialize_field("storylineTags", &f)?;
-        } else {
-            s.skip_field("storylineTags")?;
-        }
-        if let Some(f) = self.storylineConst() {
-            s.serialize_field("storylineConst", &f)?;
-        } else {
-            s.skip_field("storylineConst")?;
-        }
-        if let Some(f) = self.sixStarRuneData() {
-            s.serialize_field("sixStarRuneData", &f)?;
-        } else {
-            s.skip_field("sixStarRuneData")?;
-        }
-        if let Some(f) = self.sixStarMilestoneInfo() {
-            s.serialize_field("sixStarMilestoneInfo", &f)?;
-        } else {
-            s.skip_field("sixStarMilestoneInfo")?;
-        }
-        if let Some(f) = self.sixStarCompatibleInfo() {
-            s.serialize_field("sixStarCompatibleInfo", &f)?;
-        } else {
-            s.skip_field("sixStarCompatibleInfo")?;
-        }
-        if let Some(f) = self.conditionalDropInfo() {
-            s.serialize_field("conditionalDropInfo", &f)?;
-        } else {
-            s.skip_field("conditionalDropInfo")?;
-        }
-        s.end()
     }
 }
 
@@ -27171,6 +27028,51 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_StageTableBuilder<'
             );
     }
     #[inline]
+    pub fn add_cgGalleryDisplays(
+        &mut self,
+        cgGalleryDisplays: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryDisplayData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StageTable::VT_CGGALLERYDISPLAYS,
+            cgGalleryDisplays,
+        );
+    }
+    #[inline]
+    pub fn add_cgGalleryGroups(
+        &mut self,
+        cgGalleryGroups: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryGroupData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StageTable::VT_CGGALLERYGROUPS,
+            cgGalleryGroups,
+        );
+    }
+    #[inline]
+    pub fn add_cgGalleryCgs(
+        &mut self,
+        cgGalleryCgs: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_CGGalleryCGData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_StageTable::VT_CGGALLERYCGS,
+            cgGalleryCgs,
+        );
+    }
+    #[inline]
     pub fn add_sixStarRuneData(
         &mut self,
         sixStarRuneData: flatbuffers::WIPOffset<
@@ -27284,6 +27186,9 @@ impl core::fmt::Debug for clz_Torappu_StageTable<'_> {
         ds.field("storylineStorySets", &self.storylineStorySets());
         ds.field("storylineTags", &self.storylineTags());
         ds.field("storylineConst", &self.storylineConst());
+        ds.field("cgGalleryDisplays", &self.cgGalleryDisplays());
+        ds.field("cgGalleryGroups", &self.cgGalleryGroups());
+        ds.field("cgGalleryCgs", &self.cgGalleryCgs());
         ds.field("sixStarRuneData", &self.sixStarRuneData());
         ds.field("sixStarMilestoneInfo", &self.sixStarMilestoneInfo());
         ds.field("sixStarCompatibleInfo", &self.sixStarCompatibleInfo());
@@ -27323,6 +27228,9 @@ pub struct clz_Torappu_StageTableT {
     pub storylineStorySets: Option<Vec<dict__string__clz_Torappu_StorylineStorySetDataT>>,
     pub storylineTags: Option<Vec<dict__string__clz_Torappu_StorylineTagDataT>>,
     pub storylineConst: Option<Box<clz_Torappu_StorylineConstDataT>>,
+    pub cgGalleryDisplays: Option<Vec<dict__string__clz_Torappu_CGGalleryDisplayDataT>>,
+    pub cgGalleryGroups: Option<Vec<dict__string__clz_Torappu_CGGalleryGroupDataT>>,
+    pub cgGalleryCgs: Option<Vec<dict__string__clz_Torappu_CGGalleryCGDataT>>,
     pub sixStarRuneData: Option<Vec<dict__string__clz_Torappu_SixStarRuneDataT>>,
     pub sixStarMilestoneInfo: Option<Vec<dict__string__clz_Torappu_SixStarMilestoneGroupDataT>>,
     pub sixStarCompatibleInfo:
@@ -27356,6 +27264,9 @@ impl Default for clz_Torappu_StageTableT {
             storylineStorySets: None,
             storylineTags: None,
             storylineConst: None,
+            cgGalleryDisplays: None,
+            cgGalleryGroups: None,
+            cgGalleryCgs: None,
             sixStarRuneData: None,
             sixStarMilestoneInfo: None,
             sixStarCompatibleInfo: None,
@@ -27461,6 +27372,18 @@ impl clz_Torappu_StageTableT {
             _fbb.create_vector(&w)
         });
         let storylineConst = self.storylineConst.as_ref().map(|x| x.pack(_fbb));
+        let cgGalleryDisplays = self.cgGalleryDisplays.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let cgGalleryGroups = self.cgGalleryGroups.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let cgGalleryCgs = self.cgGalleryCgs.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         let sixStarRuneData = self.sixStarRuneData.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
@@ -27504,6 +27427,9 @@ impl clz_Torappu_StageTableT {
                 storylineStorySets,
                 storylineTags,
                 storylineConst,
+                cgGalleryDisplays,
+                cgGalleryGroups,
+                cgGalleryCgs,
                 sixStarRuneData,
                 sixStarMilestoneInfo,
                 sixStarCompatibleInfo,

@@ -9,7 +9,7 @@ import { Card, CardContent } from "~/components/ui/shadcn/card";
 import { Label } from "~/components/ui/shadcn/label";
 import { Switch } from "~/components/ui/shadcn/switch";
 import type { Stage } from "~/types/api/impl/stage";
-import type { User } from "~/types/api/impl/user";
+import type { GameUserData } from "./types";
 import type { Zone } from "~/types/api/impl/zone";
 import { ACTIVITY_NAMES, formatEventDate, getActivityEventTimes, getActivityIdFromZoneId, getActivityStartTime, getPermanentEventInfo, isActivityCurrentlyOpen, isRerunActivity } from "./activity-names";
 
@@ -25,7 +25,7 @@ interface ZoneFilterPanelProps {
     zones: Zone[];
     selectedStages: string[];
     setSelectedStages: (stages: string[]) => void;
-    user?: User | null;
+    user?: GameUserData | null;
 }
 
 const ZONE_TYPES = [

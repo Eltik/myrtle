@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
-import { convertHistoryToRecords } from "~/lib/gacha-utils";
-import type { GachaEnhancedStats, GachaEnhancedStatsParams, GachaGlobalStats, GachaHistoryParams, GachaHistoryResponse, GachaRecordEntry, GachaRecords, GachaSettings } from "~/types/api";
+import type { GachaGlobalStats, GachaHistoryParams, GachaHistoryResponse, GachaRecordEntry, GachaRecords, GachaSettings } from "~/types/api";
 
 export interface UseGachaReturn {
     // Data state
@@ -8,46 +7,42 @@ export interface UseGachaReturn {
     settings: GachaSettings | null;
     globalStats: GachaGlobalStats | null;
     history: GachaHistoryResponse | null;
-    enhancedStats: GachaEnhancedStats | null;
-    /** All history records converted to GachaRecords format for statistics */
+    /** Grouped stored records (limited/regular/special) for statistics */
     storedRecords: GachaRecords | null;
 
     // Loading states
     loading: boolean;
+    loadingRecords: boolean;
     loadingSettings: boolean;
     loadingStats: boolean;
     loadingHistory: boolean;
-    loadingEnhancedStats: boolean;
     loadingStoredRecords: boolean;
 
     // Error state
     error: string | null;
 
-    // Record functions
+    // Record actions
     fetchAllRecords: () => Promise<GachaRecords | null>;
     refetch: () => Promise<void>;
 
-    // Settings functions
+    // Settings actions
     fetchSettings: () => Promise<GachaSettings | null>;
     updateSettings: (settings: { storeRecords?: boolean; shareAnonymousStats?: boolean }) => Promise<GachaSettings | null>;
 
-    // Stats functions
+    // Stats actions
     fetchGlobalStats: () => Promise<GachaGlobalStats | null>;
-    fetchEnhancedStats: (params?: GachaEnhancedStatsParams) => Promise<GachaEnhancedStats | null>;
 
-    // History functions
+    // History actions
     fetchHistory: (params?: GachaHistoryParams) => Promise<GachaHistoryResponse | null>;
     fetchOperatorHistory: (charId: string) => Promise<GachaRecordEntry[] | null>;
-    /** Fetch all stored records for statistics calculation */
     fetchStoredRecords: () => Promise<GachaRecords | null>;
 
-    // Utility
     clearError: () => void;
 }
 
 /**
  * Hook for managing gacha data fetching and state.
- * Provides functions for fetching records, settings, and global stats.
+ * v3: backed by /api/gacha, /api/gacha/stored-records, /api/gacha/history, /api/gacha/settings.
  */
 export function useGacha(): UseGachaReturn {
     const [records, setRecords] = useState<GachaRecords | null>(null);
@@ -55,21 +50,16 @@ export function useGacha(): UseGachaReturn {
     const [globalStats, setGlobalStats] = useState<GachaGlobalStats | null>(null);
     const [storedRecords, setStoredRecords] = useState<GachaRecords | null>(null);
     const [history, setHistory] = useState<GachaHistoryResponse | null>(null);
-    const [enhancedStats, setEnhancedStats] = useState<GachaEnhancedStats | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(false);
     const [loadingStats, setLoadingStats] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(false);
-    const [loadingEnhancedStats, setLoadingEnhancedStats] = useState(false);
     const [loadingStoredRecords, setLoadingStoredRecords] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
 
-    /**
-     * Fetch all gacha records (limited, regular, special).
-     * Requires authentication with Yostar credentials.
-     */
+    /** Fetch all gacha records via a live Yostar sync. */
     const fetchAllRecords = useCallback(async (): Promise<GachaRecords | null> => {
         setLoading(true);
         setError(null);
@@ -94,17 +84,10 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Re-fetch all records. Alias for fetchAllRecords with void return.
-     */
     const refetch = useCallback(async (): Promise<void> => {
         await fetchAllRecords();
     }, [fetchAllRecords]);
 
-    /**
-     * Fetch user's gacha settings.
-     * Requires authentication.
-     */
     const fetchSettings = useCallback(async (): Promise<GachaSettings | null> => {
         setLoadingSettings(true);
 
@@ -117,7 +100,6 @@ export function useGacha(): UseGachaReturn {
                 return data.settings;
             }
 
-            // Don't set error for settings - it's optional data
             console.warn("Failed to fetch gacha settings:", data.error);
             return null;
         } catch (err) {
@@ -128,10 +110,6 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Update user's gacha settings.
-     * Requires authentication.
-     */
     const updateSettings = useCallback(async (newSettings: { storeRecords?: boolean; shareAnonymousStats?: boolean }): Promise<GachaSettings | null> => {
         setLoadingSettings(true);
 
@@ -159,25 +137,18 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Fetch global anonymous pull rate statistics.
-     * This is a public endpoint - no authentication required.
-     */
     const fetchGlobalStats = useCallback(async (): Promise<GachaGlobalStats | null> => {
         setLoadingStats(true);
 
         try {
             const response = await fetch("/api/gacha/stats");
-            const data = await response.json();
-
-            if (data.success) {
-                setGlobalStats(data.data);
-                return data.data;
+            if (!response.ok) {
+                console.warn("Failed to fetch global gacha stats");
+                return null;
             }
-
-            // Don't set error for stats - it's optional data
-            console.warn("Failed to fetch global gacha stats:", data.error);
-            return null;
+            const data: GachaGlobalStats = await response.json();
+            setGlobalStats(data);
+            return data;
         } catch (err) {
             console.error("Error fetching global gacha stats:", err);
             return null;
@@ -186,10 +157,6 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Fetch user's pull history with pagination and filters.
-     * Requires authentication.
-     */
     const fetchHistory = useCallback(async (params?: GachaHistoryParams): Promise<GachaHistoryResponse | null> => {
         setLoadingHistory(true);
 
@@ -226,10 +193,6 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Fetch all pulls of a specific operator for the user.
-     * Requires authentication.
-     */
     const fetchOperatorHistory = useCallback(async (charId: string): Promise<GachaRecordEntry[] | null> => {
         setLoadingHistory(true);
 
@@ -252,58 +215,19 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Fetch comprehensive global statistics.
-     * This is a public endpoint - no authentication required.
-     */
-    const fetchEnhancedStats = useCallback(async (params?: GachaEnhancedStatsParams): Promise<GachaEnhancedStats | null> => {
-        setLoadingEnhancedStats(true);
-
-        try {
-            const searchParams = new URLSearchParams();
-            if (params?.topN !== undefined) searchParams.set("topN", String(params.topN));
-            if (params?.includeTiming !== undefined) searchParams.set("includeTiming", String(params.includeTiming));
-
-            const queryString = searchParams.toString();
-            const url = queryString ? `/api/gacha/stats/enhanced?${queryString}` : "/api/gacha/stats/enhanced";
-
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.success) {
-                setEnhancedStats(data.data);
-                return data.data;
-            }
-
-            // Don't set error for stats - it's optional data
-            console.warn("Failed to fetch enhanced gacha stats:", data.error);
-            return null;
-        } catch (err) {
-            console.error("Error fetching enhanced gacha stats:", err);
-            return null;
-        } finally {
-            setLoadingEnhancedStats(false);
-        }
-    }, []);
-
-    /**
-     * Fetch all stored records from database for statistics calculation.
-     * Fetches up to 5000 records to compute accurate statistics.
-     */
     const fetchStoredRecords = useCallback(async (): Promise<GachaRecords | null> => {
         setLoadingStoredRecords(true);
 
         try {
-            const response = await fetch("/api/gacha/history?limit=5000&offset=0&order=desc");
+            const response = await fetch("/api/gacha/stored-records");
             const data = await response.json();
 
-            if (data.success && data.data?.records) {
-                const converted = convertHistoryToRecords(data.data.records);
-                setStoredRecords(converted);
-                return converted;
+            if (data.success && data.data) {
+                setStoredRecords(data.data);
+                return data.data;
             }
 
-            console.warn("Failed to fetch stored records for stats:", data.error);
+            console.warn("Failed to fetch stored records:", data.error);
             return null;
         } catch (err) {
             console.error("Error fetching stored records:", err);
@@ -313,9 +237,6 @@ export function useGacha(): UseGachaReturn {
         }
     }, []);
 
-    /**
-     * Clear the current error state.
-     */
     const clearError = useCallback(() => {
         setError(null);
     }, []);
@@ -325,14 +246,13 @@ export function useGacha(): UseGachaReturn {
         settings,
         globalStats,
         history,
-        enhancedStats,
         storedRecords,
 
         loading,
+        loadingRecords: loading,
         loadingSettings,
         loadingStats,
         loadingHistory,
-        loadingEnhancedStats,
         loadingStoredRecords,
 
         error,
@@ -342,7 +262,6 @@ export function useGacha(): UseGachaReturn {
         fetchSettings,
         updateSettings,
         fetchGlobalStats,
-        fetchEnhancedStats,
         fetchHistory,
         fetchStoredRecords,
         fetchOperatorHistory,

@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -107,18 +106,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeModuleType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeModuleType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeModuleType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeModuleType {
     type Inner = Self;
@@ -216,18 +203,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeMonthChatTrigType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeMonthChatTrigType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeMonthChatTrigType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -356,18 +331,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCharState {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeCharState {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCharState",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCharState {
     type Inner = Self;
@@ -463,18 +426,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeEnrollType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeEnrollType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeEnrollType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeEnrollType {
     type Inner = Self;
@@ -530,13 +481,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -628,6 +579,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -726,9 +679,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -821,6 +776,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -916,6 +873,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -927,18 +886,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1041,18 +988,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameMonthTaskClass {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeGameMonthTaskClass {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameMonthTaskClass",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1173,18 +1108,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTopicMode {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTopicMode {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTopicMode",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTopicMode {
     type Inner = Self;
@@ -1282,18 +1205,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTopicDifficultyWarningType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeTopicDifficultyWarningType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTopicDifficultyWarningType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1411,18 +1322,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTopicBankRewardType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTopicBankRewardType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTopicBankRewardType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTopicBankRewardType {
     type Inner = Self;
@@ -1519,18 +1418,6 @@ impl core::fmt::Debug for enum__Torappu_ActArchiveTotemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ActArchiveTotemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ActArchiveTotemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1634,18 +1521,6 @@ impl core::fmt::Debug for enum__Torappu_ActArchiveCopperType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ActArchiveCopperType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ActArchiveCopperType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1766,18 +1641,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCopperType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeCopperType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCopperType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperType {
     type Inner = Self;
@@ -1878,18 +1741,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCopperLuckyLevel {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeCopperLuckyLevel {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCopperLuckyLevel",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2094,18 +1945,6 @@ impl core::fmt::Debug for enum__Torappu_ActArchiveType {
         }
     }
 }
-impl Serialize for enum__Torappu_ActArchiveType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ActArchiveType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ActArchiveType {
     type Inner = Self;
@@ -2214,18 +2053,6 @@ impl core::fmt::Debug for enum__Torappu_EvolvePhase {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_EvolvePhase {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_EvolvePhase",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2340,18 +2167,6 @@ impl core::fmt::Debug for enum__Torappu_LevelData_Difficulty {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_LevelData_Difficulty {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_LevelData_Difficulty",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2488,18 +2303,6 @@ impl core::fmt::Debug for enum__Torappu_ProfessionCategory {
         }
     }
 }
-impl Serialize for enum__Torappu_ProfessionCategory {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ProfessionCategory",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionCategory {
     type Inner = Self;
@@ -2620,18 +2423,6 @@ impl core::fmt::Debug for enum__Torappu_RarityRankMask {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RarityRankMask {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RarityRankMask",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -2764,18 +2555,6 @@ impl core::fmt::Debug for enum__Torappu_ProfessionID {
         }
     }
 }
-impl Serialize for enum__Torappu_ProfessionID {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ProfessionID",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ProfessionID {
     type Inner = Self;
@@ -2894,18 +2673,6 @@ impl core::fmt::Debug for enum__Torappu_RarityRank {
         }
     }
 }
-impl Serialize for enum__Torappu_RarityRank {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RarityRank",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RarityRank {
     type Inner = Self;
@@ -3002,18 +2769,6 @@ impl core::fmt::Debug for enum__Torappu_CustomTicketType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CustomTicketType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CustomTicketType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -3123,18 +2878,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameRelicCheckType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeGameRelicCheckType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameRelicCheckType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeGameRelicCheckType {
     type Inner = Self;
@@ -3190,14 +2933,14 @@ pub const ENUM_MIN_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 16;
+pub const ENUM_MAX_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE: i32 = 23;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE:
-    [enum__Torappu_RoguelikeGameChoiceType; 17] = [
+    [enum__Torappu_RoguelikeGameChoiceType; 24] = [
     enum__Torappu_RoguelikeGameChoiceType::NONE,
     enum__Torappu_RoguelikeGameChoiceType::LEAVE,
     enum__Torappu_RoguelikeGameChoiceType::NEXT,
@@ -3215,6 +2958,13 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_GAME_CHOICE_TYPE:
     enum__Torappu_RoguelikeGameChoiceType::USE_STASHED_TICKET,
     enum__Torappu_RoguelikeGameChoiceType::EXPEDITION_ALL,
     enum__Torappu_RoguelikeGameChoiceType::EXPEDITION_RETURN_ALL,
+    enum__Torappu_RoguelikeGameChoiceType::PACIFY_WRATH,
+    enum__Torappu_RoguelikeGameChoiceType::GILD_COPPER,
+    enum__Torappu_RoguelikeGameChoiceType::ITEM_REROLL,
+    enum__Torappu_RoguelikeGameChoiceType::ITEM_TOP_UP,
+    enum__Torappu_RoguelikeGameChoiceType::GILD_COPPER_ALL,
+    enum__Torappu_RoguelikeGameChoiceType::JUMP_PROB,
+    enum__Torappu_RoguelikeGameChoiceType::JUMP,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -3239,9 +2989,16 @@ impl enum__Torappu_RoguelikeGameChoiceType {
     pub const USE_STASHED_TICKET: Self = Self(14);
     pub const EXPEDITION_ALL: Self = Self(15);
     pub const EXPEDITION_RETURN_ALL: Self = Self(16);
+    pub const PACIFY_WRATH: Self = Self(17);
+    pub const GILD_COPPER: Self = Self(18);
+    pub const ITEM_REROLL: Self = Self(19);
+    pub const ITEM_TOP_UP: Self = Self(20);
+    pub const GILD_COPPER_ALL: Self = Self(21);
+    pub const JUMP_PROB: Self = Self(22);
+    pub const JUMP: Self = Self(23);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 16;
+    pub const ENUM_MAX: i32 = 23;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::LEAVE,
@@ -3260,6 +3017,13 @@ impl enum__Torappu_RoguelikeGameChoiceType {
         Self::USE_STASHED_TICKET,
         Self::EXPEDITION_ALL,
         Self::EXPEDITION_RETURN_ALL,
+        Self::PACIFY_WRATH,
+        Self::GILD_COPPER,
+        Self::ITEM_REROLL,
+        Self::ITEM_TOP_UP,
+        Self::GILD_COPPER_ALL,
+        Self::JUMP_PROB,
+        Self::JUMP,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -3281,6 +3045,13 @@ impl enum__Torappu_RoguelikeGameChoiceType {
             Self::USE_STASHED_TICKET => Some("USE_STASHED_TICKET"),
             Self::EXPEDITION_ALL => Some("EXPEDITION_ALL"),
             Self::EXPEDITION_RETURN_ALL => Some("EXPEDITION_RETURN_ALL"),
+            Self::PACIFY_WRATH => Some("PACIFY_WRATH"),
+            Self::GILD_COPPER => Some("GILD_COPPER"),
+            Self::ITEM_REROLL => Some("ITEM_REROLL"),
+            Self::ITEM_TOP_UP => Some("ITEM_TOP_UP"),
+            Self::GILD_COPPER_ALL => Some("GILD_COPPER_ALL"),
+            Self::JUMP_PROB => Some("JUMP_PROB"),
+            Self::JUMP => Some("JUMP"),
             _ => None,
         }
     }
@@ -3292,18 +3063,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameChoiceType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeGameChoiceType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameChoiceType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -3417,18 +3176,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeChoiceLeftDecoType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeChoiceLeftDecoType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeChoiceLeftDecoType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeChoiceLeftDecoType {
     type Inner = Self;
@@ -3529,18 +3276,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeChoiceDisplayType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeChoiceDisplayType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeChoiceDisplayType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -3698,18 +3433,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeChoiceHintType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeChoiceHintType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeChoiceHintType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeChoiceHintType {
     type Inner = Self;
@@ -3794,8 +3517,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ROGUELIKE_EVENT_TYPE: [enum__Torappu_Rogueli
     enum__Torappu_RoguelikeEventType::ALCHEMY,
     enum__Torappu_RoguelikeEventType::DUEL,
     enum__Torappu_RoguelikeEventType::STASHED_RECRUIT,
-    enum__Torappu_RoguelikeEventType::CHOICES,
     enum__Torappu_RoguelikeEventType::SPECIAL_ZONE,
+    enum__Torappu_RoguelikeEventType::CHOICES,
     enum__Torappu_RoguelikeEventType::EVENTS,
     enum__Torappu_RoguelikeEventType::ALL,
 ];
@@ -3827,8 +3550,8 @@ impl enum__Torappu_RoguelikeEventType {
     pub const ALCHEMY: Self = Self(131072);
     pub const DUEL: Self = Self(262144);
     pub const STASHED_RECRUIT: Self = Self(524288);
-    pub const CHOICES: Self = Self(913136);
     pub const SPECIAL_ZONE: Self = Self(1048576);
+    pub const CHOICES: Self = Self(1961712);
     pub const EVENTS: Self = Self(1965816);
     pub const ALL: Self = Self(1965823);
 
@@ -3857,8 +3580,8 @@ impl enum__Torappu_RoguelikeEventType {
         Self::ALCHEMY,
         Self::DUEL,
         Self::STASHED_RECRUIT,
-        Self::CHOICES,
         Self::SPECIAL_ZONE,
+        Self::CHOICES,
         Self::EVENTS,
         Self::ALL,
     ];
@@ -3887,8 +3610,8 @@ impl enum__Torappu_RoguelikeEventType {
             Self::ALCHEMY => Some("ALCHEMY"),
             Self::DUEL => Some("DUEL"),
             Self::STASHED_RECRUIT => Some("STASHED_RECRUIT"),
-            Self::CHOICES => Some("CHOICES"),
             Self::SPECIAL_ZONE => Some("SPECIAL_ZONE"),
+            Self::CHOICES => Some("CHOICES"),
             Self::EVENTS => Some("EVENTS"),
             Self::ALL => Some("ALL"),
             _ => None,
@@ -3902,18 +3625,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeEventType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeEventType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeEventType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -4018,18 +3729,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameVariationType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeGameVariationType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameVariationType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeGameVariationType {
     type Inner = Self;
@@ -4127,18 +3826,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameCharBuffType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeGameCharBuffType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameCharBuffType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -4239,18 +3926,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTaskRarity {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTaskRarity {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTaskRarity",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTaskRarity {
     type Inner = Self;
@@ -4345,18 +4020,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeBankRewardCountType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeBankRewardCountType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeBankRewardCountType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -4472,18 +4135,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeRewardExDropTagSrcType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeRewardExDropTagSrcType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeRewardExDropTagSrcType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -4602,18 +4253,6 @@ impl core::fmt::Debug for enum__Torappu_TipData_Category {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_TipData_Category {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_TipData_Category",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -4895,18 +4534,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameItemType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeGameItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeGameItemType {
     type Inner = Self;
@@ -5030,18 +4657,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameItemSubType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeGameItemSubType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameItemSubType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeGameItemSubType {
     type Inner = Self;
@@ -5151,18 +4766,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeGameItemRarity {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeGameItemRarity {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeGameItemRarity",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -5320,18 +4923,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeEndingDetailText_Type {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeEndingDetailText_Type {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeEndingDetailText_Type",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeEndingDetailText_Type {
     type Inner = Self;
@@ -5422,18 +5013,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeExpStyleConfigParam {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeExpStyleConfigParam {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeExpStyleConfigParam",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -5530,18 +5109,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeActivityType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeActivityType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeActivityType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -5648,18 +5215,6 @@ impl core::fmt::Debug for enum__Torappu_SanEffectRank {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SanEffectRank {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SanEffectRank",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -5776,18 +5331,6 @@ impl core::fmt::Debug for enum__Torappu_DiceResultClass {
         }
     }
 }
-impl Serialize for enum__Torappu_DiceResultClass {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_DiceResultClass",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_DiceResultClass {
     type Inner = Self;
@@ -5884,18 +5427,6 @@ impl core::fmt::Debug for enum__Torappu_DiceResultShowType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_DiceResultShowType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_DiceResultShowType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -5998,18 +5529,6 @@ impl core::fmt::Debug for enum__Torappu_ChaosEffectRank {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ChaosEffectRank {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ChaosEffectRank",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -6118,18 +5637,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTotemColorType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTotemColorType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTotemColorType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTotemColorType {
     type Inner = Self;
@@ -6224,18 +5731,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTotemPosType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeTotemPosType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTotemPosType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -6337,18 +5832,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTotemBlurNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTotemBlurNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTotemBlurNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTotemBlurNodeType {
     type Inner = Self;
@@ -6443,18 +5926,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeVisionModuleData_VisionChoiceCh
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeVisionModuleData_VisionChoiceCheckType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeVisionModuleData_VisionChoiceCheckType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -6563,18 +6034,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeFragmentType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeFragmentType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeFragmentType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeFragmentType {
     type Inner = Self;
@@ -6678,18 +6137,6 @@ impl core::fmt::Debug for enum__Torappu_AlchemyPoolRarityType {
         }
     }
 }
-impl Serialize for enum__Torappu_AlchemyPoolRarityType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AlchemyPoolRarityType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AlchemyPoolRarityType {
     type Inner = Self;
@@ -6789,18 +6236,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCopperBuffType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeCopperBuffType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCopperBuffType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCopperBuffType {
     type Inner = Self;
@@ -6898,18 +6333,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCopperDivineType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeCopperDivineType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCopperDivineType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -7012,18 +6435,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCopperDivineResultType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeCopperDivineResultType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCopperDivineResultType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -7177,18 +6588,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeSkyZoneNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeSkyZoneNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeSkyZoneNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeSkyZoneNodeType {
     type Inner = Self;
@@ -7288,18 +6687,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTopicDevNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeTopicDevNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTopicDevNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeTopicDevNodeType {
     type Inner = Self;
@@ -7394,18 +6781,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeTopicDevTokenDisplayForm {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeTopicDevTokenDisplayForm {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeTopicDevTokenDisplayForm",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -7523,18 +6898,6 @@ impl core::fmt::Debug for enum__Torappu_RL02DevelopmentNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RL02DevelopmentNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RL02DevelopmentNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RL02DevelopmentNodeType {
     type Inner = Self;
@@ -7642,18 +7005,6 @@ impl core::fmt::Debug for enum__Torappu_RL02DevelopmentEffectType {
         }
     }
 }
-impl Serialize for enum__Torappu_RL02DevelopmentEffectType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RL02DevelopmentEffectType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RL02DevelopmentEffectType {
     type Inner = Self;
@@ -7757,18 +7108,6 @@ impl core::fmt::Debug for enum__Torappu_RL03DevelopmentNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RL03DevelopmentNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RL03DevelopmentNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RL03DevelopmentNodeType {
     type Inner = Self;
@@ -7867,18 +7206,6 @@ impl core::fmt::Debug for enum__Torappu_RL03DevelopmentEffectType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RL03DevelopmentEffectType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RL03DevelopmentEffectType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -7984,18 +7311,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCommonDevelopmentNodeType {
         }
     }
 }
-impl Serialize for enum__Torappu_RoguelikeCommonDevelopmentNodeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCommonDevelopmentNodeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_RoguelikeCommonDevelopmentNodeType {
     type Inner = Self;
@@ -8094,18 +7409,6 @@ impl core::fmt::Debug for enum__Torappu_RoguelikeCommonDevelopmentEffectType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_RoguelikeCommonDevelopmentEffectType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_RoguelikeCommonDevelopmentEffectType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -8302,31 +7605,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBasicData_HomeEntryDisplayDataArg
             startTs: 0,
             endTs: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicBasicData_HomeEntryDisplayData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeTopicBasicData_HomeEntryDisplayData",
-            4,
-        )?;
-        if let Some(f) = self.topicId() {
-            s.serialize_field("topicId", &f)?;
-        } else {
-            s.skip_field("topicId")?;
-        }
-        if let Some(f) = self.displayId() {
-            s.serialize_field("displayId", &f)?;
-        } else {
-            s.skip_field("displayId")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
     }
 }
 
@@ -8617,28 +7895,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicConfigArgs<'a> {
             loadRewardHpDecoPlugin: false,
             loadRewardExtraInfoPlugin: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicConfig", 5)?;
-        s.serialize_field("loadCharCardPlugin", &self.loadCharCardPlugin())?;
-        if let Some(f) = self.webBusType() {
-            s.serialize_field("webBusType", &f)?;
-        } else {
-            s.skip_field("webBusType")?;
-        }
-        s.serialize_field("monthChatTrigType", &self.monthChatTrigType())?;
-        s.serialize_field("loadRewardHpDecoPlugin", &self.loadRewardHpDecoPlugin())?;
-        s.serialize_field(
-            "loadRewardExtraInfoPlugin",
-            &self.loadRewardExtraInfoPlugin(),
-        )?;
-        s.end()
     }
 }
 
@@ -9131,63 +8387,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBasicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicBasicData", 12)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field(
-            "disappearTimeOnMainScreen",
-            &self.disappearTimeOnMainScreen(),
-        )?;
-        s.serialize_field("sort", &self.sort())?;
-        if let Some(f) = self.showMedalId() {
-            s.serialize_field("showMedalId", &f)?;
-        } else {
-            s.skip_field("showMedalId")?;
-        }
-        if let Some(f) = self.medalGroupId() {
-            s.serialize_field("medalGroupId", &f)?;
-        } else {
-            s.skip_field("medalGroupId")?;
-        }
-        s.serialize_field("fullStoredTime", &self.fullStoredTime())?;
-        if let Some(f) = self.lineText() {
-            s.serialize_field("lineText", &f)?;
-        } else {
-            s.skip_field("lineText")?;
-        }
-        if let Some(f) = self.homeEntryDisplayData() {
-            s.serialize_field("homeEntryDisplayData", &f)?;
-        } else {
-            s.skip_field("homeEntryDisplayData")?;
-        }
-        if let Some(f) = self.moduleTypes() {
-            s.serialize_field("moduleTypes", &f)?;
-        } else {
-            s.skip_field("moduleTypes")?;
-        }
-        if let Some(f) = self.config() {
-            s.serialize_field("config", &f)?;
-        } else {
-            s.skip_field("config")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicBasicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -9534,23 +8733,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicBasicDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicBasicData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicBasicDataBuilder<
     'a: 'b,
     'b,
@@ -9795,29 +8977,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicConst_PredefinedCharArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicConst_PredefinedChar<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeTopicConst_PredefinedChar", 4)?;
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        s.serialize_field("canBeFree", &self.canBeFree())?;
-        if let Some(f) = self.uniEquipId() {
-            s.serialize_field("uniEquipId", &f)?;
-        } else {
-            s.skip_field("uniEquipId")?;
-        }
-        s.serialize_field("recruitType", &self.recruitType())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicConst_PredefinedCharBuilder<
     'a: 'b,
     'b,
@@ -10042,25 +9201,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicConst_PredefinedCha
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicConst_PredefinedChar<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeTopicConst_PredefinedChar",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -10501,47 +9641,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicConstArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicConst", 11)?;
-        s.serialize_field("milestoneTokenRatio", &self.milestoneTokenRatio())?;
-        s.serialize_field("outerBuffTokenRatio", &self.outerBuffTokenRatio())?;
-        s.serialize_field("relicTokenRatio", &self.relicTokenRatio())?;
-        if let Some(f) = self.rogueSystemUnlockStage() {
-            s.serialize_field("rogueSystemUnlockStage", &f)?;
-        } else {
-            s.skip_field("rogueSystemUnlockStage")?;
-        }
-        s.serialize_field("ordiModeReOpenCoolDown", &self.ordiModeReOpenCoolDown())?;
-        s.serialize_field("monthModeReOpenCoolDown", &self.monthModeReOpenCoolDown())?;
-        s.serialize_field(
-            "monthlyTaskUncompletedTime",
-            &self.monthlyTaskUncompletedTime(),
-        )?;
-        s.serialize_field(
-            "monthlyTaskManualRefreshLimit",
-            &self.monthlyTaskManualRefreshLimit(),
-        )?;
-        s.serialize_field(
-            "monthlyTeamUncompletedTime",
-            &self.monthlyTeamUncompletedTime(),
-        )?;
-        s.serialize_field(
-            "bpPurchaseSystemUnlockTime",
-            &self.bpPurchaseSystemUnlockTime(),
-        )?;
-        if let Some(f) = self.predefinedChars() {
-            s.serialize_field("predefinedChars", &f)?;
-        } else {
-            s.skip_field("predefinedChars")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -10889,23 +9988,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicUpdateArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicUpdate<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicUpdate", 3)?;
-        if let Some(f) = self.updateId() {
-            s.serialize_field("updateId", &f)?;
-        } else {
-            s.skip_field("updateId")?;
-        }
-        s.serialize_field("topicUpdateTime", &self.topicUpdateTime())?;
-        s.serialize_field("topicEndTime", &self.topicEndTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicUpdateBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11146,24 +10228,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicEnrollArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicEnroll<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicEnroll", 4)?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.serialize_field("enrollTime", &self.enrollTime())?;
-        s.serialize_field("enrollType", &self.enrollType())?;
-        s.serialize_field("enrollNoticeEndTime", &self.enrollNoticeEndTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicEnrollBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -11390,23 +10454,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicEnrollArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicEnroll<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicEnroll", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicEnrollBuilder<
     'a: 'b,
     'b,
@@ -11525,6 +10572,8 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
     pub const VT_ITEMCOUNT: flatbuffers::VOffsetT = 16;
     pub const VT_ISGOODPRIZE: flatbuffers::VOffsetT = 18;
     pub const VT_ISGRANDPRIZE: flatbuffers::VOffsetT = 20;
+    pub const VT_ISRETURNDISPLAY: flatbuffers::VOffsetT = 22;
+    pub const VT_RETURNSORTID: flatbuffers::VOffsetT = 24;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -11536,6 +10585,7 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
         args: &'args clz_Torappu_RoguelikeTopicBPArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicBP<'bldr>> {
         let mut builder = clz_Torappu_RoguelikeTopicBPBuilder::new(_fbb);
+        builder.add_returnSortId(args.returnSortId);
         builder.add_itemCount(args.itemCount);
         builder.add_itemType(args.itemType);
         if let Some(x) = args.itemID {
@@ -11547,6 +10597,7 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
         if let Some(x) = args.id {
             builder.add_id(x);
         }
+        builder.add_isReturnDisplay(args.isReturnDisplay);
         builder.add_isGrandPrize(args.isGrandPrize);
         builder.add_isGoodPrize(args.isGoodPrize);
         builder.finish()
@@ -11562,6 +10613,8 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
         let itemCount = self.itemCount();
         let isGoodPrize = self.isGoodPrize();
         let isGrandPrize = self.isGrandPrize();
+        let isReturnDisplay = self.isReturnDisplay();
+        let returnSortId = self.returnSortId();
         clz_Torappu_RoguelikeTopicBPT {
             id,
             level,
@@ -11572,6 +10625,8 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
             itemCount,
             isGoodPrize,
             isGrandPrize,
+            isReturnDisplay,
+            returnSortId,
         }
     }
 
@@ -11679,6 +10734,31 @@ impl<'a> clz_Torappu_RoguelikeTopicBP<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn isReturnDisplay(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_RoguelikeTopicBP::VT_ISRETURNDISPLAY,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn returnSortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_RoguelikeTopicBP::VT_RETURNSORTID, Some(0))
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicBP<'_> {
@@ -11698,6 +10778,8 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicBP<'_> {
             .visit_field::<i32>("itemCount", Self::VT_ITEMCOUNT, false)?
             .visit_field::<bool>("isGoodPrize", Self::VT_ISGOODPRIZE, false)?
             .visit_field::<bool>("isGrandPrize", Self::VT_ISGRANDPRIZE, false)?
+            .visit_field::<bool>("isReturnDisplay", Self::VT_ISRETURNDISPLAY, false)?
+            .visit_field::<i32>("returnSortId", Self::VT_RETURNSORTID, false)?
             .finish();
         Ok(())
     }
@@ -11712,6 +10794,8 @@ pub struct clz_Torappu_RoguelikeTopicBPArgs<'a> {
     pub itemCount: i32,
     pub isGoodPrize: bool,
     pub isGrandPrize: bool,
+    pub isReturnDisplay: bool,
+    pub returnSortId: i32,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicBPArgs<'a> {
     #[inline]
@@ -11726,34 +10810,9 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBPArgs<'a> {
             itemCount: 0,
             isGoodPrize: false,
             isGrandPrize: false,
+            isReturnDisplay: false,
+            returnSortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicBP<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicBP", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("level", &self.level())?;
-        s.serialize_field("tokenNum", &self.tokenNum())?;
-        s.serialize_field("nextTokenNum", &self.nextTokenNum())?;
-        if let Some(f) = self.itemID() {
-            s.serialize_field("itemID", &f)?;
-        } else {
-            s.skip_field("itemID")?;
-        }
-        s.serialize_field("itemType", &self.itemType())?;
-        s.serialize_field("itemCount", &self.itemCount())?;
-        s.serialize_field("isGoodPrize", &self.isGoodPrize())?;
-        s.serialize_field("isGrandPrize", &self.isGrandPrize())?;
-        s.end()
     }
 }
 
@@ -11822,6 +10881,22 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeTopicBPBui
         );
     }
     #[inline]
+    pub fn add_isReturnDisplay(&mut self, isReturnDisplay: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_RoguelikeTopicBP::VT_ISRETURNDISPLAY,
+            isReturnDisplay,
+            false,
+        );
+    }
+    #[inline]
+    pub fn add_returnSortId(&mut self, returnSortId: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_RoguelikeTopicBP::VT_RETURNSORTID,
+            returnSortId,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeTopicBPBuilder<'a, 'b, A> {
@@ -11850,6 +10925,8 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeTopicBP<'_> {
         ds.field("itemCount", &self.itemCount());
         ds.field("isGoodPrize", &self.isGoodPrize());
         ds.field("isGrandPrize", &self.isGrandPrize());
+        ds.field("isReturnDisplay", &self.isReturnDisplay());
+        ds.field("returnSortId", &self.returnSortId());
         ds.finish()
     }
 }
@@ -11865,6 +10942,8 @@ pub struct clz_Torappu_RoguelikeTopicBPT {
     pub itemCount: i32,
     pub isGoodPrize: bool,
     pub isGrandPrize: bool,
+    pub isReturnDisplay: bool,
+    pub returnSortId: i32,
 }
 impl Default for clz_Torappu_RoguelikeTopicBPT {
     fn default() -> Self {
@@ -11878,6 +10957,8 @@ impl Default for clz_Torappu_RoguelikeTopicBPT {
             itemCount: 0,
             isGoodPrize: false,
             isGrandPrize: false,
+            isReturnDisplay: false,
+            returnSortId: 0,
         }
     }
 }
@@ -11895,6 +10976,8 @@ impl clz_Torappu_RoguelikeTopicBPT {
         let itemCount = self.itemCount;
         let isGoodPrize = self.isGoodPrize;
         let isGrandPrize = self.isGrandPrize;
+        let isReturnDisplay = self.isReturnDisplay;
+        let returnSortId = self.returnSortId;
         clz_Torappu_RoguelikeTopicBP::create(
             _fbb,
             &clz_Torappu_RoguelikeTopicBPArgs {
@@ -11907,6 +10990,8 @@ impl clz_Torappu_RoguelikeTopicBPT {
                 itemCount,
                 isGoodPrize,
                 isGrandPrize,
+                isReturnDisplay,
+                returnSortId,
             },
         )
     }
@@ -12074,22 +11159,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicMilestoneUpdateDataArgs {
             maxBpCount: 0,
             maxDisplayBpCount: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicMilestoneUpdateData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeTopicMilestoneUpdateData", 5)?;
-        s.serialize_field("updateTime", &self.updateTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("maxBpLevel", &self.maxBpLevel())?;
-        s.serialize_field("maxBpCount", &self.maxBpCount())?;
-        s.serialize_field("maxDisplayBpCount", &self.maxDisplayBpCount())?;
-        s.end()
     }
 }
 
@@ -12328,23 +11397,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -12768,64 +11820,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBPGrandPrizeArgs<'a> {
             detailAnnounceTime: None,
             picIdAftrerUnlock: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicBPGrandPrize<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicBPGrandPrize", 12)?;
-        if let Some(f) = self.grandPrizeDisplayId() {
-            s.serialize_field("grandPrizeDisplayId", &f)?;
-        } else {
-            s.skip_field("grandPrizeDisplayId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("displayUnlockYear", &self.displayUnlockYear())?;
-        s.serialize_field("displayUnlockMonth", &self.displayUnlockMonth())?;
-        if let Some(f) = self.acquireTitle() {
-            s.serialize_field("acquireTitle", &f)?;
-        } else {
-            s.skip_field("acquireTitle")?;
-        }
-        if let Some(f) = self.purchaseTitle() {
-            s.serialize_field("purchaseTitle", &f)?;
-        } else {
-            s.skip_field("purchaseTitle")?;
-        }
-        if let Some(f) = self.displayName() {
-            s.serialize_field("displayName", &f)?;
-        } else {
-            s.skip_field("displayName")?;
-        }
-        if let Some(f) = self.displayDiscription() {
-            s.serialize_field("displayDiscription", &f)?;
-        } else {
-            s.skip_field("displayDiscription")?;
-        }
-        if let Some(f) = self.bpLevelId() {
-            s.serialize_field("bpLevelId", &f)?;
-        } else {
-            s.skip_field("bpLevelId")?;
-        }
-        if let Some(f) = self.itemBundle() {
-            s.serialize_field("itemBundle", &f)?;
-        } else {
-            s.skip_field("itemBundle")?;
-        }
-        if let Some(f) = self.detailAnnounceTime() {
-            s.serialize_field("detailAnnounceTime", &f)?;
-        } else {
-            s.skip_field("detailAnnounceTime")?;
-        }
-        if let Some(f) = self.picIdAftrerUnlock() {
-            s.serialize_field("picIdAftrerUnlock", &f)?;
-        } else {
-            s.skip_field("picIdAftrerUnlock")?;
-        }
-        s.end()
     }
 }
 
@@ -13293,44 +12287,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicMonthMissionArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicMonthMission<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicMonthMission", 8)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.taskName() {
-            s.serialize_field("taskName", &f)?;
-        } else {
-            s.skip_field("taskName")?;
-        }
-        s.serialize_field("taskClass", &self.taskClass())?;
-        s.serialize_field("innerClassWeight", &self.innerClassWeight())?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.paramList() {
-            s.serialize_field("paramList", &f)?;
-        } else {
-            s.skip_field("paramList")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.serialize_field("tokenRewardNum", &self.tokenRewardNum())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicMonthMissionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -13600,27 +12556,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicMonthSquadTeamCharArgs<'a> {
             teamCharId: None,
             teamTmplId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicMonthSquadTeamChar<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeTopicMonthSquadTeamChar", 2)?;
-        if let Some(f) = self.teamCharId() {
-            s.serialize_field("teamCharId", &f)?;
-        } else {
-            s.skip_field("teamCharId")?;
-        }
-        if let Some(f) = self.teamTmplId() {
-            s.serialize_field("teamTmplId", &f)?;
-        } else {
-            s.skip_field("teamTmplId")?;
-        }
-        s.end()
     }
 }
 
@@ -14177,89 +13112,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicMonthSquadArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicMonthSquad<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicMonthSquad", 17)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.teamName() {
-            s.serialize_field("teamName", &f)?;
-        } else {
-            s.skip_field("teamName")?;
-        }
-        if let Some(f) = self.teamSubName() {
-            s.serialize_field("teamSubName", &f)?;
-        } else {
-            s.skip_field("teamSubName")?;
-        }
-        if let Some(f) = self.teamFlavorDesc() {
-            s.serialize_field("teamFlavorDesc", &f)?;
-        } else {
-            s.skip_field("teamFlavorDesc")?;
-        }
-        if let Some(f) = self.teamDes() {
-            s.serialize_field("teamDes", &f)?;
-        } else {
-            s.skip_field("teamDes")?;
-        }
-        if let Some(f) = self.teamColor() {
-            s.serialize_field("teamColor", &f)?;
-        } else {
-            s.skip_field("teamColor")?;
-        }
-        if let Some(f) = self.teamMonth() {
-            s.serialize_field("teamMonth", &f)?;
-        } else {
-            s.skip_field("teamMonth")?;
-        }
-        if let Some(f) = self.teamYear() {
-            s.serialize_field("teamYear", &f)?;
-        } else {
-            s.skip_field("teamYear")?;
-        }
-        if let Some(f) = self.teamIndex() {
-            s.serialize_field("teamIndex", &f)?;
-        } else {
-            s.skip_field("teamIndex")?;
-        }
-        if let Some(f) = self.teamChars() {
-            s.serialize_field("teamChars", &f)?;
-        } else {
-            s.skip_field("teamChars")?;
-        }
-        if let Some(f) = self.zoneId() {
-            s.serialize_field("zoneId", &f)?;
-        } else {
-            s.skip_field("zoneId")?;
-        }
-        if let Some(f) = self.chatId() {
-            s.serialize_field("chatId", &f)?;
-        } else {
-            s.skip_field("chatId")?;
-        }
-        s.serialize_field("tokenRewardNum", &self.tokenRewardNum())?;
-        if let Some(f) = self.items() {
-            s.serialize_field("items", &f)?;
-        } else {
-            s.skip_field("items")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.taskDes() {
-            s.serialize_field("taskDes", &f)?;
-        } else {
-            s.skip_field("taskDes")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicMonthSquadBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14658,23 +13510,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicMonthSquadArgs<'a> 
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicMonthSquad<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicMonthSquad", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicMonthSquadBuilder<
     'a: 'b,
     'b,
@@ -14925,36 +13760,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicChallengeTaskArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicChallengeTask<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicChallengeTask", 4)?;
-        if let Some(f) = self.taskId() {
-            s.serialize_field("taskId", &f)?;
-        } else {
-            s.skip_field("taskId")?;
-        }
-        if let Some(f) = self.taskDes() {
-            s.serialize_field("taskDes", &f)?;
-        } else {
-            s.skip_field("taskDes")?;
-        }
-        if let Some(f) = self.completionClass() {
-            s.serialize_field("completionClass", &f)?;
-        } else {
-            s.skip_field("completionClass")?;
-        }
-        if let Some(f) = self.completionParams() {
-            s.serialize_field("completionParams", &f)?;
-        } else {
-            s.skip_field("completionParams")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicChallengeTaskBuilder<
     'a: 'b,
     'b,
@@ -15187,23 +13992,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicChallengeTaskArgs<'
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicChallengeTask<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeTopicChallengeTask", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -15735,74 +14523,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicChallengeArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicChallenge<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicChallenge", 14)?;
-        if let Some(f) = self.challengeId() {
-            s.serialize_field("challengeId", &f)?;
-        } else {
-            s.skip_field("challengeId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.challengeName() {
-            s.serialize_field("challengeName", &f)?;
-        } else {
-            s.skip_field("challengeName")?;
-        }
-        s.serialize_field("challengeGroup", &self.challengeGroup())?;
-        s.serialize_field("challengeGroupSortId", &self.challengeGroupSortId())?;
-        if let Some(f) = self.challengeGroupName() {
-            s.serialize_field("challengeGroupName", &f)?;
-        } else {
-            s.skip_field("challengeGroupName")?;
-        }
-        if let Some(f) = self.challengeUnlockDesc() {
-            s.serialize_field("challengeUnlockDesc", &f)?;
-        } else {
-            s.skip_field("challengeUnlockDesc")?;
-        }
-        if let Some(f) = self.challengeUnlockToastDesc() {
-            s.serialize_field("challengeUnlockToastDesc", &f)?;
-        } else {
-            s.skip_field("challengeUnlockToastDesc")?;
-        }
-        if let Some(f) = self.challengeDes() {
-            s.serialize_field("challengeDes", &f)?;
-        } else {
-            s.skip_field("challengeDes")?;
-        }
-        if let Some(f) = self.challengeConditionDes() {
-            s.serialize_field("challengeConditionDes", &f)?;
-        } else {
-            s.skip_field("challengeConditionDes")?;
-        }
-        if let Some(f) = self.challengeTasks() {
-            s.serialize_field("challengeTasks", &f)?;
-        } else {
-            s.skip_field("challengeTasks")?;
-        }
-        if let Some(f) = self.defaultTaskId() {
-            s.serialize_field("defaultTaskId", &f)?;
-        } else {
-            s.skip_field("defaultTaskId")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.challengeStoryId() {
-            s.serialize_field("challengeStoryId", &f)?;
-        } else {
-            s.skip_field("challengeStoryId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicChallengeBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -16193,23 +14913,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicChallengeArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicChallenge<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicChallenge", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicChallengeBuilder<
     'a: 'b,
     'b,
@@ -16408,29 +15111,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDifficulty_RuleDescReplacementArg
             enrollId: None,
             ruleDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicDifficulty_RuleDescReplacement<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeTopicDifficulty_RuleDescReplacement",
-            2,
-        )?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        if let Some(f) = self.ruleDesc() {
-            s.serialize_field("ruleDesc", &f)?;
-        } else {
-            s.skip_field("ruleDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -17161,93 +15841,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDifficultyArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicDifficulty<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDifficulty", 25)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.nameImage() {
-            s.serialize_field("nameImage", &f)?;
-        } else {
-            s.skip_field("nameImage")?;
-        }
-        if let Some(f) = self.subName() {
-            s.serialize_field("subName", &f)?;
-        } else {
-            s.skip_field("subName")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.serialize_field("haveInitialRelicIcon", &self.haveInitialRelicIcon())?;
-        s.serialize_field("scoreFactor", &self.scoreFactor())?;
-        s.serialize_field("canUnlockItem", &self.canUnlockItem())?;
-        s.serialize_field("doMonthTask", &self.doMonthTask())?;
-        if let Some(f) = self.ruleDesc() {
-            s.serialize_field("ruleDesc", &f)?;
-        } else {
-            s.skip_field("ruleDesc")?;
-        }
-        if let Some(f) = self.ruleDescReplacements() {
-            s.serialize_field("ruleDescReplacements", &f)?;
-        } else {
-            s.skip_field("ruleDescReplacements")?;
-        }
-        if let Some(f) = self.failTitle() {
-            s.serialize_field("failTitle", &f)?;
-        } else {
-            s.skip_field("failTitle")?;
-        }
-        if let Some(f) = self.failImageId() {
-            s.serialize_field("failImageId", &f)?;
-        } else {
-            s.skip_field("failImageId")?;
-        }
-        if let Some(f) = self.failForceDesc() {
-            s.serialize_field("failForceDesc", &f)?;
-        } else {
-            s.skip_field("failForceDesc")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("equivalentGrade", &self.equivalentGrade())?;
-        if let Some(f) = self.color() {
-            s.serialize_field("color", &f)?;
-        } else {
-            s.skip_field("color")?;
-        }
-        s.serialize_field("bpValue", &self.bpValue())?;
-        s.serialize_field("bossValue", &self.bossValue())?;
-        if let Some(f) = self.addDesc() {
-            s.serialize_field("addDesc", &f)?;
-        } else {
-            s.skip_field("addDesc")?;
-        }
-        s.serialize_field("warningType", &self.warningType())?;
-        if let Some(f) = self.unlockText() {
-            s.serialize_field("unlockText", &f)?;
-        } else {
-            s.skip_field("unlockText")?;
-        }
-        if let Some(f) = self.displayIconId() {
-            s.serialize_field("displayIconId", &f)?;
-        } else {
-            s.skip_field("displayIconId")?;
-        }
-        s.serialize_field("hideEndingStory", &self.hideEndingStory())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicDifficultyBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -17774,28 +16367,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicBankRewardArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicBankReward<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicBankReward", 4)?;
-        if let Some(f) = self.rewardId() {
-            s.serialize_field("rewardId", &f)?;
-        } else {
-            s.skip_field("rewardId")?;
-        }
-        s.serialize_field("unlockGoldCnt", &self.unlockGoldCnt())?;
-        s.serialize_field("rewardType", &self.rewardType())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicBankRewardBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -18087,34 +16658,6 @@ impl<'a> Default for clz_Torappu_ActArchiveRelicItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveRelicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveRelicItemData", 6)?;
-        if let Some(f) = self.relicId() {
-            s.serialize_field("relicId", &f)?;
-        } else {
-            s.skip_field("relicId")?;
-        }
-        s.serialize_field("relicSortId", &self.relicSortId())?;
-        s.serialize_field("relicGroupId", &self.relicGroupId())?;
-        if let Some(f) = self.orderId() {
-            s.serialize_field("orderId", &f)?;
-        } else {
-            s.skip_field("orderId")?;
-        }
-        s.serialize_field("isSpRelic", &self.isSpRelic())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveRelicItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -18365,23 +16908,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveRelicItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveRelicItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveRelicItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveRelicItemDataBuilder<
     'a: 'b,
     'b,
@@ -18569,21 +17095,6 @@ impl<'a> Default for clz_Torappu_ActArchiveRelicDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveRelicDataArgs { relic: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveRelicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveRelicData", 1)?;
-        if let Some(f) = self.relic() {
-            s.serialize_field("relic", &f)?;
-        } else {
-            s.skip_field("relic")?;
-        }
-        s.end()
     }
 }
 
@@ -18813,32 +17324,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCapsuleItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveCapsuleItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCapsuleItemData", 4)?;
-        if let Some(f) = self.capsuleId() {
-            s.serialize_field("capsuleId", &f)?;
-        } else {
-            s.skip_field("capsuleId")?;
-        }
-        s.serialize_field("capsuleSortId", &self.capsuleSortId())?;
-        if let Some(f) = self.englishName() {
-            s.serialize_field("englishName", &f)?;
-        } else {
-            s.skip_field("englishName")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveCapsuleItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -19064,23 +17549,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveCapsuleItemDataArgs<'a>
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveCapsuleItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_ActArchiveCapsuleItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveCapsuleItemDataBuilder<
     'a: 'b,
     'b,
@@ -19276,21 +17744,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCapsuleDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveCapsuleDataArgs { capsule: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveCapsuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCapsuleData", 1)?;
-        if let Some(f) = self.capsule() {
-            s.serialize_field("capsule", &f)?;
-        } else {
-            s.skip_field("capsule")?;
-        }
-        s.end()
     }
 }
 
@@ -19510,32 +17963,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTrapItemDataArgs<'a> {
             orderId: None,
             enrollId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveTrapItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTrapItemData", 4)?;
-        if let Some(f) = self.trapId() {
-            s.serialize_field("trapId", &f)?;
-        } else {
-            s.skip_field("trapId")?;
-        }
-        s.serialize_field("trapSortId", &self.trapSortId())?;
-        if let Some(f) = self.orderId() {
-            s.serialize_field("orderId", &f)?;
-        } else {
-            s.skip_field("orderId")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
     }
 }
 
@@ -19763,23 +18190,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveTrapItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveTrapItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveTrapItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveTrapItemDataBuilder<
     'a: 'b,
     'b,
@@ -19967,21 +18377,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTrapDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveTrapDataArgs { trap: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveTrapData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTrapData", 1)?;
-        if let Some(f) = self.trap() {
-            s.serialize_field("trap", &f)?;
-        } else {
-            s.skip_field("trap")?;
-        }
-        s.end()
     }
 }
 
@@ -20202,32 +18597,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChatItemDataArgs<'a> {
             chatDesc: None,
             chatStoryId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChatItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChatItemData", 4)?;
-        s.serialize_field("floor", &self.floor())?;
-        if let Some(f) = self.chatZoneId() {
-            s.serialize_field("chatZoneId", &f)?;
-        } else {
-            s.skip_field("chatZoneId")?;
-        }
-        if let Some(f) = self.chatDesc() {
-            s.serialize_field("chatDesc", &f)?;
-        } else {
-            s.skip_field("chatDesc")?;
-        }
-        if let Some(f) = self.chatStoryId() {
-            s.serialize_field("chatStoryId", &f)?;
-        } else {
-            s.skip_field("chatStoryId")?;
-        }
-        s.end()
     }
 }
 
@@ -20452,22 +18821,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChatGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveChatGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChatGroupData", 2)?;
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.chatItemList() {
-            s.serialize_field("chatItemList", &f)?;
-        } else {
-            s.skip_field("chatItemList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveChatGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -20676,23 +19029,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveChatGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveChatGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveChatGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveChatGroupDataBuilder<
     'a: 'b,
     'b,
@@ -20880,21 +19216,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChatDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveChatDataArgs { chat: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChatData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChatData", 1)?;
-        if let Some(f) = self.chat() {
-            s.serialize_field("chat", &f)?;
-        } else {
-            s.skip_field("chat")?;
-        }
-        s.end()
     }
 }
 
@@ -21182,43 +19503,6 @@ impl<'a> Default for clz_Torappu_ActArchiveEndbookItemDataArgs<'a> {
             unlockDesc: None,
             textId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveEndbookItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveEndbookItemData", 7)?;
-        if let Some(f) = self.endBookId() {
-            s.serialize_field("endBookId", &f)?;
-        } else {
-            s.skip_field("endBookId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.serialize_field("isLast", &self.isLast())?;
-        if let Some(f) = self.endbookName() {
-            s.serialize_field("endbookName", &f)?;
-        } else {
-            s.skip_field("endbookName")?;
-        }
-        if let Some(f) = self.unlockDesc() {
-            s.serialize_field("unlockDesc", &f)?;
-        } else {
-            s.skip_field("unlockDesc")?;
-        }
-        if let Some(f) = self.textId() {
-            s.serialize_field("textId", &f)?;
-        } else {
-            s.skip_field("textId")?;
-        }
-        s.end()
     }
 }
 
@@ -21664,58 +19948,6 @@ impl<'a> Default for clz_Torappu_ActArchiveEndbookGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveEndbookGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveEndbookGroupData", 10)?;
-        if let Some(f) = self.endId() {
-            s.serialize_field("endId", &f)?;
-        } else {
-            s.skip_field("endId")?;
-        }
-        if let Some(f) = self.endingId() {
-            s.serialize_field("endingId", &f)?;
-        } else {
-            s.skip_field("endingId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        if let Some(f) = self.cgId() {
-            s.serialize_field("cgId", &f)?;
-        } else {
-            s.skip_field("cgId")?;
-        }
-        if let Some(f) = self.backBlurId() {
-            s.serialize_field("backBlurId", &f)?;
-        } else {
-            s.skip_field("backBlurId")?;
-        }
-        if let Some(f) = self.cardId() {
-            s.serialize_field("cardId", &f)?;
-        } else {
-            s.skip_field("cardId")?;
-        }
-        s.serialize_field("hasAvg", &self.hasAvg())?;
-        if let Some(f) = self.avgId() {
-            s.serialize_field("avgId", &f)?;
-        } else {
-            s.skip_field("avgId")?;
-        }
-        if let Some(f) = self.clientEndbookItemDatas() {
-            s.serialize_field("clientEndbookItemDatas", &f)?;
-        } else {
-            s.skip_field("clientEndbookItemDatas")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveEndbookGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -22022,23 +20254,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveEndbookGroupDataArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveEndbookGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_ActArchiveEndbookGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveEndbookGroupDataBuilder<
     'a: 'b,
     'b,
@@ -22234,21 +20449,6 @@ impl<'a> Default for clz_Torappu_ActArchiveEndbookDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveEndbookDataArgs { endbook: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveEndbookData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveEndbookData", 1)?;
-        if let Some(f) = self.endbook() {
-            s.serialize_field("endbook", &f)?;
-        } else {
-            s.skip_field("endbook")?;
-        }
-        s.end()
     }
 }
 
@@ -22551,48 +20751,6 @@ impl<'a> Default for clz_Torappu_ActArchiveBuffItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveBuffItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveBuffItemData", 8)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        s.serialize_field("buffGroupIndex", &self.buffGroupIndex())?;
-        s.serialize_field("innerSortId", &self.innerSortId())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.usage() {
-            s.serialize_field("usage", &f)?;
-        } else {
-            s.skip_field("usage")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.color() {
-            s.serialize_field("color", &f)?;
-        } else {
-            s.skip_field("color")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveBuffItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -22866,23 +21024,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveBuffItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveBuffItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveBuffItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveBuffItemDataBuilder<
     'a: 'b,
     'b,
@@ -23070,21 +21211,6 @@ impl<'a> Default for clz_Torappu_ActArchiveBuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveBuffDataArgs { buff: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveBuffData", 1)?;
-        if let Some(f) = self.buff() {
-            s.serialize_field("buff", &f)?;
-        } else {
-            s.skip_field("buff")?;
-        }
-        s.end()
     }
 }
 
@@ -23297,28 +21423,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTotemItemDataArgs<'a> {
             enrollConditionId: None,
             sortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveTotemItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTotemItemData", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.enrollConditionId() {
-            s.serialize_field("enrollConditionId", &f)?;
-        } else {
-            s.skip_field("enrollConditionId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
     }
 }
 
@@ -23547,23 +21651,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveTotemItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveTotemItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveTotemItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveTotemItemDataBuilder<
     'a: 'b,
     'b,
@@ -23751,21 +21838,6 @@ impl<'a> Default for clz_Torappu_ActArchiveTotemDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveTotemDataArgs { totem: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveTotemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveTotemData", 1)?;
-        if let Some(f) = self.totem() {
-            s.serialize_field("totem", &f)?;
-        } else {
-            s.skip_field("totem")?;
-        }
-        s.end()
     }
 }
 
@@ -23981,28 +22053,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChaosItemDataArgs<'a> {
             enrollId: None,
             sortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChaosItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChaosItemData", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("isHidden", &self.isHidden())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
     }
 }
 
@@ -24228,23 +22278,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveChaosItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveChaosItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveChaosItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveChaosItemDataBuilder<
     'a: 'b,
     'b,
@@ -24432,21 +22465,6 @@ impl<'a> Default for clz_Torappu_ActArchiveChaosDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveChaosDataArgs { chaos: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveChaosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveChaosData", 1)?;
-        if let Some(f) = self.chaos() {
-            s.serialize_field("chaos", &f)?;
-        } else {
-            s.skip_field("chaos")?;
-        }
-        s.end()
     }
 }
 
@@ -24645,27 +22663,6 @@ impl<'a> Default for clz_Torappu_ActArchiveFragmentItemDataArgs<'a> {
             sortId: 0,
             enrollConditionId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveFragmentItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveFragmentItemData", 3)?;
-        if let Some(f) = self.fragmentId() {
-            s.serialize_field("fragmentId", &f)?;
-        } else {
-            s.skip_field("fragmentId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.enrollConditionId() {
-            s.serialize_field("enrollConditionId", &f)?;
-        } else {
-            s.skip_field("enrollConditionId")?;
-        }
-        s.end()
     }
 }
 
@@ -24882,23 +22879,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveFragmentItemDataArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveFragmentItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_ActArchiveFragmentItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveFragmentItemDataBuilder<
     'a: 'b,
     'b,
@@ -25094,21 +23074,6 @@ impl<'a> Default for clz_Torappu_ActArchiveFragmentDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveFragmentDataArgs { fragment: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveFragmentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveFragmentData", 1)?;
-        if let Some(f) = self.fragment() {
-            s.serialize_field("fragment", &f)?;
-        } else {
-            s.skip_field("fragment")?;
-        }
-        s.end()
     }
 }
 
@@ -25389,42 +23354,6 @@ impl<'a> Default for clz_Torappu_ActArchiveDisasterItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveDisasterItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveDisasterItemData", 6)?;
-        if let Some(f) = self.disasterId() {
-            s.serialize_field("disasterId", &f)?;
-        } else {
-            s.skip_field("disasterId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.enrollConditionId() {
-            s.serialize_field("enrollConditionId", &f)?;
-        } else {
-            s.skip_field("enrollConditionId")?;
-        }
-        if let Some(f) = self.picSmallId() {
-            s.serialize_field("picSmallId", &f)?;
-        } else {
-            s.skip_field("picSmallId")?;
-        }
-        if let Some(f) = self.picBigActiveId() {
-            s.serialize_field("picBigActiveId", &f)?;
-        } else {
-            s.skip_field("picBigActiveId")?;
-        }
-        if let Some(f) = self.picBigInactiveId() {
-            s.serialize_field("picBigInactiveId", &f)?;
-        } else {
-            s.skip_field("picBigInactiveId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveDisasterItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -25677,23 +23606,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveDisasterItemDataArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveDisasterItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_ActArchiveDisasterItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveDisasterItemDataBuilder<
     'a: 'b,
     'b,
@@ -25889,21 +23801,6 @@ impl<'a> Default for clz_Torappu_ActArchiveDisasterDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveDisasterDataArgs { disasters: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveDisasterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveDisasterData", 1)?;
-        if let Some(f) = self.disasters() {
-            s.serialize_field("disasters", &f)?;
-        } else {
-            s.skip_field("disasters")?;
-        }
-        s.end()
     }
 }
 
@@ -26248,53 +24145,6 @@ impl<'a> Default for clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveWrathItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveWrathItemData", 9)?;
-        if let Some(f) = self.wrathId() {
-            s.serialize_field("wrathId", &f)?;
-        } else {
-            s.skip_field("wrathId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.picTitleId() {
-            s.serialize_field("picTitleId", &f)?;
-        } else {
-            s.skip_field("picTitleId")?;
-        }
-        if let Some(f) = self.picSmallInactiveId() {
-            s.serialize_field("picSmallInactiveId", &f)?;
-        } else {
-            s.skip_field("picSmallInactiveId")?;
-        }
-        if let Some(f) = self.picSmallActiveId() {
-            s.serialize_field("picSmallActiveId", &f)?;
-        } else {
-            s.skip_field("picSmallActiveId")?;
-        }
-        if let Some(f) = self.picBigActiveId() {
-            s.serialize_field("picBigActiveId", &f)?;
-        } else {
-            s.skip_field("picBigActiveId")?;
-        }
-        if let Some(f) = self.picBigInactiveId() {
-            s.serialize_field("picBigInactiveId", &f)?;
-        } else {
-            s.skip_field("picBigInactiveId")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.serialize_field("isSp", &self.isSp())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveWrathItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -26583,23 +24433,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveWrathItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveWrathItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveWrathItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveWrathItemDataBuilder<
     'a: 'b,
     'b,
@@ -26789,21 +24622,6 @@ impl<'a> Default for clz_Torappu_ActArchiveWrathDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ActArchiveWrathDataArgs { wraths: None }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveWrathData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveWrathData", 1)?;
-        if let Some(f) = self.wraths() {
-            s.serialize_field("wraths", &f)?;
-        } else {
-            s.skip_field("wraths")?;
-        }
-        s.end()
     }
 }
 
@@ -27107,39 +24925,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCopperItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveCopperItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCopperItemData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.displayCopperId() {
-            s.serialize_field("displayCopperId", &f)?;
-        } else {
-            s.skip_field("displayCopperId")?;
-        }
-        s.serialize_field("archiveType", &self.archiveType())?;
-        s.serialize_field("copperType", &self.copperType())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        if let Some(f) = self.coppersInGroup() {
-            s.serialize_field("coppersInGroup", &f)?;
-        } else {
-            s.skip_field("coppersInGroup")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveCopperItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -27407,23 +25192,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperItemDataArgs<'a> 
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_ActArchiveCopperItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveCopperItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_ActArchiveCopperItemDataBuilder<
     'a: 'b,
     'b,
@@ -27651,27 +25419,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCopperTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveCopperTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCopperTypeData", 3)?;
-        s.serialize_field("copperType", &self.copperType())?;
-        if let Some(f) = self.typeName() {
-            s.serialize_field("typeName", &f)?;
-        } else {
-            s.skip_field("typeName")?;
-        }
-        if let Some(f) = self.typeIconId() {
-            s.serialize_field("typeIconId", &f)?;
-        } else {
-            s.skip_field("typeIconId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveCopperTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -27881,23 +25628,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperTypeDataArgs<'a> 
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveCopperTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveCopperTypeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -28128,31 +25858,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCopperGildDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveCopperGildData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCopperGildData", 3)?;
-        if let Some(f) = self.gildTypeId() {
-            s.serialize_field("gildTypeId", &f)?;
-        } else {
-            s.skip_field("gildTypeId")?;
-        }
-        if let Some(f) = self.gildName() {
-            s.serialize_field("gildName", &f)?;
-        } else {
-            s.skip_field("gildName")?;
-        }
-        if let Some(f) = self.gildDesc() {
-            s.serialize_field("gildDesc", &f)?;
-        } else {
-            s.skip_field("gildDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveCopperGildDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -28361,23 +26066,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperGildDataArgs<'a> 
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveCopperGildData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ActArchiveCopperGildData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -28633,32 +26321,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCopperLuckyLevelDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCopperLuckyLevelData", 4)?;
-        s.serialize_field("luckyLevel", &self.luckyLevel())?;
-        if let Some(f) = self.luckyName() {
-            s.serialize_field("luckyName", &f)?;
-        } else {
-            s.skip_field("luckyName")?;
-        }
-        if let Some(f) = self.luckyDesc() {
-            s.serialize_field("luckyDesc", &f)?;
-        } else {
-            s.skip_field("luckyDesc")?;
-        }
-        if let Some(f) = self.luckyUsage() {
-            s.serialize_field("luckyUsage", &f)?;
-        } else {
-            s.skip_field("luckyUsage")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ActArchiveCopperLuckyLevelDataBuilder<
     'a: 'b,
     'b,
@@ -28883,25 +26545,6 @@ impl<'a> Default for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelDataArg
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_ActArchiveCopperLuckyLevelData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -29254,36 +26897,6 @@ impl<'a> Default for clz_Torappu_ActArchiveCopperDataArgs<'a> {
             gilds: None,
             luckyLevels: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ActArchiveCopperData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ActArchiveCopperData", 4)?;
-        if let Some(f) = self.coppers() {
-            s.serialize_field("coppers", &f)?;
-        } else {
-            s.skip_field("coppers")?;
-        }
-        if let Some(f) = self.copperTypes() {
-            s.serialize_field("copperTypes", &f)?;
-        } else {
-            s.skip_field("copperTypes")?;
-        }
-        if let Some(f) = self.gilds() {
-            s.serialize_field("gilds", &f)?;
-        } else {
-            s.skip_field("gilds")?;
-        }
-        if let Some(f) = self.luckyLevels() {
-            s.serialize_field("luckyLevels", &f)?;
-        } else {
-            s.skip_field("luckyLevels")?;
-        }
-        s.end()
     }
 }
 
@@ -29812,76 +27425,6 @@ impl<'a> Default for clz_Torappu_RoguelikeArchiveComponentDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeArchiveComponentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeArchiveComponentData", 12)?;
-        if let Some(f) = self.relic() {
-            s.serialize_field("relic", &f)?;
-        } else {
-            s.skip_field("relic")?;
-        }
-        if let Some(f) = self.capsule() {
-            s.serialize_field("capsule", &f)?;
-        } else {
-            s.skip_field("capsule")?;
-        }
-        if let Some(f) = self.trap() {
-            s.serialize_field("trap", &f)?;
-        } else {
-            s.skip_field("trap")?;
-        }
-        if let Some(f) = self.chat() {
-            s.serialize_field("chat", &f)?;
-        } else {
-            s.skip_field("chat")?;
-        }
-        if let Some(f) = self.endbook() {
-            s.serialize_field("endbook", &f)?;
-        } else {
-            s.skip_field("endbook")?;
-        }
-        if let Some(f) = self.buff() {
-            s.serialize_field("buff", &f)?;
-        } else {
-            s.skip_field("buff")?;
-        }
-        if let Some(f) = self.totem() {
-            s.serialize_field("totem", &f)?;
-        } else {
-            s.skip_field("totem")?;
-        }
-        if let Some(f) = self.chaos() {
-            s.serialize_field("chaos", &f)?;
-        } else {
-            s.skip_field("chaos")?;
-        }
-        if let Some(f) = self.fragment() {
-            s.serialize_field("fragment", &f)?;
-        } else {
-            s.skip_field("fragment")?;
-        }
-        if let Some(f) = self.disaster() {
-            s.serialize_field("disaster", &f)?;
-        } else {
-            s.skip_field("disaster")?;
-        }
-        if let Some(f) = self.wrath() {
-            s.serialize_field("wrath", &f)?;
-        } else {
-            s.skip_field("wrath")?;
-        }
-        if let Some(f) = self.copper() {
-            s.serialize_field("copper", &f)?;
-        } else {
-            s.skip_field("copper")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeArchiveComponentDataBuilder<
     'a: 'b,
     'b,
@@ -30232,22 +27775,6 @@ impl<'a> Default for clz_Torappu_RoguelikeArchiveUnlockCondDescArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeArchiveUnlockCondDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeArchiveUnlockCondDesc", 2)?;
-        s.serialize_field("archiveType", &self.archiveType())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeArchiveUnlockCondDescBuilder<
     'a: 'b,
     'b,
@@ -30447,25 +27974,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeArchiveUnlockCondDescArg
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeArchiveUnlockCondDesc<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeArchiveUnlockCondDesc",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -30671,22 +28179,6 @@ impl<'a> Default for clz_Torappu_RoguelikeArchiveEnrollArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeArchiveEnroll<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeArchiveEnroll", 2)?;
-        s.serialize_field("archiveType", &self.archiveType())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeArchiveEnrollBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -30884,23 +28376,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeArchiveEnrollArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeArchiveEnroll<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeArchiveEnroll", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -31152,26 +28627,6 @@ impl<'a> Default for clz_Torappu_RoguelikeArchiveUnlockCondDataArgs<'a> {
             unlockCondDesc: None,
             enroll: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeArchiveUnlockCondData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeArchiveUnlockCondData", 2)?;
-        if let Some(f) = self.unlockCondDesc() {
-            s.serialize_field("unlockCondDesc", &f)?;
-        } else {
-            s.skip_field("unlockCondDesc")?;
-        }
-        if let Some(f) = self.enroll() {
-            s.serialize_field("enroll", &f)?;
-        } else {
-            s.skip_field("enroll")?;
-        }
-        s.end()
     }
 }
 
@@ -31445,22 +28900,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelDataArgs {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelData", 5)?;
-        s.serialize_field("exp", &self.exp())?;
-        s.serialize_field("populationUp", &self.populationUp())?;
-        s.serialize_field("squadCapacityUp", &self.squadCapacityUp())?;
-        s.serialize_field("battleCharLimitUp", &self.battleCharLimitUp())?;
-        s.serialize_field("maxHpUp", &self.maxHpUp())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelDataBuilder<
     'a: 'b,
     'b,
@@ -31707,25 +29146,6 @@ impl<'a> Default for dict__int__clz_Torappu_RoguelikeTopicDetailConst_PlayerLeve
     }
 }
 
-impl Serialize for dict__int__clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__int__clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__clz_Torappu_RoguelikeTopicDetailConst_PlayerLevelDataBuilder<
     'a: 'b,
     'b,
@@ -31930,20 +29350,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeDataArgs {
             skillLevel: 0,
             skillSpecializeLevel: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeData", 3)?;
-        s.serialize_field("evolvePhase", &self.evolvePhase())?;
-        s.serialize_field("skillLevel", &self.skillLevel())?;
-        s.serialize_field("skillSpecializeLevel", &self.skillSpecializeLevel())?;
-        s.end()
     }
 }
 
@@ -32167,25 +29573,6 @@ impl<'a> Default for dict__int__clz_Torappu_RoguelikeTopicDetailConst_CharUpgrad
     }
 }
 
-impl Serialize for dict__int__clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__int__clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__clz_Torappu_RoguelikeTopicDetailConst_CharUpgradeDataBuilder<
     'a: 'b,
     'b,
@@ -32374,22 +29761,6 @@ impl<'a> Default for dict__int__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__int__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -32570,24 +29941,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevel
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelDataArgs { levels: None }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData",
-            1,
-        )?;
-        if let Some(f) = self.levels() {
-            s.serialize_field("levels", &f)?;
-        } else {
-            s.skip_field("levels")?;
-        }
-        s.end()
     }
 }
 
@@ -32801,27 +30154,6 @@ impl<'a> Default
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize
-    for dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeTopicDetailConst_PredefinedPlayerLevelData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -33899,185 +31231,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailConstArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicDetailConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDetailConst", 39)?;
-        if let Some(f) = self.playerLevelTable() {
-            s.serialize_field("playerLevelTable", &f)?;
-        } else {
-            s.skip_field("playerLevelTable")?;
-        }
-        if let Some(f) = self.charUpgradeTable() {
-            s.serialize_field("charUpgradeTable", &f)?;
-        } else {
-            s.skip_field("charUpgradeTable")?;
-        }
-        if let Some(f) = self.difficultyUpgradeRelicDescTable() {
-            s.serialize_field("difficultyUpgradeRelicDescTable", &f)?;
-        } else {
-            s.skip_field("difficultyUpgradeRelicDescTable")?;
-        }
-        if let Some(f) = self.predefinedLevelTable() {
-            s.serialize_field("predefinedLevelTable", &f)?;
-        } else {
-            s.skip_field("predefinedLevelTable")?;
-        }
-        if let Some(f) = self.tokenBpId() {
-            s.serialize_field("tokenBpId", &f)?;
-        } else {
-            s.skip_field("tokenBpId")?;
-        }
-        if let Some(f) = self.tokenOuterBuffId() {
-            s.serialize_field("tokenOuterBuffId", &f)?;
-        } else {
-            s.skip_field("tokenOuterBuffId")?;
-        }
-        if let Some(f) = self.spOperatorLockedMessage() {
-            s.serialize_field("spOperatorLockedMessage", &f)?;
-        } else {
-            s.skip_field("spOperatorLockedMessage")?;
-        }
-        if let Some(f) = self.previewedRewardsAccordingUpdateId() {
-            s.serialize_field("previewedRewardsAccordingUpdateId", &f)?;
-        } else {
-            s.skip_field("previewedRewardsAccordingUpdateId")?;
-        }
-        if let Some(f) = self.tipButtonName() {
-            s.serialize_field("tipButtonName", &f)?;
-        } else {
-            s.skip_field("tipButtonName")?;
-        }
-        if let Some(f) = self.collectButtonName() {
-            s.serialize_field("collectButtonName", &f)?;
-        } else {
-            s.skip_field("collectButtonName")?;
-        }
-        if let Some(f) = self.bpSystemName() {
-            s.serialize_field("bpSystemName", &f)?;
-        } else {
-            s.skip_field("bpSystemName")?;
-        }
-        if let Some(f) = self.autoSetKV() {
-            s.serialize_field("autoSetKV", &f)?;
-        } else {
-            s.skip_field("autoSetKV")?;
-        }
-        if let Some(f) = self.bpPurchaseActiveEnroll() {
-            s.serialize_field("bpPurchaseActiveEnroll", &f)?;
-        } else {
-            s.skip_field("bpPurchaseActiveEnroll")?;
-        }
-        if let Some(f) = self.defaultExpeditionSelectDesc() {
-            s.serialize_field("defaultExpeditionSelectDesc", &f)?;
-        } else {
-            s.skip_field("defaultExpeditionSelectDesc")?;
-        }
-        if let Some(f) = self.gotCharMutationBuffToast() {
-            s.serialize_field("gotCharMutationBuffToast", &f)?;
-        } else {
-            s.skip_field("gotCharMutationBuffToast")?;
-        }
-        if let Some(f) = self.gotCharEvolutionBuffToast() {
-            s.serialize_field("gotCharEvolutionBuffToast", &f)?;
-        } else {
-            s.skip_field("gotCharEvolutionBuffToast")?;
-        }
-        if let Some(f) = self.gotSquadBuffToast() {
-            s.serialize_field("gotSquadBuffToast", &f)?;
-        } else {
-            s.skip_field("gotSquadBuffToast")?;
-        }
-        if let Some(f) = self.loseCharBuffToast() {
-            s.serialize_field("loseCharBuffToast", &f)?;
-        } else {
-            s.skip_field("loseCharBuffToast")?;
-        }
-        if let Some(f) = self.monthTeamSystemName() {
-            s.serialize_field("monthTeamSystemName", &f)?;
-        } else {
-            s.skip_field("monthTeamSystemName")?;
-        }
-        if let Some(f) = self.battlePassUpdateName() {
-            s.serialize_field("battlePassUpdateName", &f)?;
-        } else {
-            s.skip_field("battlePassUpdateName")?;
-        }
-        if let Some(f) = self.monthCharCardTagName() {
-            s.serialize_field("monthCharCardTagName", &f)?;
-        } else {
-            s.skip_field("monthCharCardTagName")?;
-        }
-        if let Some(f) = self.monthTeamDescTagName() {
-            s.serialize_field("monthTeamDescTagName", &f)?;
-        } else {
-            s.skip_field("monthTeamDescTagName")?;
-        }
-        if let Some(f) = self.outerBuffCompleteText() {
-            s.serialize_field("outerBuffCompleteText", &f)?;
-        } else {
-            s.skip_field("outerBuffCompleteText")?;
-        }
-        if let Some(f) = self.outerProgressTextColor() {
-            s.serialize_field("outerProgressTextColor", &f)?;
-        } else {
-            s.skip_field("outerProgressTextColor")?;
-        }
-        if let Some(f) = self.challengeTaskTargetName() {
-            s.serialize_field("challengeTaskTargetName", &f)?;
-        } else {
-            s.skip_field("challengeTaskTargetName")?;
-        }
-        if let Some(f) = self.challengeTaskConditionName() {
-            s.serialize_field("challengeTaskConditionName", &f)?;
-        } else {
-            s.skip_field("challengeTaskConditionName")?;
-        }
-        if let Some(f) = self.challengeTaskRewardName() {
-            s.serialize_field("challengeTaskRewardName", &f)?;
-        } else {
-            s.skip_field("challengeTaskRewardName")?;
-        }
-        if let Some(f) = self.challengeTaskModeName() {
-            s.serialize_field("challengeTaskModeName", &f)?;
-        } else {
-            s.skip_field("challengeTaskModeName")?;
-        }
-        if let Some(f) = self.challengeTaskName() {
-            s.serialize_field("challengeTaskName", &f)?;
-        } else {
-            s.skip_field("challengeTaskName")?;
-        }
-        s.serialize_field("outerBuffTokenSum", &self.outerBuffTokenSum())?;
-        s.serialize_field("needAllFrontNode", &self.needAllFrontNode())?;
-        s.serialize_field("showBlurBack", &self.showBlurBack())?;
-        s.serialize_field(
-            "endingIconBorderDifficulty",
-            &self.endingIconBorderDifficulty(),
-        )?;
-        s.serialize_field("endingIconBorderCount", &self.endingIconBorderCount())?;
-        if let Some(f) = self.copySeedModeInfo() {
-            s.serialize_field("copySeedModeInfo", &f)?;
-        } else {
-            s.skip_field("copySeedModeInfo")?;
-        }
-        if let Some(f) = self.copySucceededTextHint() {
-            s.serialize_field("copySucceededTextHint", &f)?;
-        } else {
-            s.skip_field("copySucceededTextHint")?;
-        }
-        s.serialize_field("historicalRecordsCount", &self.historicalRecordsCount())?;
-        s.serialize_field(
-            "historicalRecordsStartTime",
-            &self.historicalRecordsStartTime(),
-        )?;
-        s.serialize_field("historicalRecordsMode", &self.historicalRecordsMode())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicDetailConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -35145,45 +32298,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameInitDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameInitData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameInitData", 13)?;
-        s.serialize_field("modeId", &self.modeId())?;
-        s.serialize_field("modeGrade", &self.modeGrade())?;
-        if let Some(f) = self.predefinedId() {
-            s.serialize_field("predefinedId", &f)?;
-        } else {
-            s.skip_field("predefinedId")?;
-        }
-        if let Some(f) = self.predefinedStyle() {
-            s.serialize_field("predefinedStyle", &f)?;
-        } else {
-            s.skip_field("predefinedStyle")?;
-        }
-        if let Some(f) = self.initialBandRelic() {
-            s.serialize_field("initialBandRelic", &f)?;
-        } else {
-            s.skip_field("initialBandRelic")?;
-        }
-        if let Some(f) = self.initialRecruitGroup() {
-            s.serialize_field("initialRecruitGroup", &f)?;
-        } else {
-            s.skip_field("initialRecruitGroup")?;
-        }
-        s.serialize_field("initialHp", &self.initialHp())?;
-        s.serialize_field("initialPopulation", &self.initialPopulation())?;
-        s.serialize_field("initialGold", &self.initialGold())?;
-        s.serialize_field("initialSquadCapacity", &self.initialSquadCapacity())?;
-        s.serialize_field("initialShield", &self.initialShield())?;
-        s.serialize_field("initialMaxHp", &self.initialMaxHp())?;
-        s.serialize_field("initialKey", &self.initialKey())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameInitDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -35920,91 +33034,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameStageDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameStageData", 19)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.linkedStageId() {
-            s.serialize_field("linkedStageId", &f)?;
-        } else {
-            s.skip_field("linkedStageId")?;
-        }
-        if let Some(f) = self.levelId() {
-            s.serialize_field("levelId", &f)?;
-        } else {
-            s.skip_field("levelId")?;
-        }
-        if let Some(f) = self.levelReplaceIds() {
-            s.serialize_field("levelReplaceIds", &f)?;
-        } else {
-            s.skip_field("levelReplaceIds")?;
-        }
-        if let Some(f) = self.code() {
-            s.serialize_field("code", &f)?;
-        } else {
-            s.skip_field("code")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.loadingPicId() {
-            s.serialize_field("loadingPicId", &f)?;
-        } else {
-            s.skip_field("loadingPicId")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.eliteDesc() {
-            s.serialize_field("eliteDesc", &f)?;
-        } else {
-            s.skip_field("eliteDesc")?;
-        }
-        s.serialize_field("isBoss", &self.isBoss())?;
-        s.serialize_field("isElite", &self.isElite())?;
-        s.serialize_field("difficulty", &self.difficulty())?;
-        if let Some(f) = self.capsulePool() {
-            s.serialize_field("capsulePool", &f)?;
-        } else {
-            s.skip_field("capsulePool")?;
-        }
-        s.serialize_field("capsuleProb", &self.capsuleProb())?;
-        if let Some(f) = self.vutresProb() {
-            s.serialize_field("vutresProb", &f)?;
-        } else {
-            s.skip_field("vutresProb")?;
-        }
-        if let Some(f) = self.boxProb() {
-            s.serialize_field("boxProb", &f)?;
-        } else {
-            s.skip_field("boxProb")?;
-        }
-        if let Some(f) = self.specialNodeId() {
-            s.serialize_field("specialNodeId", &f)?;
-        } else {
-            s.skip_field("specialNodeId")?;
-        }
-        if let Some(f) = self.redCapsulePool() {
-            s.serialize_field("redCapsulePool", &f)?;
-        } else {
-            s.skip_field("redCapsulePool")?;
-        }
-        s.serialize_field("redCapsuleProb", &self.redCapsuleProb())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameStageDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -36415,23 +33444,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameStageDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameStageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameStageData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -36875,72 +33887,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameZoneDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameZoneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameZoneData", 12)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.clockPerformance() {
-            s.serialize_field("clockPerformance", &f)?;
-        } else {
-            s.skip_field("clockPerformance")?;
-        }
-        if let Some(f) = self.displayTime() {
-            s.serialize_field("displayTime", &f)?;
-        } else {
-            s.skip_field("displayTime")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.buffDescription() {
-            s.serialize_field("buffDescription", &f)?;
-        } else {
-            s.skip_field("buffDescription")?;
-        }
-        if let Some(f) = self.endingDescription() {
-            s.serialize_field("endingDescription", &f)?;
-        } else {
-            s.skip_field("endingDescription")?;
-        }
-        if let Some(f) = self.backgroundId() {
-            s.serialize_field("backgroundId", &f)?;
-        } else {
-            s.skip_field("backgroundId")?;
-        }
-        if let Some(f) = self.zoneIconId() {
-            s.serialize_field("zoneIconId", &f)?;
-        } else {
-            s.skip_field("zoneIconId")?;
-        }
-        s.serialize_field("isHiddenZone", &self.isHiddenZone())?;
-        if let Some(f) = self.bgmSignal() {
-            s.serialize_field("bgmSignal", &f)?;
-        } else {
-            s.skip_field("bgmSignal")?;
-        }
-        if let Some(f) = self.bgmSignalWithLowSan() {
-            s.serialize_field("bgmSignalWithLowSan", &f)?;
-        } else {
-            s.skip_field("bgmSignalWithLowSan")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameZoneDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -37273,23 +34219,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameZoneDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameZoneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameZoneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameZoneDataBuilder<
     'a: 'b,
     'b,
@@ -37433,16 +34362,6 @@ impl<'a> Default for clz_Torappu_RoguelikeZoneVariationDataArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeZoneVariationDataArgs {}
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeZoneVariationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let s = serializer.serialize_struct("clz_Torappu_RoguelikeZoneVariationData", 0)?;
-        s.end()
     }
 }
 
@@ -37616,23 +34535,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeZoneVariationDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeZoneVariationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeZoneVariationData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -37855,31 +34757,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameTrapDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameTrapData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameTrapData", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        if let Some(f) = self.trapId() {
-            s.serialize_field("trapId", &f)?;
-        } else {
-            s.skip_field("trapId")?;
-        }
-        if let Some(f) = self.trapDesc() {
-            s.serialize_field("trapDesc", &f)?;
-        } else {
-            s.skip_field("trapDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameTrapDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -38088,23 +34965,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameTrapDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameTrapData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameTrapData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -38435,44 +35295,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameRecruitTicketDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameRecruitTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameRecruitTicketData", 8)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("profession", &self.profession())?;
-        s.serialize_field("rarity", &self.rarity())?;
-        if let Some(f) = self.professionList() {
-            s.serialize_field("professionList", &f)?;
-        } else {
-            s.skip_field("professionList")?;
-        }
-        if let Some(f) = self.rarityList() {
-            s.serialize_field("rarityList", &f)?;
-        } else {
-            s.skip_field("rarityList")?;
-        }
-        s.serialize_field("extraEliteNum", &self.extraEliteNum())?;
-        if let Some(f) = self.extraFreeRarity() {
-            s.serialize_field("extraFreeRarity", &f)?;
-        } else {
-            s.skip_field("extraFreeRarity")?;
-        }
-        if let Some(f) = self.extraCharIds() {
-            s.serialize_field("extraCharIds", &f)?;
-        } else {
-            s.skip_field("extraCharIds")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameRecruitTicketDataBuilder<
     'a: 'b,
     'b,
@@ -38766,25 +35588,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameRecruitTicketDataArg
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameRecruitTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeGameRecruitTicketData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameRecruitTicketDataBuilder<
     'a: 'b,
     'b,
@@ -39043,33 +35846,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameUpgradeTicketDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameUpgradeTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameUpgradeTicketData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("profession", &self.profession())?;
-        s.serialize_field("rarity", &self.rarity())?;
-        if let Some(f) = self.professionList() {
-            s.serialize_field("professionList", &f)?;
-        } else {
-            s.skip_field("professionList")?;
-        }
-        if let Some(f) = self.rarityList() {
-            s.serialize_field("rarityList", &f)?;
-        } else {
-            s.skip_field("rarityList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameUpgradeTicketDataBuilder<
     'a: 'b,
     'b,
@@ -39315,25 +36091,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameUpgradeTicketDataArg
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameUpgradeTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeGameUpgradeTicketData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameUpgradeTicketDataBuilder<
     'a: 'b,
     'b,
@@ -39550,27 +36307,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameCustomTicketDataArgs<'a> {
             subType: enum__Torappu_CustomTicketType::NONE,
             discardText: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameCustomTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameCustomTicketData", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("subType", &self.subType())?;
-        if let Some(f) = self.discardText() {
-            s.serialize_field("discardText", &f)?;
-        } else {
-            s.skip_field("discardText")?;
-        }
-        s.end()
     }
 }
 
@@ -39791,23 +36527,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameCustomTicketDataArgs
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameCustomTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameCustomTicketData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameCustomTicketDataBuilder<
     'a: 'b,
     'b,
@@ -40007,27 +36726,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameStashableTicketDataArgs<'a> {
             ticketId: None,
             stashedTicketId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeGameStashableTicketData", 2)?;
-        if let Some(f) = self.ticketId() {
-            s.serialize_field("ticketId", &f)?;
-        } else {
-            s.skip_field("ticketId")?;
-        }
-        if let Some(f) = self.stashedTicketId() {
-            s.serialize_field("stashedTicketId", &f)?;
-        } else {
-            s.skip_field("stashedTicketId")?;
-        }
-        s.end()
     }
 }
 
@@ -40233,25 +36931,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameStashableTicketDataA
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameStashableTicketData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeGameStashableTicketData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -40469,27 +37148,6 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        s.serialize_field("value", &self.value())?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Blackboard_DataPairBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -40692,26 +37350,6 @@ impl<'a> Default for clz_Torappu_RoguelikeBuffArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeBuff<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeBuff", 2)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        if let Some(f) = self.blackboard() {
-            s.serialize_field("blackboard", &f)?;
-        } else {
-            s.skip_field("blackboard")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeBuffBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -40894,26 +37532,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameRelicDataArgs<'a> {
             id: None,
             buffs: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameRelicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameRelicData", 2)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        s.end()
     }
 }
 
@@ -41118,23 +37736,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameRelicDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameRelicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameRelicData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -41361,23 +37962,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameRelicCheckParamArgs<'a> {
             valueStrs: None,
             valueInt: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameRelicCheckParam<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameRelicCheckParam", 3)?;
-        s.serialize_field("valueProfessionMask", &self.valueProfessionMask())?;
-        if let Some(f) = self.valueStrs() {
-            s.serialize_field("valueStrs", &f)?;
-        } else {
-            s.skip_field("valueStrs")?;
-        }
-        s.serialize_field("valueInt", &self.valueInt())?;
-        s.end()
     }
 }
 
@@ -41644,31 +38228,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameRelicParamDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameRelicParamData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameRelicParamData", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.checkCharBoxTypes() {
-            s.serialize_field("checkCharBoxTypes", &f)?;
-        } else {
-            s.skip_field("checkCharBoxTypes")?;
-        }
-        if let Some(f) = self.checkCharBoxParams() {
-            s.serialize_field("checkCharBoxParams", &f)?;
-        } else {
-            s.skip_field("checkCharBoxParams")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameRelicParamDataBuilder<
     'a: 'b,
     'b,
@@ -41900,23 +38459,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameRelicParamDataArgs<'
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameRelicParamData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameRelicParamData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -42181,41 +38723,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameRecruitGrpDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameRecruitGrpData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameRecruitGrpData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.unlockDesc() {
-            s.serialize_field("unlockDesc", &f)?;
-        } else {
-            s.skip_field("unlockDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameRecruitGrpDataBuilder<
     'a: 'b,
     'b,
@@ -42452,23 +38959,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameRecruitGrpDataArgs<'
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameRecruitGrpData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameRecruitGrpData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -42789,39 +39279,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChoiceDisplayDataArgs<'a> {
             difficultyUpgradeRelicGroupId: None,
             taskId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeChoiceDisplayData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeChoiceDisplayData", 7)?;
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("costHintType", &self.costHintType())?;
-        s.serialize_field("effectHintType", &self.effectHintType())?;
-        if let Some(f) = self.funcIconId() {
-            s.serialize_field("funcIconId", &f)?;
-        } else {
-            s.skip_field("funcIconId")?;
-        }
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        if let Some(f) = self.difficultyUpgradeRelicGroupId() {
-            s.serialize_field("difficultyUpgradeRelicGroupId", &f)?;
-        } else {
-            s.skip_field("difficultyUpgradeRelicGroupId")?;
-        }
-        if let Some(f) = self.taskId() {
-            s.serialize_field("taskId", &f)?;
-        } else {
-            s.skip_field("taskId")?;
-        }
-        s.end()
     }
 }
 
@@ -43273,54 +39730,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameChoiceDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameChoiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameChoiceData", 10)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.lockedCoverDesc() {
-            s.serialize_field("lockedCoverDesc", &f)?;
-        } else {
-            s.skip_field("lockedCoverDesc")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("leftDecoType", &self.leftDecoType())?;
-        if let Some(f) = self.nextSceneId() {
-            s.serialize_field("nextSceneId", &f)?;
-        } else {
-            s.skip_field("nextSceneId")?;
-        }
-        if let Some(f) = self.icon() {
-            s.serialize_field("icon", &f)?;
-        } else {
-            s.skip_field("icon")?;
-        }
-        if let Some(f) = self.displayData() {
-            s.serialize_field("displayData", &f)?;
-        } else {
-            s.skip_field("displayData")?;
-        }
-        s.serialize_field("forceShowWhenOnlyLeave", &self.forceShowWhenOnlyLeave())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameChoiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -43622,23 +40031,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameChoiceDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameChoiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameChoiceData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -43953,43 +40345,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameChoiceSceneDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameChoiceSceneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameChoiceSceneData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.background() {
-            s.serialize_field("background", &f)?;
-        } else {
-            s.skip_field("background")?;
-        }
-        if let Some(f) = self.titleIcon() {
-            s.serialize_field("titleIcon", &f)?;
-        } else {
-            s.skip_field("titleIcon")?;
-        }
-        s.serialize_field("subTypeId", &self.subTypeId())?;
-        s.serialize_field("useHiddenMusic", &self.useHiddenMusic())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameChoiceSceneDataBuilder<
     'a: 'b,
     'b,
@@ -44255,23 +40610,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameChoiceSceneDataArgs<
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameChoiceSceneData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameChoiceSceneData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameChoiceSceneDataBuilder<
     'a: 'b,
     'b,
@@ -44464,26 +40802,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameNodeTypeDataArgs<'a> {
             name: None,
             description: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameNodeTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameNodeTypeData", 2)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.end()
     }
 }
 
@@ -44685,27 +41003,6 @@ impl<'a> Default
             key: enum__Torappu_RoguelikeEventType::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize
-    for dict__enum__Torappu_RoguelikeEventType__clz_Torappu_RoguelikeGameNodeTypeData<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_RoguelikeEventType__clz_Torappu_RoguelikeGameNodeTypeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -44979,33 +41276,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameNodeSubTypeDataArgs<'a> {
             name: None,
             description: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameNodeSubTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameNodeSubTypeData", 5)?;
-        s.serialize_field("eventType", &self.eventType())?;
-        s.serialize_field("subTypeId", &self.subTypeId())?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.end()
     }
 }
 
@@ -45372,52 +41642,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameVariationDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameVariationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameVariationData", 8)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.outerName() {
-            s.serialize_field("outerName", &f)?;
-        } else {
-            s.skip_field("outerName")?;
-        }
-        if let Some(f) = self.innerName() {
-            s.serialize_field("innerName", &f)?;
-        } else {
-            s.skip_field("innerName")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.sound() {
-            s.serialize_field("sound", &f)?;
-        } else {
-            s.skip_field("sound")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameVariationDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -45692,23 +41916,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameVariationDataArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameVariationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameVariationData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameVariationDataBuilder<
     'a: 'b,
     'b,
@@ -45974,37 +42181,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameFusionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameFusionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameFusionData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameFusionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -46239,23 +42415,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameFusionDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameFusionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameFusionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -46603,52 +42762,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameCharBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameCharBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameCharBuffData", 8)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("buffType", &self.buffType())?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.outerName() {
-            s.serialize_field("outerName", &f)?;
-        } else {
-            s.skip_field("outerName")?;
-        }
-        if let Some(f) = self.innerName() {
-            s.serialize_field("innerName", &f)?;
-        } else {
-            s.skip_field("innerName")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameCharBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -46928,23 +43041,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameCharBuffDataArgs<'a>
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameCharBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameCharBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -47267,51 +43363,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameSquadBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameSquadBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameSquadBuffData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.outerName() {
-            s.serialize_field("outerName", &f)?;
-        } else {
-            s.skip_field("outerName")?;
-        }
-        if let Some(f) = self.innerName() {
-            s.serialize_field("innerName", &f)?;
-        } else {
-            s.skip_field("innerName")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameSquadBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -47577,23 +43628,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameSquadBuffDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameSquadBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameSquadBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -47870,37 +43904,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTaskDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTaskData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTaskData", 5)?;
-        if let Some(f) = self.taskId() {
-            s.serialize_field("taskId", &f)?;
-        } else {
-            s.skip_field("taskId")?;
-        }
-        if let Some(f) = self.taskName() {
-            s.serialize_field("taskName", &f)?;
-        } else {
-            s.skip_field("taskName")?;
-        }
-        if let Some(f) = self.taskDesc() {
-            s.serialize_field("taskDesc", &f)?;
-        } else {
-            s.skip_field("taskDesc")?;
-        }
-        if let Some(f) = self.rewardSceneId() {
-            s.serialize_field("rewardSceneId", &f)?;
-        } else {
-            s.skip_field("rewardSceneId")?;
-        }
-        s.serialize_field("taskRarity", &self.taskRarity())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTaskDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -48132,23 +44135,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTaskDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTaskData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTaskData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTaskDataBuilder<
     'a: 'b,
     'b,
@@ -48356,25 +44342,6 @@ impl<'a> Default for dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string
             key: enum__Torappu_RoguelikeRewardExDropTagSrcType::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_RoguelikeRewardExDropTagSrcType__string",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -50438,411 +46405,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameConstArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameConst", 89)?;
-        if let Some(f) = self.initSceneName() {
-            s.serialize_field("initSceneName", &f)?;
-        } else {
-            s.skip_field("initSceneName")?;
-        }
-        if let Some(f) = self.failSceneName() {
-            s.serialize_field("failSceneName", &f)?;
-        } else {
-            s.skip_field("failSceneName")?;
-        }
-        if let Some(f) = self.hpItemId() {
-            s.serialize_field("hpItemId", &f)?;
-        } else {
-            s.skip_field("hpItemId")?;
-        }
-        if let Some(f) = self.goldItemId() {
-            s.serialize_field("goldItemId", &f)?;
-        } else {
-            s.skip_field("goldItemId")?;
-        }
-        if let Some(f) = self.populationItemId() {
-            s.serialize_field("populationItemId", &f)?;
-        } else {
-            s.skip_field("populationItemId")?;
-        }
-        if let Some(f) = self.squadCapacityItemId() {
-            s.serialize_field("squadCapacityItemId", &f)?;
-        } else {
-            s.skip_field("squadCapacityItemId")?;
-        }
-        if let Some(f) = self.expItemId() {
-            s.serialize_field("expItemId", &f)?;
-        } else {
-            s.skip_field("expItemId")?;
-        }
-        s.serialize_field("initialBandShowGradeFlag", &self.initialBandShowGradeFlag())?;
-        s.serialize_field("bankMaxGold", &self.bankMaxGold())?;
-        if let Some(f) = self.bankCostId() {
-            s.serialize_field("bankCostId", &f)?;
-        } else {
-            s.skip_field("bankCostId")?;
-        }
-        s.serialize_field("bankDrawCount", &self.bankDrawCount())?;
-        s.serialize_field("bankDrawLimit", &self.bankDrawLimit())?;
-        s.serialize_field("bankRewardCountType", &self.bankRewardCountType())?;
-        if let Some(f) = self.spZoneShopBgmSignal() {
-            s.serialize_field("spZoneShopBgmSignal", &f)?;
-        } else {
-            s.skip_field("spZoneShopBgmSignal")?;
-        }
-        if let Some(f) = self.mimicEnemyIds() {
-            s.serialize_field("mimicEnemyIds", &f)?;
-        } else {
-            s.skip_field("mimicEnemyIds")?;
-        }
-        if let Some(f) = self.bossIds() {
-            s.serialize_field("bossIds", &f)?;
-        } else {
-            s.skip_field("bossIds")?;
-        }
-        if let Some(f) = self.goldChestTrapId() {
-            s.serialize_field("goldChestTrapId", &f)?;
-        } else {
-            s.skip_field("goldChestTrapId")?;
-        }
-        if let Some(f) = self.normBoxTrapId() {
-            s.serialize_field("normBoxTrapId", &f)?;
-        } else {
-            s.skip_field("normBoxTrapId")?;
-        }
-        if let Some(f) = self.rareBoxTrapId() {
-            s.serialize_field("rareBoxTrapId", &f)?;
-        } else {
-            s.skip_field("rareBoxTrapId")?;
-        }
-        if let Some(f) = self.badBoxTrapId() {
-            s.serialize_field("badBoxTrapId", &f)?;
-        } else {
-            s.skip_field("badBoxTrapId")?;
-        }
-        if let Some(f) = self.maxHpItemId() {
-            s.serialize_field("maxHpItemId", &f)?;
-        } else {
-            s.skip_field("maxHpItemId")?;
-        }
-        if let Some(f) = self.shieldItemId() {
-            s.serialize_field("shieldItemId", &f)?;
-        } else {
-            s.skip_field("shieldItemId")?;
-        }
-        if let Some(f) = self.keyItemId() {
-            s.serialize_field("keyItemId", &f)?;
-        } else {
-            s.skip_field("keyItemId")?;
-        }
-        if let Some(f) = self.divinationKitItemId() {
-            s.serialize_field("divinationKitItemId", &f)?;
-        } else {
-            s.skip_field("divinationKitItemId")?;
-        }
-        s.serialize_field("chestKeyCnt", &self.chestKeyCnt())?;
-        if let Some(f) = self.chestKeyItemId() {
-            s.serialize_field("chestKeyItemId", &f)?;
-        } else {
-            s.skip_field("chestKeyItemId")?;
-        }
-        if let Some(f) = self.keyColorId() {
-            s.serialize_field("keyColorId", &f)?;
-        } else {
-            s.skip_field("keyColorId")?;
-        }
-        if let Some(f) = self.onceNodeTypeList() {
-            s.serialize_field("onceNodeTypeList", &f)?;
-        } else {
-            s.skip_field("onceNodeTypeList")?;
-        }
-        s.serialize_field(
-            "vertNodeCostDialogUseItemIconType",
-            &self.vertNodeCostDialogUseItemIconType(),
-        )?;
-        s.serialize_field("gpScoreRatio", &self.gpScoreRatio())?;
-        if let Some(f) = self.overflowUsageSquadBuff() {
-            s.serialize_field("overflowUsageSquadBuff", &f)?;
-        } else {
-            s.skip_field("overflowUsageSquadBuff")?;
-        }
-        if let Some(f) = self.specialTrapId() {
-            s.serialize_field("specialTrapId", &f)?;
-        } else {
-            s.skip_field("specialTrapId")?;
-        }
-        if let Some(f) = self.trapRewardRelicId() {
-            s.serialize_field("trapRewardRelicId", &f)?;
-        } else {
-            s.skip_field("trapRewardRelicId")?;
-        }
-        if let Some(f) = self.unlockRouteItemId() {
-            s.serialize_field("unlockRouteItemId", &f)?;
-        } else {
-            s.skip_field("unlockRouteItemId")?;
-        }
-        s.serialize_field("unlockRouteItemCount", &self.unlockRouteItemCount())?;
-        if let Some(f) = self.hideBattleNodeName() {
-            s.serialize_field("hideBattleNodeName", &f)?;
-        } else {
-            s.skip_field("hideBattleNodeName")?;
-        }
-        if let Some(f) = self.hideBattleNodeDescription() {
-            s.serialize_field("hideBattleNodeDescription", &f)?;
-        } else {
-            s.skip_field("hideBattleNodeDescription")?;
-        }
-        if let Some(f) = self.hideNonBattleNodeName() {
-            s.serialize_field("hideNonBattleNodeName", &f)?;
-        } else {
-            s.skip_field("hideNonBattleNodeName")?;
-        }
-        if let Some(f) = self.hideNonBattleNodeDescription() {
-            s.serialize_field("hideNonBattleNodeDescription", &f)?;
-        } else {
-            s.skip_field("hideNonBattleNodeDescription")?;
-        }
-        if let Some(f) = self.charSelectExpeditionConflictToast() {
-            s.serialize_field("charSelectExpeditionConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectExpeditionConflictToast")?;
-        }
-        if let Some(f) = self.charSelectNoUpgradeConflictToast() {
-            s.serialize_field("charSelectNoUpgradeConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectNoUpgradeConflictToast")?;
-        }
-        if let Some(f) = self.itemDropTagDict() {
-            s.serialize_field("itemDropTagDict", &f)?;
-        } else {
-            s.skip_field("itemDropTagDict")?;
-        }
-        if let Some(f) = self.shopRefreshCostId() {
-            s.serialize_field("shopRefreshCostId", &f)?;
-        } else {
-            s.skip_field("shopRefreshCostId")?;
-        }
-        if let Some(f) = self.expeditionLeaveToastFormat() {
-            s.serialize_field("expeditionLeaveToastFormat", &f)?;
-        } else {
-            s.skip_field("expeditionLeaveToastFormat")?;
-        }
-        if let Some(f) = self.expeditionReturnDescCureUpgrade() {
-            s.serialize_field("expeditionReturnDescCureUpgrade", &f)?;
-        } else {
-            s.skip_field("expeditionReturnDescCureUpgrade")?;
-        }
-        if let Some(f) = self.expeditionReturnDescUpgrade() {
-            s.serialize_field("expeditionReturnDescUpgrade", &f)?;
-        } else {
-            s.skip_field("expeditionReturnDescUpgrade")?;
-        }
-        if let Some(f) = self.expeditionReturnDescCure() {
-            s.serialize_field("expeditionReturnDescCure", &f)?;
-        } else {
-            s.skip_field("expeditionReturnDescCure")?;
-        }
-        if let Some(f) = self.expeditionReturnDesc() {
-            s.serialize_field("expeditionReturnDesc", &f)?;
-        } else {
-            s.skip_field("expeditionReturnDesc")?;
-        }
-        if let Some(f) = self.expeditionSelectDescFormat() {
-            s.serialize_field("expeditionSelectDescFormat", &f)?;
-        } else {
-            s.skip_field("expeditionSelectDescFormat")?;
-        }
-        if let Some(f) = self.expeditionReturnDescItem() {
-            s.serialize_field("expeditionReturnDescItem", &f)?;
-        } else {
-            s.skip_field("expeditionReturnDescItem")?;
-        }
-        if let Some(f) = self.expeditionReturnRewardBlackList() {
-            s.serialize_field("expeditionReturnRewardBlackList", &f)?;
-        } else {
-            s.skip_field("expeditionReturnRewardBlackList")?;
-        }
-        if let Some(f) = self.travelLeaveToastFormat() {
-            s.serialize_field("travelLeaveToastFormat", &f)?;
-        } else {
-            s.skip_field("travelLeaveToastFormat")?;
-        }
-        if let Some(f) = self.charSelectTravelConflictToast() {
-            s.serialize_field("charSelectTravelConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectTravelConflictToast")?;
-        }
-        if let Some(f) = self.travelReturnDescUpgrade() {
-            s.serialize_field("travelReturnDescUpgrade", &f)?;
-        } else {
-            s.skip_field("travelReturnDescUpgrade")?;
-        }
-        if let Some(f) = self.travelReturnDesc() {
-            s.serialize_field("travelReturnDesc", &f)?;
-        } else {
-            s.skip_field("travelReturnDesc")?;
-        }
-        if let Some(f) = self.travelReturnDescItem() {
-            s.serialize_field("travelReturnDescItem", &f)?;
-        } else {
-            s.skip_field("travelReturnDescItem")?;
-        }
-        if let Some(f) = self.traderReturnTitle() {
-            s.serialize_field("traderReturnTitle", &f)?;
-        } else {
-            s.skip_field("traderReturnTitle")?;
-        }
-        if let Some(f) = self.traderReturnDesc() {
-            s.serialize_field("traderReturnDesc", &f)?;
-        } else {
-            s.skip_field("traderReturnDesc")?;
-        }
-        if let Some(f) = self.candleReturnDescCandleUpgrade() {
-            s.serialize_field("candleReturnDescCandleUpgrade", &f)?;
-        } else {
-            s.skip_field("candleReturnDescCandleUpgrade")?;
-        }
-        if let Some(f) = self.candleReturnDescCandle() {
-            s.serialize_field("candleReturnDescCandle", &f)?;
-        } else {
-            s.skip_field("candleReturnDescCandle")?;
-        }
-        if let Some(f) = self.charSelectCandleConflictToast() {
-            s.serialize_field("charSelectCandleConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectCandleConflictToast")?;
-        }
-        if let Some(f) = self.charSelectGuidedConflictToast() {
-            s.serialize_field("charSelectGuidedConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectGuidedConflictToast")?;
-        }
-        if let Some(f) = self.charSelectNonGuidedConflictToast() {
-            s.serialize_field("charSelectNonGuidedConflictToast", &f)?;
-        } else {
-            s.skip_field("charSelectNonGuidedConflictToast")?;
-        }
-        s.serialize_field("gainBuffDiffGrade", &self.gainBuffDiffGrade())?;
-        if let Some(f) = self.dsPredictTips() {
-            s.serialize_field("dsPredictTips", &f)?;
-        } else {
-            s.skip_field("dsPredictTips")?;
-        }
-        if let Some(f) = self.dsBuffActiveTips() {
-            s.serialize_field("dsBuffActiveTips", &f)?;
-        } else {
-            s.skip_field("dsBuffActiveTips")?;
-        }
-        if let Some(f) = self.totemDesc() {
-            s.serialize_field("totemDesc", &f)?;
-        } else {
-            s.skip_field("totemDesc")?;
-        }
-        if let Some(f) = self.copperGildDesc() {
-            s.serialize_field("copperGildDesc", &f)?;
-        } else {
-            s.skip_field("copperGildDesc")?;
-        }
-        if let Some(f) = self.relicDesc() {
-            s.serialize_field("relicDesc", &f)?;
-        } else {
-            s.skip_field("relicDesc")?;
-        }
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        if let Some(f) = self.refreshNodeItemId() {
-            s.serialize_field("refreshNodeItemId", &f)?;
-        } else {
-            s.skip_field("refreshNodeItemId")?;
-        }
-        if let Some(f) = self.storingRecruitDesc() {
-            s.serialize_field("storingRecruitDesc", &f)?;
-        } else {
-            s.skip_field("storingRecruitDesc")?;
-        }
-        if let Some(f) = self.storingRecruitSucceedToast() {
-            s.serialize_field("storingRecruitSucceedToast", &f)?;
-        } else {
-            s.skip_field("storingRecruitSucceedToast")?;
-        }
-        if let Some(f) = self.specialRecruitReductionDesc() {
-            s.serialize_field("specialRecruitReductionDesc", &f)?;
-        } else {
-            s.skip_field("specialRecruitReductionDesc")?;
-        }
-        if let Some(f) = self.specialRecruitFuncDesc() {
-            s.serialize_field("specialRecruitFuncDesc", &f)?;
-        } else {
-            s.skip_field("specialRecruitFuncDesc")?;
-        }
-        if let Some(f) = self.specialRecruitDetailDesc() {
-            s.serialize_field("specialRecruitDetailDesc", &f)?;
-        } else {
-            s.skip_field("specialRecruitDetailDesc")?;
-        }
-        if let Some(f) = self.portalZones() {
-            s.serialize_field("portalZones", &f)?;
-        } else {
-            s.skip_field("portalZones")?;
-        }
-        if let Some(f) = self.diffDisplayZoneId() {
-            s.serialize_field("diffDisplayZoneId", &f)?;
-        } else {
-            s.skip_field("diffDisplayZoneId")?;
-        }
-        if let Some(f) = self.exploreExpOnKill() {
-            s.serialize_field("exploreExpOnKill", &f)?;
-        } else {
-            s.skip_field("exploreExpOnKill")?;
-        }
-        if let Some(f) = self.fusionName() {
-            s.serialize_field("fusionName", &f)?;
-        } else {
-            s.skip_field("fusionName")?;
-        }
-        if let Some(f) = self.fusionNotifyToast() {
-            s.serialize_field("fusionNotifyToast", &f)?;
-        } else {
-            s.skip_field("fusionNotifyToast")?;
-        }
-        s.serialize_field("haveSpZone", &self.haveSpZone())?;
-        if let Some(f) = self.gotCharCandleBuffToast() {
-            s.serialize_field("gotCharCandleBuffToast", &f)?;
-        } else {
-            s.skip_field("gotCharCandleBuffToast")?;
-        }
-        if let Some(f) = self.gotCharsCandleBuffToast() {
-            s.serialize_field("gotCharsCandleBuffToast", &f)?;
-        } else {
-            s.skip_field("gotCharsCandleBuffToast")?;
-        }
-        if let Some(f) = self.stashedRecruitNodeDescription() {
-            s.serialize_field("stashedRecruitNodeDescription", &f)?;
-        } else {
-            s.skip_field("stashedRecruitNodeDescription")?;
-        }
-        if let Some(f) = self.stashedRecruitEmptyNodeDescription() {
-            s.serialize_field("stashedRecruitEmptyNodeDescription", &f)?;
-        } else {
-            s.skip_field("stashedRecruitEmptyNodeDescription")?;
-        }
-        s.serialize_field("recruitStashMaxNum", &self.recruitStashMaxNum())?;
-        s.serialize_field("recruitStashMinNum", &self.recruitStashMinNum())?;
-        s.serialize_field(
-            "hasTopicCharSelectMenuButton",
-            &self.hasTopicCharSelectMenuButton(),
-        )?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -52424,22 +47986,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameShopDialogGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameShopDialogGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeGameShopDialogGroupData", 1)?;
-        if let Some(f) = self.content() {
-            s.serialize_field("content", &f)?;
-        } else {
-            s.skip_field("content")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameShopDialogGroupDataBuilder<
     'a: 'b,
     'b,
@@ -52634,25 +48180,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameShopDialogGroupDataA
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameShopDialogGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeGameShopDialogGroupData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -52854,22 +48381,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameShopDialogTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameShopDialogTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeGameShopDialogTypeData", 1)?;
-        if let Some(f) = self.groups() {
-            s.serialize_field("groups", &f)?;
-        } else {
-            s.skip_field("groups")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameShopDialogTypeDataBuilder<
     'a: 'b,
     'b,
@@ -53068,25 +48579,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameShopDialogTypeDataAr
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameShopDialogTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeGameShopDialogTypeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameShopDialogTypeDataBuilder<
     'a: 'b,
     'b,
@@ -53278,21 +48770,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameShopDialogDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeGameShopDialogDataArgs { types: None }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameShopDialogData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameShopDialogData", 1)?;
-        if let Some(f) = self.types() {
-            s.serialize_field("types", &f)?;
-        } else {
-            s.skip_field("types")?;
-        }
-        s.end()
     }
 }
 
@@ -53498,27 +48975,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicCapsuleArgs<'a> {
             maskType: enum__Torappu_RoguelikeEventType::NONE,
             innerColor: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicCapsule<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicCapsule", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("maskType", &self.maskType())?;
-        if let Some(f) = self.innerColor() {
-            s.serialize_field("innerColor", &f)?;
-        } else {
-            s.skip_field("innerColor")?;
-        }
-        s.end()
     }
 }
 
@@ -53734,23 +49190,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicCapsuleArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicCapsule<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicCapsule", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicCapsuleBuilder<
     'a: 'b,
     'b,
@@ -53939,23 +49378,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameEndingData_LevelIconArgs<'a> {
             level: 0,
             iconId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameEndingData_LevelIcon<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeGameEndingData_LevelIcon", 2)?;
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        s.end()
     }
 }
 
@@ -54312,53 +49734,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameEndingDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameEndingData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameEndingData", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("familyId", &self.familyId())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.bgId() {
-            s.serialize_field("bgId", &f)?;
-        } else {
-            s.skip_field("bgId")?;
-        }
-        if let Some(f) = self.icons() {
-            s.serialize_field("icons", &f)?;
-        } else {
-            s.skip_field("icons")?;
-        }
-        s.serialize_field("priority", &self.priority())?;
-        if let Some(f) = self.changeEndingDesc() {
-            s.serialize_field("changeEndingDesc", &f)?;
-        } else {
-            s.skip_field("changeEndingDesc")?;
-        }
-        if let Some(f) = self.bossIconId() {
-            s.serialize_field("bossIconId", &f)?;
-        } else {
-            s.skip_field("bossIconId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameEndingDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -54658,23 +50033,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameEndingDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameEndingData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameEndingData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameEndingDataBuilder<
     'a: 'b,
     'b,
@@ -54932,37 +50290,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameFailEndingDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameFailEndingData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameFailEndingData", 5)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        s.serialize_field("priority", &self.priority())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameFailEndingDataBuilder<
     'a: 'b,
     'b,
@@ -55203,23 +50530,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameFailEndingDataArgs<'
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameFailEndingData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameFailEndingData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameFailEndingDataBuilder<
     'a: 'b,
     'b,
@@ -55404,22 +50714,6 @@ impl<'a> Default for clz_Torappu_RoguelikeBattleSummeryDescriptionDataArgs<'a> {
         clz_Torappu_RoguelikeBattleSummeryDescriptionDataArgs {
             randomDescriptionList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeBattleSummeryDescriptionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeBattleSummeryDescriptionData", 1)?;
-        if let Some(f) = self.randomDescriptionList() {
-            s.serialize_field("randomDescriptionList", &f)?;
-        } else {
-            s.skip_field("randomDescriptionList")?;
-        }
-        s.end()
     }
 }
 
@@ -55640,26 +50934,6 @@ impl<'a> Default for dict__enum__Torappu_RoguelikeTopicMode__clz_Torappu_Rogueli
   }
 }
 
-impl Serialize
-    for dict__enum__Torappu_RoguelikeTopicMode__clz_Torappu_RoguelikeBattleSummeryDescriptionData<
-        '_,
-    >
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__enum__Torappu_RoguelikeTopicMode__clz_Torappu_RoguelikeBattleSummeryDescriptionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_RoguelikeTopicMode__clz_Torappu_RoguelikeBattleSummeryDescriptionDataBuilder<
     'a: 'b,
     'b,
@@ -55869,23 +51143,6 @@ impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
             weight: 0.0,
             category: enum__Torappu_TipData_Category::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TipData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TipData", 3)?;
-        if let Some(f) = self.tip() {
-            s.serialize_field("tip", &f)?;
-        } else {
-            s.skip_field("tip")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.serialize_field("category", &self.category())?;
-        s.end()
     }
 }
 
@@ -56373,71 +51630,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeGameItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameItemData", 15)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.usage() {
-            s.serialize_field("usage", &f)?;
-        } else {
-            s.skip_field("usage")?;
-        }
-        if let Some(f) = self.obtainApproach() {
-            s.serialize_field("obtainApproach", &f)?;
-        } else {
-            s.skip_field("obtainApproach")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.itemIconGroupId() {
-            s.serialize_field("itemIconGroupId", &f)?;
-        } else {
-            s.skip_field("itemIconGroupId")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("subType", &self.subType())?;
-        s.serialize_field("rarity", &self.rarity())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("canSacrifice", &self.canSacrifice())?;
-        if let Some(f) = self.tinyIconColor() {
-            s.serialize_field("tinyIconColor", &f)?;
-        } else {
-            s.skip_field("tinyIconColor")?;
-        }
-        if let Some(f) = self.unlockCondDesc() {
-            s.serialize_field("unlockCondDesc", &f)?;
-        } else {
-            s.skip_field("unlockCondDesc")?;
-        }
-        if let Some(f) = self.shortUsage() {
-            s.serialize_field("shortUsage", &f)?;
-        } else {
-            s.skip_field("shortUsage")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeGameItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -56797,23 +51989,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameItemDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeGameItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameItemDataBuilder<
     'a: 'b,
     'b,
@@ -57030,27 +52205,6 @@ impl<'a> Default for clz_Torappu_RoguelikeBandRefDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeBandRefData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeBandRefData", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("bandLevel", &self.bandLevel())?;
-        if let Some(f) = self.normalBandId() {
-            s.serialize_field("normalBandId", &f)?;
-        } else {
-            s.skip_field("normalBandId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeBandRefDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -57257,23 +52411,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeBandRefDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeBandRefData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeBandRefData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -57624,48 +52761,6 @@ impl<'a> Default for clz_Torappu_RoguelikeEndingDetailTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeEndingDetailText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeEndingDetailText", 8)?;
-        if let Some(f) = self.textId() {
-            s.serialize_field("textId", &f)?;
-        } else {
-            s.skip_field("textId")?;
-        }
-        if let Some(f) = self.text() {
-            s.serialize_field("text", &f)?;
-        } else {
-            s.skip_field("text")?;
-        }
-        s.serialize_field("eventType", &self.eventType())?;
-        if let Some(f) = self.spZoneEvtType() {
-            s.serialize_field("spZoneEvtType", &f)?;
-        } else {
-            s.skip_field("spZoneEvtType")?;
-        }
-        s.serialize_field("showType", &self.showType())?;
-        if let Some(f) = self.choiceSceneId() {
-            s.serialize_field("choiceSceneId", &f)?;
-        } else {
-            s.skip_field("choiceSceneId")?;
-        }
-        if let Some(f) = self.paramList() {
-            s.serialize_field("paramList", &f)?;
-        } else {
-            s.skip_field("paramList")?;
-        }
-        if let Some(f) = self.otherPara1() {
-            s.serialize_field("otherPara1", &f)?;
-        } else {
-            s.skip_field("otherPara1")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeEndingDetailTextBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -57933,26 +53028,6 @@ impl<'a> Default for clz_Torappu_RoguelikeEndingRelicDetailTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeEndingRelicDetailText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeEndingRelicDetailText", 2)?;
-        if let Some(f) = self.relicId() {
-            s.serialize_field("relicId", &f)?;
-        } else {
-            s.skip_field("relicId")?;
-        }
-        if let Some(f) = self.summaryEventText() {
-            s.serialize_field("summaryEventText", &f)?;
-        } else {
-            s.skip_field("summaryEventText")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeEndingRelicDetailTextBuilder<
     'a: 'b,
     'b,
@@ -58200,37 +53275,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameTreasureDataArgs<'a> {
             name: None,
             usage: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameTreasureData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameTreasureData", 5)?;
-        if let Some(f) = self.treasureId() {
-            s.serialize_field("treasureId", &f)?;
-        } else {
-            s.skip_field("treasureId")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("subIndex", &self.subIndex())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.usage() {
-            s.serialize_field("usage", &f)?;
-        } else {
-            s.skip_field("usage")?;
-        }
-        s.end()
     }
 }
 
@@ -58492,25 +53536,6 @@ impl<'a> Default for dict__string__list_clz_Torappu_RoguelikeGameTreasureDataArg
     }
 }
 
-impl Serialize for dict__string__list_clz_Torappu_RoguelikeGameTreasureData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__list_clz_Torappu_RoguelikeGameTreasureData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__list_clz_Torappu_RoguelikeGameTreasureDataBuilder<
     'a: 'b,
     'b,
@@ -58712,23 +53737,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDifficultyUpgradeRelicDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeDifficultyUpgradeRelicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeDifficultyUpgradeRelicData", 2)?;
-        if let Some(f) = self.relicId() {
-            s.serialize_field("relicId", &f)?;
-        } else {
-            s.skip_field("relicId")?;
-        }
-        s.serialize_field("equivalentGrade", &self.equivalentGrade())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeDifficultyUpgradeRelicDataBuilder<
     'a: 'b,
     'b,
@@ -58913,22 +53921,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupDataArgs<'a
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupDataArgs { relicData: None }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupData", 1)?;
-        if let Some(f) = self.relicData() {
-            s.serialize_field("relicData", &f)?;
-        } else {
-            s.skip_field("relicData")?;
-        }
-        s.end()
     }
 }
 
@@ -59137,25 +54129,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeDifficultyUpgradeRelicGr
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeDifficultyUpgradeRelicGroupDataBuilder<
     'a: 'b,
     'b,
@@ -59348,22 +54321,6 @@ impl<'a> Default for clz_Torappu_RoguelikePredefinedStyleDataArgs<'a> {
             styleId: None,
             styleConfig: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikePredefinedStyleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikePredefinedStyleData", 2)?;
-        if let Some(f) = self.styleId() {
-            s.serialize_field("styleId", &f)?;
-        } else {
-            s.skip_field("styleId")?;
-        }
-        s.serialize_field("styleConfig", &self.styleConfig())?;
-        s.end()
     }
 }
 
@@ -59568,23 +54525,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikePredefinedStyleDataArgs<
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikePredefinedStyleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikePredefinedStyleData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -59797,25 +54737,6 @@ impl<'a> Default for dict__enum__Torappu_RoguelikeExpStyleConfigParam__stringArg
     }
 }
 
-impl Serialize for dict__enum__Torappu_RoguelikeExpStyleConfigParam__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_RoguelikeExpStyleConfigParam__string",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_RoguelikeExpStyleConfigParam__stringBuilder<
     'a: 'b,
     'b,
@@ -60009,22 +54930,6 @@ impl<'a> Default for clz_Torappu_RoguelikePredefinedExpStyleConfigDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikePredefinedExpStyleConfigData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikePredefinedExpStyleConfigData", 1)?;
-        if let Some(f) = self.paramDict() {
-            s.serialize_field("paramDict", &f)?;
-        } else {
-            s.skip_field("paramDict")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikePredefinedExpStyleConfigDataBuilder<
     'a: 'b,
     'b,
@@ -60179,22 +55084,6 @@ impl<'a> Default for clz_Torappu_RoguelikePredefinedConstStyleDataArgs<'a> {
         clz_Torappu_RoguelikePredefinedConstStyleDataArgs {
             expStyleConfig: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikePredefinedConstStyleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikePredefinedConstStyleData", 1)?;
-        if let Some(f) = self.expStyleConfig() {
-            s.serialize_field("expStyleConfig", &f)?;
-        } else {
-            s.skip_field("expStyleConfig")?;
-        }
-        s.end()
     }
 }
 
@@ -60393,31 +55282,6 @@ impl<'a> Default for clz_Torappu_RoguelikeGameExploreToolDataArgs<'a> {
             trapId: None,
             trapDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeGameExploreToolData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeGameExploreToolData", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        if let Some(f) = self.trapId() {
-            s.serialize_field("trapId", &f)?;
-        } else {
-            s.skip_field("trapId")?;
-        }
-        if let Some(f) = self.trapDesc() {
-            s.serialize_field("trapDesc", &f)?;
-        } else {
-            s.skip_field("trapDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -60636,23 +55500,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeGameExploreToolDataArgs<
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeGameExploreToolData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeGameExploreToolData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeGameExploreToolDataBuilder<
     'a: 'b,
     'b,
@@ -60821,17 +55668,6 @@ impl<'a> Default for clz_Torappu_RoguelikeRollNodeGroupDataArgs {
         clz_Torappu_RoguelikeRollNodeGroupDataArgs {
             nodeType: enum__Torappu_RoguelikeEventType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeRollNodeGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeRollNodeGroupData", 1)?;
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.end()
     }
 }
 
@@ -61019,23 +55855,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeRollNodeGroupDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeRollNodeGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeRollNodeGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -61259,26 +56078,6 @@ impl<'a> Default for clz_Torappu_RoguelikeRollNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeRollNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeRollNodeData", 2)?;
-        if let Some(f) = self.zoneId() {
-            s.serialize_field("zoneId", &f)?;
-        } else {
-            s.skip_field("zoneId")?;
-        }
-        if let Some(f) = self.groups() {
-            s.serialize_field("groups", &f)?;
-        } else {
-            s.skip_field("groups")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeRollNodeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -61488,23 +56287,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeRollNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeRollNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeRollNodeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeRollNodeDataBuilder<
     'a: 'b,
     'b,
@@ -61593,6 +56375,397 @@ impl dict__string__clz_Torappu_RoguelikeRollNodeDataT {
         dict__string__clz_Torappu_RoguelikeRollNodeData::create(
             _fbb,
             &dict__string__clz_Torappu_RoguelikeRollNodeDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_RoguelikeRelicTipsDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_RoguelikeRelicTipsData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RoguelikeRelicTipsData<'a> {
+    type Inner = clz_Torappu_RoguelikeRelicTipsData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_RoguelikeRelicTipsData<'a> {
+    pub const VT_ITEMID: flatbuffers::VOffsetT = 4;
+    pub const VT_TOASTTEXT: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_RoguelikeRelicTipsData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_RoguelikeRelicTipsDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'bldr>> {
+        let mut builder = clz_Torappu_RoguelikeRelicTipsDataBuilder::new(_fbb);
+        if let Some(x) = args.toastText {
+            builder.add_toastText(x);
+        }
+        if let Some(x) = args.itemId {
+            builder.add_itemId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RoguelikeRelicTipsDataT {
+        let itemId = self.itemId().map(|x| x.to_string());
+        let toastText = self.toastText().map(|x| x.to_string());
+        clz_Torappu_RoguelikeRelicTipsDataT { itemId, toastText }
+    }
+
+    #[inline]
+    pub fn itemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeRelicTipsData::VT_ITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn toastText(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeRelicTipsData::VT_TOASTTEXT,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_RoguelikeRelicTipsData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("itemId", Self::VT_ITEMID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "toastText",
+                Self::VT_TOASTTEXT,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
+    pub itemId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub toastText: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_RoguelikeRelicTipsDataArgs {
+            itemId: None,
+            toastText: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_RoguelikeRelicTipsDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_itemId(&mut self, itemId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeRelicTipsData::VT_ITEMID,
+            itemId,
+        );
+    }
+    #[inline]
+    pub fn add_toastText(&mut self, toastText: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeRelicTipsData::VT_TOASTTEXT,
+            toastText,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_RoguelikeRelicTipsDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_RoguelikeRelicTipsData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_RoguelikeRelicTipsData");
+        ds.field("itemId", &self.itemId());
+        ds.field("toastText", &self.toastText());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RoguelikeRelicTipsDataT {
+    pub itemId: Option<String>,
+    pub toastText: Option<String>,
+}
+impl Default for clz_Torappu_RoguelikeRelicTipsDataT {
+    fn default() -> Self {
+        Self {
+            itemId: None,
+            toastText: None,
+        }
+    }
+}
+impl clz_Torappu_RoguelikeRelicTipsDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'b>> {
+        let itemId = self.itemId.as_ref().map(|x| _fbb.create_string(x));
+        let toastText = self.toastText.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_RoguelikeRelicTipsData::create(
+            _fbb,
+            &clz_Torappu_RoguelikeRelicTipsDataArgs { itemId, toastText },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_RoguelikeRelicTipsDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
+    type Inner = dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_RoguelikeRelicTipsData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_RoguelikeRelicTipsData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_RoguelikeRelicTipsDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_RoguelikeRelicTipsData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_RoguelikeRelicTipsData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeRelicTipsData>>(
+                    dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeRelicTipsData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeRelicTipsData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_RoguelikeRelicTipsData>>(
+                dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_RoguelikeRelicTipsDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_RoguelikeRelicTipsData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_RoguelikeRelicTipsData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeRelicTipsData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_RoguelikeRelicTipsDataT>>,
+}
+impl Default for dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_RoguelikeRelicTipsDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_RoguelikeRelicTipsData::create(
+            _fbb,
+            &dict__string__clz_Torappu_RoguelikeRelicTipsDataArgs { key, value },
         )
     }
 }
@@ -61802,27 +56975,6 @@ impl<'a> Default for clz_Torappu_RoguelikeActivityBasicDataArgs<'a> {
             isUnlockBadge: false,
             validMode: enum__Torappu_RoguelikeTopicMode::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeActivityBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeActivityBasicData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("isPresentSeedMode", &self.isPresentSeedMode())?;
-        s.serialize_field("isUnlockBadge", &self.isUnlockBadge())?;
-        s.serialize_field("validMode", &self.validMode())?;
-        s.end()
     }
 }
 
@@ -62092,23 +57244,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeActivityBasicDataArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeActivityBasicData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeActivityBasicData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeActivityBasicDataBuilder<
     'a: 'b,
     'b,
@@ -62323,30 +57458,6 @@ impl<'a> Default
             sortId: 0,
             desc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeActivitySeedModeData_RoguelikeActivityOfficialSeedData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeActivitySeedModeData_RoguelikeActivityOfficialSeedData",
-            3,
-        )?;
-        if let Some(f) = self.seed() {
-            s.serialize_field("seed", &f)?;
-        } else {
-            s.skip_field("seed")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
     }
 }
 
@@ -62813,86 +57924,6 @@ impl<'a> Default
     }
 }
 
-impl Serialize
-    for clz_Torappu_RoguelikeActivitySeedModeData_RoguelikeActivitySeedModeConstData<'_>
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeActivitySeedModeData_RoguelikeActivitySeedModeConstData",
-            13,
-        )?;
-        if let Some(f) = self.seedModeIntro() {
-            s.serialize_field("seedModeIntro", &f)?;
-        } else {
-            s.skip_field("seedModeIntro")?;
-        }
-        if let Some(f) = self.emptyTextHint() {
-            s.serialize_field("emptyTextHint", &f)?;
-        } else {
-            s.skip_field("emptyTextHint")?;
-        }
-        if let Some(f) = self.errorTextHint() {
-            s.serialize_field("errorTextHint", &f)?;
-        } else {
-            s.skip_field("errorTextHint")?;
-        }
-        if let Some(f) = self.legitimateTextHint() {
-            s.serialize_field("legitimateTextHint", &f)?;
-        } else {
-            s.skip_field("legitimateTextHint")?;
-        }
-        if let Some(f) = self.seedModeConfirmReplacement() {
-            s.serialize_field("seedModeConfirmReplacement", &f)?;
-        } else {
-            s.skip_field("seedModeConfirmReplacement")?;
-        }
-        if let Some(f) = self.difficultyLevelTextHint() {
-            s.serialize_field("difficultyLevelTextHint", &f)?;
-        } else {
-            s.skip_field("difficultyLevelTextHint")?;
-        }
-        if let Some(f) = self.lockedDifficultyLevelTextHint() {
-            s.serialize_field("lockedDifficultyLevelTextHint", &f)?;
-        } else {
-            s.skip_field("lockedDifficultyLevelTextHint")?;
-        }
-        if let Some(f) = self.setDifficultyLevelTextHint() {
-            s.serialize_field("setDifficultyLevelTextHint", &f)?;
-        } else {
-            s.skip_field("setDifficultyLevelTextHint")?;
-        }
-        if let Some(f) = self.notEnabledTextHint() {
-            s.serialize_field("notEnabledTextHint", &f)?;
-        } else {
-            s.skip_field("notEnabledTextHint")?;
-        }
-        if let Some(f) = self.enabledTextHint() {
-            s.serialize_field("enabledTextHint", &f)?;
-        } else {
-            s.skip_field("enabledTextHint")?;
-        }
-        if let Some(f) = self.useSucceededTextHint() {
-            s.serialize_field("useSucceededTextHint", &f)?;
-        } else {
-            s.skip_field("useSucceededTextHint")?;
-        }
-        if let Some(f) = self.officialUseSucceededTextHint() {
-            s.serialize_field("officialUseSucceededTextHint", &f)?;
-        } else {
-            s.skip_field("officialUseSucceededTextHint")?;
-        }
-        if let Some(f) = self.seedModeLockedTextHint() {
-            s.serialize_field("seedModeLockedTextHint", &f)?;
-        } else {
-            s.skip_field("seedModeLockedTextHint")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeActivitySeedModeData_RoguelikeActivitySeedModeConstDataBuilder<
     'a: 'b,
     'b,
@@ -63288,26 +58319,6 @@ impl<'a> Default for clz_Torappu_RoguelikeActivitySeedModeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeActivitySeedModeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeActivitySeedModeData", 2)?;
-        if let Some(f) = self.officialSeedDataList() {
-            s.serialize_field("officialSeedDataList", &f)?;
-        } else {
-            s.skip_field("officialSeedDataList")?;
-        }
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeActivitySeedModeDataBuilder<
     'a: 'b,
     'b,
@@ -63534,23 +58545,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeActivitySeedModeDataArgs
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeActivitySeedModeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeActivitySeedModeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeActivitySeedModeDataBuilder<
     'a: 'b,
     'b,
@@ -63748,21 +58742,6 @@ impl<'a> Default for clz_Torappu_RoguelikeActivityTableArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeActivityTableArgs { SEED_MODE: None }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeActivityTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeActivityTable", 1)?;
-        if let Some(f) = self.SEED_MODE() {
-            s.serialize_field("SEED_MODE", &f)?;
-        } else {
-            s.skip_field("SEED_MODE")?;
-        }
-        s.end()
     }
 }
 
@@ -63976,26 +58955,6 @@ impl<'a> Default for clz_Torappu_RoguelikeActivityDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeActivityData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeActivityData", 2)?;
-        if let Some(f) = self.basicDatas() {
-            s.serialize_field("basicDatas", &f)?;
-        } else {
-            s.skip_field("basicDatas")?;
-        }
-        if let Some(f) = self.activityTable() {
-            s.serialize_field("activityTable", &f)?;
-        } else {
-            s.skip_field("activityTable")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeActivityDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -64159,6 +59118,7 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
     pub const VT_EXPLORETOOLS: flatbuffers::VOffsetT = 102;
     pub const VT_ROLLNODEDATA: flatbuffers::VOffsetT = 104;
     pub const VT_ACTIVITY: flatbuffers::VOffsetT = 106;
+    pub const VT_RELICTIPSDATA: flatbuffers::VOffsetT = 108;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -64170,6 +59130,9 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
         args: &'args clz_Torappu_RoguelikeTopicDetailArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeTopicDetail<'bldr>> {
         let mut builder = clz_Torappu_RoguelikeTopicDetailBuilder::new(_fbb);
+        if let Some(x) = args.relicTipsData {
+            builder.add_relicTipsData(x);
+        }
         if let Some(x) = args.activity {
             builder.add_activity(x);
         }
@@ -64464,6 +59427,9 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
             .rollNodeData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
         let activity = self.activity().map(|x| Box::new(x.unpack()));
+        let relicTipsData = self
+            .relicTipsData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_RoguelikeTopicDetailT {
             updates,
             enrolls,
@@ -64517,6 +59483,7 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
             exploreTools,
             rollNodeData,
             activity,
+            relicTipsData,
         }
     }
 
@@ -65583,6 +60550,27 @@ impl<'a> clz_Torappu_RoguelikeTopicDetail<'a> {
                 )
         }
     }
+    #[inline]
+    pub fn relicTipsData(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>,
+                >,
+            >>(clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA, None)
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
@@ -65645,6 +60633,7 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeTopicDetail<'_> {
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData>>>>("exploreTools", Self::VT_EXPLORETOOLS, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData>>>>("rollNodeData", Self::VT_ROLLNODEDATA, false)?
      .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeActivityData>>("activity", Self::VT_ACTIVITY, false)?
+     .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData>>>>("relicTipsData", Self::VT_RELICTIPSDATA, false)?
      .finish();
         Ok(())
     }
@@ -65702,6 +60691,7 @@ pub struct clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     pub exploreTools: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeGameExploreToolData<'a>>>>>,
     pub rollNodeData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRollNodeData<'a>>>>>,
     pub activity: Option<flatbuffers::WIPOffset<clz_Torappu_RoguelikeActivityData<'a>>>,
+    pub relicTipsData: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'a>>>>>,
 }
 impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
     #[inline]
@@ -65759,277 +60749,8 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDetailArgs<'a> {
             exploreTools: None,
             rollNodeData: None,
             activity: None,
+            relicTipsData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicDetail<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDetail", 52)?;
-        if let Some(f) = self.updates() {
-            s.serialize_field("updates", &f)?;
-        } else {
-            s.skip_field("updates")?;
-        }
-        if let Some(f) = self.enrolls() {
-            s.serialize_field("enrolls", &f)?;
-        } else {
-            s.skip_field("enrolls")?;
-        }
-        if let Some(f) = self.milestones() {
-            s.serialize_field("milestones", &f)?;
-        } else {
-            s.skip_field("milestones")?;
-        }
-        if let Some(f) = self.milestoneUpdates() {
-            s.serialize_field("milestoneUpdates", &f)?;
-        } else {
-            s.skip_field("milestoneUpdates")?;
-        }
-        if let Some(f) = self.grandPrizes() {
-            s.serialize_field("grandPrizes", &f)?;
-        } else {
-            s.skip_field("grandPrizes")?;
-        }
-        if let Some(f) = self.monthMission() {
-            s.serialize_field("monthMission", &f)?;
-        } else {
-            s.skip_field("monthMission")?;
-        }
-        if let Some(f) = self.monthSquad() {
-            s.serialize_field("monthSquad", &f)?;
-        } else {
-            s.skip_field("monthSquad")?;
-        }
-        if let Some(f) = self.challenges() {
-            s.serialize_field("challenges", &f)?;
-        } else {
-            s.skip_field("challenges")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        if let Some(f) = self.bankRewards() {
-            s.serialize_field("bankRewards", &f)?;
-        } else {
-            s.skip_field("bankRewards")?;
-        }
-        if let Some(f) = self.archiveComp() {
-            s.serialize_field("archiveComp", &f)?;
-        } else {
-            s.skip_field("archiveComp")?;
-        }
-        if let Some(f) = self.archiveUnlockCond() {
-            s.serialize_field("archiveUnlockCond", &f)?;
-        } else {
-            s.skip_field("archiveUnlockCond")?;
-        }
-        if let Some(f) = self.detailConst() {
-            s.serialize_field("detailConst", &f)?;
-        } else {
-            s.skip_field("detailConst")?;
-        }
-        if let Some(f) = self.init() {
-            s.serialize_field("init", &f)?;
-        } else {
-            s.skip_field("init")?;
-        }
-        if let Some(f) = self.stages() {
-            s.serialize_field("stages", &f)?;
-        } else {
-            s.skip_field("stages")?;
-        }
-        if let Some(f) = self.zones() {
-            s.serialize_field("zones", &f)?;
-        } else {
-            s.skip_field("zones")?;
-        }
-        if let Some(f) = self.variation() {
-            s.serialize_field("variation", &f)?;
-        } else {
-            s.skip_field("variation")?;
-        }
-        if let Some(f) = self.traps() {
-            s.serialize_field("traps", &f)?;
-        } else {
-            s.skip_field("traps")?;
-        }
-        if let Some(f) = self.recruitTickets() {
-            s.serialize_field("recruitTickets", &f)?;
-        } else {
-            s.skip_field("recruitTickets")?;
-        }
-        if let Some(f) = self.upgradeTickets() {
-            s.serialize_field("upgradeTickets", &f)?;
-        } else {
-            s.skip_field("upgradeTickets")?;
-        }
-        if let Some(f) = self.customTickets() {
-            s.serialize_field("customTickets", &f)?;
-        } else {
-            s.skip_field("customTickets")?;
-        }
-        if let Some(f) = self.stashableTickets() {
-            s.serialize_field("stashableTickets", &f)?;
-        } else {
-            s.skip_field("stashableTickets")?;
-        }
-        if let Some(f) = self.relics() {
-            s.serialize_field("relics", &f)?;
-        } else {
-            s.skip_field("relics")?;
-        }
-        if let Some(f) = self.relicParams() {
-            s.serialize_field("relicParams", &f)?;
-        } else {
-            s.skip_field("relicParams")?;
-        }
-        if let Some(f) = self.recruitGrps() {
-            s.serialize_field("recruitGrps", &f)?;
-        } else {
-            s.skip_field("recruitGrps")?;
-        }
-        if let Some(f) = self.choices() {
-            s.serialize_field("choices", &f)?;
-        } else {
-            s.skip_field("choices")?;
-        }
-        if let Some(f) = self.choiceScenes() {
-            s.serialize_field("choiceScenes", &f)?;
-        } else {
-            s.skip_field("choiceScenes")?;
-        }
-        if let Some(f) = self.nodeTypeData() {
-            s.serialize_field("nodeTypeData", &f)?;
-        } else {
-            s.skip_field("nodeTypeData")?;
-        }
-        if let Some(f) = self.subTypeData() {
-            s.serialize_field("subTypeData", &f)?;
-        } else {
-            s.skip_field("subTypeData")?;
-        }
-        if let Some(f) = self.variationData() {
-            s.serialize_field("variationData", &f)?;
-        } else {
-            s.skip_field("variationData")?;
-        }
-        if let Some(f) = self.fusionData() {
-            s.serialize_field("fusionData", &f)?;
-        } else {
-            s.skip_field("fusionData")?;
-        }
-        if let Some(f) = self.charBuffData() {
-            s.serialize_field("charBuffData", &f)?;
-        } else {
-            s.skip_field("charBuffData")?;
-        }
-        if let Some(f) = self.squadBuffData() {
-            s.serialize_field("squadBuffData", &f)?;
-        } else {
-            s.skip_field("squadBuffData")?;
-        }
-        if let Some(f) = self.taskData() {
-            s.serialize_field("taskData", &f)?;
-        } else {
-            s.skip_field("taskData")?;
-        }
-        if let Some(f) = self.gameConst() {
-            s.serialize_field("gameConst", &f)?;
-        } else {
-            s.skip_field("gameConst")?;
-        }
-        if let Some(f) = self.shopDialogData() {
-            s.serialize_field("shopDialogData", &f)?;
-        } else {
-            s.skip_field("shopDialogData")?;
-        }
-        if let Some(f) = self.capsuleDict() {
-            s.serialize_field("capsuleDict", &f)?;
-        } else {
-            s.skip_field("capsuleDict")?;
-        }
-        if let Some(f) = self.endings() {
-            s.serialize_field("endings", &f)?;
-        } else {
-            s.skip_field("endings")?;
-        }
-        if let Some(f) = self.failEndings() {
-            s.serialize_field("failEndings", &f)?;
-        } else {
-            s.skip_field("failEndings")?;
-        }
-        if let Some(f) = self.battleSummeryDescriptions() {
-            s.serialize_field("battleSummeryDescriptions", &f)?;
-        } else {
-            s.skip_field("battleSummeryDescriptions")?;
-        }
-        if let Some(f) = self.battleLoadingTips() {
-            s.serialize_field("battleLoadingTips", &f)?;
-        } else {
-            s.skip_field("battleLoadingTips")?;
-        }
-        if let Some(f) = self.items() {
-            s.serialize_field("items", &f)?;
-        } else {
-            s.skip_field("items")?;
-        }
-        if let Some(f) = self.bandRef() {
-            s.serialize_field("bandRef", &f)?;
-        } else {
-            s.skip_field("bandRef")?;
-        }
-        if let Some(f) = self.endingDetailList() {
-            s.serialize_field("endingDetailList", &f)?;
-        } else {
-            s.skip_field("endingDetailList")?;
-        }
-        if let Some(f) = self.endingRelicDetailList() {
-            s.serialize_field("endingRelicDetailList", &f)?;
-        } else {
-            s.skip_field("endingRelicDetailList")?;
-        }
-        if let Some(f) = self.treasures() {
-            s.serialize_field("treasures", &f)?;
-        } else {
-            s.skip_field("treasures")?;
-        }
-        if let Some(f) = self.difficultyUpgradeRelicGroups() {
-            s.serialize_field("difficultyUpgradeRelicGroups", &f)?;
-        } else {
-            s.skip_field("difficultyUpgradeRelicGroups")?;
-        }
-        if let Some(f) = self.styles() {
-            s.serialize_field("styles", &f)?;
-        } else {
-            s.skip_field("styles")?;
-        }
-        if let Some(f) = self.styleConfig() {
-            s.serialize_field("styleConfig", &f)?;
-        } else {
-            s.skip_field("styleConfig")?;
-        }
-        if let Some(f) = self.exploreTools() {
-            s.serialize_field("exploreTools", &f)?;
-        } else {
-            s.skip_field("exploreTools")?;
-        }
-        if let Some(f) = self.rollNodeData() {
-            s.serialize_field("rollNodeData", &f)?;
-        } else {
-            s.skip_field("rollNodeData")?;
-        }
-        if let Some(f) = self.activity() {
-            s.serialize_field("activity", &f)?;
-        } else {
-            s.skip_field("activity")?;
-        }
-        s.end()
     }
 }
 
@@ -66816,6 +61537,21 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
             );
     }
     #[inline]
+    pub fn add_relicTipsData(
+        &mut self,
+        relicTipsData: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeRelicTipsData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeTopicDetail::VT_RELICTIPSDATA,
+            relicTipsData,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeTopicDetailBuilder<'a, 'b, A> {
@@ -66893,6 +61629,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeTopicDetail<'_> {
         ds.field("exploreTools", &self.exploreTools());
         ds.field("rollNodeData", &self.rollNodeData());
         ds.field("activity", &self.activity());
+        ds.field("relicTipsData", &self.relicTipsData());
         ds.finish()
     }
 }
@@ -66951,6 +61688,7 @@ pub struct clz_Torappu_RoguelikeTopicDetailT {
   pub exploreTools: Option<Vec<dict__string__clz_Torappu_RoguelikeGameExploreToolDataT>>,
   pub rollNodeData: Option<Vec<dict__string__clz_Torappu_RoguelikeRollNodeDataT>>,
   pub activity: Option<Box<clz_Torappu_RoguelikeActivityDataT>>,
+  pub relicTipsData: Option<Vec<dict__string__clz_Torappu_RoguelikeRelicTipsDataT>>,
 }
 impl Default for clz_Torappu_RoguelikeTopicDetailT {
     fn default() -> Self {
@@ -67007,6 +61745,7 @@ impl Default for clz_Torappu_RoguelikeTopicDetailT {
             exploreTools: None,
             rollNodeData: None,
             activity: None,
+            relicTipsData: None,
         }
     }
 }
@@ -67202,6 +61941,10 @@ impl clz_Torappu_RoguelikeTopicDetailT {
             _fbb.create_vector(&w)
         });
         let activity = self.activity.as_ref().map(|x| x.pack(_fbb));
+        let relicTipsData = self.relicTipsData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         clz_Torappu_RoguelikeTopicDetail::create(
             _fbb,
             &clz_Torappu_RoguelikeTopicDetailArgs {
@@ -67257,6 +62000,7 @@ impl clz_Torappu_RoguelikeTopicDetailT {
                 exploreTools,
                 rollNodeData,
                 activity,
+                relicTipsData,
             },
         )
     }
@@ -67381,23 +62125,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicDetailArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicDetail<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicDetail", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -67696,34 +62423,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSanRangeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeSanRangeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSanRangeData", 6)?;
-        s.serialize_field("sanMax", &self.sanMax())?;
-        if let Some(f) = self.diceGroupId() {
-            s.serialize_field("diceGroupId", &f)?;
-        } else {
-            s.skip_field("diceGroupId")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("sanDungeonEffect", &self.sanDungeonEffect())?;
-        s.serialize_field("sanEffectRank", &self.sanEffectRank())?;
-        if let Some(f) = self.sanEndingDesc() {
-            s.serialize_field("sanEndingDesc", &f)?;
-        } else {
-            s.skip_field("sanEndingDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeSanRangeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -67932,21 +62631,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSanCheckConstsArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeSanCheckConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSanCheckConsts", 1)?;
-        if let Some(f) = self.sanDecreaseToast() {
-            s.serialize_field("sanDecreaseToast", &f)?;
-        } else {
-            s.skip_field("sanDecreaseToast")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeSanCheckConstsBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -68140,26 +62824,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSanCheckModuleDataArgs<'a> {
             sanRanges: None,
             moduleConsts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeSanCheckModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSanCheckModuleData", 2)?;
-        if let Some(f) = self.sanRanges() {
-            s.serialize_field("sanRanges", &f)?;
-        } else {
-            s.skip_field("sanRanges")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
     }
 }
 
@@ -68451,38 +63115,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDiceDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeDiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDiceData", 6)?;
-        if let Some(f) = self.diceId() {
-            s.serialize_field("diceId", &f)?;
-        } else {
-            s.skip_field("diceId")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("isUpgradeDice", &self.isUpgradeDice())?;
-        if let Some(f) = self.upgradeDiceId() {
-            s.serialize_field("upgradeDiceId", &f)?;
-        } else {
-            s.skip_field("upgradeDiceId")?;
-        }
-        s.serialize_field("diceFaceCount", &self.diceFaceCount())?;
-        if let Some(f) = self.battleDiceId() {
-            s.serialize_field("battleDiceId", &f)?;
-        } else {
-            s.skip_field("battleDiceId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeDiceDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -68724,23 +63356,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeDiceDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeDiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeDiceData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -69119,50 +63734,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDiceRuleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeDiceRuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDiceRuleData", 10)?;
-        s.serialize_field("dicePointMax", &self.dicePointMax())?;
-        s.serialize_field("diceResultClass", &self.diceResultClass())?;
-        if let Some(f) = self.diceGroupId() {
-            s.serialize_field("diceGroupId", &f)?;
-        } else {
-            s.skip_field("diceGroupId")?;
-        }
-        if let Some(f) = self.diceEventId() {
-            s.serialize_field("diceEventId", &f)?;
-        } else {
-            s.skip_field("diceEventId")?;
-        }
-        if let Some(f) = self.resultDesc() {
-            s.serialize_field("resultDesc", &f)?;
-        } else {
-            s.skip_field("resultDesc")?;
-        }
-        s.serialize_field("showType", &self.showType())?;
-        s.serialize_field("canReroll", &self.canReroll())?;
-        if let Some(f) = self.diceEndingScene() {
-            s.serialize_field("diceEndingScene", &f)?;
-        } else {
-            s.skip_field("diceEndingScene")?;
-        }
-        if let Some(f) = self.diceEndingDesc() {
-            s.serialize_field("diceEndingDesc", &f)?;
-        } else {
-            s.skip_field("diceEndingDesc")?;
-        }
-        if let Some(f) = self.sound() {
-            s.serialize_field("sound", &f)?;
-        } else {
-            s.skip_field("sound")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeDiceRuleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -69462,23 +64033,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeDiceRuleDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeDiceRuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeDiceRuleData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeDiceRuleDataBuilder<
     'a: 'b,
     'b,
@@ -69680,22 +64234,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -69868,22 +64406,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDiceRuleGroupDataArgs<'a> {
             ruleGroupId: None,
             minGoodNum: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeDiceRuleGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDiceRuleGroupData", 2)?;
-        if let Some(f) = self.ruleGroupId() {
-            s.serialize_field("ruleGroupId", &f)?;
-        } else {
-            s.skip_field("ruleGroupId")?;
-        }
-        s.serialize_field("minGoodNum", &self.minGoodNum())?;
-        s.end()
     }
 }
 
@@ -70085,23 +64607,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeDiceRuleGroupDataArgs<'a
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeDiceRuleGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeDiceRuleGroupData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -70342,24 +64847,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDicePredefineDataArgs<'a> {
             predefinedId: None,
             initialDiceCount: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeDicePredefineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDicePredefineData", 4)?;
-        s.serialize_field("modeId", &self.modeId())?;
-        s.serialize_field("modeGrade", &self.modeGrade())?;
-        if let Some(f) = self.predefinedId() {
-            s.serialize_field("predefinedId", &f)?;
-        } else {
-            s.skip_field("predefinedId")?;
-        }
-        s.serialize_field("initialDiceCount", &self.initialDiceCount())?;
-        s.end()
     }
 }
 
@@ -70736,41 +65223,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDiceModuleDataArgs<'a> {
             diceRuleGroups: None,
             dicePredefines: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeDiceModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDiceModuleData", 5)?;
-        if let Some(f) = self.dice() {
-            s.serialize_field("dice", &f)?;
-        } else {
-            s.skip_field("dice")?;
-        }
-        if let Some(f) = self.diceEvents() {
-            s.serialize_field("diceEvents", &f)?;
-        } else {
-            s.skip_field("diceEvents")?;
-        }
-        if let Some(f) = self.diceChoices() {
-            s.serialize_field("diceChoices", &f)?;
-        } else {
-            s.skip_field("diceChoices")?;
-        }
-        if let Some(f) = self.diceRuleGroups() {
-            s.serialize_field("diceRuleGroups", &f)?;
-        } else {
-            s.skip_field("diceRuleGroups")?;
-        }
-        if let Some(f) = self.dicePredefines() {
-            s.serialize_field("dicePredefines", &f)?;
-        } else {
-            s.skip_field("dicePredefines")?;
-        }
-        s.end()
     }
 }
 
@@ -71217,58 +65669,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChaosDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeChaosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeChaosData", 10)?;
-        if let Some(f) = self.chaosId() {
-            s.serialize_field("chaosId", &f)?;
-        } else {
-            s.skip_field("chaosId")?;
-        }
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.nextChaosId() {
-            s.serialize_field("nextChaosId", &f)?;
-        } else {
-            s.skip_field("nextChaosId")?;
-        }
-        if let Some(f) = self.prevChaosId() {
-            s.serialize_field("prevChaosId", &f)?;
-        } else {
-            s.skip_field("prevChaosId")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.sound() {
-            s.serialize_field("sound", &f)?;
-        } else {
-            s.skip_field("sound")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeChaosDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -71555,23 +65955,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeChaosDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeChaosData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeChaosData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeChaosDataBuilder<
     'a: 'b,
     'b,
@@ -71764,18 +66147,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChaosRangeDataArgs {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeChaosRangeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeChaosRangeData", 2)?;
-        s.serialize_field("chaosMax", &self.chaosMax())?;
-        s.serialize_field("chaosDungeonEffect", &self.chaosDungeonEffect())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeChaosRangeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -71954,19 +66325,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChaosPredefineLevelInfoArgs {
             chaosLevelBeginNum: 0,
             chaosLevelEndNum: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeChaosPredefineLevelInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeChaosPredefineLevelInfo", 2)?;
-        s.serialize_field("chaosLevelBeginNum", &self.chaosLevelBeginNum())?;
-        s.serialize_field("chaosLevelEndNum", &self.chaosLevelEndNum())?;
-        s.end()
     }
 }
 
@@ -72166,23 +66524,6 @@ impl<'a> Default for dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfoArgs
             key: 0,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -72413,25 +66754,6 @@ impl<'a> Default
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__list_dict__int__clz_Torappu_RoguelikeChaosPredefineLevelInfo",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -72722,33 +67044,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChaosModuleConstsArgs<'a> {
             chaosMaxDescription: None,
             chaosPredictDescription: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeChaosModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeChaosModuleConsts", 5)?;
-        s.serialize_field("maxChaosLevel", &self.maxChaosLevel())?;
-        s.serialize_field("maxChaosSlot", &self.maxChaosSlot())?;
-        if let Some(f) = self.chaosNotMaxDescription() {
-            s.serialize_field("chaosNotMaxDescription", &f)?;
-        } else {
-            s.skip_field("chaosNotMaxDescription")?;
-        }
-        if let Some(f) = self.chaosMaxDescription() {
-            s.serialize_field("chaosMaxDescription", &f)?;
-        } else {
-            s.skip_field("chaosMaxDescription")?;
-        }
-        if let Some(f) = self.chaosPredictDescription() {
-            s.serialize_field("chaosPredictDescription", &f)?;
-        } else {
-            s.skip_field("chaosPredictDescription")?;
-        }
-        s.end()
     }
 }
 
@@ -73112,36 +67407,6 @@ impl<'a> Default for clz_Torappu_RoguelikeChaosModuleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeChaosModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeChaosModuleData", 4)?;
-        if let Some(f) = self.chaosDatas() {
-            s.serialize_field("chaosDatas", &f)?;
-        } else {
-            s.skip_field("chaosDatas")?;
-        }
-        if let Some(f) = self.chaosRanges() {
-            s.serialize_field("chaosRanges", &f)?;
-        } else {
-            s.skip_field("chaosRanges")?;
-        }
-        if let Some(f) = self.levelInfoDict() {
-            s.serialize_field("levelInfoDict", &f)?;
-        } else {
-            s.skip_field("levelInfoDict")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeChaosModuleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -73393,27 +67658,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTotemLinkedNodeTypeDataArgs<'a> {
             effectiveNodeTypes: None,
             blurNodeTypes: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTotemLinkedNodeTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeTotemLinkedNodeTypeData", 2)?;
-        if let Some(f) = self.effectiveNodeTypes() {
-            s.serialize_field("effectiveNodeTypes", &f)?;
-        } else {
-            s.skip_field("effectiveNodeTypes")?;
-        }
-        if let Some(f) = self.blurNodeTypes() {
-            s.serialize_field("blurNodeTypes", &f)?;
-        } else {
-            s.skip_field("blurNodeTypes")?;
-        }
-        s.end()
     }
 }
 
@@ -73926,69 +68170,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTotemBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTotemBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTotemBuffData", 17)?;
-        if let Some(f) = self.totemId() {
-            s.serialize_field("totemId", &f)?;
-        } else {
-            s.skip_field("totemId")?;
-        }
-        s.serialize_field("color", &self.color())?;
-        s.serialize_field("pos", &self.pos())?;
-        if let Some(f) = self.rhythm() {
-            s.serialize_field("rhythm", &f)?;
-        } else {
-            s.skip_field("rhythm")?;
-        }
-        if let Some(f) = self.normalDesc() {
-            s.serialize_field("normalDesc", &f)?;
-        } else {
-            s.skip_field("normalDesc")?;
-        }
-        if let Some(f) = self.synergyDesc() {
-            s.serialize_field("synergyDesc", &f)?;
-        } else {
-            s.skip_field("synergyDesc")?;
-        }
-        if let Some(f) = self.archiveDesc() {
-            s.serialize_field("archiveDesc", &f)?;
-        } else {
-            s.skip_field("archiveDesc")?;
-        }
-        if let Some(f) = self.combineGroupName() {
-            s.serialize_field("combineGroupName", &f)?;
-        } else {
-            s.skip_field("combineGroupName")?;
-        }
-        if let Some(f) = self.bgIconId() {
-            s.serialize_field("bgIconId", &f)?;
-        } else {
-            s.skip_field("bgIconId")?;
-        }
-        s.serialize_field("isManual", &self.isManual())?;
-        if let Some(f) = self.linkedNodeTypeData() {
-            s.serialize_field("linkedNodeTypeData", &f)?;
-        } else {
-            s.skip_field("linkedNodeTypeData")?;
-        }
-        s.serialize_field("distanceMin", &self.distanceMin())?;
-        s.serialize_field("distanceMax", &self.distanceMax())?;
-        s.serialize_field("vertPassable", &self.vertPassable())?;
-        s.serialize_field("expandLength", &self.expandLength())?;
-        s.serialize_field("onlyForVert", &self.onlyForVert())?;
-        if let Some(f) = self.portalLinkedNodeTypeData() {
-            s.serialize_field("portalLinkedNodeTypeData", &f)?;
-        } else {
-            s.skip_field("portalLinkedNodeTypeData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTotemBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -74384,23 +68565,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTotemBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTotemBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTotemBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTotemBuffDataBuilder<
     'a: 'b,
     'b,
@@ -74666,41 +68830,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTotemSubBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTotemSubBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTotemSubBuffData", 5)?;
-        if let Some(f) = self.subBuffId() {
-            s.serialize_field("subBuffId", &f)?;
-        } else {
-            s.skip_field("subBuffId")?;
-        }
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.combinedDesc() {
-            s.serialize_field("combinedDesc", &f)?;
-        } else {
-            s.skip_field("combinedDesc")?;
-        }
-        if let Some(f) = self.info() {
-            s.serialize_field("info", &f)?;
-        } else {
-            s.skip_field("info")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTotemSubBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -74937,23 +69066,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTotemSubBuffDataArgs<'a>
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTotemSubBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeTotemSubBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTotemSubBuffDataBuilder<
     'a: 'b,
     'b,
@@ -75158,23 +69270,6 @@ impl<'a> Default for dict__enum__Torappu_RoguelikeTotemColorType__stringArgs<'a>
             key: enum__Torappu_RoguelikeTotemColorType::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__enum__Torappu_RoguelikeTotemColorType__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__enum__Torappu_RoguelikeTotemColorType__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -75470,41 +69565,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTotemModuleConstsArgs<'a> {
             battleNoPredictDescription: None,
             shopNoGoodsDescription: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTotemModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTotemModuleConsts", 5)?;
-        if let Some(f) = self.totemPredictDescription() {
-            s.serialize_field("totemPredictDescription", &f)?;
-        } else {
-            s.skip_field("totemPredictDescription")?;
-        }
-        if let Some(f) = self.colorCombineDesc() {
-            s.serialize_field("colorCombineDesc", &f)?;
-        } else {
-            s.skip_field("colorCombineDesc")?;
-        }
-        if let Some(f) = self.bossCombineDesc() {
-            s.serialize_field("bossCombineDesc", &f)?;
-        } else {
-            s.skip_field("bossCombineDesc")?;
-        }
-        if let Some(f) = self.battleNoPredictDescription() {
-            s.serialize_field("battleNoPredictDescription", &f)?;
-        } else {
-            s.skip_field("battleNoPredictDescription")?;
-        }
-        if let Some(f) = self.shopNoGoodsDescription() {
-            s.serialize_field("shopNoGoodsDescription", &f)?;
-        } else {
-            s.skip_field("shopNoGoodsDescription")?;
-        }
-        s.end()
     }
 }
 
@@ -75836,31 +69896,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTotemBuffModuleDataArgs<'a> {
             subBuffs: None,
             moduleConsts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTotemBuffModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTotemBuffModuleData", 3)?;
-        if let Some(f) = self.totemBuffDatas() {
-            s.serialize_field("totemBuffDatas", &f)?;
-        } else {
-            s.skip_field("totemBuffDatas")?;
-        }
-        if let Some(f) = self.subBuffs() {
-            s.serialize_field("subBuffs", &f)?;
-        } else {
-            s.skip_field("subBuffs")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
     }
 }
 
@@ -76222,45 +70257,6 @@ impl<'a> Default for clz_Torappu_RoguelikeVisionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeVisionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeVisionData", 9)?;
-        s.serialize_field("sightNum", &self.sightNum())?;
-        s.serialize_field("level", &self.level())?;
-        s.serialize_field("canForesee", &self.canForesee())?;
-        s.serialize_field("dividedDis", &self.dividedDis())?;
-        if let Some(f) = self.status() {
-            s.serialize_field("status", &f)?;
-        } else {
-            s.skip_field("status")?;
-        }
-        if let Some(f) = self.clr() {
-            s.serialize_field("clr", &f)?;
-        } else {
-            s.skip_field("clr")?;
-        }
-        if let Some(f) = self.desc1() {
-            s.serialize_field("desc1", &f)?;
-        } else {
-            s.skip_field("desc1")?;
-        }
-        if let Some(f) = self.desc2() {
-            s.serialize_field("desc2", &f)?;
-        } else {
-            s.skip_field("desc2")?;
-        }
-        if let Some(f) = self.icon() {
-            s.serialize_field("icon", &f)?;
-        } else {
-            s.skip_field("icon")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeVisionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -76529,22 +70525,6 @@ impl<'a> Default for dict__int__clz_Torappu_RoguelikeVisionDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__int__clz_Torappu_RoguelikeVisionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__clz_Torappu_RoguelikeVisionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__clz_Torappu_RoguelikeVisionDataBuilder<
     'a: 'b,
     'b,
@@ -76727,21 +70707,6 @@ impl<'a> Default for clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfigArg
             value: 0,
             type_: enum__Torappu_RoguelikeVisionModuleData_VisionChoiceCheckType::LOWER,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfig",
-            2,
-        )?;
-        s.serialize_field("value", &self.value())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -76964,25 +70929,6 @@ impl<'a> Default
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfig<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeVisionModuleData_VisionChoiceConfig",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -77238,32 +71184,6 @@ impl<'a> Default for clz_Torappu_RoguelikeVisionModuleConstsArgs<'a> {
             chestBottomDescription: None,
             goodsBottomDescription: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeVisionModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeVisionModuleConsts", 4)?;
-        s.serialize_field("maxVision", &self.maxVision())?;
-        if let Some(f) = self.totemBottomDescription() {
-            s.serialize_field("totemBottomDescription", &f)?;
-        } else {
-            s.skip_field("totemBottomDescription")?;
-        }
-        if let Some(f) = self.chestBottomDescription() {
-            s.serialize_field("chestBottomDescription", &f)?;
-        } else {
-            s.skip_field("chestBottomDescription")?;
-        }
-        if let Some(f) = self.goodsBottomDescription() {
-            s.serialize_field("goodsBottomDescription", &f)?;
-        } else {
-            s.skip_field("goodsBottomDescription")?;
-        }
-        s.end()
     }
 }
 
@@ -77576,31 +71496,6 @@ impl<'a> Default for clz_Torappu_RoguelikeVisionModuleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeVisionModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeVisionModuleData", 3)?;
-        if let Some(f) = self.visionDatas() {
-            s.serialize_field("visionDatas", &f)?;
-        } else {
-            s.skip_field("visionDatas")?;
-        }
-        if let Some(f) = self.visionChoices() {
-            s.serialize_field("visionChoices", &f)?;
-        } else {
-            s.skip_field("visionChoices")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeVisionModuleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -77858,24 +71753,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeFragmentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeFragmentData", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("value", &self.value())?;
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeFragmentDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -78093,23 +71970,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeFragmentDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeFragmentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeFragmentData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -78361,32 +72221,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeFragmentTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeFragmentTypeData", 4)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.typeName() {
-            s.serialize_field("typeName", &f)?;
-        } else {
-            s.skip_field("typeName")?;
-        }
-        if let Some(f) = self.typeDesc() {
-            s.serialize_field("typeDesc", &f)?;
-        } else {
-            s.skip_field("typeDesc")?;
-        }
-        if let Some(f) = self.typeIconId() {
-            s.serialize_field("typeIconId", &f)?;
-        } else {
-            s.skip_field("typeIconId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeFragmentTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -78609,23 +72443,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeFragmentTypeDataArgs<'a>
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeFragmentTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeFragmentTypeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -79046,54 +72863,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentModuleConstsArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeFragmentModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeFragmentModuleConsts", 11)?;
-        if let Some(f) = self.weightStatusSafeDesc() {
-            s.serialize_field("weightStatusSafeDesc", &f)?;
-        } else {
-            s.skip_field("weightStatusSafeDesc")?;
-        }
-        if let Some(f) = self.weightStatusLimitDesc() {
-            s.serialize_field("weightStatusLimitDesc", &f)?;
-        } else {
-            s.skip_field("weightStatusLimitDesc")?;
-        }
-        if let Some(f) = self.weightStatusOverweightDesc() {
-            s.serialize_field("weightStatusOverweightDesc", &f)?;
-        } else {
-            s.skip_field("weightStatusOverweightDesc")?;
-        }
-        s.serialize_field("charWeightSlot", &self.charWeightSlot())?;
-        s.serialize_field(
-            "limitWeightThresholdValue",
-            &self.limitWeightThresholdValue(),
-        )?;
-        s.serialize_field("overWeightThresholdValue", &self.overWeightThresholdValue())?;
-        s.serialize_field("maxAlchemyField", &self.maxAlchemyField())?;
-        s.serialize_field("maxAlchemyCount", &self.maxAlchemyCount())?;
-        if let Some(f) = self.fragmentBagWeightLimitTips() {
-            s.serialize_field("fragmentBagWeightLimitTips", &f)?;
-        } else {
-            s.skip_field("fragmentBagWeightLimitTips")?;
-        }
-        if let Some(f) = self.fragmentBagWeightOverWeightTips() {
-            s.serialize_field("fragmentBagWeightOverWeightTips", &f)?;
-        } else {
-            s.skip_field("fragmentBagWeightOverWeightTips")?;
-        }
-        if let Some(f) = self.weightUpgradeToastFormat() {
-            s.serialize_field("weightUpgradeToastFormat", &f)?;
-        } else {
-            s.skip_field("weightUpgradeToastFormat")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeFragmentModuleConstsBuilder<
     'a: 'b,
     'b,
@@ -79459,27 +73228,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentBuffDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeFragmentBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeFragmentBuffData", 3)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("maskType", &self.maskType())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeFragmentBuffDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -79690,23 +73438,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeFragmentBuffDataArgs<'a>
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeFragmentBuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeFragmentBuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -80051,36 +73782,6 @@ impl<'a> Default for clz_Torappu_RoguelikeAlchemyDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeAlchemyData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeAlchemyData", 8)?;
-        if let Some(f) = self.fragmentTypeList() {
-            s.serialize_field("fragmentTypeList", &f)?;
-        } else {
-            s.skip_field("fragmentTypeList")?;
-        }
-        s.serialize_field("fragmentSquareSum", &self.fragmentSquareSum())?;
-        s.serialize_field("poolRarity", &self.poolRarity())?;
-        s.serialize_field("relicProp", &self.relicProp())?;
-        s.serialize_field("shieldProp", &self.shieldProp())?;
-        s.serialize_field("populationProp", &self.populationProp())?;
-        if let Some(f) = self.overrideConditionBandIds() {
-            s.serialize_field("overrideConditionBandIds", &f)?;
-        } else {
-            s.skip_field("overrideConditionBandIds")?;
-        }
-        if let Some(f) = self.overrideRecipeId() {
-            s.serialize_field("overrideRecipeId", &f)?;
-        } else {
-            s.skip_field("overrideRecipeId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeAlchemyDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -80376,23 +74077,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeAlchemyDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeAlchemyData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeAlchemyData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeAlchemyDataBuilder<
     'a: 'b,
     'b,
@@ -80647,29 +74331,6 @@ impl<'a> Default for clz_Torappu_RoguelikeAlchemyFormulationDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeAlchemyFormulationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeAlchemyFormulationData", 4)?;
-        if let Some(f) = self.fragmentIds() {
-            s.serialize_field("fragmentIds", &f)?;
-        } else {
-            s.skip_field("fragmentIds")?;
-        }
-        if let Some(f) = self.rewardId() {
-            s.serialize_field("rewardId", &f)?;
-        } else {
-            s.skip_field("rewardId")?;
-        }
-        s.serialize_field("rewardCount", &self.rewardCount())?;
-        s.serialize_field("rewardItemType", &self.rewardItemType())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeAlchemyFormulationDataBuilder<
     'a: 'b,
     'b,
@@ -80905,25 +74566,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeAlchemyFormulationDataAr
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeAlchemyFormulationData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeAlchemyFormulationData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeAlchemyFormulationDataBuilder<
     'a: 'b,
     'b,
@@ -81086,18 +74728,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentLevelRelatedDataArgs {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeFragmentLevelRelatedDataArgs { weightUp: 0 }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeFragmentLevelRelatedData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeFragmentLevelRelatedData", 1)?;
-        s.serialize_field("weightUp", &self.weightUp())?;
-        s.end()
     }
 }
 
@@ -81281,25 +74911,6 @@ impl<'a> Default for dict__int__clz_Torappu_RoguelikeFragmentLevelRelatedDataArg
             key: 0,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__int__clz_Torappu_RoguelikeFragmentLevelRelatedData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__int__clz_Torappu_RoguelikeFragmentLevelRelatedData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -81777,51 +75388,6 @@ impl<'a> Default for clz_Torappu_RoguelikeFragmentModuleDataArgs<'a> {
             alchemyFormulaData: None,
             fragmentLevelData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeFragmentModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeFragmentModuleData", 7)?;
-        if let Some(f) = self.fragmentData() {
-            s.serialize_field("fragmentData", &f)?;
-        } else {
-            s.skip_field("fragmentData")?;
-        }
-        if let Some(f) = self.fragmentTypeData() {
-            s.serialize_field("fragmentTypeData", &f)?;
-        } else {
-            s.skip_field("fragmentTypeData")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        if let Some(f) = self.fragmentBuffData() {
-            s.serialize_field("fragmentBuffData", &f)?;
-        } else {
-            s.skip_field("fragmentBuffData")?;
-        }
-        if let Some(f) = self.alchemyData() {
-            s.serialize_field("alchemyData", &f)?;
-        } else {
-            s.skip_field("alchemyData")?;
-        }
-        if let Some(f) = self.alchemyFormulaData() {
-            s.serialize_field("alchemyFormulaData", &f)?;
-        } else {
-            s.skip_field("alchemyFormulaData")?;
-        }
-        if let Some(f) = self.fragmentLevelData() {
-            s.serialize_field("fragmentLevelData", &f)?;
-        } else {
-            s.skip_field("fragmentLevelData")?;
-        }
-        s.end()
     }
 }
 
@@ -82323,62 +75889,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDisasterDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeDisasterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDisasterData", 10)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.toastIconId() {
-            s.serialize_field("toastIconId", &f)?;
-        } else {
-            s.skip_field("toastIconId")?;
-        }
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.levelName() {
-            s.serialize_field("levelName", &f)?;
-        } else {
-            s.skip_field("levelName")?;
-        }
-        if let Some(f) = self.type_() {
-            s.serialize_field("type_", &f)?;
-        } else {
-            s.skip_field("type_")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.sound() {
-            s.serialize_field("sound", &f)?;
-        } else {
-            s.skip_field("sound")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeDisasterDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -82672,23 +76182,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeDisasterDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeDisasterData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeDisasterData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeDisasterDataBuilder<
     'a: 'b,
     'b,
@@ -82881,21 +76374,6 @@ impl<'a> Default for clz_Torappu_RoguelikeDisasterModuleDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeDisasterModuleDataArgs { disasterData: None }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeDisasterModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeDisasterModuleData", 1)?;
-        if let Some(f) = self.disasterData() {
-            s.serialize_field("disasterData", &f)?;
-        } else {
-            s.skip_field("disasterData")?;
-        }
-        s.end()
     }
 }
 
@@ -83191,40 +76669,6 @@ impl<'a> Default for clz_Torappu_RoguelikePermNodeUpgradeItemDataArgs<'a> {
             desc: None,
             nodeName: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikePermNodeUpgradeItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikePermNodeUpgradeItemData", 7)?;
-        if let Some(f) = self.upgradeId() {
-            s.serialize_field("upgradeId", &f)?;
-        } else {
-            s.skip_field("upgradeId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.serialize_field("nodeLevel", &self.nodeLevel())?;
-        if let Some(f) = self.costItemId() {
-            s.serialize_field("costItemId", &f)?;
-        } else {
-            s.skip_field("costItemId")?;
-        }
-        s.serialize_field("costItemCount", &self.costItemCount())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.nodeName() {
-            s.serialize_field("nodeName", &f)?;
-        } else {
-            s.skip_field("nodeName")?;
-        }
-        s.end()
     }
 }
 
@@ -83568,35 +77012,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTempNodeUpgradeItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTempNodeUpgradeItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeTempNodeUpgradeItemData", 6)?;
-        if let Some(f) = self.upgradeId() {
-            s.serialize_field("upgradeId", &f)?;
-        } else {
-            s.skip_field("upgradeId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.costItemId() {
-            s.serialize_field("costItemId", &f)?;
-        } else {
-            s.skip_field("costItemId")?;
-        }
-        s.serialize_field("costItemCount", &self.costItemCount())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTempNodeUpgradeItemDataBuilder<
     'a: 'b,
     'b,
@@ -83918,28 +77333,6 @@ impl<'a> Default for clz_Torappu_RoguelikeNodeUpgradeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeNodeUpgradeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeNodeUpgradeData", 4)?;
-        s.serialize_field("nodeType", &self.nodeType())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.permItemList() {
-            s.serialize_field("permItemList", &f)?;
-        } else {
-            s.skip_field("permItemList")?;
-        }
-        if let Some(f) = self.tempItemList() {
-            s.serialize_field("tempItemList", &f)?;
-        } else {
-            s.skip_field("tempItemList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeNodeUpgradeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -84184,23 +77577,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeNodeUpgradeDataArgs<'a> 
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeNodeUpgradeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeNodeUpgradeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeNodeUpgradeDataBuilder<
     'a: 'b,
     'b,
@@ -84404,21 +77780,6 @@ impl<'a> Default for clz_Torappu_RoguelikeNodeUpgradeModuleDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeNodeUpgradeModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeNodeUpgradeModuleData", 1)?;
-        if let Some(f) = self.nodeUpgradeDataMap() {
-            s.serialize_field("nodeUpgradeDataMap", &f)?;
-        } else {
-            s.skip_field("nodeUpgradeDataMap")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeNodeUpgradeModuleDataBuilder<
     'a: 'b,
     'b,
@@ -84525,6 +77886,7 @@ impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
     pub const VT_POEMLIST: flatbuffers::VOffsetT = 16;
     pub const VT_ALWAYSSHOWCOUNTDOWN: flatbuffers::VOffsetT = 18;
     pub const VT_BUFFITEMIDLIST: flatbuffers::VOffsetT = 20;
+    pub const VT_ISALLLUCKYLEVEL: flatbuffers::VOffsetT = 22;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -84556,6 +77918,7 @@ impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
         if let Some(x) = args.id {
             builder.add_id(x);
         }
+        builder.add_isAllLuckyLevel(args.isAllLuckyLevel);
         builder.add_alwaysShowCountDown(args.alwaysShowCountDown);
         builder.finish()
     }
@@ -84574,6 +77937,7 @@ impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
         let buffItemIdList = self
             .buffItemIdList()
             .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let isAllLuckyLevel = self.isAllLuckyLevel();
         clz_Torappu_RoguelikeCopperDataT {
             id,
             groupId,
@@ -84584,6 +77948,7 @@ impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
             poemList,
             alwaysShowCountDown,
             buffItemIdList,
+            isAllLuckyLevel,
         }
     }
 
@@ -84703,6 +78068,20 @@ impl<'a> clz_Torappu_RoguelikeCopperData<'a> {
             >>(clz_Torappu_RoguelikeCopperData::VT_BUFFITEMIDLIST, None)
         }
     }
+    #[inline]
+    pub fn isAllLuckyLevel(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_RoguelikeCopperData::VT_ISALLLUCKYLEVEL,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperData<'_> {
@@ -84742,6 +78121,7 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperData<'_> {
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
             >>("buffItemIdList", Self::VT_BUFFITEMIDLIST, false)?
+            .visit_field::<bool>("isAllLuckyLevel", Self::VT_ISALLLUCKYLEVEL, false)?
             .finish();
         Ok(())
     }
@@ -84760,6 +78140,7 @@ pub struct clz_Torappu_RoguelikeCopperDataArgs<'a> {
     pub buffItemIdList: Option<
         flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
     >,
+    pub isAllLuckyLevel: bool,
 }
 impl<'a> Default for clz_Torappu_RoguelikeCopperDataArgs<'a> {
     #[inline]
@@ -84774,50 +78155,8 @@ impl<'a> Default for clz_Torappu_RoguelikeCopperDataArgs<'a> {
             poemList: None,
             alwaysShowCountDown: false,
             buffItemIdList: None,
+            isAllLuckyLevel: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCopperData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCopperData", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.gildTypeId() {
-            s.serialize_field("gildTypeId", &f)?;
-        } else {
-            s.skip_field("gildTypeId")?;
-        }
-        s.serialize_field("luckyLevel", &self.luckyLevel())?;
-        s.serialize_field("buffType", &self.buffType())?;
-        if let Some(f) = self.layerCntDesc() {
-            s.serialize_field("layerCntDesc", &f)?;
-        } else {
-            s.skip_field("layerCntDesc")?;
-        }
-        if let Some(f) = self.poemList() {
-            s.serialize_field("poemList", &f)?;
-        } else {
-            s.skip_field("poemList")?;
-        }
-        s.serialize_field("alwaysShowCountDown", &self.alwaysShowCountDown())?;
-        if let Some(f) = self.buffItemIdList() {
-            s.serialize_field("buffItemIdList", &f)?;
-        } else {
-            s.skip_field("buffItemIdList")?;
-        }
-        s.end()
     }
 }
 
@@ -84905,6 +78244,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeCopperData
         );
     }
     #[inline]
+    pub fn add_isAllLuckyLevel(&mut self, isAllLuckyLevel: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_RoguelikeCopperData::VT_ISALLLUCKYLEVEL,
+            isAllLuckyLevel,
+            false,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeCopperDataBuilder<'a, 'b, A> {
@@ -84933,6 +78280,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeCopperData<'_> {
         ds.field("poemList", &self.poemList());
         ds.field("alwaysShowCountDown", &self.alwaysShowCountDown());
         ds.field("buffItemIdList", &self.buffItemIdList());
+        ds.field("isAllLuckyLevel", &self.isAllLuckyLevel());
         ds.finish()
     }
 }
@@ -84948,6 +78296,7 @@ pub struct clz_Torappu_RoguelikeCopperDataT {
     pub poemList: Option<Vec<String>>,
     pub alwaysShowCountDown: bool,
     pub buffItemIdList: Option<Vec<String>>,
+    pub isAllLuckyLevel: bool,
 }
 impl Default for clz_Torappu_RoguelikeCopperDataT {
     fn default() -> Self {
@@ -84961,6 +78310,7 @@ impl Default for clz_Torappu_RoguelikeCopperDataT {
             poemList: None,
             alwaysShowCountDown: false,
             buffItemIdList: None,
+            isAllLuckyLevel: false,
         }
     }
 }
@@ -84984,6 +78334,7 @@ impl clz_Torappu_RoguelikeCopperDataT {
             let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
             _fbb.create_vector(&w)
         });
+        let isAllLuckyLevel = self.isAllLuckyLevel;
         clz_Torappu_RoguelikeCopperData::create(
             _fbb,
             &clz_Torappu_RoguelikeCopperDataArgs {
@@ -84996,6 +78347,7 @@ impl clz_Torappu_RoguelikeCopperDataT {
                 poemList,
                 alwaysShowCountDown,
                 buffItemIdList,
+                isAllLuckyLevel,
             },
         )
     }
@@ -85117,23 +78469,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeCopperData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeCopperData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -85406,33 +78741,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCopperDivineDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeCopperDivineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCopperDivineData", 5)?;
-        if let Some(f) = self.eventId() {
-            s.serialize_field("eventId", &f)?;
-        } else {
-            s.skip_field("eventId")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.showDesc() {
-            s.serialize_field("showDesc", &f)?;
-        } else {
-            s.skip_field("showDesc")?;
-        }
-        s.serialize_field("divineType", &self.divineType())?;
-        s.serialize_field("resultType", &self.resultType())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeCopperDivineDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -85673,23 +78981,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperDivineDataArgs<'a>
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeCopperDivineData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeCopperDivineData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeCopperDivineDataBuilder<
     'a: 'b,
     'b,
@@ -85781,6 +79072,448 @@ impl dict__string__clz_Torappu_RoguelikeCopperDivineDataT {
         )
     }
 }
+pub enum clz_Torappu_RoguelikeCopperGildTypeDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    type Inner = clz_Torappu_RoguelikeCopperGildTypeData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    pub const VT_GILDTYPEID: flatbuffers::VOffsetT = 4;
+    pub const VT_GILDNAME: flatbuffers::VOffsetT = 6;
+    pub const VT_GILDDESC: flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_RoguelikeCopperGildTypeData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_RoguelikeCopperGildTypeDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'bldr>> {
+        let mut builder = clz_Torappu_RoguelikeCopperGildTypeDataBuilder::new(_fbb);
+        if let Some(x) = args.gildDesc {
+            builder.add_gildDesc(x);
+        }
+        if let Some(x) = args.gildName {
+            builder.add_gildName(x);
+        }
+        if let Some(x) = args.gildTypeId {
+            builder.add_gildTypeId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperGildTypeDataT {
+        let gildTypeId = self.gildTypeId().map(|x| x.to_string());
+        let gildName = self.gildName().map(|x| x.to_string());
+        let gildDesc = self.gildDesc().map(|x| x.to_string());
+        clz_Torappu_RoguelikeCopperGildTypeDataT {
+            gildTypeId,
+            gildName,
+            gildDesc,
+        }
+    }
+
+    #[inline]
+    pub fn gildTypeId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDTYPEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn gildName(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDNAME,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn gildDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDDESC,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperGildTypeData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "gildTypeId",
+                Self::VT_GILDTYPEID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "gildName",
+                Self::VT_GILDNAME,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "gildDesc",
+                Self::VT_GILDDESC,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
+    pub gildTypeId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub gildName: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub gildDesc: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_RoguelikeCopperGildTypeDataArgs {
+            gildTypeId: None,
+            gildName: None,
+            gildDesc: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_RoguelikeCopperGildTypeDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_gildTypeId(&mut self, gildTypeId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDTYPEID,
+            gildTypeId,
+        );
+    }
+    #[inline]
+    pub fn add_gildName(&mut self, gildName: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDNAME,
+            gildName,
+        );
+    }
+    #[inline]
+    pub fn add_gildDesc(&mut self, gildDesc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperGildTypeData::VT_GILDDESC,
+            gildDesc,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_RoguelikeCopperGildTypeDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_RoguelikeCopperGildTypeData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperGildTypeData");
+        ds.field("gildTypeId", &self.gildTypeId());
+        ds.field("gildName", &self.gildName());
+        ds.field("gildDesc", &self.gildDesc());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_RoguelikeCopperGildTypeDataT {
+    pub gildTypeId: Option<String>,
+    pub gildName: Option<String>,
+    pub gildDesc: Option<String>,
+}
+impl Default for clz_Torappu_RoguelikeCopperGildTypeDataT {
+    fn default() -> Self {
+        Self {
+            gildTypeId: None,
+            gildName: None,
+            gildDesc: None,
+        }
+    }
+}
+impl clz_Torappu_RoguelikeCopperGildTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'b>> {
+        let gildTypeId = self.gildTypeId.as_ref().map(|x| _fbb.create_string(x));
+        let gildName = self.gildName.as_ref().map(|x| _fbb.create_string(x));
+        let gildDesc = self.gildDesc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_RoguelikeCopperGildTypeData::create(
+            _fbb,
+            &clz_Torappu_RoguelikeCopperGildTypeDataArgs {
+                gildTypeId,
+                gildName,
+                gildDesc,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_RoguelikeCopperGildTypeDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    type Inner = dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_RoguelikeCopperGildTypeData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_RoguelikeCopperGildTypeData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperGildTypeData>>(
+                    dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperGildTypeData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperGildTypeData>>(
+                dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_RoguelikeCopperGildTypeDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_RoguelikeCopperGildTypeData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_RoguelikeCopperGildTypeData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_RoguelikeCopperGildTypeDataT>>,
+}
+impl Default for dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_RoguelikeCopperGildTypeData::create(
+            _fbb,
+            &dict__string__clz_Torappu_RoguelikeCopperGildTypeDataArgs { key, value },
+        )
+    }
+}
 pub enum clz_Torappu_RoguelikeCopperModuleConstsOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -85801,6 +79534,9 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperModuleConsts<'a>
 impl<'a> clz_Torappu_RoguelikeCopperModuleConsts<'a> {
     pub const VT_COPPERDRAWMAXNUM: flatbuffers::VOffsetT = 4;
     pub const VT_COPPERDRAWMINNUM: flatbuffers::VOffsetT = 6;
+    pub const VT_COPPERALLLUCKYLEVELGILDID: flatbuffers::VOffsetT = 8;
+    pub const VT_COPPERDRAWFREEZECOSTITEMID: flatbuffers::VOffsetT = 10;
+    pub const VT_COPPERDRAWFREEZECOSTCOUNT: flatbuffers::VOffsetT = 12;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -85809,9 +79545,18 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleConsts<'a> {
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_RoguelikeCopperModuleConstsArgs,
+        args: &'args clz_Torappu_RoguelikeCopperModuleConstsArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'bldr>> {
         let mut builder = clz_Torappu_RoguelikeCopperModuleConstsBuilder::new(_fbb);
+        if let Some(x) = args.copperDrawFreezeCostCount {
+            builder.add_copperDrawFreezeCostCount(x);
+        }
+        if let Some(x) = args.copperDrawFreezeCostItemId {
+            builder.add_copperDrawFreezeCostItemId(x);
+        }
+        if let Some(x) = args.copperAllLuckyLevelGildId {
+            builder.add_copperAllLuckyLevelGildId(x);
+        }
         builder.add_copperDrawMinNum(args.copperDrawMinNum);
         builder.add_copperDrawMaxNum(args.copperDrawMaxNum);
         builder.finish()
@@ -85820,9 +79565,17 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleConsts<'a> {
     pub fn unpack(&self) -> clz_Torappu_RoguelikeCopperModuleConstsT {
         let copperDrawMaxNum = self.copperDrawMaxNum();
         let copperDrawMinNum = self.copperDrawMinNum();
+        let copperAllLuckyLevelGildId = self.copperAllLuckyLevelGildId().map(|x| x.to_string());
+        let copperDrawFreezeCostItemId = self.copperDrawFreezeCostItemId().map(|x| x.to_string());
+        let copperDrawFreezeCostCount = self
+            .copperDrawFreezeCostCount()
+            .map(|x| x.into_iter().collect());
         clz_Torappu_RoguelikeCopperModuleConstsT {
             copperDrawMaxNum,
             copperDrawMinNum,
+            copperAllLuckyLevelGildId,
+            copperDrawFreezeCostItemId,
+            copperDrawFreezeCostCount,
         }
     }
 
@@ -85854,6 +79607,43 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleConsts<'a> {
                 .unwrap()
         }
     }
+    #[inline]
+    pub fn copperAllLuckyLevelGildId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERALLLUCKYLEVELGILDID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn copperDrawFreezeCostItemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn copperDrawFreezeCostCount(&self) -> Option<flatbuffers::Vector<'a, i32>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, i32>>>(
+                    clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTCOUNT,
+                    None,
+                )
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
@@ -85866,33 +79656,42 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
         v.visit_table(pos)?
             .visit_field::<i32>("copperDrawMaxNum", Self::VT_COPPERDRAWMAXNUM, false)?
             .visit_field::<i32>("copperDrawMinNum", Self::VT_COPPERDRAWMINNUM, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "copperAllLuckyLevelGildId",
+                Self::VT_COPPERALLLUCKYLEVELGILDID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "copperDrawFreezeCostItemId",
+                Self::VT_COPPERDRAWFREEZECOSTITEMID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'_, i32>>>(
+                "copperDrawFreezeCostCount",
+                Self::VT_COPPERDRAWFREEZECOSTCOUNT,
+                false,
+            )?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_RoguelikeCopperModuleConstsArgs {
+pub struct clz_Torappu_RoguelikeCopperModuleConstsArgs<'a> {
     pub copperDrawMaxNum: i32,
     pub copperDrawMinNum: i32,
+    pub copperAllLuckyLevelGildId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub copperDrawFreezeCostItemId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub copperDrawFreezeCostCount: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, i32>>>,
 }
-impl<'a> Default for clz_Torappu_RoguelikeCopperModuleConstsArgs {
+impl<'a> Default for clz_Torappu_RoguelikeCopperModuleConstsArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_RoguelikeCopperModuleConstsArgs {
             copperDrawMaxNum: 0,
             copperDrawMinNum: 0,
+            copperAllLuckyLevelGildId: None,
+            copperDrawFreezeCostItemId: None,
+            copperDrawFreezeCostCount: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCopperModuleConsts", 2)?;
-        s.serialize_field("copperDrawMaxNum", &self.copperDrawMaxNum())?;
-        s.serialize_field("copperDrawMinNum", &self.copperDrawMinNum())?;
-        s.end()
     }
 }
 
@@ -85924,6 +79723,36 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_copperAllLuckyLevelGildId(
+        &mut self,
+        copperAllLuckyLevelGildId: flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERALLLUCKYLEVELGILDID,
+            copperAllLuckyLevelGildId,
+        );
+    }
+    #[inline]
+    pub fn add_copperDrawFreezeCostItemId(
+        &mut self,
+        copperDrawFreezeCostItemId: flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTITEMID,
+            copperDrawFreezeCostItemId,
+        );
+    }
+    #[inline]
+    pub fn add_copperDrawFreezeCostCount(
+        &mut self,
+        copperDrawFreezeCostCount: flatbuffers::WIPOffset<flatbuffers::Vector<'b, i32>>,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperModuleConsts::VT_COPPERDRAWFREEZECOSTCOUNT,
+            copperDrawFreezeCostCount,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeCopperModuleConstsBuilder<'a, 'b, A> {
@@ -85945,6 +79774,18 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
         let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperModuleConsts");
         ds.field("copperDrawMaxNum", &self.copperDrawMaxNum());
         ds.field("copperDrawMinNum", &self.copperDrawMinNum());
+        ds.field(
+            "copperAllLuckyLevelGildId",
+            &self.copperAllLuckyLevelGildId(),
+        );
+        ds.field(
+            "copperDrawFreezeCostItemId",
+            &self.copperDrawFreezeCostItemId(),
+        );
+        ds.field(
+            "copperDrawFreezeCostCount",
+            &self.copperDrawFreezeCostCount(),
+        );
         ds.finish()
     }
 }
@@ -85953,12 +79794,18 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleConsts<'_> {
 pub struct clz_Torappu_RoguelikeCopperModuleConstsT {
     pub copperDrawMaxNum: i32,
     pub copperDrawMinNum: i32,
+    pub copperAllLuckyLevelGildId: Option<String>,
+    pub copperDrawFreezeCostItemId: Option<String>,
+    pub copperDrawFreezeCostCount: Option<Vec<i32>>,
 }
 impl Default for clz_Torappu_RoguelikeCopperModuleConstsT {
     fn default() -> Self {
         Self {
             copperDrawMaxNum: 0,
             copperDrawMinNum: 0,
+            copperAllLuckyLevelGildId: None,
+            copperDrawFreezeCostItemId: None,
+            copperDrawFreezeCostCount: None,
         }
     }
 }
@@ -85969,11 +79816,26 @@ impl clz_Torappu_RoguelikeCopperModuleConstsT {
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeCopperModuleConsts<'b>> {
         let copperDrawMaxNum = self.copperDrawMaxNum;
         let copperDrawMinNum = self.copperDrawMinNum;
+        let copperAllLuckyLevelGildId = self
+            .copperAllLuckyLevelGildId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let copperDrawFreezeCostItemId = self
+            .copperDrawFreezeCostItemId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let copperDrawFreezeCostCount = self
+            .copperDrawFreezeCostCount
+            .as_ref()
+            .map(|x| _fbb.create_vector(x));
         clz_Torappu_RoguelikeCopperModuleConsts::create(
             _fbb,
             &clz_Torappu_RoguelikeCopperModuleConstsArgs {
                 copperDrawMaxNum,
                 copperDrawMinNum,
+                copperAllLuckyLevelGildId,
+                copperDrawFreezeCostItemId,
+                copperDrawFreezeCostCount,
             },
         )
     }
@@ -85998,8 +79860,9 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_RoguelikeCopperModuleData<'a> {
 impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
     pub const VT_COPPERDATA: flatbuffers::VOffsetT = 4;
     pub const VT_COPPERDIVINEDATA: flatbuffers::VOffsetT = 6;
-    pub const VT_CHANGECOPPERMAP: flatbuffers::VOffsetT = 8;
-    pub const VT_MODULECONSTS: flatbuffers::VOffsetT = 10;
+    pub const VT_COPPERGILDTYPEDATA: flatbuffers::VOffsetT = 8;
+    pub const VT_CHANGECOPPERMAP: flatbuffers::VOffsetT = 10;
+    pub const VT_MODULECONSTS: flatbuffers::VOffsetT = 12;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -86017,6 +79880,9 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
         if let Some(x) = args.changeCopperMap {
             builder.add_changeCopperMap(x);
         }
+        if let Some(x) = args.copperGildTypeData {
+            builder.add_copperGildTypeData(x);
+        }
         if let Some(x) = args.copperDivineData {
             builder.add_copperDivineData(x);
         }
@@ -86033,6 +79899,9 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
         let copperDivineData = self
             .copperDivineData()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let copperGildTypeData = self
+            .copperGildTypeData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         let changeCopperMap = self
             .changeCopperMap()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
@@ -86040,6 +79909,7 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
         clz_Torappu_RoguelikeCopperModuleDataT {
             copperData,
             copperDivineData,
+            copperGildTypeData,
             changeCopperMap,
             moduleConsts,
         }
@@ -86088,6 +79958,32 @@ impl<'a> clz_Torappu_RoguelikeCopperModuleData<'a> {
                 >,
             >>(
                 clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDIVINEDATA,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn copperGildTypeData(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_RoguelikeCopperGildTypeData,
+                    >,
+                >,
+            >>(
+                clz_Torappu_RoguelikeCopperModuleData::VT_COPPERGILDTYPEDATA,
                 None,
             )
         }
@@ -86147,6 +80043,14 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeCopperModuleData<'_> {
                 >,
             >>("copperDivineData", Self::VT_COPPERDIVINEDATA, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_RoguelikeCopperGildTypeData,
+                    >,
+                >,
+            >>("copperGildTypeData", Self::VT_COPPERGILDTYPEDATA, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<dict__string__string>>,
             >>("changeCopperMap", Self::VT_CHANGECOPPERMAP, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_RoguelikeCopperModuleConsts>>(
@@ -86177,6 +80081,16 @@ pub struct clz_Torappu_RoguelikeCopperModuleDataArgs<'a> {
             >,
         >,
     >,
+    pub copperGildTypeData: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'a>,
+                >,
+            >,
+        >,
+    >,
     pub changeCopperMap: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<dict__string__string<'a>>>,
@@ -86190,39 +80104,10 @@ impl<'a> Default for clz_Torappu_RoguelikeCopperModuleDataArgs<'a> {
         clz_Torappu_RoguelikeCopperModuleDataArgs {
             copperData: None,
             copperDivineData: None,
+            copperGildTypeData: None,
             changeCopperMap: None,
             moduleConsts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCopperModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCopperModuleData", 4)?;
-        if let Some(f) = self.copperData() {
-            s.serialize_field("copperData", &f)?;
-        } else {
-            s.skip_field("copperData")?;
-        }
-        if let Some(f) = self.copperDivineData() {
-            s.serialize_field("copperDivineData", &f)?;
-        } else {
-            s.skip_field("copperDivineData")?;
-        }
-        if let Some(f) = self.changeCopperMap() {
-            s.serialize_field("changeCopperMap", &f)?;
-        } else {
-            s.skip_field("changeCopperMap")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
     }
 }
 
@@ -86264,6 +80149,23 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
             clz_Torappu_RoguelikeCopperModuleData::VT_COPPERDIVINEDATA,
             copperDivineData,
+        );
+    }
+    #[inline]
+    pub fn add_copperGildTypeData(
+        &mut self,
+        copperGildTypeData: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_RoguelikeCopperGildTypeData<'b>,
+                >,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RoguelikeCopperModuleData::VT_COPPERGILDTYPEDATA,
+            copperGildTypeData,
         );
     }
     #[inline]
@@ -86311,6 +80213,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleData<'_> {
         let mut ds = f.debug_struct("clz_Torappu_RoguelikeCopperModuleData");
         ds.field("copperData", &self.copperData());
         ds.field("copperDivineData", &self.copperDivineData());
+        ds.field("copperGildTypeData", &self.copperGildTypeData());
         ds.field("changeCopperMap", &self.changeCopperMap());
         ds.field("moduleConsts", &self.moduleConsts());
         ds.finish()
@@ -86321,6 +80224,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeCopperModuleData<'_> {
 pub struct clz_Torappu_RoguelikeCopperModuleDataT {
     pub copperData: Option<Vec<dict__string__clz_Torappu_RoguelikeCopperDataT>>,
     pub copperDivineData: Option<Vec<dict__string__clz_Torappu_RoguelikeCopperDivineDataT>>,
+    pub copperGildTypeData: Option<Vec<dict__string__clz_Torappu_RoguelikeCopperGildTypeDataT>>,
     pub changeCopperMap: Option<Vec<dict__string__stringT>>,
     pub moduleConsts: Option<Box<clz_Torappu_RoguelikeCopperModuleConstsT>>,
 }
@@ -86329,6 +80233,7 @@ impl Default for clz_Torappu_RoguelikeCopperModuleDataT {
         Self {
             copperData: None,
             copperDivineData: None,
+            copperGildTypeData: None,
             changeCopperMap: None,
             moduleConsts: None,
         }
@@ -86347,6 +80252,10 @@ impl clz_Torappu_RoguelikeCopperModuleDataT {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let copperGildTypeData = self.copperGildTypeData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         let changeCopperMap = self.changeCopperMap.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
@@ -86357,6 +80266,7 @@ impl clz_Torappu_RoguelikeCopperModuleDataT {
             &clz_Torappu_RoguelikeCopperModuleDataArgs {
                 copperData,
                 copperDivineData,
+                copperGildTypeData,
                 changeCopperMap,
                 moduleConsts,
             },
@@ -86388,6 +80298,7 @@ impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
     pub const VT_LEVELNAME: flatbuffers::VOffsetT = 12;
     pub const VT_FUNCTIONDESC: flatbuffers::VOffsetT = 14;
     pub const VT_DESC: flatbuffers::VOffsetT = 16;
+    pub const VT_ISPACIFIED: flatbuffers::VOffsetT = 18;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -86418,6 +80329,7 @@ impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
         if let Some(x) = args.id {
             builder.add_id(x);
         }
+        builder.add_isPacified(args.isPacified);
         builder.finish()
     }
 
@@ -86429,6 +80341,7 @@ impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
         let levelName = self.levelName().map(|x| x.to_string());
         let functionDesc = self.functionDesc().map(|x| x.to_string());
         let desc = self.desc().map(|x| x.to_string());
+        let isPacified = self.isPacified();
         clz_Torappu_RoguelikeWrathDataT {
             id,
             group,
@@ -86437,6 +80350,7 @@ impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
             levelName,
             functionDesc,
             desc,
+            isPacified,
         }
     }
 
@@ -86523,6 +80437,17 @@ impl<'a> clz_Torappu_RoguelikeWrathData<'a> {
             )
         }
     }
+    #[inline]
+    pub fn isPacified(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(clz_Torappu_RoguelikeWrathData::VT_ISPACIFIED, Some(false))
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathData<'_> {
@@ -86548,6 +80473,7 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathData<'_> {
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .visit_field::<bool>("isPacified", Self::VT_ISPACIFIED, false)?
             .finish();
         Ok(())
     }
@@ -86560,6 +80486,7 @@ pub struct clz_Torappu_RoguelikeWrathDataArgs<'a> {
     pub levelName: Option<flatbuffers::WIPOffset<&'a str>>,
     pub functionDesc: Option<flatbuffers::WIPOffset<&'a str>>,
     pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub isPacified: bool,
 }
 impl<'a> Default for clz_Torappu_RoguelikeWrathDataArgs<'a> {
     #[inline]
@@ -86572,48 +80499,8 @@ impl<'a> Default for clz_Torappu_RoguelikeWrathDataArgs<'a> {
             levelName: None,
             functionDesc: None,
             desc: None,
+            isPacified: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeWrathData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeWrathData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.group() {
-            s.serialize_field("group", &f)?;
-        } else {
-            s.skip_field("group")?;
-        }
-        s.serialize_field("level", &self.level())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.levelName() {
-            s.serialize_field("levelName", &f)?;
-        } else {
-            s.skip_field("levelName")?;
-        }
-        if let Some(f) = self.functionDesc() {
-            s.serialize_field("functionDesc", &f)?;
-        } else {
-            s.skip_field("functionDesc")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
     }
 }
 
@@ -86670,6 +80557,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_RoguelikeWrathDataB
         );
     }
     #[inline]
+    pub fn add_isPacified(&mut self, isPacified: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_RoguelikeWrathData::VT_ISPACIFIED,
+            isPacified,
+            false,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeWrathDataBuilder<'a, 'b, A> {
@@ -86696,6 +80591,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeWrathData<'_> {
         ds.field("levelName", &self.levelName());
         ds.field("functionDesc", &self.functionDesc());
         ds.field("desc", &self.desc());
+        ds.field("isPacified", &self.isPacified());
         ds.finish()
     }
 }
@@ -86709,6 +80605,7 @@ pub struct clz_Torappu_RoguelikeWrathDataT {
     pub levelName: Option<String>,
     pub functionDesc: Option<String>,
     pub desc: Option<String>,
+    pub isPacified: bool,
 }
 impl Default for clz_Torappu_RoguelikeWrathDataT {
     fn default() -> Self {
@@ -86720,6 +80617,7 @@ impl Default for clz_Torappu_RoguelikeWrathDataT {
             levelName: None,
             functionDesc: None,
             desc: None,
+            isPacified: false,
         }
     }
 }
@@ -86735,6 +80633,7 @@ impl clz_Torappu_RoguelikeWrathDataT {
         let levelName = self.levelName.as_ref().map(|x| _fbb.create_string(x));
         let functionDesc = self.functionDesc.as_ref().map(|x| _fbb.create_string(x));
         let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let isPacified = self.isPacified;
         clz_Torappu_RoguelikeWrathData::create(
             _fbb,
             &clz_Torappu_RoguelikeWrathDataArgs {
@@ -86745,6 +80644,7 @@ impl clz_Torappu_RoguelikeWrathDataT {
                 levelName,
                 functionDesc,
                 desc,
+                isPacified,
             },
         )
     }
@@ -86869,23 +80769,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeWrathDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeWrathData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeWrathData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeWrathDataBuilder<
     'a: 'b,
     'b,
@@ -86995,6 +80878,7 @@ impl<'a> clz_Torappu_RoguelikeWrathModuleConsts<'a> {
     pub const VT_GETWRATHTRANSITION: flatbuffers::VOffsetT = 4;
     pub const VT_GETWRATHTOAST: flatbuffers::VOffsetT = 6;
     pub const VT_HIDDENWRATHTYPE: flatbuffers::VOffsetT = 8;
+    pub const VT_PACIFIEDWRATHLEVEL: flatbuffers::VOffsetT = 10;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -87006,6 +80890,7 @@ impl<'a> clz_Torappu_RoguelikeWrathModuleConsts<'a> {
         args: &'args clz_Torappu_RoguelikeWrathModuleConstsArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_RoguelikeWrathModuleConsts<'bldr>> {
         let mut builder = clz_Torappu_RoguelikeWrathModuleConstsBuilder::new(_fbb);
+        builder.add_pacifiedWrathLevel(args.pacifiedWrathLevel);
         if let Some(x) = args.hiddenWrathType {
             builder.add_hiddenWrathType(x);
         }
@@ -87022,10 +80907,12 @@ impl<'a> clz_Torappu_RoguelikeWrathModuleConsts<'a> {
         let getWrathTransition = self.getWrathTransition().map(|x| x.to_string());
         let getWrathToast = self.getWrathToast().map(|x| x.to_string());
         let hiddenWrathType = self.hiddenWrathType().map(|x| x.to_string());
+        let pacifiedWrathLevel = self.pacifiedWrathLevel();
         clz_Torappu_RoguelikeWrathModuleConstsT {
             getWrathTransition,
             getWrathToast,
             hiddenWrathType,
+            pacifiedWrathLevel,
         }
     }
 
@@ -87065,6 +80952,20 @@ impl<'a> clz_Torappu_RoguelikeWrathModuleConsts<'a> {
             )
         }
     }
+    #[inline]
+    pub fn pacifiedWrathLevel(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_RoguelikeWrathModuleConsts::VT_PACIFIEDWRATHLEVEL,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
@@ -87090,6 +80991,7 @@ impl flatbuffers::Verifiable for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
                 Self::VT_HIDDENWRATHTYPE,
                 false,
             )?
+            .visit_field::<i32>("pacifiedWrathLevel", Self::VT_PACIFIEDWRATHLEVEL, false)?
             .finish();
         Ok(())
     }
@@ -87098,6 +81000,7 @@ pub struct clz_Torappu_RoguelikeWrathModuleConstsArgs<'a> {
     pub getWrathTransition: Option<flatbuffers::WIPOffset<&'a str>>,
     pub getWrathToast: Option<flatbuffers::WIPOffset<&'a str>>,
     pub hiddenWrathType: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub pacifiedWrathLevel: i32,
 }
 impl<'a> Default for clz_Torappu_RoguelikeWrathModuleConstsArgs<'a> {
     #[inline]
@@ -87106,32 +81009,8 @@ impl<'a> Default for clz_Torappu_RoguelikeWrathModuleConstsArgs<'a> {
             getWrathTransition: None,
             getWrathToast: None,
             hiddenWrathType: None,
+            pacifiedWrathLevel: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeWrathModuleConsts", 3)?;
-        if let Some(f) = self.getWrathTransition() {
-            s.serialize_field("getWrathTransition", &f)?;
-        } else {
-            s.skip_field("getWrathTransition")?;
-        }
-        if let Some(f) = self.getWrathToast() {
-            s.serialize_field("getWrathToast", &f)?;
-        } else {
-            s.skip_field("getWrathToast")?;
-        }
-        if let Some(f) = self.hiddenWrathType() {
-            s.serialize_field("hiddenWrathType", &f)?;
-        } else {
-            s.skip_field("hiddenWrathType")?;
-        }
-        s.end()
     }
 }
 
@@ -87165,6 +81044,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_pacifiedWrathLevel(&mut self, pacifiedWrathLevel: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_RoguelikeWrathModuleConsts::VT_PACIFIEDWRATHLEVEL,
+            pacifiedWrathLevel,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_RoguelikeWrathModuleConstsBuilder<'a, 'b, A> {
@@ -87187,6 +81074,7 @@ impl core::fmt::Debug for clz_Torappu_RoguelikeWrathModuleConsts<'_> {
         ds.field("getWrathTransition", &self.getWrathTransition());
         ds.field("getWrathToast", &self.getWrathToast());
         ds.field("hiddenWrathType", &self.hiddenWrathType());
+        ds.field("pacifiedWrathLevel", &self.pacifiedWrathLevel());
         ds.finish()
     }
 }
@@ -87196,6 +81084,7 @@ pub struct clz_Torappu_RoguelikeWrathModuleConstsT {
     pub getWrathTransition: Option<String>,
     pub getWrathToast: Option<String>,
     pub hiddenWrathType: Option<String>,
+    pub pacifiedWrathLevel: i32,
 }
 impl Default for clz_Torappu_RoguelikeWrathModuleConstsT {
     fn default() -> Self {
@@ -87203,6 +81092,7 @@ impl Default for clz_Torappu_RoguelikeWrathModuleConstsT {
             getWrathTransition: None,
             getWrathToast: None,
             hiddenWrathType: None,
+            pacifiedWrathLevel: 0,
         }
     }
 }
@@ -87217,12 +81107,14 @@ impl clz_Torappu_RoguelikeWrathModuleConstsT {
             .map(|x| _fbb.create_string(x));
         let getWrathToast = self.getWrathToast.as_ref().map(|x| _fbb.create_string(x));
         let hiddenWrathType = self.hiddenWrathType.as_ref().map(|x| _fbb.create_string(x));
+        let pacifiedWrathLevel = self.pacifiedWrathLevel;
         clz_Torappu_RoguelikeWrathModuleConsts::create(
             _fbb,
             &clz_Torappu_RoguelikeWrathModuleConstsArgs {
                 getWrathTransition,
                 getWrathToast,
                 hiddenWrathType,
+                pacifiedWrathLevel,
             },
         )
     }
@@ -87355,26 +81247,6 @@ impl<'a> Default for clz_Torappu_RoguelikeWrathModuleDataArgs<'a> {
             wrathData: None,
             moduleConsts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeWrathModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeWrathModuleData", 2)?;
-        if let Some(f) = self.wrathData() {
-            s.serialize_field("wrathData", &f)?;
-        } else {
-            s.skip_field("wrathData")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
     }
 }
 
@@ -87550,21 +81422,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCandleModuleConstsArgs<'a> {
         clz_Torappu_RoguelikeCandleModuleConstsArgs {
             candleHolderBuffId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCandleModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCandleModuleConsts", 1)?;
-        if let Some(f) = self.candleHolderBuffId() {
-            s.serialize_field("candleHolderBuffId", &f)?;
-        } else {
-            s.skip_field("candleHolderBuffId")?;
-        }
-        s.end()
     }
 }
 
@@ -87787,31 +81644,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCandleModuleDataArgs<'a> {
             moduleConsts: None,
             candleBattleStageIdList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCandleModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCandleModuleData", 3)?;
-        if let Some(f) = self.candleTicketIdList() {
-            s.serialize_field("candleTicketIdList", &f)?;
-        } else {
-            s.skip_field("candleTicketIdList")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        if let Some(f) = self.candleBattleStageIdList() {
-            s.serialize_field("candleBattleStageIdList", &f)?;
-        } else {
-            s.skip_field("candleBattleStageIdList")?;
-        }
-        s.end()
     }
 }
 
@@ -88165,48 +81997,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeSkyNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSkyNodeData", 8)?;
-        s.serialize_field("evtType", &self.evtType())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.effId() {
-            s.serialize_field("effId", &f)?;
-        } else {
-            s.skip_field("effId")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.nameBkgClr() {
-            s.serialize_field("nameBkgClr", &f)?;
-        } else {
-            s.skip_field("nameBkgClr")?;
-        }
-        if let Some(f) = self.selectClr() {
-            s.serialize_field("selectClr", &f)?;
-        } else {
-            s.skip_field("selectClr")?;
-        }
-        s.serialize_field("isRepeatedly", &self.isRepeatedly())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeSkyNodeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -88481,23 +82271,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeSkyNodeDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeSkyNodeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeSkyNodeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeSkyNodeDataBuilder<
     'a: 'b,
     'b,
@@ -88714,23 +82487,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSkyNodeSubTypeDataArgs<'a> {
             subTypeId: 0,
             desc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeSkyNodeSubTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSkyNodeSubTypeData", 3)?;
-        s.serialize_field("evtType", &self.evtType())?;
-        s.serialize_field("subTypeId", &self.subTypeId())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.end()
     }
 }
 
@@ -88959,27 +82715,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSkyModuleConstsArgs<'a> {
             skyMaxColumns: 0,
             skySacrificeChoiceDynamicKey: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeSkyModuleConsts<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSkyModuleConsts", 3)?;
-        if let Some(f) = self.skyApItemId() {
-            s.serialize_field("skyApItemId", &f)?;
-        } else {
-            s.skip_field("skyApItemId")?;
-        }
-        s.serialize_field("skyMaxColumns", &self.skyMaxColumns())?;
-        if let Some(f) = self.skySacrificeChoiceDynamicKey() {
-            s.serialize_field("skySacrificeChoiceDynamicKey", &f)?;
-        } else {
-            s.skip_field("skySacrificeChoiceDynamicKey")?;
-        }
-        s.end()
     }
 }
 
@@ -89253,31 +82988,6 @@ impl<'a> Default for clz_Torappu_RoguelikeSkyModuleDataArgs<'a> {
             subTypeData: None,
             moduleConsts: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeSkyModuleData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeSkyModuleData", 3)?;
-        if let Some(f) = self.nodeData() {
-            s.serialize_field("nodeData", &f)?;
-        } else {
-            s.skip_field("nodeData")?;
-        }
-        if let Some(f) = self.subTypeData() {
-            s.serialize_field("subTypeData", &f)?;
-        } else {
-            s.skip_field("subTypeData")?;
-        }
-        if let Some(f) = self.moduleConsts() {
-            s.serialize_field("moduleConsts", &f)?;
-        } else {
-            s.skip_field("moduleConsts")?;
-        }
-        s.end()
     }
 }
 
@@ -89743,81 +83453,6 @@ impl<'a> Default for clz_Torappu_RoguelikeModuleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeModule<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeModule", 13)?;
-        if let Some(f) = self.moduleTypes() {
-            s.serialize_field("moduleTypes", &f)?;
-        } else {
-            s.skip_field("moduleTypes")?;
-        }
-        if let Some(f) = self.sanCheck() {
-            s.serialize_field("sanCheck", &f)?;
-        } else {
-            s.skip_field("sanCheck")?;
-        }
-        if let Some(f) = self.dice() {
-            s.serialize_field("dice", &f)?;
-        } else {
-            s.skip_field("dice")?;
-        }
-        if let Some(f) = self.chaos() {
-            s.serialize_field("chaos", &f)?;
-        } else {
-            s.skip_field("chaos")?;
-        }
-        if let Some(f) = self.totemBuff() {
-            s.serialize_field("totemBuff", &f)?;
-        } else {
-            s.skip_field("totemBuff")?;
-        }
-        if let Some(f) = self.vision() {
-            s.serialize_field("vision", &f)?;
-        } else {
-            s.skip_field("vision")?;
-        }
-        if let Some(f) = self.fragment() {
-            s.serialize_field("fragment", &f)?;
-        } else {
-            s.skip_field("fragment")?;
-        }
-        if let Some(f) = self.disaster() {
-            s.serialize_field("disaster", &f)?;
-        } else {
-            s.skip_field("disaster")?;
-        }
-        if let Some(f) = self.nodeUpgrade() {
-            s.serialize_field("nodeUpgrade", &f)?;
-        } else {
-            s.skip_field("nodeUpgrade")?;
-        }
-        if let Some(f) = self.copper() {
-            s.serialize_field("copper", &f)?;
-        } else {
-            s.skip_field("copper")?;
-        }
-        if let Some(f) = self.wrath() {
-            s.serialize_field("wrath", &f)?;
-        } else {
-            s.skip_field("wrath")?;
-        }
-        if let Some(f) = self.candle() {
-            s.serialize_field("candle", &f)?;
-        } else {
-            s.skip_field("candle")?;
-        }
-        if let Some(f) = self.sky() {
-            s.serialize_field("sky", &f)?;
-        } else {
-            s.skip_field("sky")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeModuleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -90194,22 +83829,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeModuleArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeModule<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeModule", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeModuleBuilder<
     'a: 'b,
     'b,
@@ -90465,29 +84084,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDisplayItemArgs<'a> {
             tokenDesc: None,
             sortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicDisplayItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDisplayItem", 5)?;
-        if let Some(f) = self.displayType() {
-            s.serialize_field("displayType", &f)?;
-        } else {
-            s.skip_field("displayType")?;
-        }
-        s.serialize_field("displayNum", &self.displayNum())?;
-        s.serialize_field("displayForm", &self.displayForm())?;
-        if let Some(f) = self.tokenDesc() {
-            s.serialize_field("tokenDesc", &f)?;
-        } else {
-            s.skip_field("tokenDesc")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
     }
 }
 
@@ -90926,54 +84522,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDevArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicDev<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDev", 10)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("nodeType", &self.nodeType())?;
-        if let Some(f) = self.nextNodeId() {
-            s.serialize_field("nextNodeId", &f)?;
-        } else {
-            s.skip_field("nextNodeId")?;
-        }
-        if let Some(f) = self.frontNodeId() {
-            s.serialize_field("frontNodeId", &f)?;
-        } else {
-            s.skip_field("frontNodeId")?;
-        }
-        s.serialize_field("tokenCost", &self.tokenCost())?;
-        if let Some(f) = self.buffName() {
-            s.serialize_field("buffName", &f)?;
-        } else {
-            s.skip_field("buffName")?;
-        }
-        if let Some(f) = self.buffIconId() {
-            s.serialize_field("buffIconId", &f)?;
-        } else {
-            s.skip_field("buffIconId")?;
-        }
-        if let Some(f) = self.buffTypeName() {
-            s.serialize_field("buffTypeName", &f)?;
-        } else {
-            s.skip_field("buffTypeName")?;
-        }
-        if let Some(f) = self.buffDisplayInfo() {
-            s.serialize_field("buffDisplayInfo", &f)?;
-        } else {
-            s.skip_field("buffDisplayInfo")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicDevBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -91289,23 +84837,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicDevArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicDev<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicDev", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeTopicDevBuilder<
     'a: 'b,
     'b,
@@ -91521,23 +85052,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicDevTokenArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeTopicDevToken<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicDevToken", 3)?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("displayForm", &self.displayForm())?;
-        if let Some(f) = self.tokenDesc() {
-            s.serialize_field("tokenDesc", &f)?;
-        } else {
-            s.skip_field("tokenDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeTopicDevTokenBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -91749,23 +85263,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeTopicDevTokenArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeTopicDevToken<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_RoguelikeTopicDevToken", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -92971,226 +86468,6 @@ impl<'a> Default for clz_Torappu_RL01EndingTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL01EndingText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL01EndingText", 42)?;
-        if let Some(f) = self.summaryVariation() {
-            s.serialize_field("summaryVariation", &f)?;
-        } else {
-            s.skip_field("summaryVariation")?;
-        }
-        if let Some(f) = self.summaryFusion() {
-            s.serialize_field("summaryFusion", &f)?;
-        } else {
-            s.skip_field("summaryFusion")?;
-        }
-        if let Some(f) = self.summaryCapsule() {
-            s.serialize_field("summaryCapsule", &f)?;
-        } else {
-            s.skip_field("summaryCapsule")?;
-        }
-        if let Some(f) = self.summaryActor() {
-            s.serialize_field("summaryActor", &f)?;
-        } else {
-            s.skip_field("summaryActor")?;
-        }
-        if let Some(f) = self.summaryTop() {
-            s.serialize_field("summaryTop", &f)?;
-        } else {
-            s.skip_field("summaryTop")?;
-        }
-        if let Some(f) = self.summaryZone() {
-            s.serialize_field("summaryZone", &f)?;
-        } else {
-            s.skip_field("summaryZone")?;
-        }
-        if let Some(f) = self.summaryEnding() {
-            s.serialize_field("summaryEnding", &f)?;
-        } else {
-            s.skip_field("summaryEnding")?;
-        }
-        if let Some(f) = self.summaryDifficultyZone() {
-            s.serialize_field("summaryDifficultyZone", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyZone")?;
-        }
-        if let Some(f) = self.summaryDifficultyEnding() {
-            s.serialize_field("summaryDifficultyEnding", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyEnding")?;
-        }
-        if let Some(f) = self.summaryMode() {
-            s.serialize_field("summaryMode", &f)?;
-        } else {
-            s.skip_field("summaryMode")?;
-        }
-        if let Some(f) = self.summaryGroup() {
-            s.serialize_field("summaryGroup", &f)?;
-        } else {
-            s.skip_field("summaryGroup")?;
-        }
-        if let Some(f) = self.summarySupport() {
-            s.serialize_field("summarySupport", &f)?;
-        } else {
-            s.skip_field("summarySupport")?;
-        }
-        if let Some(f) = self.summaryNormalRecruit() {
-            s.serialize_field("summaryNormalRecruit", &f)?;
-        } else {
-            s.skip_field("summaryNormalRecruit")?;
-        }
-        if let Some(f) = self.summaryDirectRecruit() {
-            s.serialize_field("summaryDirectRecruit", &f)?;
-        } else {
-            s.skip_field("summaryDirectRecruit")?;
-        }
-        if let Some(f) = self.summaryFriendRecruit() {
-            s.serialize_field("summaryFriendRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFriendRecruit")?;
-        }
-        if let Some(f) = self.summaryFreeRecruit() {
-            s.serialize_field("summaryFreeRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFreeRecruit")?;
-        }
-        if let Some(f) = self.summaryMonthRecruit() {
-            s.serialize_field("summaryMonthRecruit", &f)?;
-        } else {
-            s.skip_field("summaryMonthRecruit")?;
-        }
-        if let Some(f) = self.summaryUpgrade() {
-            s.serialize_field("summaryUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryUpgrade")?;
-        }
-        if let Some(f) = self.summaryCompleteEnding() {
-            s.serialize_field("summaryCompleteEnding", &f)?;
-        } else {
-            s.skip_field("summaryCompleteEnding")?;
-        }
-        if let Some(f) = self.summaryEachZone() {
-            s.serialize_field("summaryEachZone", &f)?;
-        } else {
-            s.skip_field("summaryEachZone")?;
-        }
-        if let Some(f) = self.summaryMeetSpZone() {
-            s.serialize_field("summaryMeetSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetSpZone")?;
-        }
-        if let Some(f) = self.summaryPerfectBattle() {
-            s.serialize_field("summaryPerfectBattle", &f)?;
-        } else {
-            s.skip_field("summaryPerfectBattle")?;
-        }
-        if let Some(f) = self.summaryMeetBattle() {
-            s.serialize_field("summaryMeetBattle", &f)?;
-        } else {
-            s.skip_field("summaryMeetBattle")?;
-        }
-        if let Some(f) = self.summaryMeetEvent() {
-            s.serialize_field("summaryMeetEvent", &f)?;
-        } else {
-            s.skip_field("summaryMeetEvent")?;
-        }
-        if let Some(f) = self.summaryMeetShop() {
-            s.serialize_field("summaryMeetShop", &f)?;
-        } else {
-            s.skip_field("summaryMeetShop")?;
-        }
-        if let Some(f) = self.summaryMeetTreasure() {
-            s.serialize_field("summaryMeetTreasure", &f)?;
-        } else {
-            s.skip_field("summaryMeetTreasure")?;
-        }
-        if let Some(f) = self.summaryMeetSecretpath() {
-            s.serialize_field("summaryMeetSecretpath", &f)?;
-        } else {
-            s.skip_field("summaryMeetSecretpath")?;
-        }
-        if let Some(f) = self.summaryExchangeRelic() {
-            s.serialize_field("summaryExchangeRelic", &f)?;
-        } else {
-            s.skip_field("summaryExchangeRelic")?;
-        }
-        if let Some(f) = self.summaryMeetTrade() {
-            s.serialize_field("summaryMeetTrade", &f)?;
-        } else {
-            s.skip_field("summaryMeetTrade")?;
-        }
-        if let Some(f) = self.summaryBuy() {
-            s.serialize_field("summaryBuy", &f)?;
-        } else {
-            s.skip_field("summaryBuy")?;
-        }
-        if let Some(f) = self.summaryBuyWithPriceId() {
-            s.serialize_field("summaryBuyWithPriceId", &f)?;
-        } else {
-            s.skip_field("summaryBuyWithPriceId")?;
-        }
-        if let Some(f) = self.summaryInvest() {
-            s.serialize_field("summaryInvest", &f)?;
-        } else {
-            s.skip_field("summaryInvest")?;
-        }
-        if let Some(f) = self.summaryGet() {
-            s.serialize_field("summaryGet", &f)?;
-        } else {
-            s.skip_field("summaryGet")?;
-        }
-        if let Some(f) = self.summaryRelic() {
-            s.serialize_field("summaryRelic", &f)?;
-        } else {
-            s.skip_field("summaryRelic")?;
-        }
-        if let Some(f) = self.summarySafeHouse() {
-            s.serialize_field("summarySafeHouse", &f)?;
-        } else {
-            s.skip_field("summarySafeHouse")?;
-        }
-        if let Some(f) = self.summaryFailEnd() {
-            s.serialize_field("summaryFailEnd", &f)?;
-        } else {
-            s.skip_field("summaryFailEnd")?;
-        }
-        if let Some(f) = self.summaryStockRecruitTicket() {
-            s.serialize_field("summaryStockRecruitTicket", &f)?;
-        } else {
-            s.skip_field("summaryStockRecruitTicket")?;
-        }
-        if let Some(f) = self.summaryDuelWin() {
-            s.serialize_field("summaryDuelWin", &f)?;
-        } else {
-            s.skip_field("summaryDuelWin")?;
-        }
-        if let Some(f) = self.summaryDuelTie() {
-            s.serialize_field("summaryDuelTie", &f)?;
-        } else {
-            s.skip_field("summaryDuelTie")?;
-        }
-        if let Some(f) = self.summaryDuelLose() {
-            s.serialize_field("summaryDuelLose", &f)?;
-        } else {
-            s.skip_field("summaryDuelLose")?;
-        }
-        if let Some(f) = self.summaryExpeditionGo() {
-            s.serialize_field("summaryExpeditionGo", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGo")?;
-        }
-        if let Some(f) = self.summaryExpeditionBack() {
-            s.serialize_field("summaryExpeditionBack", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBack")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL01EndingTextBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -93991,23 +87268,6 @@ impl<'a> Default for clz_Torappu_RL01DifficultyExtArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL01DifficultyExt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL01DifficultyExt", 3)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL01DifficultyExtBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -94314,36 +87574,6 @@ impl<'a> Default for clz_Torappu_RL01CustomizeDataArgs<'a> {
             endingText: None,
             difficulties: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL01CustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL01CustomizeData", 4)?;
-        if let Some(f) = self.developments() {
-            s.serialize_field("developments", &f)?;
-        } else {
-            s.skip_field("developments")?;
-        }
-        if let Some(f) = self.developmentTokens() {
-            s.serialize_field("developmentTokens", &f)?;
-        } else {
-            s.skip_field("developmentTokens")?;
-        }
-        if let Some(f) = self.endingText() {
-            s.serialize_field("endingText", &f)?;
-        } else {
-            s.skip_field("endingText")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        s.end()
     }
 }
 
@@ -94864,61 +88094,6 @@ impl<'a> Default for clz_Torappu_RL02DevelopmentArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL02Development<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02Development", 13)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        if let Some(f) = self.frontNodeId() {
-            s.serialize_field("frontNodeId", &f)?;
-        } else {
-            s.skip_field("frontNodeId")?;
-        }
-        if let Some(f) = self.nextNodeId() {
-            s.serialize_field("nextNodeId", &f)?;
-        } else {
-            s.skip_field("nextNodeId")?;
-        }
-        s.serialize_field("positionP", &self.positionP())?;
-        s.serialize_field("positionR", &self.positionR())?;
-        s.serialize_field("tokenCost", &self.tokenCost())?;
-        if let Some(f) = self.buffName() {
-            s.serialize_field("buffName", &f)?;
-        } else {
-            s.skip_field("buffName")?;
-        }
-        if let Some(f) = self.buffIconId() {
-            s.serialize_field("buffIconId", &f)?;
-        } else {
-            s.skip_field("buffIconId")?;
-        }
-        s.serialize_field("effectType", &self.effectType())?;
-        if let Some(f) = self.rawDesc() {
-            s.serialize_field("rawDesc", &f)?;
-        } else {
-            s.skip_field("rawDesc")?;
-        }
-        if let Some(f) = self.buffDisplayInfo() {
-            s.serialize_field("buffDisplayInfo", &f)?;
-        } else {
-            s.skip_field("buffDisplayInfo")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL02DevelopmentBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -95270,22 +88445,6 @@ impl<'a> Default for dict__string__clz_Torappu_RL02DevelopmentArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RL02Development<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_RL02Development", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RL02DevelopmentBuilder<
     'a: 'b,
     'b,
@@ -95540,29 +88699,6 @@ impl<'a> Default for clz_Torappu_RL02DevRawTextBuffGroupArgs<'a> {
             useUpBreak: false,
             sortId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL02DevRawTextBuffGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02DevRawTextBuffGroup", 5)?;
-        if let Some(f) = self.nodeIdList() {
-            s.serialize_field("nodeIdList", &f)?;
-        } else {
-            s.skip_field("nodeIdList")?;
-        }
-        s.serialize_field("useLevelMark", &self.useLevelMark())?;
-        if let Some(f) = self.groupIconId() {
-            s.serialize_field("groupIconId", &f)?;
-        } else {
-            s.skip_field("groupIconId")?;
-        }
-        s.serialize_field("useUpBreak", &self.useUpBreak())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
     }
 }
 
@@ -95887,35 +89023,6 @@ impl<'a> Default for clz_Torappu_RL02DevelopmentLineArgs<'a> {
             toNodeR: 0,
             enrollId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL02DevelopmentLine<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02DevelopmentLine", 7)?;
-        if let Some(f) = self.fromNode() {
-            s.serialize_field("fromNode", &f)?;
-        } else {
-            s.skip_field("fromNode")?;
-        }
-        if let Some(f) = self.toNode() {
-            s.serialize_field("toNode", &f)?;
-        } else {
-            s.skip_field("toNode")?;
-        }
-        s.serialize_field("fromNodeP", &self.fromNodeP())?;
-        s.serialize_field("fromNodeR", &self.fromNodeR())?;
-        s.serialize_field("toNodeP", &self.toNodeP())?;
-        s.serialize_field("toNodeR", &self.toNodeR())?;
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
     }
 }
 
@@ -96674,123 +89781,6 @@ impl<'a> Default for clz_Torappu_RL02EndingTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL02EndingText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02EndingText", 23)?;
-        if let Some(f) = self.summaryMutation() {
-            s.serialize_field("summaryMutation", &f)?;
-        } else {
-            s.skip_field("summaryMutation")?;
-        }
-        if let Some(f) = self.summaryDice() {
-            s.serialize_field("summaryDice", &f)?;
-        } else {
-            s.skip_field("summaryDice")?;
-        }
-        if let Some(f) = self.summaryDiceResultGood() {
-            s.serialize_field("summaryDiceResultGood", &f)?;
-        } else {
-            s.skip_field("summaryDiceResultGood")?;
-        }
-        if let Some(f) = self.summaryDiceResultNormal() {
-            s.serialize_field("summaryDiceResultNormal", &f)?;
-        } else {
-            s.skip_field("summaryDiceResultNormal")?;
-        }
-        if let Some(f) = self.summaryDiceResultBad() {
-            s.serialize_field("summaryDiceResultBad", &f)?;
-        } else {
-            s.skip_field("summaryDiceResultBad")?;
-        }
-        if let Some(f) = self.summaryDiceResultDesc() {
-            s.serialize_field("summaryDiceResultDesc", &f)?;
-        } else {
-            s.skip_field("summaryDiceResultDesc")?;
-        }
-        if let Some(f) = self.summaryCommuDesc() {
-            s.serialize_field("summaryCommuDesc", &f)?;
-        } else {
-            s.skip_field("summaryCommuDesc")?;
-        }
-        if let Some(f) = self.summaryHiddenDesc() {
-            s.serialize_field("summaryHiddenDesc", &f)?;
-        } else {
-            s.skip_field("summaryHiddenDesc")?;
-        }
-        if let Some(f) = self.summaryKnightDesc() {
-            s.serialize_field("summaryKnightDesc", &f)?;
-        } else {
-            s.skip_field("summaryKnightDesc")?;
-        }
-        if let Some(f) = self.summaryGoldDesc() {
-            s.serialize_field("summaryGoldDesc", &f)?;
-        } else {
-            s.skip_field("summaryGoldDesc")?;
-        }
-        if let Some(f) = self.summaryPracticeDesc() {
-            s.serialize_field("summaryPracticeDesc", &f)?;
-        } else {
-            s.skip_field("summaryPracticeDesc")?;
-        }
-        if let Some(f) = self.summaryCommuEmptyDesc() {
-            s.serialize_field("summaryCommuEmptyDesc", &f)?;
-        } else {
-            s.skip_field("summaryCommuEmptyDesc")?;
-        }
-        if let Some(f) = self.summaryCommuNotEmptyDesc() {
-            s.serialize_field("summaryCommuNotEmptyDesc", &f)?;
-        } else {
-            s.skip_field("summaryCommuNotEmptyDesc")?;
-        }
-        if let Some(f) = self.summaryHiddenPassedDesc() {
-            s.serialize_field("summaryHiddenPassedDesc", &f)?;
-        } else {
-            s.skip_field("summaryHiddenPassedDesc")?;
-        }
-        if let Some(f) = self.summaryHiddenNotPassedDesc() {
-            s.serialize_field("summaryHiddenNotPassedDesc", &f)?;
-        } else {
-            s.skip_field("summaryHiddenNotPassedDesc")?;
-        }
-        if let Some(f) = self.summaryKnightPassedDesc() {
-            s.serialize_field("summaryKnightPassedDesc", &f)?;
-        } else {
-            s.skip_field("summaryKnightPassedDesc")?;
-        }
-        if let Some(f) = self.summaryKnightNotPassedDesc() {
-            s.serialize_field("summaryKnightNotPassedDesc", &f)?;
-        } else {
-            s.skip_field("summaryKnightNotPassedDesc")?;
-        }
-        s.serialize_field("summaryGoldThreshold", &self.summaryGoldThreshold())?;
-        if let Some(f) = self.summaryGoldHighDesc() {
-            s.serialize_field("summaryGoldHighDesc", &f)?;
-        } else {
-            s.skip_field("summaryGoldHighDesc")?;
-        }
-        if let Some(f) = self.summaryGoldLowDesc() {
-            s.serialize_field("summaryGoldLowDesc", &f)?;
-        } else {
-            s.skip_field("summaryGoldLowDesc")?;
-        }
-        s.serialize_field("summaryPracticeThreshold", &self.summaryPracticeThreshold())?;
-        if let Some(f) = self.summaryPracticeHighDesc() {
-            s.serialize_field("summaryPracticeHighDesc", &f)?;
-        } else {
-            s.skip_field("summaryPracticeHighDesc")?;
-        }
-        if let Some(f) = self.summaryPracticeLowDesc() {
-            s.serialize_field("summaryPracticeLowDesc", &f)?;
-        } else {
-            s.skip_field("summaryPracticeLowDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL02EndingTextBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -97353,23 +90343,6 @@ impl<'a> Default for clz_Torappu_RL02DifficultyExtArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL02DifficultyExt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02DifficultyExt", 3)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL02DifficultyExtBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -97768,46 +90741,6 @@ impl<'a> Default for clz_Torappu_RL02CustomizeDataArgs<'a> {
             endingText: None,
             difficulties: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL02CustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL02CustomizeData", 6)?;
-        if let Some(f) = self.developments() {
-            s.serialize_field("developments", &f)?;
-        } else {
-            s.skip_field("developments")?;
-        }
-        if let Some(f) = self.developmentTokens() {
-            s.serialize_field("developmentTokens", &f)?;
-        } else {
-            s.skip_field("developmentTokens")?;
-        }
-        if let Some(f) = self.developmentRawTextGroup() {
-            s.serialize_field("developmentRawTextGroup", &f)?;
-        } else {
-            s.skip_field("developmentRawTextGroup")?;
-        }
-        if let Some(f) = self.developmentLines() {
-            s.serialize_field("developmentLines", &f)?;
-        } else {
-            s.skip_field("developmentLines")?;
-        }
-        if let Some(f) = self.endingText() {
-            s.serialize_field("endingText", &f)?;
-        } else {
-            s.skip_field("endingText")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        s.end()
     }
 }
 
@@ -98402,66 +91335,6 @@ impl<'a> Default for clz_Torappu_RL03DevelopmentArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL03Development<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03Development", 14)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        if let Some(f) = self.frontNodeId() {
-            s.serialize_field("frontNodeId", &f)?;
-        } else {
-            s.skip_field("frontNodeId")?;
-        }
-        if let Some(f) = self.nextNodeId() {
-            s.serialize_field("nextNodeId", &f)?;
-        } else {
-            s.skip_field("nextNodeId")?;
-        }
-        s.serialize_field("positionRow", &self.positionRow())?;
-        s.serialize_field("positionOrder", &self.positionOrder())?;
-        s.serialize_field("tokenCost", &self.tokenCost())?;
-        if let Some(f) = self.buffName() {
-            s.serialize_field("buffName", &f)?;
-        } else {
-            s.skip_field("buffName")?;
-        }
-        if let Some(f) = self.buffIconId() {
-            s.serialize_field("buffIconId", &f)?;
-        } else {
-            s.skip_field("buffIconId")?;
-        }
-        s.serialize_field("effectType", &self.effectType())?;
-        if let Some(f) = self.rawDesc() {
-            s.serialize_field("rawDesc", &f)?;
-        } else {
-            s.skip_field("rawDesc")?;
-        }
-        if let Some(f) = self.buffDisplayInfo() {
-            s.serialize_field("buffDisplayInfo", &f)?;
-        } else {
-            s.skip_field("buffDisplayInfo")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL03DevelopmentBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -98836,22 +91709,6 @@ impl<'a> Default for dict__string__clz_Torappu_RL03DevelopmentArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RL03Development<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_RL03Development", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RL03DevelopmentBuilder<
     'a: 'b,
     'b,
@@ -99088,28 +91945,6 @@ impl<'a> Default for clz_Torappu_RL03DevRawTextBuffGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL03DevRawTextBuffGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03DevRawTextBuffGroup", 4)?;
-        if let Some(f) = self.nodeIdList() {
-            s.serialize_field("nodeIdList", &f)?;
-        } else {
-            s.skip_field("nodeIdList")?;
-        }
-        s.serialize_field("useLevelMark", &self.useLevelMark())?;
-        if let Some(f) = self.groupIconId() {
-            s.serialize_field("groupIconId", &f)?;
-        } else {
-            s.skip_field("groupIconId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL03DevRawTextBuffGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -99325,26 +92160,6 @@ impl<'a> Default for clz_Torappu_RL03DevDifficultyNodePairInfoArgs<'a> {
             frontNode: None,
             nextNode: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL03DevDifficultyNodePairInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03DevDifficultyNodePairInfo", 2)?;
-        if let Some(f) = self.frontNode() {
-            s.serialize_field("frontNode", &f)?;
-        } else {
-            s.skip_field("frontNode")?;
-        }
-        if let Some(f) = self.nextNode() {
-            s.serialize_field("nextNode", &f)?;
-        } else {
-            s.skip_field("nextNode")?;
-        }
-        s.end()
     }
 }
 
@@ -99575,27 +92390,6 @@ impl<'a> Default for clz_Torappu_RL03DevDifficultyNodeInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL03DevDifficultyNodeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03DevDifficultyNodeInfo", 3)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        if let Some(f) = self.nodeMap() {
-            s.serialize_field("nodeMap", &f)?;
-        } else {
-            s.skip_field("nodeMap")?;
-        }
-        s.serialize_field("enableGrade", &self.enableGrade())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL03DevDifficultyNodeInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -99817,23 +92611,6 @@ impl<'a> Default for dict__string__clz_Torappu_RL03DevDifficultyNodeInfoArgs<'a>
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RL03DevDifficultyNodeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RL03DevDifficultyNodeInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -101314,281 +94091,6 @@ impl<'a> Default for clz_Torappu_RL03EndingTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL03EndingText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03EndingText", 53)?;
-        if let Some(f) = self.summaryGetTotem() {
-            s.serialize_field("summaryGetTotem", &f)?;
-        } else {
-            s.skip_field("summaryGetTotem")?;
-        }
-        if let Some(f) = self.summaryDemoPointUp() {
-            s.serialize_field("summaryDemoPointUp", &f)?;
-        } else {
-            s.skip_field("summaryDemoPointUp")?;
-        }
-        if let Some(f) = self.summaryDemoPointDown() {
-            s.serialize_field("summaryDemoPointDown", &f)?;
-        } else {
-            s.skip_field("summaryDemoPointDown")?;
-        }
-        if let Some(f) = self.summaryDemoGradeUp() {
-            s.serialize_field("summaryDemoGradeUp", &f)?;
-        } else {
-            s.skip_field("summaryDemoGradeUp")?;
-        }
-        if let Some(f) = self.summaryDemoGradeDown() {
-            s.serialize_field("summaryDemoGradeDown", &f)?;
-        } else {
-            s.skip_field("summaryDemoGradeDown")?;
-        }
-        if let Some(f) = self.summaryVisionPointUp() {
-            s.serialize_field("summaryVisionPointUp", &f)?;
-        } else {
-            s.skip_field("summaryVisionPointUp")?;
-        }
-        if let Some(f) = self.summaryVisionPointDown() {
-            s.serialize_field("summaryVisionPointDown", &f)?;
-        } else {
-            s.skip_field("summaryVisionPointDown")?;
-        }
-        if let Some(f) = self.summaryVisionGradeUp() {
-            s.serialize_field("summaryVisionGradeUp", &f)?;
-        } else {
-            s.skip_field("summaryVisionGradeUp")?;
-        }
-        if let Some(f) = self.summaryVisionGradeDown() {
-            s.serialize_field("summaryVisionGradeDown", &f)?;
-        } else {
-            s.skip_field("summaryVisionGradeDown")?;
-        }
-        if let Some(f) = self.summaryFightWin() {
-            s.serialize_field("summaryFightWin", &f)?;
-        } else {
-            s.skip_field("summaryFightWin")?;
-        }
-        if let Some(f) = self.summaryFightFail() {
-            s.serialize_field("summaryFightFail", &f)?;
-        } else {
-            s.skip_field("summaryFightFail")?;
-        }
-        if let Some(f) = self.summaryExchangeTotem() {
-            s.serialize_field("summaryExchangeTotem", &f)?;
-        } else {
-            s.skip_field("summaryExchangeTotem")?;
-        }
-        if let Some(f) = self.summaryUseTotem() {
-            s.serialize_field("summaryUseTotem", &f)?;
-        } else {
-            s.skip_field("summaryUseTotem")?;
-        }
-        if let Some(f) = self.summaryVisionGrade() {
-            s.serialize_field("summaryVisionGrade", &f)?;
-        } else {
-            s.skip_field("summaryVisionGrade")?;
-        }
-        if let Some(f) = self.summaryActor() {
-            s.serialize_field("summaryActor", &f)?;
-        } else {
-            s.skip_field("summaryActor")?;
-        }
-        if let Some(f) = self.summaryTop() {
-            s.serialize_field("summaryTop", &f)?;
-        } else {
-            s.skip_field("summaryTop")?;
-        }
-        if let Some(f) = self.summaryZone() {
-            s.serialize_field("summaryZone", &f)?;
-        } else {
-            s.skip_field("summaryZone")?;
-        }
-        if let Some(f) = self.summaryEnding() {
-            s.serialize_field("summaryEnding", &f)?;
-        } else {
-            s.skip_field("summaryEnding")?;
-        }
-        if let Some(f) = self.summaryDifficultyZone() {
-            s.serialize_field("summaryDifficultyZone", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyZone")?;
-        }
-        if let Some(f) = self.summaryDifficultyEnding() {
-            s.serialize_field("summaryDifficultyEnding", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyEnding")?;
-        }
-        if let Some(f) = self.summaryMode() {
-            s.serialize_field("summaryMode", &f)?;
-        } else {
-            s.skip_field("summaryMode")?;
-        }
-        if let Some(f) = self.summaryGroup() {
-            s.serialize_field("summaryGroup", &f)?;
-        } else {
-            s.skip_field("summaryGroup")?;
-        }
-        if let Some(f) = self.summarySupport() {
-            s.serialize_field("summarySupport", &f)?;
-        } else {
-            s.skip_field("summarySupport")?;
-        }
-        if let Some(f) = self.summaryNormalRecruit() {
-            s.serialize_field("summaryNormalRecruit", &f)?;
-        } else {
-            s.skip_field("summaryNormalRecruit")?;
-        }
-        if let Some(f) = self.summaryDirectRecruit() {
-            s.serialize_field("summaryDirectRecruit", &f)?;
-        } else {
-            s.skip_field("summaryDirectRecruit")?;
-        }
-        if let Some(f) = self.summaryFriendRecruit() {
-            s.serialize_field("summaryFriendRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFriendRecruit")?;
-        }
-        if let Some(f) = self.summaryFreeRecruit() {
-            s.serialize_field("summaryFreeRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFreeRecruit")?;
-        }
-        if let Some(f) = self.summaryMonthRecruit() {
-            s.serialize_field("summaryMonthRecruit", &f)?;
-        } else {
-            s.skip_field("summaryMonthRecruit")?;
-        }
-        if let Some(f) = self.summaryUpgrade() {
-            s.serialize_field("summaryUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryUpgrade")?;
-        }
-        if let Some(f) = self.summaryCompleteEnding() {
-            s.serialize_field("summaryCompleteEnding", &f)?;
-        } else {
-            s.skip_field("summaryCompleteEnding")?;
-        }
-        if let Some(f) = self.summaryEachZone() {
-            s.serialize_field("summaryEachZone", &f)?;
-        } else {
-            s.skip_field("summaryEachZone")?;
-        }
-        if let Some(f) = self.summaryMeetSpZone() {
-            s.serialize_field("summaryMeetSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetSpZone")?;
-        }
-        if let Some(f) = self.summaryPerfectBattle() {
-            s.serialize_field("summaryPerfectBattle", &f)?;
-        } else {
-            s.skip_field("summaryPerfectBattle")?;
-        }
-        if let Some(f) = self.summaryMeetBattle() {
-            s.serialize_field("summaryMeetBattle", &f)?;
-        } else {
-            s.skip_field("summaryMeetBattle")?;
-        }
-        if let Some(f) = self.summaryMeetEvent() {
-            s.serialize_field("summaryMeetEvent", &f)?;
-        } else {
-            s.skip_field("summaryMeetEvent")?;
-        }
-        if let Some(f) = self.summaryMeetShop() {
-            s.serialize_field("summaryMeetShop", &f)?;
-        } else {
-            s.skip_field("summaryMeetShop")?;
-        }
-        if let Some(f) = self.summaryMeetTreasure() {
-            s.serialize_field("summaryMeetTreasure", &f)?;
-        } else {
-            s.skip_field("summaryMeetTreasure")?;
-        }
-        if let Some(f) = self.summaryMeetSecretpath() {
-            s.serialize_field("summaryMeetSecretpath", &f)?;
-        } else {
-            s.skip_field("summaryMeetSecretpath")?;
-        }
-        if let Some(f) = self.summaryExchangeRelic() {
-            s.serialize_field("summaryExchangeRelic", &f)?;
-        } else {
-            s.skip_field("summaryExchangeRelic")?;
-        }
-        if let Some(f) = self.summaryMeetTrade() {
-            s.serialize_field("summaryMeetTrade", &f)?;
-        } else {
-            s.skip_field("summaryMeetTrade")?;
-        }
-        if let Some(f) = self.summaryBuy() {
-            s.serialize_field("summaryBuy", &f)?;
-        } else {
-            s.skip_field("summaryBuy")?;
-        }
-        if let Some(f) = self.summaryBuyWithPriceId() {
-            s.serialize_field("summaryBuyWithPriceId", &f)?;
-        } else {
-            s.skip_field("summaryBuyWithPriceId")?;
-        }
-        if let Some(f) = self.summaryInvest() {
-            s.serialize_field("summaryInvest", &f)?;
-        } else {
-            s.skip_field("summaryInvest")?;
-        }
-        if let Some(f) = self.summaryGet() {
-            s.serialize_field("summaryGet", &f)?;
-        } else {
-            s.skip_field("summaryGet")?;
-        }
-        if let Some(f) = self.summaryRelic() {
-            s.serialize_field("summaryRelic", &f)?;
-        } else {
-            s.skip_field("summaryRelic")?;
-        }
-        if let Some(f) = self.summarySafeHouse() {
-            s.serialize_field("summarySafeHouse", &f)?;
-        } else {
-            s.skip_field("summarySafeHouse")?;
-        }
-        if let Some(f) = self.summaryFailEnd() {
-            s.serialize_field("summaryFailEnd", &f)?;
-        } else {
-            s.skip_field("summaryFailEnd")?;
-        }
-        if let Some(f) = self.summaryStockRecruitTicket() {
-            s.serialize_field("summaryStockRecruitTicket", &f)?;
-        } else {
-            s.skip_field("summaryStockRecruitTicket")?;
-        }
-        if let Some(f) = self.summaryDuelWin() {
-            s.serialize_field("summaryDuelWin", &f)?;
-        } else {
-            s.skip_field("summaryDuelWin")?;
-        }
-        if let Some(f) = self.summaryDuelTie() {
-            s.serialize_field("summaryDuelTie", &f)?;
-        } else {
-            s.skip_field("summaryDuelTie")?;
-        }
-        if let Some(f) = self.summaryDuelLose() {
-            s.serialize_field("summaryDuelLose", &f)?;
-        } else {
-            s.skip_field("summaryDuelLose")?;
-        }
-        if let Some(f) = self.summaryExpeditionGo() {
-            s.serialize_field("summaryExpeditionGo", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGo")?;
-        }
-        if let Some(f) = self.summaryExpeditionBack() {
-            s.serialize_field("summaryExpeditionBack", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBack")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL03EndingTextBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -102641,34 +95143,6 @@ impl<'a> Default for clz_Torappu_RL03DifficultyExtArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL03DifficultyExt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03DifficultyExt", 6)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        s.serialize_field("totemProb", &self.totemProb())?;
-        if let Some(f) = self.relicDevLevel() {
-            s.serialize_field("relicDevLevel", &f)?;
-        } else {
-            s.skip_field("relicDevLevel")?;
-        }
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL03DifficultyExtBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -103125,46 +95599,6 @@ impl<'a> Default for clz_Torappu_RL03CustomizeDataArgs<'a> {
             endingText: None,
             difficulties: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL03CustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL03CustomizeData", 6)?;
-        if let Some(f) = self.developments() {
-            s.serialize_field("developments", &f)?;
-        } else {
-            s.skip_field("developments")?;
-        }
-        if let Some(f) = self.developmentsTokens() {
-            s.serialize_field("developmentsTokens", &f)?;
-        } else {
-            s.skip_field("developmentsTokens")?;
-        }
-        if let Some(f) = self.developmentRawTextGroup() {
-            s.serialize_field("developmentRawTextGroup", &f)?;
-        } else {
-            s.skip_field("developmentRawTextGroup")?;
-        }
-        if let Some(f) = self.developmentsDifficultyNodeInfos() {
-            s.serialize_field("developmentsDifficultyNodeInfos", &f)?;
-        } else {
-            s.skip_field("developmentsDifficultyNodeInfos")?;
-        }
-        if let Some(f) = self.endingText() {
-            s.serialize_field("endingText", &f)?;
-        } else {
-            s.skip_field("endingText")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        s.end()
     }
 }
 
@@ -103828,76 +96262,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCommonDevelopmentArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeCommonDevelopment<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCommonDevelopment", 16)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        s.serialize_field("nodeType", &self.nodeType())?;
-        if let Some(f) = self.frontNodeId() {
-            s.serialize_field("frontNodeId", &f)?;
-        } else {
-            s.skip_field("frontNodeId")?;
-        }
-        if let Some(f) = self.nextNodeId() {
-            s.serialize_field("nextNodeId", &f)?;
-        } else {
-            s.skip_field("nextNodeId")?;
-        }
-        s.serialize_field("positionRow", &self.positionRow())?;
-        s.serialize_field("positionOrder", &self.positionOrder())?;
-        s.serialize_field("tokenCost", &self.tokenCost())?;
-        if let Some(f) = self.buffName() {
-            s.serialize_field("buffName", &f)?;
-        } else {
-            s.skip_field("buffName")?;
-        }
-        if let Some(f) = self.activeIconId() {
-            s.serialize_field("activeIconId", &f)?;
-        } else {
-            s.skip_field("activeIconId")?;
-        }
-        if let Some(f) = self.inactiveIconId() {
-            s.serialize_field("inactiveIconId", &f)?;
-        } else {
-            s.skip_field("inactiveIconId")?;
-        }
-        if let Some(f) = self.bottomIconId() {
-            s.serialize_field("bottomIconId", &f)?;
-        } else {
-            s.skip_field("bottomIconId")?;
-        }
-        s.serialize_field("effectType", &self.effectType())?;
-        if let Some(f) = self.rawDesc() {
-            s.serialize_field("rawDesc", &f)?;
-        } else {
-            s.skip_field("rawDesc")?;
-        }
-        if let Some(f) = self.buffDisplayInfo() {
-            s.serialize_field("buffDisplayInfo", &f)?;
-        } else {
-            s.skip_field("buffDisplayInfo")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.enrollId() {
-            s.serialize_field("enrollId", &f)?;
-        } else {
-            s.skip_field("enrollId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeCommonDevelopmentBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -104311,23 +96675,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeCommonDevelopmentArgs<'a
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_RoguelikeCommonDevelopment<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("dict__string__clz_Torappu_RoguelikeCommonDevelopment", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_RoguelikeCommonDevelopmentBuilder<
     'a: 'b,
     'b,
@@ -104557,28 +96904,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCommonDevRawTextBuffGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeCommonDevRawTextBuffGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeCommonDevRawTextBuffGroup", 3)?;
-        if let Some(f) = self.nodeIdList() {
-            s.serialize_field("nodeIdList", &f)?;
-        } else {
-            s.skip_field("nodeIdList")?;
-        }
-        if let Some(f) = self.groupIconId() {
-            s.serialize_field("groupIconId", &f)?;
-        } else {
-            s.skip_field("groupIconId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeCommonDevRawTextBuffGroupBuilder<
     'a: 'b,
     'b,
@@ -104796,27 +97121,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCommonDevDifficultyNodePairInfoArgs<'a
             frontNodes: None,
             nextNode: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCommonDevDifficultyNodePairInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_RoguelikeCommonDevDifficultyNodePairInfo", 2)?;
-        if let Some(f) = self.frontNodes() {
-            s.serialize_field("frontNodes", &f)?;
-        } else {
-            s.skip_field("frontNodes")?;
-        }
-        if let Some(f) = self.nextNode() {
-            s.serialize_field("nextNode", &f)?;
-        } else {
-            s.skip_field("nextNode")?;
-        }
-        s.end()
     }
 }
 
@@ -105133,43 +97437,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCommonDevDifficultyNodeInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RoguelikeCommonDevDifficultyNodeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_RoguelikeCommonDevDifficultyNodeInfo", 6)?;
-        if let Some(f) = self.buffId() {
-            s.serialize_field("buffId", &f)?;
-        } else {
-            s.skip_field("buffId")?;
-        }
-        if let Some(f) = self.nodeMap() {
-            s.serialize_field("nodeMap", &f)?;
-        } else {
-            s.skip_field("nodeMap")?;
-        }
-        s.serialize_field("enableGrade", &self.enableGrade())?;
-        if let Some(f) = self.enableDesc() {
-            s.serialize_field("enableDesc", &f)?;
-        } else {
-            s.skip_field("enableDesc")?;
-        }
-        if let Some(f) = self.lightId() {
-            s.serialize_field("lightId", &f)?;
-        } else {
-            s.skip_field("lightId")?;
-        }
-        if let Some(f) = self.decoId() {
-            s.serialize_field("decoId", &f)?;
-        } else {
-            s.skip_field("decoId")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RoguelikeCommonDevDifficultyNodeInfoBuilder<
     'a: 'b,
     'b,
@@ -105432,25 +97699,6 @@ impl<'a> Default for dict__string__clz_Torappu_RoguelikeCommonDevDifficultyNodeI
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_RoguelikeCommonDevDifficultyNodeInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__string__clz_Torappu_RoguelikeCommonDevDifficultyNodeInfo",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -105812,36 +98060,6 @@ impl<'a> Default for clz_Torappu_RoguelikeCommonDevelopmentDataArgs<'a> {
             developmentRawTextGroup: None,
             developmentsDifficultyNodeInfos: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeCommonDevelopmentData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeCommonDevelopmentData", 4)?;
-        if let Some(f) = self.developments() {
-            s.serialize_field("developments", &f)?;
-        } else {
-            s.skip_field("developments")?;
-        }
-        if let Some(f) = self.developmentsTokens() {
-            s.serialize_field("developmentsTokens", &f)?;
-        } else {
-            s.skip_field("developmentsTokens")?;
-        }
-        if let Some(f) = self.developmentRawTextGroup() {
-            s.serialize_field("developmentRawTextGroup", &f)?;
-        } else {
-            s.skip_field("developmentRawTextGroup")?;
-        }
-        if let Some(f) = self.developmentsDifficultyNodeInfos() {
-            s.serialize_field("developmentsDifficultyNodeInfos", &f)?;
-        } else {
-            s.skip_field("developmentsDifficultyNodeInfos")?;
-        }
-        s.end()
     }
 }
 
@@ -106257,48 +98475,6 @@ impl<'a> Default for clz_Torappu_RL04DifficultyExtArgs<'a> {
             buffs: None,
             buffDesc: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL04DifficultyExt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL04DifficultyExt", 8)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        if let Some(f) = self.leftDisasterDesc() {
-            s.serialize_field("leftDisasterDesc", &f)?;
-        } else {
-            s.skip_field("leftDisasterDesc")?;
-        }
-        if let Some(f) = self.leftOverweightDesc() {
-            s.serialize_field("leftOverweightDesc", &f)?;
-        } else {
-            s.skip_field("leftOverweightDesc")?;
-        }
-        if let Some(f) = self.relicDevLevel() {
-            s.serialize_field("relicDevLevel", &f)?;
-        } else {
-            s.skip_field("relicDevLevel")?;
-        }
-        if let Some(f) = self.weightStatusLimitDesc() {
-            s.serialize_field("weightStatusLimitDesc", &f)?;
-        } else {
-            s.skip_field("weightStatusLimitDesc")?;
-        }
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        s.end()
     }
 }
 
@@ -107886,286 +100062,6 @@ impl<'a> Default for clz_Torappu_RL04EndingTextArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL04EndingText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL04EndingText", 54)?;
-        if let Some(f) = self.summaryGetFragment() {
-            s.serialize_field("summaryGetFragment", &f)?;
-        } else {
-            s.skip_field("summaryGetFragment")?;
-        }
-        if let Some(f) = self.summaryUseIdea() {
-            s.serialize_field("summaryUseIdea", &f)?;
-        } else {
-            s.skip_field("summaryUseIdea")?;
-        }
-        if let Some(f) = self.summaryUseFood() {
-            s.serialize_field("summaryUseFood", &f)?;
-        } else {
-            s.skip_field("summaryUseFood")?;
-        }
-        if let Some(f) = self.summaryDropFragment() {
-            s.serialize_field("summaryDropFragment", &f)?;
-        } else {
-            s.skip_field("summaryDropFragment")?;
-        }
-        if let Some(f) = self.summaryMeetDisaster() {
-            s.serialize_field("summaryMeetDisaster", &f)?;
-        } else {
-            s.skip_field("summaryMeetDisaster")?;
-        }
-        if let Some(f) = self.summaryLeaveDisaster() {
-            s.serialize_field("summaryLeaveDisaster", &f)?;
-        } else {
-            s.skip_field("summaryLeaveDisaster")?;
-        }
-        if let Some(f) = self.summaryEnterAlchemy() {
-            s.serialize_field("summaryEnterAlchemy", &f)?;
-        } else {
-            s.skip_field("summaryEnterAlchemy")?;
-        }
-        if let Some(f) = self.summaryAlchemyOthers() {
-            s.serialize_field("summaryAlchemyOthers", &f)?;
-        } else {
-            s.skip_field("summaryAlchemyOthers")?;
-        }
-        if let Some(f) = self.summaryAlchemyFragment() {
-            s.serialize_field("summaryAlchemyFragment", &f)?;
-        } else {
-            s.skip_field("summaryAlchemyFragment")?;
-        }
-        if let Some(f) = self.summaryWeightOverweight() {
-            s.serialize_field("summaryWeightOverweight", &f)?;
-        } else {
-            s.skip_field("summaryWeightOverweight")?;
-        }
-        if let Some(f) = self.summaryWeightLimit() {
-            s.serialize_field("summaryWeightLimit", &f)?;
-        } else {
-            s.skip_field("summaryWeightLimit")?;
-        }
-        if let Some(f) = self.summaryWeightSafe() {
-            s.serialize_field("summaryWeightSafe", &f)?;
-        } else {
-            s.skip_field("summaryWeightSafe")?;
-        }
-        if let Some(f) = self.summaryPermUpgrade() {
-            s.serialize_field("summaryPermUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryPermUpgrade")?;
-        }
-        if let Some(f) = self.summaryTempUpgrade() {
-            s.serialize_field("summaryTempUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryTempUpgrade")?;
-        }
-        if let Some(f) = self.summarySellFragment() {
-            s.serialize_field("summarySellFragment", &f)?;
-        } else {
-            s.skip_field("summarySellFragment")?;
-        }
-        if let Some(f) = self.summaryActor() {
-            s.serialize_field("summaryActor", &f)?;
-        } else {
-            s.skip_field("summaryActor")?;
-        }
-        if let Some(f) = self.summaryTop() {
-            s.serialize_field("summaryTop", &f)?;
-        } else {
-            s.skip_field("summaryTop")?;
-        }
-        if let Some(f) = self.summaryZone() {
-            s.serialize_field("summaryZone", &f)?;
-        } else {
-            s.skip_field("summaryZone")?;
-        }
-        if let Some(f) = self.summaryEnding() {
-            s.serialize_field("summaryEnding", &f)?;
-        } else {
-            s.skip_field("summaryEnding")?;
-        }
-        if let Some(f) = self.summaryDifficultyZone() {
-            s.serialize_field("summaryDifficultyZone", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyZone")?;
-        }
-        if let Some(f) = self.summaryDifficultyEnding() {
-            s.serialize_field("summaryDifficultyEnding", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyEnding")?;
-        }
-        if let Some(f) = self.summaryMode() {
-            s.serialize_field("summaryMode", &f)?;
-        } else {
-            s.skip_field("summaryMode")?;
-        }
-        if let Some(f) = self.summarySupport() {
-            s.serialize_field("summarySupport", &f)?;
-        } else {
-            s.skip_field("summarySupport")?;
-        }
-        if let Some(f) = self.summaryGroup() {
-            s.serialize_field("summaryGroup", &f)?;
-        } else {
-            s.skip_field("summaryGroup")?;
-        }
-        if let Some(f) = self.summaryNormalRecruit() {
-            s.serialize_field("summaryNormalRecruit", &f)?;
-        } else {
-            s.skip_field("summaryNormalRecruit")?;
-        }
-        if let Some(f) = self.summaryDirectRecruit() {
-            s.serialize_field("summaryDirectRecruit", &f)?;
-        } else {
-            s.skip_field("summaryDirectRecruit")?;
-        }
-        if let Some(f) = self.summaryFriendRecruit() {
-            s.serialize_field("summaryFriendRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFriendRecruit")?;
-        }
-        if let Some(f) = self.summaryFreeRecruit() {
-            s.serialize_field("summaryFreeRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFreeRecruit")?;
-        }
-        if let Some(f) = self.summaryMonthRecruit() {
-            s.serialize_field("summaryMonthRecruit", &f)?;
-        } else {
-            s.skip_field("summaryMonthRecruit")?;
-        }
-        if let Some(f) = self.summaryUpgrade() {
-            s.serialize_field("summaryUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryUpgrade")?;
-        }
-        if let Some(f) = self.summaryCompleteEnding() {
-            s.serialize_field("summaryCompleteEnding", &f)?;
-        } else {
-            s.skip_field("summaryCompleteEnding")?;
-        }
-        if let Some(f) = self.summaryEachZone() {
-            s.serialize_field("summaryEachZone", &f)?;
-        } else {
-            s.skip_field("summaryEachZone")?;
-        }
-        if let Some(f) = self.summaryMeetSpZone() {
-            s.serialize_field("summaryMeetSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetSpZone")?;
-        }
-        if let Some(f) = self.summaryPerfectBattle() {
-            s.serialize_field("summaryPerfectBattle", &f)?;
-        } else {
-            s.skip_field("summaryPerfectBattle")?;
-        }
-        if let Some(f) = self.summaryMeetBattle() {
-            s.serialize_field("summaryMeetBattle", &f)?;
-        } else {
-            s.skip_field("summaryMeetBattle")?;
-        }
-        if let Some(f) = self.summaryMeetEvent() {
-            s.serialize_field("summaryMeetEvent", &f)?;
-        } else {
-            s.skip_field("summaryMeetEvent")?;
-        }
-        if let Some(f) = self.summaryMeetShop() {
-            s.serialize_field("summaryMeetShop", &f)?;
-        } else {
-            s.skip_field("summaryMeetShop")?;
-        }
-        if let Some(f) = self.summaryMeetTreasure() {
-            s.serialize_field("summaryMeetTreasure", &f)?;
-        } else {
-            s.skip_field("summaryMeetTreasure")?;
-        }
-        if let Some(f) = self.summaryMeetSecretpath() {
-            s.serialize_field("summaryMeetSecretpath", &f)?;
-        } else {
-            s.skip_field("summaryMeetSecretpath")?;
-        }
-        if let Some(f) = self.summaryExchangeRelic() {
-            s.serialize_field("summaryExchangeRelic", &f)?;
-        } else {
-            s.skip_field("summaryExchangeRelic")?;
-        }
-        if let Some(f) = self.summaryMeetTrade() {
-            s.serialize_field("summaryMeetTrade", &f)?;
-        } else {
-            s.skip_field("summaryMeetTrade")?;
-        }
-        if let Some(f) = self.summaryBuy() {
-            s.serialize_field("summaryBuy", &f)?;
-        } else {
-            s.skip_field("summaryBuy")?;
-        }
-        if let Some(f) = self.summaryBuyWithPriceId() {
-            s.serialize_field("summaryBuyWithPriceId", &f)?;
-        } else {
-            s.skip_field("summaryBuyWithPriceId")?;
-        }
-        if let Some(f) = self.summaryInvest() {
-            s.serialize_field("summaryInvest", &f)?;
-        } else {
-            s.skip_field("summaryInvest")?;
-        }
-        if let Some(f) = self.summaryGet() {
-            s.serialize_field("summaryGet", &f)?;
-        } else {
-            s.skip_field("summaryGet")?;
-        }
-        if let Some(f) = self.summaryRelic() {
-            s.serialize_field("summaryRelic", &f)?;
-        } else {
-            s.skip_field("summaryRelic")?;
-        }
-        if let Some(f) = self.summarySafeHouse() {
-            s.serialize_field("summarySafeHouse", &f)?;
-        } else {
-            s.skip_field("summarySafeHouse")?;
-        }
-        if let Some(f) = self.summaryFailEnd() {
-            s.serialize_field("summaryFailEnd", &f)?;
-        } else {
-            s.skip_field("summaryFailEnd")?;
-        }
-        if let Some(f) = self.summaryDuelWin() {
-            s.serialize_field("summaryDuelWin", &f)?;
-        } else {
-            s.skip_field("summaryDuelWin")?;
-        }
-        if let Some(f) = self.summaryDuelTie() {
-            s.serialize_field("summaryDuelTie", &f)?;
-        } else {
-            s.skip_field("summaryDuelTie")?;
-        }
-        if let Some(f) = self.summaryDuelLose() {
-            s.serialize_field("summaryDuelLose", &f)?;
-        } else {
-            s.skip_field("summaryDuelLose")?;
-        }
-        if let Some(f) = self.summaryStockRecruitTicket() {
-            s.serialize_field("summaryStockRecruitTicket", &f)?;
-        } else {
-            s.skip_field("summaryStockRecruitTicket")?;
-        }
-        if let Some(f) = self.summaryExpeditionGo() {
-            s.serialize_field("summaryExpeditionGo", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGo")?;
-        }
-        if let Some(f) = self.summaryExpeditionBack() {
-            s.serialize_field("summaryExpeditionBack", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBack")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL04EndingTextBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -109180,31 +101076,6 @@ impl<'a> Default for clz_Torappu_RL04CustomizeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL04CustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL04CustomizeData", 3)?;
-        if let Some(f) = self.commonDevelopment() {
-            s.serialize_field("commonDevelopment", &f)?;
-        } else {
-            s.skip_field("commonDevelopment")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        if let Some(f) = self.endingText() {
-            s.serialize_field("endingText", &f)?;
-        } else {
-            s.skip_field("endingText")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL04CustomizeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -109568,48 +101439,6 @@ impl<'a> Default for clz_Torappu_RL05DifficultyExtArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_RL05DifficultyExt<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL05DifficultyExt", 8)?;
-        s.serialize_field("modeDifficulty", &self.modeDifficulty())?;
-        s.serialize_field("grade", &self.grade())?;
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        if let Some(f) = self.buffDesc() {
-            s.serialize_field("buffDesc", &f)?;
-        } else {
-            s.skip_field("buffDesc")?;
-        }
-        if let Some(f) = self.leftWrathDesc() {
-            s.serialize_field("leftWrathDesc", &f)?;
-        } else {
-            s.skip_field("leftWrathDesc")?;
-        }
-        if let Some(f) = self.relicDevLevel() {
-            s.serialize_field("relicDevLevel", &f)?;
-        } else {
-            s.skip_field("relicDevLevel")?;
-        }
-        if let Some(f) = self.gildProbDisplay() {
-            s.serialize_field("gildProbDisplay", &f)?;
-        } else {
-            s.skip_field("gildProbDisplay")?;
-        }
-        if let Some(f) = self.skyStepDescription() {
-            s.serialize_field("skyStepDescription", &f)?;
-        } else {
-            s.skip_field("skyStepDescription")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_RL05DifficultyExtBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -109810,52 +101639,53 @@ impl<'a> clz_Torappu_RL05EndingText<'a> {
     pub const VT_SUMMARYHOLDCANDLE: flatbuffers::VOffsetT = 34;
     pub const VT_SUMMARYHOLDCANDLERECRUIT: flatbuffers::VOffsetT = 36;
     pub const VT_SUMMARYHOLDCANDLEUPGRADE: flatbuffers::VOffsetT = 38;
-    pub const VT_SUMMARYEXCHANGESPZONEGET: flatbuffers::VOffsetT = 40;
-    pub const VT_SUMMARYMEETSHOPSPZONE: flatbuffers::VOffsetT = 42;
-    pub const VT_SUMMARYBATTLEFAILSPZONE: flatbuffers::VOffsetT = 44;
-    pub const VT_SUMMARYMEETEVENTLOCK: flatbuffers::VOffsetT = 46;
-    pub const VT_SUMMARYTREASURESPZONE: flatbuffers::VOffsetT = 48;
-    pub const VT_SUMMARYMEETEXCHANGESPZONE: flatbuffers::VOffsetT = 50;
-    pub const VT_SUMMARYMEETTRADESPZONE: flatbuffers::VOffsetT = 52;
-    pub const VT_SUMMARYACTOR: flatbuffers::VOffsetT = 54;
-    pub const VT_SUMMARYTOP: flatbuffers::VOffsetT = 56;
-    pub const VT_SUMMARYZONE: flatbuffers::VOffsetT = 58;
-    pub const VT_SUMMARYENDING: flatbuffers::VOffsetT = 60;
-    pub const VT_SUMMARYDIFFICULTYZONE: flatbuffers::VOffsetT = 62;
-    pub const VT_SUMMARYDIFFICULTYENDING: flatbuffers::VOffsetT = 64;
-    pub const VT_SUMMARYMODE: flatbuffers::VOffsetT = 66;
-    pub const VT_SUMMARYSUPPORT: flatbuffers::VOffsetT = 68;
-    pub const VT_SUMMARYGROUP: flatbuffers::VOffsetT = 70;
-    pub const VT_SUMMARYNORMALRECRUIT: flatbuffers::VOffsetT = 72;
-    pub const VT_SUMMARYDIRECTRECRUIT: flatbuffers::VOffsetT = 74;
-    pub const VT_SUMMARYFRIENDRECRUIT: flatbuffers::VOffsetT = 76;
-    pub const VT_SUMMARYFREERECRUIT: flatbuffers::VOffsetT = 78;
-    pub const VT_SUMMARYMONTHRECRUIT: flatbuffers::VOffsetT = 80;
-    pub const VT_SUMMARYUPGRADE: flatbuffers::VOffsetT = 82;
-    pub const VT_SUMMARYCOMPLETEENDING: flatbuffers::VOffsetT = 84;
-    pub const VT_SUMMARYEACHZONE: flatbuffers::VOffsetT = 86;
-    pub const VT_SUMMARYMEETSPZONE: flatbuffers::VOffsetT = 88;
-    pub const VT_SUMMARYPERFECTBATTLE: flatbuffers::VOffsetT = 90;
-    pub const VT_SUMMARYMEETBATTLE: flatbuffers::VOffsetT = 92;
-    pub const VT_SUMMARYMEETEVENT: flatbuffers::VOffsetT = 94;
-    pub const VT_SUMMARYMEETSHOP: flatbuffers::VOffsetT = 96;
-    pub const VT_SUMMARYMEETTREASURE: flatbuffers::VOffsetT = 98;
-    pub const VT_SUMMARYMEETSECRETPATH: flatbuffers::VOffsetT = 100;
-    pub const VT_SUMMARYEXCHANGERELIC: flatbuffers::VOffsetT = 102;
-    pub const VT_SUMMARYMEETTRADE: flatbuffers::VOffsetT = 104;
-    pub const VT_SUMMARYBUY: flatbuffers::VOffsetT = 106;
-    pub const VT_SUMMARYBUYWITHPRICEID: flatbuffers::VOffsetT = 108;
-    pub const VT_SUMMARYINVEST: flatbuffers::VOffsetT = 110;
-    pub const VT_SUMMARYGET: flatbuffers::VOffsetT = 112;
-    pub const VT_SUMMARYRELIC: flatbuffers::VOffsetT = 114;
-    pub const VT_SUMMARYSAFEHOUSE: flatbuffers::VOffsetT = 116;
-    pub const VT_SUMMARYFAILEND: flatbuffers::VOffsetT = 118;
-    pub const VT_SUMMARYSTOCKRECRUITTICKET: flatbuffers::VOffsetT = 120;
-    pub const VT_SUMMARYDUELWIN: flatbuffers::VOffsetT = 122;
-    pub const VT_SUMMARYDUELTIE: flatbuffers::VOffsetT = 124;
-    pub const VT_SUMMARYDUELLOSE: flatbuffers::VOffsetT = 126;
-    pub const VT_SUMMARYEXPEDITIONGO: flatbuffers::VOffsetT = 128;
-    pub const VT_SUMMARYEXPEDITIONBACK: flatbuffers::VOffsetT = 130;
+    pub const VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE: flatbuffers::VOffsetT = 40;
+    pub const VT_SUMMARYEXCHANGESPZONEGET: flatbuffers::VOffsetT = 42;
+    pub const VT_SUMMARYMEETSHOPSPZONE: flatbuffers::VOffsetT = 44;
+    pub const VT_SUMMARYBATTLEFAILSPZONE: flatbuffers::VOffsetT = 46;
+    pub const VT_SUMMARYMEETEVENTLOCK: flatbuffers::VOffsetT = 48;
+    pub const VT_SUMMARYTREASURESPZONE: flatbuffers::VOffsetT = 50;
+    pub const VT_SUMMARYMEETEXCHANGESPZONE: flatbuffers::VOffsetT = 52;
+    pub const VT_SUMMARYMEETTRADESPZONE: flatbuffers::VOffsetT = 54;
+    pub const VT_SUMMARYACTOR: flatbuffers::VOffsetT = 56;
+    pub const VT_SUMMARYTOP: flatbuffers::VOffsetT = 58;
+    pub const VT_SUMMARYZONE: flatbuffers::VOffsetT = 60;
+    pub const VT_SUMMARYENDING: flatbuffers::VOffsetT = 62;
+    pub const VT_SUMMARYDIFFICULTYZONE: flatbuffers::VOffsetT = 64;
+    pub const VT_SUMMARYDIFFICULTYENDING: flatbuffers::VOffsetT = 66;
+    pub const VT_SUMMARYMODE: flatbuffers::VOffsetT = 68;
+    pub const VT_SUMMARYSUPPORT: flatbuffers::VOffsetT = 70;
+    pub const VT_SUMMARYGROUP: flatbuffers::VOffsetT = 72;
+    pub const VT_SUMMARYNORMALRECRUIT: flatbuffers::VOffsetT = 74;
+    pub const VT_SUMMARYDIRECTRECRUIT: flatbuffers::VOffsetT = 76;
+    pub const VT_SUMMARYFRIENDRECRUIT: flatbuffers::VOffsetT = 78;
+    pub const VT_SUMMARYFREERECRUIT: flatbuffers::VOffsetT = 80;
+    pub const VT_SUMMARYMONTHRECRUIT: flatbuffers::VOffsetT = 82;
+    pub const VT_SUMMARYUPGRADE: flatbuffers::VOffsetT = 84;
+    pub const VT_SUMMARYCOMPLETEENDING: flatbuffers::VOffsetT = 86;
+    pub const VT_SUMMARYEACHZONE: flatbuffers::VOffsetT = 88;
+    pub const VT_SUMMARYMEETSPZONE: flatbuffers::VOffsetT = 90;
+    pub const VT_SUMMARYPERFECTBATTLE: flatbuffers::VOffsetT = 92;
+    pub const VT_SUMMARYMEETBATTLE: flatbuffers::VOffsetT = 94;
+    pub const VT_SUMMARYMEETEVENT: flatbuffers::VOffsetT = 96;
+    pub const VT_SUMMARYMEETSHOP: flatbuffers::VOffsetT = 98;
+    pub const VT_SUMMARYMEETTREASURE: flatbuffers::VOffsetT = 100;
+    pub const VT_SUMMARYMEETSECRETPATH: flatbuffers::VOffsetT = 102;
+    pub const VT_SUMMARYEXCHANGERELIC: flatbuffers::VOffsetT = 104;
+    pub const VT_SUMMARYMEETTRADE: flatbuffers::VOffsetT = 106;
+    pub const VT_SUMMARYBUY: flatbuffers::VOffsetT = 108;
+    pub const VT_SUMMARYBUYWITHPRICEID: flatbuffers::VOffsetT = 110;
+    pub const VT_SUMMARYINVEST: flatbuffers::VOffsetT = 112;
+    pub const VT_SUMMARYGET: flatbuffers::VOffsetT = 114;
+    pub const VT_SUMMARYRELIC: flatbuffers::VOffsetT = 116;
+    pub const VT_SUMMARYSAFEHOUSE: flatbuffers::VOffsetT = 118;
+    pub const VT_SUMMARYFAILEND: flatbuffers::VOffsetT = 120;
+    pub const VT_SUMMARYSTOCKRECRUITTICKET: flatbuffers::VOffsetT = 122;
+    pub const VT_SUMMARYDUELWIN: flatbuffers::VOffsetT = 124;
+    pub const VT_SUMMARYDUELTIE: flatbuffers::VOffsetT = 126;
+    pub const VT_SUMMARYDUELLOSE: flatbuffers::VOffsetT = 128;
+    pub const VT_SUMMARYEXPEDITIONGO: flatbuffers::VOffsetT = 130;
+    pub const VT_SUMMARYEXPEDITIONBACK: flatbuffers::VOffsetT = 132;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -110005,6 +101835,9 @@ impl<'a> clz_Torappu_RL05EndingText<'a> {
         if let Some(x) = args.summaryExchangeSpZoneGet {
             builder.add_summaryExchangeSpZoneGet(x);
         }
+        if let Some(x) = args.summaryExpeditionEndingFourToFive {
+            builder.add_summaryExpeditionEndingFourToFive(x);
+        }
         if let Some(x) = args.summaryHoldCandleUpgrade {
             builder.add_summaryHoldCandleUpgrade(x);
         }
@@ -110084,6 +101917,9 @@ impl<'a> clz_Torappu_RL05EndingText<'a> {
         let summaryHoldCandle = self.summaryHoldCandle().map(|x| x.to_string());
         let summaryHoldCandleRecruit = self.summaryHoldCandleRecruit().map(|x| x.to_string());
         let summaryHoldCandleUpgrade = self.summaryHoldCandleUpgrade().map(|x| x.to_string());
+        let summaryExpeditionEndingFourToFive = self
+            .summaryExpeditionEndingFourToFive()
+            .map(|x| x.to_string());
         let summaryExchangeSpZoneGet = self.summaryExchangeSpZoneGet().map(|x| x.to_string());
         let summaryMeetShopSpZone = self.summaryMeetShopSpZone().map(|x| x.to_string());
         let summaryBattleFailSpZone = self.summaryBattleFailSpZone().map(|x| x.to_string());
@@ -110149,6 +101985,7 @@ impl<'a> clz_Torappu_RL05EndingText<'a> {
             summaryHoldCandle,
             summaryHoldCandleRecruit,
             summaryHoldCandleUpgrade,
+            summaryExpeditionEndingFourToFive,
             summaryExchangeSpZoneGet,
             summaryMeetShopSpZone,
             summaryBattleFailSpZone,
@@ -110410,6 +102247,18 @@ impl<'a> clz_Torappu_RL05EndingText<'a> {
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
                 clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLEUPGRADE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn summaryExpeditionEndingFourToFive(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE,
                 None,
             )
         }
@@ -111067,6 +102916,11 @@ impl flatbuffers::Verifiable for clz_Torappu_RL05EndingText<'_> {
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "summaryExpeditionEndingFourToFive",
+                Self::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
                 "summaryExchangeSpZoneGet",
                 Self::VT_SUMMARYEXCHANGESPZONEGET,
                 false,
@@ -111319,6 +103173,7 @@ pub struct clz_Torappu_RL05EndingTextArgs<'a> {
     pub summaryHoldCandle: Option<flatbuffers::WIPOffset<&'a str>>,
     pub summaryHoldCandleRecruit: Option<flatbuffers::WIPOffset<&'a str>>,
     pub summaryHoldCandleUpgrade: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub summaryExpeditionEndingFourToFive: Option<flatbuffers::WIPOffset<&'a str>>,
     pub summaryExchangeSpZoneGet: Option<flatbuffers::WIPOffset<&'a str>>,
     pub summaryMeetShopSpZone: Option<flatbuffers::WIPOffset<&'a str>>,
     pub summaryBattleFailSpZone: Option<flatbuffers::WIPOffset<&'a str>>,
@@ -111388,6 +103243,7 @@ impl<'a> Default for clz_Torappu_RL05EndingTextArgs<'a> {
             summaryHoldCandle: None,
             summaryHoldCandleRecruit: None,
             summaryHoldCandleUpgrade: None,
+            summaryExpeditionEndingFourToFive: None,
             summaryExchangeSpZoneGet: None,
             summaryMeetShopSpZone: None,
             summaryBattleFailSpZone: None,
@@ -111435,336 +103291,6 @@ impl<'a> Default for clz_Torappu_RL05EndingTextArgs<'a> {
             summaryExpeditionGo: None,
             summaryExpeditionBack: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL05EndingText<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL05EndingText", 64)?;
-        if let Some(f) = self.summaryGetCopper() {
-            s.serialize_field("summaryGetCopper", &f)?;
-        } else {
-            s.skip_field("summaryGetCopper")?;
-        }
-        if let Some(f) = self.summaryLostCopper() {
-            s.serialize_field("summaryLostCopper", &f)?;
-        } else {
-            s.skip_field("summaryLostCopper")?;
-        }
-        if let Some(f) = self.summaryDrawCopper() {
-            s.serialize_field("summaryDrawCopper", &f)?;
-        } else {
-            s.skip_field("summaryDrawCopper")?;
-        }
-        if let Some(f) = self.summaryCopperResultGood() {
-            s.serialize_field("summaryCopperResultGood", &f)?;
-        } else {
-            s.skip_field("summaryCopperResultGood")?;
-        }
-        if let Some(f) = self.summaryCopperResultBad() {
-            s.serialize_field("summaryCopperResultBad", &f)?;
-        } else {
-            s.skip_field("summaryCopperResultBad")?;
-        }
-        if let Some(f) = self.summaryCopperResultNormal() {
-            s.serialize_field("summaryCopperResultNormal", &f)?;
-        } else {
-            s.skip_field("summaryCopperResultNormal")?;
-        }
-        if let Some(f) = self.summaryCopperCheckSuccess() {
-            s.serialize_field("summaryCopperCheckSuccess", &f)?;
-        } else {
-            s.skip_field("summaryCopperCheckSuccess")?;
-        }
-        if let Some(f) = self.summaryCopperCheckFail() {
-            s.serialize_field("summaryCopperCheckFail", &f)?;
-        } else {
-            s.skip_field("summaryCopperCheckFail")?;
-        }
-        if let Some(f) = self.summaryCopperCheckNormal() {
-            s.serialize_field("summaryCopperCheckNormal", &f)?;
-        } else {
-            s.skip_field("summaryCopperCheckNormal")?;
-        }
-        if let Some(f) = self.summaryMeetWrath() {
-            s.serialize_field("summaryMeetWrath", &f)?;
-        } else {
-            s.skip_field("summaryMeetWrath")?;
-        }
-        if let Some(f) = self.summaryExpeditionGoEndingFour() {
-            s.serialize_field("summaryExpeditionGoEndingFour", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGoEndingFour")?;
-        }
-        if let Some(f) = self.summaryExpeditionBackEndingFour() {
-            s.serialize_field("summaryExpeditionBackEndingFour", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBackEndingFour")?;
-        }
-        if let Some(f) = self.summaryExpeditionBackCandle() {
-            s.serialize_field("summaryExpeditionBackCandle", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBackCandle")?;
-        }
-        if let Some(f) = self.summaryExpeditionGoEnding() {
-            s.serialize_field("summaryExpeditionGoEnding", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGoEnding")?;
-        }
-        if let Some(f) = self.summaryExpeditionBackEnding() {
-            s.serialize_field("summaryExpeditionBackEnding", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBackEnding")?;
-        }
-        if let Some(f) = self.summaryHoldCandle() {
-            s.serialize_field("summaryHoldCandle", &f)?;
-        } else {
-            s.skip_field("summaryHoldCandle")?;
-        }
-        if let Some(f) = self.summaryHoldCandleRecruit() {
-            s.serialize_field("summaryHoldCandleRecruit", &f)?;
-        } else {
-            s.skip_field("summaryHoldCandleRecruit")?;
-        }
-        if let Some(f) = self.summaryHoldCandleUpgrade() {
-            s.serialize_field("summaryHoldCandleUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryHoldCandleUpgrade")?;
-        }
-        if let Some(f) = self.summaryExchangeSpZoneGet() {
-            s.serialize_field("summaryExchangeSpZoneGet", &f)?;
-        } else {
-            s.skip_field("summaryExchangeSpZoneGet")?;
-        }
-        if let Some(f) = self.summaryMeetShopSpZone() {
-            s.serialize_field("summaryMeetShopSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetShopSpZone")?;
-        }
-        if let Some(f) = self.summaryBattleFailSpZone() {
-            s.serialize_field("summaryBattleFailSpZone", &f)?;
-        } else {
-            s.skip_field("summaryBattleFailSpZone")?;
-        }
-        if let Some(f) = self.summaryMeetEventLock() {
-            s.serialize_field("summaryMeetEventLock", &f)?;
-        } else {
-            s.skip_field("summaryMeetEventLock")?;
-        }
-        if let Some(f) = self.summaryTreasureSpZone() {
-            s.serialize_field("summaryTreasureSpZone", &f)?;
-        } else {
-            s.skip_field("summaryTreasureSpZone")?;
-        }
-        if let Some(f) = self.summaryMeetExchangeSpZone() {
-            s.serialize_field("summaryMeetExchangeSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetExchangeSpZone")?;
-        }
-        if let Some(f) = self.summaryMeetTradeSpZone() {
-            s.serialize_field("summaryMeetTradeSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetTradeSpZone")?;
-        }
-        if let Some(f) = self.summaryActor() {
-            s.serialize_field("summaryActor", &f)?;
-        } else {
-            s.skip_field("summaryActor")?;
-        }
-        if let Some(f) = self.summaryTop() {
-            s.serialize_field("summaryTop", &f)?;
-        } else {
-            s.skip_field("summaryTop")?;
-        }
-        if let Some(f) = self.summaryZone() {
-            s.serialize_field("summaryZone", &f)?;
-        } else {
-            s.skip_field("summaryZone")?;
-        }
-        if let Some(f) = self.summaryEnding() {
-            s.serialize_field("summaryEnding", &f)?;
-        } else {
-            s.skip_field("summaryEnding")?;
-        }
-        if let Some(f) = self.summaryDifficultyZone() {
-            s.serialize_field("summaryDifficultyZone", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyZone")?;
-        }
-        if let Some(f) = self.summaryDifficultyEnding() {
-            s.serialize_field("summaryDifficultyEnding", &f)?;
-        } else {
-            s.skip_field("summaryDifficultyEnding")?;
-        }
-        if let Some(f) = self.summaryMode() {
-            s.serialize_field("summaryMode", &f)?;
-        } else {
-            s.skip_field("summaryMode")?;
-        }
-        if let Some(f) = self.summarySupport() {
-            s.serialize_field("summarySupport", &f)?;
-        } else {
-            s.skip_field("summarySupport")?;
-        }
-        if let Some(f) = self.summaryGroup() {
-            s.serialize_field("summaryGroup", &f)?;
-        } else {
-            s.skip_field("summaryGroup")?;
-        }
-        if let Some(f) = self.summaryNormalRecruit() {
-            s.serialize_field("summaryNormalRecruit", &f)?;
-        } else {
-            s.skip_field("summaryNormalRecruit")?;
-        }
-        if let Some(f) = self.summaryDirectRecruit() {
-            s.serialize_field("summaryDirectRecruit", &f)?;
-        } else {
-            s.skip_field("summaryDirectRecruit")?;
-        }
-        if let Some(f) = self.summaryFriendRecruit() {
-            s.serialize_field("summaryFriendRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFriendRecruit")?;
-        }
-        if let Some(f) = self.summaryFreeRecruit() {
-            s.serialize_field("summaryFreeRecruit", &f)?;
-        } else {
-            s.skip_field("summaryFreeRecruit")?;
-        }
-        if let Some(f) = self.summaryMonthRecruit() {
-            s.serialize_field("summaryMonthRecruit", &f)?;
-        } else {
-            s.skip_field("summaryMonthRecruit")?;
-        }
-        if let Some(f) = self.summaryUpgrade() {
-            s.serialize_field("summaryUpgrade", &f)?;
-        } else {
-            s.skip_field("summaryUpgrade")?;
-        }
-        if let Some(f) = self.summaryCompleteEnding() {
-            s.serialize_field("summaryCompleteEnding", &f)?;
-        } else {
-            s.skip_field("summaryCompleteEnding")?;
-        }
-        if let Some(f) = self.summaryEachZone() {
-            s.serialize_field("summaryEachZone", &f)?;
-        } else {
-            s.skip_field("summaryEachZone")?;
-        }
-        if let Some(f) = self.summaryMeetSpZone() {
-            s.serialize_field("summaryMeetSpZone", &f)?;
-        } else {
-            s.skip_field("summaryMeetSpZone")?;
-        }
-        if let Some(f) = self.summaryPerfectBattle() {
-            s.serialize_field("summaryPerfectBattle", &f)?;
-        } else {
-            s.skip_field("summaryPerfectBattle")?;
-        }
-        if let Some(f) = self.summaryMeetBattle() {
-            s.serialize_field("summaryMeetBattle", &f)?;
-        } else {
-            s.skip_field("summaryMeetBattle")?;
-        }
-        if let Some(f) = self.summaryMeetEvent() {
-            s.serialize_field("summaryMeetEvent", &f)?;
-        } else {
-            s.skip_field("summaryMeetEvent")?;
-        }
-        if let Some(f) = self.summaryMeetShop() {
-            s.serialize_field("summaryMeetShop", &f)?;
-        } else {
-            s.skip_field("summaryMeetShop")?;
-        }
-        if let Some(f) = self.summaryMeetTreasure() {
-            s.serialize_field("summaryMeetTreasure", &f)?;
-        } else {
-            s.skip_field("summaryMeetTreasure")?;
-        }
-        if let Some(f) = self.summaryMeetSecretpath() {
-            s.serialize_field("summaryMeetSecretpath", &f)?;
-        } else {
-            s.skip_field("summaryMeetSecretpath")?;
-        }
-        if let Some(f) = self.summaryExchangeRelic() {
-            s.serialize_field("summaryExchangeRelic", &f)?;
-        } else {
-            s.skip_field("summaryExchangeRelic")?;
-        }
-        if let Some(f) = self.summaryMeetTrade() {
-            s.serialize_field("summaryMeetTrade", &f)?;
-        } else {
-            s.skip_field("summaryMeetTrade")?;
-        }
-        if let Some(f) = self.summaryBuy() {
-            s.serialize_field("summaryBuy", &f)?;
-        } else {
-            s.skip_field("summaryBuy")?;
-        }
-        if let Some(f) = self.summaryBuyWithPriceId() {
-            s.serialize_field("summaryBuyWithPriceId", &f)?;
-        } else {
-            s.skip_field("summaryBuyWithPriceId")?;
-        }
-        if let Some(f) = self.summaryInvest() {
-            s.serialize_field("summaryInvest", &f)?;
-        } else {
-            s.skip_field("summaryInvest")?;
-        }
-        if let Some(f) = self.summaryGet() {
-            s.serialize_field("summaryGet", &f)?;
-        } else {
-            s.skip_field("summaryGet")?;
-        }
-        if let Some(f) = self.summaryRelic() {
-            s.serialize_field("summaryRelic", &f)?;
-        } else {
-            s.skip_field("summaryRelic")?;
-        }
-        if let Some(f) = self.summarySafeHouse() {
-            s.serialize_field("summarySafeHouse", &f)?;
-        } else {
-            s.skip_field("summarySafeHouse")?;
-        }
-        if let Some(f) = self.summaryFailEnd() {
-            s.serialize_field("summaryFailEnd", &f)?;
-        } else {
-            s.skip_field("summaryFailEnd")?;
-        }
-        if let Some(f) = self.summaryStockRecruitTicket() {
-            s.serialize_field("summaryStockRecruitTicket", &f)?;
-        } else {
-            s.skip_field("summaryStockRecruitTicket")?;
-        }
-        if let Some(f) = self.summaryDuelWin() {
-            s.serialize_field("summaryDuelWin", &f)?;
-        } else {
-            s.skip_field("summaryDuelWin")?;
-        }
-        if let Some(f) = self.summaryDuelTie() {
-            s.serialize_field("summaryDuelTie", &f)?;
-        } else {
-            s.skip_field("summaryDuelTie")?;
-        }
-        if let Some(f) = self.summaryDuelLose() {
-            s.serialize_field("summaryDuelLose", &f)?;
-        } else {
-            s.skip_field("summaryDuelLose")?;
-        }
-        if let Some(f) = self.summaryExpeditionGo() {
-            s.serialize_field("summaryExpeditionGo", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionGo")?;
-        }
-        if let Some(f) = self.summaryExpeditionBack() {
-            s.serialize_field("summaryExpeditionBack", &f)?;
-        } else {
-            s.skip_field("summaryExpeditionBack")?;
-        }
-        s.end()
     }
 }
 
@@ -111936,6 +103462,16 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_RL05EndingTextBuild
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
             clz_Torappu_RL05EndingText::VT_SUMMARYHOLDCANDLEUPGRADE,
             summaryHoldCandleUpgrade,
+        );
+    }
+    #[inline]
+    pub fn add_summaryExpeditionEndingFourToFive(
+        &mut self,
+        summaryExpeditionEndingFourToFive: flatbuffers::WIPOffset<&'b str>,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_RL05EndingText::VT_SUMMARYEXPEDITIONENDINGFOURTOFIVE,
+            summaryExpeditionEndingFourToFive,
         );
     }
     #[inline]
@@ -112385,6 +103921,10 @@ impl core::fmt::Debug for clz_Torappu_RL05EndingText<'_> {
         ds.field("summaryHoldCandle", &self.summaryHoldCandle());
         ds.field("summaryHoldCandleRecruit", &self.summaryHoldCandleRecruit());
         ds.field("summaryHoldCandleUpgrade", &self.summaryHoldCandleUpgrade());
+        ds.field(
+            "summaryExpeditionEndingFourToFive",
+            &self.summaryExpeditionEndingFourToFive(),
+        );
         ds.field("summaryExchangeSpZoneGet", &self.summaryExchangeSpZoneGet());
         ds.field("summaryMeetShopSpZone", &self.summaryMeetShopSpZone());
         ds.field("summaryBattleFailSpZone", &self.summaryBattleFailSpZone());
@@ -112461,6 +104001,7 @@ pub struct clz_Torappu_RL05EndingTextT {
     pub summaryHoldCandle: Option<String>,
     pub summaryHoldCandleRecruit: Option<String>,
     pub summaryHoldCandleUpgrade: Option<String>,
+    pub summaryExpeditionEndingFourToFive: Option<String>,
     pub summaryExchangeSpZoneGet: Option<String>,
     pub summaryMeetShopSpZone: Option<String>,
     pub summaryBattleFailSpZone: Option<String>,
@@ -112529,6 +104070,7 @@ impl Default for clz_Torappu_RL05EndingTextT {
             summaryHoldCandle: None,
             summaryHoldCandleRecruit: None,
             summaryHoldCandleUpgrade: None,
+            summaryExpeditionEndingFourToFive: None,
             summaryExchangeSpZoneGet: None,
             summaryMeetShopSpZone: None,
             summaryBattleFailSpZone: None,
@@ -112653,6 +104195,10 @@ impl clz_Torappu_RL05EndingTextT {
             .map(|x| _fbb.create_string(x));
         let summaryHoldCandleUpgrade = self
             .summaryHoldCandleUpgrade
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let summaryExpeditionEndingFourToFive = self
+            .summaryExpeditionEndingFourToFive
             .as_ref()
             .map(|x| _fbb.create_string(x));
         let summaryExchangeSpZoneGet = self
@@ -112806,6 +104352,7 @@ impl clz_Torappu_RL05EndingTextT {
                 summaryHoldCandle,
                 summaryHoldCandleRecruit,
                 summaryHoldCandleUpgrade,
+                summaryExpeditionEndingFourToFive,
                 summaryExchangeSpZoneGet,
                 summaryMeetShopSpZone,
                 summaryBattleFailSpZone,
@@ -113018,36 +104565,6 @@ impl<'a> Default for clz_Torappu_RL05CustomizeDataArgs<'a> {
             specialShopDialog: None,
             endingText: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RL05CustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RL05CustomizeData", 4)?;
-        if let Some(f) = self.commonDevelopment() {
-            s.serialize_field("commonDevelopment", &f)?;
-        } else {
-            s.skip_field("commonDevelopment")?;
-        }
-        if let Some(f) = self.difficulties() {
-            s.serialize_field("difficulties", &f)?;
-        } else {
-            s.skip_field("difficulties")?;
-        }
-        if let Some(f) = self.specialShopDialog() {
-            s.serialize_field("specialShopDialog", &f)?;
-        } else {
-            s.skip_field("specialShopDialog")?;
-        }
-        if let Some(f) = self.endingText() {
-            s.serialize_field("endingText", &f)?;
-        } else {
-            s.skip_field("endingText")?;
-        }
-        s.end()
     }
 }
 
@@ -113360,41 +104877,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicCustomizeDataArgs<'a> {
             rogue_4: None,
             rogue_5: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicCustomizeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicCustomizeData", 5)?;
-        if let Some(f) = self.rogue_1() {
-            s.serialize_field("rogue_1", &f)?;
-        } else {
-            s.skip_field("rogue_1")?;
-        }
-        if let Some(f) = self.rogue_2() {
-            s.serialize_field("rogue_2", &f)?;
-        } else {
-            s.skip_field("rogue_2")?;
-        }
-        if let Some(f) = self.rogue_3() {
-            s.serialize_field("rogue_3", &f)?;
-        } else {
-            s.skip_field("rogue_3")?;
-        }
-        if let Some(f) = self.rogue_4() {
-            s.serialize_field("rogue_4", &f)?;
-        } else {
-            s.skip_field("rogue_4")?;
-        }
-        if let Some(f) = self.rogue_5() {
-            s.serialize_field("rogue_5", &f)?;
-        } else {
-            s.skip_field("rogue_5")?;
-        }
-        s.end()
     }
 }
 
@@ -113776,41 +105258,6 @@ impl<'a> Default for clz_Torappu_RoguelikeTopicTableArgs<'a> {
             modules: None,
             customizeData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_RoguelikeTopicTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_RoguelikeTopicTable", 5)?;
-        if let Some(f) = self.topics() {
-            s.serialize_field("topics", &f)?;
-        } else {
-            s.skip_field("topics")?;
-        }
-        if let Some(f) = self.constant() {
-            s.serialize_field("constant", &f)?;
-        } else {
-            s.skip_field("constant")?;
-        }
-        if let Some(f) = self.details() {
-            s.serialize_field("details", &f)?;
-        } else {
-            s.skip_field("details")?;
-        }
-        if let Some(f) = self.modules() {
-            s.serialize_field("modules", &f)?;
-        } else {
-            s.skip_field("modules")?;
-        }
-        if let Some(f) = self.customizeData() {
-            s.serialize_field("customizeData", &f)?;
-        } else {
-            s.skip_field("customizeData")?;
-        }
-        s.end()
     }
 }
 

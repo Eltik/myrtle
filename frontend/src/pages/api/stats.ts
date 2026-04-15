@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { StatsResponse } from "~/types/api";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "GET") {
@@ -14,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(response.status).json({ error: "Failed to fetch stats" });
         }
 
-        const data = (await response.json()) as StatsResponse;
+        const data = await response.json();
 
         // Cache for 5 minutes, allow stale-while-revalidate for 10 minutes
         res.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=600");

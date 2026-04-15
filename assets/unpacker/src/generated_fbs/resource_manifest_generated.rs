@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -158,29 +157,6 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifest_BundleMetaArgs<'a> {
             sccIndex: 0,
             allDependencies: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Resource_ResourceManifest_BundleMeta<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_Resource_ResourceManifest_BundleMeta", 4)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.serialize_field("props", &self.props())?;
-        s.serialize_field("sccIndex", &self.sccIndex())?;
-        if let Some(f) = self.allDependencies() {
-            s.serialize_field("allDependencies", &f)?;
-        } else {
-            s.skip_field("allDependencies")?;
-        }
-        s.end()
     }
 }
 
@@ -442,33 +418,6 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifest_AssetToBundleMetaArgs
             name: None,
             path: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_Resource_ResourceManifest_AssetToBundleMeta", 4)?;
-        if let Some(f) = self.assetName() {
-            s.serialize_field("assetName", &f)?;
-        } else {
-            s.skip_field("assetName")?;
-        }
-        s.serialize_field("bundleIndex", &self.bundleIndex())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.path() {
-            s.serialize_field("path", &f)?;
-        } else {
-            s.skip_field("path")?;
-        }
-        s.end()
     }
 }
 
@@ -754,27 +703,6 @@ impl<'a> Default for clz_Torappu_Resource_ResourceManifestArgs<'a> {
             bundles: None,
             assetToBundleList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Resource_ResourceManifest<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Resource_ResourceManifest", 3)?;
-        s.serialize_field("rawCount", &self.rawCount())?;
-        if let Some(f) = self.bundles() {
-            s.serialize_field("bundles", &f)?;
-        } else {
-            s.skip_field("bundles")?;
-        }
-        if let Some(f) = self.assetToBundleList() {
-            s.serialize_field("assetToBundleList", &f)?;
-        } else {
-            s.skip_field("assetToBundleList")?;
-        }
-        s.end()
     }
 }
 

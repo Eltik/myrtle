@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import { isAdminRole } from "~/lib/permissions";
 import type { TierListVersionSummary } from "~/types/api/impl/tier-list";
@@ -23,9 +23,12 @@ interface VerifyResponse {
 
 async function verifyUserRole(token: string): Promise<{ valid: boolean; role: string | null }> {
     try {
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const response = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         if (!response.ok) return { valid: false, role: null };
         const data: VerifyResponse = await response.json();
@@ -54,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     // Require authentication
-    const siteToken = getSiteToken(req);
+    const siteToken = getToken(req);
     if (!siteToken) {
         return res.status(401).json({
             success: false,

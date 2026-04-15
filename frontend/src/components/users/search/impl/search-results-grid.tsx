@@ -1,8 +1,8 @@
-import type { SearchResultEntry } from "~/types/api";
+import type { UserProfile } from "~/types/api";
 import { SearchResultCard } from "./search-result-card";
 
 interface SearchResultsGridProps {
-    results: SearchResultEntry[];
+    results: UserProfile[];
 }
 
 export function SearchResultsGrid({ results }: SearchResultsGridProps) {

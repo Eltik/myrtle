@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 import type { TierListType } from "~/types/api/impl/tier-list";
 
@@ -15,10 +15,9 @@ interface TierListFromBackend {
     updated_at: string;
 }
 
-interface ListResponse {
-    tier_lists: TierListFromBackend[];
-    count: number;
-}
+// Backend `/tier-lists/mine` returns a bare `Vec<TierList>` array.
+// Tolerate a `{ tier_lists, count }` envelope too in case the shape changes.
+type ListResponse = TierListFromBackend[] | { tier_lists: TierListFromBackend[]; count?: number };
 
 interface ApiSuccessResponse {
     success: true;
@@ -43,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const siteToken = getSiteToken(req);
+        const siteToken = getToken(req);
 
         if (!siteToken) {
             return res.status(401).json({
@@ -68,10 +67,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         const data: ListResponse = await response.json();
+        const tierLists: TierListFromBackend[] = Array.isArray(data) ? data : (data.tier_lists ?? []);
+        const count = Array.isArray(data) ? tierLists.length : (data.count ?? tierLists.length);
         return res.status(200).json({
             success: true,
-            tier_lists: data.tier_lists,
-            count: data.count,
+            tier_lists: tierLists,
+            count,
         });
     } catch (error) {
         console.error("My tier lists handler error:", error);

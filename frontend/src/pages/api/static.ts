@@ -3,60 +3,20 @@ import { unstable_cache } from "next/cache";
 import { env } from "~/env";
 import { backendFetch } from "~/lib/backend-fetch";
 import type { ChibiCharacter } from "~/types/api/impl/chibi";
-import type { Enemy, EnemyInfoList, RaceData } from "~/types/api/impl/enemy";
+import type { Enemy, EnemyHandbook } from "~/types/api/impl/enemy";
+import type { GachaData, GachaTag } from "~/types/api/impl/gacha";
 import type { Item } from "~/types/api/impl/material";
-import type { Module, ModuleData, Modules } from "~/types/api/impl/module";
+import type { Module, Modules } from "~/types/api/impl/module";
 import type { Operator } from "~/types/api/impl/operator";
 import type { Ranges } from "~/types/api/impl/range";
 import type { Skill } from "~/types/api/impl/skill";
 import type { Skin, SkinData } from "~/types/api/impl/skin";
-import type { Voice, Voices } from "~/types/api/impl/voice";
-
-interface ModulesListResponse {
-    modules: Module[];
-}
-interface ModuleDetailsResponse {
-    details: ModuleData;
-}
-interface SingleModuleResponse {
-    module: Module;
-}
-interface AllModulesResponse {
-    modules: Modules;
-}
-
-type ModulesApiResponse = ModulesListResponse | ModuleDetailsResponse | SingleModuleResponse | AllModulesResponse;
+import type { Voice, VoiceLang, VoiceLangDictEntry, Voices } from "~/types/api/impl/voice";
 
 interface RecruitmentTag {
     id: string;
     name: string;
     type: string;
-}
-
-interface OperatorOutcome {
-    id: string;
-    name: string;
-    rarity: number;
-    profession: string;
-    position: string;
-    guaranteed: boolean;
-    tags: string[];
-}
-
-interface BackendGachaTag {
-    tagId: number;
-    tagName: string;
-    tagGroup: number;
-}
-
-interface BackendRecruitmentResponse {
-    recruitment: {
-        tags: BackendGachaTag[];
-        tagMap: Record<string, BackendGachaTag>;
-        tagNameMap: Record<string, BackendGachaTag>;
-        recruitDetail: string;
-        recruitPool: unknown;
-    };
 }
 
 const TAG_GROUP_TYPE_MAP: Record<number, string> = {
@@ -74,22 +34,6 @@ const RARITY_TIER_MAP: Record<string, number> = {
     TIER_2: 2,
     TIER_1: 1,
 };
-
-interface BackendOperator {
-    id: string;
-    name: string;
-    rarity: string;
-    profession: string;
-    position: string;
-    tag_list?: string[];
-}
-
-interface BackendCalculateResponse {
-    recruitment: Array<{
-        label: string[];
-        operators: BackendOperator[];
-    }>;
-}
 
 const CACHE_TAG = "static-api";
 const CACHE_TTL = 3600;
@@ -157,113 +101,127 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         switch (body.type) {
             case "materials": {
-                const endpoint = body.id ? `/static/materials/${body.id}` : "/static/materials";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-materials-${body.id ?? "all"}`;
-                const materials = await fetchData<{ materials?: Item[]; material?: Item }>(endpoint, cacheKey);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-materials`;
+                const materials = await fetchData<Record<string, Item>>("/static/materials", cacheKey);
 
-                const data = materials.material ? materials.material : materials.materials;
-                return res.status(200).json({ data });
+                if (body.id) {
+                    const item = materials[body.id];
+                    return res.status(200).json({ data: item ?? null });
+                }
+                return res.status(200).json({ data: Object.values(materials) });
             }
             case "modules": {
-                let endpoint: string;
-                if (body.method === "details" && body.id) {
-                    endpoint = `/static/modules/details/${body.id}`;
-                } else if (body.id) {
-                    endpoint = `/static/modules/${body.id}`;
-                } else {
-                    endpoint = "/static/modules";
-                }
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-modules-${body.id ?? "all"}-${body.method ?? "default"}`;
-                const modules = await fetchData<ModulesApiResponse>(endpoint, cacheKey);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-modules`;
+                const modules = await fetchData<Modules>("/static/modules", cacheKey);
 
-                return res.status(200).json(modules);
+                if (body.method === "details" && body.id) {
+                    // Look up module details by ID from the full modules data
+                    // The Modules type contains the full module dataset; extract what's needed
+                    return res.status(200).json({ details: (modules as unknown as Record<string, unknown>)[body.id] ?? null });
+                }
+                if (body.id) {
+                    // Look up a specific module by operator ID or module ID
+                    const found = (modules as unknown as Record<string, unknown>)[body.id] ?? null;
+                    return res.status(200).json({ module: found });
+                }
+                return res.status(200).json({ modules });
             }
             case "operators": {
-                let endpoint = body.id ? `/static/operators/${body.id}` : "/static/operators";
-                const queryParams: string[] = [];
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators`;
+                const operators = await fetchData<Record<string, Operator>>("/static/operators", cacheKey);
 
-                const limit = body.limit ?? 1000;
-                queryParams.push(`limit=${limit}`);
+                if (body.id) {
+                    const op = operators[body.id];
+                    return res.status(200).json({ data: op ?? null });
+                }
 
+                let data: Partial<Operator>[] = Object.values(operators);
+
+                // If fields were requested, filter to only those fields for backward compat
                 if (body.fields && body.fields.length > 0) {
-                    const fieldsParam = body.fields.join(",");
-                    queryParams.push(`fields=${encodeURIComponent(fieldsParam)}`);
+                    const fields = body.fields;
+                    data = data.map((op) => {
+                        const filtered: Record<string, unknown> = {};
+                        const opRecord = op as unknown as Record<string, unknown>;
+                        for (const field of fields) {
+                            if (field in opRecord) {
+                                filtered[field] = opRecord[field];
+                            }
+                        }
+                        return filtered as Partial<Operator>;
+                    });
                 }
 
-                if (queryParams.length > 0) {
-                    endpoint += `?${queryParams.join("&")}`;
-                }
-
-                const fieldsKey = body.fields ? [...body.fields].sort().join(",") : "all";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-operators-${body.id ?? "all"}-fields-${fieldsKey}-limit-${limit}`;
-                const operators = await fetchData<{ operators?: Partial<Operator>[]; operator?: Partial<Operator> }>(endpoint, cacheKey);
-
-                const data = operators.operator ? operators.operator : operators.operators;
                 return res.status(200).json({ data });
             }
             case "ranges": {
-                const endpoint = body.id ? `/static/ranges/${body.id}` : "/static/ranges";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-ranges-${body.id ?? "all"}`;
-                const ranges = await fetchData<{ range?: Ranges; ranges?: Ranges[] }>(endpoint, cacheKey);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-ranges`;
+                const ranges = await fetchData<Record<string, Ranges>>("/static/ranges", cacheKey);
 
-                const data = ranges.range ? ranges.range : ranges.ranges;
-                return res.status(200).json({ data });
+                if (body.id) {
+                    const range = ranges[body.id];
+                    return res.status(200).json({ data: range ?? null });
+                }
+                return res.status(200).json({ data: Object.values(ranges) });
             }
             case "skills": {
-                const endpoint = body.id ? `/static/skills/${body.id}` : "/static/skills";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skills-${body.id ?? "all"}`;
-                const skills = await fetchData<{ skills?: Skill[]; skill?: Skill }>(endpoint, cacheKey);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skills`;
+                const skills = await fetchData<Record<string, Skill>>("/static/skills", cacheKey);
 
-                const data = skills.skill ? skills.skill : skills.skills;
-                return res.status(200).json({ data });
+                if (body.id) {
+                    const skill = skills[body.id];
+                    return res.status(200).json({ data: skill ?? null });
+                }
+                return res.status(200).json({ data: Object.values(skills) });
             }
             case "trust": {
-                let endpoint = "/static/trust";
-                if (body.trust !== undefined) {
-                    endpoint = `/static/trust/calculate?trust=${body.trust}`;
-                }
-                const cacheKey = body.trust === undefined && !isDevelopment ? `${CACHE_TAG}-trust-base` : undefined;
-                const trust = await fetchData<{ trust?: number; level?: number; favor?: unknown }>(endpoint, cacheKey);
-
-                const _data = trust.level !== undefined ? trust.level : trust.favor;
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-trust`;
+                const trust = await fetchData<unknown>("/static/trust", cacheKey);
                 return res.status(200).json({ data: trust });
             }
             case "handbook": {
-                const endpoint = body.id ? `/static/handbook/${body.id}` : "/static/handbook";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-handbook-${body.id ?? "all"}`;
-                const handbook = await fetchData<{ handbook: unknown }>(endpoint, cacheKey);
-                return res.status(200).json({ data: handbook.handbook });
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-handbook`;
+                const handbook = await fetchData<Record<string, unknown>>("/static/handbook", cacheKey);
+
+                if (body.id) {
+                    const entry = handbook[body.id];
+                    return res.status(200).json({ data: entry ?? null });
+                }
+                return res.status(200).json({ data: handbook });
             }
             case "skins": {
-                let endpoint: string;
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skins`;
+                const skins = await fetchData<SkinData>("/static/skins", cacheKey);
+
                 if (body.id) {
                     if (body.id.startsWith("char_")) {
-                        endpoint = `/static/skins/char/${body.id}`;
-                    } else {
-                        endpoint = `/static/skins/${body.id}`;
+                        // Filter skins belonging to this character
+                        const charSkins = Object.values(skins.charSkins ?? {}).filter((s: Skin) => s.charId === body.id);
+                        return res.status(200).json({ skins: charSkins });
                     }
-                } else {
-                    endpoint = "/static/skins";
+                    // Look up a specific skin by skin ID
+                    const skin = skins.charSkins?.[body.id] ?? null;
+                    return res.status(200).json({ skins: skin });
                 }
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-skins-${body.id ?? "all"}`;
-                const skins = await fetchData<{ skins: Skin[] | SkinData }>(endpoint, cacheKey);
-
-                return res.status(200).json(skins);
+                return res.status(200).json({ skins });
             }
             case "voices": {
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-voices`;
+                const allVoices = await fetchData<Voices>("/static/voices", cacheKey);
+
                 if (body.method === "voice-actors") {
-                    const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-voice-actors-map`;
-                    const allVoices = await fetchData<{ voices: Voice[]; total: number; has_more: boolean }>("/static/voices?limit=20000", cacheKey);
+                    // Build voice actor lookup from voiceLangDict
                     const voiceActors: Record<string, string[]> = {};
-                    for (const voice of allVoices.voices) {
-                        if (!voice.charId) continue;
-                        if (!voiceActors[voice.charId]) voiceActors[voice.charId] = [];
-                        const existing = new Set(voiceActors[voice.charId]);
-                        for (const d of voice.data ?? []) {
-                            for (const name of d.cvName ?? []) {
+                    for (const [, langEntry] of Object.entries(allVoices.voiceLangDict ?? {})) {
+                        const entry = langEntry as VoiceLang;
+                        if (!entry.charId) continue;
+                        if (!voiceActors[entry.charId]) voiceActors[entry.charId] = [];
+                        const existing = new Set(voiceActors[entry.charId]);
+                        for (const [, dictVal] of Object.entries(entry.dict ?? {}) as [string, VoiceLangDictEntry][]) {
+                            for (const name of dictVal.cvName ?? []) {
                                 if (name && !existing.has(name)) {
                                     existing.add(name);
-                                    voiceActors[voice.charId]?.push(name);
+                                    voiceActors[entry.charId]?.push(name);
                                 }
                             }
                         }
@@ -271,32 +229,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(200).json({ voiceActors });
                 }
 
-                let endpoint: string;
                 if (body.id) {
                     if (body.id.startsWith("char_")) {
-                        endpoint = `/static/voices/char/${body.id}`;
-                    } else {
-                        endpoint = `/static/voices/${body.id}`;
+                        // Filter voices for this character from charWords
+                        const charVoices = Object.values(allVoices.charWords ?? {}).filter((v: Voice) => v.charId === body.id);
+                        // Also get the voiceLangDict entry for this character
+                        const langEntries: Record<string, VoiceLang> = {};
+                        for (const [key, entry] of Object.entries(allVoices.voiceLangDict ?? {})) {
+                            if ((entry as VoiceLang).charId === body.id) {
+                                langEntries[key] = entry as VoiceLang;
+                            }
+                        }
+                        return res.status(200).json({ voices: charVoices, voiceLangDict: langEntries });
                     }
-                } else {
-                    endpoint = "/static/voices";
+                    // Look up a specific voice by ID
+                    const voice = allVoices.charWords?.[body.id] ?? null;
+                    return res.status(200).json({ voices: voice });
                 }
-                const voices = await fetchData<{ voices: Voice[] | Voices }>(endpoint);
-                return res.status(200).json(voices);
+                return res.status(200).json({ voices: allVoices });
             }
             case "gacha": {
                 if (body.method === "recruitment") {
-                    const endpoint = "/static/gacha/recruitment";
                     const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-recruitment-tags`;
+                    const gachaData = await fetchData<GachaData>("/static/gacha", cacheKey);
 
-                    const gachaData = await fetchData<BackendRecruitmentResponse>(endpoint, cacheKey);
-
-                    if (!gachaData.recruitment?.tags || !Array.isArray(gachaData.recruitment.tags)) {
-                        console.error("Invalid recruitment data structure received from backend:", gachaData);
+                    if (!gachaData.gachaTags || !Array.isArray(gachaData.gachaTags)) {
+                        console.error("Invalid gacha data structure - no gachaTags:", gachaData);
                         throw new Error("Could not retrieve recruitment tags from backend.");
                     }
 
-                    const tagsArray: RecruitmentTag[] = gachaData.recruitment.tags.map((tag) => ({
+                    const tagsArray: RecruitmentTag[] = gachaData.gachaTags.map((tag: GachaTag) => ({
                         id: String(tag.tagId),
                         name: tag.tagName,
                         type: TAG_GROUP_TYPE_MAP[tag.tagGroup] ?? "Affix",
@@ -304,95 +266,194 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                     return res.status(200).json({ data: tagsArray });
                 } else if (body.method === "calculate") {
+                    // v3 backend does not have a /static/gacha/calculate endpoint.
+                    // Return the full gacha data so the client can calculate locally,
+                    // or return an error indicating client-side calculation is needed.
                     if (!body.tags || !Array.isArray(body.tags)) {
                         return res.status(400).json({ error: "Missing or invalid 'tags' array in request body." });
                     }
 
-                    const recruitmentString = [...body.tags].sort().join(",");
-                    const endpoint = `/static/gacha/calculate?recruitment=${encodeURIComponent(recruitmentString)}`;
-                    const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-gacha-calculate-${recruitmentString}`;
-                    const calcResult = await fetchData<BackendCalculateResponse>(endpoint, cacheKey);
+                    // Fetch operators and gacha data, then do server-side calculation
+                    const [gachaData, operators] = await Promise.all([
+                        fetchData<GachaData>("/static/gacha", isDevelopment ? undefined : `${CACHE_TAG}-gacha`),
+                        fetchData<Record<string, Operator>>("/static/operators", isDevelopment ? undefined : `${CACHE_TAG}-operators`),
+                    ]);
 
-                    if (!calcResult.recruitment || !Array.isArray(calcResult.recruitment)) {
-                        console.error("Invalid calculation result structure received from backend:", calcResult);
-                        throw new Error("Could not retrieve calculation results from backend.");
+                    // Build tag name -> tag mapping
+                    const tagNameMap: Record<string, GachaTag> = {};
+                    for (const tag of gachaData.gachaTags ?? []) {
+                        tagNameMap[tag.tagName] = tag;
                     }
 
-                    const operatorOutcomes: OperatorOutcome[] = [];
+                    // Find recruitable operators (those with tags in the recruit pool)
+                    // Filter operators that have recruitment tags
+                    const recruitableOps = Object.values(operators).filter((op) => {
+                        return op.tagList && op.tagList.length > 0;
+                    });
 
-                    for (const group of calcResult.recruitment) {
-                        const hasTopOperator = group.label.includes("Top Operator");
-                        const hasSeniorOperator = group.label.includes("Senior Operator");
-                        const _minRarity = hasTopOperator ? 6 : hasSeniorOperator ? 5 : 3;
+                    // For each selected tag combination, find matching operators
+                    const selectedTags = body.tags;
 
-                        for (const op of group.operators) {
-                            const rarity = RARITY_TIER_MAP[op.rarity] ?? 1;
-                            const allHighRarity = group.operators.every((o) => (RARITY_TIER_MAP[o.rarity] ?? 1) >= 4);
+                    // Map tag names to their categories for matching
+                    const matchingOperators: Array<{
+                        id: string;
+                        name: string;
+                        rarity: number;
+                        profession: string;
+                        position: string;
+                        guaranteed: boolean;
+                        tags: string[];
+                    }> = [];
 
-                            operatorOutcomes.push({
-                                id: op.id,
-                                name: op.name,
-                                rarity,
-                                profession: op.profession,
-                                position: op.position,
-                                guaranteed: hasTopOperator || hasSeniorOperator || allHighRarity,
-                                tags: body.tags,
-                            });
+                    const hasTopOperator = selectedTags.includes("Top Operator");
+                    const hasSeniorOperator = selectedTags.includes("Senior Operator");
+
+                    for (const op of recruitableOps) {
+                        const opRarity = RARITY_TIER_MAP[op.rarity] ?? 1;
+
+                        // Build the operator's full tag set (including position, class, qualification tags)
+                        const opTags = new Set<string>(op.tagList ?? []);
+                        if (op.position) opTags.add(op.position === "MELEE" ? "Melee" : op.position === "RANGED" ? "Ranged" : op.position);
+                        if (op.profession) {
+                            const professionTagMap: Record<string, string> = {
+                                PIONEER: "Vanguard",
+                                WARRIOR: "Guard",
+                                TANK: "Defender",
+                                SNIPER: "Sniper",
+                                CASTER: "Caster",
+                                SUPPORT: "Supporter",
+                                MEDIC: "Medic",
+                                SPECIAL: "Specialist",
+                            };
+                            const classTag = professionTagMap[op.profession];
+                            if (classTag) opTags.add(classTag);
+                        }
+                        // Add qualification tags based on rarity
+                        if (opRarity === 6) opTags.add("Top Operator");
+                        if (opRarity >= 5) opTags.add("Senior Operator");
+                        if (opRarity === 1) opTags.add("Robot");
+                        if (opRarity <= 2) opTags.add("Starter");
+
+                        // Check if operator matches ALL selected tags
+                        const matchesAll = selectedTags.every((tag) => opTags.has(tag));
+                        if (!matchesAll) continue;
+
+                        // Filter by rarity rules: without Top/Senior, 6★ are excluded from recruit
+                        if (!hasTopOperator && opRarity === 6) continue;
+                        if (!hasSeniorOperator && !hasTopOperator && opRarity === 5) continue;
+
+                        matchingOperators.push({
+                            id: op.id ?? "",
+                            name: op.name ?? "",
+                            rarity: opRarity,
+                            profession: op.profession ?? "",
+                            position: op.position ?? "",
+                            guaranteed: hasTopOperator || hasSeniorOperator,
+                            tags: selectedTags,
+                        });
+                    }
+
+                    // Recalculate guaranteed flag: if all results are 4★+, it's guaranteed
+                    const allHighRarity = matchingOperators.length > 0 && matchingOperators.every((op) => op.rarity >= 4);
+                    if (allHighRarity) {
+                        for (const op of matchingOperators) {
+                            op.guaranteed = true;
                         }
                     }
 
-                    return res.status(200).json({ data: operatorOutcomes });
+                    return res.status(200).json({ data: matchingOperators });
                 } else {
                     return res.status(400).json({ error: "Invalid 'method' for type 'gacha'. Use 'recruitment' or 'calculate'." });
                 }
             }
             case "chibis": {
-                let endpoint: string;
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-chibis`;
+                // v3 returns { characters: ChibiCharacter[] } (by_operator is skipped in serialization)
+                const data = await fetchData<{ characters: ChibiCharacter[] }>("/static/chibis", cacheKey);
+                const characters = data.characters ?? [];
+
                 if (body.id) {
-                    if (body.id.startsWith("char_")) {
-                        endpoint = `/static/chibis/${body.id}`;
-                    } else {
-                        endpoint = `/static/chibis/${body.id}`;
-                    }
-                } else {
-                    endpoint = "/static/chibis";
+                    const chibi = characters.find((c) => c.operatorCode === body.id);
+                    return res.status(200).json({ chibi: chibi ?? null });
                 }
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-chibis-${body.id ?? "all"}`;
-                const chibis = await fetchData<{ chibi?: ChibiCharacter; chibis?: ChibiCharacter[] }>(endpoint, cacheKey);
-                return res.status(200).json(chibis);
+                return res.status(200).json({ chibis: characters });
             }
             case "enemies": {
-                const queryParams: string[] = [];
-                if (body.cursor) queryParams.push(`cursor=${encodeURIComponent(body.cursor)}`);
-                if (body.limit) queryParams.push(`limit=${body.limit}`);
-                if (body.fields && body.fields.length > 0) queryParams.push(`fields=${encodeURIComponent(body.fields.join(","))}`);
-                if (body.level !== undefined) queryParams.push(`level=${body.level}`);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies`;
+                const enemyData = await fetchData<EnemyHandbook | Record<string, Enemy>>("/static/enemies", cacheKey);
 
-                const endpoint = queryParams.length > 0 ? `/static/enemies?${queryParams.join("&")}` : "/static/enemies";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies-${body.cursor ?? "start"}-${body.limit ?? "default"}-${body.level ?? "all"}`;
-                const enemies = await fetchData<{ enemies: Enemy[]; hasMore: boolean; nextCursor: string | null; total: number }>(endpoint, cacheKey);
-                return res.status(200).json(enemies);
+                // v3 returns the full enemy dataset. It may be an EnemyHandbook structure
+                // or a flat Record<string, Enemy>. Handle both.
+                let enemies: Enemy[];
+                if ("enemyData" in enemyData && typeof enemyData.enemyData === "object") {
+                    enemies = Object.values((enemyData as EnemyHandbook).enemyData);
+                } else {
+                    enemies = Object.values(enemyData as Record<string, Enemy>);
+                }
+
+                // Apply level filter if specified
+                if (body.level !== undefined) {
+                    enemies = enemies.filter((e) => {
+                        if (!e.stats?.levels) return false;
+                        return e.stats.levels.some((l) => l.level === body.level);
+                    });
+                }
+
+                // Apply pagination for backward compat
+                const limit = body.limit ?? enemies.length;
+                const cursorIndex = body.cursor ? parseInt(body.cursor, 10) : 0;
+                const paginatedEnemies = enemies.slice(cursorIndex, cursorIndex + limit);
+                const hasMore = cursorIndex + limit < enemies.length;
+                const nextCursor = hasMore ? String(cursorIndex + limit) : null;
+
+                return res.status(200).json({
+                    enemies: paginatedEnemies,
+                    hasMore,
+                    nextCursor,
+                    total: enemies.length,
+                });
             }
             case "enemy": {
                 if (!body.id) {
                     return res.status(400).json({ error: "Missing 'id' for enemy request." });
                 }
-                const endpoint = `/static/enemies/${body.id}`;
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-${body.id}`;
-                const enemy = await fetchData<{ enemy: Enemy }>(endpoint, cacheKey);
-                return res.status(200).json(enemy);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies`;
+                const enemyData = await fetchData<EnemyHandbook | Record<string, Enemy>>("/static/enemies", cacheKey);
+
+                let enemy: Enemy | undefined;
+                if ("enemyData" in enemyData && typeof enemyData.enemyData === "object") {
+                    enemy = (enemyData as EnemyHandbook).enemyData[body.id];
+                } else {
+                    enemy = (enemyData as Record<string, Enemy>)[body.id];
+                }
+
+                if (!enemy) {
+                    return res.status(404).json({ error: `Enemy '${body.id}' not found.` });
+                }
+                return res.status(200).json({ enemy });
             }
             case "enemyRaces": {
-                const endpoint = "/static/enemies/races";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-races`;
-                const races = await fetchData<{ races: Record<string, RaceData> }>(endpoint, cacheKey);
-                return res.status(200).json(races);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies`;
+                const enemyData = await fetchData<EnemyHandbook | Record<string, unknown>>("/static/enemies", cacheKey);
+
+                if ("raceData" in enemyData && typeof enemyData.raceData === "object") {
+                    return res.status(200).json({ races: (enemyData as EnemyHandbook).raceData });
+                }
+
+                // If the data doesn't have raceData, try to extract race info from enemies
+                console.warn("enemyRaces: raceData not found in /static/enemies response, returning empty.");
+                return res.status(200).json({ races: {} });
             }
             case "enemyLevelInfo": {
-                const endpoint = "/static/enemies/levels";
-                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemy-level-info`;
-                const levelInfo = await fetchData<{ levels: EnemyInfoList[] }>(endpoint, cacheKey);
-                return res.status(200).json(levelInfo);
+                const cacheKey = isDevelopment ? undefined : `${CACHE_TAG}-enemies`;
+                const enemyData = await fetchData<EnemyHandbook | Record<string, unknown>>("/static/enemies", cacheKey);
+
+                if ("levelInfoList" in enemyData && Array.isArray(enemyData.levelInfoList)) {
+                    return res.status(200).json({ levels: (enemyData as EnemyHandbook).levelInfoList });
+                }
+
+                console.warn("enemyLevelInfo: levelInfoList not found in /static/enemies response, returning empty.");
+                return res.status(200).json({ levels: [] });
             }
             default: {
                 const unknownType = body.type as string;

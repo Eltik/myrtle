@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY . .
+ENV SQLX_OFFLINE=true
 RUN cargo build --release --bin backend
 
 FROM debian:bookworm-slim
@@ -16,6 +17,7 @@ RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /build/target/release/backend ./backend
+COPY --from=builder /build/external ./external
 
 EXPOSE 3060
 CMD ["./backend"]

@@ -179,7 +179,12 @@ export function AudioContent({ operator }: AudioContentProps) {
             return;
         }
 
-        const audioUrl = `/api/cdn/upk${voiceData.voiceUrl}`;
+        // Backend emits `/audio/sound_beta_2/...ogg` (logical path). On disk the
+// unpacker writes bundles into `output/audio/<bundle_subdir>`, so voice
+// files actually live at `output/audio/audio/sound_beta_2/...`. Prepend
+// the extra `audio/` segment so the CDN proxy finds the file, and route
+// via `/api/cdn` (not `/api/cdn/upk`) to skip the image-only path rewrite.
+const audioUrl = `/api/cdn/audio${voiceData.voiceUrl}`;
 
         const audio = new Audio(audioUrl);
         audio.volume = isMuted ? 0 : volume / 100;
@@ -216,7 +221,7 @@ export function AudioContent({ operator }: AudioContentProps) {
 
         setDownloadingId(voice.id);
         try {
-            const audioUrl = `/api/cdn/upk${voiceData.voiceUrl}`;
+            const audioUrl = `/api/cdn/audio${voiceData.voiceUrl}`;
             const filename = generateVoiceFilename(operator.name ?? operator.id, voice.title, selectedLanguage, voiceData.voiceUrl);
             await downloadVoiceLine(audioUrl, filename);
         } catch (err) {

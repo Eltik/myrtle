@@ -1,13 +1,12 @@
 export const SORT_OPTIONS = [
     { value: "total_score", label: "Total Score", tooltip: "Overall score combining all categories" },
-    { value: "grade", label: "Grade", tooltip: "Letter grade based on percentile ranking" },
     { value: "operator_score", label: "Operators", tooltip: "Score from operator collection and investment" },
     { value: "stage_score", label: "Stages", tooltip: "Score from stage completions and challenges" },
     { value: "roguelike_score", label: "Roguelike", tooltip: "Integrated Strategies progress" },
     { value: "sandbox_score", label: "Sandbox", tooltip: "Reclamation Algorithm progress" },
     { value: "medal_score", label: "Medals", tooltip: "Medal collection progress" },
     { value: "base_score", label: "Base", tooltip: "Rhodes Island base development" },
-    { value: "composite_score", label: "Composite", tooltip: "Weighted combination score" },
+    { value: "skin_score", label: "Skins", tooltip: "Skin collection progress" },
 ] as const;
 
 export const SERVERS = [
@@ -60,24 +59,20 @@ export const GRADE_COLORS: Record<string, GradeColorValue> & { F: GradeColorValu
 
 export const SCORE_CATEGORIES = [
     {
-        key: "operatorScore",
+        key: "operator_score",
         label: "Operators",
         description: "Collection size, levels, masteries, modules, potential, and skins",
     },
-    { key: "stageScore", label: "Stages", description: "Main story, events, annihilation, and challenge modes" },
+    { key: "stage_score", label: "Stages", description: "Main story, events, annihilation, and challenge modes" },
     {
-        key: "roguelikeScore",
+        key: "roguelike_score",
         label: "Roguelike",
         description: "Integrated Strategies endings, collectibles, and achievements",
     },
-    { key: "sandboxScore", label: "Sandbox", description: "Reclamation Algorithm progress and unlocks" },
-    { key: "medalScore", label: "Medals", description: "Medal collection across all categories" },
-    { key: "baseScore", label: "Base", description: "Rhodes Island infrastructure and furniture collection" },
-    {
-        key: "compositeScore",
-        label: "Composite",
-        description: "50% progression relative to account age, 30% activity, 20% content engagement",
-    },
+    { key: "sandbox_score", label: "Sandbox", description: "Reclamation Algorithm progress and unlocks" },
+    { key: "medal_score", label: "Medals", description: "Medal collection across all categories" },
+    { key: "base_score", label: "Base", description: "Rhodes Island infrastructure and furniture collection" },
+    { key: "skin_score", label: "Skins", description: "Skin collection progress" },
 ] as const;
 
 /** Default avatar - Amiya E1 */

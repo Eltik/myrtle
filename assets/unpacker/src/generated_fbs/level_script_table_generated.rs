@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -125,22 +124,6 @@ impl<'a> Default for dict__string__list_stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -468,41 +451,6 @@ impl<'a> Default for clz_Torappu_Battle_LevelScriptDataMapArgs<'a> {
             levelScriptDataGameModeDict: None,
             levelScriptDataMiscList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_Battle_LevelScriptDataMap<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Battle_LevelScriptDataMap", 5)?;
-        if let Some(f) = self.levelScriptDataCharacterDict() {
-            s.serialize_field("levelScriptDataCharacterDict", &f)?;
-        } else {
-            s.skip_field("levelScriptDataCharacterDict")?;
-        }
-        if let Some(f) = self.levelScriptDataEnemyDict() {
-            s.serialize_field("levelScriptDataEnemyDict", &f)?;
-        } else {
-            s.skip_field("levelScriptDataEnemyDict")?;
-        }
-        if let Some(f) = self.levelScriptDataLevelDict() {
-            s.serialize_field("levelScriptDataLevelDict", &f)?;
-        } else {
-            s.skip_field("levelScriptDataLevelDict")?;
-        }
-        if let Some(f) = self.levelScriptDataGameModeDict() {
-            s.serialize_field("levelScriptDataGameModeDict", &f)?;
-        } else {
-            s.skip_field("levelScriptDataGameModeDict")?;
-        }
-        if let Some(f) = self.levelScriptDataMiscList() {
-            s.serialize_field("levelScriptDataMiscList", &f)?;
-        } else {
-            s.skip_field("levelScriptDataMiscList")?;
-        }
-        s.end()
     }
 }
 

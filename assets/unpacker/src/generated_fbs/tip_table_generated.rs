@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -81,18 +80,6 @@ impl core::fmt::Debug for enum__Torappu_TipData_Category {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_TipData_Category {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_TipData_Category",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -257,23 +244,6 @@ impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
             weight: 0.0,
             category: enum__Torappu_TipData_Category::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TipData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TipData", 3)?;
-        if let Some(f) = self.tip() {
-            s.serialize_field("tip", &f)?;
-        } else {
-            s.skip_field("tip")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.serialize_field("category", &self.category())?;
-        s.end()
     }
 }
 
@@ -508,32 +478,6 @@ impl<'a> Default for clz_Torappu_WorldViewTipArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_WorldViewTip<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_WorldViewTip", 4)?;
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.backgroundPicId() {
-            s.serialize_field("backgroundPicId", &f)?;
-        } else {
-            s.skip_field("backgroundPicId")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_WorldViewTipBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -748,26 +692,6 @@ impl<'a> Default for clz_Torappu_TipTableArgs<'a> {
             tips: None,
             worldViewTips: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TipTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TipTable", 2)?;
-        if let Some(f) = self.tips() {
-            s.serialize_field("tips", &f)?;
-        } else {
-            s.skip_field("tips")?;
-        }
-        if let Some(f) = self.worldViewTips() {
-            s.serialize_field("worldViewTips", &f)?;
-        } else {
-            s.skip_field("worldViewTips")?;
-        }
-        s.end()
     }
 }
 

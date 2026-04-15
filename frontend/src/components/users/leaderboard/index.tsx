@@ -18,6 +18,8 @@ import { LeaderboardRowDialog } from "./impl/leaderboard-row-dialog";
 import { RankBadge } from "./impl/rank-badge";
 import { ScoreBreakdownTooltip } from "./impl/score-breakdown-tooltip";
 
+const DEFAULT_LIMIT = 25;
+
 interface LeaderboardPageProps {
     initialData: LeaderboardResponse;
 }
@@ -27,15 +29,13 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
     const [data, setData] = useState(initialData);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null);
-    const [fullEntryData, setFullEntryData] = useState<LeaderboardEntry | null>(null);
-    const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
     // Get current filter values from URL or defaults
-    const currentSortBy = (router.query.sort_by as SortBy) || "total_score";
+    const currentSortBy = (router.query.sort as SortBy) || "total_score";
     const currentOrder = (router.query.order as "asc" | "desc") || "desc";
     const currentServer = (router.query.server as string) || "all";
     const currentOffset = Number(router.query.offset) || 0;
-    const limit = data.pagination.limit;
+    const limit = Number(router.query.limit) || DEFAULT_LIMIT;
 
     const updateFilters = useCallback(
         async (newParams: Record<string, string | undefined>) => {
@@ -72,7 +72,7 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
     );
 
     const handleSortChange = (sortBy: string) => {
-        void updateFilters({ sort_by: sortBy, offset: "0" });
+        void updateFilters({ sort: sortBy, offset: "0" });
     };
 
     const handleOrderToggle = () => {
@@ -89,59 +89,18 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
     };
 
     const handleRowClick = useCallback(
-        async (entry: LeaderboardEntry) => {
+        (entry: LeaderboardEntry) => {
             setSelectedEntry(entry);
-
-            // If we already have full data (gradeBreakdown exists), use it directly
-            if (entry.gradeBreakdown) {
-                setFullEntryData(entry);
-                return;
-            }
-
-            // Fetch full data for the detail modal
-            setIsLoadingDetail(true);
-            try {
-                const params = new URLSearchParams();
-                params.set("fields", "full");
-                params.set("limit", "1");
-
-                // Calculate the offset for this specific entry
-                const entryIndex = data.entries.findIndex((e) => e.uid === entry.uid && e.server === entry.server);
-                if (entryIndex !== -1) {
-                    const currentOffset = Number(router.query.offset) || 0;
-                    params.set("offset", String(currentOffset + entryIndex));
-                }
-
-                if (router.query.sort_by) params.set("sort_by", String(router.query.sort_by));
-                if (router.query.order) params.set("order", String(router.query.order));
-                if (router.query.server) params.set("server", String(router.query.server));
-
-                const response = await fetch(`/api/leaderboard?${params.toString()}`);
-                if (response.ok) {
-                    const fullData = (await response.json()) as LeaderboardResponse;
-                    const firstEntry = fullData.entries[0];
-                    if (firstEntry) {
-                        setFullEntryData(firstEntry);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch full entry data:", error);
-                // Fallback to showing what we have
-                setFullEntryData(entry);
-            } finally {
-                setIsLoadingDetail(false);
-            }
         },
-        [data.entries, router.query],
+        [],
     );
 
     const handleCloseDialog = useCallback(() => {
         setSelectedEntry(null);
-        setFullEntryData(null);
     }, []);
 
     const currentPage = Math.floor(currentOffset / limit) + 1;
-    const totalPages = Math.ceil(data.pagination.total / limit);
+    const totalPages = Math.ceil(data.total / limit);
 
     return (
         <div className="min-w-0 space-y-6">
@@ -197,9 +156,9 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
 
                 {/* Results info */}
                 <div className="text-muted-foreground text-sm">
-                    {data.pagination.total > 0 ? (
+                    {data.total > 0 ? (
                         <span>
-                            Showing {currentOffset + 1}-{Math.min(currentOffset + limit, data.pagination.total)} of {data.pagination.total.toLocaleString()} players
+                            Showing {currentOffset + 1}-{Math.min(currentOffset + limit, data.total)} of {data.total.toLocaleString()} players
                         </span>
                     ) : (
                         <span>No players found</span>
@@ -229,29 +188,29 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
                             data.entries.map((entry) => (
                                 <TableRow className="cursor-pointer transition-colors hover:bg-muted/50" key={`${entry.uid}-${entry.server}`} onClick={() => void handleRowClick(entry)}>
                                     <TableCell className="py-4 text-center">
-                                        <RankBadge rank={entry.rank} />
+                                        <RankBadge rank={entry.rank_global ?? 0} />
                                     </TableCell>
                                     <TableCell className="py-4">
                                         <div className="flex items-center gap-4">
                                             <Avatar className="h-11 w-11 border border-border">
-                                                <AvatarImage alt={entry.nickname} src={getAvatarURL(entry.avatarId)} />
-                                                <AvatarFallback className="text-sm">{entry.nickname.slice(0, 2).toUpperCase()}</AvatarFallback>
+                                                <AvatarImage alt={entry.nickname ?? "Unknown"} src={getAvatarURL(entry.avatar_id)} />
+                                                <AvatarFallback className="text-sm">{(entry.nickname ?? "??").slice(0, 2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0">
                                                 <Link className="block truncate font-medium text-base hover:text-primary hover:underline" href={`/user/${entry.uid}`} onClick={(e) => e.stopPropagation()}>
-                                                    {entry.nickname}
+                                                    {entry.nickname ?? "Unknown"}
                                                 </Link>
                                                 <div className="flex items-center gap-2 text-muted-foreground text-sm sm:hidden">
-                                                    <GradeBadge grade={entry.grade} size="sm" />
-                                                    <span>{entry.totalScore.toLocaleString()}</span>
+                                                    <GradeBadge grade={entry.grade ?? "F"} size="sm" />
+                                                    <span>{(entry.total_score ?? 0).toLocaleString()}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden py-4 text-center sm:table-cell">
-                                        <GradeBadge grade={entry.grade} />
+                                        <GradeBadge grade={entry.grade ?? "F"} />
                                     </TableCell>
-                                    <TableCell className="hidden py-4 text-right font-mono text-base md:table-cell">{entry.totalScore.toLocaleString()}</TableCell>
+                                    <TableCell className="hidden py-4 text-right font-mono text-base md:table-cell">{(entry.total_score ?? 0).toLocaleString()}</TableCell>
                                     <TableCell className="hidden py-4 text-center lg:table-cell">
                                         <Badge className="uppercase" variant="secondary">
                                             {entry.server}
@@ -300,8 +259,8 @@ export function LeaderboardPage({ initialData }: LeaderboardPageProps) {
                 </div>
             )}
 
-            {/* Detail Dialog - uses fullEntryData when available for complete score breakdown */}
-            <LeaderboardRowDialog entry={fullEntryData ?? selectedEntry} isLoading={isLoadingDetail} onClose={handleCloseDialog} />
+            {/* Detail Dialog */}
+            <LeaderboardRowDialog entry={selectedEntry} onClose={handleCloseDialog} />
         </div>
     );
 }

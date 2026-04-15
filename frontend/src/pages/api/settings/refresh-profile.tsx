@@ -1,17 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSessionFromCookie, setAuthCookies } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { User } from "~/types/api";
-
-interface BackendRefreshResponse {
-    user: User;
-    site_token: string;
-}
+import type { UserProfile } from "~/types/api/impl/user";
 
 interface RefreshProfileResponse {
     success: boolean;
     message?: string;
-    user?: User;
+    user?: UserProfile;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<RefreshProfileResponse>) {
@@ -20,47 +15,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const session = getSessionFromCookie(req);
+        const token = getToken(req);
 
-        if (!session) {
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 message: "Not authenticated",
             });
         }
 
-        const { uid, secret, seqnum, server } = session;
-
-        // Call backend /refresh to fetch fresh data from game servers
-        const params = new URLSearchParams();
-        params.set("uid", uid);
-        params.set("secret", secret);
-        params.set("seqnum", seqnum.toString());
-        params.set("server", server);
-
-        const refreshResponse = await backendFetch(`/refresh?${params.toString()}`, {
+        // Step 1: Trigger sync from game server. v3 /refresh returns the sync
+        // result (not the user profile), so we need to follow up with /get-user.
+        const refreshResponse = await backendFetch("/refresh", {
             method: "POST",
+            bearerToken: token,
         });
 
         if (!refreshResponse.ok) {
             const errorText = await refreshResponse.text();
             console.error(`Backend refresh failed: ${refreshResponse.status} - ${errorText}`);
-
             return res.status(500).json({
                 success: false,
                 message: "Failed to refresh profile from game servers",
             });
         }
 
-        const refreshData: BackendRefreshResponse = await refreshResponse.json();
+        // Step 2: Verify token to get uid, then fetch the freshly-synced profile.
+        const verifyResponse = await backendFetch("/auth/verify", { bearerToken: token });
+        if (!verifyResponse.ok) {
+            return res.status(401).json({ success: false, message: "Invalid token" });
+        }
+        const verifyData = (await verifyResponse.json()) as { valid: boolean; uid?: string };
+        if (!verifyData.valid || !verifyData.uid) {
+            return res.status(401).json({ success: false, message: "Invalid token" });
+        }
 
-        // Update session cookies with incremented seqnum
-        setAuthCookies(res, { uid, secret, seqnum: seqnum + 1, server }, refreshData.site_token);
+        const profileResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(verifyData.uid)}`);
+        if (!profileResponse.ok) {
+            return res.status(500).json({ success: false, message: "Failed to fetch updated profile" });
+        }
+
+        const user: UserProfile = await profileResponse.json();
 
         return res.status(200).json({
             success: true,
             message: "Profile refreshed successfully",
-            user: refreshData.user,
+            user,
         });
     } catch (error) {
         console.error("Error refreshing profile:", error);

@@ -1,19 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { clearAuthCookies, getSessionFromCookie } from "~/lib/auth";
+import { clearAuthCookies, getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { User } from "~/types/api";
-
-interface SuccessResponse {
-    success: true;
-    user: User;
-}
+import type { UserProfile } from "~/types/api/impl/user";
 
 interface ErrorResponse {
     success: false;
     error: string;
 }
 
-type ApiResponse = SuccessResponse | ErrorResponse;
+type ApiResponse = UserProfile | ErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     if (req.method !== "POST") {
@@ -25,25 +20,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const session = getSessionFromCookie(req);
+        const token = getToken(req);
 
-        if (!session) {
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 error: "Not authenticated",
             });
         }
 
-        const { uid } = session;
+        // Step 1: Verify the token to get uid
+        const verifyResponse = await backendFetch("/auth/verify", {
+            bearerToken: token,
+        });
 
-        // Build backend URL to get user data (no refresh)
-        const userResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
+        if (!verifyResponse.ok) {
+            clearAuthCookies(res);
+            return res.status(401).json({
+                success: false,
+                error: "Invalid token",
+            });
+        }
+
+        const verifyData: { valid: boolean; uid?: string } = await verifyResponse.json();
+
+        if (!verifyData.valid || !verifyData.uid) {
+            clearAuthCookies(res);
+            return res.status(401).json({
+                success: false,
+                error: "Invalid token",
+            });
+        }
+
+        // Step 2: Fetch user profile
+        const userResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(verifyData.uid)}`);
 
         if (!userResponse.ok) {
             const errorText = await userResponse.text();
             console.error(`Backend get-user failed: ${userResponse.status} - ${errorText}`);
 
-            // If not found or unauthorized, clear the session cookies
             if (userResponse.status === 404 || userResponse.status === 401) {
                 clearAuthCookies(res);
                 return res.status(401).json({
@@ -58,23 +73,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        // Backend returns database User model: { id, uid, server, data, created_at }
-        // The actual user data is nested in the 'data' field
-        const dbUser = await userResponse.json();
-        const user: User = dbUser.data;
+        const user: UserProfile = await userResponse.json();
 
-        if (!user || !user.status) {
-            clearAuthCookies(res);
-            return res.status(401).json({
-                success: false,
-                error: "Invalid user data",
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            user,
-        });
+        return res.status(200).json(user);
     } catch (error) {
         console.error("Me handler error:", error);
         return res.status(500).json({

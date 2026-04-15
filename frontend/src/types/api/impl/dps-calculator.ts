@@ -1,6 +1,6 @@
 /**
  * DPS Calculator Types
- * Based on backend Rust structures in /backend/src/app/routes/dps_calculator/
+ * Based on v3 backend Rust structures
  */
 
 // ============================================================================
@@ -11,13 +11,9 @@
  * Buff parameters that can be applied to operators
  */
 export interface DpsBuffs {
-    /** ATK buff as decimal (e.g., 0.4 = 40% ATK increase) */
     atk?: number;
-    /** Flat ATK bonus added after percentage buffs */
     flatAtk?: number;
-    /** Attack speed buff (e.g., 30 = +30 ASPD) */
     aspd?: number;
-    /** Fragile debuff on enemy - increases damage taken (e.g., 0.3 = +30% damage) */
     fragile?: number;
 }
 
@@ -25,13 +21,9 @@ export interface DpsBuffs {
  * Defense/Resistance shred parameters
  */
 export interface DpsShred {
-    /** Percentage DEF reduction (e.g., 40 = -40% DEF) */
     def?: number;
-    /** Flat DEF reduction */
     defFlat?: number;
-    /** Percentage RES reduction (e.g., 20 = -20 RES) */
     res?: number;
-    /** Flat RES reduction */
     resFlat?: number;
 }
 
@@ -39,93 +31,20 @@ export interface DpsShred {
  * Conditional damage toggles for trait/talent/skill/module bonuses
  */
 export interface DpsConditionals {
-    /** Enable trait damage bonus */
     traitDamage?: boolean;
-    /** Enable talent 1 damage bonus */
     talentDamage?: boolean;
-    /** Enable talent 2 damage bonus */
     talent2Damage?: boolean;
-    /** Enable skill damage bonus */
     skillDamage?: boolean;
-    /** Enable module damage bonus */
     moduleDamage?: boolean;
-}
-
-/**
- * Operator configuration parameters for DPS calculation
- */
-export interface DpsOperatorParams {
-    /** Operator potential (1-6), defaults to 6 */
-    potential?: number;
-    /** Elite/promotion level (0-2), defaults to max */
-    promotion?: number;
-    /** Operator level, defaults to max for elite */
-    level?: number;
-    /** Trust level (0-100), defaults to 100 */
-    trust?: number;
-    /** Skill index (0=basic attack, 1=S1, 2=S2, 3=S3) */
-    skillIndex?: number;
-    /** Mastery level (0-3), defaults to 3 */
-    masteryLevel?: number;
-    /** Module index (0=none, 1-3 for X/Y/Delta modules) */
-    moduleIndex?: number;
-    /** Module level (1-3), defaults to 3 */
-    moduleLevel?: number;
-    /** External buffs applied to operator */
-    buffs?: DpsBuffs;
-    /** Base buffs applied before skill multipliers */
-    baseBuffs?: DpsBuffs;
-    /** SP regeneration boost per second */
-    spBoost?: number;
-    /** Number of targets hit */
-    targets?: number;
-    /** Conditional damage toggles */
-    conditionals?: DpsConditionals;
-    /** Enable/disable all conditionals at once */
-    allCond?: boolean;
-    /** DEF/RES shred parameters */
-    shred?: DpsShred;
-}
-
-/**
- * Enemy stats for DPS calculation
- */
-export interface DpsEnemyStats {
-    /** Enemy DEF value */
-    defense: number;
-    /** Enemy RES value (0-100+) */
-    res: number;
-}
-
-/**
- * Range parameters for generating DPS curves
- */
-export interface DpsRangeParams {
-    /** Minimum DEF value for range calculation */
-    minDef?: number;
-    /** Maximum DEF value (default: 3000) */
-    maxDef?: number;
-    /** Step size for DEF iteration (default: 100) */
-    defStep?: number;
-    /** Minimum RES value for range calculation */
-    minRes?: number;
-    /** Maximum RES value (default: 120) */
-    maxRes?: number;
-    /** Step size for RES iteration (default: 10) */
-    resStep?: number;
 }
 
 /**
  * Request body for DPS calculation endpoint
  */
 export interface DpsCalculateRequest {
-    /** Operator ID (e.g., "char_017_huang" for Blaze) */
     operatorId: string;
-    /** Operator configuration parameters */
     params?: DpsOperatorParams;
-    /** Enemy stats to calculate against */
     enemy?: DpsEnemyStats;
-    /** Range parameters for generating DPS curves */
     range?: DpsRangeParams;
 }
 
@@ -134,136 +53,65 @@ export interface DpsCalculateRequest {
 // ============================================================================
 
 /**
- * Single DPS result (when no range is specified)
+ * Response from DPS calculation endpoint (single point)
  */
 export interface DpsSingleResult {
-    /** DPS while skill is active */
-    skillDps: number;
-    /** Total damage during skill duration */
-    totalDamage: number;
-    /** Average DPS including skill downtime */
-    averageDps: number;
+    skill_dps: number;
+    total_damage: number;
+    average_dps: number;
 }
 
 /**
- * Data point for DPS range calculations
+ * Range data point for DPS curve
  */
 export interface DpsRangeDataPoint {
-    /** DEF or RES value */
     value: number;
-    /** DPS at that value */
     dps: number;
 }
 
 /**
- * Range DPS result (when range params are specified)
+ * Response from DPS range calculation
  */
 export interface DpsRangeResult {
-    /** DPS values by enemy defense */
     byDefense: DpsRangeDataPoint[];
-    /** DPS values by enemy resistance */
     byResistance: DpsRangeDataPoint[];
 }
 
 /**
- * Operator metadata returned with DPS calculation
- */
-export interface DpsOperatorInfo {
-    /** Operator ID */
-    id: string;
-    /** Operator name */
-    name: string;
-    /** Rarity (1-6) */
-    rarity: number;
-    /** Elite level used in calculation */
-    elite: number;
-    /** Level used in calculation */
-    level: number;
-    /** Potential used in calculation */
-    potential: number;
-    /** Trust used in calculation */
-    trust: number;
-    /** Skill index used */
-    skillIndex: number;
-    /** Effective skill level (1-10) */
-    skillLevel: number;
-    /** Module index used */
-    moduleIndex: number;
-    /** Module level used */
-    moduleLevel: number;
-    /** Final calculated ATK */
-    atk: number;
-    /** Base attack interval */
-    attackInterval: number;
-    /** Attack speed (100 = base) */
-    attackSpeed: number;
-    /** Whether damage is physical (true) or magical (false) */
-    isPhysical: boolean;
-    /** Skill duration in seconds */
-    skillDuration: number;
-    /** Skill SP cost */
-    skillCost: number;
-    /** Skill blackboard parameters */
-    skillParameters: number[];
-    /** Talent 1 parameters */
-    talent1Parameters: number[];
-    /** Talent 2 parameters */
-    talent2Parameters: number[];
-}
-
-/**
- * Response from DPS calculation endpoint
+ * DPS calculation response - either single or range result
  */
 export interface DpsCalculateResponse {
-    /** DPS calculation results (single or range) */
-    dps: DpsSingleResult | DpsRangeResult;
-    /** Operator metadata and calculated stats */
     operator: DpsOperatorInfo;
+    dps: DpsSingleResult | DpsRangeResult;
 }
 
 /**
- * Potential rank data for DPS calculator
+ * Type guard for range result
  */
-export interface DpsPotentialRank {
-    /** Description of what this potential does */
-    Description: string;
+export function isDpsRangeResult(dps: DpsSingleResult | DpsRangeResult): dps is DpsRangeResult {
+    return "byDefense" in dps;
 }
 
 /**
- * Skill display data for DPS calculator
+ * Type guard for single result
  */
-export interface DpsSkillData {
-    /** Skill index (1, 2, or 3) */
-    index: number;
-    /** Skill ID for API lookups */
-    skillId: string;
-    /** Display name */
+export function isDpsSingleResult(dps: DpsSingleResult | DpsRangeResult): dps is DpsSingleResult {
+    return "skill_dps" in dps;
+}
+
+/**
+ * Operator info returned in DPS response
+ */
+export interface DpsOperatorInfo {
+    id: string;
     name: string;
-    /** Icon ID for fallback image path */
-    iconId: string | null;
-    /** Direct image path if available */
-    image: string | null;
+    rarity: number;
+    profession: string;
 }
 
-/**
- * Module display data for DPS calculator
- */
-export interface DpsModuleData {
-    /** Module index (1, 2, or 3) */
-    index: number;
-    /** Module unique ID */
-    uniEquipId: string;
-    /** Display name */
-    uniEquipName: string;
-    /** Module type (X, Y, or D for Delta) */
-    typeName1: string;
-    /** Direct image path if available */
-    image: string | null;
-    /** Icon ID for fallback path */
-    uniEquipIcon: string;
-    /** Maximum module level (1-3) */
-    maxLevel: number;
-}
+// ============================================================================
+// Operator List Types
+// ============================================================================
 
 /**
  * Conditional type enum values
@@ -274,84 +122,131 @@ export type DpsConditionalType = "trait" | "talent" | "talent2" | "skill" | "mod
  * Conditional info from backend - describes operator-specific conditionals
  */
 export interface DpsConditionalInfo {
-    /** Type of conditional: trait, talent, talent2, skill, module */
     conditionalType: DpsConditionalType;
-    /** Display name for this conditional (e.g., "aerialTarget", "maxStacks", "vsBlocked") */
     name: string;
-    /** If true, the name/label applies when this conditional is DISABLED */
-    inverted: boolean;
-    /** Which skills this conditional applies to (empty = all skills) */
+    default: boolean;
+    inverted?: boolean;
     applicableSkills: number[];
-    /** Which modules this conditional applies to (empty = all modules) */
     applicableModules: number[];
-    /** Minimum elite level required for this conditional to be relevant */
     minElite: number;
-    /** Minimum module level required for this conditional to be relevant */
     minModuleLevel: number;
+    /** @deprecated v3 snake_case alias */
+    conditional_type?: string;
+    /** @deprecated v3 snake_case alias */
+    skills?: number[];
+    /** @deprecated v3 snake_case alias */
+    modules?: number[];
 }
 
 /**
  * Operator entry in the list response
  */
 export interface DpsOperatorListEntry {
-    /** Operator ID (e.g., "char_017_huang") */
     id: string;
-    /** Operator display name */
     name: string;
-    /** Calculator implementation name */
     calculatorName: string;
-    /** Rarity (1-6) */
     rarity: number;
-    /** Profession/class */
     profession: string;
-    /** Available skill indices (e.g., [1, 2] or [1, 2, 3]) */
     availableSkills: number[];
-    /** Available module indices (e.g., [1, 2] or []) */
     availableModules: number[];
-    /** Default skill index for this operator */
     defaultSkillIndex: number;
-    /** Default potential for this operator */
-    defaultPotential: number;
-    /** Default module index for this operator */
     defaultModuleIndex: number;
-    /** Maximum promotion/elite level (0, 1, or 2) based on rarity */
+    defaultPotential: number;
     maxPromotion: number;
-    /** Skill metadata for display (optional, backend may not provide) */
-    skillData?: DpsSkillData[];
-    /** Module metadata for display (optional, backend may not provide) */
-    moduleData?: DpsModuleData[];
-    /** Max level for each phase [E0, E1, E2] (optional) */
     phaseLevels?: number[];
-    /** Potential rank descriptions (optional, for tooltip display) */
+    skillData?: DpsSkillData[];
+    moduleData?: DpsModuleData[];
     potentialRanks?: DpsPotentialRank[];
-    /** Operator-specific conditional metadata (optional) */
-    conditionals?: DpsConditionalInfo[];
+    conditionals: DpsConditionalInfo[];
+    /** @deprecated v3 snake_case alias */
+    available_skills?: number[];
+    /** @deprecated v3 snake_case alias */
+    available_modules?: number[];
+    /** @deprecated v3 snake_case alias */
+    default_skill?: number;
+    /** @deprecated v3 snake_case alias */
+    default_module?: number;
 }
 
 /**
- * Response from list operators endpoint
+ * Response from list operators endpoint - v3 returns array directly
  */
-export interface DpsListOperatorsResponse {
-    /** Total count of operators with DPS calculators */
-    count: number;
-    /** List of operators */
-    operators: DpsOperatorListEntry[];
+export type DpsListOperatorsResponse = DpsOperatorListEntry[];
+
+// ============================================================================
+// Client-side Operator Parameter Types
+// ============================================================================
+
+/**
+ * Enemy stats for DPS calculation
+ */
+export interface DpsEnemyStats {
+    defense?: number;
+    res?: number;
+}
+
+/**
+ * Client-side operator params (camelCase, sent to /api/dps-calculator)
+ */
+export interface DpsOperatorParams {
+    potential?: number;
+    trust?: number;
+    promotion?: number;
+    level?: number;
+    skillIndex?: number;
+    masteryLevel?: number;
+    moduleIndex?: number;
+    moduleLevel?: number;
+    targets?: number;
+    spBoost?: number;
+    allCond?: boolean;
+    conditionals?: DpsConditionals;
+    buffs?: DpsBuffs;
+    shred?: DpsShred;
+}
+
+/**
+ * Range params for DPS curve generation
+ */
+export interface DpsRangeParams {
+    minDef?: number;
+    maxDef?: number;
+    defStep?: number;
+    minRes?: number;
+    maxRes?: number;
+    resStep?: number;
 }
 
 // ============================================================================
-// Type Guards
+// Operator Metadata Types (returned in operator list)
 // ============================================================================
 
 /**
- * Check if the DPS result is a single calculation (not a range)
+ * Skill metadata for display
  */
-export function isDpsSingleResult(result: DpsSingleResult | DpsRangeResult): result is DpsSingleResult {
-    return "skillDps" in result && "totalDamage" in result && "averageDps" in result;
+export interface DpsSkillData {
+    index: number;
+    name: string;
+    iconId?: string;
 }
 
 /**
- * Check if the DPS result is a range calculation
+ * Module metadata for display
  */
-export function isDpsRangeResult(result: DpsSingleResult | DpsRangeResult): result is DpsRangeResult {
-    return "byDefense" in result && "byResistance" in result;
+export interface DpsModuleData {
+    index: number;
+    name: string;
+    typeName1?: string;
+    uniEquipName?: string;
+    iconId?: string;
+}
+
+/**
+ * Potential rank description
+ */
+export interface DpsPotentialRank {
+    rank: number;
+    description: string;
+    /** Backend returns Description (capital D) - game data format */
+    Description?: string;
 }

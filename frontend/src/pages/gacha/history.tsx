@@ -83,14 +83,14 @@ function GachaHistoryPageContent() {
     );
 
     useEffect(() => {
-        if (user?.status && !authLoading && !initialFetchDone.current) {
+        if (user?.uid && !authLoading && !initialFetchDone.current) {
             initialFetchDone.current = true;
             fetchAllRecords();
             fetchSettings();
             fetchHistory({ limit: pageSize, offset: 0, order: "desc" });
             fetchStoredRecords();
         }
-    }, [user?.status, authLoading, fetchAllRecords, fetchHistory, fetchSettings, fetchStoredRecords, pageSize]);
+    }, [user?.uid, authLoading, fetchAllRecords, fetchHistory, fetchSettings, fetchStoredRecords, pageSize]);
 
     const handleTabChange = useCallback(
         async (tab: string) => {

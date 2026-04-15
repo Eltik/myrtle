@@ -1,0 +1,11 @@
+pub mod auth;
+pub mod dps;
+pub mod gacha;
+pub mod leaderboard;
+pub mod operator_notes;
+pub mod roster;
+pub mod search;
+pub mod static_data;
+pub mod stats;
+pub mod tier_list;
+pub mod user;

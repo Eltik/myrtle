@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -20,13 +19,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 42;
+pub const ENUM_MAX_ENUM__TORAPPU_ABNORMAL_FLAG: i32 = 44;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 43] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 45] = [
     enum__Torappu_AbnormalFlag::STUNNED,
     enum__Torappu_AbnormalFlag::SP_RECOVER_STOPPED,
     enum__Torappu_AbnormalFlag::TARGET_FREE,
@@ -69,6 +68,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ABNORMAL_FLAG: [enum__Torappu_AbnormalFlag; 
     enum__Torappu_AbnormalFlag::PALSY,
     enum__Torappu_AbnormalFlag::PALSYING,
     enum__Torappu_AbnormalFlag::ATTRACTED,
+    enum__Torappu_AbnormalFlag::FEARED_PRIVATE,
+    enum__Torappu_AbnormalFlag::DOZE,
     enum__Torappu_AbnormalFlag::E_NUM,
 ];
 
@@ -119,10 +120,12 @@ impl enum__Torappu_AbnormalFlag {
     pub const PALSY: Self = Self(39);
     pub const PALSYING: Self = Self(40);
     pub const ATTRACTED: Self = Self(41);
-    pub const E_NUM: Self = Self(42);
+    pub const FEARED_PRIVATE: Self = Self(42);
+    pub const DOZE: Self = Self(43);
+    pub const E_NUM: Self = Self(44);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 42;
+    pub const ENUM_MAX: i32 = 44;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::STUNNED,
         Self::SP_RECOVER_STOPPED,
@@ -166,6 +169,8 @@ impl enum__Torappu_AbnormalFlag {
         Self::PALSY,
         Self::PALSYING,
         Self::ATTRACTED,
+        Self::FEARED_PRIVATE,
+        Self::DOZE,
         Self::E_NUM,
     ];
     /// Returns the variant's name or "" if unknown.
@@ -217,6 +222,8 @@ impl enum__Torappu_AbnormalFlag {
             Self::PALSY => Some("PALSY"),
             Self::PALSYING => Some("PALSYING"),
             Self::ATTRACTED => Some("ATTRACTED"),
+            Self::FEARED_PRIVATE => Some("FEARED_PRIVATE"),
+            Self::DOZE => Some("DOZE"),
             Self::E_NUM => Some("E_NUM"),
             _ => None,
         }
@@ -229,18 +236,6 @@ impl core::fmt::Debug for enum__Torappu_AbnormalFlag {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_AbnormalFlag {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AbnormalFlag",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -339,18 +334,6 @@ impl core::fmt::Debug for enum__Torappu_AbnormalCombo {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_AbnormalCombo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AbnormalCombo",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -593,18 +576,6 @@ impl core::fmt::Debug for enum__Torappu_AttributeType {
         }
     }
 }
-impl Serialize for enum__Torappu_AttributeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AttributeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_AttributeType {
     type Inner = Self;
@@ -714,18 +685,6 @@ impl core::fmt::Debug for enum__Torappu_AttributeModifierData_AttributeModifier_
         }
     }
 }
-impl Serialize for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a>
     for enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType
@@ -832,18 +791,6 @@ impl core::fmt::Debug for enum__Torappu_BuffData_StatusResistable {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_BuffData_StatusResistable {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BuffData_StatusResistable",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -957,18 +904,6 @@ impl core::fmt::Debug for enum__Torappu_BuffData_OverrideType {
         }
     }
 }
-impl Serialize for enum__Torappu_BuffData_OverrideType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BuffData_OverrideType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_BuffData_OverrideType {
     type Inner = Self;
@@ -1019,7 +954,7 @@ impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_BuffData_OverrideType 
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MIN_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = -3000;
+pub const ENUM_MIN_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = -4000;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
@@ -1031,7 +966,8 @@ pub const ENUM_MAX_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY: i32 = 2000;
 )]
 #[allow(non_camel_case_types)]
 pub const ENUM_VALUES_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY:
-    [enum__Torappu_BuffData_OnEventPriority; 6] = [
+    [enum__Torappu_BuffData_OnEventPriority; 7] = [
+    enum__Torappu_BuffData_OnEventPriority::TITI_DOZE_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOWEST_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOWER_PRIORITY,
     enum__Torappu_BuffData_OnEventPriority::LOW_PRIORITY,
@@ -1045,6 +981,7 @@ pub const ENUM_VALUES_ENUM__TORAPPU_BUFF_DATA_ON_EVENT_PRIORITY:
 pub struct enum__Torappu_BuffData_OnEventPriority(pub i32);
 #[allow(non_upper_case_globals)]
 impl enum__Torappu_BuffData_OnEventPriority {
+    pub const TITI_DOZE_PRIORITY: Self = Self(-4000);
     pub const LOWEST_PRIORITY: Self = Self(-3000);
     pub const LOWER_PRIORITY: Self = Self(-2000);
     pub const LOW_PRIORITY: Self = Self(-1000);
@@ -1052,9 +989,10 @@ impl enum__Torappu_BuffData_OnEventPriority {
     pub const HIGH_PRIORITY: Self = Self(1000);
     pub const HIGHER_PRIORITY: Self = Self(2000);
 
-    pub const ENUM_MIN: i32 = -3000;
+    pub const ENUM_MIN: i32 = -4000;
     pub const ENUM_MAX: i32 = 2000;
     pub const ENUM_VALUES: &'static [Self] = &[
+        Self::TITI_DOZE_PRIORITY,
         Self::LOWEST_PRIORITY,
         Self::LOWER_PRIORITY,
         Self::LOW_PRIORITY,
@@ -1065,6 +1003,7 @@ impl enum__Torappu_BuffData_OnEventPriority {
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
+            Self::TITI_DOZE_PRIORITY => Some("TITI_DOZE_PRIORITY"),
             Self::LOWEST_PRIORITY => Some("LOWEST_PRIORITY"),
             Self::LOWER_PRIORITY => Some("LOWER_PRIORITY"),
             Self::LOW_PRIORITY => Some("LOW_PRIORITY"),
@@ -1082,18 +1021,6 @@ impl core::fmt::Debug for enum__Torappu_BuffData_OnEventPriority {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_BuffData_OnEventPriority {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_BuffData_OnEventPriority",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1200,18 +1127,6 @@ impl core::fmt::Debug for enum__Torappu_LifeType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_LifeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_LifeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -1428,25 +1343,6 @@ impl<'a> Default for clz_Torappu_AttributeModifierData_AttributeModifierArgs {
             loadFromBlackboard: false,
             fetchBaseValueFromSourceEntity: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_AttributeModifierData_AttributeModifier<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer
-            .serialize_struct("clz_Torappu_AttributeModifierData_AttributeModifier", 5)?;
-        s.serialize_field("attributeType", &self.attributeType())?;
-        s.serialize_field("formulaItem", &self.formulaItem())?;
-        s.serialize_field("value", &self.value())?;
-        s.serialize_field("loadFromBlackboard", &self.loadFromBlackboard())?;
-        s.serialize_field(
-            "fetchBaseValueFromSourceEntity",
-            &self.fetchBaseValueFromSourceEntity(),
-        )?;
-        s.end()
     }
 }
 
@@ -1798,46 +1694,6 @@ impl<'a> Default for clz_Torappu_AttributeModifierDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_AttributeModifierData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_AttributeModifierData", 6)?;
-        if let Some(f) = self.abnormalFlags() {
-            s.serialize_field("abnormalFlags", &f)?;
-        } else {
-            s.skip_field("abnormalFlags")?;
-        }
-        if let Some(f) = self.abnormalImmunes() {
-            s.serialize_field("abnormalImmunes", &f)?;
-        } else {
-            s.skip_field("abnormalImmunes")?;
-        }
-        if let Some(f) = self.abnormalAntis() {
-            s.serialize_field("abnormalAntis", &f)?;
-        } else {
-            s.skip_field("abnormalAntis")?;
-        }
-        if let Some(f) = self.abnormalCombos() {
-            s.serialize_field("abnormalCombos", &f)?;
-        } else {
-            s.skip_field("abnormalCombos")?;
-        }
-        if let Some(f) = self.abnormalComboImmunes() {
-            s.serialize_field("abnormalComboImmunes", &f)?;
-        } else {
-            s.skip_field("abnormalComboImmunes")?;
-        }
-        if let Some(f) = self.attributeModifiers() {
-            s.serialize_field("attributeModifiers", &f)?;
-        } else {
-            s.skip_field("attributeModifiers")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_AttributeModifierDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2124,27 +1980,6 @@ impl<'a> Default for clz_Torappu_Blackboard_DataPairArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_Blackboard_DataPair<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_Blackboard_DataPair", 3)?;
-        if let Some(f) = self.key() {
-            s.serialize_field("key", &f)?;
-        } else {
-            s.skip_field("key")?;
-        }
-        s.serialize_field("value", &self.value())?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_Blackboard_DataPairBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2283,6 +2118,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
     pub const VT_PRIORITYBBKEYS: flatbuffers::VOffsetT = 70;
     pub const VT_STRIPBLACKBOARDPARAMSWITHBUFFKEY: flatbuffers::VOffsetT = 72;
     pub const VT_BLACKBOARD: flatbuffers::VOffsetT = 74;
+    pub const VT_ENABLEINITDIRECTIONFROMSOURCE: flatbuffers::VOffsetT = 76;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -2330,6 +2166,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         if let Some(x) = args.attributes {
             builder.add_attributes(x);
         }
+        builder.add_enableInitDirectionFromSource(args.enableInitDirectionFromSource);
         builder.add_stripBlackboardParamsWithBuffKey(args.stripBlackboardParamsWithBuffKey);
         builder.add_waitFirstTriggerInterval(args.waitFirstTriggerInterval);
         builder.add_triggerLifeType(args.triggerLifeType);
@@ -2392,6 +2229,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
         let blackboard = self
             .blackboard()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let enableInitDirectionFromSource = self.enableInitDirectionFromSource();
         clz_Torappu_BuffDataT {
             attributes,
             buffKey,
@@ -2429,6 +2267,7 @@ impl<'a> clz_Torappu_BuffData<'a> {
             priorityBBKeys,
             stripBlackboardParamsWithBuffKey,
             blackboard,
+            enableInitDirectionFromSource,
         }
     }
 
@@ -2876,6 +2715,20 @@ impl<'a> clz_Torappu_BuffData<'a> {
             >>(clz_Torappu_BuffData::VT_BLACKBOARD, None)
         }
     }
+    #[inline]
+    pub fn enableInitDirectionFromSource(&self) -> bool {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<bool>(
+                    clz_Torappu_BuffData::VT_ENABLEINITDIRECTIONFROMSOURCE,
+                    Some(false),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
@@ -2997,6 +2850,11 @@ impl flatbuffers::Verifiable for clz_Torappu_BuffData<'_> {
                     flatbuffers::ForwardsUOffset<clz_Torappu_Blackboard_DataPair>,
                 >,
             >>("blackboard", Self::VT_BLACKBOARD, false)?
+            .visit_field::<bool>(
+                "enableInitDirectionFromSource",
+                Self::VT_ENABLEINITDIRECTIONFROMSOURCE,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -3047,6 +2905,7 @@ pub struct clz_Torappu_BuffDataArgs<'a> {
             >,
         >,
     >,
+    pub enableInitDirectionFromSource: bool,
 }
 impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
     #[inline]
@@ -3088,101 +2947,8 @@ impl<'a> Default for clz_Torappu_BuffDataArgs<'a> {
             priorityBBKeys: None,
             stripBlackboardParamsWithBuffKey: false,
             blackboard: None,
+            enableInitDirectionFromSource: false,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_BuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BuffData", 36)?;
-        if let Some(f) = self.attributes() {
-            s.serialize_field("attributes", &f)?;
-        } else {
-            s.skip_field("attributes")?;
-        }
-        if let Some(f) = self.buffKey() {
-            s.serialize_field("buffKey", &f)?;
-        } else {
-            s.skip_field("buffKey")?;
-        }
-        s.serialize_field("loadFromDB", &self.loadFromDB())?;
-        s.serialize_field("isDurableBuff", &self.isDurableBuff())?;
-        s.serialize_field("isDamageMissable", &self.isDamageMissable())?;
-        s.serialize_field("isSilenceable", &self.isSilenceable())?;
-        s.serialize_field("isStunnable", &self.isStunnable())?;
-        s.serialize_field("isFreezable", &self.isFreezable())?;
-        s.serialize_field("isLevitatable", &self.isLevitatable())?;
-        s.serialize_field("statusResistable", &self.statusResistable())?;
-        if let Some(f) = self.templateKey() {
-            s.serialize_field("templateKey", &f)?;
-        } else {
-            s.skip_field("templateKey")?;
-        }
-        s.serialize_field("disableOverride", &self.disableOverride())?;
-        if let Some(f) = self.overrideKey() {
-            s.serialize_field("overrideKey", &f)?;
-        } else {
-            s.skip_field("overrideKey")?;
-        }
-        s.serialize_field("overrideType", &self.overrideType())?;
-        s.serialize_field("maxStackCnt", &self.maxStackCnt())?;
-        s.serialize_field(
-            "refreshRemainingTimeWhenStackMax",
-            &self.refreshRemainingTimeWhenStackMax(),
-        )?;
-        s.serialize_field(
-            "clearAllStackCntWhenTimeUp",
-            &self.clearAllStackCntWhenTimeUp(),
-        )?;
-        s.serialize_field("maxValidStackCnt", &self.maxValidStackCnt())?;
-        s.serialize_field(
-            "independentCharacterSource",
-            &self.independentCharacterSource(),
-        )?;
-        if let Some(f) = self.overrideEffectKey() {
-            s.serialize_field("overrideEffectKey", &f)?;
-        } else {
-            s.skip_field("overrideEffectKey")?;
-        }
-        s.serialize_field("overrideOnEventPriority", &self.overrideOnEventPriority())?;
-        s.serialize_field("onEventPriority", &self.onEventPriority())?;
-        if let Some(f) = self.audioSignal() {
-            s.serialize_field("audioSignal", &f)?;
-        } else {
-            s.skip_field("audioSignal")?;
-        }
-        s.serialize_field("lifeTimeType", &self.lifeTimeType())?;
-        s.serialize_field("takeSnapshotWhenExtend", &self.takeSnapshotWhenExtend())?;
-        if let Some(f) = self.durationKey() {
-            s.serialize_field("durationKey", &f)?;
-        } else {
-            s.skip_field("durationKey")?;
-        }
-        s.serialize_field("lifeTime", &self.lifeTime())?;
-        s.serialize_field("triggerLifeType", &self.triggerLifeType())?;
-        s.serialize_field("triggerCnt", &self.triggerCnt())?;
-        s.serialize_field("triggerInterval", &self.triggerInterval())?;
-        s.serialize_field("waitFirstTriggerInterval", &self.waitFirstTriggerInterval())?;
-        s.serialize_field("firstTriggerInterval", &self.firstTriggerInterval())?;
-        s.serialize_field("priority", &self.priority())?;
-        if let Some(f) = self.priorityBBKeys() {
-            s.serialize_field("priorityBBKeys", &f)?;
-        } else {
-            s.skip_field("priorityBBKeys")?;
-        }
-        s.serialize_field(
-            "stripBlackboardParamsWithBuffKey",
-            &self.stripBlackboardParamsWithBuffKey(),
-        )?;
-        if let Some(f) = self.blackboard() {
-            s.serialize_field("blackboard", &f)?;
-        } else {
-            s.skip_field("blackboard")?;
-        }
-        s.end()
     }
 }
 
@@ -3463,6 +3229,14 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_BuffDataBuilder<'a,
         );
     }
     #[inline]
+    pub fn add_enableInitDirectionFromSource(&mut self, enableInitDirectionFromSource: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_BuffData::VT_ENABLEINITDIRECTIONFROMSOURCE,
+            enableInitDirectionFromSource,
+            false,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_BuffDataBuilder<'a, 'b, A> {
@@ -3530,6 +3304,10 @@ impl core::fmt::Debug for clz_Torappu_BuffData<'_> {
             &self.stripBlackboardParamsWithBuffKey(),
         );
         ds.field("blackboard", &self.blackboard());
+        ds.field(
+            "enableInitDirectionFromSource",
+            &self.enableInitDirectionFromSource(),
+        );
         ds.finish()
     }
 }
@@ -3572,6 +3350,7 @@ pub struct clz_Torappu_BuffDataT {
     pub priorityBBKeys: Option<Vec<String>>,
     pub stripBlackboardParamsWithBuffKey: bool,
     pub blackboard: Option<Vec<clz_Torappu_Blackboard_DataPairT>>,
+    pub enableInitDirectionFromSource: bool,
 }
 impl Default for clz_Torappu_BuffDataT {
     fn default() -> Self {
@@ -3612,6 +3391,7 @@ impl Default for clz_Torappu_BuffDataT {
             priorityBBKeys: None,
             stripBlackboardParamsWithBuffKey: false,
             blackboard: None,
+            enableInitDirectionFromSource: false,
         }
     }
 }
@@ -3665,6 +3445,7 @@ impl clz_Torappu_BuffDataT {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let enableInitDirectionFromSource = self.enableInitDirectionFromSource;
         clz_Torappu_BuffData::create(
             _fbb,
             &clz_Torappu_BuffDataArgs {
@@ -3704,6 +3485,7 @@ impl clz_Torappu_BuffDataT {
                 priorityBBKeys,
                 stripBlackboardParamsWithBuffKey,
                 blackboard,
+                enableInitDirectionFromSource,
             },
         )
     }
@@ -3825,22 +3607,6 @@ impl<'a> Default for dict__string__clz_Torappu_BuffDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_BuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_BuffData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4022,22 +3788,6 @@ impl<'a> Default for clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_SimpleKVTable_clz_Torappu_BuffDataArgs { buffs: None }
-    }
-}
-
-impl Serialize for clz_Torappu_SimpleKVTable_clz_Torappu_BuffData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_SimpleKVTable_clz_Torappu_BuffData", 1)?;
-        if let Some(f) = self.buffs() {
-            s.serialize_field("buffs", &f)?;
-        } else {
-            s.skip_field("buffs")?;
-        }
-        s.end()
     }
 }
 

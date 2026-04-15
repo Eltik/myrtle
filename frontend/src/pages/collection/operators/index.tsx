@@ -2,7 +2,7 @@ import type { GetServerSideProps, NextPage } from "next";
 import { OperatorDetail } from "~/components/collection/operators/detail/operator-detail";
 import { OperatorsList } from "~/components/collection/operators/list/operators-list";
 import { SEO } from "~/components/seo";
-import { env } from "~/env.js";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { Operator, OperatorFromList } from "~/types/api";
 
 interface ListProps {
@@ -42,75 +42,48 @@ const OperatorsPage: NextPage<Props> = (props) => {
 
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
     const { id } = context.query;
-    const backendURL = env.BACKEND_URL;
 
-    // If no ID provided, show the list view
-    if (!id || typeof id !== "string") {
-        const base = `${backendURL}/static/operators`;
-        const params = new URLSearchParams({
-            limit: "1000",
-            fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait", "phases"].join(","),
-        });
+    try {
+        // v3: /static/operators returns Record<string, Operator>
+        const response = await backendFetch("/static/operators");
 
-        try {
-            const response = await fetch(`${base}?${params.toString()}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+        if (!response.ok) {
+            console.error("Failed to fetch operators:", response.status);
+            return { notFound: true };
+        }
 
-            const data = (await response.json()) as {
-                has_more: boolean;
-                next_cursor: string;
-                operators: Operator[];
-            };
+        const data = (await response.json()) as Record<string, Operator>;
+        const operators = Object.values(data);
 
-            if (data.operators?.length === 0) {
-                return { notFound: true };
-            }
+        if (operators.length === 0) {
+            return { notFound: true };
+        }
 
+        // If no ID provided, show the list view
+        if (!id || typeof id !== "string") {
             return {
                 props: {
                     mode: "list" as const,
-                    operators: data.operators as OperatorFromList[],
+                    operators: operators as OperatorFromList[],
                 },
             };
-        } catch (error) {
-            console.error("Failed to fetch operators:", error);
-            return { notFound: true };
-        }
-    }
-
-    // ID provided, show the detail view
-    const base = `${backendURL}/static/operators/${id}`;
-
-    try {
-        const response = await fetch(base, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            return { notFound: true };
         }
 
-        const data = (await response.json()) as { operator: Operator };
+        // ID provided, show the detail view - look up by ID in the map
+        const operator = data[id];
 
-        if (!data.operator) {
+        if (!operator) {
             return { notFound: true };
         }
 
         return {
             props: {
                 mode: "detail" as const,
-                operator: data.operator,
+                operator,
             },
         };
     } catch (error) {
-        console.error("Failed to fetch operator:", error);
+        console.error("Failed to fetch operators:", error);
         return { notFound: true };
     }
 };

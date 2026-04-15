@@ -2,47 +2,39 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import { AKServerSchema, setAuthCookies } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
-import type { User } from "~/types/api";
+import type { UserProfile } from "~/types/api/impl/user";
 
-// Login request validation schema
 const LoginSchema = z.object({
-    email: z.email("Invalid email format").min(1, "Email is required").max(254, "Email too long"),
+    email: z.string().min(1, "Email is required").max(254, "Email too long").email("Invalid email format"),
+    // v3 backend expects `code` as a 6-digit string. Accept string or number
+    // from the client and always forward as a zero-padded string.
     code: z
         .union([z.string(), z.number()])
         .transform((val) => {
-            const num = typeof val === "string" ? Number.parseInt(val, 10) : val;
-            if (Number.isNaN(num)) throw new Error("Code must be a valid number");
-            return num;
-        })
-        .refine((val) => val >= 0 && val <= 999999, "Code must be a 6-digit number"),
+            const str = typeof val === "number" ? String(val) : val.trim();
+            if (!/^\d{1,6}$/.test(str)) throw new Error("Code must be a 6-digit number");
+            return str.padStart(6, "0");
+        }),
     server: AKServerSchema.default("en"),
 });
 
 type LoginInput = z.infer<typeof LoginSchema>;
 
-interface BackendRefreshResponse {
-    user: User;
-    site_token: string;
-}
-
-interface BackendLoginResponse {
+interface LoginResponse {
+    token: string;
     uid: string;
-    secret: string;
-    seqnum: number;
-    yostar_email: string;
-    yssid: string | null;
-    yssid_sig: string | null;
+    server: string;
 }
 
 interface SuccessResponse {
     success: true;
-    user: User;
+    user: UserProfile;
 }
 
 interface ErrorResponse {
     success: false;
     error: string;
-    details?: z.core.$ZodIssue[];
+    details?: z.ZodIssue[];
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -70,13 +62,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         const { email, code, server }: LoginInput = parseResult.data;
 
         // Step 1: Authenticate with backend
-        const loginParams = new URLSearchParams();
-        loginParams.set("email", email);
-        loginParams.set("code", code.toString());
-        loginParams.set("server", server);
-
-        const loginResponse = await backendFetch(`/login?${loginParams.toString()}`, {
+        const loginResponse = await backendFetch("/login", {
             method: "POST",
+            body: JSON.stringify({ email, code, server }),
         });
 
         if (!loginResponse.ok) {
@@ -90,30 +78,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const backendData: BackendLoginResponse = await loginResponse.json();
+        const loginData: LoginResponse = await loginResponse.json();
 
-        if (!backendData.uid || !backendData.secret || typeof backendData.seqnum !== "number" || !backendData.yostar_email) {
-            console.error("Invalid backend response structure:", backendData);
+        if (!loginData.token || !loginData.uid) {
+            console.error("Invalid backend response structure:", loginData);
             return res.status(500).json({
                 success: false,
                 error: "Authentication service error",
             });
         }
 
-        // Step 2: Refresh to fetch user data and store in database
-        const refreshParams = new URLSearchParams();
-        refreshParams.set("uid", backendData.uid);
-        refreshParams.set("secret", backendData.secret);
-        refreshParams.set("seqnum", backendData.seqnum.toString());
-        refreshParams.set("server", server);
+        // Step 2: Set auth cookies with JWT token
+        setAuthCookies(res, loginData.token);
 
-        const refreshResponse = await backendFetch(`/refresh?${refreshParams.toString()}`, {
+        // Step 3: Trigger game data sync and WAIT for it to complete.
+        // Without awaiting, step 4 would fetch a stale or empty profile.
+        console.log(`[login] Triggering /refresh for uid=${loginData.uid}`);
+        const refreshResponse = await backendFetch("/refresh", {
             method: "POST",
+            bearerToken: loginData.token,
         });
 
         if (!refreshResponse.ok) {
-            const errorText = await refreshResponse.text();
-            console.error(`Backend refresh failed: ${refreshResponse.status} - ${errorText}`);
+            const errText = await refreshResponse.text().catch(() => "");
+            console.error(`[login] /refresh FAILED ${refreshResponse.status}: ${errText}`);
+            // Don't silently succeed — if sync fails, the profile will be empty/stale.
+            return res.status(502).json({
+                success: false,
+                error: `Sync failed (${refreshResponse.status}). Try logging in again.`,
+            });
+        }
+
+        const refreshBody = await refreshResponse.text().catch(() => "");
+        console.log(`[login] /refresh OK for uid=${loginData.uid}, response length=${refreshBody.length}`);
+
+        // Step 4: Fetch user profile (now populated with fresh game data)
+        const userResponse = await backendFetch(`/get-user?uid=${encodeURIComponent(loginData.uid)}`);
+
+        if (!userResponse.ok) {
+            const errorText = await userResponse.text();
+            console.error(`Backend get-user failed: ${userResponse.status} - ${errorText}`);
 
             return res.status(500).json({
                 success: false,
@@ -121,24 +125,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const refreshData: BackendRefreshResponse = await refreshResponse.json();
+        const user: UserProfile = await userResponse.json();
 
-        // Step 3: Set session cookies (seqnum incremented after refresh)
-        setAuthCookies(
-            res,
-            {
-                uid: backendData.uid,
-                secret: backendData.secret,
-                seqnum: backendData.seqnum + 1,
-                server,
-                yostar_email: backendData.yostar_email,
-                yssid: backendData.yssid ?? undefined,
-                yssid_sig: backendData.yssid_sig ?? undefined,
-            },
-            refreshData.site_token,
-        );
-
-        return res.status(200).json({ success: true, user: refreshData.user });
+        return res.status(200).json({ success: true, user });
     } catch (error) {
         console.error("Login handler error:", error);
         return res.status(500).json({

@@ -394,7 +394,7 @@ export function getAvatarById(charId: string): string {
  * Handles both default skins (ending in #1) and purchased skins (containing @).
  * Uses the dynamic avatar route which looks up the correct directory.
  */
-export function getAvatarSkinId(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
+export function getAvatarSkinId(user: { secretary?: string | null; secretary_skin_id?: string | null } | null): string {
     return getSecretaryAvatarURL(user);
 }
 
@@ -454,13 +454,13 @@ export function getOperatorImageURL(charId: string, skin: string, evolvePhase: n
  * Gets the avatar URL for a user's secretary using the dynamic avatar route.
  * The backend will look up the correct directory from asset mappings.
  */
-export function getSecretaryAvatarURL(user: { status?: { secretary: string; secretarySkinId: string } } | null): string {
+export function getSecretaryAvatarURL(user: { secretary?: string | null; secretary_skin_id?: string | null } | null): string {
     const DEFAULT_AVATAR = "/api/cdn/avatar/char_002_amiya";
 
-    if (!user?.status) return DEFAULT_AVATAR;
+    if (!user?.secretary) return DEFAULT_AVATAR;
 
-    const secretaryId = user.status.secretary;
-    const secretarySkinId = user.status.secretarySkinId;
+    const secretaryId = user.secretary;
+    const secretarySkinId = user.secretary_skin_id ?? "";
 
     const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
 

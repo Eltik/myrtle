@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
+import { AKServerSchema } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 
-const AKServerSchema = z.enum(["en", "jp", "kr", "cn", "bili", "tw"]);
-
 const SendCodeSchema = z.object({
-    email: z.email("Invalid email format").min(1, "Email is required").max(254, "Email too long"),
+    email: z.string().min(1, "Email is required").max(254, "Email too long").email("Invalid email format"),
     server: AKServerSchema.default("en"),
 });
 
@@ -18,7 +17,7 @@ interface SuccessResponse {
 interface ErrorResponse {
     success: false;
     error: string;
-    details?: z.core.$ZodIssue[];
+    details?: z.ZodIssue[];
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -45,12 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const { email, server }: SendCodeInput = parseResult.data;
 
-        const params = new URLSearchParams();
-        params.set("email", email);
-        params.set("server", server);
-
-        const sendCodeResponse = await backendFetch(`/send-code?${params.toString()}`, {
+        const sendCodeResponse = await backendFetch("/login/send-code", {
             method: "POST",
+            body: JSON.stringify({ email, server }),
         });
 
         if (!sendCodeResponse.ok) {

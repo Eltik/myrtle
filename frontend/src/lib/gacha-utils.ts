@@ -9,7 +9,7 @@ export const HARD_PITY = 99;
 /**
  * Statistics calculated from gacha records
  */
-export interface GachaStats {
+export interface GachaStatsSummary {
     totalPulls: number;
     sixStarCount: number;
     fiveStarCount: number;
@@ -24,7 +24,8 @@ export interface GachaStats {
  * Parse the star/rarity string to a number.
  * Handles formats like "6", "TIER_6", etc.
  */
-export function parseRarity(star: string): number {
+export function parseRarity(star: string | number): number {
+    if (typeof star === "number") return star;
     const match = star.match(/\d+/);
     return match ? Number.parseInt(match[0], 10) : 3;
 }
@@ -48,7 +49,7 @@ export function calculatePity(records: GachaItem[]): number {
 /**
  * Calculate comprehensive statistics from gacha records.
  */
-export function calculateStats(records: GachaItem[]): GachaStats {
+export function calculateStats(records: GachaItem[]): GachaStatsSummary {
     const totalPulls = records.length;
     let sixStarCount = 0;
     let fiveStarCount = 0;
@@ -108,7 +109,6 @@ export function filterByRarity(records: GachaItem[], rarity: number): GachaItem[
 
 /**
  * Get the most recent N pulls.
- * Assumes records are already sorted newest first.
  */
 export function getRecentPulls(records: GachaItem[], count: number): GachaItem[] {
     return records.slice(0, count);
@@ -142,7 +142,7 @@ export function sortByTime(records: GachaItem[], order: "asc" | "desc"): GachaIt
 /**
  * Get Tailwind color class for rarity display.
  */
-export function getRarityColor(star: string): string {
+export function getRarityColor(star: string | number): string {
     const rarity = parseRarity(star);
     switch (rarity) {
         case 6:
@@ -159,7 +159,7 @@ export function getRarityColor(star: string): string {
 /**
  * Get background color class for rarity.
  */
-export function getRarityBgColor(star: string): string {
+export function getRarityBgColor(star: string | number): string {
     const rarity = parseRarity(star);
     switch (rarity) {
         case 6:
@@ -174,10 +174,13 @@ export function getRarityBgColor(star: string): string {
 }
 
 /**
- * Format pull timestamp for display.
+ * Format pull timestamp (seconds since epoch) for display.
+ * Records from the backend are seconds; convert to ms for Date().
  */
 export function formatPullDate(timestamp: number): string {
-    const date = new Date(timestamp);
+    // Heuristic: treat values > 1e12 as milliseconds; else seconds.
+    const ms = timestamp > 1e12 ? timestamp : timestamp * 1000;
+    const date = new Date(ms);
     return date.toLocaleDateString(undefined, {
         year: "numeric",
         month: "short",
@@ -204,12 +207,11 @@ export function calculateAvgPullsPerSixStar(totalPulls: number, sixStarCount: nu
 
 /**
  * Count 6-stars obtained in soft pity range (pulls 50-99).
- * This analyzes the pull history to find the pity count when each 6-star was obtained.
  */
 export function countSixStarsInSoftPity(records: GachaItem[]): number {
     let softPityCount = 0;
     let pullsSinceLastSixStar = 0;
-    const sortedRecords = [...records].sort((a, b) => a.at - b.at); // oldest first
+    const sortedRecords = [...records].sort((a, b) => a.at - b.at);
 
     for (const record of sortedRecords) {
         pullsSinceLastSixStar++;
@@ -223,9 +225,6 @@ export function countSixStarsInSoftPity(records: GachaItem[]): number {
     return softPityCount;
 }
 
-/**
- * Operator count entry for most common operators
- */
 export interface OperatorCount {
     charId: string;
     charName: string;
@@ -233,10 +232,6 @@ export interface OperatorCount {
     rarity: number;
 }
 
-/**
- * Get most common operators by rarity.
- * Returns top N operators for each rarity level.
- */
 export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): Record<number, OperatorCount[]> {
     const countsByRarity: Record<number, Map<string, { charName: string; count: number }>> = {
         6: new Map(),
@@ -273,7 +268,6 @@ export function getMostCommonOperatorsByRarity(records: GachaItem[], topN = 3): 
     return result;
 }
 
-/** Pity info for a single 6-star pull */
 export interface SixStarPityEntry {
     charId: string;
     charName: string;
@@ -282,7 +276,6 @@ export interface SixStarPityEntry {
     inSoftPity: boolean;
 }
 
-/** Summary statistics for a single banner (pool) */
 export interface BannerBreakdownEntry {
     poolId: string;
     poolName: string;
@@ -295,21 +288,13 @@ export interface BannerBreakdownEntry {
     fourStarCount: number;
     threeStarCount: number;
     notablePulls: Array<{ charId: string; charName: string; count: number }>;
-    /** All pulls on this banner sorted oldest first */
     pulls: GachaItem[];
-    /** Pity count for each 6-star obtained on this banner */
     pityHistory: SixStarPityEntry[];
-    /** Current pity (pulls since last 6-star on this banner) */
     currentPity: number;
 }
 
 export type BannerSortMode = "recent" | "pullCount" | "sixStarRate";
 
-/**
- * Build per-banner breakdown from gacha records.
- * Groups by poolId, accumulates stats including full pull history and pity tracking.
- * Returns sorted by most recent pull.
- */
 export function buildBannerBreakdown(records: GachaItem[]): BannerBreakdownEntry[] {
     const poolMap = new Map<
         string,
@@ -344,7 +329,6 @@ export function buildBannerBreakdown(records: GachaItem[]): BannerBreakdownEntry
 
     return Array.from(poolMap.entries())
         .map(([poolId, data]) => {
-            // Sort pulls oldest first for pity calculation
             const sortedPulls = [...data.pulls].sort((a, b) => a.at - b.at);
 
             let sixStarCount = 0;
@@ -407,9 +391,6 @@ export function buildBannerBreakdown(records: GachaItem[]): BannerBreakdownEntry
         .sort((a, b) => b.lastPullTimestamp - a.lastPullTimestamp);
 }
 
-/**
- * Sort banner breakdown entries by the given mode.
- */
 export function sortBannerBreakdown(entries: BannerBreakdownEntry[], mode: BannerSortMode): BannerBreakdownEntry[] {
     return [...entries].sort((a, b) => {
         switch (mode) {
@@ -428,16 +409,12 @@ export function sortBannerBreakdown(entries: BannerBreakdownEntry[], mode: Banne
     });
 }
 
-/**
- * Check if a pool is a collab/linkage banner
- */
 export function isCollabBanner(poolId: string): boolean {
     return poolId.startsWith("LINKAGE_");
 }
 
 /**
  * Map of operator rarity tier strings to numeric values.
- * Game data uses "TIER_6" for 6-star, etc.
  */
 export const RARITY_TIER_MAP: Record<string, number> = {
     TIER_6: 6,
@@ -448,14 +425,12 @@ export const RARITY_TIER_MAP: Record<string, number> = {
     TIER_1: 1,
 };
 
-/** Operator lookup entry for enriching gacha records */
 export interface OperatorLookupEntry {
     name: string;
     rarity: number;
     profession: string;
 }
 
-/** Build an operator lookup map from static operator data */
 export function buildOperatorLookup(operators: Array<{ id: string | null; name: string; rarity: string; profession: string }>): Map<string, OperatorLookupEntry> {
     const map = new Map<string, OperatorLookupEntry>();
     for (const op of operators) {
@@ -498,28 +473,20 @@ export function enrichGachaRecords(records: GachaRecords, operatorMap: Map<strin
     };
 }
 
-/**
- * Convert GachaRecordEntry array to GachaItem array.
- * Used when computing statistics from database records.
- */
 export function convertRecordEntryToGachaItem(entry: { charId: string; charName: string; rarity: number; poolId: string; poolName: string; gachaType: string; pullTimestamp: number; pullTimestampStr: string | null }): GachaItem {
     return {
         charId: entry.charId,
         charName: entry.charName,
-        star: String(entry.rarity), // Convert numeric rarity to string for parseRarity()
-        color: "", // Not available from database, but not used in stats
+        star: String(entry.rarity),
+        color: "",
         poolId: entry.poolId,
         poolName: entry.poolName,
-        typeName: entry.gachaType, // Use gacha type as type name
+        typeName: entry.gachaType,
         at: entry.pullTimestamp,
         atStr: entry.pullTimestampStr ?? "",
     };
 }
 
-/**
- * Convert an array of GachaRecordEntry to GachaRecords structure.
- * Groups records by gacha_type and creates the expected format for StatsOverview.
- */
 export function convertHistoryToRecords(
     entries: Array<{
         charId: string;
@@ -540,32 +507,22 @@ export function convertHistoryToRecords(
         const item = convertRecordEntryToGachaItem(entry);
         switch (entry.gachaType) {
             case "limited":
+            case "linkage":
                 limited.push(item);
                 break;
-            case "regular":
-                regular.push(item);
-                break;
-            case "special":
+            case "single":
+            case "boot":
                 special.push(item);
+                break;
+            default:
+                regular.push(item);
                 break;
         }
     }
 
     return {
-        limited: {
-            gacha_type: "limited",
-            records: limited,
-            total: limited.length,
-        },
-        regular: {
-            gacha_type: "regular",
-            records: regular,
-            total: regular.length,
-        },
-        special: {
-            gacha_type: "special",
-            records: special,
-            total: special.length,
-        },
+        limited: { gacha_type: "limited", records: limited, total: limited.length },
+        regular: { gacha_type: "regular", records: regular, total: regular.length },
+        special: { gacha_type: "special", records: special, total: special.length },
     };
 }

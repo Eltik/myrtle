@@ -1,29 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
-import type { User } from "~/types/api";
+import type { UserProfile } from "~/types/api/impl/user";
 
 const USER_CACHE_KEY = "myrtle_user_cache";
 
 /**
  * Minimal user data cached in localStorage for instant display.
- * Only includes fields actually used in the UI to avoid quota issues.
- * The full User object can be 100-300KB which exceeds localStorage limits.
+ * Uses v3 field names matching UserProfile.
  */
 export interface CachedUserData {
-    status: {
-        uid: string;
-        nickName: string;
-        level: number;
-        secretary: string;
-        secretarySkinId: string;
-    };
+    uid: string;
+    nickname: string;
+    level: number;
+    secretary: string;
+    secretary_skin_id: string;
+    avatar_id: string;
+    server: string;
 }
 
-/** User data type - can be full User from API or minimal cached data */
-export type AuthUser = User | CachedUserData;
+/** User data type - can be full UserProfile from API or minimal cached data */
+export type AuthUser = UserProfile | CachedUserData;
 
 /**
  * Check if the auth indicator cookie exists (client-side readable).
- * This cookie is set alongside the httpOnly session cookie to allow
+ * This cookie is set alongside the httpOnly JWT cookie to allow
  * the client to know if a session exists without exposing sensitive data.
  */
 function hasAuthIndicator(): boolean {
@@ -35,21 +34,20 @@ function hasAuthIndicator(): boolean {
  * Extract minimal user data for caching.
  * Only includes fields used in the UI (header display, avatar).
  */
-function extractCacheData(user: User): CachedUserData {
+function extractCacheData(user: UserProfile): CachedUserData {
     return {
-        status: {
-            uid: user.status.uid,
-            nickName: user.status.nickName,
-            level: user.status.level,
-            secretary: user.status.secretary,
-            secretarySkinId: user.status.secretarySkinId,
-        },
+        uid: user.uid,
+        nickname: user.nickname ?? "",
+        level: user.level ?? 0,
+        secretary: user.secretary ?? "",
+        secretary_skin_id: user.secretary_skin_id ?? "",
+        avatar_id: user.avatar_id ?? "",
+        server: user.server,
     };
 }
 
 /**
  * Get cached user data from localStorage for instant display.
- * Returns a partial User object with only the cached fields.
  */
 function getCachedUser(): CachedUserData | null {
     if (typeof window === "undefined") return null;
@@ -63,9 +61,8 @@ function getCachedUser(): CachedUserData | null {
 
 /**
  * Cache minimal user data to localStorage for faster subsequent loads.
- * Only caches fields actually used in the UI to avoid quota issues.
  */
-function setCachedUser(user: User | null): void {
+function setCachedUser(user: UserProfile | null): void {
     if (typeof window === "undefined") return;
     if (user) {
         localStorage.setItem(USER_CACHE_KEY, JSON.stringify(extractCacheData(user)));
@@ -79,15 +76,23 @@ export function useAuth() {
     const [loading, setLoading] = useState(true);
 
     // Fetch user data from the server (uses cached database data, no game server refresh)
-    const fetchUser = useCallback(async (): Promise<User | null> => {
+    const fetchUser = useCallback(async (): Promise<UserProfile | null> => {
         try {
             const res = await fetch("/api/auth/me", { method: "POST" });
-            const data = await res.json();
 
-            if (data.success && data.user) {
-                return data.user;
+            if (!res.ok) {
+                return null;
             }
-            return null;
+
+            // v3: /api/auth/me returns UserProfile directly (not wrapped in {success, user})
+            const data: UserProfile = await res.json();
+
+            // Guard against error responses that slip through
+            if (!data.uid) {
+                return null;
+            }
+
+            return data;
         } catch {
             return null;
         }
@@ -132,6 +137,7 @@ export function useAuth() {
 
         const data = await res.json();
 
+        // v3: login returns { success: true, user: UserProfile }
         if (data.success && data.user) {
             setUser(data.user);
             setCachedUser(data.user);
@@ -146,13 +152,14 @@ export function useAuth() {
         setCachedUser(null);
     }, []);
 
-    const verify = useCallback(async (): Promise<{ valid: boolean; role?: string }> => {
+    const verify = useCallback(async (): Promise<{ valid: boolean; userId?: string; uid?: string; server?: string; role?: string }> => {
         try {
             const res = await fetch("/api/auth/verify", { method: "POST" });
             const data = await res.json();
 
+            // v3: verify returns { success: true, data: { valid, userId, uid, server, role } }
             if (data.success && data.data?.valid) {
-                return { valid: true, role: data.data.role };
+                return { valid: true, userId: data.data.userId, uid: data.data.uid, server: data.data.server, role: data.data.role };
             }
             return { valid: false };
         } catch {

@@ -40,7 +40,7 @@ This project builds upon the work of many open-source projects:
 - [UnityPy](https://github.com/K0lb3/UnityPy) - Original Python library for Unity asset extraction (unity-rs is a Rust port)
 - [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) - FlatBuffers schemas
 - [ArkPRTS](https://github.com/thesadru/ArkPRTS) - Inspiration for authentication flow
-- [isHarryH/Årk-Unpacker](https://github.com/isHarryh/Ark-Unpacker) - Original Python implementation for unpacking (current `/unpacker` is a Rust port)
+- [isHarryH/Ark-Unpacker](https://github.com/isHarryh/Ark-Unpacker) - Original Python implementation for unpacking (current `/unpacker` is a Rust port)
 
 ---
 

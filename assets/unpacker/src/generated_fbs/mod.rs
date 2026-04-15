@@ -1,16 +1,17 @@
-// Auto-generated FlatBuffer schemas for Arknights
-// Generated with: flatc --rust --gen-object-api --rust-serialize
-// These types implement serde::Serialize for direct JSON conversion
+// Auto-generated - do not edit
 
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-#![allow(unreachable_patterns)]
-#![allow(clippy::all)]
+#![allow(
+    dead_code,
+    unused_imports,
+    non_snake_case,
+    non_camel_case_types,
+    unreachable_patterns,
+    clippy::all
+)]
 
 pub mod activity_table_generated;
 pub mod audio_data_generated;
+pub mod bake_muzzle_data_generated;
 pub mod battle_equip_table_generated;
 pub mod buff_table_generated;
 pub mod building_data_generated;

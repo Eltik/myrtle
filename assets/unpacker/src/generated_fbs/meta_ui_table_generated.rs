@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -61,18 +60,6 @@ impl core::fmt::Debug for enum__Torappu_CommonUnlockType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CommonUnlockType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CommonUnlockType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -191,18 +178,6 @@ impl core::fmt::Debug for enum__Torappu_TipData_Category {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_TipData_Category {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_TipData_Category",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -326,21 +301,6 @@ impl<'a> Default for clz_Torappu_StageUnlockParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_StageUnlockParamArgs { stageId: None }
-    }
-}
-
-impl Serialize for clz_Torappu_StageUnlockParam<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_StageUnlockParam", 1)?;
-        if let Some(f) = self.stageId() {
-            s.serialize_field("stageId", &f)?;
-        } else {
-            s.skip_field("stageId")?;
-        }
-        s.end()
     }
 }
 
@@ -474,21 +434,6 @@ impl<'a> Default for clz_Torappu_CharUnlockParamArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_CharUnlockParamArgs { charId: None }
-    }
-}
-
-impl Serialize for clz_Torappu_CharUnlockParam<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharUnlockParam", 1)?;
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        s.end()
     }
 }
 
@@ -735,30 +680,6 @@ impl<'a> Default for clz_Torappu_CommonAvailCheckArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CommonAvailCheck<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CommonAvailCheck", 6)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("rate", &self.rate())?;
-        if let Some(f) = self.stageUnlockParam() {
-            s.serialize_field("stageUnlockParam", &f)?;
-        } else {
-            s.skip_field("stageUnlockParam")?;
-        }
-        if let Some(f) = self.charUnlockParam() {
-            s.serialize_field("charUnlockParam", &f)?;
-        } else {
-            s.skip_field("charUnlockParam")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CommonAvailCheckBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1000,23 +921,6 @@ impl<'a> Default for clz_Torappu_TipDataArgs<'a> {
             weight: 0.0,
             category: enum__Torappu_TipData_Category::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TipData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TipData", 3)?;
-        if let Some(f) = self.tip() {
-            s.serialize_field("tip", &f)?;
-        } else {
-            s.skip_field("tip")?;
-        }
-        s.serialize_field("weight", &self.weight())?;
-        s.serialize_field("category", &self.category())?;
-        s.end()
     }
 }
 
@@ -1364,52 +1268,6 @@ impl<'a> Default for clz_Torappu_TipsMetaDisplayItemArgs<'a> {
             zoneIdList: None,
             tips: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_TipsMetaDisplayItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TipsMetaDisplayItem", 8)?;
-        if let Some(f) = self.tipsId() {
-            s.serialize_field("tipsId", &f)?;
-        } else {
-            s.skip_field("tipsId")?;
-        }
-        if let Some(f) = self.loadingPic() {
-            s.serialize_field("loadingPic", &f)?;
-        } else {
-            s.skip_field("loadingPic")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.zoneIdList() {
-            s.serialize_field("zoneIdList", &f)?;
-        } else {
-            s.skip_field("zoneIdList")?;
-        }
-        if let Some(f) = self.tips() {
-            s.serialize_field("tips", &f)?;
-        } else {
-            s.skip_field("tips")?;
-        }
-        s.end()
     }
 }
 
@@ -1844,45 +1702,6 @@ impl<'a> Default for clz_Torappu_FlashAlertAfterStageDisplayMetaItemArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_FlashAlertAfterStageDisplayMetaItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_FlashAlertAfterStageDisplayMetaItem", 8)?;
-        if let Some(f) = self.flashAlertId() {
-            s.serialize_field("flashAlertId", &f)?;
-        } else {
-            s.skip_field("flashAlertId")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        if let Some(f) = self.detailText() {
-            s.serialize_field("detailText", &f)?;
-        } else {
-            s.skip_field("detailText")?;
-        }
-        s.serialize_field("isBasicInfo", &self.isBasicInfo())?;
-        s.serialize_field("times", &self.times())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_FlashAlertAfterStageDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -2235,37 +2054,6 @@ impl<'a> Default for clz_Torappu_MapPreviewDisplayMetaItemArgs<'a> {
             isAllStageActive: false,
             stageIdList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MapPreviewDisplayMetaItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MapPreviewDisplayMetaItem", 5)?;
-        if let Some(f) = self.mapPreviewPicId() {
-            s.serialize_field("mapPreviewPicId", &f)?;
-        } else {
-            s.skip_field("mapPreviewPicId")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        s.end()
     }
 }
 
@@ -2655,52 +2443,6 @@ impl<'a> Default for clz_Torappu_BattleFinishDisplayMetaItemArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_BattleFinishDisplayMetaItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BattleFinishDisplayMetaItem", 8)?;
-        if let Some(f) = self.battleFinishDisplayKey() {
-            s.serialize_field("battleFinishDisplayKey", &f)?;
-        } else {
-            s.skip_field("battleFinishDisplayKey")?;
-        }
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        if let Some(f) = self.overrideStageName() {
-            s.serialize_field("overrideStageName", &f)?;
-        } else {
-            s.skip_field("overrideStageName")?;
-        }
-        if let Some(f) = self.signal() {
-            s.serialize_field("signal", &f)?;
-        } else {
-            s.skip_field("signal")?;
-        }
-        if let Some(f) = self.overrideCharWord() {
-            s.serialize_field("overrideCharWord", &f)?;
-        } else {
-            s.skip_field("overrideCharWord")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BattleFinishDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -3067,37 +2809,6 @@ impl<'a> Default for clz_Torappu_BattleLoadingDisplayMetaItemArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_BattleLoadingDisplayMetaItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BattleLoadingDisplayMetaItem", 5)?;
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.battleLoadingPicId() {
-            s.serialize_field("battleLoadingPicId", &f)?;
-        } else {
-            s.skip_field("battleLoadingPicId")?;
-        }
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_BattleLoadingDisplayMetaItemBuilder<
     'a: 'b,
     'b,
@@ -3413,37 +3124,6 @@ impl<'a> Default for clz_Torappu_BattleAutoBattleMetaItemArgs<'a> {
             stageIdList: None,
             availCheck: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_BattleAutoBattleMetaItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_BattleAutoBattleMetaItem", 5)?;
-        if let Some(f) = self.battleAutoBattleDisplayKey() {
-            s.serialize_field("battleAutoBattleDisplayKey", &f)?;
-        } else {
-            s.skip_field("battleAutoBattleDisplayKey")?;
-        }
-        s.serialize_field("isAllStageActive", &self.isAllStageActive())?;
-        if let Some(f) = self.relateActId() {
-            s.serialize_field("relateActId", &f)?;
-        } else {
-            s.skip_field("relateActId")?;
-        }
-        if let Some(f) = self.stageIdList() {
-            s.serialize_field("stageIdList", &f)?;
-        } else {
-            s.skip_field("stageIdList")?;
-        }
-        if let Some(f) = self.availCheck() {
-            s.serialize_field("availCheck", &f)?;
-        } else {
-            s.skip_field("availCheck")?;
-        }
-        s.end()
     }
 }
 
@@ -3935,46 +3615,6 @@ impl<'a> Default for clz_Torappu_MetaUIDisplayTableArgs<'a> {
             battleLoadingDisplayMetaItemList: None,
             battleAutoBattleMetaItemList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MetaUIDisplayTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MetaUIDisplayTable", 6)?;
-        if let Some(f) = self.tipsMetaList() {
-            s.serialize_field("tipsMetaList", &f)?;
-        } else {
-            s.skip_field("tipsMetaList")?;
-        }
-        if let Some(f) = self.flashAlertAfterStageItemList() {
-            s.serialize_field("flashAlertAfterStageItemList", &f)?;
-        } else {
-            s.skip_field("flashAlertAfterStageItemList")?;
-        }
-        if let Some(f) = self.mapPreviewDisplayMetaItemList() {
-            s.serialize_field("mapPreviewDisplayMetaItemList", &f)?;
-        } else {
-            s.skip_field("mapPreviewDisplayMetaItemList")?;
-        }
-        if let Some(f) = self.battleFinishDisplayMetaItemList() {
-            s.serialize_field("battleFinishDisplayMetaItemList", &f)?;
-        } else {
-            s.skip_field("battleFinishDisplayMetaItemList")?;
-        }
-        if let Some(f) = self.battleLoadingDisplayMetaItemList() {
-            s.serialize_field("battleLoadingDisplayMetaItemList", &f)?;
-        } else {
-            s.skip_field("battleLoadingDisplayMetaItemList")?;
-        }
-        if let Some(f) = self.battleAutoBattleMetaItemList() {
-            s.serialize_field("battleAutoBattleMetaItemList", &f)?;
-        } else {
-            s.skip_field("battleAutoBattleMetaItemList")?;
-        }
-        s.end()
     }
 }
 

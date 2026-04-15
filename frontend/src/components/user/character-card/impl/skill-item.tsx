@@ -1,34 +1,17 @@
 import Image from "next/image";
-import type { CharacterData } from "~/types/api/impl/user";
-
-interface SkillStatic {
-    iconId?: string;
-    skillId?: string;
-    image?: string;
-    name?: string;
-    description?: string;
-    duration?: number;
-    hidden?: boolean;
-    spData?: {
-        increment?: number;
-        initSp?: number;
-        levelUpCost?: null;
-        maxChargeTime?: number;
-        spCost?: number;
-        spType?: string;
-    };
-}
+import type { UserSkillStatic } from "~/types/api/impl/user";
 
 interface SkillItemProps {
-    skill: CharacterData["skills"][0];
+    skillId: string;
+    specializeLevel: number;
+    skillStatic?: UserSkillStatic | null;
     index: number;
     isDefaultSkill: boolean;
     mainSkillLvl: number;
     size?: "small" | "large";
 }
 
-export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "small" }: SkillItemProps) {
-    const skillStatic = skill.static as SkillStatic | null;
+export function SkillItem({ skillId, specializeLevel, skillStatic, index, isDefaultSkill, mainSkillLvl, size = "small" }: SkillItemProps) {
     const isSmall = size === "small";
 
     return (
@@ -38,7 +21,7 @@ export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "
                 className={isSmall ? "h-6 w-6 rounded" : "h-7 w-7 rounded-sm"}
                 height={isSmall ? 24 : 28}
                 loading="lazy"
-                src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`}
+                src={skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/skill-icons/${skillStatic?.iconId ?? skillStatic?.skillId ?? skillId}.png`}
                 unoptimized
                 width={isSmall ? 24 : 28}
             />
@@ -47,7 +30,7 @@ export function SkillItem({ skill, index, isDefaultSkill, mainSkillLvl, size = "
             </span>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                 <span>Lv.{mainSkillLvl}</span>
-                {skill.specializeLevel > 0 && <Image alt={`M${skill.specializeLevel}`} className="h-4 w-4" height={16} loading="lazy" src={`/api/cdn/upk/arts/specialized_hub/specialized_${skill.specializeLevel}.png`} unoptimized width={16} />}
+                {specializeLevel > 0 && <Image alt={`M${specializeLevel}`} className="h-4 w-4" height={16} loading="lazy" src={`/api/cdn/upk/arts/specialized_hub/specialized_${specializeLevel}.png`} unoptimized width={16} />}
             </div>
         </div>
     );

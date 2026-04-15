@@ -25,9 +25,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(401).json({ success: false, error: "Not authenticated" });
         }
 
+        // Backend `/auth/verify` is a GET route that requires a Bearer token header.
         const verifyResponse = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token: siteToken }),
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${siteToken}`,
+            },
         });
 
         if (!verifyResponse.ok) {

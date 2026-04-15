@@ -1,4 +1,4 @@
-import { Building2, Compass, type LucideIcon, Map as MapIcon, Medal, Swords, TreePalm } from "lucide-react";
+import { Building2, Compass, type LucideIcon, Map as MapIcon, Medal, Shirt, Swords, TreePalm } from "lucide-react";
 
 // Score category configuration with icons and colors
 export const SCORE_CATEGORY_CONFIG: Record<
@@ -66,6 +66,15 @@ export const SCORE_CATEGORY_CONFIG: Record<
         color: "text-cyan-400",
         bgColor: "bg-cyan-500/10",
         progressColor: "bg-cyan-500",
+    },
+    skinScore: {
+        key: "skinScore",
+        label: "Skins",
+        description: "Skin collection",
+        icon: Shirt,
+        color: "text-pink-400",
+        bgColor: "bg-pink-500/10",
+        progressColor: "bg-pink-500",
     },
 };
 

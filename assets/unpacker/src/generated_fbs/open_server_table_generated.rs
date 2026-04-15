@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -103,18 +102,6 @@ impl core::fmt::Debug for enum__Torappu_MissionType {
         }
     }
 }
-impl Serialize for enum__Torappu_MissionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionType {
     type Inner = Self;
@@ -170,13 +157,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -268,6 +255,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -366,9 +355,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -461,6 +452,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -556,6 +549,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -567,18 +562,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -679,18 +662,6 @@ impl core::fmt::Debug for enum__Torappu_MissionItemBgType {
         }
     }
 }
-impl Serialize for enum__Torappu_MissionItemBgType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionItemBgType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
     type Inner = Self;
@@ -741,74 +712,43 @@ impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_MissionItemBgType {}
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MIN_ENUM__TORAPPU_RETURN_V_2_JUMP_TYPE: i32 = 0;
+pub const ENUM_MIN_ENUM__TORAPPU_RETURN_ALL_OPEN_TYPE: i32 = 0;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_RETURN_V_2_JUMP_TYPE: i32 = 8;
+pub const ENUM_MAX_ENUM__TORAPPU_RETURN_ALL_OPEN_TYPE: i32 = 1;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_RETURN_V_2_JUMP_TYPE: [enum__Torappu_ReturnV2JumpType; 9] = [
-    enum__Torappu_ReturnV2JumpType::NONE,
-    enum__Torappu_ReturnV2JumpType::ZONE_GROUP,
-    enum__Torappu_ReturnV2JumpType::ROGUE,
-    enum__Torappu_ReturnV2JumpType::CLIMB_TOWER,
-    enum__Torappu_ReturnV2JumpType::CAMPAIGN,
-    enum__Torappu_ReturnV2JumpType::BUILDING,
-    enum__Torappu_ReturnV2JumpType::RECRUIT_BUILD,
-    enum__Torappu_ReturnV2JumpType::DAILY_MISSION,
-    enum__Torappu_ReturnV2JumpType::SANDBOX,
+pub const ENUM_VALUES_ENUM__TORAPPU_RETURN_ALL_OPEN_TYPE: [enum__Torappu_ReturnAllOpenType; 2] = [
+    enum__Torappu_ReturnAllOpenType::RESOURCE,
+    enum__Torappu_ReturnAllOpenType::CAMP,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[repr(transparent)]
-pub struct enum__Torappu_ReturnV2JumpType(pub i32);
+pub struct enum__Torappu_ReturnAllOpenType(pub i32);
 #[allow(non_upper_case_globals)]
-impl enum__Torappu_ReturnV2JumpType {
-    pub const NONE: Self = Self(0);
-    pub const ZONE_GROUP: Self = Self(1);
-    pub const ROGUE: Self = Self(2);
-    pub const CLIMB_TOWER: Self = Self(3);
-    pub const CAMPAIGN: Self = Self(4);
-    pub const BUILDING: Self = Self(5);
-    pub const RECRUIT_BUILD: Self = Self(6);
-    pub const DAILY_MISSION: Self = Self(7);
-    pub const SANDBOX: Self = Self(8);
+impl enum__Torappu_ReturnAllOpenType {
+    pub const RESOURCE: Self = Self(0);
+    pub const CAMP: Self = Self(1);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 8;
-    pub const ENUM_VALUES: &'static [Self] = &[
-        Self::NONE,
-        Self::ZONE_GROUP,
-        Self::ROGUE,
-        Self::CLIMB_TOWER,
-        Self::CAMPAIGN,
-        Self::BUILDING,
-        Self::RECRUIT_BUILD,
-        Self::DAILY_MISSION,
-        Self::SANDBOX,
-    ];
+    pub const ENUM_MAX: i32 = 1;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::RESOURCE, Self::CAMP];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
         match self {
-            Self::NONE => Some("NONE"),
-            Self::ZONE_GROUP => Some("ZONE_GROUP"),
-            Self::ROGUE => Some("ROGUE"),
-            Self::CLIMB_TOWER => Some("CLIMB_TOWER"),
-            Self::CAMPAIGN => Some("CAMPAIGN"),
-            Self::BUILDING => Some("BUILDING"),
-            Self::RECRUIT_BUILD => Some("RECRUIT_BUILD"),
-            Self::DAILY_MISSION => Some("DAILY_MISSION"),
-            Self::SANDBOX => Some("SANDBOX"),
+            Self::RESOURCE => Some("RESOURCE"),
+            Self::CAMP => Some("CAMP"),
             _ => None,
         }
     }
 }
-impl core::fmt::Debug for enum__Torappu_ReturnV2JumpType {
+impl core::fmt::Debug for enum__Torappu_ReturnAllOpenType {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         if let Some(name) = self.variant_name() {
             f.write_str(name)
@@ -817,20 +757,8 @@ impl core::fmt::Debug for enum__Torappu_ReturnV2JumpType {
         }
     }
 }
-impl Serialize for enum__Torappu_ReturnV2JumpType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ReturnV2JumpType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
-impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnV2JumpType {
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnAllOpenType {
     type Inner = Self;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
@@ -839,8 +767,8 @@ impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnV2JumpType {
     }
 }
 
-impl flatbuffers::Push for enum__Torappu_ReturnV2JumpType {
-    type Output = enum__Torappu_ReturnV2JumpType;
+impl flatbuffers::Push for enum__Torappu_ReturnAllOpenType {
+    type Output = enum__Torappu_ReturnAllOpenType;
     #[inline]
     unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
         unsafe {
@@ -849,7 +777,7 @@ impl flatbuffers::Push for enum__Torappu_ReturnV2JumpType {
     }
 }
 
-impl flatbuffers::EndianScalar for enum__Torappu_ReturnV2JumpType {
+impl flatbuffers::EndianScalar for enum__Torappu_ReturnAllOpenType {
     type Scalar = i32;
     #[inline]
     fn to_little_endian(self) -> i32 {
@@ -863,7 +791,7 @@ impl flatbuffers::EndianScalar for enum__Torappu_ReturnV2JumpType {
     }
 }
 
-impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnV2JumpType {
+impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnAllOpenType {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -874,7 +802,338 @@ impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnV2JumpType {
     }
 }
 
-impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnV2JumpType {}
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnAllOpenType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_RETURN_MISSION_GROUP_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_RETURN_MISSION_GROUP_TYPE: i32 = 2;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_RETURN_MISSION_GROUP_TYPE:
+    [enum__Torappu_ReturnMissionGroupType; 3] = [
+    enum__Torappu_ReturnMissionGroupType::DAILY,
+    enum__Torappu_ReturnMissionGroupType::NORMAL,
+    enum__Torappu_ReturnMissionGroupType::DIFF,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_ReturnMissionGroupType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_ReturnMissionGroupType {
+    pub const DAILY: Self = Self(0);
+    pub const NORMAL: Self = Self(1);
+    pub const DIFF: Self = Self(2);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 2;
+    pub const ENUM_VALUES: &'static [Self] = &[Self::DAILY, Self::NORMAL, Self::DIFF];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::DAILY => Some("DAILY"),
+            Self::NORMAL => Some("NORMAL"),
+            Self::DIFF => Some("DIFF"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_ReturnMissionGroupType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnMissionGroupType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_ReturnMissionGroupType {
+    type Output = enum__Torappu_ReturnMissionGroupType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_ReturnMissionGroupType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnMissionGroupType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnMissionGroupType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_RETURN_JUMP_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_RETURN_JUMP_TYPE: i32 = 9;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_RETURN_JUMP_TYPE: [enum__Torappu_ReturnJumpType; 10] = [
+    enum__Torappu_ReturnJumpType::NONE,
+    enum__Torappu_ReturnJumpType::ZONE_GROUP,
+    enum__Torappu_ReturnJumpType::ROGUE,
+    enum__Torappu_ReturnJumpType::CLIMB_TOWER,
+    enum__Torappu_ReturnJumpType::CAMPAIGN,
+    enum__Torappu_ReturnJumpType::BUILDING,
+    enum__Torappu_ReturnJumpType::RECRUIT_BUILD,
+    enum__Torappu_ReturnJumpType::DAILY_MISSION,
+    enum__Torappu_ReturnJumpType::SANDBOX,
+    enum__Torappu_ReturnJumpType::MAIN_SS,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_ReturnJumpType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_ReturnJumpType {
+    pub const NONE: Self = Self(0);
+    pub const ZONE_GROUP: Self = Self(1);
+    pub const ROGUE: Self = Self(2);
+    pub const CLIMB_TOWER: Self = Self(3);
+    pub const CAMPAIGN: Self = Self(4);
+    pub const BUILDING: Self = Self(5);
+    pub const RECRUIT_BUILD: Self = Self(6);
+    pub const DAILY_MISSION: Self = Self(7);
+    pub const SANDBOX: Self = Self(8);
+    pub const MAIN_SS: Self = Self(9);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 9;
+    pub const ENUM_VALUES: &'static [Self] = &[
+        Self::NONE,
+        Self::ZONE_GROUP,
+        Self::ROGUE,
+        Self::CLIMB_TOWER,
+        Self::CAMPAIGN,
+        Self::BUILDING,
+        Self::RECRUIT_BUILD,
+        Self::DAILY_MISSION,
+        Self::SANDBOX,
+        Self::MAIN_SS,
+    ];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::ZONE_GROUP => Some("ZONE_GROUP"),
+            Self::ROGUE => Some("ROGUE"),
+            Self::CLIMB_TOWER => Some("CLIMB_TOWER"),
+            Self::CAMPAIGN => Some("CAMPAIGN"),
+            Self::BUILDING => Some("BUILDING"),
+            Self::RECRUIT_BUILD => Some("RECRUIT_BUILD"),
+            Self::DAILY_MISSION => Some("DAILY_MISSION"),
+            Self::SANDBOX => Some("SANDBOX"),
+            Self::MAIN_SS => Some("MAIN_SS"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_ReturnJumpType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnJumpType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_ReturnJumpType {
+    type Output = enum__Torappu_ReturnJumpType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_ReturnJumpType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnJumpType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnJumpType {}
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MIN_ENUM__TORAPPU_RETURN_NEWS_TYPE: i32 = 0;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+pub const ENUM_MAX_ENUM__TORAPPU_RETURN_NEWS_TYPE: i32 = 3;
+#[deprecated(
+    since = "2.0.0",
+    note = "Use associated constants instead. This will no longer be generated in 2021."
+)]
+#[allow(non_camel_case_types)]
+pub const ENUM_VALUES_ENUM__TORAPPU_RETURN_NEWS_TYPE: [enum__Torappu_ReturnNewsType; 4] = [
+    enum__Torappu_ReturnNewsType::NONE,
+    enum__Torappu_ReturnNewsType::MAIN_SS,
+    enum__Torappu_ReturnNewsType::ROGUE,
+    enum__Torappu_ReturnNewsType::SANDBOX,
+];
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[repr(transparent)]
+pub struct enum__Torappu_ReturnNewsType(pub i32);
+#[allow(non_upper_case_globals)]
+impl enum__Torappu_ReturnNewsType {
+    pub const NONE: Self = Self(0);
+    pub const MAIN_SS: Self = Self(1);
+    pub const ROGUE: Self = Self(2);
+    pub const SANDBOX: Self = Self(3);
+
+    pub const ENUM_MIN: i32 = 0;
+    pub const ENUM_MAX: i32 = 3;
+    pub const ENUM_VALUES: &'static [Self] =
+        &[Self::NONE, Self::MAIN_SS, Self::ROGUE, Self::SANDBOX];
+    /// Returns the variant's name or "" if unknown.
+    pub fn variant_name(self) -> Option<&'static str> {
+        match self {
+            Self::NONE => Some("NONE"),
+            Self::MAIN_SS => Some("MAIN_SS"),
+            Self::ROGUE => Some("ROGUE"),
+            Self::SANDBOX => Some("SANDBOX"),
+            _ => None,
+        }
+    }
+}
+impl core::fmt::Debug for enum__Torappu_ReturnNewsType {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        if let Some(name) = self.variant_name() {
+            f.write_str(name)
+        } else {
+            f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+        }
+    }
+}
+
+impl<'a> flatbuffers::Follow<'a> for enum__Torappu_ReturnNewsType {
+    type Inner = Self;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        let b = unsafe { flatbuffers::read_scalar_at::<i32>(buf, loc) };
+        Self(b)
+    }
+}
+
+impl flatbuffers::Push for enum__Torappu_ReturnNewsType {
+    type Output = enum__Torappu_ReturnNewsType;
+    #[inline]
+    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+        unsafe {
+            flatbuffers::emplace_scalar::<i32>(dst, self.0);
+        }
+    }
+}
+
+impl flatbuffers::EndianScalar for enum__Torappu_ReturnNewsType {
+    type Scalar = i32;
+    #[inline]
+    fn to_little_endian(self) -> i32 {
+        self.0.to_le()
+    }
+    #[inline]
+    #[allow(clippy::wrong_self_convention)]
+    fn from_little_endian(v: i32) -> Self {
+        let b = i32::from_le(v);
+        Self(b)
+    }
+}
+
+impl<'a> flatbuffers::Verifiable for enum__Torappu_ReturnNewsType {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        i32::run_verifier(v, pos)
+    }
+}
+
+impl flatbuffers::SimpleToVerifyInSlice for enum__Torappu_ReturnNewsType {}
 pub enum clz_Torappu_OpenServerScheduleItemOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
@@ -1086,43 +1345,6 @@ impl<'a> Default for clz_Torappu_OpenServerScheduleItemArgs<'a> {
             chainLoginDescription: None,
             charImg: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_OpenServerScheduleItem<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerScheduleItem", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.versionId() {
-            s.serialize_field("versionId", &f)?;
-        } else {
-            s.skip_field("versionId")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        if let Some(f) = self.totalCheckinDescption() {
-            s.serialize_field("totalCheckinDescption", &f)?;
-        } else {
-            s.skip_field("totalCheckinDescption")?;
-        }
-        if let Some(f) = self.chainLoginDescription() {
-            s.serialize_field("chainLoginDescription", &f)?;
-        } else {
-            s.skip_field("chainLoginDescription")?;
-        }
-        if let Some(f) = self.charImg() {
-            s.serialize_field("charImg", &f)?;
-        } else {
-            s.skip_field("charImg")?;
-        }
-        s.end()
     }
 }
 
@@ -1384,23 +1606,6 @@ impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
             id: None,
             count: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MissionDisplayRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionDisplayRewards", 3)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.end()
     }
 }
 
@@ -1763,49 +1968,6 @@ impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
             startTs: 0,
             endTs: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionGroup", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.preMissionGroup() {
-            s.serialize_field("preMissionGroup", &f)?;
-        } else {
-            s.skip_field("preMissionGroup")?;
-        }
-        if let Some(f) = self.period() {
-            s.serialize_field("period", &f)?;
-        } else {
-            s.skip_field("period")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.missionIds() {
-            s.serialize_field("missionIds", &f)?;
-        } else {
-            s.skip_field("missionIds")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
     }
 }
 
@@ -2500,87 +2662,6 @@ impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionData", 19)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("itemBgType", &self.itemBgType())?;
-        if let Some(f) = self.preMissionIds() {
-            s.serialize_field("preMissionIds", &f)?;
-        } else {
-            s.skip_field("preMissionIds")?;
-        }
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.templateType() {
-            s.serialize_field("templateType", &f)?;
-        } else {
-            s.skip_field("templateType")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.unlockCondition() {
-            s.serialize_field("unlockCondition", &f)?;
-        } else {
-            s.skip_field("unlockCondition")?;
-        }
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        if let Some(f) = self.missionGroup() {
-            s.serialize_field("missionGroup", &f)?;
-        } else {
-            s.skip_field("missionGroup")?;
-        }
-        if let Some(f) = self.toPage() {
-            s.serialize_field("toPage", &f)?;
-        } else {
-            s.skip_field("toPage")?;
-        }
-        s.serialize_field("periodicalPoint", &self.periodicalPoint())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.backImagePath() {
-            s.serialize_field("backImagePath", &f)?;
-        } else {
-            s.skip_field("backImagePath")?;
-        }
-        if let Some(f) = self.foldId() {
-            s.serialize_field("foldId", &f)?;
-        } else {
-            s.skip_field("foldId")?;
-        }
-        s.serialize_field("haveSubMissionToUnlock", &self.haveSubMissionToUnlock())?;
-        s.serialize_field("countEndTs", &self.countEndTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3034,28 +3115,6 @@ impl<'a> Default for clz_Torappu_OpenServerItemDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_OpenServerItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerItemData", 4)?;
-        if let Some(f) = self.itemId() {
-            s.serialize_field("itemId", &f)?;
-        } else {
-            s.skip_field("itemId")?;
-        }
-        s.serialize_field("itemType", &self.itemType())?;
-        s.serialize_field("count", &self.count())?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_OpenServerItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3276,23 +3335,6 @@ impl<'a> Default for clz_Torappu_TotalCheckinDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_TotalCheckinData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_TotalCheckinData", 3)?;
-        s.serialize_field("order", &self.order())?;
-        if let Some(f) = self.item() {
-            s.serialize_field("item", &f)?;
-        } else {
-            s.skip_field("item")?;
-        }
-        s.serialize_field("colorId", &self.colorId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_TotalCheckinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3496,23 +3538,6 @@ impl<'a> Default for clz_Torappu_ChainLoginDataArgs<'a> {
             item: None,
             colorId: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ChainLoginData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ChainLoginData", 3)?;
-        s.serialize_field("order", &self.order())?;
-        if let Some(f) = self.item() {
-            s.serialize_field("item", &f)?;
-        } else {
-            s.skip_field("item")?;
-        }
-        s.serialize_field("colorId", &self.colorId())?;
-        s.end()
     }
 }
 
@@ -3840,46 +3865,6 @@ impl<'a> Default for clz_Torappu_OpenServerDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_OpenServerData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerData", 6)?;
-        if let Some(f) = self.openServerMissionGroup() {
-            s.serialize_field("openServerMissionGroup", &f)?;
-        } else {
-            s.skip_field("openServerMissionGroup")?;
-        }
-        if let Some(f) = self.openServerMissionData() {
-            s.serialize_field("openServerMissionData", &f)?;
-        } else {
-            s.skip_field("openServerMissionData")?;
-        }
-        if let Some(f) = self.checkInData() {
-            s.serialize_field("checkInData", &f)?;
-        } else {
-            s.skip_field("checkInData")?;
-        }
-        if let Some(f) = self.chainLoginData() {
-            s.serialize_field("chainLoginData", &f)?;
-        } else {
-            s.skip_field("chainLoginData")?;
-        }
-        if let Some(f) = self.totalCheckinCharData() {
-            s.serialize_field("totalCheckinCharData", &f)?;
-        } else {
-            s.skip_field("totalCheckinCharData")?;
-        }
-        if let Some(f) = self.chainLoginCharData() {
-            s.serialize_field("chainLoginCharData", &f)?;
-        } else {
-            s.skip_field("chainLoginCharData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_OpenServerDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4163,22 +4148,6 @@ impl<'a> Default for dict__string__clz_Torappu_OpenServerDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_OpenServerData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_OpenServerData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4509,43 +4478,6 @@ impl<'a> Default for clz_Torappu_OpenServerConstArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_OpenServerConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerConst", 8)?;
-        s.serialize_field(
-            "firstDiamondShardMailCount",
-            &self.firstDiamondShardMailCount(),
-        )?;
-        s.serialize_field("initApMailEndTs", &self.initApMailEndTs())?;
-        if let Some(f) = self.resFullOpenUnlockStageId() {
-            s.serialize_field("resFullOpenUnlockStageId", &f)?;
-        } else {
-            s.skip_field("resFullOpenUnlockStageId")?;
-        }
-        s.serialize_field("resFullOpenDuration", &self.resFullOpenDuration())?;
-        if let Some(f) = self.resFullOpenTitle() {
-            s.serialize_field("resFullOpenTitle", &f)?;
-        } else {
-            s.skip_field("resFullOpenTitle")?;
-        }
-        if let Some(f) = self.resFullOpenDesc() {
-            s.serialize_field("resFullOpenDesc", &f)?;
-        } else {
-            s.skip_field("resFullOpenDesc")?;
-        }
-        if let Some(f) = self.resFullOpenGuideGroupThreshold() {
-            s.serialize_field("resFullOpenGuideGroupThreshold", &f)?;
-        } else {
-            s.skip_field("resFullOpenGuideGroupThreshold")?;
-        }
-        s.serialize_field("resFullOpenStartTime", &self.resFullOpenStartTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_OpenServerConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4717,15 +4649,15 @@ impl clz_Torappu_OpenServerConstT {
         )
     }
 }
-pub enum clz_Torappu_ReturnConstOffset {}
+pub enum clz_Torappu_ReturnOpenDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_ReturnConst<'a> {
+pub struct clz_Torappu_ReturnOpenData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnConst<'a> {
-    type Inner = clz_Torappu_ReturnConst<'a>;
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnOpenData<'a> {
+    type Inner = clz_Torappu_ReturnOpenData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -4734,203 +4666,80 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnConst<'a> {
     }
 }
 
-impl<'a> clz_Torappu_ReturnConst<'a> {
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 4;
-    pub const VT_SYSTEMTAB_TIME: flatbuffers::VOffsetT = 6;
-    pub const VT_AFKDAYS: flatbuffers::VOffsetT = 8;
-    pub const VT_UNLOCKLV: flatbuffers::VOffsetT = 10;
-    pub const VT_UNLOCKLEVEL: flatbuffers::VOffsetT = 12;
-    pub const VT_JUNIORCLEAR: flatbuffers::VOffsetT = 14;
-    pub const VT_IFVISITOR: flatbuffers::VOffsetT = 16;
-    pub const VT_PERMMISSION_TIME: flatbuffers::VOffsetT = 18;
-    pub const VT_NEEDPOINTS: flatbuffers::VOffsetT = 20;
-    pub const VT_DEFAULTINTRO: flatbuffers::VOffsetT = 22;
-    pub const VT_POINTID: flatbuffers::VOffsetT = 24;
+impl<'a> clz_Torappu_ReturnOpenData<'a> {
+    pub const VT_ALLOPENTYPE: flatbuffers::VOffsetT = 4;
+    pub const VT_ALLOPENTIME: flatbuffers::VOffsetT = 6;
+    pub const VT_DESC: flatbuffers::VOffsetT = 8;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnConst { _tab: table }
+        clz_Torappu_ReturnOpenData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnConstArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'bldr>> {
-        let mut builder = clz_Torappu_ReturnConstBuilder::new(_fbb);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.pointId {
-            builder.add_pointId(x);
+        args: &'args clz_Torappu_ReturnOpenDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnOpenDataBuilder::new(_fbb);
+        if let Some(x) = args.desc {
+            builder.add_desc(x);
         }
-        if let Some(x) = args.defaultIntro {
-            builder.add_defaultIntro(x);
-        }
-        builder.add_needPoints(args.needPoints);
-        builder.add_permMission_time(args.permMission_time);
-        if let Some(x) = args.unlockLevel {
-            builder.add_unlockLevel(x);
-        }
-        builder.add_unlockLv(args.unlockLv);
-        builder.add_afkDays(args.afkDays);
-        builder.add_systemTab_time(args.systemTab_time);
-        builder.add_ifvisitor(args.ifvisitor);
-        builder.add_juniorClear(args.juniorClear);
+        builder.add_allOpenTime(args.allOpenTime);
+        builder.add_allOpenType(args.allOpenType);
         builder.finish()
     }
 
-    pub fn unpack(&self) -> clz_Torappu_ReturnConstT {
-        let startTime = self.startTime();
-        let systemTab_time = self.systemTab_time();
-        let afkDays = self.afkDays();
-        let unlockLv = self.unlockLv();
-        let unlockLevel = self.unlockLevel().map(|x| x.to_string());
-        let juniorClear = self.juniorClear();
-        let ifvisitor = self.ifvisitor();
-        let permMission_time = self.permMission_time();
-        let needPoints = self.needPoints();
-        let defaultIntro = self.defaultIntro().map(|x| x.to_string());
-        let pointId = self.pointId().map(|x| x.to_string());
-        clz_Torappu_ReturnConstT {
-            startTime,
-            systemTab_time,
-            afkDays,
-            unlockLv,
-            unlockLevel,
-            juniorClear,
-            ifvisitor,
-            permMission_time,
-            needPoints,
-            defaultIntro,
-            pointId,
+    pub fn unpack(&self) -> clz_Torappu_ReturnOpenDataT {
+        let allOpenType = self.allOpenType();
+        let allOpenTime = self.allOpenTime();
+        let desc = self.desc().map(|x| x.to_string());
+        clz_Torappu_ReturnOpenDataT {
+            allOpenType,
+            allOpenTime,
+            desc,
         }
     }
 
     #[inline]
-    pub fn startTime(&self) -> i64 {
+    pub fn allOpenType(&self) -> enum__Torappu_ReturnAllOpenType {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i64>(clz_Torappu_ReturnConst::VT_STARTTIME, Some(0))
+                .get::<enum__Torappu_ReturnAllOpenType>(
+                    clz_Torappu_ReturnOpenData::VT_ALLOPENTYPE,
+                    Some(enum__Torappu_ReturnAllOpenType::RESOURCE),
+                )
                 .unwrap()
         }
     }
     #[inline]
-    pub fn systemTab_time(&self) -> i32 {
+    pub fn allOpenTime(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i32>(clz_Torappu_ReturnConst::VT_SYSTEMTAB_TIME, Some(0))
+                .get::<i32>(clz_Torappu_ReturnOpenData::VT_ALLOPENTIME, Some(0))
                 .unwrap()
         }
     }
     #[inline]
-    pub fn afkDays(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnConst::VT_AFKDAYS, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn unlockLv(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnConst::VT_UNLOCKLV, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn unlockLevel(&self) -> Option<&'a str> {
+    pub fn desc(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnConst::VT_UNLOCKLEVEL,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn juniorClear(&self) -> bool {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<bool>(clz_Torappu_ReturnConst::VT_JUNIORCLEAR, Some(false))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn ifvisitor(&self) -> bool {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<bool>(clz_Torappu_ReturnConst::VT_IFVISITOR, Some(false))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn permMission_time(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnConst::VT_PERMMISSION_TIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn needPoints(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnConst::VT_NEEDPOINTS, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn defaultIntro(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnConst::VT_DEFAULTINTRO,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn pointId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnConst::VT_POINTID,
+                clz_Torappu_ReturnOpenData::VT_DESC,
                 None,
             )
         }
     }
 }
 
-impl flatbuffers::Verifiable for clz_Torappu_ReturnConst<'_> {
+impl flatbuffers::Verifiable for clz_Torappu_ReturnOpenData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -4938,263 +4747,1570 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnConst<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i32>("systemTab_time", Self::VT_SYSTEMTAB_TIME, false)?
-            .visit_field::<i32>("afkDays", Self::VT_AFKDAYS, false)?
-            .visit_field::<i32>("unlockLv", Self::VT_UNLOCKLV, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "unlockLevel",
-                Self::VT_UNLOCKLEVEL,
+            .visit_field::<enum__Torappu_ReturnAllOpenType>(
+                "allOpenType",
+                Self::VT_ALLOPENTYPE,
                 false,
             )?
-            .visit_field::<bool>("juniorClear", Self::VT_JUNIORCLEAR, false)?
-            .visit_field::<bool>("ifvisitor", Self::VT_IFVISITOR, false)?
-            .visit_field::<i32>("permMission_time", Self::VT_PERMMISSION_TIME, false)?
-            .visit_field::<i32>("needPoints", Self::VT_NEEDPOINTS, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "defaultIntro",
-                Self::VT_DEFAULTINTRO,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("pointId", Self::VT_POINTID, false)?
+            .visit_field::<i32>("allOpenTime", Self::VT_ALLOPENTIME, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_ReturnConstArgs<'a> {
-    pub startTime: i64,
-    pub systemTab_time: i32,
-    pub afkDays: i32,
-    pub unlockLv: i32,
-    pub unlockLevel: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub juniorClear: bool,
-    pub ifvisitor: bool,
-    pub permMission_time: i32,
-    pub needPoints: i32,
-    pub defaultIntro: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub pointId: Option<flatbuffers::WIPOffset<&'a str>>,
+pub struct clz_Torappu_ReturnOpenDataArgs<'a> {
+    pub allOpenType: enum__Torappu_ReturnAllOpenType,
+    pub allOpenTime: i32,
+    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
 }
-impl<'a> Default for clz_Torappu_ReturnConstArgs<'a> {
+impl<'a> Default for clz_Torappu_ReturnOpenDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_ReturnConstArgs {
-            startTime: 0,
-            systemTab_time: 0,
-            afkDays: 0,
-            unlockLv: 0,
-            unlockLevel: None,
-            juniorClear: false,
-            ifvisitor: false,
-            permMission_time: 0,
-            needPoints: 0,
-            defaultIntro: None,
-            pointId: None,
+        clz_Torappu_ReturnOpenDataArgs {
+            allOpenType: enum__Torappu_ReturnAllOpenType::RESOURCE,
+            allOpenTime: 0,
+            desc: None,
         }
     }
 }
 
-impl Serialize for clz_Torappu_ReturnConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnConst", 11)?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("systemTab_time", &self.systemTab_time())?;
-        s.serialize_field("afkDays", &self.afkDays())?;
-        s.serialize_field("unlockLv", &self.unlockLv())?;
-        if let Some(f) = self.unlockLevel() {
-            s.serialize_field("unlockLevel", &f)?;
-        } else {
-            s.skip_field("unlockLevel")?;
-        }
-        s.serialize_field("juniorClear", &self.juniorClear())?;
-        s.serialize_field("ifvisitor", &self.ifvisitor())?;
-        s.serialize_field("permMission_time", &self.permMission_time())?;
-        s.serialize_field("needPoints", &self.needPoints())?;
-        if let Some(f) = self.defaultIntro() {
-            s.serialize_field("defaultIntro", &f)?;
-        } else {
-            s.skip_field("defaultIntro")?;
-        }
-        if let Some(f) = self.pointId() {
-            s.serialize_field("pointId", &f)?;
-        } else {
-            s.skip_field("pointId")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct clz_Torappu_ReturnOpenDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnConstBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnOpenDataBuilder<'a, 'b, A> {
     #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnConst::VT_STARTTIME, startTime, 0);
-    }
-    #[inline]
-    pub fn add_systemTab_time(&mut self, systemTab_time: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnConst::VT_SYSTEMTAB_TIME,
-            systemTab_time,
-            0,
+    pub fn add_allOpenType(&mut self, allOpenType: enum__Torappu_ReturnAllOpenType) {
+        self.fbb_.push_slot::<enum__Torappu_ReturnAllOpenType>(
+            clz_Torappu_ReturnOpenData::VT_ALLOPENTYPE,
+            allOpenType,
+            enum__Torappu_ReturnAllOpenType::RESOURCE,
         );
     }
     #[inline]
-    pub fn add_afkDays(&mut self, afkDays: i32) {
+    pub fn add_allOpenTime(&mut self, allOpenTime: i32) {
         self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnConst::VT_AFKDAYS, afkDays, 0);
+            .push_slot::<i32>(clz_Torappu_ReturnOpenData::VT_ALLOPENTIME, allOpenTime, 0);
     }
     #[inline]
-    pub fn add_unlockLv(&mut self, unlockLv: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnConst::VT_UNLOCKLV, unlockLv, 0);
-    }
-    #[inline]
-    pub fn add_unlockLevel(&mut self, unlockLevel: flatbuffers::WIPOffset<&'b str>) {
+    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnConst::VT_UNLOCKLEVEL,
-            unlockLevel,
-        );
-    }
-    #[inline]
-    pub fn add_juniorClear(&mut self, juniorClear: bool) {
-        self.fbb_
-            .push_slot::<bool>(clz_Torappu_ReturnConst::VT_JUNIORCLEAR, juniorClear, false);
-    }
-    #[inline]
-    pub fn add_ifvisitor(&mut self, ifvisitor: bool) {
-        self.fbb_
-            .push_slot::<bool>(clz_Torappu_ReturnConst::VT_IFVISITOR, ifvisitor, false);
-    }
-    #[inline]
-    pub fn add_permMission_time(&mut self, permMission_time: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnConst::VT_PERMMISSION_TIME,
-            permMission_time,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_needPoints(&mut self, needPoints: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnConst::VT_NEEDPOINTS, needPoints, 0);
-    }
-    #[inline]
-    pub fn add_defaultIntro(&mut self, defaultIntro: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnConst::VT_DEFAULTINTRO,
-            defaultIntro,
-        );
-    }
-    #[inline]
-    pub fn add_pointId(&mut self, pointId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnConst::VT_POINTID,
-            pointId,
+            clz_Torappu_ReturnOpenData::VT_DESC,
+            desc,
         );
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnConstBuilder<'a, 'b, A> {
+    ) -> clz_Torappu_ReturnOpenDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_ReturnConstBuilder {
+        clz_Torappu_ReturnOpenDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'a>> {
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for clz_Torappu_ReturnConst<'_> {
+impl core::fmt::Debug for clz_Torappu_ReturnOpenData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnConst");
-        ds.field("startTime", &self.startTime());
-        ds.field("systemTab_time", &self.systemTab_time());
-        ds.field("afkDays", &self.afkDays());
-        ds.field("unlockLv", &self.unlockLv());
-        ds.field("unlockLevel", &self.unlockLevel());
-        ds.field("juniorClear", &self.juniorClear());
-        ds.field("ifvisitor", &self.ifvisitor());
-        ds.field("permMission_time", &self.permMission_time());
-        ds.field("needPoints", &self.needPoints());
-        ds.field("defaultIntro", &self.defaultIntro());
-        ds.field("pointId", &self.pointId());
+        let mut ds = f.debug_struct("clz_Torappu_ReturnOpenData");
+        ds.field("allOpenType", &self.allOpenType());
+        ds.field("allOpenTime", &self.allOpenTime());
+        ds.field("desc", &self.desc());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnConstT {
-    pub startTime: i64,
-    pub systemTab_time: i32,
-    pub afkDays: i32,
-    pub unlockLv: i32,
-    pub unlockLevel: Option<String>,
-    pub juniorClear: bool,
-    pub ifvisitor: bool,
-    pub permMission_time: i32,
-    pub needPoints: i32,
-    pub defaultIntro: Option<String>,
-    pub pointId: Option<String>,
+pub struct clz_Torappu_ReturnOpenDataT {
+    pub allOpenType: enum__Torappu_ReturnAllOpenType,
+    pub allOpenTime: i32,
+    pub desc: Option<String>,
 }
-impl Default for clz_Torappu_ReturnConstT {
+impl Default for clz_Torappu_ReturnOpenDataT {
     fn default() -> Self {
         Self {
-            startTime: 0,
-            systemTab_time: 0,
-            afkDays: 0,
-            unlockLv: 0,
-            unlockLevel: None,
-            juniorClear: false,
-            ifvisitor: false,
-            permMission_time: 0,
-            needPoints: 0,
-            defaultIntro: None,
-            pointId: None,
+            allOpenType: enum__Torappu_ReturnAllOpenType::RESOURCE,
+            allOpenTime: 0,
+            desc: None,
         }
     }
 }
-impl clz_Torappu_ReturnConstT {
+impl clz_Torappu_ReturnOpenDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'b>> {
-        let startTime = self.startTime;
-        let systemTab_time = self.systemTab_time;
-        let afkDays = self.afkDays;
-        let unlockLv = self.unlockLv;
-        let unlockLevel = self.unlockLevel.as_ref().map(|x| _fbb.create_string(x));
-        let juniorClear = self.juniorClear;
-        let ifvisitor = self.ifvisitor;
-        let permMission_time = self.permMission_time;
-        let needPoints = self.needPoints;
-        let defaultIntro = self.defaultIntro.as_ref().map(|x| _fbb.create_string(x));
-        let pointId = self.pointId.as_ref().map(|x| _fbb.create_string(x));
-        clz_Torappu_ReturnConst::create(
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenData<'b>> {
+        let allOpenType = self.allOpenType;
+        let allOpenTime = self.allOpenTime;
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnOpenData::create(
             _fbb,
-            &clz_Torappu_ReturnConstArgs {
-                startTime,
-                systemTab_time,
-                afkDays,
-                unlockLv,
-                unlockLevel,
-                juniorClear,
-                ifvisitor,
-                permMission_time,
-                needPoints,
-                defaultIntro,
-                pointId,
+            &clz_Torappu_ReturnOpenDataArgs {
+                allOpenType,
+                allOpenTime,
+                desc,
             },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnGroupData<'a> {
+    type Inner = clz_Torappu_ReturnGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnGroupData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_TASKDAYS: flatbuffers::VOffsetT = 6;
+    pub const VT_ONCEGROUPID: flatbuffers::VOffsetT = 8;
+    pub const VT_MISSIONGROUPID: flatbuffers::VOffsetT = 10;
+    pub const VT_CHECKINGROUPID: flatbuffers::VOffsetT = 12;
+    pub const VT_PRICEGROUPID: flatbuffers::VOffsetT = 14;
+    pub const VT_NEWSGROUPID: flatbuffers::VOffsetT = 16;
+    pub const VT_GIFTPACKAGEIDLIST: flatbuffers::VOffsetT = 18;
+    pub const VT_CHECKINGPID: flatbuffers::VOffsetT = 20;
+    pub const VT_GACHAPOOLID: flatbuffers::VOffsetT = 22;
+    pub const VT_ALLOPENDAYS: flatbuffers::VOffsetT = 24;
+    pub const VT_CAMPALLOPENDAYS: flatbuffers::VOffsetT = 26;
+    pub const VT_ALLOPENDATA: flatbuffers::VOffsetT = 28;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.allOpenData {
+            builder.add_allOpenData(x);
+        }
+        builder.add_campAllOpenDays(args.campAllOpenDays);
+        builder.add_allOpenDays(args.allOpenDays);
+        if let Some(x) = args.gachaPoolId {
+            builder.add_gachaPoolId(x);
+        }
+        if let Some(x) = args.checkinGpId {
+            builder.add_checkinGpId(x);
+        }
+        if let Some(x) = args.giftPackageIdList {
+            builder.add_giftPackageIdList(x);
+        }
+        if let Some(x) = args.newsGroupId {
+            builder.add_newsGroupId(x);
+        }
+        if let Some(x) = args.priceGroupId {
+            builder.add_priceGroupId(x);
+        }
+        if let Some(x) = args.checkinGroupId {
+            builder.add_checkinGroupId(x);
+        }
+        if let Some(x) = args.missionGroupId {
+            builder.add_missionGroupId(x);
+        }
+        if let Some(x) = args.onceGroupId {
+            builder.add_onceGroupId(x);
+        }
+        builder.add_taskDays(args.taskDays);
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let taskDays = self.taskDays();
+        let onceGroupId = self.onceGroupId().map(|x| x.to_string());
+        let missionGroupId = self
+            .missionGroupId()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let checkinGroupId = self.checkinGroupId().map(|x| x.to_string());
+        let priceGroupId = self.priceGroupId().map(|x| x.to_string());
+        let newsGroupId = self
+            .newsGroupId()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let giftPackageIdList = self
+            .giftPackageIdList()
+            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let checkinGpId = self.checkinGpId().map(|x| x.to_string());
+        let gachaPoolId = self.gachaPoolId().map(|x| x.to_string());
+        let allOpenDays = self.allOpenDays();
+        let campAllOpenDays = self.campAllOpenDays();
+        let allOpenData = self
+            .allOpenData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnGroupDataT {
+            groupId,
+            taskDays,
+            onceGroupId,
+            missionGroupId,
+            checkinGroupId,
+            priceGroupId,
+            newsGroupId,
+            giftPackageIdList,
+            checkinGpId,
+            gachaPoolId,
+            allOpenDays,
+            campAllOpenDays,
+            allOpenData,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn taskDays(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnGroupData::VT_TASKDAYS, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn onceGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_ONCEGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn missionGroupId(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_ReturnGroupData::VT_MISSIONGROUPID, None)
+        }
+    }
+    #[inline]
+    pub fn checkinGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_CHECKINGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn priceGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_PRICEGROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn newsGroupId(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_ReturnGroupData::VT_NEWSGROUPID, None)
+        }
+    }
+    #[inline]
+    pub fn giftPackageIdList(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
+            >>(clz_Torappu_ReturnGroupData::VT_GIFTPACKAGEIDLIST, None)
+        }
+    }
+    #[inline]
+    pub fn checkinGpId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_CHECKINGPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn gachaPoolId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGroupData::VT_GACHAPOOLID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn allOpenDays(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnGroupData::VT_ALLOPENDAYS, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn campAllOpenDays(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnGroupData::VT_CAMPALLOPENDAYS, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn allOpenData(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenData<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenData>>,
+            >>(clz_Torappu_ReturnGroupData::VT_ALLOPENDATA, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<i32>("taskDays", Self::VT_TASKDAYS, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "onceGroupId",
+                Self::VT_ONCEGROUPID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("missionGroupId", Self::VT_MISSIONGROUPID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "checkinGroupId",
+                Self::VT_CHECKINGROUPID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "priceGroupId",
+                Self::VT_PRICEGROUPID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("newsGroupId", Self::VT_NEWSGROUPID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
+            >>("giftPackageIdList", Self::VT_GIFTPACKAGEIDLIST, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "checkinGpId",
+                Self::VT_CHECKINGPID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "gachaPoolId",
+                Self::VT_GACHAPOOLID,
+                false,
+            )?
+            .visit_field::<i32>("allOpenDays", Self::VT_ALLOPENDAYS, false)?
+            .visit_field::<i32>("campAllOpenDays", Self::VT_CAMPALLOPENDAYS, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenData>>,
+            >>("allOpenData", Self::VT_ALLOPENDATA, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnGroupDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub taskDays: i32,
+    pub onceGroupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub missionGroupId: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
+    pub checkinGroupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub priceGroupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub newsGroupId: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
+    pub giftPackageIdList: Option<
+        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
+    >,
+    pub checkinGpId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub gachaPoolId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub allOpenDays: i32,
+    pub campAllOpenDays: i32,
+    pub allOpenData: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenData<'a>>>,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_ReturnGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnGroupDataArgs {
+            groupId: None,
+            taskDays: 0,
+            onceGroupId: None,
+            missionGroupId: None,
+            checkinGroupId: None,
+            priceGroupId: None,
+            newsGroupId: None,
+            giftPackageIdList: None,
+            checkinGpId: None,
+            gachaPoolId: None,
+            allOpenDays: 0,
+            campAllOpenDays: 0,
+            allOpenData: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnGroupDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_taskDays(&mut self, taskDays: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnGroupData::VT_TASKDAYS, taskDays, 0);
+    }
+    #[inline]
+    pub fn add_onceGroupId(&mut self, onceGroupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_ONCEGROUPID,
+            onceGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_missionGroupId(
+        &mut self,
+        missionGroupId: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_MISSIONGROUPID,
+            missionGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_checkinGroupId(&mut self, checkinGroupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_CHECKINGROUPID,
+            checkinGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_priceGroupId(&mut self, priceGroupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_PRICEGROUPID,
+            priceGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_newsGroupId(
+        &mut self,
+        newsGroupId: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_NEWSGROUPID,
+            newsGroupId,
+        );
+    }
+    #[inline]
+    pub fn add_giftPackageIdList(
+        &mut self,
+        giftPackageIdList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_GIFTPACKAGEIDLIST,
+            giftPackageIdList,
+        );
+    }
+    #[inline]
+    pub fn add_checkinGpId(&mut self, checkinGpId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_CHECKINGPID,
+            checkinGpId,
+        );
+    }
+    #[inline]
+    pub fn add_gachaPoolId(&mut self, gachaPoolId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_GACHAPOOLID,
+            gachaPoolId,
+        );
+    }
+    #[inline]
+    pub fn add_allOpenDays(&mut self, allOpenDays: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnGroupData::VT_ALLOPENDAYS, allOpenDays, 0);
+    }
+    #[inline]
+    pub fn add_campAllOpenDays(&mut self, campAllOpenDays: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ReturnGroupData::VT_CAMPALLOPENDAYS,
+            campAllOpenDays,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_allOpenData(
+        &mut self,
+        allOpenData: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenData<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGroupData::VT_ALLOPENDATA,
+            allOpenData,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnGroupData");
+        ds.field("groupId", &self.groupId());
+        ds.field("taskDays", &self.taskDays());
+        ds.field("onceGroupId", &self.onceGroupId());
+        ds.field("missionGroupId", &self.missionGroupId());
+        ds.field("checkinGroupId", &self.checkinGroupId());
+        ds.field("priceGroupId", &self.priceGroupId());
+        ds.field("newsGroupId", &self.newsGroupId());
+        ds.field("giftPackageIdList", &self.giftPackageIdList());
+        ds.field("checkinGpId", &self.checkinGpId());
+        ds.field("gachaPoolId", &self.gachaPoolId());
+        ds.field("allOpenDays", &self.allOpenDays());
+        ds.field("campAllOpenDays", &self.campAllOpenDays());
+        ds.field("allOpenData", &self.allOpenData());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnGroupDataT {
+    pub groupId: Option<String>,
+    pub taskDays: i32,
+    pub onceGroupId: Option<String>,
+    pub missionGroupId: Option<Vec<String>>,
+    pub checkinGroupId: Option<String>,
+    pub priceGroupId: Option<String>,
+    pub newsGroupId: Option<Vec<String>>,
+    pub giftPackageIdList: Option<Vec<String>>,
+    pub checkinGpId: Option<String>,
+    pub gachaPoolId: Option<String>,
+    pub allOpenDays: i32,
+    pub campAllOpenDays: i32,
+    pub allOpenData: Option<Vec<clz_Torappu_ReturnOpenDataT>>,
+}
+impl Default for clz_Torappu_ReturnGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            taskDays: 0,
+            onceGroupId: None,
+            missionGroupId: None,
+            checkinGroupId: None,
+            priceGroupId: None,
+            newsGroupId: None,
+            giftPackageIdList: None,
+            checkinGpId: None,
+            gachaPoolId: None,
+            allOpenDays: 0,
+            campAllOpenDays: 0,
+            allOpenData: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let taskDays = self.taskDays;
+        let onceGroupId = self.onceGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let missionGroupId = self.missionGroupId.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkinGroupId = self.checkinGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let priceGroupId = self.priceGroupId.as_ref().map(|x| _fbb.create_string(x));
+        let newsGroupId = self.newsGroupId.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let giftPackageIdList = self.giftPackageIdList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkinGpId = self.checkinGpId.as_ref().map(|x| _fbb.create_string(x));
+        let gachaPoolId = self.gachaPoolId.as_ref().map(|x| _fbb.create_string(x));
+        let allOpenDays = self.allOpenDays;
+        let campAllOpenDays = self.campAllOpenDays;
+        let allOpenData = self.allOpenData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnGroupData::create(
+            _fbb,
+            &clz_Torappu_ReturnGroupDataArgs {
+                groupId,
+                taskDays,
+                onceGroupId,
+                missionGroupId,
+                checkinGroupId,
+                priceGroupId,
+                newsGroupId,
+                giftPackageIdList,
+                checkinGpId,
+                gachaPoolId,
+                allOpenDays,
+                campAllOpenDays,
+                allOpenData,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnGroupData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ReturnGroupData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnGroupData>>(
+                    dict__string__clz_Torappu_ReturnGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnGroupDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData<'b>>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnGroupData>>(
+                dict__string__clz_Torappu_ReturnGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_ReturnGroupData::VT_KEY, "key");
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnItemData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnItemData<'a> {
+    type Inner = clz_Torappu_ReturnItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnItemData<'a> {
+    pub const VT_ID: flatbuffers::VOffsetT = 4;
+    pub const VT_COUNT: flatbuffers::VOffsetT = 6;
+    pub const VT_TYPE_: flatbuffers::VOffsetT = 8;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 10;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnItemDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnItemData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnItemDataBuilder::new(_fbb);
+        builder.add_sortId(args.sortId);
+        builder.add_type_(args.type_);
+        builder.add_count(args.count);
+        if let Some(x) = args.id {
+            builder.add_id(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnItemDataT {
+        let id = self.id().map(|x| x.to_string());
+        let count = self.count();
+        let type_ = self.type_();
+        let sortId = self.sortId();
+        clz_Torappu_ReturnItemDataT {
+            id,
+            count,
+            type_,
+            sortId,
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(clz_Torappu_ReturnItemData::VT_ID, None)
+        }
+    }
+    #[inline]
+    pub fn count(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnItemData::VT_COUNT, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn type_(&self) -> enum__Torappu_ItemType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_ItemType>(
+                    clz_Torappu_ReturnItemData::VT_TYPE_,
+                    Some(enum__Torappu_ItemType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnItemData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
+            .visit_field::<i32>("count", Self::VT_COUNT, false)?
+            .visit_field::<enum__Torappu_ItemType>("type_", Self::VT_TYPE_, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnItemDataArgs<'a> {
+    pub id: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+    pub sortId: i32,
+}
+impl<'a> Default for clz_Torappu_ReturnItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnItemDataArgs {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+            sortId: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnItemDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<_>>(clz_Torappu_ReturnItemData::VT_ID, id);
+    }
+    #[inline]
+    pub fn add_count(&mut self, count: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnItemData::VT_COUNT, count, 0);
+    }
+    #[inline]
+    pub fn add_type_(&mut self, type_: enum__Torappu_ItemType) {
+        self.fbb_.push_slot::<enum__Torappu_ItemType>(
+            clz_Torappu_ReturnItemData::VT_TYPE_,
+            type_,
+            enum__Torappu_ItemType::NONE,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnItemData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnItemData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnItemData");
+        ds.field("id", &self.id());
+        ds.field("count", &self.count());
+        ds.field("type_", &self.type_());
+        ds.field("sortId", &self.sortId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnItemDataT {
+    pub id: Option<String>,
+    pub count: i32,
+    pub type_: enum__Torappu_ItemType,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_ReturnItemDataT {
+    fn default() -> Self {
+        Self {
+            id: None,
+            count: 0,
+            type_: enum__Torappu_ItemType::NONE,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_ReturnItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnItemData<'b>> {
+        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+        let count = self.count;
+        let type_ = self.type_;
+        let sortId = self.sortId;
+        clz_Torappu_ReturnItemData::create(
+            _fbb,
+            &clz_Torappu_ReturnItemDataArgs {
+                id,
+                count,
+                type_,
+                sortId,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnOnceRewardDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnOnceRewardData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnOnceRewardData<'a> {
+    type Inner = clz_Torappu_ReturnOnceRewardData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnOnceRewardData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnOnceRewardData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnOnceRewardDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnOnceRewardDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardList {
+            builder.add_rewardList(x);
+        }
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnOnceRewardDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnOnceRewardDataT {
+            groupId,
+            rewardList,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOnceRewardData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardList(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>(clz_Torappu_ReturnOnceRewardData::VT_REWARDLIST, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnOnceRewardData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>("rewardList", Self::VT_REWARDLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnOnceRewardDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub rewardList: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_ReturnOnceRewardDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnOnceRewardDataArgs {
+            groupId: None,
+            rewardList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnOnceRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnOnceRewardDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOnceRewardData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardList(
+        &mut self,
+        rewardList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOnceRewardData::VT_REWARDLIST,
+            rewardList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnOnceRewardDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnOnceRewardDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnOnceRewardData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnOnceRewardData");
+        ds.field("groupId", &self.groupId());
+        ds.field("rewardList", &self.rewardList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnOnceRewardDataT {
+    pub groupId: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ReturnItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnOnceRewardDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            rewardList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnOnceRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnOnceRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnOnceRewardDataArgs {
+                groupId,
+                rewardList,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnOnceRewardDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnOnceRewardData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnOnceRewardData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnOnceRewardData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnOnceRewardData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnOnceRewardData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnOnceRewardDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnOnceRewardDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnOnceRewardDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnOnceRewardDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnOnceRewardData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ReturnOnceRewardData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnOnceRewardData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOnceRewardData>>(
+                    dict__string__clz_Torappu_ReturnOnceRewardData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnOnceRewardData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOnceRewardData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnOnceRewardDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnOnceRewardDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnOnceRewardDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnOnceRewardDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnOnceRewardDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnOnceRewardData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnOnceRewardData>>(
+                dict__string__clz_Torappu_ReturnOnceRewardData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnOnceRewardDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnOnceRewardDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnOnceRewardData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnOnceRewardData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnOnceRewardData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnOnceRewardDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnOnceRewardDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnOnceRewardDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnOnceRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnOnceRewardData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnOnceRewardDataArgs { key, value },
         )
     }
 }
@@ -5313,23 +6429,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_ItemBundleBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5406,15 +6505,15 @@ impl clz_Torappu_ItemBundleT {
         clz_Torappu_ItemBundle::create(_fbb, &clz_Torappu_ItemBundleArgs { id, count, type_ })
     }
 }
-pub enum clz_Torappu_ReturnIntroDataOffset {}
+pub enum clz_Torappu_ReturnCheckinItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_ReturnIntroData<'a> {
+pub struct clz_Torappu_ReturnCheckinItemData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnIntroData<'a> {
-    type Inner = clz_Torappu_ReturnIntroData<'a>;
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinItemData<'a> {
+    type Inner = clz_Torappu_ReturnCheckinItemData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5423,77 +6522,81 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnIntroData<'a> {
     }
 }
 
-impl<'a> clz_Torappu_ReturnIntroData<'a> {
-    pub const VT_SORT: flatbuffers::VOffsetT = 4;
-    pub const VT_PUBTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_IMAGE: flatbuffers::VOffsetT = 8;
+impl<'a> clz_Torappu_ReturnCheckinItemData<'a> {
+    pub const VT_ORDER: flatbuffers::VOffsetT = 4;
+    pub const VT_ISKEYITEM: flatbuffers::VOffsetT = 6;
+    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 8;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnIntroData { _tab: table }
+        clz_Torappu_ReturnCheckinItemData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnIntroDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnIntroData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnIntroDataBuilder::new(_fbb);
-        builder.add_pubTime(args.pubTime);
-        if let Some(x) = args.image {
-            builder.add_image(x);
+        args: &'args clz_Torappu_ReturnCheckinItemDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinItemData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnCheckinItemDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardList {
+            builder.add_rewardList(x);
         }
-        builder.add_sort(args.sort);
+        builder.add_order(args.order);
+        builder.add_isKeyItem(args.isKeyItem);
         builder.finish()
     }
 
-    pub fn unpack(&self) -> clz_Torappu_ReturnIntroDataT {
-        let sort = self.sort();
-        let pubTime = self.pubTime();
-        let image = self.image().map(|x| x.to_string());
-        clz_Torappu_ReturnIntroDataT {
-            sort,
-            pubTime,
-            image,
+    pub fn unpack(&self) -> clz_Torappu_ReturnCheckinItemDataT {
+        let order = self.order();
+        let isKeyItem = self.isKeyItem();
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnCheckinItemDataT {
+            order,
+            isKeyItem,
+            rewardList,
         }
     }
 
     #[inline]
-    pub fn sort(&self) -> i32 {
+    pub fn order(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i32>(clz_Torappu_ReturnIntroData::VT_SORT, Some(0))
+                .get::<i32>(clz_Torappu_ReturnCheckinItemData::VT_ORDER, Some(0))
                 .unwrap()
         }
     }
     #[inline]
-    pub fn pubTime(&self) -> i64 {
+    pub fn isKeyItem(&self) -> bool {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i64>(clz_Torappu_ReturnIntroData::VT_PUBTIME, Some(0))
+                .get::<bool>(clz_Torappu_ReturnCheckinItemData::VT_ISKEYITEM, Some(false))
                 .unwrap()
         }
     }
     #[inline]
-    pub fn image(&self) -> Option<&'a str> {
+    pub fn rewardList(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
+    {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnIntroData::VT_IMAGE,
-                None,
-            )
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>(clz_Torappu_ReturnCheckinItemData::VT_REWARDLIST, None)
         }
     }
 }
 
-impl flatbuffers::Verifiable for clz_Torappu_ReturnIntroData<'_> {
+impl flatbuffers::Verifiable for clz_Torappu_ReturnCheckinItemData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -5501,137 +6604,139 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnIntroData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<i32>("sort", Self::VT_SORT, false)?
-            .visit_field::<i64>("pubTime", Self::VT_PUBTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("image", Self::VT_IMAGE, false)?
+            .visit_field::<i32>("order", Self::VT_ORDER, false)?
+            .visit_field::<bool>("isKeyItem", Self::VT_ISKEYITEM, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
+            >>("rewardList", Self::VT_REWARDLIST, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_ReturnIntroDataArgs<'a> {
-    pub sort: i32,
-    pub pubTime: i64,
-    pub image: Option<flatbuffers::WIPOffset<&'a str>>,
+pub struct clz_Torappu_ReturnCheckinItemDataArgs<'a> {
+    pub order: i32,
+    pub isKeyItem: bool,
+    pub rewardList: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
+        >,
+    >,
 }
-impl<'a> Default for clz_Torappu_ReturnIntroDataArgs<'a> {
+impl<'a> Default for clz_Torappu_ReturnCheckinItemDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_ReturnIntroDataArgs {
-            sort: 0,
-            pubTime: 0,
-            image: None,
+        clz_Torappu_ReturnCheckinItemDataArgs {
+            order: 0,
+            isKeyItem: false,
+            rewardList: None,
         }
     }
 }
 
-impl Serialize for clz_Torappu_ReturnIntroData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnIntroData", 3)?;
-        s.serialize_field("sort", &self.sort())?;
-        s.serialize_field("pubTime", &self.pubTime())?;
-        if let Some(f) = self.image() {
-            s.serialize_field("image", &f)?;
-        } else {
-            s.skip_field("image")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnIntroDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct clz_Torappu_ReturnCheckinItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnIntroDataBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnCheckinItemDataBuilder<'a, 'b, A>
+{
     #[inline]
-    pub fn add_sort(&mut self, sort: i32) {
+    pub fn add_order(&mut self, order: i32) {
         self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnIntroData::VT_SORT, sort, 0);
+            .push_slot::<i32>(clz_Torappu_ReturnCheckinItemData::VT_ORDER, order, 0);
     }
     #[inline]
-    pub fn add_pubTime(&mut self, pubTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnIntroData::VT_PUBTIME, pubTime, 0);
+    pub fn add_isKeyItem(&mut self, isKeyItem: bool) {
+        self.fbb_.push_slot::<bool>(
+            clz_Torappu_ReturnCheckinItemData::VT_ISKEYITEM,
+            isKeyItem,
+            false,
+        );
     }
     #[inline]
-    pub fn add_image(&mut self, image: flatbuffers::WIPOffset<&'b str>) {
+    pub fn add_rewardList(
+        &mut self,
+        rewardList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
+        >,
+    ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnIntroData::VT_IMAGE,
-            image,
+            clz_Torappu_ReturnCheckinItemData::VT_REWARDLIST,
+            rewardList,
         );
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnIntroDataBuilder<'a, 'b, A> {
+    ) -> clz_Torappu_ReturnCheckinItemDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_ReturnIntroDataBuilder {
+        clz_Torappu_ReturnCheckinItemDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnIntroData<'a>> {
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinItemData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for clz_Torappu_ReturnIntroData<'_> {
+impl core::fmt::Debug for clz_Torappu_ReturnCheckinItemData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnIntroData");
-        ds.field("sort", &self.sort());
-        ds.field("pubTime", &self.pubTime());
-        ds.field("image", &self.image());
+        let mut ds = f.debug_struct("clz_Torappu_ReturnCheckinItemData");
+        ds.field("order", &self.order());
+        ds.field("isKeyItem", &self.isKeyItem());
+        ds.field("rewardList", &self.rewardList());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnIntroDataT {
-    pub sort: i32,
-    pub pubTime: i64,
-    pub image: Option<String>,
+pub struct clz_Torappu_ReturnCheckinItemDataT {
+    pub order: i32,
+    pub isKeyItem: bool,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
 }
-impl Default for clz_Torappu_ReturnIntroDataT {
+impl Default for clz_Torappu_ReturnCheckinItemDataT {
     fn default() -> Self {
         Self {
-            sort: 0,
-            pubTime: 0,
-            image: None,
+            order: 0,
+            isKeyItem: false,
+            rewardList: None,
         }
     }
 }
-impl clz_Torappu_ReturnIntroDataT {
+impl clz_Torappu_ReturnCheckinItemDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnIntroData<'b>> {
-        let sort = self.sort;
-        let pubTime = self.pubTime;
-        let image = self.image.as_ref().map(|x| _fbb.create_string(x));
-        clz_Torappu_ReturnIntroData::create(
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinItemData<'b>> {
+        let order = self.order;
+        let isKeyItem = self.isKeyItem;
+        let rewardList = self.rewardList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnCheckinItemData::create(
             _fbb,
-            &clz_Torappu_ReturnIntroDataArgs {
-                sort,
-                pubTime,
-                image,
+            &clz_Torappu_ReturnCheckinItemDataArgs {
+                order,
+                isKeyItem,
+                rewardList,
             },
         )
     }
 }
-pub enum clz_Torappu_ReturnDailyTaskDataOffset {}
+pub enum clz_Torappu_ReturnCheckinGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_ReturnDailyTaskData<'a> {
+pub struct clz_Torappu_ReturnCheckinGroupData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnDailyTaskData<'a> {
-    type Inner = clz_Torappu_ReturnDailyTaskData<'a>;
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinGroupData<'a> {
+    type Inner = clz_Torappu_ReturnCheckinGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -5640,44 +6745,22 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnDailyTaskData<'a> {
     }
 }
 
-impl<'a> clz_Torappu_ReturnDailyTaskData<'a> {
+impl<'a> clz_Torappu_ReturnCheckinGroupData<'a> {
     pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_GROUPSORTID: flatbuffers::VOffsetT = 8;
-    pub const VT_TASKSORTID: flatbuffers::VOffsetT = 10;
-    pub const VT_TEMPLATE: flatbuffers::VOffsetT = 12;
-    pub const VT_PARAM: flatbuffers::VOffsetT = 14;
-    pub const VT_DESC: flatbuffers::VOffsetT = 16;
-    pub const VT_REWARDS: flatbuffers::VOffsetT = 18;
-    pub const VT_PLAYPOINT: flatbuffers::VOffsetT = 20;
+    pub const VT_CHECKINITEMLIST: flatbuffers::VOffsetT = 6;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnDailyTaskData { _tab: table }
+        clz_Torappu_ReturnCheckinGroupData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnDailyTaskDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnDailyTaskData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnDailyTaskDataBuilder::new(_fbb);
-        builder.add_playPoint(args.playPoint);
-        if let Some(x) = args.rewards {
-            builder.add_rewards(x);
-        }
-        if let Some(x) = args.desc {
-            builder.add_desc(x);
-        }
-        if let Some(x) = args.param {
-            builder.add_param(x);
-        }
-        if let Some(x) = args.template {
-            builder.add_template(x);
-        }
-        builder.add_taskSortId(args.taskSortId);
-        builder.add_groupSortId(args.groupSortId);
-        if let Some(x) = args.id {
-            builder.add_id(x);
+        args: &'args clz_Torappu_ReturnCheckinGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnCheckinGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.checkinItemList {
+            builder.add_checkinItemList(x);
         }
         if let Some(x) = args.groupId {
             builder.add_groupId(x);
@@ -5685,30 +6768,14 @@ impl<'a> clz_Torappu_ReturnDailyTaskData<'a> {
         builder.finish()
     }
 
-    pub fn unpack(&self) -> clz_Torappu_ReturnDailyTaskDataT {
+    pub fn unpack(&self) -> clz_Torappu_ReturnCheckinGroupDataT {
         let groupId = self.groupId().map(|x| x.to_string());
-        let id = self.id().map(|x| x.to_string());
-        let groupSortId = self.groupSortId();
-        let taskSortId = self.taskSortId();
-        let template = self.template().map(|x| x.to_string());
-        let param = self
-            .param()
-            .map(|x| x.iter().map(|s| s.to_string()).collect());
-        let desc = self.desc().map(|x| x.to_string());
-        let rewards = self
-            .rewards()
+        let checkinItemList = self
+            .checkinItemList()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let playPoint = self.playPoint();
-        clz_Torappu_ReturnDailyTaskDataT {
+        clz_Torappu_ReturnCheckinGroupDataT {
             groupId,
-            id,
-            groupSortId,
-            taskSortId,
-            template,
-            param,
-            desc,
-            rewards,
-            playPoint,
+            checkinItemList,
         }
     }
 
@@ -5719,87 +6786,18 @@ impl<'a> clz_Torappu_ReturnDailyTaskData<'a> {
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnDailyTaskData::VT_GROUPID,
+                clz_Torappu_ReturnCheckinGroupData::VT_GROUPID,
                 None,
             )
         }
     }
     #[inline]
-    pub fn id(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnDailyTaskData::VT_ID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn groupSortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnDailyTaskData::VT_GROUPSORTID, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn taskSortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnDailyTaskData::VT_TASKSORTID, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn template(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnDailyTaskData::VT_TEMPLATE,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn param(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
-            >>(clz_Torappu_ReturnDailyTaskData::VT_PARAM, None)
-        }
-    }
-    #[inline]
-    pub fn desc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnDailyTaskData::VT_DESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn rewards(
+    pub fn checkinItemList(
         &self,
     ) -> Option<
         flatbuffers::Vector<
             'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinItemData<'a>>,
         >,
     > {
         // Safety:
@@ -5809,25 +6807,14 @@ impl<'a> clz_Torappu_ReturnDailyTaskData<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinItemData>,
                 >,
-            >>(clz_Torappu_ReturnDailyTaskData::VT_REWARDS, None)
-        }
-    }
-    #[inline]
-    pub fn playPoint(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnDailyTaskData::VT_PLAYPOINT, Some(0))
-                .unwrap()
+            >>(clz_Torappu_ReturnCheckinGroupData::VT_CHECKINITEMLIST, None)
         }
     }
 }
 
-impl flatbuffers::Verifiable for clz_Torappu_ReturnDailyTaskData<'_> {
+impl flatbuffers::Verifiable for clz_Torappu_ReturnCheckinGroupData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -5836,295 +6823,133 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnDailyTaskData<'_> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-            .visit_field::<i32>("groupSortId", Self::VT_GROUPSORTID, false)?
-            .visit_field::<i32>("taskSortId", Self::VT_TASKSORTID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "template",
-                Self::VT_TEMPLATE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("param", Self::VT_PARAM, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinItemData>,
                 >,
-            >>("rewards", Self::VT_REWARDS, false)?
-            .visit_field::<i32>("playPoint", Self::VT_PLAYPOINT, false)?
+            >>("checkinItemList", Self::VT_CHECKINITEMLIST, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_ReturnDailyTaskDataArgs<'a> {
+pub struct clz_Torappu_ReturnCheckinGroupDataArgs<'a> {
     pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub id: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub groupSortId: i32,
-    pub taskSortId: i32,
-    pub template: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub param: Option<
-        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
-    >,
-    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub rewards: Option<
+    pub checkinItemList: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinItemData<'a>>,
             >,
         >,
     >,
-    pub playPoint: i32,
 }
-impl<'a> Default for clz_Torappu_ReturnDailyTaskDataArgs<'a> {
+impl<'a> Default for clz_Torappu_ReturnCheckinGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_ReturnDailyTaskDataArgs {
+        clz_Torappu_ReturnCheckinGroupDataArgs {
             groupId: None,
-            id: None,
-            groupSortId: 0,
-            taskSortId: 0,
-            template: None,
-            param: None,
-            desc: None,
-            rewards: None,
-            playPoint: 0,
+            checkinItemList: None,
         }
     }
 }
 
-impl Serialize for clz_Torappu_ReturnDailyTaskData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnDailyTaskData", 9)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("groupSortId", &self.groupSortId())?;
-        s.serialize_field("taskSortId", &self.taskSortId())?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.serialize_field("playPoint", &self.playPoint())?;
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnDailyTaskDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct clz_Torappu_ReturnCheckinGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnDailyTaskDataBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnCheckinGroupDataBuilder<'a, 'b, A>
+{
     #[inline]
     pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_GROUPID,
+            clz_Torappu_ReturnCheckinGroupData::VT_GROUPID,
             groupId,
         );
     }
     #[inline]
-    pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_ID,
-            id,
-        );
-    }
-    #[inline]
-    pub fn add_groupSortId(&mut self, groupSortId: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnDailyTaskData::VT_GROUPSORTID,
-            groupSortId,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_taskSortId(&mut self, taskSortId: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnDailyTaskData::VT_TASKSORTID,
-            taskSortId,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_template(&mut self, template: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_TEMPLATE,
-            template,
-        );
-    }
-    #[inline]
-    pub fn add_param(
+    pub fn add_checkinItemList(
         &mut self,
-        param: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_PARAM,
-            param,
-        );
-    }
-    #[inline]
-    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_DESC,
-            desc,
-        );
-    }
-    #[inline]
-    pub fn add_rewards(
-        &mut self,
-        rewards: flatbuffers::WIPOffset<
+        checkinItemList: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'b>>,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinItemData<'b>>,
             >,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnDailyTaskData::VT_REWARDS,
-            rewards,
+            clz_Torappu_ReturnCheckinGroupData::VT_CHECKINITEMLIST,
+            checkinItemList,
         );
-    }
-    #[inline]
-    pub fn add_playPoint(&mut self, playPoint: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnDailyTaskData::VT_PLAYPOINT, playPoint, 0);
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnDailyTaskDataBuilder<'a, 'b, A> {
+    ) -> clz_Torappu_ReturnCheckinGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_ReturnDailyTaskDataBuilder {
+        clz_Torappu_ReturnCheckinGroupDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnDailyTaskData<'a>> {
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for clz_Torappu_ReturnDailyTaskData<'_> {
+impl core::fmt::Debug for clz_Torappu_ReturnCheckinGroupData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnDailyTaskData");
+        let mut ds = f.debug_struct("clz_Torappu_ReturnCheckinGroupData");
         ds.field("groupId", &self.groupId());
-        ds.field("id", &self.id());
-        ds.field("groupSortId", &self.groupSortId());
-        ds.field("taskSortId", &self.taskSortId());
-        ds.field("template", &self.template());
-        ds.field("param", &self.param());
-        ds.field("desc", &self.desc());
-        ds.field("rewards", &self.rewards());
-        ds.field("playPoint", &self.playPoint());
+        ds.field("checkinItemList", &self.checkinItemList());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnDailyTaskDataT {
+pub struct clz_Torappu_ReturnCheckinGroupDataT {
     pub groupId: Option<String>,
-    pub id: Option<String>,
-    pub groupSortId: i32,
-    pub taskSortId: i32,
-    pub template: Option<String>,
-    pub param: Option<Vec<String>>,
-    pub desc: Option<String>,
-    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
-    pub playPoint: i32,
+    pub checkinItemList: Option<Vec<clz_Torappu_ReturnCheckinItemDataT>>,
 }
-impl Default for clz_Torappu_ReturnDailyTaskDataT {
+impl Default for clz_Torappu_ReturnCheckinGroupDataT {
     fn default() -> Self {
         Self {
             groupId: None,
-            id: None,
-            groupSortId: 0,
-            taskSortId: 0,
-            template: None,
-            param: None,
-            desc: None,
-            rewards: None,
-            playPoint: 0,
+            checkinItemList: None,
         }
     }
 }
-impl clz_Torappu_ReturnDailyTaskDataT {
+impl clz_Torappu_ReturnCheckinGroupDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnDailyTaskData<'b>> {
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData<'b>> {
         let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
-        let groupSortId = self.groupSortId;
-        let taskSortId = self.taskSortId;
-        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
-        let param = self.param.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
-            _fbb.create_vector(&w)
-        });
-        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
-        let rewards = self.rewards.as_ref().map(|x| {
+        let checkinItemList = self.checkinItemList.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
-        let playPoint = self.playPoint;
-        clz_Torappu_ReturnDailyTaskData::create(
+        clz_Torappu_ReturnCheckinGroupData::create(
             _fbb,
-            &clz_Torappu_ReturnDailyTaskDataArgs {
+            &clz_Torappu_ReturnCheckinGroupDataArgs {
                 groupId,
-                id,
-                groupSortId,
-                taskSortId,
-                template,
-                param,
-                desc,
-                rewards,
-                playPoint,
+                checkinItemList,
             },
         )
     }
 }
-pub enum dict__string__list_clz_Torappu_ReturnDailyTaskDataOffset {}
+pub enum dict__string__clz_Torappu_ReturnCheckinGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
+pub struct dict__string__clz_Torappu_ReturnCheckinGroupData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
-    type Inner = dict__string__list_clz_Torappu_ReturnDailyTaskData<'a>;
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnCheckinGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnCheckinGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6133,20 +6958,20 @@ impl<'a> flatbuffers::Follow<'a> for dict__string__list_clz_Torappu_ReturnDailyT
     }
 }
 
-impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
+impl<'a> dict__string__clz_Torappu_ReturnCheckinGroupData<'a> {
     pub const VT_KEY: flatbuffers::VOffsetT = 4;
     pub const VT_VALUE: flatbuffers::VOffsetT = 6;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        dict__string__list_clz_Torappu_ReturnDailyTaskData { _tab: table }
+        dict__string__clz_Torappu_ReturnCheckinGroupData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_ReturnDailyTaskData<'bldr>> {
-        let mut builder = dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder::new(_fbb);
+        args: &'args dict__string__clz_Torappu_ReturnCheckinGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnCheckinGroupDataBuilder::new(_fbb);
         if let Some(x) = args.value {
             builder.add_value(x);
         }
@@ -6156,13 +6981,13 @@ impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
         builder.finish()
     }
 
-    pub fn unpack(&self) -> dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnCheckinGroupDataT {
         let key = {
             let x = self.key();
             x.to_string()
         };
-        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
-        dict__string__list_clz_Torappu_ReturnDailyTaskDataT { key, value }
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnCheckinGroupDataT { key, value }
     }
 
     #[inline]
@@ -6173,7 +6998,7 @@ impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
         unsafe {
             self._tab
                 .get::<flatbuffers::ForwardsUOffset<&str>>(
-                    dict__string__list_clz_Torappu_ReturnDailyTaskData::VT_KEY,
+                    dict__string__clz_Torappu_ReturnCheckinGroupData::VT_KEY,
                     None,
                 )
                 .unwrap()
@@ -6182,7 +7007,7 @@ impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
     #[inline]
     pub fn key_compare_less_than(
         &self,
-        o: &dict__string__list_clz_Torappu_ReturnDailyTaskData,
+        o: &dict__string__clz_Torappu_ReturnCheckinGroupData,
     ) -> bool {
         self.key() < o.key()
     }
@@ -6193,29 +7018,21 @@ impl<'a> dict__string__list_clz_Torappu_ReturnDailyTaskData<'a> {
         key.cmp(val)
     }
     #[inline]
-    pub fn value(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnDailyTaskData<'a>>>,
-    > {
+    pub fn value(&self) -> Option<clz_Torappu_ReturnCheckinGroupData<'a>> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnDailyTaskData>,
-                >,
-            >>(
-                dict__string__list_clz_Torappu_ReturnDailyTaskData::VT_VALUE,
-                None,
-            )
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinGroupData>>(
+                    dict__string__clz_Torappu_ReturnCheckinGroupData::VT_VALUE,
+                    None,
+                )
         }
     }
 }
 
-impl flatbuffers::Verifiable for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_> {
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnCheckinGroupData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -6224,55 +7041,30 @@ impl flatbuffers::Verifiable for dict__string__list_clz_Torappu_ReturnDailyTaskD
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnDailyTaskData>,
-                >,
-            >>("value", Self::VT_VALUE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
             .finish();
         Ok(())
     }
 }
-pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs<'a> {
+pub struct dict__string__clz_Torappu_ReturnCheckinGroupDataArgs<'a> {
     pub key: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub value: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnDailyTaskData<'a>>,
-            >,
-        >,
-    >,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData<'a>>>,
 }
-impl<'a> Default for dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs<'a> {
+impl<'a> Default for dict__string__clz_Torappu_ReturnCheckinGroupDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs {
+        dict__string__clz_Torappu_ReturnCheckinGroupDataArgs {
             key: None, // required field
             value: None,
         }
     }
 }
 
-impl Serialize for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__list_clz_Torappu_ReturnDailyTaskData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
-pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder<
+pub struct dict__string__clz_Torappu_ReturnCheckinGroupDataBuilder<
     'a: 'b,
     'b,
     A: flatbuffers::Allocator + 'a,
@@ -6281,36 +7073,32 @@ pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder<
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder<'a, 'b, A>
+    dict__string__clz_Torappu_ReturnCheckinGroupDataBuilder<'a, 'b, A>
 {
     #[inline]
     pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            dict__string__list_clz_Torappu_ReturnDailyTaskData::VT_KEY,
+            dict__string__clz_Torappu_ReturnCheckinGroupData::VT_KEY,
             key,
         );
     }
     #[inline]
     pub fn add_value(
         &mut self,
-        value: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnDailyTaskData<'b>>,
-            >,
-        >,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData<'b>>,
     ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            dict__string__list_clz_Torappu_ReturnDailyTaskData::VT_VALUE,
-            value,
-        );
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGroupData>>(
+                dict__string__clz_Torappu_ReturnCheckinGroupData::VT_VALUE,
+                value,
+            );
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder<'a, 'b, A> {
+    ) -> dict__string__clz_Torappu_ReturnCheckinGroupDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        dict__string__list_clz_Torappu_ReturnDailyTaskDataBuilder {
+        dict__string__clz_Torappu_ReturnCheckinGroupDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
@@ -6318,20 +7106,20 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
     #[inline]
     pub fn finish(
         self,
-    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_ReturnDailyTaskData<'a>> {
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         self.fbb_.required(
             o,
-            dict__string__list_clz_Torappu_ReturnDailyTaskData::VT_KEY,
+            dict__string__clz_Torappu_ReturnCheckinGroupData::VT_KEY,
             "key",
         );
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_> {
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnCheckinGroupData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("dict__string__list_clz_Torappu_ReturnDailyTaskData");
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnCheckinGroupData");
         ds.field("key", &self.key());
         ds.field("value", &self.value());
         ds.finish()
@@ -6339,11 +7127,11 @@ impl core::fmt::Debug for dict__string__list_clz_Torappu_ReturnDailyTaskData<'_>
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+pub struct dict__string__clz_Torappu_ReturnCheckinGroupDataT {
     pub key: String,
-    pub value: Option<Vec<clz_Torappu_ReturnDailyTaskDataT>>,
+    pub value: Option<Box<clz_Torappu_ReturnCheckinGroupDataT>>,
 }
-impl Default for dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+impl Default for dict__string__clz_Torappu_ReturnCheckinGroupDataT {
     fn default() -> Self {
         Self {
             key: "".to_string(),
@@ -6351,34 +7139,31 @@ impl Default for dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
         }
     }
 }
-impl dict__string__list_clz_Torappu_ReturnDailyTaskDataT {
+impl dict__string__clz_Torappu_ReturnCheckinGroupDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<dict__string__list_clz_Torappu_ReturnDailyTaskData<'b>> {
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'b>> {
         let key = Some({
             let x = &self.key;
             _fbb.create_string(x)
         });
-        let value = self.value.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        dict__string__list_clz_Torappu_ReturnDailyTaskData::create(
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnCheckinGroupData::create(
             _fbb,
-            &dict__string__list_clz_Torappu_ReturnDailyTaskDataArgs { key, value },
+            &dict__string__clz_Torappu_ReturnCheckinGroupDataArgs { key, value },
         )
     }
 }
-pub enum clz_Torappu_ReturnLongTermTaskDataOffset {}
+pub enum clz_Torappu_ReturnPriceItemDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_ReturnLongTermTaskData<'a> {
+pub struct clz_Torappu_ReturnPriceItemData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnLongTermTaskData<'a> {
-    type Inner = clz_Torappu_ReturnLongTermTaskData<'a>;
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnPriceItemData<'a> {
+    type Inner = clz_Torappu_ReturnPriceItemData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6387,76 +7172,68 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnLongTermTaskData<'a> {
     }
 }
 
-impl<'a> clz_Torappu_ReturnLongTermTaskData<'a> {
-    pub const VT_ID: flatbuffers::VOffsetT = 4;
+impl<'a> clz_Torappu_ReturnPriceItemData<'a> {
+    pub const VT_CONTENTID: flatbuffers::VOffsetT = 4;
     pub const VT_SORTID: flatbuffers::VOffsetT = 6;
-    pub const VT_TEMPLATE: flatbuffers::VOffsetT = 8;
-    pub const VT_PARAM: flatbuffers::VOffsetT = 10;
-    pub const VT_DESC: flatbuffers::VOffsetT = 12;
-    pub const VT_REWARDS: flatbuffers::VOffsetT = 14;
-    pub const VT_PLAYPOINT: flatbuffers::VOffsetT = 16;
+    pub const VT_POINTREQUIRE: flatbuffers::VOffsetT = 8;
+    pub const VT_DESC: flatbuffers::VOffsetT = 10;
+    pub const VT_DISPLAYREWARD: flatbuffers::VOffsetT = 12;
+    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 14;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnLongTermTaskData { _tab: table }
+        clz_Torappu_ReturnPriceItemData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnLongTermTaskDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnLongTermTaskData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnLongTermTaskDataBuilder::new(_fbb);
-        builder.add_playPoint(args.playPoint);
-        if let Some(x) = args.rewards {
-            builder.add_rewards(x);
+        args: &'args clz_Torappu_ReturnPriceItemDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceItemData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnPriceItemDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardList {
+            builder.add_rewardList(x);
+        }
+        if let Some(x) = args.displayReward {
+            builder.add_displayReward(x);
         }
         if let Some(x) = args.desc {
             builder.add_desc(x);
         }
-        if let Some(x) = args.param {
-            builder.add_param(x);
-        }
-        if let Some(x) = args.template {
-            builder.add_template(x);
-        }
+        builder.add_pointRequire(args.pointRequire);
         builder.add_sortId(args.sortId);
-        if let Some(x) = args.id {
-            builder.add_id(x);
+        if let Some(x) = args.contentId {
+            builder.add_contentId(x);
         }
         builder.finish()
     }
 
-    pub fn unpack(&self) -> clz_Torappu_ReturnLongTermTaskDataT {
-        let id = self.id().map(|x| x.to_string());
+    pub fn unpack(&self) -> clz_Torappu_ReturnPriceItemDataT {
+        let contentId = self.contentId().map(|x| x.to_string());
         let sortId = self.sortId();
-        let template = self.template().map(|x| x.to_string());
-        let param = self
-            .param()
-            .map(|x| x.iter().map(|s| s.to_string()).collect());
+        let pointRequire = self.pointRequire();
         let desc = self.desc().map(|x| x.to_string());
-        let rewards = self
-            .rewards()
+        let displayReward = self.displayReward().map(|x| Box::new(x.unpack()));
+        let rewardList = self
+            .rewardList()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let playPoint = self.playPoint();
-        clz_Torappu_ReturnLongTermTaskDataT {
-            id,
+        clz_Torappu_ReturnPriceItemDataT {
+            contentId,
             sortId,
-            template,
-            param,
+            pointRequire,
             desc,
-            rewards,
-            playPoint,
+            displayReward,
+            rewardList,
         }
     }
 
     #[inline]
-    pub fn id(&self) -> Option<&'a str> {
+    pub fn contentId(&self) -> Option<&'a str> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnLongTermTaskData::VT_ID,
+                clz_Torappu_ReturnPriceItemData::VT_CONTENTID,
                 None,
             )
         }
@@ -6468,31 +7245,19 @@ impl<'a> clz_Torappu_ReturnLongTermTaskData<'a> {
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i32>(clz_Torappu_ReturnLongTermTaskData::VT_SORTID, Some(0))
+                .get::<i32>(clz_Torappu_ReturnPriceItemData::VT_SORTID, Some(0))
                 .unwrap()
         }
     }
     #[inline]
-    pub fn template(&self) -> Option<&'a str> {
+    pub fn pointRequire(&self) -> i32 {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnLongTermTaskData::VT_TEMPLATE,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn param(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>,
-            >>(clz_Torappu_ReturnLongTermTaskData::VT_PARAM, None)
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnPriceItemData::VT_POINTREQUIRE, Some(0))
+                .unwrap()
         }
     }
     #[inline]
@@ -6502,46 +7267,41 @@ impl<'a> clz_Torappu_ReturnLongTermTaskData<'a> {
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnLongTermTaskData::VT_DESC,
+                clz_Torappu_ReturnPriceItemData::VT_DESC,
                 None,
             )
         }
     }
     #[inline]
-    pub fn rewards(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
-                >,
-            >>(clz_Torappu_ReturnLongTermTaskData::VT_REWARDS, None)
-        }
-    }
-    #[inline]
-    pub fn playPoint(&self) -> i32 {
+    pub fn displayReward(&self) -> Option<clz_Torappu_ReturnItemData<'a>> {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<i32>(clz_Torappu_ReturnLongTermTaskData::VT_PLAYPOINT, Some(0))
-                .unwrap()
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>(
+                    clz_Torappu_ReturnPriceItemData::VT_DISPLAYREWARD,
+                    None,
+                )
+        }
+    }
+    #[inline]
+    pub fn rewardList(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>(clz_Torappu_ReturnPriceItemData::VT_REWARDLIST, None)
         }
     }
 }
 
-impl flatbuffers::Verifiable for clz_Torappu_ReturnLongTermTaskData<'_> {
+impl flatbuffers::Verifiable for clz_Torappu_ReturnPriceItemData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -6549,261 +7309,194 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnLongTermTaskData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "template",
-                Self::VT_TEMPLATE,
+                "contentId",
+                Self::VT_CONTENTID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<i32>("pointRequire", Self::VT_POINTREQUIRE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>(
+                "displayReward",
+                Self::VT_DISPLAYREWARD,
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<&'_ str>>,
-            >>("param", Self::VT_PARAM, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards>,
-                >,
-            >>("rewards", Self::VT_REWARDS, false)?
-            .visit_field::<i32>("playPoint", Self::VT_PLAYPOINT, false)?
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>("rewardList", Self::VT_REWARDLIST, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_ReturnLongTermTaskDataArgs<'a> {
-    pub id: Option<flatbuffers::WIPOffset<&'a str>>,
+pub struct clz_Torappu_ReturnPriceItemDataArgs<'a> {
+    pub contentId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub sortId: i32,
-    pub template: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub param: Option<
-        flatbuffers::WIPOffset<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<&'a str>>>,
-    >,
+    pub pointRequire: i32,
     pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub rewards: Option<
+    pub displayReward: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnItemData<'a>>>,
+    pub rewardList: Option<
         flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'a>>,
-            >,
+            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>,
         >,
     >,
-    pub playPoint: i32,
 }
-impl<'a> Default for clz_Torappu_ReturnLongTermTaskDataArgs<'a> {
+impl<'a> Default for clz_Torappu_ReturnPriceItemDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_ReturnLongTermTaskDataArgs {
-            id: None,
+        clz_Torappu_ReturnPriceItemDataArgs {
+            contentId: None,
             sortId: 0,
-            template: None,
-            param: None,
+            pointRequire: 0,
             desc: None,
-            rewards: None,
-            playPoint: 0,
+            displayReward: None,
+            rewardList: None,
         }
     }
 }
 
-impl Serialize for clz_Torappu_ReturnLongTermTaskData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnLongTermTaskData", 7)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.serialize_field("playPoint", &self.playPoint())?;
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnLongTermTaskDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct clz_Torappu_ReturnPriceItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnLongTermTaskDataBuilder<'a, 'b, A>
-{
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnPriceItemDataBuilder<'a, 'b, A> {
     #[inline]
-    pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
+    pub fn add_contentId(&mut self, contentId: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnLongTermTaskData::VT_ID,
-            id,
+            clz_Torappu_ReturnPriceItemData::VT_CONTENTID,
+            contentId,
         );
     }
     #[inline]
     pub fn add_sortId(&mut self, sortId: i32) {
         self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnLongTermTaskData::VT_SORTID, sortId, 0);
+            .push_slot::<i32>(clz_Torappu_ReturnPriceItemData::VT_SORTID, sortId, 0);
     }
     #[inline]
-    pub fn add_template(&mut self, template: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnLongTermTaskData::VT_TEMPLATE,
-            template,
-        );
-    }
-    #[inline]
-    pub fn add_param(
-        &mut self,
-        param: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<&'b str>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnLongTermTaskData::VT_PARAM,
-            param,
+    pub fn add_pointRequire(&mut self, pointRequire: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ReturnPriceItemData::VT_POINTREQUIRE,
+            pointRequire,
+            0,
         );
     }
     #[inline]
     pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnLongTermTaskData::VT_DESC,
+            clz_Torappu_ReturnPriceItemData::VT_DESC,
             desc,
         );
     }
     #[inline]
-    pub fn add_rewards(
+    pub fn add_displayReward(
         &mut self,
-        rewards: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_MissionDisplayRewards<'b>>,
-            >,
+        displayReward: flatbuffers::WIPOffset<clz_Torappu_ReturnItemData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnItemData>>(
+                clz_Torappu_ReturnPriceItemData::VT_DISPLAYREWARD,
+                displayReward,
+            );
+    }
+    #[inline]
+    pub fn add_rewardList(
+        &mut self,
+        rewardList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'b>>>,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnLongTermTaskData::VT_REWARDS,
-            rewards,
-        );
-    }
-    #[inline]
-    pub fn add_playPoint(&mut self, playPoint: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnLongTermTaskData::VT_PLAYPOINT,
-            playPoint,
-            0,
+            clz_Torappu_ReturnPriceItemData::VT_REWARDLIST,
+            rewardList,
         );
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnLongTermTaskDataBuilder<'a, 'b, A> {
+    ) -> clz_Torappu_ReturnPriceItemDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_ReturnLongTermTaskDataBuilder {
+        clz_Torappu_ReturnPriceItemDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnLongTermTaskData<'a>> {
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceItemData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for clz_Torappu_ReturnLongTermTaskData<'_> {
+impl core::fmt::Debug for clz_Torappu_ReturnPriceItemData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnLongTermTaskData");
-        ds.field("id", &self.id());
+        let mut ds = f.debug_struct("clz_Torappu_ReturnPriceItemData");
+        ds.field("contentId", &self.contentId());
         ds.field("sortId", &self.sortId());
-        ds.field("template", &self.template());
-        ds.field("param", &self.param());
+        ds.field("pointRequire", &self.pointRequire());
         ds.field("desc", &self.desc());
-        ds.field("rewards", &self.rewards());
-        ds.field("playPoint", &self.playPoint());
+        ds.field("displayReward", &self.displayReward());
+        ds.field("rewardList", &self.rewardList());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnLongTermTaskDataT {
-    pub id: Option<String>,
+pub struct clz_Torappu_ReturnPriceItemDataT {
+    pub contentId: Option<String>,
     pub sortId: i32,
-    pub template: Option<String>,
-    pub param: Option<Vec<String>>,
+    pub pointRequire: i32,
     pub desc: Option<String>,
-    pub rewards: Option<Vec<clz_Torappu_MissionDisplayRewardsT>>,
-    pub playPoint: i32,
+    pub displayReward: Option<Box<clz_Torappu_ReturnItemDataT>>,
+    pub rewardList: Option<Vec<clz_Torappu_ReturnItemDataT>>,
 }
-impl Default for clz_Torappu_ReturnLongTermTaskDataT {
+impl Default for clz_Torappu_ReturnPriceItemDataT {
     fn default() -> Self {
         Self {
-            id: None,
+            contentId: None,
             sortId: 0,
-            template: None,
-            param: None,
+            pointRequire: 0,
             desc: None,
-            rewards: None,
-            playPoint: 0,
+            displayReward: None,
+            rewardList: None,
         }
     }
 }
-impl clz_Torappu_ReturnLongTermTaskDataT {
+impl clz_Torappu_ReturnPriceItemDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnLongTermTaskData<'b>> {
-        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceItemData<'b>> {
+        let contentId = self.contentId.as_ref().map(|x| _fbb.create_string(x));
         let sortId = self.sortId;
-        let template = self.template.as_ref().map(|x| _fbb.create_string(x));
-        let param = self.param.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|s| _fbb.create_string(s)).collect();
-            _fbb.create_vector(&w)
-        });
+        let pointRequire = self.pointRequire;
         let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
-        let rewards = self.rewards.as_ref().map(|x| {
+        let displayReward = self.displayReward.as_ref().map(|x| x.pack(_fbb));
+        let rewardList = self.rewardList.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
-        let playPoint = self.playPoint;
-        clz_Torappu_ReturnLongTermTaskData::create(
+        clz_Torappu_ReturnPriceItemData::create(
             _fbb,
-            &clz_Torappu_ReturnLongTermTaskDataArgs {
-                id,
+            &clz_Torappu_ReturnPriceItemDataArgs {
+                contentId,
                 sortId,
-                template,
-                param,
+                pointRequire,
                 desc,
-                rewards,
-                playPoint,
+                displayReward,
+                rewardList,
             },
         )
     }
 }
-pub enum clz_Torappu_ReturnCheckinDataOffset {}
+pub enum clz_Torappu_ReturnPriceGroupDataOffset {}
 #[derive(Copy, Clone, PartialEq)]
 
-pub struct clz_Torappu_ReturnCheckinData<'a> {
+pub struct clz_Torappu_ReturnPriceGroupData<'a> {
     pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinData<'a> {
-    type Inner = clz_Torappu_ReturnCheckinData<'a>;
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnPriceGroupData<'a> {
+    type Inner = clz_Torappu_ReturnPriceGroupData<'a>;
     #[inline]
     unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -6812,51 +7505,577 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinData<'a> {
     }
 }
 
-impl<'a> clz_Torappu_ReturnCheckinData<'a> {
-    pub const VT_ISIMPORTANT: flatbuffers::VOffsetT = 4;
-    pub const VT_CHECKINREWARDITEMS: flatbuffers::VOffsetT = 6;
+impl<'a> clz_Torappu_ReturnPriceGroupData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_CONTENT: flatbuffers::VOffsetT = 6;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnCheckinData { _tab: table }
+        clz_Torappu_ReturnPriceGroupData { _tab: table }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnCheckinDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnCheckinDataBuilder::new(_fbb);
-        if let Some(x) = args.checkinRewardItems {
-            builder.add_checkinRewardItems(x);
+        args: &'args clz_Torappu_ReturnPriceGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnPriceGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.content {
+            builder.add_content(x);
         }
-        builder.add_isImportant(args.isImportant);
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
         builder.finish()
     }
 
-    pub fn unpack(&self) -> clz_Torappu_ReturnCheckinDataT {
-        let isImportant = self.isImportant();
-        let checkinRewardItems = self
-            .checkinRewardItems()
+    pub fn unpack(&self) -> clz_Torappu_ReturnPriceGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let content = self
+            .content()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnCheckinDataT {
-            isImportant,
-            checkinRewardItems,
-        }
+        clz_Torappu_ReturnPriceGroupDataT { groupId, content }
     }
 
     #[inline]
-    pub fn isImportant(&self) -> bool {
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnPriceGroupData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn content(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceItemData<'a>>>,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceItemData>,
+                >,
+            >>(clz_Torappu_ReturnPriceGroupData::VT_CONTENT, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnPriceGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceItemData>,
+                >,
+            >>("content", Self::VT_CONTENT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnPriceGroupDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub content: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceItemData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_ReturnPriceGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnPriceGroupDataArgs {
+            groupId: None,
+            content: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnPriceGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnPriceGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnPriceGroupData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_content(
+        &mut self,
+        content: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceItemData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnPriceGroupData::VT_CONTENT,
+            content,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnPriceGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnPriceGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnPriceGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnPriceGroupData");
+        ds.field("groupId", &self.groupId());
+        ds.field("content", &self.content());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnPriceGroupDataT {
+    pub groupId: Option<String>,
+    pub content: Option<Vec<clz_Torappu_ReturnPriceItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnPriceGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            content: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnPriceGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let content = self.content.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnPriceGroupData::create(
+            _fbb,
+            &clz_Torappu_ReturnPriceGroupDataArgs { groupId, content },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnPriceGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnPriceGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnPriceGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnPriceGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnPriceGroupData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnPriceGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnPriceGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnPriceGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnPriceGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnPriceGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab
-                .get::<bool>(clz_Torappu_ReturnCheckinData::VT_ISIMPORTANT, Some(false))
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnPriceGroupData::VT_KEY,
+                    None,
+                )
                 .unwrap()
         }
     }
     #[inline]
-    pub fn checkinRewardItems(
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ReturnPriceGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnPriceGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceGroupData>>(
+                    dict__string__clz_Torappu_ReturnPriceGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnPriceGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnPriceGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnPriceGroupDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnPriceGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnPriceGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnPriceGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnPriceGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnPriceGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnPriceGroupData>>(
+                dict__string__clz_Torappu_ReturnPriceGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnPriceGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnPriceGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnPriceGroupData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnPriceGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnPriceGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnPriceGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnPriceGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnPriceGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnPriceGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnPriceGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnPriceGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnMissionItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnMissionItemData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnMissionItemData<'a> {
+    type Inner = clz_Torappu_ReturnMissionItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnMissionItemData<'a> {
+    pub const VT_MISSIONID: flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
+    pub const VT_UNCOMPLETEBGICON: flatbuffers::VOffsetT = 8;
+    pub const VT_COMPLETEBGICON: flatbuffers::VOffsetT = 10;
+    pub const VT_DESC: flatbuffers::VOffsetT = 12;
+    pub const VT_JUMPTYPE: flatbuffers::VOffsetT = 14;
+    pub const VT_JUMPPLACE: flatbuffers::VOffsetT = 16;
+    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 18;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnMissionItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnMissionItemDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionItemData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnMissionItemDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardList {
+            builder.add_rewardList(x);
+        }
+        if let Some(x) = args.jumpPlace {
+            builder.add_jumpPlace(x);
+        }
+        builder.add_jumpType(args.jumpType);
+        if let Some(x) = args.desc {
+            builder.add_desc(x);
+        }
+        if let Some(x) = args.completeBgIcon {
+            builder.add_completeBgIcon(x);
+        }
+        if let Some(x) = args.uncompleteBgIcon {
+            builder.add_uncompleteBgIcon(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.missionId {
+            builder.add_missionId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnMissionItemDataT {
+        let missionId = self.missionId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let uncompleteBgIcon = self.uncompleteBgIcon().map(|x| x.to_string());
+        let completeBgIcon = self.completeBgIcon().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let jumpType = self.jumpType();
+        let jumpPlace = self.jumpPlace().map(|x| x.to_string());
+        let rewardList = self
+            .rewardList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnMissionItemDataT {
+            missionId,
+            sortId,
+            uncompleteBgIcon,
+            completeBgIcon,
+            desc,
+            jumpType,
+            jumpPlace,
+            rewardList,
+        }
+    }
+
+    #[inline]
+    pub fn missionId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionItemData::VT_MISSIONID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnMissionItemData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn uncompleteBgIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionItemData::VT_UNCOMPLETEBGICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn completeBgIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionItemData::VT_COMPLETEBGICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn desc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionItemData::VT_DESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn jumpType(&self) -> enum__Torappu_ReturnJumpType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_ReturnJumpType>(
+                    clz_Torappu_ReturnMissionItemData::VT_JUMPTYPE,
+                    Some(enum__Torappu_ReturnJumpType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn jumpPlace(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionItemData::VT_JUMPPLACE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardList(
         &self,
     ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
     {
@@ -6866,12 +8085,12 @@ impl<'a> clz_Torappu_ReturnCheckinData<'a> {
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(clz_Torappu_ReturnCheckinData::VT_CHECKINREWARDITEMS, None)
+            >>(clz_Torappu_ReturnMissionItemData::VT_REWARDLIST, None)
         }
     }
 }
 
-impl flatbuffers::Verifiable for clz_Torappu_ReturnCheckinData<'_> {
+impl flatbuffers::Verifiable for clz_Torappu_ReturnMissionItemData<'_> {
     #[inline]
     fn run_verifier(
         v: &mut flatbuffers::Verifier,
@@ -6879,127 +8098,3336 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnCheckinData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<bool>("isImportant", Self::VT_ISIMPORTANT, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "missionId",
+                Self::VT_MISSIONID,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "uncompleteBgIcon",
+                Self::VT_UNCOMPLETEBGICON,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "completeBgIcon",
+                Self::VT_COMPLETEBGICON,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .visit_field::<enum__Torappu_ReturnJumpType>("jumpType", Self::VT_JUMPTYPE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "jumpPlace",
+                Self::VT_JUMPPLACE,
+                false,
+            )?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("checkinRewardItems", Self::VT_CHECKINREWARDITEMS, false)?
+            >>("rewardList", Self::VT_REWARDLIST, false)?
             .finish();
         Ok(())
     }
 }
-pub struct clz_Torappu_ReturnCheckinDataArgs<'a> {
-    pub isImportant: bool,
-    pub checkinRewardItems: Option<
+pub struct clz_Torappu_ReturnMissionItemDataArgs<'a> {
+    pub missionId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub uncompleteBgIcon: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub completeBgIcon: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub jumpType: enum__Torappu_ReturnJumpType,
+    pub jumpPlace: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub rewardList: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
         >,
     >,
 }
-impl<'a> Default for clz_Torappu_ReturnCheckinDataArgs<'a> {
+impl<'a> Default for clz_Torappu_ReturnMissionItemDataArgs<'a> {
     #[inline]
     fn default() -> Self {
-        clz_Torappu_ReturnCheckinDataArgs {
-            isImportant: false,
-            checkinRewardItems: None,
+        clz_Torappu_ReturnMissionItemDataArgs {
+            missionId: None,
+            sortId: 0,
+            uncompleteBgIcon: None,
+            completeBgIcon: None,
+            desc: None,
+            jumpType: enum__Torappu_ReturnJumpType::NONE,
+            jumpPlace: None,
+            rewardList: None,
         }
     }
 }
 
-impl Serialize for clz_Torappu_ReturnCheckinData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnCheckinData", 2)?;
-        s.serialize_field("isImportant", &self.isImportant())?;
-        if let Some(f) = self.checkinRewardItems() {
-            s.serialize_field("checkinRewardItems", &f)?;
-        } else {
-            s.skip_field("checkinRewardItems")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnCheckinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+pub struct clz_Torappu_ReturnMissionItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnCheckinDataBuilder<'a, 'b, A> {
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnMissionItemDataBuilder<'a, 'b, A>
+{
     #[inline]
-    pub fn add_isImportant(&mut self, isImportant: bool) {
-        self.fbb_.push_slot::<bool>(
-            clz_Torappu_ReturnCheckinData::VT_ISIMPORTANT,
-            isImportant,
-            false,
+    pub fn add_missionId(&mut self, missionId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionItemData::VT_MISSIONID,
+            missionId,
         );
     }
     #[inline]
-    pub fn add_checkinRewardItems(
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnMissionItemData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_uncompleteBgIcon(&mut self, uncompleteBgIcon: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionItemData::VT_UNCOMPLETEBGICON,
+            uncompleteBgIcon,
+        );
+    }
+    #[inline]
+    pub fn add_completeBgIcon(&mut self, completeBgIcon: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionItemData::VT_COMPLETEBGICON,
+            completeBgIcon,
+        );
+    }
+    #[inline]
+    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionItemData::VT_DESC,
+            desc,
+        );
+    }
+    #[inline]
+    pub fn add_jumpType(&mut self, jumpType: enum__Torappu_ReturnJumpType) {
+        self.fbb_.push_slot::<enum__Torappu_ReturnJumpType>(
+            clz_Torappu_ReturnMissionItemData::VT_JUMPTYPE,
+            jumpType,
+            enum__Torappu_ReturnJumpType::NONE,
+        );
+    }
+    #[inline]
+    pub fn add_jumpPlace(&mut self, jumpPlace: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionItemData::VT_JUMPPLACE,
+            jumpPlace,
+        );
+    }
+    #[inline]
+    pub fn add_rewardList(
         &mut self,
-        checkinRewardItems: flatbuffers::WIPOffset<
+        rewardList: flatbuffers::WIPOffset<
             flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnCheckinData::VT_CHECKINREWARDITEMS,
-            checkinRewardItems,
+            clz_Torappu_ReturnMissionItemData::VT_REWARDLIST,
+            rewardList,
         );
     }
     #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnCheckinDataBuilder<'a, 'b, A> {
+    ) -> clz_Torappu_ReturnMissionItemDataBuilder<'a, 'b, A> {
         let start = _fbb.start_table();
-        clz_Torappu_ReturnCheckinDataBuilder {
+        clz_Torappu_ReturnMissionItemDataBuilder {
             fbb_: _fbb,
             start_: start,
         }
     }
     #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinData<'a>> {
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionItemData<'a>> {
         let o = self.fbb_.end_table(self.start_);
         flatbuffers::WIPOffset::new(o.value())
     }
 }
 
-impl core::fmt::Debug for clz_Torappu_ReturnCheckinData<'_> {
+impl core::fmt::Debug for clz_Torappu_ReturnMissionItemData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnCheckinData");
-        ds.field("isImportant", &self.isImportant());
-        ds.field("checkinRewardItems", &self.checkinRewardItems());
+        let mut ds = f.debug_struct("clz_Torappu_ReturnMissionItemData");
+        ds.field("missionId", &self.missionId());
+        ds.field("sortId", &self.sortId());
+        ds.field("uncompleteBgIcon", &self.uncompleteBgIcon());
+        ds.field("completeBgIcon", &self.completeBgIcon());
+        ds.field("desc", &self.desc());
+        ds.field("jumpType", &self.jumpType());
+        ds.field("jumpPlace", &self.jumpPlace());
+        ds.field("rewardList", &self.rewardList());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnCheckinDataT {
-    pub isImportant: bool,
-    pub checkinRewardItems: Option<Vec<clz_Torappu_ItemBundleT>>,
+pub struct clz_Torappu_ReturnMissionItemDataT {
+    pub missionId: Option<String>,
+    pub sortId: i32,
+    pub uncompleteBgIcon: Option<String>,
+    pub completeBgIcon: Option<String>,
+    pub desc: Option<String>,
+    pub jumpType: enum__Torappu_ReturnJumpType,
+    pub jumpPlace: Option<String>,
+    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
 }
-impl Default for clz_Torappu_ReturnCheckinDataT {
+impl Default for clz_Torappu_ReturnMissionItemDataT {
     fn default() -> Self {
         Self {
-            isImportant: false,
-            checkinRewardItems: None,
+            missionId: None,
+            sortId: 0,
+            uncompleteBgIcon: None,
+            completeBgIcon: None,
+            desc: None,
+            jumpType: enum__Torappu_ReturnJumpType::NONE,
+            jumpPlace: None,
+            rewardList: None,
         }
     }
 }
-impl clz_Torappu_ReturnCheckinDataT {
+impl clz_Torappu_ReturnMissionItemDataT {
     pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinData<'b>> {
-        let isImportant = self.isImportant;
-        let checkinRewardItems = self.checkinRewardItems.as_ref().map(|x| {
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionItemData<'b>> {
+        let missionId = self.missionId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let uncompleteBgIcon = self
+            .uncompleteBgIcon
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        let completeBgIcon = self.completeBgIcon.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let jumpType = self.jumpType;
+        let jumpPlace = self.jumpPlace.as_ref().map(|x| _fbb.create_string(x));
+        let rewardList = self.rewardList.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
-        clz_Torappu_ReturnCheckinData::create(
+        clz_Torappu_ReturnMissionItemData::create(
             _fbb,
-            &clz_Torappu_ReturnCheckinDataArgs {
-                isImportant,
-                checkinRewardItems,
+            &clz_Torappu_ReturnMissionItemDataArgs {
+                missionId,
+                sortId,
+                uncompleteBgIcon,
+                completeBgIcon,
+                desc,
+                jumpType,
+                jumpPlace,
+                rewardList,
+            },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnMissionGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnMissionGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnMissionGroupData<'a> {
+    type Inner = clz_Torappu_ReturnMissionGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnMissionGroupData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
+    pub const VT_TYPE_: flatbuffers::VOffsetT = 8;
+    pub const VT_MISSIONLIST: flatbuffers::VOffsetT = 10;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnMissionGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnMissionGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnMissionGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.missionList {
+            builder.add_missionList(x);
+        }
+        builder.add_type_(args.type_);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnMissionGroupDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let type_ = self.type_();
+        let missionList = self
+            .missionList()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnMissionGroupDataT {
+            groupId,
+            sortId,
+            type_,
+            missionList,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnMissionGroupData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnMissionGroupData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn type_(&self) -> enum__Torappu_ReturnMissionGroupType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_ReturnMissionGroupType>(
+                    clz_Torappu_ReturnMissionGroupData::VT_TYPE_,
+                    Some(enum__Torappu_ReturnMissionGroupType::DAILY),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn missionList(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionItemData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionItemData>,
+                >,
+            >>(clz_Torappu_ReturnMissionGroupData::VT_MISSIONLIST, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnMissionGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<enum__Torappu_ReturnMissionGroupType>("type_", Self::VT_TYPE_, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionItemData>,
+                >,
+            >>("missionList", Self::VT_MISSIONLIST, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnMissionGroupDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub type_: enum__Torappu_ReturnMissionGroupType,
+    pub missionList: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionItemData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_ReturnMissionGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnMissionGroupDataArgs {
+            groupId: None,
+            sortId: 0,
+            type_: enum__Torappu_ReturnMissionGroupType::DAILY,
+            missionList: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnMissionGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnMissionGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionGroupData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnMissionGroupData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_type_(&mut self, type_: enum__Torappu_ReturnMissionGroupType) {
+        self.fbb_.push_slot::<enum__Torappu_ReturnMissionGroupType>(
+            clz_Torappu_ReturnMissionGroupData::VT_TYPE_,
+            type_,
+            enum__Torappu_ReturnMissionGroupType::DAILY,
+        );
+    }
+    #[inline]
+    pub fn add_missionList(
+        &mut self,
+        missionList: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionItemData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnMissionGroupData::VT_MISSIONLIST,
+            missionList,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnMissionGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnMissionGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnMissionGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnMissionGroupData");
+        ds.field("groupId", &self.groupId());
+        ds.field("sortId", &self.sortId());
+        ds.field("type_", &self.type_());
+        ds.field("missionList", &self.missionList());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnMissionGroupDataT {
+    pub groupId: Option<String>,
+    pub sortId: i32,
+    pub type_: enum__Torappu_ReturnMissionGroupType,
+    pub missionList: Option<Vec<clz_Torappu_ReturnMissionItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnMissionGroupDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            sortId: 0,
+            type_: enum__Torappu_ReturnMissionGroupType::DAILY,
+            missionList: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnMissionGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let type_ = self.type_;
+        let missionList = self.missionList.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnMissionGroupData::create(
+            _fbb,
+            &clz_Torappu_ReturnMissionGroupDataArgs {
+                groupId,
+                sortId,
+                type_,
+                missionList,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnMissionGroupDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnMissionGroupData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnMissionGroupData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnMissionGroupData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnMissionGroupData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnMissionGroupData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnMissionGroupDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnMissionGroupDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnMissionGroupDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnMissionGroupDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnMissionGroupData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ReturnMissionGroupData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnMissionGroupData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionGroupData>>(
+                    dict__string__clz_Torappu_ReturnMissionGroupData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnMissionGroupData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnMissionGroupData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnMissionGroupDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnMissionGroupDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnMissionGroupDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnMissionGroupDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnMissionGroupDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnMissionGroupData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnMissionGroupData>>(
+                dict__string__clz_Torappu_ReturnMissionGroupData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnMissionGroupDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnMissionGroupDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnMissionGroupData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnMissionGroupData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnMissionGroupData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnMissionGroupDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnMissionGroupDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnMissionGroupDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnMissionGroupDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnMissionGroupData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnMissionGroupDataArgs { key, value },
+        )
+    }
+}
+pub enum dict__int__list_clz_Torappu_ReturnItemDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__int__list_clz_Torappu_ReturnItemData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__int__list_clz_Torappu_ReturnItemData<'a> {
+    type Inner = dict__int__list_clz_Torappu_ReturnItemData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__int__list_clz_Torappu_ReturnItemData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__int__list_clz_Torappu_ReturnItemData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__int__list_clz_Torappu_ReturnItemDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnItemData<'bldr>> {
+        let mut builder = dict__int__list_clz_Torappu_ReturnItemDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        builder.add_key(args.key);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__int__list_clz_Torappu_ReturnItemDataT {
+        let key = self.key();
+        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
+        dict__int__list_clz_Torappu_ReturnItemDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(dict__int__list_clz_Torappu_ReturnItemData::VT_KEY, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__int__list_clz_Torappu_ReturnItemData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(&val)
+    }
+    #[inline]
+    pub fn value(
+        &self,
+    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>>
+    {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>(dict__int__list_clz_Torappu_ReturnItemData::VT_VALUE, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__int__list_clz_Torappu_ReturnItemData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<i32>("key", Self::VT_KEY, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData>>,
+            >>("value", Self::VT_VALUE, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__int__list_clz_Torappu_ReturnItemDataArgs<'a> {
+    pub key: i32,
+    pub value: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'a>>>,
+        >,
+    >,
+}
+impl<'a> Default for dict__int__list_clz_Torappu_ReturnItemDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__int__list_clz_Torappu_ReturnItemDataArgs {
+            key: 0,
+            value: None,
+        }
+    }
+}
+
+pub struct dict__int__list_clz_Torappu_ReturnItemDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__int__list_clz_Torappu_ReturnItemDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: i32) {
+        self.fbb_
+            .push_slot::<i32>(dict__int__list_clz_Torappu_ReturnItemData::VT_KEY, key, 0);
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<
+            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnItemData<'b>>>,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__int__list_clz_Torappu_ReturnItemData::VT_VALUE,
+            value,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__int__list_clz_Torappu_ReturnItemDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__int__list_clz_Torappu_ReturnItemDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnItemData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__int__list_clz_Torappu_ReturnItemData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__int__list_clz_Torappu_ReturnItemData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__int__list_clz_Torappu_ReturnItemDataT {
+    pub key: i32,
+    pub value: Option<Vec<clz_Torappu_ReturnItemDataT>>,
+}
+impl Default for dict__int__list_clz_Torappu_ReturnItemDataT {
+    fn default() -> Self {
+        Self {
+            key: 0,
+            value: None,
+        }
+    }
+}
+impl dict__int__list_clz_Torappu_ReturnItemDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnItemData<'b>> {
+        let key = self.key;
+        let value = self.value.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        dict__int__list_clz_Torappu_ReturnItemData::create(
+            _fbb,
+            &dict__int__list_clz_Torappu_ReturnItemDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnCheckinGpRewardDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    type Inner = clz_Torappu_ReturnCheckinGpRewardData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_GETTIME: flatbuffers::VOffsetT = 6;
+    pub const VT_BINDGPGOODID: flatbuffers::VOffsetT = 8;
+    pub const VT_TOTALCHECKINDAY: flatbuffers::VOffsetT = 10;
+    pub const VT_ICONID: flatbuffers::VOffsetT = 12;
+    pub const VT_REWARDDICT: flatbuffers::VOffsetT = 14;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnCheckinGpRewardData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnCheckinGpRewardDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnCheckinGpRewardDataBuilder::new(_fbb);
+        if let Some(x) = args.rewardDict {
+            builder.add_rewardDict(x);
+        }
+        if let Some(x) = args.iconId {
+            builder.add_iconId(x);
+        }
+        builder.add_totalCheckInDay(args.totalCheckInDay);
+        if let Some(x) = args.bindGPGoodId {
+            builder.add_bindGPGoodId(x);
+        }
+        builder.add_getTime(args.getTime);
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnCheckinGpRewardDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let getTime = self.getTime();
+        let bindGPGoodId = self.bindGPGoodId().map(|x| x.to_string());
+        let totalCheckInDay = self.totalCheckInDay();
+        let iconId = self.iconId().map(|x| x.to_string());
+        let rewardDict = self
+            .rewardDict()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        clz_Torappu_ReturnCheckinGpRewardDataT {
+            groupId,
+            getTime,
+            bindGPGoodId,
+            totalCheckInDay,
+            iconId,
+            rewardDict,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnCheckinGpRewardData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn getTime(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnCheckinGpRewardData::VT_GETTIME, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn bindGPGoodId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnCheckinGpRewardData::VT_BINDGPGOODID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn totalCheckInDay(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(
+                    clz_Torappu_ReturnCheckinGpRewardData::VT_TOTALCHECKINDAY,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn iconId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnCheckinGpRewardData::VT_ICONID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn rewardDict(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnItemData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnItemData>,
+                >,
+            >>(clz_Torappu_ReturnCheckinGpRewardData::VT_REWARDDICT, None)
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnCheckinGpRewardData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<i32>("getTime", Self::VT_GETTIME, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "bindGPGoodId",
+                Self::VT_BINDGPGOODID,
+                false,
+            )?
+            .visit_field::<i32>("totalCheckInDay", Self::VT_TOTALCHECKINDAY, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnItemData>,
+                >,
+            >>("rewardDict", Self::VT_REWARDDICT, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnCheckinGpRewardDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub getTime: i32,
+    pub bindGPGoodId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub totalCheckInDay: i32,
+    pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub rewardDict: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnItemData<'a>>,
+            >,
+        >,
+    >,
+}
+impl<'a> Default for clz_Torappu_ReturnCheckinGpRewardDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnCheckinGpRewardDataArgs {
+            groupId: None,
+            getTime: 0,
+            bindGPGoodId: None,
+            totalCheckInDay: 0,
+            iconId: None,
+            rewardDict: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnCheckinGpRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+{
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnCheckinGpRewardDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_getTime(&mut self, getTime: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_GETTIME,
+            getTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_bindGPGoodId(&mut self, bindGPGoodId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_BINDGPGOODID,
+            bindGPGoodId,
+        );
+    }
+    #[inline]
+    pub fn add_totalCheckInDay(&mut self, totalCheckInDay: i32) {
+        self.fbb_.push_slot::<i32>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_TOTALCHECKINDAY,
+            totalCheckInDay,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_iconId(&mut self, iconId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_ICONID,
+            iconId,
+        );
+    }
+    #[inline]
+    pub fn add_rewardDict(
+        &mut self,
+        rewardDict: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnItemData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnCheckinGpRewardData::VT_REWARDDICT,
+            rewardDict,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnCheckinGpRewardDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnCheckinGpRewardDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnCheckinGpRewardData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnCheckinGpRewardData");
+        ds.field("groupId", &self.groupId());
+        ds.field("getTime", &self.getTime());
+        ds.field("bindGPGoodId", &self.bindGPGoodId());
+        ds.field("totalCheckInDay", &self.totalCheckInDay());
+        ds.field("iconId", &self.iconId());
+        ds.field("rewardDict", &self.rewardDict());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnCheckinGpRewardDataT {
+    pub groupId: Option<String>,
+    pub getTime: i32,
+    pub bindGPGoodId: Option<String>,
+    pub totalCheckInDay: i32,
+    pub iconId: Option<String>,
+    pub rewardDict: Option<Vec<dict__int__list_clz_Torappu_ReturnItemDataT>>,
+}
+impl Default for clz_Torappu_ReturnCheckinGpRewardDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            getTime: 0,
+            bindGPGoodId: None,
+            totalCheckInDay: 0,
+            iconId: None,
+            rewardDict: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnCheckinGpRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let getTime = self.getTime;
+        let bindGPGoodId = self.bindGPGoodId.as_ref().map(|x| _fbb.create_string(x));
+        let totalCheckInDay = self.totalCheckInDay;
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let rewardDict = self.rewardDict.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        clz_Torappu_ReturnCheckinGpRewardData::create(
+            _fbb,
+            &clz_Torappu_ReturnCheckinGpRewardDataArgs {
+                groupId,
+                getTime,
+                bindGPGoodId,
+                totalCheckInDay,
+                iconId,
+                rewardDict,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnCheckinGpRewardDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnCheckinGpRewardData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnCheckinGpRewardDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGpRewardData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnCheckinGpRewardDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnCheckinGpRewardDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnCheckinGpRewardDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnCheckinGpRewardData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ReturnCheckinGpRewardData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnCheckinGpRewardData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinGpRewardData>>(
+                    dict__string__clz_Torappu_ReturnCheckinGpRewardData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnCheckinGpRewardData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinGpRewardData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnCheckinGpRewardDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnCheckinGpRewardDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnCheckinGpRewardDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnCheckinGpRewardDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnCheckinGpRewardDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnCheckinGpRewardData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnCheckinGpRewardData>>(
+                dict__string__clz_Torappu_ReturnCheckinGpRewardData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnCheckinGpRewardDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnCheckinGpRewardDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnCheckinGpRewardData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnCheckinGpRewardData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnCheckinGpRewardData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnCheckinGpRewardDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnCheckinGpRewardDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnCheckinGpRewardDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnCheckinGpRewardDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnCheckinGpRewardData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnCheckinGpRewardData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnCheckinGpRewardDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnNewsDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnNewsData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnNewsData<'a> {
+    type Inner = clz_Torappu_ReturnNewsData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnNewsData<'a> {
+    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
+    pub const VT_TABTITLE: flatbuffers::VOffsetT = 8;
+    pub const VT_TABICON: flatbuffers::VOffsetT = 10;
+    pub const VT_TITLE: flatbuffers::VOffsetT = 12;
+    pub const VT_DESC: flatbuffers::VOffsetT = 14;
+    pub const VT_IMGID: flatbuffers::VOffsetT = 16;
+    pub const VT_ICONID: flatbuffers::VOffsetT = 18;
+    pub const VT_JUMPTYPE: flatbuffers::VOffsetT = 20;
+    pub const VT_JUMPPLACE: flatbuffers::VOffsetT = 22;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnNewsData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnNewsDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnNewsDataBuilder::new(_fbb);
+        if let Some(x) = args.jumpPlace {
+            builder.add_jumpPlace(x);
+        }
+        builder.add_jumpType(args.jumpType);
+        if let Some(x) = args.iconId {
+            builder.add_iconId(x);
+        }
+        if let Some(x) = args.imgId {
+            builder.add_imgId(x);
+        }
+        if let Some(x) = args.desc {
+            builder.add_desc(x);
+        }
+        if let Some(x) = args.title {
+            builder.add_title(x);
+        }
+        if let Some(x) = args.tabIcon {
+            builder.add_tabIcon(x);
+        }
+        if let Some(x) = args.tabTitle {
+            builder.add_tabTitle(x);
+        }
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.groupId {
+            builder.add_groupId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnNewsDataT {
+        let groupId = self.groupId().map(|x| x.to_string());
+        let sortId = self.sortId();
+        let tabTitle = self.tabTitle().map(|x| x.to_string());
+        let tabIcon = self.tabIcon().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let desc = self.desc().map(|x| x.to_string());
+        let imgId = self.imgId().map(|x| x.to_string());
+        let iconId = self.iconId().map(|x| x.to_string());
+        let jumpType = self.jumpType();
+        let jumpPlace = self.jumpPlace().map(|x| x.to_string());
+        clz_Torappu_ReturnNewsDataT {
+            groupId,
+            sortId,
+            tabTitle,
+            tabIcon,
+            title,
+            desc,
+            imgId,
+            iconId,
+            jumpType,
+            jumpPlace,
+        }
+    }
+
+    #[inline]
+    pub fn groupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_GROUPID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnNewsData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn tabTitle(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_TABTITLE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn tabIcon(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_TABICON,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn title(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_TITLE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn desc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_DESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn imgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_IMGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn iconId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_ICONID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn jumpType(&self) -> enum__Torappu_ReturnNewsType {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<enum__Torappu_ReturnNewsType>(
+                    clz_Torappu_ReturnNewsData::VT_JUMPTYPE,
+                    Some(enum__Torappu_ReturnNewsType::NONE),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn jumpPlace(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnNewsData::VT_JUMPPLACE,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnNewsData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "tabTitle",
+                Self::VT_TABTITLE,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("tabIcon", Self::VT_TABICON, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("title", Self::VT_TITLE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("imgId", Self::VT_IMGID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
+            .visit_field::<enum__Torappu_ReturnNewsType>("jumpType", Self::VT_JUMPTYPE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "jumpPlace",
+                Self::VT_JUMPPLACE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnNewsDataArgs<'a> {
+    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+    pub tabTitle: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub tabIcon: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub title: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub imgId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub jumpType: enum__Torappu_ReturnNewsType,
+    pub jumpPlace: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_ReturnNewsDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnNewsDataArgs {
+            groupId: None,
+            sortId: 0,
+            tabTitle: None,
+            tabIcon: None,
+            title: None,
+            desc: None,
+            imgId: None,
+            iconId: None,
+            jumpType: enum__Torappu_ReturnNewsType::NONE,
+            jumpPlace: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnNewsDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnNewsDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_GROUPID,
+            groupId,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnNewsData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_tabTitle(&mut self, tabTitle: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_TABTITLE,
+            tabTitle,
+        );
+    }
+    #[inline]
+    pub fn add_tabIcon(&mut self, tabIcon: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_TABICON,
+            tabIcon,
+        );
+    }
+    #[inline]
+    pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_TITLE,
+            title,
+        );
+    }
+    #[inline]
+    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_DESC,
+            desc,
+        );
+    }
+    #[inline]
+    pub fn add_imgId(&mut self, imgId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_IMGID,
+            imgId,
+        );
+    }
+    #[inline]
+    pub fn add_iconId(&mut self, iconId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_ICONID,
+            iconId,
+        );
+    }
+    #[inline]
+    pub fn add_jumpType(&mut self, jumpType: enum__Torappu_ReturnNewsType) {
+        self.fbb_.push_slot::<enum__Torappu_ReturnNewsType>(
+            clz_Torappu_ReturnNewsData::VT_JUMPTYPE,
+            jumpType,
+            enum__Torappu_ReturnNewsType::NONE,
+        );
+    }
+    #[inline]
+    pub fn add_jumpPlace(&mut self, jumpPlace: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnNewsData::VT_JUMPPLACE,
+            jumpPlace,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnNewsDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnNewsDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnNewsData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnNewsData");
+        ds.field("groupId", &self.groupId());
+        ds.field("sortId", &self.sortId());
+        ds.field("tabTitle", &self.tabTitle());
+        ds.field("tabIcon", &self.tabIcon());
+        ds.field("title", &self.title());
+        ds.field("desc", &self.desc());
+        ds.field("imgId", &self.imgId());
+        ds.field("iconId", &self.iconId());
+        ds.field("jumpType", &self.jumpType());
+        ds.field("jumpPlace", &self.jumpPlace());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnNewsDataT {
+    pub groupId: Option<String>,
+    pub sortId: i32,
+    pub tabTitle: Option<String>,
+    pub tabIcon: Option<String>,
+    pub title: Option<String>,
+    pub desc: Option<String>,
+    pub imgId: Option<String>,
+    pub iconId: Option<String>,
+    pub jumpType: enum__Torappu_ReturnNewsType,
+    pub jumpPlace: Option<String>,
+}
+impl Default for clz_Torappu_ReturnNewsDataT {
+    fn default() -> Self {
+        Self {
+            groupId: None,
+            sortId: 0,
+            tabTitle: None,
+            tabIcon: None,
+            title: None,
+            desc: None,
+            imgId: None,
+            iconId: None,
+            jumpType: enum__Torappu_ReturnNewsType::NONE,
+            jumpPlace: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnNewsDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData<'b>> {
+        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        let tabTitle = self.tabTitle.as_ref().map(|x| _fbb.create_string(x));
+        let tabIcon = self.tabIcon.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
+        let imgId = self.imgId.as_ref().map(|x| _fbb.create_string(x));
+        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
+        let jumpType = self.jumpType;
+        let jumpPlace = self.jumpPlace.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnNewsData::create(
+            _fbb,
+            &clz_Torappu_ReturnNewsDataArgs {
+                groupId,
+                sortId,
+                tabTitle,
+                tabIcon,
+                title,
+                desc,
+                imgId,
+                iconId,
+                jumpType,
+                jumpPlace,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnNewsDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnNewsData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnNewsData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnNewsData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnNewsData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnNewsData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnNewsDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnNewsData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnNewsDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnNewsDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnNewsDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnNewsData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ReturnNewsData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnNewsData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnNewsData>>(
+                    dict__string__clz_Torappu_ReturnNewsData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnNewsData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnNewsData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnNewsDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnNewsDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnNewsDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnNewsDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnNewsDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnNewsData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(&mut self, value: flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData<'b>>) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnNewsData>>(
+                dict__string__clz_Torappu_ReturnNewsData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnNewsDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnNewsDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnNewsData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_
+            .required(o, dict__string__clz_Torappu_ReturnNewsData::VT_KEY, "key");
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnNewsData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnNewsData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnNewsDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnNewsDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnNewsDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnNewsDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnNewsData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnNewsData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnNewsDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnGiftPackagePicDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnGiftPackagePicData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnGiftPackagePicData<'a> {
+    type Inner = clz_Torappu_ReturnGiftPackagePicData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnGiftPackagePicData<'a> {
+    pub const VT_GIFTPACKAGEID: flatbuffers::VOffsetT = 4;
+    pub const VT_GIFTPACKAGEPIC: flatbuffers::VOffsetT = 6;
+    pub const VT_SORTID: flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnGiftPackagePicData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnGiftPackagePicDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnGiftPackagePicDataBuilder::new(_fbb);
+        builder.add_sortId(args.sortId);
+        if let Some(x) = args.giftPackagePic {
+            builder.add_giftPackagePic(x);
+        }
+        if let Some(x) = args.giftPackageId {
+            builder.add_giftPackageId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnGiftPackagePicDataT {
+        let giftPackageId = self.giftPackageId().map(|x| x.to_string());
+        let giftPackagePic = self.giftPackagePic().map(|x| x.to_string());
+        let sortId = self.sortId();
+        clz_Torappu_ReturnGiftPackagePicDataT {
+            giftPackageId,
+            giftPackagePic,
+            sortId,
+        }
+    }
+
+    #[inline]
+    pub fn giftPackageId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGiftPackagePicData::VT_GIFTPACKAGEID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn giftPackagePic(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnGiftPackagePicData::VT_GIFTPACKAGEPIC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnGiftPackagePicData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnGiftPackagePicData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "giftPackageId",
+                Self::VT_GIFTPACKAGEID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "giftPackagePic",
+                Self::VT_GIFTPACKAGEPIC,
+                false,
+            )?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnGiftPackagePicDataArgs<'a> {
+    pub giftPackageId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub giftPackagePic: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub sortId: i32,
+}
+impl<'a> Default for clz_Torappu_ReturnGiftPackagePicDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnGiftPackagePicDataArgs {
+            giftPackageId: None,
+            giftPackagePic: None,
+            sortId: 0,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnGiftPackagePicDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    clz_Torappu_ReturnGiftPackagePicDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_giftPackageId(&mut self, giftPackageId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGiftPackagePicData::VT_GIFTPACKAGEID,
+            giftPackageId,
+        );
+    }
+    #[inline]
+    pub fn add_giftPackagePic(&mut self, giftPackagePic: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnGiftPackagePicData::VT_GIFTPACKAGEPIC,
+            giftPackagePic,
+        );
+    }
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnGiftPackagePicData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnGiftPackagePicDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnGiftPackagePicDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnGiftPackagePicData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnGiftPackagePicData");
+        ds.field("giftPackageId", &self.giftPackageId());
+        ds.field("giftPackagePic", &self.giftPackagePic());
+        ds.field("sortId", &self.sortId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnGiftPackagePicDataT {
+    pub giftPackageId: Option<String>,
+    pub giftPackagePic: Option<String>,
+    pub sortId: i32,
+}
+impl Default for clz_Torappu_ReturnGiftPackagePicDataT {
+    fn default() -> Self {
+        Self {
+            giftPackageId: None,
+            giftPackagePic: None,
+            sortId: 0,
+        }
+    }
+}
+impl clz_Torappu_ReturnGiftPackagePicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData<'b>> {
+        let giftPackageId = self.giftPackageId.as_ref().map(|x| _fbb.create_string(x));
+        let giftPackagePic = self.giftPackagePic.as_ref().map(|x| _fbb.create_string(x));
+        let sortId = self.sortId;
+        clz_Torappu_ReturnGiftPackagePicData::create(
+            _fbb,
+            &clz_Torappu_ReturnGiftPackagePicDataArgs {
+                giftPackageId,
+                giftPackagePic,
+                sortId,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnGiftPackagePicDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnGiftPackagePicData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnGiftPackagePicData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnGiftPackagePicData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnGiftPackagePicData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnGiftPackagePicData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnGiftPackagePicDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGiftPackagePicData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnGiftPackagePicDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnGiftPackagePicDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnGiftPackagePicDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnGiftPackagePicData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(
+        &self,
+        o: &dict__string__clz_Torappu_ReturnGiftPackagePicData,
+    ) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnGiftPackagePicData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnGiftPackagePicData>>(
+                    dict__string__clz_Torappu_ReturnGiftPackagePicData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnGiftPackagePicData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnGiftPackagePicData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnGiftPackagePicDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnGiftPackagePicDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnGiftPackagePicDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnGiftPackagePicDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnGiftPackagePicDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnGiftPackagePicData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnGiftPackagePicData>>(
+                dict__string__clz_Torappu_ReturnGiftPackagePicData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnGiftPackagePicDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnGiftPackagePicDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGiftPackagePicData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnGiftPackagePicData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnGiftPackagePicData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnGiftPackagePicData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnGiftPackagePicDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnGiftPackagePicDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnGiftPackagePicDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnGiftPackagePicDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnGiftPackagePicData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnGiftPackagePicData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnGiftPackagePicDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnOpenStyleDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnOpenStyleData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnOpenStyleData<'a> {
+    type Inner = clz_Torappu_ReturnOpenStyleData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnOpenStyleData<'a> {
+    pub const VT_SORTID: flatbuffers::VOffsetT = 4;
+    pub const VT_IMGBKGID: flatbuffers::VOffsetT = 6;
+    pub const VT_IMGENTRYID: flatbuffers::VOffsetT = 8;
+    pub const VT_IMGICONID: flatbuffers::VOffsetT = 10;
+    pub const VT_PAUSEDESC: flatbuffers::VOffsetT = 12;
+    pub const VT_TITLE: flatbuffers::VOffsetT = 14;
+    pub const VT_NAME: flatbuffers::VOffsetT = 16;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnOpenStyleData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnOpenStyleDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnOpenStyleDataBuilder::new(_fbb);
+        if let Some(x) = args.name {
+            builder.add_name(x);
+        }
+        if let Some(x) = args.title {
+            builder.add_title(x);
+        }
+        if let Some(x) = args.pauseDesc {
+            builder.add_pauseDesc(x);
+        }
+        if let Some(x) = args.imgIconId {
+            builder.add_imgIconId(x);
+        }
+        if let Some(x) = args.imgEntryId {
+            builder.add_imgEntryId(x);
+        }
+        if let Some(x) = args.imgBkgId {
+            builder.add_imgBkgId(x);
+        }
+        builder.add_sortId(args.sortId);
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnOpenStyleDataT {
+        let sortId = self.sortId();
+        let imgBkgId = self.imgBkgId().map(|x| x.to_string());
+        let imgEntryId = self.imgEntryId().map(|x| x.to_string());
+        let imgIconId = self.imgIconId().map(|x| x.to_string());
+        let pauseDesc = self.pauseDesc().map(|x| x.to_string());
+        let title = self.title().map(|x| x.to_string());
+        let name = self.name().map(|x| x.to_string());
+        clz_Torappu_ReturnOpenStyleDataT {
+            sortId,
+            imgBkgId,
+            imgEntryId,
+            imgIconId,
+            pauseDesc,
+            title,
+            name,
+        }
+    }
+
+    #[inline]
+    pub fn sortId(&self) -> i32 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i32>(clz_Torappu_ReturnOpenStyleData::VT_SORTID, Some(0))
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn imgBkgId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_IMGBKGID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn imgEntryId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_IMGENTRYID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn imgIconId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_IMGICONID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn pauseDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_PAUSEDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn title(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_TITLE,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn name(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnOpenStyleData::VT_NAME,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnOpenStyleData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "imgBkgId",
+                Self::VT_IMGBKGID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "imgEntryId",
+                Self::VT_IMGENTRYID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "imgIconId",
+                Self::VT_IMGICONID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "pauseDesc",
+                Self::VT_PAUSEDESC,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("title", Self::VT_TITLE, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnOpenStyleDataArgs<'a> {
+    pub sortId: i32,
+    pub imgBkgId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub imgEntryId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub imgIconId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub pauseDesc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub title: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub name: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_ReturnOpenStyleDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnOpenStyleDataArgs {
+            sortId: 0,
+            imgBkgId: None,
+            imgEntryId: None,
+            imgIconId: None,
+            pauseDesc: None,
+            title: None,
+            name: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnOpenStyleDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnOpenStyleDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_sortId(&mut self, sortId: i32) {
+        self.fbb_
+            .push_slot::<i32>(clz_Torappu_ReturnOpenStyleData::VT_SORTID, sortId, 0);
+    }
+    #[inline]
+    pub fn add_imgBkgId(&mut self, imgBkgId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_IMGBKGID,
+            imgBkgId,
+        );
+    }
+    #[inline]
+    pub fn add_imgEntryId(&mut self, imgEntryId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_IMGENTRYID,
+            imgEntryId,
+        );
+    }
+    #[inline]
+    pub fn add_imgIconId(&mut self, imgIconId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_IMGICONID,
+            imgIconId,
+        );
+    }
+    #[inline]
+    pub fn add_pauseDesc(&mut self, pauseDesc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_PAUSEDESC,
+            pauseDesc,
+        );
+    }
+    #[inline]
+    pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_TITLE,
+            title,
+        );
+    }
+    #[inline]
+    pub fn add_name(&mut self, name: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnOpenStyleData::VT_NAME,
+            name,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnOpenStyleDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnOpenStyleDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnOpenStyleData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnOpenStyleData");
+        ds.field("sortId", &self.sortId());
+        ds.field("imgBkgId", &self.imgBkgId());
+        ds.field("imgEntryId", &self.imgEntryId());
+        ds.field("imgIconId", &self.imgIconId());
+        ds.field("pauseDesc", &self.pauseDesc());
+        ds.field("title", &self.title());
+        ds.field("name", &self.name());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnOpenStyleDataT {
+    pub sortId: i32,
+    pub imgBkgId: Option<String>,
+    pub imgEntryId: Option<String>,
+    pub imgIconId: Option<String>,
+    pub pauseDesc: Option<String>,
+    pub title: Option<String>,
+    pub name: Option<String>,
+}
+impl Default for clz_Torappu_ReturnOpenStyleDataT {
+    fn default() -> Self {
+        Self {
+            sortId: 0,
+            imgBkgId: None,
+            imgEntryId: None,
+            imgIconId: None,
+            pauseDesc: None,
+            title: None,
+            name: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnOpenStyleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData<'b>> {
+        let sortId = self.sortId;
+        let imgBkgId = self.imgBkgId.as_ref().map(|x| _fbb.create_string(x));
+        let imgEntryId = self.imgEntryId.as_ref().map(|x| _fbb.create_string(x));
+        let imgIconId = self.imgIconId.as_ref().map(|x| _fbb.create_string(x));
+        let pauseDesc = self.pauseDesc.as_ref().map(|x| _fbb.create_string(x));
+        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
+        let name = self.name.as_ref().map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnOpenStyleData::create(
+            _fbb,
+            &clz_Torappu_ReturnOpenStyleDataArgs {
+                sortId,
+                imgBkgId,
+                imgEntryId,
+                imgIconId,
+                pauseDesc,
+                title,
+                name,
+            },
+        )
+    }
+}
+pub enum dict__string__clz_Torappu_ReturnOpenStyleDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct dict__string__clz_Torappu_ReturnOpenStyleData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for dict__string__clz_Torappu_ReturnOpenStyleData<'a> {
+    type Inner = dict__string__clz_Torappu_ReturnOpenStyleData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> dict__string__clz_Torappu_ReturnOpenStyleData<'a> {
+    pub const VT_KEY: flatbuffers::VOffsetT = 4;
+    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        dict__string__clz_Torappu_ReturnOpenStyleData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args dict__string__clz_Torappu_ReturnOpenStyleDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'bldr>> {
+        let mut builder = dict__string__clz_Torappu_ReturnOpenStyleDataBuilder::new(_fbb);
+        if let Some(x) = args.value {
+            builder.add_value(x);
+        }
+        if let Some(x) = args.key {
+            builder.add_key(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> dict__string__clz_Torappu_ReturnOpenStyleDataT {
+        let key = {
+            let x = self.key();
+            x.to_string()
+        };
+        let value = self.value().map(|x| Box::new(x.unpack()));
+        dict__string__clz_Torappu_ReturnOpenStyleDataT { key, value }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &'a str {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<&str>>(
+                    dict__string__clz_Torappu_ReturnOpenStyleData::VT_KEY,
+                    None,
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn key_compare_less_than(&self, o: &dict__string__clz_Torappu_ReturnOpenStyleData) -> bool {
+        self.key() < o.key()
+    }
+
+    #[inline]
+    pub fn key_compare_with_value(&self, val: &str) -> ::core::cmp::Ordering {
+        let key = self.key();
+        key.cmp(val)
+    }
+    #[inline]
+    pub fn value(&self) -> Option<clz_Torappu_ReturnOpenStyleData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenStyleData>>(
+                    dict__string__clz_Torappu_ReturnOpenStyleData::VT_VALUE,
+                    None,
+                )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for dict__string__clz_Torappu_ReturnOpenStyleData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("key", Self::VT_KEY, true)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnOpenStyleData>>(
+                "value",
+                Self::VT_VALUE,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct dict__string__clz_Torappu_ReturnOpenStyleDataArgs<'a> {
+    pub key: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub value: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData<'a>>>,
+}
+impl<'a> Default for dict__string__clz_Torappu_ReturnOpenStyleDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        dict__string__clz_Torappu_ReturnOpenStyleDataArgs {
+            key: None, // required field
+            value: None,
+        }
+    }
+}
+
+pub struct dict__string__clz_Torappu_ReturnOpenStyleDataBuilder<
+    'a: 'b,
+    'b,
+    A: flatbuffers::Allocator + 'a,
+> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
+    dict__string__clz_Torappu_ReturnOpenStyleDataBuilder<'a, 'b, A>
+{
+    #[inline]
+    pub fn add_key(&mut self, key: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            dict__string__clz_Torappu_ReturnOpenStyleData::VT_KEY,
+            key,
+        );
+    }
+    #[inline]
+    pub fn add_value(
+        &mut self,
+        value: flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnOpenStyleData>>(
+                dict__string__clz_Torappu_ReturnOpenStyleData::VT_VALUE,
+                value,
+            );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> dict__string__clz_Torappu_ReturnOpenStyleDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        dict__string__clz_Torappu_ReturnOpenStyleDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(
+        self,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        self.fbb_.required(
+            o,
+            dict__string__clz_Torappu_ReturnOpenStyleData::VT_KEY,
+            "key",
+        );
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for dict__string__clz_Torappu_ReturnOpenStyleData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("dict__string__clz_Torappu_ReturnOpenStyleData");
+        ds.field("key", &self.key());
+        ds.field("value", &self.value());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct dict__string__clz_Torappu_ReturnOpenStyleDataT {
+    pub key: String,
+    pub value: Option<Box<clz_Torappu_ReturnOpenStyleDataT>>,
+}
+impl Default for dict__string__clz_Torappu_ReturnOpenStyleDataT {
+    fn default() -> Self {
+        Self {
+            key: "".to_string(),
+            value: None,
+        }
+    }
+}
+impl dict__string__clz_Torappu_ReturnOpenStyleDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'b>> {
+        let key = Some({
+            let x = &self.key;
+            _fbb.create_string(x)
+        });
+        let value = self.value.as_ref().map(|x| x.pack(_fbb));
+        dict__string__clz_Torappu_ReturnOpenStyleData::create(
+            _fbb,
+            &dict__string__clz_Torappu_ReturnOpenStyleDataArgs { key, value },
+        )
+    }
+}
+pub enum clz_Torappu_ReturnConstDataOffset {}
+#[derive(Copy, Clone, PartialEq)]
+
+pub struct clz_Torappu_ReturnConstData<'a> {
+    pub _tab: flatbuffers::Table<'a>,
+}
+
+impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnConstData<'a> {
+    type Inner = clz_Torappu_ReturnConstData<'a>;
+    #[inline]
+    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+        Self {
+            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
+        }
+    }
+}
+
+impl<'a> clz_Torappu_ReturnConstData<'a> {
+    pub const VT_POINTITEMID: flatbuffers::VOffsetT = 4;
+    pub const VT_RETURNPRICEDESC: flatbuffers::VOffsetT = 6;
+    pub const VT_OLDRETURNGROUPID: flatbuffers::VOffsetT = 8;
+
+    #[inline]
+    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
+        clz_Torappu_ReturnConstData { _tab: table }
+    }
+    #[allow(unused_mut)]
+    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
+        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
+        args: &'args clz_Torappu_ReturnConstDataArgs<'args>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConstData<'bldr>> {
+        let mut builder = clz_Torappu_ReturnConstDataBuilder::new(_fbb);
+        if let Some(x) = args.oldReturnGroupId {
+            builder.add_oldReturnGroupId(x);
+        }
+        if let Some(x) = args.returnPriceDesc {
+            builder.add_returnPriceDesc(x);
+        }
+        if let Some(x) = args.pointItemId {
+            builder.add_pointItemId(x);
+        }
+        builder.finish()
+    }
+
+    pub fn unpack(&self) -> clz_Torappu_ReturnConstDataT {
+        let pointItemId = self.pointItemId().map(|x| x.to_string());
+        let returnPriceDesc = self.returnPriceDesc().map(|x| x.to_string());
+        let oldReturnGroupId = self.oldReturnGroupId().map(|x| x.to_string());
+        clz_Torappu_ReturnConstDataT {
+            pointItemId,
+            returnPriceDesc,
+            oldReturnGroupId,
+        }
+    }
+
+    #[inline]
+    pub fn pointItemId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnConstData::VT_POINTITEMID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn returnPriceDesc(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnConstData::VT_RETURNPRICEDESC,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn oldReturnGroupId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_ReturnConstData::VT_OLDRETURNGROUPID,
+                None,
+            )
+        }
+    }
+}
+
+impl flatbuffers::Verifiable for clz_Torappu_ReturnConstData<'_> {
+    #[inline]
+    fn run_verifier(
+        v: &mut flatbuffers::Verifier,
+        pos: usize,
+    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
+        use self::flatbuffers::Verifiable;
+        v.visit_table(pos)?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "pointItemId",
+                Self::VT_POINTITEMID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "returnPriceDesc",
+                Self::VT_RETURNPRICEDESC,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "oldReturnGroupId",
+                Self::VT_OLDRETURNGROUPID,
+                false,
+            )?
+            .finish();
+        Ok(())
+    }
+}
+pub struct clz_Torappu_ReturnConstDataArgs<'a> {
+    pub pointItemId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub returnPriceDesc: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub oldReturnGroupId: Option<flatbuffers::WIPOffset<&'a str>>,
+}
+impl<'a> Default for clz_Torappu_ReturnConstDataArgs<'a> {
+    #[inline]
+    fn default() -> Self {
+        clz_Torappu_ReturnConstDataArgs {
+            pointItemId: None,
+            returnPriceDesc: None,
+            oldReturnGroupId: None,
+        }
+    }
+}
+
+pub struct clz_Torappu_ReturnConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
+    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
+}
+impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnConstDataBuilder<'a, 'b, A> {
+    #[inline]
+    pub fn add_pointItemId(&mut self, pointItemId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnConstData::VT_POINTITEMID,
+            pointItemId,
+        );
+    }
+    #[inline]
+    pub fn add_returnPriceDesc(&mut self, returnPriceDesc: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnConstData::VT_RETURNPRICEDESC,
+            returnPriceDesc,
+        );
+    }
+    #[inline]
+    pub fn add_oldReturnGroupId(&mut self, oldReturnGroupId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnConstData::VT_OLDRETURNGROUPID,
+            oldReturnGroupId,
+        );
+    }
+    #[inline]
+    pub fn new(
+        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
+    ) -> clz_Torappu_ReturnConstDataBuilder<'a, 'b, A> {
+        let start = _fbb.start_table();
+        clz_Torappu_ReturnConstDataBuilder {
+            fbb_: _fbb,
+            start_: start,
+        }
+    }
+    #[inline]
+    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConstData<'a>> {
+        let o = self.fbb_.end_table(self.start_);
+        flatbuffers::WIPOffset::new(o.value())
+    }
+}
+
+impl core::fmt::Debug for clz_Torappu_ReturnConstData<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut ds = f.debug_struct("clz_Torappu_ReturnConstData");
+        ds.field("pointItemId", &self.pointItemId());
+        ds.field("returnPriceDesc", &self.returnPriceDesc());
+        ds.field("oldReturnGroupId", &self.oldReturnGroupId());
+        ds.finish()
+    }
+}
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq)]
+pub struct clz_Torappu_ReturnConstDataT {
+    pub pointItemId: Option<String>,
+    pub returnPriceDesc: Option<String>,
+    pub oldReturnGroupId: Option<String>,
+}
+impl Default for clz_Torappu_ReturnConstDataT {
+    fn default() -> Self {
+        Self {
+            pointItemId: None,
+            returnPriceDesc: None,
+            oldReturnGroupId: None,
+        }
+    }
+}
+impl clz_Torappu_ReturnConstDataT {
+    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
+        &self,
+        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
+    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnConstData<'b>> {
+        let pointItemId = self.pointItemId.as_ref().map(|x| _fbb.create_string(x));
+        let returnPriceDesc = self.returnPriceDesc.as_ref().map(|x| _fbb.create_string(x));
+        let oldReturnGroupId = self
+            .oldReturnGroupId
+            .as_ref()
+            .map(|x| _fbb.create_string(x));
+        clz_Torappu_ReturnConstData::create(
+            _fbb,
+            &clz_Torappu_ReturnConstDataArgs {
+                pointItemId,
+                returnPriceDesc,
+                oldReturnGroupId,
             },
         )
     }
@@ -7022,13 +11450,16 @@ impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnData<'a> {
 }
 
 impl<'a> clz_Torappu_ReturnData<'a> {
-    pub const VT_CONSTDATA: flatbuffers::VOffsetT = 4;
-    pub const VT_ONCEREWARDS: flatbuffers::VOffsetT = 6;
-    pub const VT_INTRO: flatbuffers::VOffsetT = 8;
-    pub const VT_RETURNDAILYTASKDIC: flatbuffers::VOffsetT = 10;
-    pub const VT_RETURNLONGTERMTASKLIST: flatbuffers::VOffsetT = 12;
-    pub const VT_CREDITSLIST: flatbuffers::VOffsetT = 14;
-    pub const VT_CHECKINREWARDLIST: flatbuffers::VOffsetT = 16;
+    pub const VT_GROUPDATAMAP: flatbuffers::VOffsetT = 4;
+    pub const VT_ONCEDATAMAP: flatbuffers::VOffsetT = 6;
+    pub const VT_CHECKINDATAMAP: flatbuffers::VOffsetT = 8;
+    pub const VT_PRICEDATAMAP: flatbuffers::VOffsetT = 10;
+    pub const VT_MISSIONDATAMAP: flatbuffers::VOffsetT = 12;
+    pub const VT_CHECKINGPDATA: flatbuffers::VOffsetT = 14;
+    pub const VT_NEWSDATAMAP: flatbuffers::VOffsetT = 16;
+    pub const VT_GIFTPACKAGEPICDATAMAP: flatbuffers::VOffsetT = 18;
+    pub const VT_OPENSTYLEDATA: flatbuffers::VOffsetT = 20;
+    pub const VT_CONSTDATA: flatbuffers::VOffsetT = 22;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -7040,108 +11471,194 @@ impl<'a> clz_Torappu_ReturnData<'a> {
         args: &'args clz_Torappu_ReturnDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnData<'bldr>> {
         let mut builder = clz_Torappu_ReturnDataBuilder::new(_fbb);
-        if let Some(x) = args.checkinRewardList {
-            builder.add_checkinRewardList(x);
-        }
-        if let Some(x) = args.creditsList {
-            builder.add_creditsList(x);
-        }
-        if let Some(x) = args.returnLongTermTaskList {
-            builder.add_returnLongTermTaskList(x);
-        }
-        if let Some(x) = args.returnDailyTaskDic {
-            builder.add_returnDailyTaskDic(x);
-        }
-        if let Some(x) = args.intro {
-            builder.add_intro(x);
-        }
-        if let Some(x) = args.onceRewards {
-            builder.add_onceRewards(x);
-        }
         if let Some(x) = args.constData {
             builder.add_constData(x);
+        }
+        if let Some(x) = args.openStyleData {
+            builder.add_openStyleData(x);
+        }
+        if let Some(x) = args.giftPackagePicDataMap {
+            builder.add_giftPackagePicDataMap(x);
+        }
+        if let Some(x) = args.newsDataMap {
+            builder.add_newsDataMap(x);
+        }
+        if let Some(x) = args.checkinGpData {
+            builder.add_checkinGpData(x);
+        }
+        if let Some(x) = args.missionDataMap {
+            builder.add_missionDataMap(x);
+        }
+        if let Some(x) = args.priceDataMap {
+            builder.add_priceDataMap(x);
+        }
+        if let Some(x) = args.checkinDataMap {
+            builder.add_checkinDataMap(x);
+        }
+        if let Some(x) = args.onceDataMap {
+            builder.add_onceDataMap(x);
+        }
+        if let Some(x) = args.groupDataMap {
+            builder.add_groupDataMap(x);
         }
         builder.finish()
     }
 
     pub fn unpack(&self) -> clz_Torappu_ReturnDataT {
+        let groupDataMap = self
+            .groupDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let onceDataMap = self
+            .onceDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let checkinDataMap = self
+            .checkinDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let priceDataMap = self
+            .priceDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let missionDataMap = self
+            .missionDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let checkinGpData = self
+            .checkinGpData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let newsDataMap = self
+            .newsDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let giftPackagePicDataMap = self
+            .giftPackagePicDataMap()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let openStyleData = self
+            .openStyleData()
+            .map(|x| x.iter().map(|t| t.unpack()).collect());
         let constData = self.constData().map(|x| Box::new(x.unpack()));
-        let onceRewards = self
-            .onceRewards()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let intro = self.intro().map(|x| x.iter().map(|t| t.unpack()).collect());
-        let returnDailyTaskDic = self
-            .returnDailyTaskDic()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let returnLongTermTaskList = self
-            .returnLongTermTaskList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let creditsList = self
-            .creditsList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let checkinRewardList = self
-            .checkinRewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
         clz_Torappu_ReturnDataT {
+            groupDataMap,
+            onceDataMap,
+            checkinDataMap,
+            priceDataMap,
+            missionDataMap,
+            checkinGpData,
+            newsDataMap,
+            giftPackagePicDataMap,
+            openStyleData,
             constData,
-            onceRewards,
-            intro,
-            returnDailyTaskDic,
-            returnLongTermTaskList,
-            creditsList,
-            checkinRewardList,
         }
     }
 
     #[inline]
-    pub fn constData(&self) -> Option<clz_Torappu_ReturnConst<'a>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnConst>>(
-                    clz_Torappu_ReturnData::VT_CONSTDATA,
-                    None,
-                )
-        }
-    }
-    #[inline]
-    pub fn onceRewards(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
-    {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(clz_Torappu_ReturnData::VT_ONCEREWARDS, None)
-        }
-    }
-    #[inline]
-    pub fn intro(
+    pub fn groupDataMap(
         &self,
     ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnIntroData<'a>>>,
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGroupData<'a>>,
+        >,
     > {
         // Safety:
         // Created from valid Table for this object
         // which contains a valid value in this slot
         unsafe {
             self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnIntroData>>,
-            >>(clz_Torappu_ReturnData::VT_INTRO, None)
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGroupData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_GROUPDATAMAP, None)
         }
     }
     #[inline]
-    pub fn returnDailyTaskDic(
+    pub fn onceDataMap(
         &self,
     ) -> Option<
         flatbuffers::Vector<
             'a,
-            flatbuffers::ForwardsUOffset<dict__string__list_clz_Torappu_ReturnDailyTaskData<'a>>,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOnceRewardData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_ONCEDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn checkinDataMap(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGroupData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_CHECKINDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn priceDataMap(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnPriceGroupData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_PRICEDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn missionDataMap(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnMissionGroupData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_MISSIONDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn checkinGpData(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a>>,
         >,
     > {
         // Safety:
@@ -7152,19 +11669,19 @@ impl<'a> clz_Torappu_ReturnData<'a> {
                 flatbuffers::Vector<
                     'a,
                     flatbuffers::ForwardsUOffset<
-                        dict__string__list_clz_Torappu_ReturnDailyTaskData,
+                        dict__string__clz_Torappu_ReturnCheckinGpRewardData,
                     >,
                 >,
-            >>(clz_Torappu_ReturnData::VT_RETURNDAILYTASKDIC, None)
+            >>(clz_Torappu_ReturnData::VT_CHECKINGPDATA, None)
         }
     }
     #[inline]
-    pub fn returnLongTermTaskList(
+    pub fn newsDataMap(
         &self,
     ) -> Option<
         flatbuffers::Vector<
             'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnLongTermTaskData<'a>>,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnNewsData<'a>>,
         >,
     > {
         // Safety:
@@ -7174,30 +11691,19 @@ impl<'a> clz_Torappu_ReturnData<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnLongTermTaskData>,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnNewsData>,
                 >,
-            >>(clz_Torappu_ReturnData::VT_RETURNLONGTERMTASKLIST, None)
+            >>(clz_Torappu_ReturnData::VT_NEWSDATAMAP, None)
         }
     }
     #[inline]
-    pub fn creditsList(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
-    {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(clz_Torappu_ReturnData::VT_CREDITSLIST, None)
-        }
-    }
-    #[inline]
-    pub fn checkinRewardList(
+    pub fn giftPackagePicDataMap(
         &self,
     ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinData<'a>>>,
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGiftPackagePicData<'a>>,
+        >,
     > {
         // Safety:
         // Created from valid Table for this object
@@ -7206,9 +11712,45 @@ impl<'a> clz_Torappu_ReturnData<'a> {
             self._tab.get::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinData>,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_ReturnGiftPackagePicData,
+                    >,
                 >,
-            >>(clz_Torappu_ReturnData::VT_CHECKINREWARDLIST, None)
+            >>(clz_Torappu_ReturnData::VT_GIFTPACKAGEPICDATAMAP, None)
+        }
+    }
+    #[inline]
+    pub fn openStyleData(
+        &self,
+    ) -> Option<
+        flatbuffers::Vector<
+            'a,
+            flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'a>>,
+        >,
+    > {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    'a,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOpenStyleData>,
+                >,
+            >>(clz_Torappu_ReturnData::VT_OPENSTYLEDATA, None)
+        }
+    }
+    #[inline]
+    pub fn constData(&self) -> Option<clz_Torappu_ReturnConstData<'a>> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnConstData>>(
+                    clz_Torappu_ReturnData::VT_CONSTDATA,
+                    None,
+                )
         }
     }
 }
@@ -7221,149 +11763,171 @@ impl flatbuffers::Verifiable for clz_Torappu_ReturnData<'_> {
     ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
         use self::flatbuffers::Verifiable;
         v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnConst>>(
-                "constData",
-                Self::VT_CONSTDATA,
-                false,
-            )?
             .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("onceRewards", Self::VT_ONCEREWARDS, false)?
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGroupData>,
+                >,
+            >>("groupDataMap", Self::VT_GROUPDATAMAP, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnIntroData>>,
-            >>("intro", Self::VT_INTRO, false)?
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOnceRewardData>,
+                >,
+            >>("onceDataMap", Self::VT_ONCEDATAMAP, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGroupData>,
+                >,
+            >>("checkinDataMap", Self::VT_CHECKINDATAMAP, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnPriceGroupData>,
+                >,
+            >>("priceDataMap", Self::VT_PRICEDATAMAP, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnMissionGroupData>,
+                >,
+            >>("missionDataMap", Self::VT_MISSIONDATAMAP, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
                     flatbuffers::ForwardsUOffset<
-                        dict__string__list_clz_Torappu_ReturnDailyTaskData,
+                        dict__string__clz_Torappu_ReturnCheckinGpRewardData,
                     >,
                 >,
-            >>("returnDailyTaskDic", Self::VT_RETURNDAILYTASKDIC, false)?
+            >>("checkinGpData", Self::VT_CHECKINGPDATA, false)?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnLongTermTaskData>,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnNewsData>,
+                >,
+            >>("newsDataMap", Self::VT_NEWSDATAMAP, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<
+                flatbuffers::Vector<
+                    '_,
+                    flatbuffers::ForwardsUOffset<
+                        dict__string__clz_Torappu_ReturnGiftPackagePicData,
+                    >,
                 >,
             >>(
-                "returnLongTermTaskList",
-                Self::VT_RETURNLONGTERMTASKLIST,
+                "giftPackagePicDataMap",
+                Self::VT_GIFTPACKAGEPICDATAMAP,
                 false,
             )?
             .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("creditsList", Self::VT_CREDITSLIST, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinData>,
+                    flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOpenStyleData>,
                 >,
-            >>("checkinRewardList", Self::VT_CHECKINREWARDLIST, false)?
+            >>("openStyleData", Self::VT_OPENSTYLEDATA, false)?
+            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnConstData>>(
+                "constData",
+                Self::VT_CONSTDATA,
+                false,
+            )?
             .finish();
         Ok(())
     }
 }
 pub struct clz_Torappu_ReturnDataArgs<'a> {
-    pub constData: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'a>>>,
-    pub onceRewards: Option<
+    pub groupDataMap: Option<
         flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGroupData<'a>>,
+            >,
         >,
     >,
-    pub intro: Option<
+    pub onceDataMap: Option<
         flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnIntroData<'a>>>,
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'a>>,
+            >,
         >,
     >,
-    pub returnDailyTaskDic: Option<
+    pub checkinDataMap: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'a>>,
+            >,
+        >,
+    >,
+    pub priceDataMap: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'a>>,
+            >,
+        >,
+    >,
+    pub missionDataMap: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'a>>,
+            >,
+        >,
+    >,
+    pub checkinGpData: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
                 flatbuffers::ForwardsUOffset<
-                    dict__string__list_clz_Torappu_ReturnDailyTaskData<'a>,
+                    dict__string__clz_Torappu_ReturnCheckinGpRewardData<'a>,
                 >,
             >,
         >,
     >,
-    pub returnLongTermTaskList: Option<
+    pub newsDataMap: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnLongTermTaskData<'a>>,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnNewsData<'a>>,
             >,
         >,
     >,
-    pub creditsList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
-        >,
-    >,
-    pub checkinRewardList: Option<
+    pub giftPackagePicDataMap: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinData<'a>>,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ReturnGiftPackagePicData<'a>,
+                >,
             >,
         >,
     >,
+    pub openStyleData: Option<
+        flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'a,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'a>>,
+            >,
+        >,
+    >,
+    pub constData: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnConstData<'a>>>,
 }
 impl<'a> Default for clz_Torappu_ReturnDataArgs<'a> {
     #[inline]
     fn default() -> Self {
         clz_Torappu_ReturnDataArgs {
+            groupDataMap: None,
+            onceDataMap: None,
+            checkinDataMap: None,
+            priceDataMap: None,
+            missionDataMap: None,
+            checkinGpData: None,
+            newsDataMap: None,
+            giftPackagePicDataMap: None,
+            openStyleData: None,
             constData: None,
-            onceRewards: None,
-            intro: None,
-            returnDailyTaskDic: None,
-            returnLongTermTaskList: None,
-            creditsList: None,
-            checkinRewardList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnData", 7)?;
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        if let Some(f) = self.onceRewards() {
-            s.serialize_field("onceRewards", &f)?;
-        } else {
-            s.skip_field("onceRewards")?;
-        }
-        if let Some(f) = self.intro() {
-            s.serialize_field("intro", &f)?;
-        } else {
-            s.skip_field("intro")?;
-        }
-        if let Some(f) = self.returnDailyTaskDic() {
-            s.serialize_field("returnDailyTaskDic", &f)?;
-        } else {
-            s.skip_field("returnDailyTaskDic")?;
-        }
-        if let Some(f) = self.returnLongTermTaskList() {
-            s.serialize_field("returnLongTermTaskList", &f)?;
-        } else {
-            s.skip_field("returnLongTermTaskList")?;
-        }
-        if let Some(f) = self.creditsList() {
-            s.serialize_field("creditsList", &f)?;
-        } else {
-            s.skip_field("creditsList")?;
-        }
-        if let Some(f) = self.checkinRewardList() {
-            s.serialize_field("checkinRewardList", &f)?;
-        } else {
-            s.skip_field("checkinRewardList")?;
-        }
-        s.end()
     }
 }
 
@@ -7373,96 +11937,154 @@ pub struct clz_Torappu_ReturnDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator +
 }
 impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnDataBuilder<'a, 'b, A> {
     #[inline]
-    pub fn add_constData(
+    pub fn add_groupDataMap(
         &mut self,
-        constData: flatbuffers::WIPOffset<clz_Torappu_ReturnConst<'b>>,
-    ) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnConst>>(
-                clz_Torappu_ReturnData::VT_CONSTDATA,
-                constData,
-            );
-    }
-    #[inline]
-    pub fn add_onceRewards(
-        &mut self,
-        onceRewards: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
+        groupDataMap: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnGroupData<'b>>,
+            >,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnData::VT_ONCEREWARDS,
-            onceRewards,
+            clz_Torappu_ReturnData::VT_GROUPDATAMAP,
+            groupDataMap,
         );
     }
     #[inline]
-    pub fn add_intro(
+    pub fn add_onceDataMap(
         &mut self,
-        intro: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnIntroData<'b>>>,
+        onceDataMap: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOnceRewardData<'b>>,
+            >,
         >,
     ) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<_>>(clz_Torappu_ReturnData::VT_INTRO, intro);
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnData::VT_ONCEDATAMAP,
+            onceDataMap,
+        );
     }
     #[inline]
-    pub fn add_returnDailyTaskDic(
+    pub fn add_checkinDataMap(
         &mut self,
-        returnDailyTaskDic: flatbuffers::WIPOffset<
+        checkinDataMap: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnCheckinGroupData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnData::VT_CHECKINDATAMAP,
+            checkinDataMap,
+        );
+    }
+    #[inline]
+    pub fn add_priceDataMap(
+        &mut self,
+        priceDataMap: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnPriceGroupData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnData::VT_PRICEDATAMAP,
+            priceDataMap,
+        );
+    }
+    #[inline]
+    pub fn add_missionDataMap(
+        &mut self,
+        missionDataMap: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnMissionGroupData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnData::VT_MISSIONDATAMAP,
+            missionDataMap,
+        );
+    }
+    #[inline]
+    pub fn add_checkinGpData(
+        &mut self,
+        checkinGpData: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
                 flatbuffers::ForwardsUOffset<
-                    dict__string__list_clz_Torappu_ReturnDailyTaskData<'b>,
+                    dict__string__clz_Torappu_ReturnCheckinGpRewardData<'b>,
                 >,
             >,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnData::VT_RETURNDAILYTASKDIC,
-            returnDailyTaskDic,
+            clz_Torappu_ReturnData::VT_CHECKINGPDATA,
+            checkinGpData,
         );
     }
     #[inline]
-    pub fn add_returnLongTermTaskList(
+    pub fn add_newsDataMap(
         &mut self,
-        returnLongTermTaskList: flatbuffers::WIPOffset<
+        newsDataMap: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnLongTermTaskData<'b>>,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnNewsData<'b>>,
             >,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnData::VT_RETURNLONGTERMTASKLIST,
-            returnLongTermTaskList,
+            clz_Torappu_ReturnData::VT_NEWSDATAMAP,
+            newsDataMap,
         );
     }
     #[inline]
-    pub fn add_creditsList(
+    pub fn add_giftPackagePicDataMap(
         &mut self,
-        creditsList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnData::VT_CREDITSLIST,
-            creditsList,
-        );
-    }
-    #[inline]
-    pub fn add_checkinRewardList(
-        &mut self,
-        checkinRewardList: flatbuffers::WIPOffset<
+        giftPackagePicDataMap: flatbuffers::WIPOffset<
             flatbuffers::Vector<
                 'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnCheckinData<'b>>,
+                flatbuffers::ForwardsUOffset<
+                    dict__string__clz_Torappu_ReturnGiftPackagePicData<'b>,
+                >,
             >,
         >,
     ) {
         self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnData::VT_CHECKINREWARDLIST,
-            checkinRewardList,
+            clz_Torappu_ReturnData::VT_GIFTPACKAGEPICDATAMAP,
+            giftPackagePicDataMap,
         );
+    }
+    #[inline]
+    pub fn add_openStyleData(
+        &mut self,
+        openStyleData: flatbuffers::WIPOffset<
+            flatbuffers::Vector<
+                'b,
+                flatbuffers::ForwardsUOffset<dict__string__clz_Torappu_ReturnOpenStyleData<'b>>,
+            >,
+        >,
+    ) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_ReturnData::VT_OPENSTYLEDATA,
+            openStyleData,
+        );
+    }
+    #[inline]
+    pub fn add_constData(
+        &mut self,
+        constData: flatbuffers::WIPOffset<clz_Torappu_ReturnConstData<'b>>,
+    ) {
+        self.fbb_
+            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnConstData>>(
+                clz_Torappu_ReturnData::VT_CONSTDATA,
+                constData,
+            );
     }
     #[inline]
     pub fn new(
@@ -7484,37 +12106,46 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnDataBuilder<'
 impl core::fmt::Debug for clz_Torappu_ReturnData<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut ds = f.debug_struct("clz_Torappu_ReturnData");
+        ds.field("groupDataMap", &self.groupDataMap());
+        ds.field("onceDataMap", &self.onceDataMap());
+        ds.field("checkinDataMap", &self.checkinDataMap());
+        ds.field("priceDataMap", &self.priceDataMap());
+        ds.field("missionDataMap", &self.missionDataMap());
+        ds.field("checkinGpData", &self.checkinGpData());
+        ds.field("newsDataMap", &self.newsDataMap());
+        ds.field("giftPackagePicDataMap", &self.giftPackagePicDataMap());
+        ds.field("openStyleData", &self.openStyleData());
         ds.field("constData", &self.constData());
-        ds.field("onceRewards", &self.onceRewards());
-        ds.field("intro", &self.intro());
-        ds.field("returnDailyTaskDic", &self.returnDailyTaskDic());
-        ds.field("returnLongTermTaskList", &self.returnLongTermTaskList());
-        ds.field("creditsList", &self.creditsList());
-        ds.field("checkinRewardList", &self.checkinRewardList());
         ds.finish()
     }
 }
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq)]
 pub struct clz_Torappu_ReturnDataT {
-    pub constData: Option<Box<clz_Torappu_ReturnConstT>>,
-    pub onceRewards: Option<Vec<clz_Torappu_ItemBundleT>>,
-    pub intro: Option<Vec<clz_Torappu_ReturnIntroDataT>>,
-    pub returnDailyTaskDic: Option<Vec<dict__string__list_clz_Torappu_ReturnDailyTaskDataT>>,
-    pub returnLongTermTaskList: Option<Vec<clz_Torappu_ReturnLongTermTaskDataT>>,
-    pub creditsList: Option<Vec<clz_Torappu_ItemBundleT>>,
-    pub checkinRewardList: Option<Vec<clz_Torappu_ReturnCheckinDataT>>,
+    pub groupDataMap: Option<Vec<dict__string__clz_Torappu_ReturnGroupDataT>>,
+    pub onceDataMap: Option<Vec<dict__string__clz_Torappu_ReturnOnceRewardDataT>>,
+    pub checkinDataMap: Option<Vec<dict__string__clz_Torappu_ReturnCheckinGroupDataT>>,
+    pub priceDataMap: Option<Vec<dict__string__clz_Torappu_ReturnPriceGroupDataT>>,
+    pub missionDataMap: Option<Vec<dict__string__clz_Torappu_ReturnMissionGroupDataT>>,
+    pub checkinGpData: Option<Vec<dict__string__clz_Torappu_ReturnCheckinGpRewardDataT>>,
+    pub newsDataMap: Option<Vec<dict__string__clz_Torappu_ReturnNewsDataT>>,
+    pub giftPackagePicDataMap: Option<Vec<dict__string__clz_Torappu_ReturnGiftPackagePicDataT>>,
+    pub openStyleData: Option<Vec<dict__string__clz_Torappu_ReturnOpenStyleDataT>>,
+    pub constData: Option<Box<clz_Torappu_ReturnConstDataT>>,
 }
 impl Default for clz_Torappu_ReturnDataT {
     fn default() -> Self {
         Self {
+            groupDataMap: None,
+            onceDataMap: None,
+            checkinDataMap: None,
+            priceDataMap: None,
+            missionDataMap: None,
+            checkinGpData: None,
+            newsDataMap: None,
+            giftPackagePicDataMap: None,
+            openStyleData: None,
             constData: None,
-            onceRewards: None,
-            intro: None,
-            returnDailyTaskDic: None,
-            returnLongTermTaskList: None,
-            creditsList: None,
-            checkinRewardList: None,
         }
     }
 }
@@ -7523,4772 +12154,56 @@ impl clz_Torappu_ReturnDataT {
         &self,
         _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnData<'b>> {
+        let groupDataMap = self.groupDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let onceDataMap = self.onceDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkinDataMap = self.checkinDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let priceDataMap = self.priceDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let missionDataMap = self.missionDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let checkinGpData = self.checkinGpData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let newsDataMap = self.newsDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let giftPackagePicDataMap = self.giftPackagePicDataMap.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
+        let openStyleData = self.openStyleData.as_ref().map(|x| {
+            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
+            _fbb.create_vector(&w)
+        });
         let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
-        let onceRewards = self.onceRewards.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let intro = self.intro.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let returnDailyTaskDic = self.returnDailyTaskDic.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let returnLongTermTaskList = self.returnLongTermTaskList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let creditsList = self.creditsList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let checkinRewardList = self.checkinRewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
         clz_Torappu_ReturnData::create(
             _fbb,
             &clz_Torappu_ReturnDataArgs {
+                groupDataMap,
+                onceDataMap,
+                checkinDataMap,
+                priceDataMap,
+                missionDataMap,
+                checkinGpData,
+                newsDataMap,
+                giftPackagePicDataMap,
+                openStyleData,
                 constData,
-                onceRewards,
-                intro,
-                returnDailyTaskDic,
-                returnLongTermTaskList,
-                creditsList,
-                checkinRewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2ConstOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2Const<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2Const<'a> {
-    type Inner = clz_Torappu_ReturnV2Const<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2Const<'a> {
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 4;
-    pub const VT_UNLOCKLV: flatbuffers::VOffsetT = 6;
-    pub const VT_UNLOCKSTAGE: flatbuffers::VOffsetT = 8;
-    pub const VT_PERMMISSIONTIME: flatbuffers::VOffsetT = 10;
-    pub const VT_POINTID: flatbuffers::VOffsetT = 12;
-    pub const VT_RETURNPRICEDESC: flatbuffers::VOffsetT = 14;
-    pub const VT_DAILYSUPPLYDESC: flatbuffers::VOffsetT = 16;
-    pub const VT_OLDGPID: flatbuffers::VOffsetT = 18;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2Const { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2ConstArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2ConstBuilder::new(_fbb);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.oldGPId {
-            builder.add_oldGPId(x);
-        }
-        if let Some(x) = args.dailySupplyDesc {
-            builder.add_dailySupplyDesc(x);
-        }
-        if let Some(x) = args.returnPriceDesc {
-            builder.add_returnPriceDesc(x);
-        }
-        if let Some(x) = args.pointId {
-            builder.add_pointId(x);
-        }
-        builder.add_permMissionTime(args.permMissionTime);
-        if let Some(x) = args.unlockStage {
-            builder.add_unlockStage(x);
-        }
-        builder.add_unlockLv(args.unlockLv);
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2ConstT {
-        let startTime = self.startTime();
-        let unlockLv = self.unlockLv();
-        let unlockStage = self.unlockStage().map(|x| x.to_string());
-        let permMissionTime = self.permMissionTime();
-        let pointId = self.pointId().map(|x| x.to_string());
-        let returnPriceDesc = self.returnPriceDesc().map(|x| x.to_string());
-        let dailySupplyDesc = self.dailySupplyDesc().map(|x| x.to_string());
-        let oldGPId = self.oldGPId().map(|x| x.to_string());
-        clz_Torappu_ReturnV2ConstT {
-            startTime,
-            unlockLv,
-            unlockStage,
-            permMissionTime,
-            pointId,
-            returnPriceDesc,
-            dailySupplyDesc,
-            oldGPId,
-        }
-    }
-
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2Const::VT_STARTTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn unlockLv(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2Const::VT_UNLOCKLV, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn unlockStage(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2Const::VT_UNLOCKSTAGE,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn permMissionTime(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2Const::VT_PERMMISSIONTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn pointId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2Const::VT_POINTID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn returnPriceDesc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2Const::VT_RETURNPRICEDESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn dailySupplyDesc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2Const::VT_DAILYSUPPLYDESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn oldGPId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2Const::VT_OLDGPID,
-                None,
-            )
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2Const<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i32>("unlockLv", Self::VT_UNLOCKLV, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "unlockStage",
-                Self::VT_UNLOCKSTAGE,
-                false,
-            )?
-            .visit_field::<i32>("permMissionTime", Self::VT_PERMMISSIONTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("pointId", Self::VT_POINTID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "returnPriceDesc",
-                Self::VT_RETURNPRICEDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "dailySupplyDesc",
-                Self::VT_DAILYSUPPLYDESC,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("oldGPId", Self::VT_OLDGPID, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2ConstArgs<'a> {
-    pub startTime: i64,
-    pub unlockLv: i32,
-    pub unlockStage: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub permMissionTime: i32,
-    pub pointId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub returnPriceDesc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub dailySupplyDesc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub oldGPId: Option<flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for clz_Torappu_ReturnV2ConstArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2ConstArgs {
-            startTime: 0,
-            unlockLv: 0,
-            unlockStage: None,
-            permMissionTime: 0,
-            pointId: None,
-            returnPriceDesc: None,
-            dailySupplyDesc: None,
-            oldGPId: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2Const<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2Const", 8)?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("unlockLv", &self.unlockLv())?;
-        if let Some(f) = self.unlockStage() {
-            s.serialize_field("unlockStage", &f)?;
-        } else {
-            s.skip_field("unlockStage")?;
-        }
-        s.serialize_field("permMissionTime", &self.permMissionTime())?;
-        if let Some(f) = self.pointId() {
-            s.serialize_field("pointId", &f)?;
-        } else {
-            s.skip_field("pointId")?;
-        }
-        if let Some(f) = self.returnPriceDesc() {
-            s.serialize_field("returnPriceDesc", &f)?;
-        } else {
-            s.skip_field("returnPriceDesc")?;
-        }
-        if let Some(f) = self.dailySupplyDesc() {
-            s.serialize_field("dailySupplyDesc", &f)?;
-        } else {
-            s.skip_field("dailySupplyDesc")?;
-        }
-        if let Some(f) = self.oldGPId() {
-            s.serialize_field("oldGPId", &f)?;
-        } else {
-            s.skip_field("oldGPId")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2ConstBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnV2ConstBuilder<'a, 'b, A> {
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnV2Const::VT_STARTTIME, startTime, 0);
-    }
-    #[inline]
-    pub fn add_unlockLv(&mut self, unlockLv: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2Const::VT_UNLOCKLV, unlockLv, 0);
-    }
-    #[inline]
-    pub fn add_unlockStage(&mut self, unlockStage: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Const::VT_UNLOCKSTAGE,
-            unlockStage,
-        );
-    }
-    #[inline]
-    pub fn add_permMissionTime(&mut self, permMissionTime: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2Const::VT_PERMMISSIONTIME,
-            permMissionTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_pointId(&mut self, pointId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Const::VT_POINTID,
-            pointId,
-        );
-    }
-    #[inline]
-    pub fn add_returnPriceDesc(&mut self, returnPriceDesc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Const::VT_RETURNPRICEDESC,
-            returnPriceDesc,
-        );
-    }
-    #[inline]
-    pub fn add_dailySupplyDesc(&mut self, dailySupplyDesc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Const::VT_DAILYSUPPLYDESC,
-            dailySupplyDesc,
-        );
-    }
-    #[inline]
-    pub fn add_oldGPId(&mut self, oldGPId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Const::VT_OLDGPID,
-            oldGPId,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2ConstBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2ConstBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2Const<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2Const");
-        ds.field("startTime", &self.startTime());
-        ds.field("unlockLv", &self.unlockLv());
-        ds.field("unlockStage", &self.unlockStage());
-        ds.field("permMissionTime", &self.permMissionTime());
-        ds.field("pointId", &self.pointId());
-        ds.field("returnPriceDesc", &self.returnPriceDesc());
-        ds.field("dailySupplyDesc", &self.dailySupplyDesc());
-        ds.field("oldGPId", &self.oldGPId());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2ConstT {
-    pub startTime: i64,
-    pub unlockLv: i32,
-    pub unlockStage: Option<String>,
-    pub permMissionTime: i32,
-    pub pointId: Option<String>,
-    pub returnPriceDesc: Option<String>,
-    pub dailySupplyDesc: Option<String>,
-    pub oldGPId: Option<String>,
-}
-impl Default for clz_Torappu_ReturnV2ConstT {
-    fn default() -> Self {
-        Self {
-            startTime: 0,
-            unlockLv: 0,
-            unlockStage: None,
-            permMissionTime: 0,
-            pointId: None,
-            returnPriceDesc: None,
-            dailySupplyDesc: None,
-            oldGPId: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2ConstT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'b>> {
-        let startTime = self.startTime;
-        let unlockLv = self.unlockLv;
-        let unlockStage = self.unlockStage.as_ref().map(|x| _fbb.create_string(x));
-        let permMissionTime = self.permMissionTime;
-        let pointId = self.pointId.as_ref().map(|x| _fbb.create_string(x));
-        let returnPriceDesc = self.returnPriceDesc.as_ref().map(|x| _fbb.create_string(x));
-        let dailySupplyDesc = self.dailySupplyDesc.as_ref().map(|x| _fbb.create_string(x));
-        let oldGPId = self.oldGPId.as_ref().map(|x| _fbb.create_string(x));
-        clz_Torappu_ReturnV2Const::create(
-            _fbb,
-            &clz_Torappu_ReturnV2ConstArgs {
-                startTime,
-                unlockLv,
-                unlockStage,
-                permMissionTime,
-                pointId,
-                returnPriceDesc,
-                dailySupplyDesc,
-                oldGPId,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2ItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2ItemData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2ItemData<'a> {
-    type Inner = clz_Torappu_ReturnV2ItemData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2ItemData<'a> {
-    pub const VT_ID: flatbuffers::VOffsetT = 4;
-    pub const VT_TYPE_: flatbuffers::VOffsetT = 6;
-    pub const VT_COUNT: flatbuffers::VOffsetT = 8;
-    pub const VT_SORTID: flatbuffers::VOffsetT = 10;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2ItemData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2ItemDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2ItemData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2ItemDataBuilder::new(_fbb);
-        builder.add_sortId(args.sortId);
-        builder.add_count(args.count);
-        builder.add_type_(args.type_);
-        if let Some(x) = args.id {
-            builder.add_id(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2ItemDataT {
-        let id = self.id().map(|x| x.to_string());
-        let type_ = self.type_();
-        let count = self.count();
-        let sortId = self.sortId();
-        clz_Torappu_ReturnV2ItemDataT {
-            id,
-            type_,
-            count,
-            sortId,
-        }
-    }
-
-    #[inline]
-    pub fn id(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2ItemData::VT_ID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn type_(&self) -> enum__Torappu_ItemType {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<enum__Torappu_ItemType>(
-                    clz_Torappu_ReturnV2ItemData::VT_TYPE_,
-                    Some(enum__Torappu_ItemType::NONE),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn count(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2ItemData::VT_COUNT, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn sortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2ItemData::VT_SORTID, Some(0))
-                .unwrap()
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2ItemData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("id", Self::VT_ID, false)?
-            .visit_field::<enum__Torappu_ItemType>("type_", Self::VT_TYPE_, false)?
-            .visit_field::<i32>("count", Self::VT_COUNT, false)?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2ItemDataArgs<'a> {
-    pub id: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub type_: enum__Torappu_ItemType,
-    pub count: i32,
-    pub sortId: i32,
-}
-impl<'a> Default for clz_Torappu_ReturnV2ItemDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2ItemDataArgs {
-            id: None,
-            type_: enum__Torappu_ItemType::NONE,
-            count: 0,
-            sortId: 0,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2ItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2ItemData", 4)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2ItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnV2ItemDataBuilder<'a, 'b, A> {
-    #[inline]
-    pub fn add_id(&mut self, id: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<_>>(clz_Torappu_ReturnV2ItemData::VT_ID, id);
-    }
-    #[inline]
-    pub fn add_type_(&mut self, type_: enum__Torappu_ItemType) {
-        self.fbb_.push_slot::<enum__Torappu_ItemType>(
-            clz_Torappu_ReturnV2ItemData::VT_TYPE_,
-            type_,
-            enum__Torappu_ItemType::NONE,
-        );
-    }
-    #[inline]
-    pub fn add_count(&mut self, count: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2ItemData::VT_COUNT, count, 0);
-    }
-    #[inline]
-    pub fn add_sortId(&mut self, sortId: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2ItemData::VT_SORTID, sortId, 0);
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2ItemDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2ItemDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2ItemData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2ItemData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2ItemData");
-        ds.field("id", &self.id());
-        ds.field("type_", &self.type_());
-        ds.field("count", &self.count());
-        ds.field("sortId", &self.sortId());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2ItemDataT {
-    pub id: Option<String>,
-    pub type_: enum__Torappu_ItemType,
-    pub count: i32,
-    pub sortId: i32,
-}
-impl Default for clz_Torappu_ReturnV2ItemDataT {
-    fn default() -> Self {
-        Self {
-            id: None,
-            type_: enum__Torappu_ItemType::NONE,
-            count: 0,
-            sortId: 0,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2ItemDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2ItemData<'b>> {
-        let id = self.id.as_ref().map(|x| _fbb.create_string(x));
-        let type_ = self.type_;
-        let count = self.count;
-        let sortId = self.sortId;
-        clz_Torappu_ReturnV2ItemData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2ItemDataArgs {
-                id,
-                type_,
-                count,
-                sortId,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2OnceRewardDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2OnceRewardData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2OnceRewardData<'a> {
-    type Inner = clz_Torappu_ReturnV2OnceRewardData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2OnceRewardData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 10;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2OnceRewardData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2OnceRewardDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2OnceRewardData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2OnceRewardDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2OnceRewardDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2OnceRewardDataT {
-            groupId,
-            startTime,
-            endTime,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2OnceRewardData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2OnceRewardData::VT_STARTTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2OnceRewardData::VT_ENDTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>(clz_Torappu_ReturnV2OnceRewardData::VT_REWARDLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2OnceRewardData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2OnceRewardDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2OnceRewardDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2OnceRewardDataArgs {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2OnceRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2OnceRewardData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2OnceRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2OnceRewardDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2OnceRewardData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2OnceRewardData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnV2OnceRewardData::VT_ENDTIME, endTime, 0);
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2OnceRewardData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2OnceRewardDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2OnceRewardDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2OnceRewardData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2OnceRewardData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2OnceRewardData");
-        ds.field("groupId", &self.groupId());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2OnceRewardDataT {
-    pub groupId: Option<String>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2OnceRewardDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2OnceRewardDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2OnceRewardData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2OnceRewardData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2OnceRewardDataArgs {
-                groupId,
-                startTime,
-                endTime,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2CheckInRewardItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2CheckInRewardItemData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2CheckInRewardItemData<'a> {
-    type Inner = clz_Torappu_ReturnV2CheckInRewardItemData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2CheckInRewardItemData<'a> {
-    pub const VT_SORTID: flatbuffers::VOffsetT = 4;
-    pub const VT_ISIMPORTANT: flatbuffers::VOffsetT = 6;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 8;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2CheckInRewardItemData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2CheckInRewardItemDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2CheckInRewardItemDataBuilder::new(_fbb);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        builder.add_sortId(args.sortId);
-        builder.add_isImportant(args.isImportant);
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2CheckInRewardItemDataT {
-        let sortId = self.sortId();
-        let isImportant = self.isImportant();
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2CheckInRewardItemDataT {
-            sortId,
-            isImportant,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn sortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    clz_Torappu_ReturnV2CheckInRewardItemData::VT_SORTID,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn isImportant(&self) -> bool {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<bool>(
-                    clz_Torappu_ReturnV2CheckInRewardItemData::VT_ISIMPORTANT,
-                    Some(false),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
-    {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(
-                clz_Torappu_ReturnV2CheckInRewardItemData::VT_REWARDLIST,
-                None,
-            )
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2CheckInRewardItemData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-            .visit_field::<bool>("isImportant", Self::VT_ISIMPORTANT, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2CheckInRewardItemDataArgs<'a> {
-    pub sortId: i32,
-    pub isImportant: bool,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2CheckInRewardItemDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2CheckInRewardItemDataArgs {
-            sortId: 0,
-            isImportant: false,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2CheckInRewardItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2CheckInRewardItemData", 3)?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("isImportant", &self.isImportant())?;
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2CheckInRewardItemDataBuilder<
-    'a: 'b,
-    'b,
-    A: flatbuffers::Allocator + 'a,
-> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2CheckInRewardItemDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_sortId(&mut self, sortId: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2CheckInRewardItemData::VT_SORTID,
-            sortId,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_isImportant(&mut self, isImportant: bool) {
-        self.fbb_.push_slot::<bool>(
-            clz_Torappu_ReturnV2CheckInRewardItemData::VT_ISIMPORTANT,
-            isImportant,
-            false,
-        );
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2CheckInRewardItemData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2CheckInRewardItemDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2CheckInRewardItemDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2CheckInRewardItemData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2CheckInRewardItemData");
-        ds.field("sortId", &self.sortId());
-        ds.field("isImportant", &self.isImportant());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2CheckInRewardItemDataT {
-    pub sortId: i32,
-    pub isImportant: bool,
-    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
-}
-impl Default for clz_Torappu_ReturnV2CheckInRewardItemDataT {
-    fn default() -> Self {
-        Self {
-            sortId: 0,
-            isImportant: false,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2CheckInRewardItemDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'b>> {
-        let sortId = self.sortId;
-        let isImportant = self.isImportant;
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2CheckInRewardItemData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2CheckInRewardItemDataArgs {
-                sortId,
-                isImportant,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2CheckInRewardDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2CheckInRewardData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2CheckInRewardData<'a> {
-    type Inner = clz_Torappu_ReturnV2CheckInRewardData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2CheckInRewardData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 10;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2CheckInRewardData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2CheckInRewardDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2CheckInRewardDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2CheckInRewardDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2CheckInRewardDataT {
-            groupId,
-            startTime,
-            endTime,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2CheckInRewardData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2CheckInRewardData::VT_STARTTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2CheckInRewardData::VT_ENDTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardItemData>,
-                >,
-            >>(clz_Torappu_ReturnV2CheckInRewardData::VT_REWARDLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2CheckInRewardData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardItemData>,
-                >,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2CheckInRewardDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'a>>,
-            >,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2CheckInRewardDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2CheckInRewardDataArgs {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2CheckInRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2CheckInRewardData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2CheckInRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-{
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2CheckInRewardDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2CheckInRewardData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2CheckInRewardData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2CheckInRewardData::VT_ENDTIME,
-            endTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardItemData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2CheckInRewardData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2CheckInRewardDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2CheckInRewardDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2CheckInRewardData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2CheckInRewardData");
-        ds.field("groupId", &self.groupId());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2CheckInRewardDataT {
-    pub groupId: Option<String>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<Vec<clz_Torappu_ReturnV2CheckInRewardItemDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2CheckInRewardDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2CheckInRewardDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2CheckInRewardData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2CheckInRewardData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2CheckInRewardDataArgs {
-                groupId,
-                startTime,
-                endTime,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2PriceRewardDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2PriceRewardData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PriceRewardData<'a> {
-    type Inner = clz_Torappu_ReturnV2PriceRewardData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2PriceRewardData<'a> {
-    pub const VT_CONTENTID: flatbuffers::VOffsetT = 4;
-    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
-    pub const VT_POINTREQUIRE: flatbuffers::VOffsetT = 8;
-    pub const VT_DESC: flatbuffers::VOffsetT = 10;
-    pub const VT_ICONID: flatbuffers::VOffsetT = 12;
-    pub const VT_TOPICONID: flatbuffers::VOffsetT = 14;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 16;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2PriceRewardData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2PriceRewardDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2PriceRewardDataBuilder::new(_fbb);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        if let Some(x) = args.topIconId {
-            builder.add_topIconId(x);
-        }
-        if let Some(x) = args.iconId {
-            builder.add_iconId(x);
-        }
-        if let Some(x) = args.desc {
-            builder.add_desc(x);
-        }
-        builder.add_pointRequire(args.pointRequire);
-        builder.add_sortId(args.sortId);
-        if let Some(x) = args.contentId {
-            builder.add_contentId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2PriceRewardDataT {
-        let contentId = self.contentId().map(|x| x.to_string());
-        let sortId = self.sortId();
-        let pointRequire = self.pointRequire();
-        let desc = self.desc().map(|x| x.to_string());
-        let iconId = self.iconId().map(|x| x.to_string());
-        let topIconId = self.topIconId().map(|x| x.to_string());
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2PriceRewardDataT {
-            contentId,
-            sortId,
-            pointRequire,
-            desc,
-            iconId,
-            topIconId,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn contentId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PriceRewardData::VT_CONTENTID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn sortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2PriceRewardData::VT_SORTID, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn pointRequire(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    clz_Torappu_ReturnV2PriceRewardData::VT_POINTREQUIRE,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn desc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PriceRewardData::VT_DESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn iconId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PriceRewardData::VT_ICONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn topIconId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PriceRewardData::VT_TOPICONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>(clz_Torappu_ReturnV2PriceRewardData::VT_REWARDLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2PriceRewardData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "contentId",
-                Self::VT_CONTENTID,
-                false,
-            )?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-            .visit_field::<i32>("pointRequire", Self::VT_POINTREQUIRE, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "topIconId",
-                Self::VT_TOPICONID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2PriceRewardDataArgs<'a> {
-    pub contentId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub sortId: i32,
-    pub pointRequire: i32,
-    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub topIconId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2PriceRewardDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2PriceRewardDataArgs {
-            contentId: None,
-            sortId: 0,
-            pointRequire: 0,
-            desc: None,
-            iconId: None,
-            topIconId: None,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2PriceRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2PriceRewardData", 7)?;
-        if let Some(f) = self.contentId() {
-            s.serialize_field("contentId", &f)?;
-        } else {
-            s.skip_field("contentId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("pointRequire", &self.pointRequire())?;
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.topIconId() {
-            s.serialize_field("topIconId", &f)?;
-        } else {
-            s.skip_field("topIconId")?;
-        }
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2PriceRewardDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2PriceRewardDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_contentId(&mut self, contentId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_CONTENTID,
-            contentId,
-        );
-    }
-    #[inline]
-    pub fn add_sortId(&mut self, sortId: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2PriceRewardData::VT_SORTID, sortId, 0);
-    }
-    #[inline]
-    pub fn add_pointRequire(&mut self, pointRequire: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_POINTREQUIRE,
-            pointRequire,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_DESC,
-            desc,
-        );
-    }
-    #[inline]
-    pub fn add_iconId(&mut self, iconId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_ICONID,
-            iconId,
-        );
-    }
-    #[inline]
-    pub fn add_topIconId(&mut self, topIconId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_TOPICONID,
-            topIconId,
-        );
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2PriceRewardDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2PriceRewardDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2PriceRewardData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2PriceRewardData");
-        ds.field("contentId", &self.contentId());
-        ds.field("sortId", &self.sortId());
-        ds.field("pointRequire", &self.pointRequire());
-        ds.field("desc", &self.desc());
-        ds.field("iconId", &self.iconId());
-        ds.field("topIconId", &self.topIconId());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2PriceRewardDataT {
-    pub contentId: Option<String>,
-    pub sortId: i32,
-    pub pointRequire: i32,
-    pub desc: Option<String>,
-    pub iconId: Option<String>,
-    pub topIconId: Option<String>,
-    pub rewardList: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2PriceRewardDataT {
-    fn default() -> Self {
-        Self {
-            contentId: None,
-            sortId: 0,
-            pointRequire: 0,
-            desc: None,
-            iconId: None,
-            topIconId: None,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2PriceRewardDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardData<'b>> {
-        let contentId = self.contentId.as_ref().map(|x| _fbb.create_string(x));
-        let sortId = self.sortId;
-        let pointRequire = self.pointRequire;
-        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
-        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
-        let topIconId = self.topIconId.as_ref().map(|x| _fbb.create_string(x));
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2PriceRewardData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2PriceRewardDataArgs {
-                contentId,
-                sortId,
-                pointRequire,
-                desc,
-                iconId,
-                topIconId,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2PriceRewardGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2PriceRewardGroupData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PriceRewardGroupData<'a> {
-    type Inner = clz_Torappu_ReturnV2PriceRewardGroupData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2PriceRewardGroupData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_CONTENTLIST: flatbuffers::VOffsetT = 10;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2PriceRewardGroupData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2PriceRewardGroupDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2PriceRewardGroupDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.contentList {
-            builder.add_contentList(x);
-        }
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2PriceRewardGroupDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let contentList = self
-            .contentList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2PriceRewardGroupDataT {
-            groupId,
-            startTime,
-            endTime,
-            contentList,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PriceRewardGroupData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(
-                    clz_Torappu_ReturnV2PriceRewardGroupData::VT_STARTTIME,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(
-                    clz_Torappu_ReturnV2PriceRewardGroupData::VT_ENDTIME,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn contentList(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardData>,
-                >,
-            >>(
-                clz_Torappu_ReturnV2PriceRewardGroupData::VT_CONTENTLIST,
-                None,
-            )
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2PriceRewardGroupData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardData>,
-                >,
-            >>("contentList", Self::VT_CONTENTLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2PriceRewardGroupDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub contentList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardData<'a>>,
-            >,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2PriceRewardGroupDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2PriceRewardGroupDataArgs {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            contentList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2PriceRewardGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2PriceRewardGroupData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.contentList() {
-            s.serialize_field("contentList", &f)?;
-        } else {
-            s.skip_field("contentList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2PriceRewardGroupDataBuilder<
-    'a: 'b,
-    'b,
-    A: flatbuffers::Allocator + 'a,
-> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2PriceRewardGroupDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardGroupData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2PriceRewardGroupData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2PriceRewardGroupData::VT_ENDTIME,
-            endTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_contentList(
-        &mut self,
-        contentList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PriceRewardGroupData::VT_CONTENTLIST,
-            contentList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2PriceRewardGroupDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2PriceRewardGroupDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2PriceRewardGroupData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2PriceRewardGroupData");
-        ds.field("groupId", &self.groupId());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("contentList", &self.contentList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2PriceRewardGroupDataT {
-    pub groupId: Option<String>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub contentList: Option<Vec<clz_Torappu_ReturnV2PriceRewardDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2PriceRewardGroupDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            contentList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2PriceRewardGroupDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let contentList = self.contentList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2PriceRewardGroupData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2PriceRewardGroupDataArgs {
-                groupId,
-                startTime,
-                endTime,
-                contentList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2MissionItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2MissionItemData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2MissionItemData<'a> {
-    type Inner = clz_Torappu_ReturnV2MissionItemData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2MissionItemData<'a> {
-    pub const VT_MISSIONID: flatbuffers::VOffsetT = 4;
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 6;
-    pub const VT_SORTID: flatbuffers::VOffsetT = 8;
-    pub const VT_JUMPTYPE: flatbuffers::VOffsetT = 10;
-    pub const VT_JUMPPARAM: flatbuffers::VOffsetT = 12;
-    pub const VT_DESC: flatbuffers::VOffsetT = 14;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 16;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2MissionItemData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2MissionItemDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionItemData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2MissionItemDataBuilder::new(_fbb);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        if let Some(x) = args.desc {
-            builder.add_desc(x);
-        }
-        if let Some(x) = args.jumpParam {
-            builder.add_jumpParam(x);
-        }
-        builder.add_jumpType(args.jumpType);
-        builder.add_sortId(args.sortId);
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        if let Some(x) = args.missionId {
-            builder.add_missionId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2MissionItemDataT {
-        let missionId = self.missionId().map(|x| x.to_string());
-        let groupId = self.groupId().map(|x| x.to_string());
-        let sortId = self.sortId();
-        let jumpType = self.jumpType();
-        let jumpParam = self.jumpParam().map(|x| x.to_string());
-        let desc = self.desc().map(|x| x.to_string());
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2MissionItemDataT {
-            missionId,
-            groupId,
-            sortId,
-            jumpType,
-            jumpParam,
-            desc,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn missionId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionItemData::VT_MISSIONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionItemData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn sortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2MissionItemData::VT_SORTID, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn jumpType(&self) -> enum__Torappu_ReturnV2JumpType {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<enum__Torappu_ReturnV2JumpType>(
-                    clz_Torappu_ReturnV2MissionItemData::VT_JUMPTYPE,
-                    Some(enum__Torappu_ReturnV2JumpType::NONE),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn jumpParam(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionItemData::VT_JUMPPARAM,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn desc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionItemData::VT_DESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
-    {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(clz_Torappu_ReturnV2MissionItemData::VT_REWARDLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2MissionItemData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "missionId",
-                Self::VT_MISSIONID,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-            .visit_field::<enum__Torappu_ReturnV2JumpType>("jumpType", Self::VT_JUMPTYPE, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "jumpParam",
-                Self::VT_JUMPPARAM,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2MissionItemDataArgs<'a> {
-    pub missionId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub sortId: i32,
-    pub jumpType: enum__Torappu_ReturnV2JumpType,
-    pub jumpParam: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2MissionItemDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2MissionItemDataArgs {
-            missionId: None,
-            groupId: None,
-            sortId: 0,
-            jumpType: enum__Torappu_ReturnV2JumpType::NONE,
-            jumpParam: None,
-            desc: None,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2MissionItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2MissionItemData", 7)?;
-        if let Some(f) = self.missionId() {
-            s.serialize_field("missionId", &f)?;
-        } else {
-            s.skip_field("missionId")?;
-        }
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("jumpType", &self.jumpType())?;
-        if let Some(f) = self.jumpParam() {
-            s.serialize_field("jumpParam", &f)?;
-        } else {
-            s.skip_field("jumpParam")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2MissionItemDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2MissionItemDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_missionId(&mut self, missionId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionItemData::VT_MISSIONID,
-            missionId,
-        );
-    }
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionItemData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_sortId(&mut self, sortId: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2MissionItemData::VT_SORTID, sortId, 0);
-    }
-    #[inline]
-    pub fn add_jumpType(&mut self, jumpType: enum__Torappu_ReturnV2JumpType) {
-        self.fbb_.push_slot::<enum__Torappu_ReturnV2JumpType>(
-            clz_Torappu_ReturnV2MissionItemData::VT_JUMPTYPE,
-            jumpType,
-            enum__Torappu_ReturnV2JumpType::NONE,
-        );
-    }
-    #[inline]
-    pub fn add_jumpParam(&mut self, jumpParam: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionItemData::VT_JUMPPARAM,
-            jumpParam,
-        );
-    }
-    #[inline]
-    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionItemData::VT_DESC,
-            desc,
-        );
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionItemData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2MissionItemDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2MissionItemDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionItemData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2MissionItemData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2MissionItemData");
-        ds.field("missionId", &self.missionId());
-        ds.field("groupId", &self.groupId());
-        ds.field("sortId", &self.sortId());
-        ds.field("jumpType", &self.jumpType());
-        ds.field("jumpParam", &self.jumpParam());
-        ds.field("desc", &self.desc());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2MissionItemDataT {
-    pub missionId: Option<String>,
-    pub groupId: Option<String>,
-    pub sortId: i32,
-    pub jumpType: enum__Torappu_ReturnV2JumpType,
-    pub jumpParam: Option<String>,
-    pub desc: Option<String>,
-    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
-}
-impl Default for clz_Torappu_ReturnV2MissionItemDataT {
-    fn default() -> Self {
-        Self {
-            missionId: None,
-            groupId: None,
-            sortId: 0,
-            jumpType: enum__Torappu_ReturnV2JumpType::NONE,
-            jumpParam: None,
-            desc: None,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2MissionItemDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionItemData<'b>> {
-        let missionId = self.missionId.as_ref().map(|x| _fbb.create_string(x));
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let sortId = self.sortId;
-        let jumpType = self.jumpType;
-        let jumpParam = self.jumpParam.as_ref().map(|x| _fbb.create_string(x));
-        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2MissionItemData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2MissionItemDataArgs {
-                missionId,
-                groupId,
-                sortId,
-                jumpType,
-                jumpParam,
-                desc,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2MissionGroupDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2MissionGroupData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2MissionGroupData<'a> {
-    type Inner = clz_Torappu_ReturnV2MissionGroupData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2MissionGroupData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_SORTID: flatbuffers::VOffsetT = 6;
-    pub const VT_TABTITLE: flatbuffers::VOffsetT = 8;
-    pub const VT_TITLE: flatbuffers::VOffsetT = 10;
-    pub const VT_DESC: flatbuffers::VOffsetT = 12;
-    pub const VT_DIFFMISSIONCOUNT: flatbuffers::VOffsetT = 14;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 16;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 18;
-    pub const VT_IMAGEID: flatbuffers::VOffsetT = 20;
-    pub const VT_ICONID: flatbuffers::VOffsetT = 22;
-    pub const VT_MISSIONLIST: flatbuffers::VOffsetT = 24;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2MissionGroupData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2MissionGroupDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionGroupData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2MissionGroupDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.missionList {
-            builder.add_missionList(x);
-        }
-        if let Some(x) = args.iconId {
-            builder.add_iconId(x);
-        }
-        if let Some(x) = args.imageId {
-            builder.add_imageId(x);
-        }
-        builder.add_diffMissionCount(args.diffMissionCount);
-        if let Some(x) = args.desc {
-            builder.add_desc(x);
-        }
-        if let Some(x) = args.title {
-            builder.add_title(x);
-        }
-        if let Some(x) = args.tabTitle {
-            builder.add_tabTitle(x);
-        }
-        builder.add_sortId(args.sortId);
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2MissionGroupDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let sortId = self.sortId();
-        let tabTitle = self.tabTitle().map(|x| x.to_string());
-        let title = self.title().map(|x| x.to_string());
-        let desc = self.desc().map(|x| x.to_string());
-        let diffMissionCount = self.diffMissionCount();
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let imageId = self.imageId().map(|x| x.to_string());
-        let iconId = self.iconId().map(|x| x.to_string());
-        let missionList = self
-            .missionList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2MissionGroupDataT {
-            groupId,
-            sortId,
-            tabTitle,
-            title,
-            desc,
-            diffMissionCount,
-            startTime,
-            endTime,
-            imageId,
-            iconId,
-            missionList,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn sortId(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(clz_Torappu_ReturnV2MissionGroupData::VT_SORTID, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn tabTitle(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_TABTITLE,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn title(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_TITLE,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn desc(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_DESC,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn diffMissionCount(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    clz_Torappu_ReturnV2MissionGroupData::VT_DIFFMISSIONCOUNT,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2MissionGroupData::VT_STARTTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2MissionGroupData::VT_ENDTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn imageId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_IMAGEID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn iconId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2MissionGroupData::VT_ICONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn missionList(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionItemData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionItemData>,
-                >,
-            >>(clz_Torappu_ReturnV2MissionGroupData::VT_MISSIONLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2MissionGroupData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i32>("sortId", Self::VT_SORTID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "tabTitle",
-                Self::VT_TABTITLE,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("title", Self::VT_TITLE, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("desc", Self::VT_DESC, false)?
-            .visit_field::<i32>("diffMissionCount", Self::VT_DIFFMISSIONCOUNT, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("imageId", Self::VT_IMAGEID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionItemData>,
-                >,
-            >>("missionList", Self::VT_MISSIONLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2MissionGroupDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub sortId: i32,
-    pub tabTitle: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub title: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub desc: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub diffMissionCount: i32,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub imageId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub missionList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionItemData<'a>>,
-            >,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2MissionGroupDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2MissionGroupDataArgs {
-            groupId: None,
-            sortId: 0,
-            tabTitle: None,
-            title: None,
-            desc: None,
-            diffMissionCount: 0,
-            startTime: 0,
-            endTime: 0,
-            imageId: None,
-            iconId: None,
-            missionList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2MissionGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2MissionGroupData", 11)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.tabTitle() {
-            s.serialize_field("tabTitle", &f)?;
-        } else {
-            s.skip_field("tabTitle")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        if let Some(f) = self.desc() {
-            s.serialize_field("desc", &f)?;
-        } else {
-            s.skip_field("desc")?;
-        }
-        s.serialize_field("diffMissionCount", &self.diffMissionCount())?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.imageId() {
-            s.serialize_field("imageId", &f)?;
-        } else {
-            s.skip_field("imageId")?;
-        }
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.missionList() {
-            s.serialize_field("missionList", &f)?;
-        } else {
-            s.skip_field("missionList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2MissionGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2MissionGroupDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_sortId(&mut self, sortId: i32) {
-        self.fbb_
-            .push_slot::<i32>(clz_Torappu_ReturnV2MissionGroupData::VT_SORTID, sortId, 0);
-    }
-    #[inline]
-    pub fn add_tabTitle(&mut self, tabTitle: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_TABTITLE,
-            tabTitle,
-        );
-    }
-    #[inline]
-    pub fn add_title(&mut self, title: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_TITLE,
-            title,
-        );
-    }
-    #[inline]
-    pub fn add_desc(&mut self, desc: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_DESC,
-            desc,
-        );
-    }
-    #[inline]
-    pub fn add_diffMissionCount(&mut self, diffMissionCount: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_DIFFMISSIONCOUNT,
-            diffMissionCount,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnV2MissionGroupData::VT_ENDTIME, endTime, 0);
-    }
-    #[inline]
-    pub fn add_imageId(&mut self, imageId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_IMAGEID,
-            imageId,
-        );
-    }
-    #[inline]
-    pub fn add_iconId(&mut self, iconId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_ICONID,
-            iconId,
-        );
-    }
-    #[inline]
-    pub fn add_missionList(
-        &mut self,
-        missionList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionItemData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2MissionGroupData::VT_MISSIONLIST,
-            missionList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2MissionGroupDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2MissionGroupDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionGroupData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2MissionGroupData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2MissionGroupData");
-        ds.field("groupId", &self.groupId());
-        ds.field("sortId", &self.sortId());
-        ds.field("tabTitle", &self.tabTitle());
-        ds.field("title", &self.title());
-        ds.field("desc", &self.desc());
-        ds.field("diffMissionCount", &self.diffMissionCount());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("imageId", &self.imageId());
-        ds.field("iconId", &self.iconId());
-        ds.field("missionList", &self.missionList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2MissionGroupDataT {
-    pub groupId: Option<String>,
-    pub sortId: i32,
-    pub tabTitle: Option<String>,
-    pub title: Option<String>,
-    pub desc: Option<String>,
-    pub diffMissionCount: i32,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub imageId: Option<String>,
-    pub iconId: Option<String>,
-    pub missionList: Option<Vec<clz_Torappu_ReturnV2MissionItemDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2MissionGroupDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            sortId: 0,
-            tabTitle: None,
-            title: None,
-            desc: None,
-            diffMissionCount: 0,
-            startTime: 0,
-            endTime: 0,
-            imageId: None,
-            iconId: None,
-            missionList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2MissionGroupDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2MissionGroupData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let sortId = self.sortId;
-        let tabTitle = self.tabTitle.as_ref().map(|x| _fbb.create_string(x));
-        let title = self.title.as_ref().map(|x| _fbb.create_string(x));
-        let desc = self.desc.as_ref().map(|x| _fbb.create_string(x));
-        let diffMissionCount = self.diffMissionCount;
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let imageId = self.imageId.as_ref().map(|x| _fbb.create_string(x));
-        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
-        let missionList = self.missionList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2MissionGroupData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2MissionGroupDataArgs {
-                groupId,
-                sortId,
-                tabTitle,
-                title,
-                desc,
-                diffMissionCount,
-                startTime,
-                endTime,
-                imageId,
-                iconId,
-                missionList,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2DailySupplyDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2DailySupplyData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2DailySupplyData<'a> {
-    type Inner = clz_Torappu_ReturnV2DailySupplyData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2DailySupplyData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_REWARDLIST: flatbuffers::VOffsetT = 10;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2DailySupplyData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2DailySupplyDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2DailySupplyData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2DailySupplyDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.rewardList {
-            builder.add_rewardList(x);
-        }
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2DailySupplyDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let rewardList = self
-            .rewardList()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2DailySupplyDataT {
-            groupId,
-            startTime,
-            endTime,
-            rewardList,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2DailySupplyData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2DailySupplyData::VT_STARTTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(clz_Torappu_ReturnV2DailySupplyData::VT_ENDTIME, Some(0))
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn rewardList(
-        &self,
-    ) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>>
-    {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>(clz_Torappu_ReturnV2DailySupplyData::VT_REWARDLIST, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2DailySupplyData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle>>,
-            >>("rewardList", Self::VT_REWARDLIST, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2DailySupplyDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2DailySupplyDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2DailySupplyDataArgs {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2DailySupplyData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2DailySupplyData", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2DailySupplyDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2DailySupplyDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2DailySupplyData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2DailySupplyData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_
-            .push_slot::<i64>(clz_Torappu_ReturnV2DailySupplyData::VT_ENDTIME, endTime, 0);
-    }
-    #[inline]
-    pub fn add_rewardList(
-        &mut self,
-        rewardList: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ItemBundle<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2DailySupplyData::VT_REWARDLIST,
-            rewardList,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2DailySupplyDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2DailySupplyDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2DailySupplyData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2DailySupplyData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2DailySupplyData");
-        ds.field("groupId", &self.groupId());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("rewardList", &self.rewardList());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2DailySupplyDataT {
-    pub groupId: Option<String>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub rewardList: Option<Vec<clz_Torappu_ItemBundleT>>,
-}
-impl Default for clz_Torappu_ReturnV2DailySupplyDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            rewardList: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2DailySupplyDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2DailySupplyData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let rewardList = self.rewardList.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2DailySupplyData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2DailySupplyDataArgs {
-                groupId,
-                startTime,
-                endTime,
-                rewardList,
-            },
-        )
-    }
-}
-pub enum dict__int__list_clz_Torappu_ReturnV2ItemDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct dict__int__list_clz_Torappu_ReturnV2ItemData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for dict__int__list_clz_Torappu_ReturnV2ItemData<'a> {
-    type Inner = dict__int__list_clz_Torappu_ReturnV2ItemData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> dict__int__list_clz_Torappu_ReturnV2ItemData<'a> {
-    pub const VT_KEY: flatbuffers::VOffsetT = 4;
-    pub const VT_VALUE: flatbuffers::VOffsetT = 6;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        dict__int__list_clz_Torappu_ReturnV2ItemData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args dict__int__list_clz_Torappu_ReturnV2ItemDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'bldr>> {
-        let mut builder = dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder::new(_fbb);
-        if let Some(x) = args.value {
-            builder.add_value(x);
-        }
-        builder.add_key(args.key);
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> dict__int__list_clz_Torappu_ReturnV2ItemDataT {
-        let key = self.key();
-        let value = self.value().map(|x| x.iter().map(|t| t.unpack()).collect());
-        dict__int__list_clz_Torappu_ReturnV2ItemDataT { key, value }
-    }
-
-    #[inline]
-    pub fn key(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    dict__int__list_clz_Torappu_ReturnV2ItemData::VT_KEY,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn key_compare_less_than(&self, o: &dict__int__list_clz_Torappu_ReturnV2ItemData) -> bool {
-        self.key() < o.key()
-    }
-
-    #[inline]
-    pub fn key_compare_with_value(&self, val: i32) -> ::core::cmp::Ordering {
-        let key = self.key();
-        key.cmp(&val)
-    }
-    #[inline]
-    pub fn value(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>(dict__int__list_clz_Torappu_ReturnV2ItemData::VT_VALUE, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for dict__int__list_clz_Torappu_ReturnV2ItemData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<i32>("key", Self::VT_KEY, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<'_, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData>>,
-            >>("value", Self::VT_VALUE, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct dict__int__list_clz_Torappu_ReturnV2ItemDataArgs<'a> {
-    pub key: i32,
-    pub value: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'a>>>,
-        >,
-    >,
-}
-impl<'a> Default for dict__int__list_clz_Torappu_ReturnV2ItemDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        dict__int__list_clz_Torappu_ReturnV2ItemDataArgs {
-            key: 0,
-            value: None,
-        }
-    }
-}
-
-impl Serialize for dict__int__list_clz_Torappu_ReturnV2ItemData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__int__list_clz_Torappu_ReturnV2ItemData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
-pub struct dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder<
-    'a: 'b,
-    'b,
-    A: flatbuffers::Allocator + 'a,
-> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_key(&mut self, key: i32) {
-        self.fbb_
-            .push_slot::<i32>(dict__int__list_clz_Torappu_ReturnV2ItemData::VT_KEY, key, 0);
-    }
-    #[inline]
-    pub fn add_value(
-        &mut self,
-        value: flatbuffers::WIPOffset<
-            flatbuffers::Vector<'b, flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2ItemData<'b>>>,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            dict__int__list_clz_Torappu_ReturnV2ItemData::VT_VALUE,
-            value,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        dict__int__list_clz_Torappu_ReturnV2ItemDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(
-        self,
-    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for dict__int__list_clz_Torappu_ReturnV2ItemData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("dict__int__list_clz_Torappu_ReturnV2ItemData");
-        ds.field("key", &self.key());
-        ds.field("value", &self.value());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct dict__int__list_clz_Torappu_ReturnV2ItemDataT {
-    pub key: i32,
-    pub value: Option<Vec<clz_Torappu_ReturnV2ItemDataT>>,
-}
-impl Default for dict__int__list_clz_Torappu_ReturnV2ItemDataT {
-    fn default() -> Self {
-        Self {
-            key: 0,
-            value: None,
-        }
-    }
-}
-impl dict__int__list_clz_Torappu_ReturnV2ItemDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'b>> {
-        let key = self.key;
-        let value = self.value.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        dict__int__list_clz_Torappu_ReturnV2ItemData::create(
-            _fbb,
-            &dict__int__list_clz_Torappu_ReturnV2ItemDataArgs { key, value },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2PackageCheckInRewardDataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2PackageCheckInRewardData<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2PackageCheckInRewardData<'a> {
-    type Inner = clz_Torappu_ReturnV2PackageCheckInRewardData<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2PackageCheckInRewardData<'a> {
-    pub const VT_GROUPID: flatbuffers::VOffsetT = 4;
-    pub const VT_STARTTIME: flatbuffers::VOffsetT = 6;
-    pub const VT_ENDTIME: flatbuffers::VOffsetT = 8;
-    pub const VT_GETTIME: flatbuffers::VOffsetT = 10;
-    pub const VT_BINDGPGOODID: flatbuffers::VOffsetT = 12;
-    pub const VT_TOTALCHECKINDAY: flatbuffers::VOffsetT = 14;
-    pub const VT_ICONID: flatbuffers::VOffsetT = 16;
-    pub const VT_REWARDDICT: flatbuffers::VOffsetT = 18;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2PackageCheckInRewardData { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2PackageCheckInRewardDataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder::new(_fbb);
-        builder.add_endTime(args.endTime);
-        builder.add_startTime(args.startTime);
-        if let Some(x) = args.rewardDict {
-            builder.add_rewardDict(x);
-        }
-        if let Some(x) = args.iconId {
-            builder.add_iconId(x);
-        }
-        builder.add_totalCheckInDay(args.totalCheckInDay);
-        if let Some(x) = args.bindGPGoodId {
-            builder.add_bindGPGoodId(x);
-        }
-        builder.add_getTime(args.getTime);
-        if let Some(x) = args.groupId {
-            builder.add_groupId(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2PackageCheckInRewardDataT {
-        let groupId = self.groupId().map(|x| x.to_string());
-        let startTime = self.startTime();
-        let endTime = self.endTime();
-        let getTime = self.getTime();
-        let bindGPGoodId = self.bindGPGoodId().map(|x| x.to_string());
-        let totalCheckInDay = self.totalCheckInDay();
-        let iconId = self.iconId().map(|x| x.to_string());
-        let rewardDict = self
-            .rewardDict()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2PackageCheckInRewardDataT {
-            groupId,
-            startTime,
-            endTime,
-            getTime,
-            bindGPGoodId,
-            totalCheckInDay,
-            iconId,
-            rewardDict,
-        }
-    }
-
-    #[inline]
-    pub fn groupId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PackageCheckInRewardData::VT_GROUPID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn startTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(
-                    clz_Torappu_ReturnV2PackageCheckInRewardData::VT_STARTTIME,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn endTime(&self) -> i64 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i64>(
-                    clz_Torappu_ReturnV2PackageCheckInRewardData::VT_ENDTIME,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn getTime(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    clz_Torappu_ReturnV2PackageCheckInRewardData::VT_GETTIME,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn bindGPGoodId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PackageCheckInRewardData::VT_BINDGPGOODID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn totalCheckInDay(&self) -> i32 {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<i32>(
-                    clz_Torappu_ReturnV2PackageCheckInRewardData::VT_TOTALCHECKINDAY,
-                    Some(0),
-                )
-                .unwrap()
-        }
-    }
-    #[inline]
-    pub fn iconId(&self) -> Option<&'a str> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
-                clz_Torappu_ReturnV2PackageCheckInRewardData::VT_ICONID,
-                None,
-            )
-        }
-    }
-    #[inline]
-    pub fn rewardDict(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnV2ItemData>,
-                >,
-            >>(
-                clz_Torappu_ReturnV2PackageCheckInRewardData::VT_REWARDDICT,
-                None,
-            )
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2PackageCheckInRewardData<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("groupId", Self::VT_GROUPID, false)?
-            .visit_field::<i64>("startTime", Self::VT_STARTTIME, false)?
-            .visit_field::<i64>("endTime", Self::VT_ENDTIME, false)?
-            .visit_field::<i32>("getTime", Self::VT_GETTIME, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
-                "bindGPGoodId",
-                Self::VT_BINDGPGOODID,
-                false,
-            )?
-            .visit_field::<i32>("totalCheckInDay", Self::VT_TOTALCHECKINDAY, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<&str>>("iconId", Self::VT_ICONID, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnV2ItemData>,
-                >,
-            >>("rewardDict", Self::VT_REWARDDICT, false)?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2PackageCheckInRewardDataArgs<'a> {
-    pub groupId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub getTime: i32,
-    pub bindGPGoodId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub totalCheckInDay: i32,
-    pub iconId: Option<flatbuffers::WIPOffset<&'a str>>,
-    pub rewardDict: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'a>>,
-            >,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2PackageCheckInRewardDataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2PackageCheckInRewardDataArgs {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            getTime: 0,
-            bindGPGoodId: None,
-            totalCheckInDay: 0,
-            iconId: None,
-            rewardDict: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2PackageCheckInRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_ReturnV2PackageCheckInRewardData", 8)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("getTime", &self.getTime())?;
-        if let Some(f) = self.bindGPGoodId() {
-            s.serialize_field("bindGPGoodId", &f)?;
-        } else {
-            s.skip_field("bindGPGoodId")?;
-        }
-        s.serialize_field("totalCheckInDay", &self.totalCheckInDay())?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.rewardDict() {
-            s.serialize_field("rewardDict", &f)?;
-        } else {
-            s.skip_field("rewardDict")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder<
-    'a: 'b,
-    'b,
-    A: flatbuffers::Allocator + 'a,
-> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
-    clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder<'a, 'b, A>
-{
-    #[inline]
-    pub fn add_groupId(&mut self, groupId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_GROUPID,
-            groupId,
-        );
-    }
-    #[inline]
-    pub fn add_startTime(&mut self, startTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_STARTTIME,
-            startTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_endTime(&mut self, endTime: i64) {
-        self.fbb_.push_slot::<i64>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_ENDTIME,
-            endTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_getTime(&mut self, getTime: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_GETTIME,
-            getTime,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_bindGPGoodId(&mut self, bindGPGoodId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_BINDGPGOODID,
-            bindGPGoodId,
-        );
-    }
-    #[inline]
-    pub fn add_totalCheckInDay(&mut self, totalCheckInDay: i32) {
-        self.fbb_.push_slot::<i32>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_TOTALCHECKINDAY,
-            totalCheckInDay,
-            0,
-        );
-    }
-    #[inline]
-    pub fn add_iconId(&mut self, iconId: flatbuffers::WIPOffset<&'b str>) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_ICONID,
-            iconId,
-        );
-    }
-    #[inline]
-    pub fn add_rewardDict(
-        &mut self,
-        rewardDict: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<dict__int__list_clz_Torappu_ReturnV2ItemData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2PackageCheckInRewardData::VT_REWARDDICT,
-            rewardDict,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2PackageCheckInRewardDataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(
-        self,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2PackageCheckInRewardData<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2PackageCheckInRewardData");
-        ds.field("groupId", &self.groupId());
-        ds.field("startTime", &self.startTime());
-        ds.field("endTime", &self.endTime());
-        ds.field("getTime", &self.getTime());
-        ds.field("bindGPGoodId", &self.bindGPGoodId());
-        ds.field("totalCheckInDay", &self.totalCheckInDay());
-        ds.field("iconId", &self.iconId());
-        ds.field("rewardDict", &self.rewardDict());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2PackageCheckInRewardDataT {
-    pub groupId: Option<String>,
-    pub startTime: i64,
-    pub endTime: i64,
-    pub getTime: i32,
-    pub bindGPGoodId: Option<String>,
-    pub totalCheckInDay: i32,
-    pub iconId: Option<String>,
-    pub rewardDict: Option<Vec<dict__int__list_clz_Torappu_ReturnV2ItemDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2PackageCheckInRewardDataT {
-    fn default() -> Self {
-        Self {
-            groupId: None,
-            startTime: 0,
-            endTime: 0,
-            getTime: 0,
-            bindGPGoodId: None,
-            totalCheckInDay: 0,
-            iconId: None,
-            rewardDict: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2PackageCheckInRewardDataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'b>> {
-        let groupId = self.groupId.as_ref().map(|x| _fbb.create_string(x));
-        let startTime = self.startTime;
-        let endTime = self.endTime;
-        let getTime = self.getTime;
-        let bindGPGoodId = self.bindGPGoodId.as_ref().map(|x| _fbb.create_string(x));
-        let totalCheckInDay = self.totalCheckInDay;
-        let iconId = self.iconId.as_ref().map(|x| _fbb.create_string(x));
-        let rewardDict = self.rewardDict.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2PackageCheckInRewardData::create(
-            _fbb,
-            &clz_Torappu_ReturnV2PackageCheckInRewardDataArgs {
-                groupId,
-                startTime,
-                endTime,
-                getTime,
-                bindGPGoodId,
-                totalCheckInDay,
-                iconId,
-                rewardDict,
-            },
-        )
-    }
-}
-pub enum clz_Torappu_ReturnV2DataOffset {}
-#[derive(Copy, Clone, PartialEq)]
-
-pub struct clz_Torappu_ReturnV2Data<'a> {
-    pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for clz_Torappu_ReturnV2Data<'a> {
-    type Inner = clz_Torappu_ReturnV2Data<'a>;
-    #[inline]
-    unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: unsafe { flatbuffers::Table::new(buf, loc) },
-        }
-    }
-}
-
-impl<'a> clz_Torappu_ReturnV2Data<'a> {
-    pub const VT_CONSTDATA: flatbuffers::VOffsetT = 4;
-    pub const VT_ONCEREWARDDATA: flatbuffers::VOffsetT = 6;
-    pub const VT_CHECKINREWARDDATA: flatbuffers::VOffsetT = 8;
-    pub const VT_PRICEREWARDDATA: flatbuffers::VOffsetT = 10;
-    pub const VT_MISSIONGROUPDATA: flatbuffers::VOffsetT = 12;
-    pub const VT_DAILYSUPPLYDATA: flatbuffers::VOffsetT = 14;
-    pub const VT_PACKAGECHECKINREWARDDATA: flatbuffers::VOffsetT = 16;
-
-    #[inline]
-    pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        clz_Torappu_ReturnV2Data { _tab: table }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: flatbuffers::Allocator + 'bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr, A>,
-        args: &'args clz_Torappu_ReturnV2DataArgs<'args>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'bldr>> {
-        let mut builder = clz_Torappu_ReturnV2DataBuilder::new(_fbb);
-        if let Some(x) = args.packageCheckInRewardData {
-            builder.add_packageCheckInRewardData(x);
-        }
-        if let Some(x) = args.dailySupplyData {
-            builder.add_dailySupplyData(x);
-        }
-        if let Some(x) = args.missionGroupData {
-            builder.add_missionGroupData(x);
-        }
-        if let Some(x) = args.priceRewardData {
-            builder.add_priceRewardData(x);
-        }
-        if let Some(x) = args.checkInRewardData {
-            builder.add_checkInRewardData(x);
-        }
-        if let Some(x) = args.onceRewardData {
-            builder.add_onceRewardData(x);
-        }
-        if let Some(x) = args.constData {
-            builder.add_constData(x);
-        }
-        builder.finish()
-    }
-
-    pub fn unpack(&self) -> clz_Torappu_ReturnV2DataT {
-        let constData = self.constData().map(|x| Box::new(x.unpack()));
-        let onceRewardData = self
-            .onceRewardData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let checkInRewardData = self
-            .checkInRewardData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let priceRewardData = self
-            .priceRewardData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let missionGroupData = self
-            .missionGroupData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let dailySupplyData = self
-            .dailySupplyData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        let packageCheckInRewardData = self
-            .packageCheckInRewardData()
-            .map(|x| x.iter().map(|t| t.unpack()).collect());
-        clz_Torappu_ReturnV2DataT {
-            constData,
-            onceRewardData,
-            checkInRewardData,
-            priceRewardData,
-            missionGroupData,
-            dailySupplyData,
-            packageCheckInRewardData,
-        }
-    }
-
-    #[inline]
-    pub fn constData(&self) -> Option<clz_Torappu_ReturnV2Const<'a>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2Const>>(
-                    clz_Torappu_ReturnV2Data::VT_CONSTDATA,
-                    None,
-                )
-        }
-    }
-    #[inline]
-    pub fn onceRewardData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2OnceRewardData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2OnceRewardData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_ONCEREWARDDATA, None)
-        }
-    }
-    #[inline]
-    pub fn checkInRewardData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_CHECKINREWARDDATA, None)
-        }
-    }
-    #[inline]
-    pub fn priceRewardData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardGroupData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_PRICEREWARDDATA, None)
-        }
-    }
-    #[inline]
-    pub fn missionGroupData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionGroupData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionGroupData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_MISSIONGROUPDATA, None)
-        }
-    }
-    #[inline]
-    pub fn dailySupplyData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2DailySupplyData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2DailySupplyData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_DAILYSUPPLYDATA, None)
-        }
-    }
-    #[inline]
-    pub fn packageCheckInRewardData(
-        &self,
-    ) -> Option<
-        flatbuffers::Vector<
-            'a,
-            flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'a>>,
-        >,
-    > {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab.get::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    'a,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PackageCheckInRewardData>,
-                >,
-            >>(clz_Torappu_ReturnV2Data::VT_PACKAGECHECKINREWARDDATA, None)
-        }
-    }
-}
-
-impl flatbuffers::Verifiable for clz_Torappu_ReturnV2Data<'_> {
-    #[inline]
-    fn run_verifier(
-        v: &mut flatbuffers::Verifier,
-        pos: usize,
-    ) -> Result<(), flatbuffers::InvalidFlatbuffer> {
-        use self::flatbuffers::Verifiable;
-        v.visit_table(pos)?
-            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2Const>>(
-                "constData",
-                Self::VT_CONSTDATA,
-                false,
-            )?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2OnceRewardData>,
-                >,
-            >>("onceRewardData", Self::VT_ONCEREWARDDATA, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardData>,
-                >,
-            >>("checkInRewardData", Self::VT_CHECKINREWARDDATA, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardGroupData>,
-                >,
-            >>("priceRewardData", Self::VT_PRICEREWARDDATA, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionGroupData>,
-                >,
-            >>("missionGroupData", Self::VT_MISSIONGROUPDATA, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2DailySupplyData>,
-                >,
-            >>("dailySupplyData", Self::VT_DAILYSUPPLYDATA, false)?
-            .visit_field::<flatbuffers::ForwardsUOffset<
-                flatbuffers::Vector<
-                    '_,
-                    flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PackageCheckInRewardData>,
-                >,
-            >>(
-                "packageCheckInRewardData",
-                Self::VT_PACKAGECHECKINREWARDDATA,
-                false,
-            )?
-            .finish();
-        Ok(())
-    }
-}
-pub struct clz_Torappu_ReturnV2DataArgs<'a> {
-    pub constData: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'a>>>,
-    pub onceRewardData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2OnceRewardData<'a>>,
-            >,
-        >,
-    >,
-    pub checkInRewardData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardData<'a>>,
-            >,
-        >,
-    >,
-    pub priceRewardData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'a>>,
-            >,
-        >,
-    >,
-    pub missionGroupData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionGroupData<'a>>,
-            >,
-        >,
-    >,
-    pub dailySupplyData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2DailySupplyData<'a>>,
-            >,
-        >,
-    >,
-    pub packageCheckInRewardData: Option<
-        flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'a,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'a>>,
-            >,
-        >,
-    >,
-}
-impl<'a> Default for clz_Torappu_ReturnV2DataArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        clz_Torappu_ReturnV2DataArgs {
-            constData: None,
-            onceRewardData: None,
-            checkInRewardData: None,
-            priceRewardData: None,
-            missionGroupData: None,
-            dailySupplyData: None,
-            packageCheckInRewardData: None,
-        }
-    }
-}
-
-impl Serialize for clz_Torappu_ReturnV2Data<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ReturnV2Data", 7)?;
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        if let Some(f) = self.onceRewardData() {
-            s.serialize_field("onceRewardData", &f)?;
-        } else {
-            s.skip_field("onceRewardData")?;
-        }
-        if let Some(f) = self.checkInRewardData() {
-            s.serialize_field("checkInRewardData", &f)?;
-        } else {
-            s.skip_field("checkInRewardData")?;
-        }
-        if let Some(f) = self.priceRewardData() {
-            s.serialize_field("priceRewardData", &f)?;
-        } else {
-            s.skip_field("priceRewardData")?;
-        }
-        if let Some(f) = self.missionGroupData() {
-            s.serialize_field("missionGroupData", &f)?;
-        } else {
-            s.skip_field("missionGroupData")?;
-        }
-        if let Some(f) = self.dailySupplyData() {
-            s.serialize_field("dailySupplyData", &f)?;
-        } else {
-            s.skip_field("dailySupplyData")?;
-        }
-        if let Some(f) = self.packageCheckInRewardData() {
-            s.serialize_field("packageCheckInRewardData", &f)?;
-        } else {
-            s.skip_field("packageCheckInRewardData")?;
-        }
-        s.end()
-    }
-}
-
-pub struct clz_Torappu_ReturnV2DataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
-    fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_ReturnV2DataBuilder<'a, 'b, A> {
-    #[inline]
-    pub fn add_constData(
-        &mut self,
-        constData: flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const<'b>>,
-    ) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnV2Const>>(
-                clz_Torappu_ReturnV2Data::VT_CONSTDATA,
-                constData,
-            );
-    }
-    #[inline]
-    pub fn add_onceRewardData(
-        &mut self,
-        onceRewardData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2OnceRewardData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_ONCEREWARDDATA,
-            onceRewardData,
-        );
-    }
-    #[inline]
-    pub fn add_checkInRewardData(
-        &mut self,
-        checkInRewardData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2CheckInRewardData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_CHECKINREWARDDATA,
-            checkInRewardData,
-        );
-    }
-    #[inline]
-    pub fn add_priceRewardData(
-        &mut self,
-        priceRewardData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PriceRewardGroupData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_PRICEREWARDDATA,
-            priceRewardData,
-        );
-    }
-    #[inline]
-    pub fn add_missionGroupData(
-        &mut self,
-        missionGroupData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2MissionGroupData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_MISSIONGROUPDATA,
-            missionGroupData,
-        );
-    }
-    #[inline]
-    pub fn add_dailySupplyData(
-        &mut self,
-        dailySupplyData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2DailySupplyData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_DAILYSUPPLYDATA,
-            dailySupplyData,
-        );
-    }
-    #[inline]
-    pub fn add_packageCheckInRewardData(
-        &mut self,
-        packageCheckInRewardData: flatbuffers::WIPOffset<
-            flatbuffers::Vector<
-                'b,
-                flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2PackageCheckInRewardData<'b>>,
-            >,
-        >,
-    ) {
-        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
-            clz_Torappu_ReturnV2Data::VT_PACKAGECHECKINREWARDDATA,
-            packageCheckInRewardData,
-        );
-    }
-    #[inline]
-    pub fn new(
-        _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
-    ) -> clz_Torappu_ReturnV2DataBuilder<'a, 'b, A> {
-        let start = _fbb.start_table();
-        clz_Torappu_ReturnV2DataBuilder {
-            fbb_: _fbb,
-            start_: start,
-        }
-    }
-    #[inline]
-    pub fn finish(self) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'a>> {
-        let o = self.fbb_.end_table(self.start_);
-        flatbuffers::WIPOffset::new(o.value())
-    }
-}
-
-impl core::fmt::Debug for clz_Torappu_ReturnV2Data<'_> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut ds = f.debug_struct("clz_Torappu_ReturnV2Data");
-        ds.field("constData", &self.constData());
-        ds.field("onceRewardData", &self.onceRewardData());
-        ds.field("checkInRewardData", &self.checkInRewardData());
-        ds.field("priceRewardData", &self.priceRewardData());
-        ds.field("missionGroupData", &self.missionGroupData());
-        ds.field("dailySupplyData", &self.dailySupplyData());
-        ds.field("packageCheckInRewardData", &self.packageCheckInRewardData());
-        ds.finish()
-    }
-}
-#[non_exhaustive]
-#[derive(Debug, Clone, PartialEq)]
-pub struct clz_Torappu_ReturnV2DataT {
-    pub constData: Option<Box<clz_Torappu_ReturnV2ConstT>>,
-    pub onceRewardData: Option<Vec<clz_Torappu_ReturnV2OnceRewardDataT>>,
-    pub checkInRewardData: Option<Vec<clz_Torappu_ReturnV2CheckInRewardDataT>>,
-    pub priceRewardData: Option<Vec<clz_Torappu_ReturnV2PriceRewardGroupDataT>>,
-    pub missionGroupData: Option<Vec<clz_Torappu_ReturnV2MissionGroupDataT>>,
-    pub dailySupplyData: Option<Vec<clz_Torappu_ReturnV2DailySupplyDataT>>,
-    pub packageCheckInRewardData: Option<Vec<clz_Torappu_ReturnV2PackageCheckInRewardDataT>>,
-}
-impl Default for clz_Torappu_ReturnV2DataT {
-    fn default() -> Self {
-        Self {
-            constData: None,
-            onceRewardData: None,
-            checkInRewardData: None,
-            priceRewardData: None,
-            missionGroupData: None,
-            dailySupplyData: None,
-            packageCheckInRewardData: None,
-        }
-    }
-}
-impl clz_Torappu_ReturnV2DataT {
-    pub fn pack<'b, A: flatbuffers::Allocator + 'b>(
-        &self,
-        _fbb: &mut flatbuffers::FlatBufferBuilder<'b, A>,
-    ) -> flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'b>> {
-        let constData = self.constData.as_ref().map(|x| x.pack(_fbb));
-        let onceRewardData = self.onceRewardData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let checkInRewardData = self.checkInRewardData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let priceRewardData = self.priceRewardData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let missionGroupData = self.missionGroupData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let dailySupplyData = self.dailySupplyData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        let packageCheckInRewardData = self.packageCheckInRewardData.as_ref().map(|x| {
-            let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
-            _fbb.create_vector(&w)
-        });
-        clz_Torappu_ReturnV2Data::create(
-            _fbb,
-            &clz_Torappu_ReturnV2DataArgs {
-                constData,
-                onceRewardData,
-                checkInRewardData,
-                priceRewardData,
-                missionGroupData,
-                dailySupplyData,
-                packageCheckInRewardData,
             },
         )
     }
@@ -12398,22 +12313,6 @@ impl<'a> Default for clz_Torappu_NewbieCheckInPackageRewardDataArgs<'a> {
             orderNum: 0,
             itemBundle: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_NewbieCheckInPackageRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_NewbieCheckInPackageRewardData", 2)?;
-        s.serialize_field("orderNum", &self.orderNum())?;
-        if let Some(f) = self.itemBundle() {
-            s.serialize_field("itemBundle", &f)?;
-        } else {
-            s.skip_field("itemBundle")?;
-        }
-        s.end()
     }
 }
 
@@ -12643,25 +12542,6 @@ impl<'a> Default for dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataA
     }
 }
 
-impl Serialize for dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__int__list_clz_Torappu_NewbieCheckInPackageRewardData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataBuilder<
     'a: 'b,
     'b,
@@ -12781,6 +12661,8 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
     pub const VT_TOTALCHECKINDAY: flatbuffers::VOffsetT = 14;
     pub const VT_ICONID: flatbuffers::VOffsetT = 16;
     pub const VT_CHECKINREWARDDICT: flatbuffers::VOffsetT = 18;
+    pub const VT_TRIGSTARTTIME: flatbuffers::VOffsetT = 20;
+    pub const VT_TRIGENDTIME: flatbuffers::VOffsetT = 22;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -12792,6 +12674,8 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
         args: &'args clz_Torappu_NewbieCheckInPackageDataArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_NewbieCheckInPackageData<'bldr>> {
         let mut builder = clz_Torappu_NewbieCheckInPackageDataBuilder::new(_fbb);
+        builder.add_trigEndTime(args.trigEndTime);
+        builder.add_trigStartTime(args.trigStartTime);
         builder.add_endTime(args.endTime);
         builder.add_startTime(args.startTime);
         if let Some(x) = args.checkInRewardDict {
@@ -12822,6 +12706,8 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
         let checkInRewardDict = self
             .checkInRewardDict()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
+        let trigStartTime = self.trigStartTime();
+        let trigEndTime = self.trigEndTime();
         clz_Torappu_NewbieCheckInPackageDataT {
             groupId,
             startTime,
@@ -12831,6 +12717,8 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
             totalCheckInDay,
             iconId,
             checkInRewardDict,
+            trigStartTime,
+            trigEndTime,
         }
     }
 
@@ -12948,6 +12836,34 @@ impl<'a> clz_Torappu_NewbieCheckInPackageData<'a> {
             )
         }
     }
+    #[inline]
+    pub fn trigStartTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_NewbieCheckInPackageData::VT_TRIGSTARTTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
+    #[inline]
+    pub fn trigEndTime(&self) -> i64 {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab
+                .get::<i64>(
+                    clz_Torappu_NewbieCheckInPackageData::VT_TRIGENDTIME,
+                    Some(0),
+                )
+                .unwrap()
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_NewbieCheckInPackageData<'_> {
@@ -12977,6 +12893,8 @@ impl flatbuffers::Verifiable for clz_Torappu_NewbieCheckInPackageData<'_> {
                     >,
                 >,
             >>("checkInRewardDict", Self::VT_CHECKINREWARDDICT, false)?
+            .visit_field::<i64>("trigStartTime", Self::VT_TRIGSTARTTIME, false)?
+            .visit_field::<i64>("trigEndTime", Self::VT_TRIGENDTIME, false)?
             .finish();
         Ok(())
     }
@@ -12999,6 +12917,8 @@ pub struct clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
             >,
         >,
     >,
+    pub trigStartTime: i64,
+    pub trigEndTime: i64,
 }
 impl<'a> Default for clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
     #[inline]
@@ -13012,41 +12932,9 @@ impl<'a> Default for clz_Torappu_NewbieCheckInPackageDataArgs<'a> {
             totalCheckInDay: 0,
             iconId: None,
             checkInRewardDict: None,
+            trigStartTime: 0,
+            trigEndTime: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_NewbieCheckInPackageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_NewbieCheckInPackageData", 8)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.bindGPGoodId() {
-            s.serialize_field("bindGPGoodId", &f)?;
-        } else {
-            s.skip_field("bindGPGoodId")?;
-        }
-        s.serialize_field("checkInDuration", &self.checkInDuration())?;
-        s.serialize_field("totalCheckInDay", &self.totalCheckInDay())?;
-        if let Some(f) = self.iconId() {
-            s.serialize_field("iconId", &f)?;
-        } else {
-            s.skip_field("iconId")?;
-        }
-        if let Some(f) = self.checkInRewardDict() {
-            s.serialize_field("checkInRewardDict", &f)?;
-        } else {
-            s.skip_field("checkInRewardDict")?;
-        }
-        s.end()
     }
 }
 
@@ -13125,6 +13013,22 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
         );
     }
     #[inline]
+    pub fn add_trigStartTime(&mut self, trigStartTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_NewbieCheckInPackageData::VT_TRIGSTARTTIME,
+            trigStartTime,
+            0,
+        );
+    }
+    #[inline]
+    pub fn add_trigEndTime(&mut self, trigEndTime: i64) {
+        self.fbb_.push_slot::<i64>(
+            clz_Torappu_NewbieCheckInPackageData::VT_TRIGENDTIME,
+            trigEndTime,
+            0,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_NewbieCheckInPackageDataBuilder<'a, 'b, A> {
@@ -13152,6 +13056,8 @@ impl core::fmt::Debug for clz_Torappu_NewbieCheckInPackageData<'_> {
         ds.field("totalCheckInDay", &self.totalCheckInDay());
         ds.field("iconId", &self.iconId());
         ds.field("checkInRewardDict", &self.checkInRewardDict());
+        ds.field("trigStartTime", &self.trigStartTime());
+        ds.field("trigEndTime", &self.trigEndTime());
         ds.finish()
     }
 }
@@ -13166,6 +13072,8 @@ pub struct clz_Torappu_NewbieCheckInPackageDataT {
     pub totalCheckInDay: i32,
     pub iconId: Option<String>,
     pub checkInRewardDict: Option<Vec<dict__int__list_clz_Torappu_NewbieCheckInPackageRewardDataT>>,
+    pub trigStartTime: i64,
+    pub trigEndTime: i64,
 }
 impl Default for clz_Torappu_NewbieCheckInPackageDataT {
     fn default() -> Self {
@@ -13178,6 +13086,8 @@ impl Default for clz_Torappu_NewbieCheckInPackageDataT {
             totalCheckInDay: 0,
             iconId: None,
             checkInRewardDict: None,
+            trigStartTime: 0,
+            trigEndTime: 0,
         }
     }
 }
@@ -13197,6 +13107,8 @@ impl clz_Torappu_NewbieCheckInPackageDataT {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
         });
+        let trigStartTime = self.trigStartTime;
+        let trigEndTime = self.trigEndTime;
         clz_Torappu_NewbieCheckInPackageData::create(
             _fbb,
             &clz_Torappu_NewbieCheckInPackageDataArgs {
@@ -13208,6 +13120,8 @@ impl clz_Torappu_NewbieCheckInPackageDataT {
                 totalCheckInDay,
                 iconId,
                 checkInRewardDict,
+                trigStartTime,
+                trigEndTime,
             },
         )
     }
@@ -13490,50 +13404,6 @@ impl<'a> Default for clz_Torappu_LongTermCheckInGroupDataArgs<'a> {
             bottomText: None,
             rewardList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_LongTermCheckInGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInGroupData", 10)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("level", &self.level())?;
-        s.serialize_field("days", &self.days())?;
-        if let Some(f) = self.bkgImgId() {
-            s.serialize_field("bkgImgId", &f)?;
-        } else {
-            s.skip_field("bkgImgId")?;
-        }
-        if let Some(f) = self.titleImgId() {
-            s.serialize_field("titleImgId", &f)?;
-        } else {
-            s.skip_field("titleImgId")?;
-        }
-        if let Some(f) = self.tipText() {
-            s.serialize_field("tipText", &f)?;
-        } else {
-            s.skip_field("tipText")?;
-        }
-        if let Some(f) = self.bottomText() {
-            s.serialize_field("bottomText", &f)?;
-        } else {
-            s.skip_field("bottomText")?;
-        }
-        if let Some(f) = self.rewardList() {
-            s.serialize_field("rewardList", &f)?;
-        } else {
-            s.skip_field("rewardList")?;
-        }
-        s.end()
     }
 }
 
@@ -13838,27 +13708,6 @@ impl<'a> Default for clz_Torappu_LongTermCheckInConstDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_LongTermCheckInConstData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInConstData", 3)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        if let Some(f) = self.detailTitle() {
-            s.serialize_field("detailTitle", &f)?;
-        } else {
-            s.skip_field("detailTitle")?;
-        }
-        if let Some(f) = self.detailDesc() {
-            s.serialize_field("detailDesc", &f)?;
-        } else {
-            s.skip_field("detailDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_LongTermCheckInConstDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14076,26 +13925,6 @@ impl<'a> Default for clz_Torappu_LongTermCheckInDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_LongTermCheckInData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_LongTermCheckInData", 2)?;
-        if let Some(f) = self.groupList() {
-            s.serialize_field("groupList", &f)?;
-        } else {
-            s.skip_field("groupList")?;
-        }
-        if let Some(f) = self.constData() {
-            s.serialize_field("constData", &f)?;
-        } else {
-            s.skip_field("constData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_LongTermCheckInDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -14207,9 +14036,8 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
     pub const VT_DATAMAP: flatbuffers::VOffsetT = 6;
     pub const VT_CONSTANT: flatbuffers::VOffsetT = 8;
     pub const VT_PLAYERRETURN: flatbuffers::VOffsetT = 10;
-    pub const VT_PLAYERRETURNV2: flatbuffers::VOffsetT = 12;
-    pub const VT_NEWBIECHECKINPACKAGELIST: flatbuffers::VOffsetT = 14;
-    pub const VT_LONGTERMCHECKINDATA: flatbuffers::VOffsetT = 16;
+    pub const VT_NEWBIECHECKINPACKAGELIST: flatbuffers::VOffsetT = 12;
+    pub const VT_LONGTERMCHECKINDATA: flatbuffers::VOffsetT = 14;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -14226,9 +14054,6 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
         }
         if let Some(x) = args.newbieCheckInPackageList {
             builder.add_newbieCheckInPackageList(x);
-        }
-        if let Some(x) = args.playerReturnV2 {
-            builder.add_playerReturnV2(x);
         }
         if let Some(x) = args.playerReturn {
             builder.add_playerReturn(x);
@@ -14254,7 +14079,6 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
             .map(|x| x.iter().map(|t| t.unpack()).collect());
         let constant = self.constant().map(|x| Box::new(x.unpack()));
         let playerReturn = self.playerReturn().map(|x| Box::new(x.unpack()));
-        let playerReturnV2 = self.playerReturnV2().map(|x| Box::new(x.unpack()));
         let newbieCheckInPackageList = self
             .newbieCheckInPackageList()
             .map(|x| x.iter().map(|t| t.unpack()).collect());
@@ -14264,7 +14088,6 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
             dataMap,
             constant,
             playerReturn,
-            playerReturnV2,
             newbieCheckInPackageList,
             longTermCheckInData,
         }
@@ -14339,19 +14162,6 @@ impl<'a> clz_Torappu_OpenServerSchedule<'a> {
         }
     }
     #[inline]
-    pub fn playerReturnV2(&self) -> Option<clz_Torappu_ReturnV2Data<'a>> {
-        // Safety:
-        // Created from valid Table for this object
-        // which contains a valid value in this slot
-        unsafe {
-            self._tab
-                .get::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2Data>>(
-                    clz_Torappu_OpenServerSchedule::VT_PLAYERRETURNV2,
-                    None,
-                )
-        }
-    }
-    #[inline]
     pub fn newbieCheckInPackageList(
         &self,
     ) -> Option<
@@ -14420,11 +14230,6 @@ impl flatbuffers::Verifiable for clz_Torappu_OpenServerSchedule<'_> {
                 Self::VT_PLAYERRETURN,
                 false,
             )?
-            .visit_field::<flatbuffers::ForwardsUOffset<clz_Torappu_ReturnV2Data>>(
-                "playerReturnV2",
-                Self::VT_PLAYERRETURNV2,
-                false,
-            )?
             .visit_field::<flatbuffers::ForwardsUOffset<
                 flatbuffers::Vector<
                     '_,
@@ -14463,7 +14268,6 @@ pub struct clz_Torappu_OpenServerScheduleArgs<'a> {
     >,
     pub constant: Option<flatbuffers::WIPOffset<clz_Torappu_OpenServerConst<'a>>>,
     pub playerReturn: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnData<'a>>>,
-    pub playerReturnV2: Option<flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'a>>>,
     pub newbieCheckInPackageList: Option<
         flatbuffers::WIPOffset<
             flatbuffers::Vector<
@@ -14482,55 +14286,9 @@ impl<'a> Default for clz_Torappu_OpenServerScheduleArgs<'a> {
             dataMap: None,
             constant: None,
             playerReturn: None,
-            playerReturnV2: None,
             newbieCheckInPackageList: None,
             longTermCheckInData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_OpenServerSchedule<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_OpenServerSchedule", 7)?;
-        if let Some(f) = self.schedule() {
-            s.serialize_field("schedule", &f)?;
-        } else {
-            s.skip_field("schedule")?;
-        }
-        if let Some(f) = self.dataMap() {
-            s.serialize_field("dataMap", &f)?;
-        } else {
-            s.skip_field("dataMap")?;
-        }
-        if let Some(f) = self.constant() {
-            s.serialize_field("constant", &f)?;
-        } else {
-            s.skip_field("constant")?;
-        }
-        if let Some(f) = self.playerReturn() {
-            s.serialize_field("playerReturn", &f)?;
-        } else {
-            s.skip_field("playerReturn")?;
-        }
-        if let Some(f) = self.playerReturnV2() {
-            s.serialize_field("playerReturnV2", &f)?;
-        } else {
-            s.skip_field("playerReturnV2")?;
-        }
-        if let Some(f) = self.newbieCheckInPackageList() {
-            s.serialize_field("newbieCheckInPackageList", &f)?;
-        } else {
-            s.skip_field("newbieCheckInPackageList")?;
-        }
-        if let Some(f) = self.longTermCheckInData() {
-            s.serialize_field("longTermCheckInData", &f)?;
-        } else {
-            s.skip_field("longTermCheckInData")?;
-        }
-        s.end()
     }
 }
 
@@ -14592,17 +14350,6 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_OpenServerScheduleB
             );
     }
     #[inline]
-    pub fn add_playerReturnV2(
-        &mut self,
-        playerReturnV2: flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data<'b>>,
-    ) {
-        self.fbb_
-            .push_slot_always::<flatbuffers::WIPOffset<clz_Torappu_ReturnV2Data>>(
-                clz_Torappu_OpenServerSchedule::VT_PLAYERRETURNV2,
-                playerReturnV2,
-            );
-    }
-    #[inline]
     pub fn add_newbieCheckInPackageList(
         &mut self,
         newbieCheckInPackageList: flatbuffers::WIPOffset<
@@ -14652,7 +14399,6 @@ impl core::fmt::Debug for clz_Torappu_OpenServerSchedule<'_> {
         ds.field("dataMap", &self.dataMap());
         ds.field("constant", &self.constant());
         ds.field("playerReturn", &self.playerReturn());
-        ds.field("playerReturnV2", &self.playerReturnV2());
         ds.field("newbieCheckInPackageList", &self.newbieCheckInPackageList());
         ds.field("longTermCheckInData", &self.longTermCheckInData());
         ds.finish()
@@ -14665,7 +14411,6 @@ pub struct clz_Torappu_OpenServerScheduleT {
     pub dataMap: Option<Vec<dict__string__clz_Torappu_OpenServerDataT>>,
     pub constant: Option<Box<clz_Torappu_OpenServerConstT>>,
     pub playerReturn: Option<Box<clz_Torappu_ReturnDataT>>,
-    pub playerReturnV2: Option<Box<clz_Torappu_ReturnV2DataT>>,
     pub newbieCheckInPackageList: Option<Vec<clz_Torappu_NewbieCheckInPackageDataT>>,
     pub longTermCheckInData: Option<Box<clz_Torappu_LongTermCheckInDataT>>,
 }
@@ -14676,7 +14421,6 @@ impl Default for clz_Torappu_OpenServerScheduleT {
             dataMap: None,
             constant: None,
             playerReturn: None,
-            playerReturnV2: None,
             newbieCheckInPackageList: None,
             longTermCheckInData: None,
         }
@@ -14697,7 +14441,6 @@ impl clz_Torappu_OpenServerScheduleT {
         });
         let constant = self.constant.as_ref().map(|x| x.pack(_fbb));
         let playerReturn = self.playerReturn.as_ref().map(|x| x.pack(_fbb));
-        let playerReturnV2 = self.playerReturnV2.as_ref().map(|x| x.pack(_fbb));
         let newbieCheckInPackageList = self.newbieCheckInPackageList.as_ref().map(|x| {
             let w: Vec<_> = x.iter().map(|t| t.pack(_fbb)).collect();
             _fbb.create_vector(&w)
@@ -14710,7 +14453,6 @@ impl clz_Torappu_OpenServerScheduleT {
                 dataMap,
                 constant,
                 playerReturn,
-                playerReturnV2,
                 newbieCheckInPackageList,
                 longTermCheckInData,
             },

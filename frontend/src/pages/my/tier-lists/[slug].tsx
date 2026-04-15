@@ -96,9 +96,9 @@ export default function EditMyTierListPage() {
 
     // Fetch tier list when user is authenticated and slug is available
     useEffect(() => {
-        if (user?.status && slug) {
+        if (user?.uid && slug) {
             fetchTierList();
-        } else if (!authLoading && !user?.status) {
+        } else if (!authLoading && !user?.uid) {
             setLoading(false);
         }
     }, [user, authLoading, slug, fetchTierList]);
@@ -178,7 +178,7 @@ export default function EditMyTierListPage() {
         );
     }
 
-    if (!user?.status) {
+    if (!user?.uid) {
         return (
             <>
                 <SEO description="Edit your community tier list." noIndex path={`/my/tier-lists/${slug}`} title="Edit Tier List" />

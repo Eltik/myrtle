@@ -1,19 +1,26 @@
-import { parse } from "cookie";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 
-interface VerifyResponse {
+interface VerifyData {
     valid: boolean;
-    user_id?: string;
+    userId?: string;
     uid?: string;
+    server?: string;
     role?: string;
 }
 
-interface ApiResponse {
-    success: boolean;
-    data?: VerifyResponse;
-    error?: string;
+interface SuccessResponse {
+    success: true;
+    data: VerifyData;
 }
+
+interface ErrorResponse {
+    success: false;
+    error: string;
+}
+
+type ApiResponse = SuccessResponse | ErrorResponse;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
     if (req.method !== "POST") {
@@ -25,20 +32,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     try {
-        const cookies = parse(req.headers.cookie ?? "");
-        const siteToken = cookies.site_token;
+        const token = getToken(req);
 
-        if (!siteToken) {
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 error: "No token found",
             });
         }
 
-        // Call backend to verify token
         const verifyResponse = await backendFetch("/auth/verify", {
-            method: "POST",
-            body: JSON.stringify({ token: siteToken }),
+            bearerToken: token,
         });
 
         if (!verifyResponse.ok) {
@@ -48,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             });
         }
 
-        const data: VerifyResponse = await verifyResponse.json();
+        const data: VerifyData = await verifyResponse.json();
 
         if (!data.valid) {
             return res.status(401).json({

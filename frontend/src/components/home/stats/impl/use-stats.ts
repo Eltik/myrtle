@@ -17,7 +17,7 @@ interface UseStatsResult {
 
 function mapResponseToStats(response: StatsResponse): DisplayStat[] {
     return STAT_CONFIGS.map((config) => {
-        let rawValue: number;
+        let rawValue: number;;
 
         switch (config.key) {
             case "operators":
@@ -30,7 +30,7 @@ function mapResponseToStats(response: StatsResponse): DisplayStat[] {
                 rawValue = response.gacha.totalPulls;
                 break;
             case "tierLists":
-                rawValue = response.tierLists.total + response.tierLists.communityCount;
+                rawValue = response.tierLists.total;
                 break;
             default:
                 rawValue = config.fallbackValue;

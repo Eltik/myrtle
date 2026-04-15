@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -61,18 +60,6 @@ impl core::fmt::Debug for enum__Torappu_SkinVoiceType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_SkinVoiceType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_SkinVoiceType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -225,26 +212,6 @@ impl<'a> Default for clz_Torappu_CharSkinData_TokenSkinInfoArgs<'a> {
             tokenId: None,
             tokenSkinId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharSkinData_TokenSkinInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinData_TokenSkinInfo", 2)?;
-        if let Some(f) = self.tokenId() {
-            s.serialize_field("tokenId", &f)?;
-        } else {
-            s.skip_field("tokenId")?;
-        }
-        if let Some(f) = self.tokenSkinId() {
-            s.serialize_field("tokenSkinId", &f)?;
-        } else {
-            s.skip_field("tokenSkinId")?;
-        }
-        s.end()
     }
 }
 
@@ -429,22 +396,6 @@ impl<'a> Default for clz_Torappu_CharSkinData_BattleSkinArgs<'a> {
             overwritePrefab: false,
             skinOrPrefabId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharSkinData_BattleSkin<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinData_BattleSkin", 2)?;
-        s.serialize_field("overwritePrefab", &self.overwritePrefab())?;
-        if let Some(f) = self.skinOrPrefabId() {
-            s.serialize_field("skinOrPrefabId", &f)?;
-        } else {
-            s.skip_field("skinOrPrefabId")?;
-        }
-        s.end()
     }
 }
 
@@ -1026,91 +977,6 @@ impl<'a> Default for clz_Torappu_CharSkinData_DisplaySkinArgs<'a> {
             onYear: 0,
             onPeriod: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharSkinData_DisplaySkin<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinData_DisplaySkin", 19)?;
-        if let Some(f) = self.skinName() {
-            s.serialize_field("skinName", &f)?;
-        } else {
-            s.skip_field("skinName")?;
-        }
-        if let Some(f) = self.colorList() {
-            s.serialize_field("colorList", &f)?;
-        } else {
-            s.skip_field("colorList")?;
-        }
-        if let Some(f) = self.titleList() {
-            s.serialize_field("titleList", &f)?;
-        } else {
-            s.skip_field("titleList")?;
-        }
-        if let Some(f) = self.modelName() {
-            s.serialize_field("modelName", &f)?;
-        } else {
-            s.skip_field("modelName")?;
-        }
-        if let Some(f) = self.drawerList() {
-            s.serialize_field("drawerList", &f)?;
-        } else {
-            s.skip_field("drawerList")?;
-        }
-        if let Some(f) = self.designerList() {
-            s.serialize_field("designerList", &f)?;
-        } else {
-            s.skip_field("designerList")?;
-        }
-        if let Some(f) = self.skinGroupId() {
-            s.serialize_field("skinGroupId", &f)?;
-        } else {
-            s.skip_field("skinGroupId")?;
-        }
-        if let Some(f) = self.skinGroupName() {
-            s.serialize_field("skinGroupName", &f)?;
-        } else {
-            s.skip_field("skinGroupName")?;
-        }
-        s.serialize_field("skinGroupSortIndex", &self.skinGroupSortIndex())?;
-        if let Some(f) = self.content() {
-            s.serialize_field("content", &f)?;
-        } else {
-            s.skip_field("content")?;
-        }
-        if let Some(f) = self.dialog() {
-            s.serialize_field("dialog", &f)?;
-        } else {
-            s.skip_field("dialog")?;
-        }
-        if let Some(f) = self.usage() {
-            s.serialize_field("usage", &f)?;
-        } else {
-            s.skip_field("usage")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.obtainApproach() {
-            s.serialize_field("obtainApproach", &f)?;
-        } else {
-            s.skip_field("obtainApproach")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.displayTagId() {
-            s.serialize_field("displayTagId", &f)?;
-        } else {
-            s.skip_field("displayTagId")?;
-        }
-        s.serialize_field("getTime", &self.getTime())?;
-        s.serialize_field("onYear", &self.onYear())?;
-        s.serialize_field("onPeriod", &self.onPeriod())?;
-        s.end()
     }
 }
 
@@ -1927,98 +1793,6 @@ impl<'a> Default for clz_Torappu_CharSkinDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharSkinData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinData", 18)?;
-        if let Some(f) = self.skinId() {
-            s.serialize_field("skinId", &f)?;
-        } else {
-            s.skip_field("skinId")?;
-        }
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.tokenSkinMap() {
-            s.serialize_field("tokenSkinMap", &f)?;
-        } else {
-            s.skip_field("tokenSkinMap")?;
-        }
-        if let Some(f) = self.illustId() {
-            s.serialize_field("illustId", &f)?;
-        } else {
-            s.skip_field("illustId")?;
-        }
-        if let Some(f) = self.spIllustId() {
-            s.serialize_field("spIllustId", &f)?;
-        } else {
-            s.skip_field("spIllustId")?;
-        }
-        if let Some(f) = self.dynIllustId() {
-            s.serialize_field("dynIllustId", &f)?;
-        } else {
-            s.skip_field("dynIllustId")?;
-        }
-        if let Some(f) = self.spDynIllustId() {
-            s.serialize_field("spDynIllustId", &f)?;
-        } else {
-            s.skip_field("spDynIllustId")?;
-        }
-        if let Some(f) = self.avatarId() {
-            s.serialize_field("avatarId", &f)?;
-        } else {
-            s.skip_field("avatarId")?;
-        }
-        if let Some(f) = self.portraitId() {
-            s.serialize_field("portraitId", &f)?;
-        } else {
-            s.skip_field("portraitId")?;
-        }
-        if let Some(f) = self.dynPortraitId() {
-            s.serialize_field("dynPortraitId", &f)?;
-        } else {
-            s.skip_field("dynPortraitId")?;
-        }
-        if let Some(f) = self.dynEntranceId() {
-            s.serialize_field("dynEntranceId", &f)?;
-        } else {
-            s.skip_field("dynEntranceId")?;
-        }
-        if let Some(f) = self.buildingId() {
-            s.serialize_field("buildingId", &f)?;
-        } else {
-            s.skip_field("buildingId")?;
-        }
-        if let Some(f) = self.battleSkin() {
-            s.serialize_field("battleSkin", &f)?;
-        } else {
-            s.skip_field("battleSkin")?;
-        }
-        s.serialize_field("isBuySkin", &self.isBuySkin())?;
-        if let Some(f) = self.tmplId() {
-            s.serialize_field("tmplId", &f)?;
-        } else {
-            s.skip_field("tmplId")?;
-        }
-        if let Some(f) = self.voiceId() {
-            s.serialize_field("voiceId", &f)?;
-        } else {
-            s.skip_field("voiceId")?;
-        }
-        s.serialize_field("voiceType", &self.voiceType())?;
-        if let Some(f) = self.displaySkin() {
-            s.serialize_field("displaySkin", &f)?;
-        } else {
-            s.skip_field("displaySkin")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharSkinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2423,22 +2197,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharSkinDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CharSkinData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_CharSkinData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CharSkinDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2621,22 +2379,6 @@ impl<'a> Default for dict__int__stringArgs<'a> {
             key: 0,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__int__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__int__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2823,22 +2565,6 @@ impl<'a> Default for dict__string__list_dict__int__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_dict__int__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_dict__int__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3038,22 +2764,6 @@ impl<'a> Default for dict__string__stringArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__stringBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3242,22 +2952,6 @@ impl<'a> Default for dict__string__list_dict__string__stringArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__list_dict__string__string<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__list_dict__string__string", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3455,22 +3149,6 @@ impl<'a> Default for clz_Torappu_CharSkinGroupInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharSkinGroupInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinGroupInfo", 2)?;
-        if let Some(f) = self.skinGroupId() {
-            s.serialize_field("skinGroupId", &f)?;
-        } else {
-            s.skip_field("skinGroupId")?;
-        }
-        s.serialize_field("publishTime", &self.publishTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharSkinGroupInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3650,26 +3328,6 @@ impl<'a> Default for clz_Torappu_CharSkinKvImgInfoArgs<'a> {
             kvImgId: None,
             linkedSkinGroupId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharSkinKvImgInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinKvImgInfo", 2)?;
-        if let Some(f) = self.kvImgId() {
-            s.serialize_field("kvImgId", &f)?;
-        } else {
-            s.skip_field("kvImgId")?;
-        }
-        if let Some(f) = self.linkedSkinGroupId() {
-            s.serialize_field("linkedSkinGroupId", &f)?;
-        } else {
-            s.skip_field("linkedSkinGroupId")?;
-        }
-        s.end()
     }
 }
 
@@ -4025,48 +3683,6 @@ impl<'a> Default for clz_Torappu_CharSkinBrandInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharSkinBrandInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharSkinBrandInfo", 8)?;
-        if let Some(f) = self.brandId() {
-            s.serialize_field("brandId", &f)?;
-        } else {
-            s.skip_field("brandId")?;
-        }
-        if let Some(f) = self.groupList() {
-            s.serialize_field("groupList", &f)?;
-        } else {
-            s.skip_field("groupList")?;
-        }
-        if let Some(f) = self.kvImgIdList() {
-            s.serialize_field("kvImgIdList", &f)?;
-        } else {
-            s.skip_field("kvImgIdList")?;
-        }
-        if let Some(f) = self.brandName() {
-            s.serialize_field("brandName", &f)?;
-        } else {
-            s.skip_field("brandName")?;
-        }
-        if let Some(f) = self.brandCapitalName() {
-            s.serialize_field("brandCapitalName", &f)?;
-        } else {
-            s.skip_field("brandCapitalName")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("publishTime", &self.publishTime())?;
-        s.serialize_field("sortId", &self.sortId())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharSkinBrandInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4357,23 +3973,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharSkinBrandInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CharSkinBrandInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CharSkinBrandInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CharSkinBrandInfoBuilder<
     'a: 'b,
     'b,
@@ -4578,23 +4177,6 @@ impl<'a> Default for clz_Torappu_SpecialSkinInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SpecialSkinInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpecialSkinInfo", 3)?;
-        if let Some(f) = self.skinId() {
-            s.serialize_field("skinId", &f)?;
-        } else {
-            s.skip_field("skinId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SpecialSkinInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4699,6 +4281,8 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
     pub const VT_SPDYNILLUSTID: flatbuffers::VOffsetT = 6;
     pub const VT_SPDYNILLUSTSKINTAG: flatbuffers::VOffsetT = 8;
     pub const VT_SPILLUSTID: flatbuffers::VOffsetT = 10;
+    pub const VT_SPPORTRAITID: flatbuffers::VOffsetT = 12;
+    pub const VT_SPAVATARID: flatbuffers::VOffsetT = 14;
 
     #[inline]
     pub unsafe fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
@@ -4710,6 +4294,12 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         args: &'args clz_Torappu_SpDynIllustInfoArgs<'args>,
     ) -> flatbuffers::WIPOffset<clz_Torappu_SpDynIllustInfo<'bldr>> {
         let mut builder = clz_Torappu_SpDynIllustInfoBuilder::new(_fbb);
+        if let Some(x) = args.spAvatarId {
+            builder.add_spAvatarId(x);
+        }
+        if let Some(x) = args.spPortraitId {
+            builder.add_spPortraitId(x);
+        }
         if let Some(x) = args.spIllustId {
             builder.add_spIllustId(x);
         }
@@ -4730,11 +4320,15 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
         let spDynIllustId = self.spDynIllustId().map(|x| x.to_string());
         let spDynIllustSkinTag = self.spDynIllustSkinTag().map(|x| x.to_string());
         let spIllustId = self.spIllustId().map(|x| x.to_string());
+        let spPortraitId = self.spPortraitId().map(|x| x.to_string());
+        let spAvatarId = self.spAvatarId().map(|x| x.to_string());
         clz_Torappu_SpDynIllustInfoT {
             skinId,
             spDynIllustId,
             spDynIllustSkinTag,
             spIllustId,
+            spPortraitId,
+            spAvatarId,
         }
     }
 
@@ -4786,6 +4380,30 @@ impl<'a> clz_Torappu_SpDynIllustInfo<'a> {
             )
         }
     }
+    #[inline]
+    pub fn spPortraitId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID,
+                None,
+            )
+        }
+    }
+    #[inline]
+    pub fn spAvatarId(&self) -> Option<&'a str> {
+        // Safety:
+        // Created from valid Table for this object
+        // which contains a valid value in this slot
+        unsafe {
+            self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                clz_Torappu_SpDynIllustInfo::VT_SPAVATARID,
+                None,
+            )
+        }
+    }
 }
 
 impl flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
@@ -4812,6 +4430,16 @@ impl flatbuffers::Verifiable for clz_Torappu_SpDynIllustInfo<'_> {
                 Self::VT_SPILLUSTID,
                 false,
             )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "spPortraitId",
+                Self::VT_SPPORTRAITID,
+                false,
+            )?
+            .visit_field::<flatbuffers::ForwardsUOffset<&str>>(
+                "spAvatarId",
+                Self::VT_SPAVATARID,
+                false,
+            )?
             .finish();
         Ok(())
     }
@@ -4821,6 +4449,8 @@ pub struct clz_Torappu_SpDynIllustInfoArgs<'a> {
     pub spDynIllustId: Option<flatbuffers::WIPOffset<&'a str>>,
     pub spDynIllustSkinTag: Option<flatbuffers::WIPOffset<&'a str>>,
     pub spIllustId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub spPortraitId: Option<flatbuffers::WIPOffset<&'a str>>,
+    pub spAvatarId: Option<flatbuffers::WIPOffset<&'a str>>,
 }
 impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
     #[inline]
@@ -4830,37 +4460,9 @@ impl<'a> Default for clz_Torappu_SpDynIllustInfoArgs<'a> {
             spDynIllustId: None,
             spDynIllustSkinTag: None,
             spIllustId: None,
+            spPortraitId: None,
+            spAvatarId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SpDynIllustInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SpDynIllustInfo", 4)?;
-        if let Some(f) = self.skinId() {
-            s.serialize_field("skinId", &f)?;
-        } else {
-            s.skip_field("skinId")?;
-        }
-        if let Some(f) = self.spDynIllustId() {
-            s.serialize_field("spDynIllustId", &f)?;
-        } else {
-            s.skip_field("spDynIllustId")?;
-        }
-        if let Some(f) = self.spDynIllustSkinTag() {
-            s.serialize_field("spDynIllustSkinTag", &f)?;
-        } else {
-            s.skip_field("spDynIllustSkinTag")?;
-        }
-        if let Some(f) = self.spIllustId() {
-            s.serialize_field("spIllustId", &f)?;
-        } else {
-            s.skip_field("spIllustId")?;
-        }
-        s.end()
     }
 }
 
@@ -4898,6 +4500,20 @@ impl<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> clz_Torappu_SpDynIllustInfoBuil
         );
     }
     #[inline]
+    pub fn add_spPortraitId(&mut self, spPortraitId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPPORTRAITID,
+            spPortraitId,
+        );
+    }
+    #[inline]
+    pub fn add_spAvatarId(&mut self, spAvatarId: flatbuffers::WIPOffset<&'b str>) {
+        self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+            clz_Torappu_SpDynIllustInfo::VT_SPAVATARID,
+            spAvatarId,
+        );
+    }
+    #[inline]
     pub fn new(
         _fbb: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     ) -> clz_Torappu_SpDynIllustInfoBuilder<'a, 'b, A> {
@@ -4921,6 +4537,8 @@ impl core::fmt::Debug for clz_Torappu_SpDynIllustInfo<'_> {
         ds.field("spDynIllustId", &self.spDynIllustId());
         ds.field("spDynIllustSkinTag", &self.spDynIllustSkinTag());
         ds.field("spIllustId", &self.spIllustId());
+        ds.field("spPortraitId", &self.spPortraitId());
+        ds.field("spAvatarId", &self.spAvatarId());
         ds.finish()
     }
 }
@@ -4931,6 +4549,8 @@ pub struct clz_Torappu_SpDynIllustInfoT {
     pub spDynIllustId: Option<String>,
     pub spDynIllustSkinTag: Option<String>,
     pub spIllustId: Option<String>,
+    pub spPortraitId: Option<String>,
+    pub spAvatarId: Option<String>,
 }
 impl Default for clz_Torappu_SpDynIllustInfoT {
     fn default() -> Self {
@@ -4939,6 +4559,8 @@ impl Default for clz_Torappu_SpDynIllustInfoT {
             spDynIllustId: None,
             spDynIllustSkinTag: None,
             spIllustId: None,
+            spPortraitId: None,
+            spAvatarId: None,
         }
     }
 }
@@ -4954,6 +4576,8 @@ impl clz_Torappu_SpDynIllustInfoT {
             .as_ref()
             .map(|x| _fbb.create_string(x));
         let spIllustId = self.spIllustId.as_ref().map(|x| _fbb.create_string(x));
+        let spPortraitId = self.spPortraitId.as_ref().map(|x| _fbb.create_string(x));
+        let spAvatarId = self.spAvatarId.as_ref().map(|x| _fbb.create_string(x));
         clz_Torappu_SpDynIllustInfo::create(
             _fbb,
             &clz_Torappu_SpDynIllustInfoArgs {
@@ -4961,6 +4585,8 @@ impl clz_Torappu_SpDynIllustInfoT {
                 spDynIllustId,
                 spDynIllustSkinTag,
                 spIllustId,
+                spPortraitId,
+                spAvatarId,
             },
         )
     }
@@ -5082,22 +4708,6 @@ impl<'a> Default for dict__string__clz_Torappu_SpDynIllustInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SpDynIllustInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_SpDynIllustInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5529,51 +5139,6 @@ impl<'a> Default for clz_Torappu_SkinTableArgs<'a> {
             spDynSkins: None,
             spDynIllustSkinTagsMap: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_SkinTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SkinTable", 7)?;
-        if let Some(f) = self.charSkins() {
-            s.serialize_field("charSkins", &f)?;
-        } else {
-            s.skip_field("charSkins")?;
-        }
-        if let Some(f) = self.buildinEvolveMap() {
-            s.serialize_field("buildinEvolveMap", &f)?;
-        } else {
-            s.skip_field("buildinEvolveMap")?;
-        }
-        if let Some(f) = self.buildinPatchMap() {
-            s.serialize_field("buildinPatchMap", &f)?;
-        } else {
-            s.skip_field("buildinPatchMap")?;
-        }
-        if let Some(f) = self.brandList() {
-            s.serialize_field("brandList", &f)?;
-        } else {
-            s.skip_field("brandList")?;
-        }
-        if let Some(f) = self.specialSkinInfoList() {
-            s.serialize_field("specialSkinInfoList", &f)?;
-        } else {
-            s.skip_field("specialSkinInfoList")?;
-        }
-        if let Some(f) = self.spDynSkins() {
-            s.serialize_field("spDynSkins", &f)?;
-        } else {
-            s.skip_field("spDynSkins")?;
-        }
-        if let Some(f) = self.spDynIllustSkinTagsMap() {
-            s.serialize_field("spDynIllustSkinTagsMap", &f)?;
-        } else {
-            s.skip_field("spDynIllustSkinTagsMap")?;
-        }
-        s.end()
     }
 }
 

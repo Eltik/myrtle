@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -61,18 +60,6 @@ impl core::fmt::Debug for enum__Torappu_CharWordVoiceType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CharWordVoiceType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CharWordVoiceType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -195,18 +182,6 @@ impl core::fmt::Debug for enum__Torappu_DataUnlockType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_DataUnlockType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_DataUnlockType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -443,18 +418,6 @@ impl core::fmt::Debug for enum__Torappu_CharWordShowType {
         }
     }
 }
-impl Serialize for enum__Torappu_CharWordShowType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CharWordShowType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_CharWordShowType {
     type Inner = Self;
@@ -593,18 +556,6 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangType {
         }
     }
 }
-impl Serialize for enum__Torappu_VoiceLangType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_VoiceLangType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_VoiceLangType {
     type Inner = Self;
@@ -723,18 +674,6 @@ impl core::fmt::Debug for enum__Torappu_VoiceLangGroupType {
         }
     }
 }
-impl Serialize for enum__Torappu_VoiceLangGroupType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_VoiceLangGroupType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_VoiceLangGroupType {
     type Inner = Self;
@@ -832,18 +771,6 @@ impl core::fmt::Debug for enum__Torappu_FestivalVoiceTimeType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_FestivalVoiceTimeType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_FestivalVoiceTimeType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -990,22 +917,6 @@ impl<'a> Default for clz_Torappu_CharWordUnlockParamArgs<'a> {
             valueStr: None,
             valueInt: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharWordUnlockParam<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharWordUnlockParam", 2)?;
-        if let Some(f) = self.valueStr() {
-            s.serialize_field("valueStr", &f)?;
-        } else {
-            s.skip_field("valueStr")?;
-        }
-        s.serialize_field("valueInt", &self.valueInt())?;
-        s.end()
     }
 }
 
@@ -1449,65 +1360,6 @@ impl<'a> Default for clz_Torappu_CharWordDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharWordData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharWordData", 13)?;
-        if let Some(f) = self.charWordId() {
-            s.serialize_field("charWordId", &f)?;
-        } else {
-            s.skip_field("charWordId")?;
-        }
-        if let Some(f) = self.wordKey() {
-            s.serialize_field("wordKey", &f)?;
-        } else {
-            s.skip_field("wordKey")?;
-        }
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.voiceId() {
-            s.serialize_field("voiceId", &f)?;
-        } else {
-            s.skip_field("voiceId")?;
-        }
-        if let Some(f) = self.voiceText() {
-            s.serialize_field("voiceText", &f)?;
-        } else {
-            s.skip_field("voiceText")?;
-        }
-        if let Some(f) = self.voiceTitle() {
-            s.serialize_field("voiceTitle", &f)?;
-        } else {
-            s.skip_field("voiceTitle")?;
-        }
-        s.serialize_field("voiceIndex", &self.voiceIndex())?;
-        s.serialize_field("voiceType", &self.voiceType())?;
-        s.serialize_field("unlockType", &self.unlockType())?;
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        if let Some(f) = self.lockDescription() {
-            s.serialize_field("lockDescription", &f)?;
-        } else {
-            s.skip_field("lockDescription")?;
-        }
-        s.serialize_field("placeType", &self.placeType())?;
-        if let Some(f) = self.voiceAsset() {
-            s.serialize_field("voiceAsset", &f)?;
-        } else {
-            s.skip_field("voiceAsset")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -1846,22 +1698,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharWordDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CharWordData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_CharWordData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CharWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2091,36 +1927,6 @@ impl<'a> Default for clz_Torappu_CharExtraWordDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CharExtraWordData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharExtraWordData", 4)?;
-        if let Some(f) = self.wordKey() {
-            s.serialize_field("wordKey", &f)?;
-        } else {
-            s.skip_field("wordKey")?;
-        }
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.voiceId() {
-            s.serialize_field("voiceId", &f)?;
-        } else {
-            s.skip_field("voiceId")?;
-        }
-        if let Some(f) = self.voiceText() {
-            s.serialize_field("voiceText", &f)?;
-        } else {
-            s.skip_field("voiceText")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CharExtraWordDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2336,23 +2142,6 @@ impl<'a> Default for dict__string__clz_Torappu_CharExtraWordDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_CharExtraWordData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CharExtraWordData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -2600,32 +2389,6 @@ impl<'a> Default for clz_Torappu_VoiceLangInfoDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_VoiceLangInfoData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangInfoData", 4)?;
-        if let Some(f) = self.wordkey() {
-            s.serialize_field("wordkey", &f)?;
-        } else {
-            s.skip_field("wordkey")?;
-        }
-        s.serialize_field("voiceLangType", &self.voiceLangType())?;
-        if let Some(f) = self.cvName() {
-            s.serialize_field("cvName", &f)?;
-        } else {
-            s.skip_field("cvName")?;
-        }
-        if let Some(f) = self.voicePath() {
-            s.serialize_field("voicePath", &f)?;
-        } else {
-            s.skip_field("voicePath")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_VoiceLangInfoDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2858,25 +2621,6 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInf
             key: enum__Torappu_VoiceLangType::NONE,
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangInfoData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3124,31 +2868,6 @@ impl<'a> Default for clz_Torappu_VoiceLangDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_VoiceLangData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangData", 3)?;
-        if let Some(f) = self.wordkeys() {
-            s.serialize_field("wordkeys", &f)?;
-        } else {
-            s.skip_field("wordkeys")?;
-        }
-        if let Some(f) = self.charId() {
-            s.serialize_field("charId", &f)?;
-        } else {
-            s.skip_field("charId")?;
-        }
-        if let Some(f) = self.dict() {
-            s.serialize_field("dict", &f)?;
-        } else {
-            s.skip_field("dict")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_VoiceLangDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3376,22 +3095,6 @@ impl<'a> Default for dict__string__clz_Torappu_VoiceLangDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_VoiceLangData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_VoiceLangData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_VoiceLangDataBuilder<
     'a: 'b,
     'b,
@@ -3576,22 +3279,6 @@ impl<'a> Default for clz_Torappu_VoiceLangTypeDataArgs<'a> {
             name: None,
             groupType: enum__Torappu_VoiceLangGroupType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_VoiceLangTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangTypeData", 2)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        s.serialize_field("groupType", &self.groupType())?;
-        s.end()
     }
 }
 
@@ -3795,25 +3482,6 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTyp
     }
 }
 
-impl Serialize for dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_VoiceLangType__clz_Torappu_VoiceLangTypeDataBuilder<
     'a: 'b,
     'b,
@@ -3995,26 +3663,6 @@ impl<'a> Default for clz_Torappu_VoiceLangGroupDataArgs<'a> {
             name: None,
             members: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_VoiceLangGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_VoiceLangGroupData", 2)?;
-        if let Some(f) = self.name() {
-            s.serialize_field("name", &f)?;
-        } else {
-            s.skip_field("name")?;
-        }
-        if let Some(f) = self.members() {
-            s.serialize_field("members", &f)?;
-        } else {
-            s.skip_field("members")?;
-        }
-        s.end()
     }
 }
 
@@ -4228,25 +3876,6 @@ impl<'a> Default
     }
 }
 
-impl Serialize for dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_VoiceLangGroupType__clz_Torappu_VoiceLangGroupDataBuilder<
     'a: 'b,
     'b,
@@ -4454,18 +4083,6 @@ impl<'a> Default for dict__string__enum__Torappu_VoiceLangTypeArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__enum__Torappu_VoiceLangType<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__enum__Torappu_VoiceLangType", 2)?;
-        s.serialize_field("key", &self.key())?;
-        s.serialize_field("value", &self.value())?;
-        s.end()
-    }
-}
-
 pub struct dict__string__enum__Torappu_VoiceLangTypeBuilder<
     'a: 'b,
     'b,
@@ -4650,22 +4267,6 @@ impl<'a> Default for clz_Torappu_NewVoiceTimeDataArgs<'a> {
             timestamp: 0,
             charSet: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_NewVoiceTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_NewVoiceTimeData", 2)?;
-        s.serialize_field("timestamp", &self.timestamp())?;
-        if let Some(f) = self.charSet() {
-            s.serialize_field("charSet", &f)?;
-        } else {
-            s.skip_field("charSet")?;
-        }
-        s.end()
     }
 }
 
@@ -4883,25 +4484,6 @@ impl<'a> Default for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoic
     }
 }
 
-impl Serialize for dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct(
-            "dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeData",
-            2,
-        )?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__enum__Torappu_VoiceLangType__list_clz_Torappu_NewVoiceTimeDataBuilder<
     'a: 'b,
     'b,
@@ -5093,18 +4675,6 @@ impl<'a> Default for clz_Torappu_FestivalTimeIntervalArgs {
     }
 }
 
-impl Serialize for clz_Torappu_FestivalTimeInterval<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FestivalTimeInterval", 2)?;
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_FestivalTimeIntervalBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5280,22 +4850,6 @@ impl<'a> Default for clz_Torappu_FestivalTimeDataArgs<'a> {
             timeType: enum__Torappu_FestivalVoiceTimeType::NONE,
             interval: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_FestivalTimeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FestivalTimeData", 2)?;
-        s.serialize_field("timeType", &self.timeType())?;
-        if let Some(f) = self.interval() {
-            s.serialize_field("interval", &f)?;
-        } else {
-            s.skip_field("interval")?;
-        }
-        s.end()
     }
 }
 
@@ -5483,22 +5037,6 @@ impl<'a> Default for clz_Torappu_FestivalVoiceDataArgs<'a> {
             showType: enum__Torappu_CharWordShowType::HOME_SHOW,
             timeData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_FestivalVoiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FestivalVoiceData", 2)?;
-        s.serialize_field("showType", &self.showType())?;
-        if let Some(f) = self.timeData() {
-            s.serialize_field("timeData", &f)?;
-        } else {
-            s.skip_field("timeData")?;
-        }
-        s.end()
     }
 }
 
@@ -5699,23 +5237,6 @@ impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_FestivalVoiceData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_FestivalVoiceData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -5920,19 +5441,6 @@ impl<'a> Default for clz_Torappu_FestivalVoiceWeightDataArgs {
             weight: 0.0,
             priority: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_FestivalVoiceWeightData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_FestivalVoiceWeightData", 3)?;
-        s.serialize_field("showType", &self.showType())?;
-        s.serialize_field("weight", &self.weight())?;
-        s.serialize_field("priority", &self.priority())?;
-        s.end()
     }
 }
 
@@ -6147,23 +5655,6 @@ impl<'a> Default for dict__string__clz_Torappu_FestivalVoiceWeightDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_FestivalVoiceWeightData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_FestivalVoiceWeightData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_FestivalVoiceWeightDataBuilder<
     'a: 'b,
     'b,
@@ -6355,26 +5846,6 @@ impl<'a> Default for clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
             voiceId: None,
             validVoiceLang: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ExtraVoiceConfigData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ExtraVoiceConfigData", 2)?;
-        if let Some(f) = self.voiceId() {
-            s.serialize_field("voiceId", &f)?;
-        } else {
-            s.skip_field("voiceId")?;
-        }
-        if let Some(f) = self.validVoiceLang() {
-            s.serialize_field("validVoiceLang", &f)?;
-        } else {
-            s.skip_field("validVoiceLang")?;
-        }
-        s.end()
     }
 }
 
@@ -6579,23 +6050,6 @@ impl<'a> Default for dict__string__clz_Torappu_ExtraVoiceConfigDataArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_ExtraVoiceConfigData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_ExtraVoiceConfigData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -7268,83 +6722,6 @@ impl<'a> Default for clz_Torappu_CharWordTableArgs<'a> {
             fesVoiceWeight: None,
             extraVoiceConfigData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CharWordTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CharWordTable", 15)?;
-        if let Some(f) = self.charWords() {
-            s.serialize_field("charWords", &f)?;
-        } else {
-            s.skip_field("charWords")?;
-        }
-        if let Some(f) = self.charExtraWords() {
-            s.serialize_field("charExtraWords", &f)?;
-        } else {
-            s.skip_field("charExtraWords")?;
-        }
-        if let Some(f) = self.voiceLangDict() {
-            s.serialize_field("voiceLangDict", &f)?;
-        } else {
-            s.skip_field("voiceLangDict")?;
-        }
-        s.serialize_field("defaultLangType", &self.defaultLangType())?;
-        if let Some(f) = self.newTagList() {
-            s.serialize_field("newTagList", &f)?;
-        } else {
-            s.skip_field("newTagList")?;
-        }
-        if let Some(f) = self.voiceLangTypeDict() {
-            s.serialize_field("voiceLangTypeDict", &f)?;
-        } else {
-            s.skip_field("voiceLangTypeDict")?;
-        }
-        if let Some(f) = self.voiceLangGroupTypeDict() {
-            s.serialize_field("voiceLangGroupTypeDict", &f)?;
-        } else {
-            s.skip_field("voiceLangGroupTypeDict")?;
-        }
-        if let Some(f) = self.charDefaultTypeDict() {
-            s.serialize_field("charDefaultTypeDict", &f)?;
-        } else {
-            s.skip_field("charDefaultTypeDict")?;
-        }
-        if let Some(f) = self.startTimeWithTypeDict() {
-            s.serialize_field("startTimeWithTypeDict", &f)?;
-        } else {
-            s.skip_field("startTimeWithTypeDict")?;
-        }
-        if let Some(f) = self.displayGroupTypeList() {
-            s.serialize_field("displayGroupTypeList", &f)?;
-        } else {
-            s.skip_field("displayGroupTypeList")?;
-        }
-        if let Some(f) = self.displayTypeList() {
-            s.serialize_field("displayTypeList", &f)?;
-        } else {
-            s.skip_field("displayTypeList")?;
-        }
-        s.serialize_field("playVoiceRange", &self.playVoiceRange())?;
-        if let Some(f) = self.fesVoiceData() {
-            s.serialize_field("fesVoiceData", &f)?;
-        } else {
-            s.skip_field("fesVoiceData")?;
-        }
-        if let Some(f) = self.fesVoiceWeight() {
-            s.serialize_field("fesVoiceWeight", &f)?;
-        } else {
-            s.skip_field("fesVoiceWeight")?;
-        }
-        if let Some(f) = self.extraVoiceConfigData() {
-            s.serialize_field("extraVoiceConfigData", &f)?;
-        } else {
-            s.skip_field("extraVoiceConfigData")?;
-        }
-        s.end()
     }
 }
 

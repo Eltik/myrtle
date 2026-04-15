@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import { getSessionFromCookie, getSiteToken } from "~/lib/auth";
+import { getToken } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend-fetch";
 
 const UpdateVisibilitySchema = z.object({
@@ -30,10 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         const { publicProfile } = parseResult.data;
 
-        const token = getSiteToken(req);
-        const session = getSessionFromCookie(req);
+        const token = getToken(req);
 
-        if (!token || !session) {
+        if (!token) {
             return res.status(401).json({
                 success: false,
                 message: "Not authenticated",

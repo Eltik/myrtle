@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -77,18 +76,6 @@ impl core::fmt::Debug for enum__Torappu_MedalRarity {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_MedalRarity {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MedalRarity",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -192,18 +179,6 @@ impl core::fmt::Debug for enum__Torappu_MedalExpireType {
         }
     }
 }
-impl Serialize for enum__Torappu_MedalExpireType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MedalExpireType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MedalExpireType {
     type Inner = Self;
@@ -259,13 +234,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -357,6 +332,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -455,9 +432,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -550,6 +529,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -645,6 +626,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -656,18 +639,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -827,19 +798,6 @@ impl<'a> Default for clz_Torappu_MedalExpireTimeArgs {
             end: 0,
             type_: enum__Torappu_MedalExpireType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MedalExpireTime<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalExpireTime", 3)?;
-        s.serialize_field("start", &self.start())?;
-        s.serialize_field("end", &self.end())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -1034,23 +992,6 @@ impl<'a> Default for clz_Torappu_ItemBundleArgs<'a> {
             count: 0,
             type_: enum__Torappu_ItemType::NONE,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_ItemBundle<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_ItemBundle", 3)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.end()
     }
 }
 
@@ -1258,27 +1199,6 @@ impl<'a> Default for clz_Torappu_MedalRewardGroupDataArgs<'a> {
             slotId: 0,
             itemList: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MedalRewardGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalRewardGroupData", 3)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("slotId", &self.slotId())?;
-        if let Some(f) = self.itemList() {
-            s.serialize_field("itemList", &f)?;
-        } else {
-            s.skip_field("itemList")?;
-        }
-        s.end()
     }
 }
 
@@ -1837,80 +1757,6 @@ impl<'a> Default for clz_Torappu_MedalPerDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MedalPerData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalPerData", 16)?;
-        if let Some(f) = self.medalId() {
-            s.serialize_field("medalId", &f)?;
-        } else {
-            s.skip_field("medalId")?;
-        }
-        if let Some(f) = self.medalName() {
-            s.serialize_field("medalName", &f)?;
-        } else {
-            s.skip_field("medalName")?;
-        }
-        if let Some(f) = self.medalType() {
-            s.serialize_field("medalType", &f)?;
-        } else {
-            s.skip_field("medalType")?;
-        }
-        s.serialize_field("slotId", &self.slotId())?;
-        if let Some(f) = self.preMedalIdList() {
-            s.serialize_field("preMedalIdList", &f)?;
-        } else {
-            s.skip_field("preMedalIdList")?;
-        }
-        s.serialize_field("rarity", &self.rarity())?;
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        if let Some(f) = self.getMethod() {
-            s.serialize_field("getMethod", &f)?;
-        } else {
-            s.skip_field("getMethod")?;
-        }
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        if let Some(f) = self.advancedMedal() {
-            s.serialize_field("advancedMedal", &f)?;
-        } else {
-            s.skip_field("advancedMedal")?;
-        }
-        if let Some(f) = self.originMedal() {
-            s.serialize_field("originMedal", &f)?;
-        } else {
-            s.skip_field("originMedal")?;
-        }
-        s.serialize_field("displayTime", &self.displayTime())?;
-        if let Some(f) = self.expireTimes() {
-            s.serialize_field("expireTimes", &f)?;
-        } else {
-            s.skip_field("expireTimes")?;
-        }
-        if let Some(f) = self.medalRewardGroup() {
-            s.serialize_field("medalRewardGroup", &f)?;
-        } else {
-            s.skip_field("medalRewardGroup")?;
-        }
-        s.serialize_field("isHidden", &self.isHidden())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MedalPerDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2436,48 +2282,6 @@ impl<'a> Default for clz_Torappu_MedalGroupDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MedalGroupData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalGroupData", 8)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.groupName() {
-            s.serialize_field("groupName", &f)?;
-        } else {
-            s.skip_field("groupName")?;
-        }
-        if let Some(f) = self.groupDesc() {
-            s.serialize_field("groupDesc", &f)?;
-        } else {
-            s.skip_field("groupDesc")?;
-        }
-        if let Some(f) = self.medalId() {
-            s.serialize_field("medalId", &f)?;
-        } else {
-            s.skip_field("medalId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.groupBackColor() {
-            s.serialize_field("groupBackColor", &f)?;
-        } else {
-            s.skip_field("groupBackColor")?;
-        }
-        s.serialize_field("groupGetTime", &self.groupGetTime())?;
-        if let Some(f) = self.sharedExpireTimes() {
-            s.serialize_field("sharedExpireTimes", &f)?;
-        } else {
-            s.skip_field("sharedExpireTimes")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MedalGroupDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2796,32 +2600,6 @@ impl<'a> Default for clz_Torappu_MedalTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MedalTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalTypeData", 4)?;
-        if let Some(f) = self.medalGroupId() {
-            s.serialize_field("medalGroupId", &f)?;
-        } else {
-            s.skip_field("medalGroupId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.medalName() {
-            s.serialize_field("medalName", &f)?;
-        } else {
-            s.skip_field("medalName")?;
-        }
-        if let Some(f) = self.groupData() {
-            s.serialize_field("groupData", &f)?;
-        } else {
-            s.skip_field("groupData")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MedalTypeDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3046,22 +2824,6 @@ impl<'a> Default for dict__string__clz_Torappu_MedalTypeDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MedalTypeData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MedalTypeData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MedalTypeDataBuilder<
     'a: 'b,
     'b,
@@ -3278,26 +3040,6 @@ impl<'a> Default for clz_Torappu_MedalDataArgs<'a> {
             medalList: None,
             medalTypeData: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MedalData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MedalData", 2)?;
-        if let Some(f) = self.medalList() {
-            s.serialize_field("medalList", &f)?;
-        } else {
-            s.skip_field("medalList")?;
-        }
-        if let Some(f) = self.medalTypeData() {
-            s.serialize_field("medalTypeData", &f)?;
-        } else {
-            s.skip_field("medalTypeData")?;
-        }
-        s.end()
     }
 }
 

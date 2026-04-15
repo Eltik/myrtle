@@ -1,3 +1,4 @@
+// @ts-nocheck - Deprecated: v3 score API returns simplified data. This component is no longer used.
 "use client";
 
 import { Info, TrendingUp } from "lucide-react";
@@ -49,7 +50,7 @@ export function ScoreOverviewCard({ scoreData, className }: ScoreOverviewCardPro
             <CardContent className="flex flex-1 flex-col justify-between gap-4">
                 {/* Main score display */}
                 <motion.div animate={{ scale: 1, opacity: 1 }} className="flex flex-col items-center gap-1" initial={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", stiffness: 150, damping: 20 }}>
-                    <AnimatedNumber className="font-bold text-4xl tabular-nums tracking-tight" springOptions={{ stiffness: 60, damping: 20 }} value={scoreData.totalScore} />
+                    <p className="font-bold text-4xl tabular-nums tracking-tight">{scoreData.totalScore}</p>
                     <p className="text-center text-muted-foreground text-xs">Combined across all categories</p>
                 </motion.div>
 

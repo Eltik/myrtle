@@ -12,14 +12,14 @@ import { ScrollArea } from "~/components/ui/shadcn/scroll-area";
 import { Separator } from "~/components/ui/shadcn/separator";
 import { useCDNPrefetch } from "~/hooks/use-cdn-prefetch";
 import { formatProfession, getOperatorImageURL, getProfessionIconName, getRarityStarCount } from "~/lib/utils";
-import type { CharacterData, CharacterStatic } from "~/types/api/impl/user";
+import type { CharacterStatic, EnrichedRosterEntry } from "~/types/api/impl/user";
 import { CharacterDialog } from "./impl/character-dialog";
-import { getAttributeStats } from "./impl/helpers";
+import { getAttributeStats, getTrustPercent } from "./impl/helpers";
 import { ModuleItem } from "./impl/module-item";
 import { SkillItem } from "./impl/skill-item";
 
 interface CharacterCardProps {
-    data: CharacterData;
+    data: EnrichedRosterEntry;
 }
 
 export function CharacterCard({ data }: CharacterCardProps) {
@@ -33,9 +33,35 @@ export function CharacterCard({ data }: CharacterCardProps) {
     const hasPreloadedRef = useRef(false);
     const { prefetch } = useCDNPrefetch();
 
-    const trustPercentage = operator?.trust ? (operator.trust / 200) * 100 : 0;
-    const maxLevel = operator?.phases?.[data.evolvePhase]?.MaxLevel ?? 1;
+    // Trust % derived from the user's raw favor_point (v3 stores raw game XP).
+    const trustPercent = getTrustPercent(data.favor_point ?? 0);
+    const trustPercentage = (trustPercent / 200) * 100;
+    const maxLevel = operator?.phases?.[data.elite]?.MaxLevel ?? 1;
     const stats = getAttributeStats(data, operator);
+
+    // Build skill display data by merging roster masteries with static skill data
+    const skillDisplayData = (operator?.skills ?? []).map((staticSkill, index) => {
+        const mastery = data.masteries.find((m) => m.skill_id === staticSkill.skillId);
+        return {
+            skillId: staticSkill.skillId,
+            specializeLevel: mastery?.specialize_level ?? 0,
+            skillStatic: staticSkill.static ?? null,
+            index,
+        };
+    });
+
+    // Build module display data by merging static modules with roster modules
+    const moduleDisplayData = (operator?.modules ?? [])
+        .filter((mod) => mod.typeName1 !== "ORIGINAL")
+        .map((mod) => {
+            const rosterMod = data.modules.find((m) => m.equip_id === mod.uniEquipId);
+            return {
+                module: mod,
+                level: rosterMod?.level ?? 0,
+                isEquipped: data.current_equip === mod.uniEquipId,
+            };
+        })
+        .filter((m) => m.level > 0);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -67,13 +93,12 @@ export function CharacterCard({ data }: CharacterCardProps) {
         if (hasPreloadedRef.current) return;
         hasPreloadedRef.current = true;
 
-        const operatorImage = getOperatorImageURL(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+        const operatorImage = getOperatorImageURL(data.operator_id, data.skin_id ?? "", data.elite, data.current_tmpl);
 
-        const imagesToPreload: string[] = [operatorImage, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`];
+        const imagesToPreload: string[] = [operatorImage, `/api/cdn/upk/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`, `/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`, `/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`];
 
-        for (const skill of data.skills) {
-            const skillStatic = skill.static as { iconId?: string; skillId?: string; image?: string } | null;
-            const skillIcon = skillStatic?.image ? `/api/cdn${skillStatic.image}` : `/api/cdn/upk/spritepack/skill_icons_0/skill_icon_${skillStatic?.iconId ?? skillStatic?.skillId ?? skill.skillId}.png`;
+        for (const skill of skillDisplayData) {
+            const skillIcon = skill.skillStatic?.image ? `/api/cdn${skill.skillStatic.image}` : `/api/cdn/skill-icons/${skill.skillStatic?.iconId ?? skill.skillStatic?.skillId ?? skill.skillId}.png`;
             imagesToPreload.push(skillIcon);
 
             if (skill.specializeLevel > 0) {
@@ -81,21 +106,13 @@ export function CharacterCard({ data }: CharacterCardProps) {
             }
         }
 
-        if (operator?.modules) {
-            for (const module of operator.modules) {
-                const equipData = data.equip[module.uniEquipId];
-                const moduleLevel = equipData?.level ?? 0;
-                const isLocked = equipData?.locked === 1;
-
-                if (module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked) {
-                    const moduleImage = module.image ? `/api/cdn${module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${module.uniEquipIcon}.png`;
-                    imagesToPreload.push(moduleImage);
-                }
-            }
+        for (const mod of moduleDisplayData) {
+            const moduleImage = mod.module.image ? `/api/cdn${mod.module.image}` : `/api/cdn/upk/spritepack/ui_equip_big_img_hub_0/${mod.module.uniEquipIcon}.png`;
+            imagesToPreload.push(moduleImage);
         }
 
         prefetch(imagesToPreload, "high");
-    }, [data, operator, starCount, prefetch]);
+    }, [data, skillDisplayData, moduleDisplayData, starCount, prefetch]);
 
     const handleMouseEnter = useCallback(() => {
         setIsHovered(true);
@@ -111,19 +128,19 @@ export function CharacterCard({ data }: CharacterCardProps) {
     }, []);
 
     const isMaxed = (() => {
-        const isMaxPotential = data.potentialRank === 5;
+        const isMaxPotential = data.potential === 5;
 
         const maxElitePhase = (operator?.phases?.length ?? 1) - 1;
-        const isAtMaxElite = data.evolvePhase === maxElitePhase;
+        const isAtMaxElite = data.elite === maxElitePhase;
         const maxLevelForPhase = operator?.phases?.[maxElitePhase]?.MaxLevel ?? 1;
         const isMaxLevel = isAtMaxElite && data.level === maxLevelForPhase;
 
         const isThreeStar = starCount <= 3;
-        const isMaxSkills = isThreeStar ? data.mainSkillLvl === 7 : data.skills.length > 0 && data.skills.every((skill) => skill.specializeLevel === 3);
+        const isMaxSkills = isThreeStar ? data.skill_level === 7 : data.masteries.length > 0 && data.masteries.every((m) => m.specialize_level === 3);
 
         return isMaxPotential && isMaxLevel && isMaxSkills;
     })();
-    const operatorImage = getOperatorImageURL(data.charId, data.skin, data.evolvePhase, data.currentTmpl, data.tmpl as Record<string, { skinId: string }> | null);
+    const operatorImage = getOperatorImageURL(data.operator_id, data.skin_id ?? "", data.elite, data.current_tmpl);
     const rarityColor = RARITY_COLORS[starCount] ?? "#ffffff";
 
     return (
@@ -153,7 +170,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                             <span className="text-sm text-white">{operatorProfession}</span>
                                         </div>
                                     </div>
-                                    <Image alt="Elite" className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.evolvePhase}.png`} unoptimized width={24} />
+                                    <Image alt="Elite" className="h-6 w-6 object-contain" height={24} src={`/api/cdn/upk/arts/elite_hub/elite_${data.elite}.png`} unoptimized width={24} />
                                 </div>
                             </div>
                         </div>
@@ -181,7 +198,7 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <div>
                             <div className="flex items-center justify-between">
                                 <span className="font-medium text-sm">Trust</span>
-                                <span className="font-bold text-sm">{(operator?.trust ?? 0).toFixed(0)}%</span>
+                                <span className="font-bold text-sm">{trustPercent}%</span>
                             </div>
                             <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
                         </div>
@@ -230,8 +247,8 @@ export function CharacterCard({ data }: CharacterCardProps) {
                                 <div className="flex items-center justify-between py-1">
                                     <span className="text-sm">Current Potential</span>
                                     <div className="flex items-center gap-1">
-                                        <Image alt={`Potential ${data.potentialRank + 1}`} className="h-6 w-6" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potentialRank}.png`} unoptimized width={24} />
-                                        <span className="text-muted-foreground text-sm">+{data.potentialRank}</span>
+                                        <Image alt={`Potential ${data.potential + 1}`} className="h-6 w-6" height={24} src={`/api/cdn/upk/arts/potential_hub/potential_${data.potential}.png`} unoptimized width={24} />
+                                        <span className="text-muted-foreground text-sm">+{data.potential}</span>
                                     </div>
                                 </div>
                             </AccordionContent>
@@ -242,10 +259,10 @@ export function CharacterCard({ data }: CharacterCardProps) {
                             <AccordionTrigger className="py-2 font-medium text-sm">Skills</AccordionTrigger>
                             <AccordionContent>
                                 <ScrollArea className="max-h-45 w-full">
-                                    {data.skills && data.skills.length > 0 ? (
+                                    {skillDisplayData.length > 0 ? (
                                         <div className="w-full space-y-2 overflow-hidden">
-                                            {data.skills.map((skill, index) => (
-                                                <SkillItem index={index} isDefaultSkill={data.defaultSkillIndex === index} key={skill.skillId} mainSkillLvl={data.mainSkillLvl} size="small" skill={skill} />
+                                            {skillDisplayData.map((skill) => (
+                                                <SkillItem index={skill.index} isDefaultSkill={data.default_skill === skill.index} key={skill.skillId} mainSkillLvl={data.skill_level} skillId={skill.skillId} skillStatic={skill.skillStatic} specializeLevel={skill.specializeLevel} size="small" />
                                             ))}
                                         </div>
                                     ) : (
@@ -259,31 +276,14 @@ export function CharacterCard({ data }: CharacterCardProps) {
                         <AccordionItem className="border-b-0" value="modules">
                             <AccordionTrigger className="py-2 font-medium text-sm">Modules</AccordionTrigger>
                             <AccordionContent>
-                                {operator?.modules && operator.modules.length > 0 ? (
+                                {moduleDisplayData.length > 0 ? (
                                     <div className="space-y-2">
-                                        {operator.modules
-                                            .map((module) => {
-                                                const equipData = data.equip[module.uniEquipId];
-                                                const moduleLevel = equipData?.level ?? 0;
-                                                const isEquipped = data.currentEquip === module.uniEquipId;
-                                                const isLocked = equipData?.locked === 1;
-
-                                                if (module.typeName1 === "ORIGINAL" || moduleLevel === 0 || isLocked) {
-                                                    return null;
-                                                }
-
-                                                return <ModuleItem isEquipped={isEquipped} key={module.uniEquipId} module={module} moduleLevel={moduleLevel} size="small" />;
-                                            })
-                                            .filter(Boolean)}
-                                        {!operator.modules.some((module) => {
-                                            const equipData = data.equip[module.uniEquipId];
-                                            const moduleLevel = equipData?.level ?? 0;
-                                            const isLocked = equipData?.locked === 1;
-                                            return module.typeName1 !== "ORIGINAL" && moduleLevel > 0 && !isLocked;
-                                        }) && <p className="text-muted-foreground text-sm">No modules unlocked.</p>}
+                                        {moduleDisplayData.map((mod) => (
+                                            <ModuleItem isEquipped={mod.isEquipped} key={mod.module.uniEquipId} module={mod.module} moduleLevel={mod.level} size="small" />
+                                        ))}
                                     </div>
                                 ) : (
-                                    <p className="text-muted-foreground text-sm">No modules available.</p>
+                                    <p className="text-muted-foreground text-sm">No modules unlocked.</p>
                                 )}
                             </AccordionContent>
                         </AccordionItem>

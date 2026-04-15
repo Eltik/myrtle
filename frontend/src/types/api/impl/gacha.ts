@@ -1,7 +1,49 @@
 // Gacha types
 
 // ============================================
-// Gacha Record Types (Pull History)
+// v3 Gacha Record Types (raw DB row — still used by community + settings pages)
+// ============================================
+
+/** v3 gacha record from database */
+export interface GachaRecord {
+    id: number;
+    user_id: string;
+    char_id: string;
+    pool_id: string;
+    rarity: number;
+    pull_timestamp: number;
+    pool_name: string | null;
+    gacha_type: string | null;
+    created_at: string;
+}
+
+/** v3 user gacha statistics */
+export interface GachaStats {
+    user_id: string;
+    total_pulls: number | null;
+    six_star_count: number | null;
+    five_star_count: number | null;
+    four_star_count: number | null;
+    first_pull: number | null;
+    last_pull: number | null;
+}
+
+/** v3 global gacha statistics (camelCase from service layer). Used by community page. */
+export interface GachaGlobalStats {
+    totalPulls: number;
+    totalUsers: number;
+    sixStarRate: number;
+    fiveStarRate: number;
+}
+
+/** v3 gacha fetch result (camelCase from service layer). */
+export interface GachaFetchResult {
+    totalFetched: number;
+    newRecords: number;
+}
+
+// ============================================
+// Grouped GachaRecords (limited/regular/special) — used by history page
 // ============================================
 
 export type GachaType = "limited" | "regular" | "special";
@@ -30,27 +72,8 @@ export interface GachaRecords {
     special: GachaTypeRecords;
 }
 
-export interface GachaSettings {
-    user_id: string;
-    store_records: boolean;
-    share_anonymous_stats: boolean;
-    total_pulls: number;
-    six_star_count: number;
-    five_star_count: number;
-    last_sync_at: string | null;
-}
-
-export interface GachaGlobalStats {
-    total_pulls: number;
-    six_star_count: number;
-    five_star_count: number;
-    six_star_rate: number;
-    five_star_rate: number;
-    contributor_count: number;
-}
-
 // ============================================
-// Gacha History Types (User Pull History)
+// History / Settings
 // ============================================
 
 /** Individual pull entry from stored history */
@@ -74,13 +97,11 @@ export interface GachaPaginationInfo {
     hasMore: boolean;
 }
 
-/** Date range filter */
 export interface DateRange {
     from: number | null;
     to: number | null;
 }
 
-/** Filters applied to history query */
 export interface HistoryFilters {
     rarity: number | null;
     gachaType: string | null;
@@ -88,14 +109,12 @@ export interface HistoryFilters {
     dateRange: DateRange | null;
 }
 
-/** Response for user pull history endpoint */
 export interface GachaHistoryResponse {
     records: GachaRecordEntry[];
     pagination: GachaPaginationInfo;
     filtersApplied: HistoryFilters;
 }
 
-/** Query parameters for history endpoint */
 export interface GachaHistoryParams {
     limit?: number;
     offset?: number;
@@ -105,6 +124,16 @@ export interface GachaHistoryParams {
     from?: number;
     to?: number;
     order?: "asc" | "desc";
+}
+
+export interface GachaSettings {
+    user_id: string;
+    store_records: boolean;
+    share_anonymous_stats: boolean;
+    total_pulls: number;
+    six_star_count: number;
+    five_star_count: number;
+    last_sync_at: string | null;
 }
 
 // ============================================

@@ -1,11 +1,18 @@
-// Authentication API response types
+// Authentication API types for v3 backend
 
 export interface SendCodeResponse {
-    success: boolean;
-    error?: string;
+    status: string;
 }
 
 export interface LoginResponse {
-    success: boolean;
-    error?: string;
+    token: string;
+    uid: string;
+    server: string;
+}
+
+export interface VerifyResponse {
+    valid: boolean;
+    userId: string;
+    uid: string;
+    server: string;
 }

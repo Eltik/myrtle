@@ -6,7 +6,6 @@ use core::cmp::Ordering;
 use core::mem;
 
 extern crate serde;
-use self::serde::ser::{Serialize, SerializeStruct, Serializer};
 
 extern crate flatbuffers;
 use self::flatbuffers::{EndianScalar, Follow};
@@ -101,18 +100,6 @@ impl core::fmt::Debug for enum__Torappu_MissionType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_MissionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -213,18 +200,6 @@ impl core::fmt::Debug for enum__Torappu_MissionItemBgType {
         }
     }
 }
-impl Serialize for enum__Torappu_MissionItemBgType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_MissionItemBgType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
-    }
-}
 
 impl<'a> flatbuffers::Follow<'a> for enum__Torappu_MissionItemBgType {
     type Inner = Self;
@@ -280,13 +255,13 @@ pub const ENUM_MIN_ENUM__TORAPPU_ITEM_TYPE: i32 = 0;
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
-pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 90;
+pub const ENUM_MAX_ENUM__TORAPPU_ITEM_TYPE: i32 = 92;
 #[deprecated(
     since = "2.0.0",
     note = "Use associated constants instead. This will no longer be generated in 2021."
 )]
 #[allow(non_camel_case_types)]
-pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
+pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 93] = [
     enum__Torappu_ItemType::NONE,
     enum__Torappu_ItemType::CHAR,
     enum__Torappu_ItemType::CARD_EXP,
@@ -378,6 +353,8 @@ pub const ENUM_VALUES_ENUM__TORAPPU_ITEM_TYPE: [enum__Torappu_ItemType; 91] = [
     enum__Torappu_ItemType::RANDOM_VOUCHER_SKIN,
     enum__Torappu_ItemType::ACT1VHALFIDLE_ITEM,
     enum__Torappu_ItemType::PLOT_ITEM,
+    enum__Torappu_ItemType::MAGAZINE_LEAF,
+    enum__Torappu_ItemType::STICKER,
 ];
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -476,9 +453,11 @@ impl enum__Torappu_ItemType {
     pub const RANDOM_VOUCHER_SKIN: Self = Self(88);
     pub const ACT1VHALFIDLE_ITEM: Self = Self(89);
     pub const PLOT_ITEM: Self = Self(90);
+    pub const MAGAZINE_LEAF: Self = Self(91);
+    pub const STICKER: Self = Self(92);
 
     pub const ENUM_MIN: i32 = 0;
-    pub const ENUM_MAX: i32 = 90;
+    pub const ENUM_MAX: i32 = 92;
     pub const ENUM_VALUES: &'static [Self] = &[
         Self::NONE,
         Self::CHAR,
@@ -571,6 +550,8 @@ impl enum__Torappu_ItemType {
         Self::RANDOM_VOUCHER_SKIN,
         Self::ACT1VHALFIDLE_ITEM,
         Self::PLOT_ITEM,
+        Self::MAGAZINE_LEAF,
+        Self::STICKER,
     ];
     /// Returns the variant's name or "" if unknown.
     pub fn variant_name(self) -> Option<&'static str> {
@@ -666,6 +647,8 @@ impl enum__Torappu_ItemType {
             Self::RANDOM_VOUCHER_SKIN => Some("RANDOM_VOUCHER_SKIN"),
             Self::ACT1VHALFIDLE_ITEM => Some("ACT1VHALFIDLE_ITEM"),
             Self::PLOT_ITEM => Some("PLOT_ITEM"),
+            Self::MAGAZINE_LEAF => Some("MAGAZINE_LEAF"),
+            Self::STICKER => Some("STICKER"),
             _ => None,
         }
     }
@@ -677,18 +660,6 @@ impl core::fmt::Debug for enum__Torappu_ItemType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_ItemType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_ItemType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -785,18 +756,6 @@ impl core::fmt::Debug for enum__Torappu_CrossAppShareMissionType {
         } else {
             f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
         }
-    }
-}
-impl Serialize for enum__Torappu_CrossAppShareMissionType {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_unit_variant(
-            "enum__Torappu_CrossAppShareMissionType",
-            self.0 as u32,
-            self.variant_name().unwrap(),
-        )
     }
 }
 
@@ -959,23 +918,6 @@ impl<'a> Default for clz_Torappu_MissionDisplayRewardsArgs<'a> {
             id: None,
             count: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MissionDisplayRewards<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionDisplayRewards", 3)?;
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("count", &self.count())?;
-        s.end()
     }
 }
 
@@ -1581,87 +1523,6 @@ impl<'a> Default for clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionData", 19)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.description() {
-            s.serialize_field("description", &f)?;
-        } else {
-            s.skip_field("description")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("itemBgType", &self.itemBgType())?;
-        if let Some(f) = self.preMissionIds() {
-            s.serialize_field("preMissionIds", &f)?;
-        } else {
-            s.skip_field("preMissionIds")?;
-        }
-        if let Some(f) = self.template() {
-            s.serialize_field("template", &f)?;
-        } else {
-            s.skip_field("template")?;
-        }
-        if let Some(f) = self.templateType() {
-            s.serialize_field("templateType", &f)?;
-        } else {
-            s.skip_field("templateType")?;
-        }
-        if let Some(f) = self.param() {
-            s.serialize_field("param", &f)?;
-        } else {
-            s.skip_field("param")?;
-        }
-        if let Some(f) = self.unlockCondition() {
-            s.serialize_field("unlockCondition", &f)?;
-        } else {
-            s.skip_field("unlockCondition")?;
-        }
-        if let Some(f) = self.unlockParam() {
-            s.serialize_field("unlockParam", &f)?;
-        } else {
-            s.skip_field("unlockParam")?;
-        }
-        if let Some(f) = self.missionGroup() {
-            s.serialize_field("missionGroup", &f)?;
-        } else {
-            s.skip_field("missionGroup")?;
-        }
-        if let Some(f) = self.toPage() {
-            s.serialize_field("toPage", &f)?;
-        } else {
-            s.skip_field("toPage")?;
-        }
-        s.serialize_field("periodicalPoint", &self.periodicalPoint())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.backImagePath() {
-            s.serialize_field("backImagePath", &f)?;
-        } else {
-            s.skip_field("backImagePath")?;
-        }
-        if let Some(f) = self.foldId() {
-            s.serialize_field("foldId", &f)?;
-        } else {
-            s.skip_field("foldId")?;
-        }
-        s.serialize_field("haveSubMissionToUnlock", &self.haveSubMissionToUnlock())?;
-        s.serialize_field("countEndTs", &self.countEndTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2093,22 +1954,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionDataArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MissionData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionData", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MissionDataBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -2468,49 +2313,6 @@ impl<'a> Default for clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionGroup", 9)?;
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        if let Some(f) = self.title() {
-            s.serialize_field("title", &f)?;
-        } else {
-            s.skip_field("title")?;
-        }
-        s.serialize_field("type_", &self.type_())?;
-        if let Some(f) = self.preMissionGroup() {
-            s.serialize_field("preMissionGroup", &f)?;
-        } else {
-            s.skip_field("preMissionGroup")?;
-        }
-        if let Some(f) = self.period() {
-            s.serialize_field("period", &f)?;
-        } else {
-            s.skip_field("period")?;
-        }
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        if let Some(f) = self.missionIds() {
-            s.serialize_field("missionIds", &f)?;
-        } else {
-            s.skip_field("missionIds")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -2803,22 +2605,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionGroupArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("dict__string__clz_Torappu_MissionGroup", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a>
 {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
@@ -3106,34 +2892,6 @@ impl<'a> Default for clz_Torappu_MissionDailyRewardConfArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionDailyRewardConf<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionDailyRewardConf", 6)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("periodicalPointCost", &self.periodicalPointCost())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("sortIndex", &self.sortIndex())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionDailyRewardConfBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -3392,23 +3150,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionDailyRewardConfArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_MissionDailyRewardConf<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_MissionDailyRewardConf", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -3746,36 +3487,6 @@ impl<'a> Default for clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_MissionWeeklyRewardConf<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionWeeklyRewardConf", 8)?;
-        s.serialize_field("beginTime", &self.beginTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.id() {
-            s.serialize_field("id", &f)?;
-        } else {
-            s.skip_field("id")?;
-        }
-        s.serialize_field("periodicalPointCost", &self.periodicalPointCost())?;
-        s.serialize_field("type_", &self.type_())?;
-        s.serialize_field("sortIndex", &self.sortIndex())?;
-        if let Some(f) = self.rewards() {
-            s.serialize_field("rewards", &f)?;
-        } else {
-            s.skip_field("rewards")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_MissionWeeklyRewardConfBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4060,23 +3771,6 @@ impl<'a> Default for dict__string__clz_Torappu_MissionWeeklyRewardConfArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_MissionWeeklyRewardConf<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_MissionWeeklyRewardConf", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_MissionWeeklyRewardConfBuilder<
     'a: 'b,
     'b,
@@ -4314,28 +4008,6 @@ impl<'a> Default for clz_Torappu_SOCharMissionGroupArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_SOCharMissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_SOCharMissionGroup", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        if let Some(f) = self.missionIds() {
-            s.serialize_field("missionIds", &f)?;
-        } else {
-            s.skip_field("missionIds")?;
-        }
-        s.serialize_field("startTs", &self.startTs())?;
-        s.serialize_field("endTs", &self.endTs())?;
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_SOCharMissionGroupBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -4555,23 +4227,6 @@ impl<'a> Default for dict__string__clz_Torappu_SOCharMissionGroupArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_SOCharMissionGroup<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_SOCharMissionGroup", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -4797,32 +4452,6 @@ impl<'a> Default for clz_Torappu_DailyMissionGroupInfo_periodInfoArgs<'a> {
             rewardGroupId: None,
             period: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_DailyMissionGroupInfo_periodInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("clz_Torappu_DailyMissionGroupInfo_periodInfo", 3)?;
-        if let Some(f) = self.missionGroupId() {
-            s.serialize_field("missionGroupId", &f)?;
-        } else {
-            s.skip_field("missionGroupId")?;
-        }
-        if let Some(f) = self.rewardGroupId() {
-            s.serialize_field("rewardGroupId", &f)?;
-        } else {
-            s.skip_field("rewardGroupId")?;
-        }
-        if let Some(f) = self.period() {
-            s.serialize_field("period", &f)?;
-        } else {
-            s.skip_field("period")?;
-        }
-        s.end()
     }
 }
 
@@ -5086,28 +4715,6 @@ impl<'a> Default for clz_Torappu_DailyMissionGroupInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_DailyMissionGroupInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_DailyMissionGroupInfo", 4)?;
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        if let Some(f) = self.tagState() {
-            s.serialize_field("tagState", &f)?;
-        } else {
-            s.skip_field("tagState")?;
-        }
-        if let Some(f) = self.periodList() {
-            s.serialize_field("periodList", &f)?;
-        } else {
-            s.skip_field("periodList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_DailyMissionGroupInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -5341,23 +4948,6 @@ impl<'a> Default for dict__string__clz_Torappu_DailyMissionGroupInfoArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_DailyMissionGroupInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_DailyMissionGroupInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_DailyMissionGroupInfoBuilder<
     'a: 'b,
     'b,
@@ -5546,22 +5136,6 @@ impl<'a> Default for clz_Torappu_MainlineMissionEndImageDataArgs<'a> {
             imageId: None,
             priority: 0,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MainlineMissionEndImageData<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MainlineMissionEndImageData", 2)?;
-        if let Some(f) = self.imageId() {
-            s.serialize_field("imageId", &f)?;
-        } else {
-            s.skip_field("imageId")?;
-        }
-        s.serialize_field("priority", &self.priority())?;
-        s.end()
     }
 }
 
@@ -5930,45 +5504,6 @@ impl<'a> Default for clz_Torappu_CrossAppShareMissionArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_CrossAppShareMission<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrossAppShareMission", 9)?;
-        if let Some(f) = self.shareMissionId() {
-            s.serialize_field("shareMissionId", &f)?;
-        } else {
-            s.skip_field("shareMissionId")?;
-        }
-        s.serialize_field("missionType", &self.missionType())?;
-        if let Some(f) = self.relateActivityId() {
-            s.serialize_field("relateActivityId", &f)?;
-        } else {
-            s.skip_field("relateActivityId")?;
-        }
-        s.serialize_field("startTime", &self.startTime())?;
-        s.serialize_field("endTime", &self.endTime())?;
-        s.serialize_field("limitCount", &self.limitCount())?;
-        if let Some(f) = self.condTemplate() {
-            s.serialize_field("condTemplate", &f)?;
-        } else {
-            s.skip_field("condTemplate")?;
-        }
-        if let Some(f) = self.condParam() {
-            s.serialize_field("condParam", &f)?;
-        } else {
-            s.skip_field("condParam")?;
-        }
-        if let Some(f) = self.rewardsList() {
-            s.serialize_field("rewardsList", &f)?;
-        } else {
-            s.skip_field("rewardsList")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_CrossAppShareMissionBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6273,23 +5808,6 @@ impl<'a> Default for dict__string__clz_Torappu_CrossAppShareMissionArgs<'a> {
     }
 }
 
-impl Serialize for dict__string__clz_Torappu_CrossAppShareMission<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_CrossAppShareMission", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
-    }
-}
-
 pub struct dict__string__clz_Torappu_CrossAppShareMissionBuilder<
     'a: 'b,
     'b,
@@ -6464,21 +5982,6 @@ impl<'a> Default for clz_Torappu_CrossAppShareMissionConstArgs<'a> {
         clz_Torappu_CrossAppShareMissionConstArgs {
             nameCardShareMissionId: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_CrossAppShareMissionConst<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_CrossAppShareMissionConst", 1)?;
-        if let Some(f) = self.nameCardShareMissionId() {
-            s.serialize_field("nameCardShareMissionId", &f)?;
-        } else {
-            s.skip_field("nameCardShareMissionId")?;
-        }
-        s.end()
     }
 }
 
@@ -6703,32 +6206,6 @@ impl<'a> Default for clz_Torappu_GuideMissionGroupInfoArgs<'a> {
     }
 }
 
-impl Serialize for clz_Torappu_GuideMissionGroupInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_GuideMissionGroupInfo", 4)?;
-        if let Some(f) = self.groupId() {
-            s.serialize_field("groupId", &f)?;
-        } else {
-            s.skip_field("groupId")?;
-        }
-        s.serialize_field("sortId", &self.sortId())?;
-        if let Some(f) = self.shortName() {
-            s.serialize_field("shortName", &f)?;
-        } else {
-            s.skip_field("shortName")?;
-        }
-        if let Some(f) = self.unlockDesc() {
-            s.serialize_field("unlockDesc", &f)?;
-        } else {
-            s.skip_field("unlockDesc")?;
-        }
-        s.end()
-    }
-}
-
 pub struct clz_Torappu_GuideMissionGroupInfoBuilder<'a: 'b, 'b, A: flatbuffers::Allocator + 'a> {
     fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a, A>,
     start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
@@ -6947,23 +6424,6 @@ impl<'a> Default for dict__string__clz_Torappu_GuideMissionGroupInfoArgs<'a> {
             key: None, // required field
             value: None,
         }
-    }
-}
-
-impl Serialize for dict__string__clz_Torappu_GuideMissionGroupInfo<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s =
-            serializer.serialize_struct("dict__string__clz_Torappu_GuideMissionGroupInfo", 2)?;
-        s.serialize_field("key", &self.key())?;
-        if let Some(f) = self.value() {
-            s.serialize_field("value", &f)?;
-        } else {
-            s.skip_field("value")?;
-        }
-        s.end()
     }
 }
 
@@ -7612,71 +7072,6 @@ impl<'a> Default for clz_Torappu_MissionTableArgs<'a> {
             crossAppShareMissionConst: None,
             guideMissionGroupInfo: None,
         }
-    }
-}
-
-impl Serialize for clz_Torappu_MissionTable<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut s = serializer.serialize_struct("clz_Torappu_MissionTable", 11)?;
-        if let Some(f) = self.missions() {
-            s.serialize_field("missions", &f)?;
-        } else {
-            s.skip_field("missions")?;
-        }
-        if let Some(f) = self.missionGroups() {
-            s.serialize_field("missionGroups", &f)?;
-        } else {
-            s.skip_field("missionGroups")?;
-        }
-        if let Some(f) = self.periodicalRewards() {
-            s.serialize_field("periodicalRewards", &f)?;
-        } else {
-            s.skip_field("periodicalRewards")?;
-        }
-        if let Some(f) = self.weeklyRewards() {
-            s.serialize_field("weeklyRewards", &f)?;
-        } else {
-            s.skip_field("weeklyRewards")?;
-        }
-        if let Some(f) = self.soCharMissionGroupInfo() {
-            s.serialize_field("soCharMissionGroupInfo", &f)?;
-        } else {
-            s.skip_field("soCharMissionGroupInfo")?;
-        }
-        if let Some(f) = self.dailyMissionGroupInfo() {
-            s.serialize_field("dailyMissionGroupInfo", &f)?;
-        } else {
-            s.skip_field("dailyMissionGroupInfo")?;
-        }
-        if let Some(f) = self.dailyMissionPeriodInfo() {
-            s.serialize_field("dailyMissionPeriodInfo", &f)?;
-        } else {
-            s.skip_field("dailyMissionPeriodInfo")?;
-        }
-        if let Some(f) = self.mainlineMissionEndImageDataList() {
-            s.serialize_field("mainlineMissionEndImageDataList", &f)?;
-        } else {
-            s.skip_field("mainlineMissionEndImageDataList")?;
-        }
-        if let Some(f) = self.crossAppShareMissions() {
-            s.serialize_field("crossAppShareMissions", &f)?;
-        } else {
-            s.skip_field("crossAppShareMissions")?;
-        }
-        if let Some(f) = self.crossAppShareMissionConst() {
-            s.serialize_field("crossAppShareMissionConst", &f)?;
-        } else {
-            s.skip_field("crossAppShareMissionConst")?;
-        }
-        if let Some(f) = self.guideMissionGroupInfo() {
-            s.serialize_field("guideMissionGroupInfo", &f)?;
-        } else {
-            s.skip_field("guideMissionGroupInfo")?;
-        }
-        s.end()
     }
 }
 

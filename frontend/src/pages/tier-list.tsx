@@ -2,7 +2,7 @@ import type { GetServerSidePropsContext, NextPage } from "next";
 import { SEO } from "~/components/seo";
 import { TierListView } from "~/components/tier-list";
 import { TierListIndex } from "~/components/tier-list/impl/tier-list-index";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
 import type { Operator, OperatorFromList } from "~/types/api";
 import type { TierListResponse, TierListVersionSummary } from "~/types/api/impl/tier-list";
 
@@ -58,17 +58,11 @@ const TierListPage: NextPage<TierListPageProps> = (props) => {
 };
 
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
-    const backendURL = env.BACKEND_URL;
     const tierListSlug = context.query.slug as string | undefined;
 
     try {
         if (!tierListSlug) {
-            const tierListsResponse = await fetch(`${backendURL}/tier-lists`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const tierListsResponse = await backendFetch("/tier-lists");
 
             if (!tierListsResponse.ok) {
                 console.error("Failed to fetch tier lists");
@@ -80,52 +74,34 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 };
             }
 
-            const tierListsData = (await tierListsResponse.json()) as {
-                tier_lists: Array<{
-                    id: string;
-                    name: string;
-                    slug: string;
-                    description: string | null;
-                    is_active: boolean;
-                    tier_list_type: "official" | "community";
-                    created_at: string;
-                    updated_at: string;
-                }>;
-            };
+            // v3: GET /tier-lists returns TierList[] directly (plain array)
+            const tierListsData = (await tierListsResponse.json()) as Array<{
+                id: string;
+                name: string;
+                slug: string;
+                description: string | null;
+                list_type: string;
+                is_active: boolean;
+                created_at: string;
+                updated_at: string;
+            }>;
 
-            const operatorsBase = `${backendURL}/static/operators`;
-            const operatorParams = new URLSearchParams({
-                limit: "1000",
-                fields: ["id", "name", "portrait", "rarity"].join(","),
-            });
+            // v3: /static/operators returns Record<string, Operator>
+            const operatorsResponse = await backendFetch("/static/operators");
 
-            const operatorsResponse = await fetch(`${operatorsBase}?${operatorParams.toString()}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const operatorsJson = (await operatorsResponse.json()) as {
-                operators: Operator[];
-            };
+            const operatorsJson = (await operatorsResponse.json()) as Record<string, Operator>;
 
             const operatorsMap: Record<string, OperatorFromList> = {};
-            for (const op of operatorsJson.operators) {
+            for (const op of Object.values(operatorsJson)) {
                 if (op.id) {
                     operatorsMap[op.id] = op as OperatorFromList;
                 }
             }
 
             const tierListsWithDetails: TierListPreview[] = await Promise.all(
-                tierListsData.tier_lists.map(async (tierList) => {
+                tierListsData.map(async (tierList) => {
                     try {
-                        const detailResponse = await fetch(`${backendURL}/tier-lists/${tierList.slug}`, {
-                            method: "GET",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
-                        });
+                        const detailResponse = await backendFetch(`/tier-lists/${tierList.slug}`);
 
                         if (!detailResponse.ok) {
                             return {
@@ -134,7 +110,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                                 slug: tierList.slug,
                                 description: tierList.description ?? null,
                                 is_active: tierList.is_active,
-                                tier_list_type: tierList.tier_list_type || "official",
+                                tier_list_type: (tierList.list_type || "official") as "official" | "community",
                                 created_at: tierList.created_at,
                                 updated_at: tierList.updated_at,
                                 operatorCount: 0,
@@ -150,7 +126,8 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                         const topOperatorIds: string[] = [];
 
                         for (const tier of tiers) {
-                            const tierOperators = tier.operators || [];
+                            // v3 backend emits `placements`; v2 emitted `operators`.
+                            const tierOperators = tier.placements || tier.operators || [];
                             operatorCount += tierOperators.length;
 
                             if (topOperatorIds.length < 6) {
@@ -170,7 +147,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
-                            tier_list_type: tierList.tier_list_type || "official",
+                            tier_list_type: (tierList.list_type || "official") as "official" | "community",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount,
@@ -184,7 +161,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                             slug: tierList.slug,
                             description: tierList.description ?? null,
                             is_active: tierList.is_active,
-                            tier_list_type: tierList.tier_list_type || "official",
+                            tier_list_type: (tierList.list_type || "official") as "official" | "community",
                             created_at: tierList.created_at,
                             updated_at: tierList.updated_at,
                             operatorCount: 0,
@@ -203,12 +180,7 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
             };
         }
 
-        const tierListResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const tierListResponse = await backendFetch(`/tier-lists/${tierListSlug}`);
 
         if (!tierListResponse.ok) {
             return {
@@ -226,28 +198,39 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
                 slug: rawData.slug,
                 description: rawData.description ?? null,
                 is_active: rawData.is_active ?? false,
-                tier_list_type: rawData.tier_list_type || "official",
+                tier_list_type: (rawData.list_type || "official") as "official" | "community",
                 created_by: rawData.created_by ?? null,
                 created_at: rawData.created_at ?? null,
                 updated_at: rawData.updated_at ?? null,
             },
-            tiers: (rawData.tiers || []).map((tier: { id: string; name: string; display_order: number; color: string | null; description: string | null; operators?: Array<{ id: string; operator_id: string; sub_order: number; notes: string | null }> }) => ({
-                id: tier.id,
-                tier_list_id: rawData.id,
-                name: tier.name,
-                display_order: tier.display_order,
-                color: tier.color ?? null,
-                description: tier.description ?? null,
-                placements: (tier.operators || []).map((op) => ({
-                    id: op.id,
-                    tier_id: tier.id,
-                    operator_id: op.operator_id,
-                    sub_order: op.sub_order,
-                    notes: op.notes ?? null,
-                    created_at: rawData.created_at ?? null,
-                    updated_at: rawData.updated_at ?? null,
-                })),
-            })),
+            tiers: (rawData.tiers || []).map(
+                (tier: {
+                    id: string;
+                    name: string;
+                    display_order: number;
+                    color: string | null;
+                    description: string | null;
+                    // v3 backend emits `placements`; v2 emitted `operators`. Accept either.
+                    placements?: Array<{ id?: string; operator_id: string; sub_order: number; notes: string | null }>;
+                    operators?: Array<{ id?: string; operator_id: string; sub_order: number; notes: string | null }>;
+                }) => ({
+                    id: tier.id,
+                    tier_list_id: rawData.id,
+                    name: tier.name,
+                    display_order: tier.display_order,
+                    color: tier.color ?? null,
+                    description: tier.description ?? null,
+                    placements: (tier.placements || tier.operators || []).map((op) => ({
+                        id: op.id ?? `${tier.id}:${op.operator_id}`,
+                        tier_id: tier.id,
+                        operator_id: op.operator_id,
+                        sub_order: op.sub_order,
+                        notes: op.notes ?? null,
+                        created_at: rawData.created_at ?? null,
+                        updated_at: rawData.updated_at ?? null,
+                    })),
+                }),
+            ),
         };
 
         const operatorIds = new Set<string>();
@@ -260,44 +243,28 @@ export const getServerSideProps = async (context: GetServerSidePropsContext) => 
         const operatorsData: Record<string, OperatorFromList> = {};
 
         if (operatorIds.size > 0) {
-            const operatorsBase = `${backendURL}/static/operators`;
-            const params = new URLSearchParams({
-                limit: "1000",
-                fields: ["id", "name", "nationId", "groupId", "teamId", "position", "isSpChar", "rarity", "profession", "subProfessionId", "profile", "artists", "portrait"].join(","),
-            });
+            // v3: /static/operators returns Record<string, Operator>
+            const operatorsResponse = await backendFetch("/static/operators");
 
-            const operatorsResponse = await fetch(`${operatorsBase}?${params.toString()}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const operatorsJson = (await operatorsResponse.json()) as Record<string, Operator>;
 
-            const operatorsJson = (await operatorsResponse.json()) as {
-                has_more: boolean;
-                next_cursor: string;
-                operators: Operator[];
-            };
-
-            for (const operator of operatorsJson.operators) {
-                if (operator.id && operatorIds.has(operator.id)) {
-                    operatorsData[operator.id] = operator as OperatorFromList;
+            for (const [opId, operator] of Object.entries(operatorsJson)) {
+                if (operatorIds.has(opId)) {
+                    operatorsData[opId] = operator as OperatorFromList;
                 }
             }
         }
 
         let versions: TierListVersionSummary[] = [];
         try {
-            const versionsResponse = await fetch(`${backendURL}/tier-lists/${tierListSlug}/versions?limit=20`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
+            const versionsResponse = await backendFetch(`/tier-lists/${tierListSlug}/versions?limit=20`);
 
             if (versionsResponse.ok) {
-                const versionsData = (await versionsResponse.json()) as { versions: TierListVersionSummary[] };
-                versions = versionsData.versions.map((v) => ({
+                // Backend `/tier-lists/{slug}/versions` returns a bare array.
+                // Tolerate a `{ versions: [...] }` envelope too in case the shape changes.
+                const versionsData = (await versionsResponse.json()) as TierListVersionSummary[] | { versions: TierListVersionSummary[] };
+                const rawVersions = Array.isArray(versionsData) ? versionsData : (versionsData.versions ?? []);
+                versions = rawVersions.map((v) => ({
                     ...v,
                     change_summary: v.change_summary ?? null,
                     published_by: v.published_by ?? null,

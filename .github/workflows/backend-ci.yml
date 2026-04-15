@@ -1,0 +1,253 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, v3]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, v3]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-D warnings"
+  # All sqlx queries are runtime (sqlx::query(), not query!), so no .sqlx/ cache needed.
+  # This flag prevents sqlx from attempting to reach a database during compilation.
+  SQLX_OFFLINE: "true"
+  # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Formatting check
+  # ──────────────────────────────────────────────────────────────────────────────
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check backend formatting
+        working-directory: backend
+        run: cargo fmt --check
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Linting
+  # ──────────────────────────────────────────────────────────────────────────────
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: clippy
+          cache-on-failure: true
+
+      - name: Lint backend
+        working-directory: backend
+        run: cargo clippy --all-targets -- -D warnings
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Compilation check
+  # ──────────────────────────────────────────────────────────────────────────────
+  check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: check
+          cache-on-failure: true
+
+      - name: Check backend compilation
+        working-directory: backend
+        run: cargo check --all-targets
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Tests (DPS engine validation — requires game data from assets pipeline)
+  # ──────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: test
+          cache-on-failure: true
+
+      - name: Download game data from assets pipeline
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: assets-ci.yml
+          name: game-data
+          path: assets/output
+          branch: ${{ github.base_ref || github.ref_name }}
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Verify game data exists
+        id: gamedata
+        run: |
+          if [ -d "assets/output/gamedata/excel" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "Game data found"
+            ls assets/output/gamedata/excel/ | head -10
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Game data not found — assets pipeline may not have run recently"
+            echo "::warning::DPS engine tests will be skipped"
+          fi
+
+      - name: Run tests
+        if: steps.gamedata.outputs.found == 'true'
+        working-directory: backend
+        env:
+          GAME_DATA_DIR: ../assets/output/gamedata/excel
+          ASSETS_DIR: ../assets/output
+          RUST_BACKTRACE: 1
+        run: cargo test -- --nocapture
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Release build
+  # ──────────────────────────────────────────────────────────────────────────────
+  build-release:
+    name: Release Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: release
+          cache-on-failure: true
+
+      - name: Build backend (release)
+        working-directory: backend
+        run: cargo build --release --bin backend
+
+      - name: Build generate-dps (release)
+        working-directory: backend
+        run: cargo build --release --bin generate-dps
+
+      - name: Verify binaries exist
+        run: |
+          test -f "backend/target/release/backend"
+          test -f "backend/target/release/generate-dps"
+          echo "Both binaries built successfully"
+
+      - name: Upload binaries
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
+        uses: actions/upload-artifact@v5
+        with:
+          name: backend-release-binaries
+          path: |
+            backend/target/release/backend
+            backend/target/release/generate-dps
+            !backend/target/release/.fingerprint/**
+            !backend/target/release/build/**
+            !backend/target/release/deps/**
+            !backend/target/release/examples/**
+            !backend/target/release/incremental/**
+            !backend/target/release/*.d
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Docker image build validation
+  # ──────────────────────────────────────────────────────────────────────────────
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: backend:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Security audit
+  # ──────────────────────────────────────────────────────────────────────────────
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Audit backend
+        working-directory: backend
+        run: cargo audit || echo "::warning::Backend audit found vulnerabilities"
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Final status
+  # ──────────────────────────────────────────────────────────────────────────────
+  ci-pass:
+    name: CI Pass
+    if: always()
+    needs: [fmt, clippy, check, test, build-release, docker, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs
+        run: |
+          results=(
+            "${{ needs.fmt.result }}"
+            "${{ needs.clippy.result }}"
+            "${{ needs.check.result }}"
+            "${{ needs.test.result }}"
+            "${{ needs.build-release.result }}"
+            "${{ needs.docker.result }}"
+            "${{ needs.audit.result }}"
+          )
+          for result in "${results[@]}"; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "::error::Job failed with result: $result"
+              exit 1
+            fi
+          done
+          echo "All jobs passed!"

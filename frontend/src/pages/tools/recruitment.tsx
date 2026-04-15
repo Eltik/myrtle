@@ -1,8 +1,10 @@
 import type { GetServerSideProps, NextPage } from "next";
 import { SEO } from "~/components/seo";
 import { RecruitmentCalculator } from "~/components/tools/recruitment-calculator";
-import { env } from "~/env";
+import { backendFetch } from "~/lib/backend-fetch";
+import type { GachaData } from "~/types/api/impl/gacha";
 import type { GachaTag, RecruitableOperatorWithTags } from "~/types/frontend/impl/tools/recruitment";
+import type { Operator } from "~/types/api";
 
 interface Props {
     tags: GachaTag[];
@@ -25,8 +27,6 @@ const RecruitmentPage: NextPage<Props> = ({ tags, recruitableOperators, initialS
 };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
-    const backendURL = env.BACKEND_URL;
-
     // Parse ?tags query parameter (comma-separated tag names)
     const tagsQuery = context.query.tags;
     const initialSelectedTagNames: string[] =
@@ -38,59 +38,124 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
             : [];
 
     try {
-        // Fetch both tags and recruitable operators in parallel
-        const [recruitmentResponse, recruitableResponse] = await Promise.all([
-            fetch(`${backendURL}/static/gacha/recruitment`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            }),
-            fetch(`${backendURL}/static/gacha/recruitable`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            }),
+        // v3: Fetch gacha data and operators in parallel
+        // /static/gacha returns the full GachaData structure (no sub-routes)
+        // /static/operators returns Record<string, Operator>
+        const [gachaResponse, operatorsResponse] = await Promise.all([
+            backendFetch("/static/gacha"),
+            backendFetch("/static/operators"),
         ]);
 
-        if (!recruitmentResponse.ok) {
-            console.error("Failed to fetch recruitment data:", recruitmentResponse.status);
+        if (!gachaResponse.ok) {
+            console.error("Failed to fetch gacha data:", gachaResponse.status);
             return { notFound: true };
         }
 
-        if (!recruitableResponse.ok) {
-            console.error("Failed to fetch recruitable operators:", recruitableResponse.status);
+        if (!operatorsResponse.ok) {
+            console.error("Failed to fetch operators:", operatorsResponse.status);
             return { notFound: true };
         }
 
-        const recruitmentData = (await recruitmentResponse.json()) as {
-            recruitment: {
-                tags: GachaTag[];
-                tagMap: Record<number, GachaTag>;
-                tagNameMap: Record<string, GachaTag>;
-                recruitDetail: string;
-                recruitPool: unknown;
+        const gachaData = (await gachaResponse.json()) as GachaData;
+        const operatorsData = (await operatorsResponse.json()) as Record<string, Operator>;
+
+        // Extract recruitment tags from gacha data
+        const tags = gachaData.gachaTags;
+        if (!tags || !Array.isArray(tags)) {
+            console.error("Invalid gacha data structure: missing gachaTags");
+            return { notFound: true };
+        }
+
+        // Build recruitable operators from recruitDetail and operators data
+        // Parse the recruitDetail HTML to extract recruitable operator names
+        const recruitDetail = gachaData.recruitDetail ?? "";
+        const recruitableOperators: RecruitableOperatorWithTags[] = [];
+
+        // Build a tag name map for looking up tags
+        const tagNameMap: Record<string, GachaTag> = {};
+        for (const tag of tags) {
+            tagNameMap[tag.tagName] = tag;
+        }
+
+        // Extract recruitable operator names from recruitDetail
+        // Format: rarity sections separated by "----", operators separated by " / "
+        // Some operators are wrapped in <@rc.eml>Name</>, most are plain text
+        const operatorsList = Object.values(operatorsData);
+
+        const recruitableNames = new Set<string>();
+        if (recruitDetail) {
+            // Split by lines and parse each section
+            const lines = recruitDetail.split("\n");
+            for (const line of lines) {
+                // Skip headers, rules, and separators
+                if (line.startsWith("<@rc.title>") || line.startsWith("<@rc.subtitle>") || line.startsWith("<@rc.em>") || line.startsWith("-----") || line.trim() === "" || /^★+$/.test(line.trim())) {
+                    continue;
+                }
+
+                // Split by " / " separator and clean each name
+                const names = line.split("/").map((n) => {
+                    // Strip all markup tags like <@rc.eml>, </>
+                    return n.replace(/<[^>]*>/g, "").replace(/★+/g, "").trim();
+                }).filter((n) => n.length > 0);
+
+                for (const name of names) {
+                    recruitableNames.add(name);
+                }
+            }
+        }
+
+        // Map recruitable names to operator data with tags
+        for (const operator of operatorsList) {
+            if (!operator.id || !recruitableNames.has(operator.name)) continue;
+
+            // Build tag list for this operator based on their properties
+            const operatorTags: string[] = [];
+
+            // Add position tag
+            if (operator.position === "MELEE") operatorTags.push("Melee");
+            if (operator.position === "RANGED") operatorTags.push("Ranged");
+
+            // Add profession-based tags
+            const professionTagMap: Record<string, string> = {
+                PIONEER: "Vanguard",
+                WARRIOR: "Guard",
+                TANK: "Defender",
+                SNIPER: "Sniper",
+                CASTER: "Caster",
+                SUPPORT: "Supporter",
+                MEDIC: "Medic",
+                SPECIAL: "Specialist",
             };
-        };
+            const profTag = professionTagMap[operator.profession];
+            if (profTag) operatorTags.push(profTag);
 
-        const recruitableData = (await recruitableResponse.json()) as {
-            operators: RecruitableOperatorWithTags[];
-            total: number;
-        };
+            // Add rarity-based qualification tags
+            const rarity = typeof operator.rarity === "number" ? operator.rarity : Number.parseInt(String(operator.rarity).replace("TIER_", ""), 10);
+            if (rarity === 6) operatorTags.push("Top Operator");
+            if (rarity === 5) operatorTags.push("Senior Operator");
+            if (rarity === 1) operatorTags.push("Robot");
 
-        // Validate recruitment data
-        if (!recruitmentData.recruitment?.tags || !Array.isArray(recruitmentData.recruitment.tags)) {
-            console.error("Invalid recruitment data structure");
-            return { notFound: true };
-        }
+            // Add tagList from operator data if available
+            if ((operator as { tagList?: string[] }).tagList) {
+                operatorTags.push(...(operator as { tagList: string[] }).tagList);
+            }
 
-        // Validate recruitable operators data
-        if (!recruitableData.operators || !Array.isArray(recruitableData.operators)) {
-            console.error("Invalid recruitable operators data structure");
-            return { notFound: true };
+            const rarityStr = `TIER_${rarity}`;
+
+            recruitableOperators.push({
+                id: operator.id ?? "",
+                name: operator.name,
+                rarity: rarityStr,
+                profession: operator.profession,
+                position: operator.position,
+                tagList: operatorTags,
+            });
         }
 
         return {
             props: {
-                tags: recruitmentData.recruitment.tags,
-                recruitableOperators: recruitableData.operators,
+                tags,
+                recruitableOperators,
                 initialSelectedTagNames,
             },
         };

@@ -1,48 +1,20 @@
-import type { SearchQuery, SearchResponse } from "~/types/api";
+import type { SearchQuery, SearchResponse, UserProfile } from "~/types/api";
 
 /**
- * All search parameter keys that can be passed to the backend
- */
-const SEARCH_PARAM_KEYS = [
-    // Text search params
-    "nickname",
-    "uid",
-    "resume",
-    // Exact match filters
-    "server",
-    "grade",
-    "secretary",
-    // Range query params
-    "level",
-    "totalScore",
-    "compositeScore",
-    "operatorScore",
-    "stageScore",
-    "roguelikeScore",
-    "sandboxScore",
-    "medalScore",
-    "baseScore",
-    // Query options
-    "logic",
-    "sortBy",
-    "order",
-    "limit",
-    "offset",
-    "fields",
-] as const;
-
-/**
- * Builds URLSearchParams from a SearchQuery object
- * Works for both client-side and server-side usage
+ * Builds URLSearchParams from a SearchQuery object.
+ * v3 uses `q`, `limit`, `offset` only.
  */
 export function buildSearchParams(params: SearchQuery): URLSearchParams {
     const searchParams = new URLSearchParams();
 
-    for (const key of SEARCH_PARAM_KEYS) {
-        const value = params[key as keyof SearchQuery];
-        if (value !== undefined && value !== null && value !== "") {
-            searchParams.set(key, String(value));
-        }
+    if (params.q) {
+        searchParams.set("q", params.q);
+    }
+    if (params.limit !== undefined) {
+        searchParams.set("limit", String(params.limit));
+    }
+    if (params.offset !== undefined) {
+        searchParams.set("offset", String(params.offset));
     }
 
     return searchParams;
@@ -55,19 +27,14 @@ export function buildSearchParams(params: SearchQuery): URLSearchParams {
 export function buildSearchParamsFromQuery(query: Record<string, string | string[] | undefined>): URLSearchParams {
     const searchParams = new URLSearchParams();
 
-    for (const key of SEARCH_PARAM_KEYS) {
-        const value = query[key];
-        if (value && typeof value === "string") {
-            searchParams.set(key, value);
-        }
+    if (query.q && typeof query.q === "string") {
+        searchParams.set("q", query.q);
     }
-
-    const levelMin = query.levelMin;
-    const levelMax = query.levelMax;
-    if ((levelMin && typeof levelMin === "string") || (levelMax && typeof levelMax === "string")) {
-        const min = levelMin && typeof levelMin === "string" ? levelMin : "";
-        const max = levelMax && typeof levelMax === "string" ? levelMax : "";
-        searchParams.set("level", `${min},${max}`);
+    if (query.limit && typeof query.limit === "string") {
+        searchParams.set("limit", query.limit);
+    }
+    if (query.offset && typeof query.offset === "string") {
+        searchParams.set("offset", query.offset);
     }
 
     return searchParams;
@@ -165,9 +132,8 @@ export function clearSearchAbortController(): void {
 }
 
 /**
- * Fetches search results from the API with caching and request cancellation
- * @param params - Search query parameters
- * @param options - Fetch options including abort signal
+ * Fetches search results from the API with caching and request cancellation.
+ * The v3 API route returns UserProfile[] which we wrap with pagination info.
  */
 export async function fetchSearchResultsCached(params: SearchQuery, options?: { signal?: AbortSignal; skipCache?: boolean }): Promise<SearchResponse> {
     const searchParams = buildSearchParams(params);
@@ -194,7 +160,20 @@ export async function fetchSearchResultsCached(params: SearchQuery, options?: { 
         throw new Error(errorMessage);
     }
 
-    const data = (await response.json()) as SearchResponse;
+    // v3 API returns UserProfile[] directly - wrap with pagination
+    const results = (await response.json()) as UserProfile[];
+    const limit = params.limit ?? 24;
+    const offset = params.offset ?? 0;
+
+    const data: SearchResponse = {
+        results: Array.isArray(results) ? results : [],
+        pagination: {
+            limit,
+            offset,
+            total: Array.isArray(results) ? (results.length < limit ? offset + results.length : offset + limit + 1) : 0,
+            hasMore: Array.isArray(results) && results.length >= limit,
+        },
+    };
 
     setCachedSearch(searchParams, data);
 
