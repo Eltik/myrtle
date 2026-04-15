@@ -56,16 +56,6 @@ RUST_LOG=info
 - `ENABLE_DB`: Enable Postgres database (if false, must update the postgres db URI in backend vars)
 - `RUST_LOG`: Rust log level for the backend
 
-Once configured, build the images.
-
-```shell
-docker compose build
-```
-
-This will build the images for `postgres` and `redis` if enabled along with backend and frontend.
-
-> **NOTE:** If the `DOCKERFILE` is changed (switching from prod to dev or dev to prod) the images must be built with this command again.
-
 ### 2. Assets Pipeline
 
 The `asset-tools` service runs in an isolated Rust container and operates on the `tools` profile so it doesn't run during normal startup.
@@ -76,7 +66,13 @@ The `asset-tools` service runs in an isolated Rust container and operates on the
 docker compose --profile tools build
 ```
 
-#### 2. Download Arknights Assets
+#### 2. Generate FlatBuffer schemas
+
+```shell
+docker compose run --rm asset-tools generate_fbs.sh
+```
+
+#### 3. Download Arknights Assets
 
 ```shell
 docker compose run --rm asset-tools download.sh [server] [threads]
@@ -85,17 +81,11 @@ docker compose run --rm asset-tools download.sh [server] [threads]
 # docker compose run --rm asset-tools download.sh cn 2
 ```
 
-#### 3. Unpack and Decode Assets
+#### 4. Unpack and Decode Assets
 
 ```shell
 docker compose run --rm asset-tools unpack.sh [threads]
 # Example: docker compose run --rm asset-tools unpack.sh 4
-```
-
-#### 4. Generate FlatBuffer schemas
-
-```shell
-docker compose run --rm asset-tools generate_fbs.sh
 ```
 
 #### 5. Regenerate DPS Calculations
@@ -121,10 +111,19 @@ For detailed asset pipeline documentation, see:
 
 ### 3. Running the Application
 
+#### Build the containers
+```shell
+# Build the images for backend and frontend
+docker compose build
+```
+
+> **NOTE:** If the `DOCKERFILE` (env variable) is changed (switching from prod to dev or dev to prod) the images must be built with this command again.
+
 #### Start the entire stack
 
 ```shell
-# Starts postgres, redis, backend, and frontend
+# Starts backend, and frontend containers
+# If enabled, also starts postgres and redis containers
 docker compose up -d
 ```
 
@@ -163,35 +162,35 @@ Each component has its own detailed README with specific documentation.
 
 ### Frontend
 
-| Technology | Purpose |
-| ------------ | --------- |
-| [Next.js 15](https://nextjs.org/) | React framework with App Router |
-| [React 19](https://react.dev/) | UI library |
-| [TypeScript](https://www.typescriptlang.org/) | Type-safe JavaScript |
-| [Tailwind CSS v4](https://tailwindcss.com/) | Utility-first CSS with OKLCH colors |
-| [shadcn/ui](https://ui.shadcn.com/) | Radix-based component library |
-| [Motion Primitives](https://motion-primitives.com/) | Motion-based component library |
-| [PixiJS](https://pixijs.com/) + Pixi-Spine | Spine animation rendering |
+| Technology                                          | Purpose                             |
+| --------------------------------------------------- | ----------------------------------- |
+| [Next.js 15](https://nextjs.org/)                   | React framework with App Router     |
+| [React 19](https://react.dev/)                      | UI library                          |
+| [TypeScript](https://www.typescriptlang.org/)       | Type-safe JavaScript                |
+| [Tailwind CSS v4](https://tailwindcss.com/)         | Utility-first CSS with OKLCH colors |
+| [shadcn/ui](https://ui.shadcn.com/)                 | Radix-based component library       |
+| [Motion Primitives](https://motion-primitives.com/) | Motion-based component library      |
+| [PixiJS](https://pixijs.com/) + Pixi-Spine          | Spine animation rendering           |
 
 ### Backend
 
-| Technology | Purpose |
-| ------------ | --------- |
-| [Rust](https://www.rust-lang.org/) | Systems programming language |
-| [Axum](https://github.com/tokio-rs/axum) | Async web framework |
-| [SQLx](https://github.com/launchbadge/sqlx) | Compile-time SQL queries |
-| [PostgreSQL](https://www.postgresql.org/) | Primary database |
-| [Redis](https://redis.io/) | Session cache & rate limiting |
-| [JWT](https://jwt.io/) | Authentication tokens |
+| Technology                                  | Purpose                       |
+| ------------------------------------------- | ----------------------------- |
+| [Rust](https://www.rust-lang.org/)          | Systems programming language  |
+| [Axum](https://github.com/tokio-rs/axum)    | Async web framework           |
+| [SQLx](https://github.com/launchbadge/sqlx) | Compile-time SQL queries      |
+| [PostgreSQL](https://www.postgresql.org/)   | Primary database              |
+| [Redis](https://redis.io/)                  | Session cache & rate limiting |
+| [JWT](https://jwt.io/)                      | Authentication tokens         |
 
 ### Asset Toolkit
 
-| Component | Purpose |
-| ----------- | --------- |
-| [unity-rs](assets/unity-rs/) | Rust port of UnityPy for Unity asset parsing |
-| [downloader](assets/downloader/) | Multi-server asset downloader with version tracking |
-| [unpacker](assets/unpacker/) | High-performance asset extraction (9x faster than Python) |
-| [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar) | FlatBuffers schemas for 59 game data tables |
+| Component                                                                        | Purpose                                                   |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [unity-rs](assets/unity-rs/)                                                     | Rust port of UnityPy for Unity asset parsing              |
+| [downloader](assets/downloader/)                                                 | Multi-server asset downloader with version tracking       |
+| [unpacker](assets/unpacker/)                                                     | High-performance asset extraction (9x faster than Python) |
+| [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar) | FlatBuffers schemas for 59 game data tables               |
 
 ## Architecture
 
@@ -240,13 +239,13 @@ Each component has its own detailed README with specific documentation.
 
 ## Documentation
 
-| Component | Documentation |
-| ----------- | --------------- |
-| Frontend | [frontend/README.md](frontend/README.md) |
-| Backend | [backend/README.md](backend/README.md) |
-| Asset Downloader | [assets/downloader/README.md](assets/downloader/README.md) |
-| Asset Unpacker | [assets/unpacker/README.md](assets/unpacker/README.md) |
-| Unity-RS Library | [assets/unity-rs/README.md](assets/unity-rs/README.md) |
+| Component           | Documentation                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Frontend            | [frontend/README.md](frontend/README.md)                                                                                      |
+| Backend             | [backend/README.md](backend/README.md)                                                                                        |
+| Asset Downloader    | [assets/downloader/README.md](assets/downloader/README.md)                                                                    |
+| Asset Unpacker      | [assets/unpacker/README.md](assets/unpacker/README.md)                                                                        |
+| Unity-RS Library    | [assets/unity-rs/README.md](assets/unity-rs/README.md)                                                                        |
 | FlatBuffers Schemas | [MooncellWiki/OpenArknightsFBS/tree/YoStar/README.md](https://github.com/MooncellWiki/OpenArknightsFBS/tree/YoStar/README.md) |
 
 ## API Reference
