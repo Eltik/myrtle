@@ -3,7 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
     server: {
-        SERVER_URL: z.string().url().optional(),
+        NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+        BACKEND_URL: z.url().optional(),
     },
 
     /**
@@ -20,7 +21,11 @@ export const env = createEnv({
      * What object holds the environment variables at runtime. This is usually
      * `process.env` or `import.meta.env`.
      */
-    runtimeEnv: import.meta.env,
+    runtimeEnv: {
+        ...import.meta.env,
+        BACKEND_URL: process.env.BACKEND_URL,
+        NODE_ENV: process.env.NODE_ENV,
+    },
 
     /**
      * By default, this library will feed the environment variables directly to
