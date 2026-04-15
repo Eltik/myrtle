@@ -35,6 +35,7 @@ export function Group({
     children: React.ReactNode;
 } & React.ComponentProps<"div">): React.ReactElement {
     return (
+        /* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for button groups */
         <div className={cn(groupVariants({ orientation }), className)} data-orientation={orientation} data-slot="group" role="group" {...props}>
             {children}
         </div>

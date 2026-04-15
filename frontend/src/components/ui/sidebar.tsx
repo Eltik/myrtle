@@ -5,8 +5,6 @@ import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
-import { useMediaQuery } from "#/hooks/use-media-query";
-import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { ScrollArea } from "#/components/ui/scroll-area";
@@ -14,6 +12,8 @@ import { Separator } from "#/components/ui/separator";
 import { Sheet, SheetDescription, SheetHeader, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useMediaQuery } from "#/hooks/use-media-query";
+import { cn } from "#/lib/utils";
 
 const SIDEBAR_COOKIE_NAME: string = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE: number = 60 * 60 * 24 * 7;

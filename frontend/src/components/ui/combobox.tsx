@@ -3,9 +3,9 @@
 import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
 import { ChevronsUpDownIcon, XIcon } from "lucide-react";
 import * as React from "react";
-import { cn } from "#/lib/utils";
 import { Input } from "#/components/ui/input";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { cn } from "#/lib/utils";
 
 export const ComboboxContext: React.Context<{
     chipsRef: React.RefObject<Element | null> | null;

@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { loginSchema, type LoginInput } from "./login";
-import { backendFetch } from "../fetch";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
-import type { IUserProfile } from "#/types/user";
 import { env } from "#/env";
+import type { IUserProfile } from "#/types/user";
+import { backendFetch } from "../fetch";
+import { type LoginInput, loginSchema } from "./login";
 
 export const loginFn = createServerFn({ method: "POST" })
     .inputValidator((d: LoginInput) => loginSchema.parse(d))
