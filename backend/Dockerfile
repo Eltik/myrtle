@@ -17,6 +17,7 @@ RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /build/target/release/backend ./backend
+COPY --from=builder /build/external ./external
 
 EXPOSE 3060
 CMD ["./backend"]
