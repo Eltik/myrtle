@@ -1,5 +1,5 @@
 ArkAssets/
-Unpacked/
+output/
 
 **/target/
 **/.cargo/
@@ -7,3 +7,5 @@ Unpacked/
 .git/
 .DS_Store
 Thumbs.db
+
+OpenArknightsFBS/
