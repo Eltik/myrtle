@@ -37,18 +37,32 @@ pub async fn login(
     Ok(Json(result))
 }
 
-pub async fn verify(auth: AuthUser) -> Json<serde_json::Value> {
-    // AuthUser extractor already validated the token.
-    // `role` is surfaced so frontend API routes can make permission decisions
-    // without a second round-trip (e.g. deciding whether a user may create an
-    // official tier list vs a community one).
-    Json(serde_json::json!({
+pub async fn verify(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    // AuthUser extractor already validated the token. Re-read the user's
+    // role from the DB so admin promotions/demotions take effect on the next
+    // `verify` call without requiring the user to log out and back in
+    // (JWT claims freeze the role at login time).
+    let db_role: Option<String> = if let Ok(uuid) = uuid::Uuid::parse_str(&auth.user_id) {
+        sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = $1")
+            .bind(uuid)
+            .fetch_optional(&state.db)
+            .await?
+    } else {
+        None
+    };
+
+    let role = db_role.unwrap_or_else(|| auth.role.to_string());
+
+    Ok(Json(serde_json::json!({
         "valid": true,
         "userId": auth.user_id,
         "uid": auth.uid,
         "server": auth.server,
-        "role": auth.role.to_string(),
-    }))
+        "role": role,
+    })))
 }
 
 #[derive(Deserialize)]
