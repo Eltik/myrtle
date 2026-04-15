@@ -19,6 +19,10 @@ path = "src/bin/import_database.rs"
 name = "translate-backup"
 path = "src/bin/translate_backup.rs"
 
+[[bin]]
+name = "regrade-users"
+path = "src/bin/regrade_users.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"

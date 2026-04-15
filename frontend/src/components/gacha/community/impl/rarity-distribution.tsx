@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import { PieChartIcon } from "lucide-react";
 import { Cell, Pie, PieChart } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";

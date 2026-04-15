@@ -137,6 +137,81 @@ export interface GachaSettings {
 }
 
 // ============================================
+// Enhanced Statistics Types
+// ============================================
+
+/** Collective statistics for all consenting users */
+export interface CollectiveStats {
+    totalPulls: number;
+    totalUsers: number;
+    totalSixStars: number;
+    totalFiveStars: number;
+    totalFourStars: number;
+    totalThreeStars: number;
+}
+
+/** Pull rate percentages */
+export interface PullRates {
+    sixStarRate: number;
+    fiveStarRate: number;
+}
+
+/** Operator popularity statistics */
+export interface OperatorPopularity {
+    charId: string;
+    charName: string;
+    rarity: number;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Hourly pull distribution */
+export interface HourlyPullData {
+    hour: number;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Day of week pull distribution */
+export interface DayOfWeekPullData {
+    day: number;
+    dayName: string;
+    pullCount: number;
+    percentage: number;
+}
+
+/** Pull history by date (time series) */
+export interface DatePullData {
+    date: string;
+    pullCount: number;
+}
+
+/** Pull timing data for graphs */
+export interface PullTimingData {
+    byHour: HourlyPullData[];
+    byDayOfWeek: DayOfWeekPullData[];
+    byDate?: DatePullData[];
+}
+
+/** Full enhanced statistics response */
+export interface GachaEnhancedStats {
+    collectiveStats: CollectiveStats;
+    pullRates: PullRates;
+    mostCommonOperators: OperatorPopularity[];
+    averagePullsToSixStar: number;
+    averagePullsToFiveStar: number;
+    pullTiming?: PullTimingData;
+    computedAt: string;
+    cached: boolean;
+}
+
+/** Query parameters for enhanced stats endpoint */
+export interface GachaEnhancedStatsParams {
+    topN?: number;
+    includeTiming?: boolean;
+}
+
+// ============================================
 // Gacha Pool Types (Game Client Data)
 // ============================================
 

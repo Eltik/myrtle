@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import { Calendar, Clock } from "lucide-react";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";

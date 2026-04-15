@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import { TrendingUp } from "lucide-react";
 import { Line, LineChart, XAxis, YAxis } from "recharts";
 import { InView } from "~/components/ui/motion-primitives/in-view";
