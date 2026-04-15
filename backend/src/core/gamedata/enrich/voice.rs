@@ -125,9 +125,10 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang: Option<&VoiceLang>) -> Voi
 }
 
 fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
+    // Files on disk are Vorbis-in-Ogg (`.ogg`).
     let info = lang_info(lang);
     let Some((original_dir, file)) = voice_asset.split_once('/') else {
-        return format!("/audio/sound_beta_2/voice/{voice_asset}.wav");
+        return format!("/audio/sound_beta_2/voice/{voice_asset}.ogg");
     };
 
     // Strip any existing language suffix from dir, then append the target suffix
@@ -141,5 +142,5 @@ fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
         .replace("_spa", "");
 
     let dir = format!("{base_dir}{}", info.suffix);
-    format!("/audio/sound_beta_2/{}/{dir}/{file}.wav", info.dir)
+    format!("/audio/sound_beta_2/{}/{dir}/{file}.ogg", info.dir)
 }

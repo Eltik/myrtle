@@ -204,6 +204,15 @@ pub fn extract_sprites(
         .map(|(pid, tex)| (tex.name.as_str(), *pid))
         .collect();
 
+    // Common alpha-companion naming conventions in Arknights bundles. Tried
+    // in order when the Sprite's `m_RD.alphaTexture` PPtr is null.
+    //
+    // Seen in practice:
+    //   * `{name}[alpha]`   — most common in current operator portrait atlases
+    //   * `{name}_alpha`    — occasionally in older bundles
+    //   * `{name}a`         — used by the legacy SpritePacker format
+    let alpha_suffixes = ["[alpha]", "_alpha", "a"];
+
     let mut count = 0;
     for sprite in sprites {
         let Some(rgb_tex) = textures_by_pid.get(&sprite.texture_pid) else {
@@ -215,10 +224,15 @@ pub fn extract_sprites(
             None
         }
         .or_else(|| {
-            let alpha_name = format!("{}a", rgb_tex.name);
-            name_to_pid
-                .get(alpha_name.as_str())
-                .and_then(|pid| textures_by_pid.get(pid))
+            for suffix in alpha_suffixes {
+                let candidate = format!("{}{suffix}", rgb_tex.name);
+                if let Some(pid) = name_to_pid.get(candidate.as_str())
+                    && let Some(tex) = textures_by_pid.get(pid)
+                {
+                    return Some(tex);
+                }
+            }
+            None
         });
 
         // The atlas texture's own height is the correct reference for
@@ -302,12 +316,18 @@ fn crop_sprite(
             let cb = rgb.rgba.get(src_idx + 2).copied().unwrap_or(0);
 
             // Alpha source priority:
-            //   1. Separate alpha atlas (R channel of the companion texture).
-            //      Legacy SpritePacker bundles ship RGB + dedicated alpha atlas.
-            //   2. The RGB texture's own alpha channel. Current Sprite-based
-            //      portrait bundles bake alpha straight into the RGB atlas.
-            let ca = match alpha.and_then(|a| a.rgba.get(src_idx)).copied() {
-                Some(a) => a,
+            //   1. Separate alpha atlas — sample at its own (src_x, src_y)
+            //      since its stride may differ from the RGB atlas. Alpha value
+            //      lives in the R channel for Alpha8/ETC2_R11 companions.
+            //   2. The RGB texture's own alpha channel — portrait bundles
+            //      whose format already encodes alpha (rare in current builds).
+            let ca = match alpha {
+                Some(a) => {
+                    let ax = src_x.min(a.width.saturating_sub(1));
+                    let ay = src_y.min(a.height.saturating_sub(1));
+                    let a_idx = ((ay * a.width + ax) * 4) as usize;
+                    a.rgba.get(a_idx).copied().unwrap_or(255)
+                }
                 None => rgb.rgba.get(src_idx + 3).copied().unwrap_or(255),
             };
 
