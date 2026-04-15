@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import type { DatePullData, GachaPoolClient } from "~/types/api";
 import type { BannerSortMode, PoolType, PoolTypeFilter } from "./banner-constants";
 

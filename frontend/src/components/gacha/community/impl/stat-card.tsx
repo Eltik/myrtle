@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import type { LucideIcon } from "lucide-react";
 import { AnimatedNumber } from "~/components/ui/motion-primitives/animated-number";
 import { InView } from "~/components/ui/motion-primitives/in-view";

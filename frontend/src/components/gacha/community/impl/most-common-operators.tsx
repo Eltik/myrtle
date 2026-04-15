@@ -1,4 +1,3 @@
-// @ts-nocheck - Deprecated: v3 community stats simplified. This component is no longer used.
 import { Users } from "lucide-react";
 import Image from "next/image";
 import { InView } from "~/components/ui/motion-primitives/in-view";

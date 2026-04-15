@@ -28,6 +28,10 @@ pub enum CacheKey<'a> {
         uid: &'a str,
     },
     GachaGlobalStats,
+    GachaEnhancedStats {
+        top_n: u32,
+        include_timing: bool,
+    },
 }
 
 impl CacheKey<'_> {
@@ -51,6 +55,10 @@ impl CacheKey<'_> {
             CacheKey::GameSession { uid } => format!("game_session:{uid}"),
             CacheKey::PortalSession { uid } => format!("portal_session:{uid}"),
             CacheKey::GachaGlobalStats => "gacha:global_stats".to_owned(),
+            CacheKey::GachaEnhancedStats {
+                top_n,
+                include_timing,
+            } => format!("gacha:enhanced_stats:{top_n}:{include_timing}"),
         }
     }
 
@@ -65,6 +73,7 @@ impl CacheKey<'_> {
             CacheKey::GameSession { .. } => Duration::from_secs(3600), // 1 hour
             CacheKey::PortalSession { .. } => Duration::from_secs(3600), // 1 hour
             CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
+            CacheKey::GachaEnhancedStats { .. } => Duration::from_secs(600), // 10 min
         }
     }
 }

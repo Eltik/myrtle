@@ -211,6 +211,330 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
     Ok(result)
 }
 
+// ============================================
+// Enhanced global stats (port from old backend)
+// ============================================
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CollectiveStats {
+    pub total_pulls: i64,
+    pub total_users: i64,
+    pub total_six_stars: i64,
+    pub total_five_stars: i64,
+    pub total_four_stars: i64,
+    pub total_three_stars: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PullRates {
+    pub six_star_rate: f64,
+    pub five_star_rate: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorPopularity {
+    pub char_id: String,
+    pub char_name: String,
+    pub rarity: i16,
+    pub pull_count: i64,
+    pub percentage: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct HourlyPullData {
+    pub hour: i32,
+    pub pull_count: i64,
+    pub percentage: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DayOfWeekPullData {
+    pub day: i32,
+    pub day_name: String,
+    pub pull_count: i64,
+    pub percentage: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DatePullData {
+    pub date: String,
+    pub pull_count: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PullTimingData {
+    pub by_hour: Vec<HourlyPullData>,
+    pub by_day_of_week: Vec<DayOfWeekPullData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub by_date: Option<Vec<DatePullData>>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GachaEnhancedStats {
+    pub collective_stats: CollectiveStats,
+    pub pull_rates: PullRates,
+    pub most_common_operators: Vec<OperatorPopularity>,
+    pub average_pulls_to_six_star: f64,
+    pub average_pulls_to_five_star: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pull_timing: Option<PullTimingData>,
+    pub computed_at: String,
+    pub cached: bool,
+}
+
+pub async fn get_enhanced_stats(
+    state: &AppState,
+    top_n: u32,
+    include_timing: bool,
+) -> Result<GachaEnhancedStats, ApiError> {
+    let key = CacheKey::GachaEnhancedStats {
+        top_n,
+        include_timing,
+    };
+    if let Some(mut cached) = state.cache.get::<GachaEnhancedStats>(&key).await {
+        cached.cached = true;
+        return Ok(cached);
+    }
+
+    // Collective stats
+    #[derive(sqlx::FromRow)]
+    struct CollectiveRow {
+        total_pulls: i64,
+        total_users: i64,
+        total_six_stars: i64,
+        total_five_stars: i64,
+        total_four_stars: i64,
+        total_three_stars: i64,
+    }
+
+    let collective = sqlx::query_as::<_, CollectiveRow>(
+        r#"
+        SELECT
+            COUNT(*) AS total_pulls,
+            COUNT(DISTINCT gr.user_id) AS total_users,
+            COUNT(*) FILTER (WHERE rarity = 6) AS total_six_stars,
+            COUNT(*) FILTER (WHERE rarity = 5) AS total_five_stars,
+            COUNT(*) FILTER (WHERE rarity = 4) AS total_four_stars,
+            COUNT(*) FILTER (WHERE rarity = 3) AS total_three_stars
+        FROM gacha_records gr
+        JOIN user_settings us ON us.user_id = gr.user_id
+        WHERE us.share_stats = true
+        "#,
+    )
+    .fetch_one(&state.db)
+    .await?;
+
+    let total = collective.total_pulls.max(1) as f64;
+    let collective_stats = CollectiveStats {
+        total_pulls: collective.total_pulls,
+        total_users: collective.total_users,
+        total_six_stars: collective.total_six_stars,
+        total_five_stars: collective.total_five_stars,
+        total_four_stars: collective.total_four_stars,
+        total_three_stars: collective.total_three_stars,
+    };
+    let pull_rates = PullRates {
+        six_star_rate: collective.total_six_stars as f64 / total,
+        five_star_rate: collective.total_five_stars as f64 / total,
+    };
+
+    // Most common operators (top N overall)
+    #[derive(sqlx::FromRow)]
+    struct OpRow {
+        char_id: String,
+        rarity: i16,
+        pull_count: i64,
+    }
+
+    // Top-N **per rarity**, windowed. A single global top-N is dominated by
+    // 3-stars (which drop far more often than higher rarities) so the 6/5/4-star
+    // buckets would always be empty. Windowing fixes that.
+    let op_rows = sqlx::query_as::<_, OpRow>(
+        r#"
+        SELECT char_id, rarity, pull_count FROM (
+            SELECT gr.char_id, gr.rarity, COUNT(*) AS pull_count,
+                   ROW_NUMBER() OVER (PARTITION BY gr.rarity ORDER BY COUNT(*) DESC) AS rn
+            FROM gacha_records gr
+            JOIN user_settings us ON us.user_id = gr.user_id
+            WHERE us.share_stats = true
+            GROUP BY gr.char_id, gr.rarity
+        ) t
+        WHERE rn <= $1
+        ORDER BY rarity DESC, pull_count DESC
+        "#,
+    )
+    .bind(top_n as i64)
+    .fetch_all(&state.db)
+    .await?;
+
+    let most_common_operators: Vec<OperatorPopularity> = op_rows
+        .into_iter()
+        .map(|r| OperatorPopularity {
+            char_id: r.char_id,
+            char_name: String::new(),
+            rarity: r.rarity,
+            pull_count: r.pull_count,
+            percentage: if collective.total_pulls > 0 {
+                r.pull_count as f64 / collective.total_pulls as f64
+            } else {
+                0.0
+            },
+        })
+        .collect();
+
+    // Average pulls to a 6-star / 5-star (simple estimate: total pulls / count)
+    let average_pulls_to_six_star = if collective.total_six_stars > 0 {
+        collective.total_pulls as f64 / collective.total_six_stars as f64
+    } else {
+        0.0
+    };
+    let average_pulls_to_five_star = if collective.total_five_stars > 0 {
+        collective.total_pulls as f64 / collective.total_five_stars as f64
+    } else {
+        0.0
+    };
+
+    // Optional pull timing data
+    let pull_timing = if include_timing {
+        #[derive(sqlx::FromRow)]
+        struct HourRow {
+            hour: i32,
+            pull_count: i64,
+        }
+        #[derive(sqlx::FromRow)]
+        struct DowRow {
+            day: i32,
+            pull_count: i64,
+        }
+        #[derive(sqlx::FromRow)]
+        struct DateRow {
+            date: String,
+            pull_count: i64,
+        }
+
+        let hours = sqlx::query_as::<_, HourRow>(
+            r#"
+            SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp))::int AS hour,
+                   COUNT(*) AS pull_count
+            FROM gacha_records gr
+            JOIN user_settings us ON us.user_id = gr.user_id
+            WHERE us.share_stats = true
+            GROUP BY hour
+            ORDER BY hour
+            "#,
+        )
+        .fetch_all(&state.db)
+        .await?;
+
+        let dows = sqlx::query_as::<_, DowRow>(
+            r#"
+            SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp))::int AS day,
+                   COUNT(*) AS pull_count
+            FROM gacha_records gr
+            JOIN user_settings us ON us.user_id = gr.user_id
+            WHERE us.share_stats = true
+            GROUP BY day
+            ORDER BY day
+            "#,
+        )
+        .fetch_all(&state.db)
+        .await?;
+
+        let dates = sqlx::query_as::<_, DateRow>(
+            r#"
+            SELECT to_char(to_timestamp(gr.pull_timestamp), 'YYYY-MM-DD') AS date,
+                   COUNT(*) AS pull_count
+            FROM gacha_records gr
+            JOIN user_settings us ON us.user_id = gr.user_id
+            WHERE us.share_stats = true
+            GROUP BY date
+            ORDER BY date
+            "#,
+        )
+        .fetch_all(&state.db)
+        .await?;
+
+        let day_names = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ];
+
+        let by_hour: Vec<HourlyPullData> = hours
+            .into_iter()
+            .map(|r| HourlyPullData {
+                hour: r.hour,
+                pull_count: r.pull_count,
+                percentage: if collective.total_pulls > 0 {
+                    r.pull_count as f64 / collective.total_pulls as f64
+                } else {
+                    0.0
+                },
+            })
+            .collect();
+
+        let by_day_of_week: Vec<DayOfWeekPullData> = dows
+            .into_iter()
+            .map(|r| DayOfWeekPullData {
+                day: r.day,
+                day_name: day_names
+                    .get(r.day as usize)
+                    .copied()
+                    .unwrap_or("")
+                    .to_string(),
+                pull_count: r.pull_count,
+                percentage: if collective.total_pulls > 0 {
+                    r.pull_count as f64 / collective.total_pulls as f64
+                } else {
+                    0.0
+                },
+            })
+            .collect();
+
+        let by_date: Vec<DatePullData> = dates
+            .into_iter()
+            .map(|r| DatePullData {
+                date: r.date,
+                pull_count: r.pull_count,
+            })
+            .collect();
+
+        Some(PullTimingData {
+            by_hour,
+            by_day_of_week,
+            by_date: Some(by_date),
+        })
+    } else {
+        None
+    };
+
+    let result = GachaEnhancedStats {
+        collective_stats,
+        pull_rates,
+        most_common_operators,
+        average_pulls_to_six_star,
+        average_pulls_to_five_star,
+        pull_timing,
+        computed_at: chrono::Utc::now().to_rfc3339(),
+        cached: false,
+    };
+
+    state.cache.set(&key, &result).await;
+    Ok(result)
+}
+
 pub async fn get_history(
     state: &AppState,
     user_id: Uuid,

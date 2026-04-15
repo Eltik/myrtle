@@ -1,5 +1,5 @@
-import type { GachaGlobalStats } from "~/types/api/impl/gacha";
-import { EXPECTED_RATES, RARITY_COLORS } from "./constants";
+import type { CollectiveStats, GachaEnhancedStats, OperatorPopularity, PullTimingData } from "~/types/api";
+import { DAY_NAMES, EXPECTED_RATES, RARITY_COLORS } from "./constants";
 
 // Type for actual rates with all rarities
 export interface ActualRates {
@@ -9,13 +9,14 @@ export interface ActualRates {
     3: number;
 }
 
-// Calculate actual rates from global stats
-export function calculateActualRates(stats: GachaGlobalStats): ActualRates {
+// Calculate actual rates from collective stats
+export function calculateActualRates(collectiveStats: CollectiveStats): ActualRates {
+    const totalPulls = collectiveStats.totalPulls;
     return {
-        6: stats.sixStarRate,
-        5: stats.fiveStarRate,
-        4: 0, // Not available in v3 global stats
-        3: 0, // Not available in v3 global stats
+        6: totalPulls > 0 ? collectiveStats.totalSixStars / totalPulls : 0,
+        5: totalPulls > 0 ? collectiveStats.totalFiveStars / totalPulls : 0,
+        4: totalPulls > 0 ? collectiveStats.totalFourStars / totalPulls : 0,
+        3: totalPulls > 0 ? collectiveStats.totalThreeStars / totalPulls : 0,
     };
 }
 
@@ -23,21 +24,25 @@ export function calculateActualRates(stats: GachaGlobalStats): ActualRates {
 // Positive = lucky, Negative = unlucky
 export function calculateLuckScore(actualRates: ActualRates) {
     return (
-        ((actualRates[6] - EXPECTED_RATES[6]) / EXPECTED_RATES[6]) * 0.5 + // 6-star weighted heavily
-        ((actualRates[5] - EXPECTED_RATES[5]) / EXPECTED_RATES[5]) * 0.3 // 5-star weighted moderately
+        ((actualRates[6] - EXPECTED_RATES[6]) / EXPECTED_RATES[6]) * 0.5 + // 6★ weighted heavily
+        ((actualRates[5] - EXPECTED_RATES[5]) / EXPECTED_RATES[5]) * 0.3 + // 5★ weighted moderately
+        ((actualRates[4] - EXPECTED_RATES[4]) / EXPECTED_RATES[4]) * 0.1 + // 4★ weighted lightly
+        ((actualRates[3] - EXPECTED_RATES[3]) / EXPECTED_RATES[3]) * 0.1 // 3★ weighted lightly
     );
 }
 
 // Build rate comparison data for progress bars
 export function buildRateComparisonData(actualRates: ActualRates) {
     return [
-        { rarity: 6, label: "6-Star", actual: actualRates[6], expected: EXPECTED_RATES[6], color: RARITY_COLORS[6].hex, bgColor: RARITY_COLORS[6].bgClass },
-        { rarity: 5, label: "5-Star", actual: actualRates[5], expected: EXPECTED_RATES[5], color: RARITY_COLORS[5].hex, bgColor: RARITY_COLORS[5].bgClass },
+        { rarity: 6, label: "6★", actual: actualRates[6], expected: EXPECTED_RATES[6], color: RARITY_COLORS[6].hex, bgColor: RARITY_COLORS[6].bgClass },
+        { rarity: 5, label: "5★", actual: actualRates[5], expected: EXPECTED_RATES[5], color: RARITY_COLORS[5].hex, bgColor: RARITY_COLORS[5].bgClass },
+        { rarity: 4, label: "4★", actual: actualRates[4], expected: EXPECTED_RATES[4], color: RARITY_COLORS[4].hex, bgColor: RARITY_COLORS[4].bgClass },
+        { rarity: 3, label: "3★", actual: actualRates[3], expected: EXPECTED_RATES[3], color: RARITY_COLORS[3].hex, bgColor: RARITY_COLORS[3].bgClass },
     ] as const;
 }
 
-// Group operators by rarity for display (stub - enhanced stats not available in v3)
-export function groupOperatorsByRarity(operators: Array<{ rarity: number }>) {
+// Group operators by rarity for display
+export function groupOperatorsByRarity(operators: OperatorPopularity[]) {
     return {
         6: operators.filter((op) => op.rarity === 6),
         5: operators.filter((op) => op.rarity === 5),
@@ -46,32 +51,68 @@ export function groupOperatorsByRarity(operators: Array<{ rarity: number }>) {
     };
 }
 
-// Build rarity distribution data (stub - detailed counts not available in v3)
-export function buildRarityData(stats: GachaGlobalStats) {
+// Transform hourly timing data for charts
+export function transformHourlyData(pullTiming: PullTimingData | undefined) {
+    return (
+        pullTiming?.byHour.map((item) => ({
+            hour: `${item.hour}:00`,
+            pulls: item.pullCount,
+            percentage: item.percentage,
+        })) ?? []
+    );
+}
+
+// Transform daily timing data for charts
+export function transformDailyData(pullTiming: PullTimingData | undefined) {
+    return (
+        pullTiming?.byDayOfWeek.map((item) => ({
+            day: DAY_NAMES[item.day] ?? item.dayName,
+            pulls: item.pullCount,
+            percentage: item.percentage,
+        })) ?? []
+    );
+}
+
+// Transform date timing data for line chart
+export function transformDateData(pullTiming: PullTimingData | undefined) {
+    return (
+        pullTiming?.byDate?.map((item) => ({
+            date: new Date(item.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+            fullDate: item.date,
+            pulls: item.pullCount,
+        })) ?? []
+    );
+}
+
+// Build rarity distribution data for pie chart
+export function buildRarityData(collectiveStats: CollectiveStats) {
     return [
-        { name: "6-Star", value: Math.round(stats.sixStarRate * stats.totalPulls), color: RARITY_COLORS[6].hex },
-        { name: "5-Star", value: Math.round(stats.fiveStarRate * stats.totalPulls), color: RARITY_COLORS[5].hex },
+        { name: "6-Star", value: collectiveStats.totalSixStars, color: RARITY_COLORS[6].hex },
+        { name: "5-Star", value: collectiveStats.totalFiveStars, color: RARITY_COLORS[5].hex },
+        { name: "4-Star", value: collectiveStats.totalFourStars, color: RARITY_COLORS[4].hex },
+        { name: "3-Star", value: collectiveStats.totalThreeStars, color: RARITY_COLORS[3].hex },
     ];
 }
 
-// Stub functions for compatibility - these features require enhanced stats not in v3
-export function transformHourlyData(_pullTiming: unknown) { return []; }
-export function transformDailyData(_pullTiming: unknown) { return []; }
-export function transformDateData(_pullTiming: unknown) { return []; }
-export function calculateDerivedData(stats: GachaGlobalStats) {
-    const actualRates = calculateActualRates(stats);
+// Calculate all derived data from stats
+export function calculateDerivedData(stats: GachaEnhancedStats) {
+    const actualRates = calculateActualRates(stats.collectiveStats);
     const luckScore = calculateLuckScore(actualRates);
     const rateComparisonData = buildRateComparisonData(actualRates);
-    const rarityData = buildRarityData(stats);
+    const operatorsByRarity = groupOperatorsByRarity(stats.mostCommonOperators);
+    const hourlyData = transformHourlyData(stats.pullTiming);
+    const dailyData = transformDailyData(stats.pullTiming);
+    const dateData = transformDateData(stats.pullTiming);
+    const rarityData = buildRarityData(stats.collectiveStats);
 
     return {
         actualRates,
         luckScore,
         rateComparisonData,
-        operatorsByRarity: { 6: [], 5: [], 4: [], 3: [] },
-        hourlyData: [],
-        dailyData: [],
-        dateData: [],
+        operatorsByRarity,
+        hourlyData,
+        dailyData,
+        dateData,
         rarityData,
     };
 }
