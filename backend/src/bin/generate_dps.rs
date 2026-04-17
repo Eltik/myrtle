@@ -1783,10 +1783,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // int(x) → truncate toward zero (stays f64) — uses balanced paren matching
     {
         let mut search_from = 0;
-        loop {
-            let Some(m) = RE.int_pat.find(&s[search_from..]) else {
-                break;
-            };
+        while let Some(m) = RE.int_pat.find(&s[search_from..]) {
             let abs_start = search_from + m.start();
             let open = search_from + m.end() - 1;
             let mut depth = 1;
@@ -2148,10 +2145,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
             &RE.max_func
         };
         let mut search_from = 0;
-        loop {
-            let Some(m) = re.find(&s[search_from..]) else {
-                break;
-            };
+        while let Some(m) = re.find(&s[search_from..]) {
             let abs_start = search_from + m.start();
             let open = search_from + m.end() - 1;
             // Find matching closing paren
