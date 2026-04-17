@@ -1,9 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronRightIcon, ExternalLinkIcon, MenuIcon } from "lucide-react";
+import { ChevronRightIcon, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
-import { cn } from "#/lib/utils";
+import { useAuth } from "#/hooks/use-auth";
+import { cn, getAvatarSkinId } from "#/lib/utils";
 import type { NavItem } from "./MainNav";
+import { AuthDialog } from "./AuthDialog";
+import { Spinner } from "#/components/ui/spinner";
 
 interface MobileNavProps {
     items: NavItem[];
@@ -11,6 +15,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ items, toolItems = [] }: MobileNavProps) {
+    const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
 
@@ -99,6 +104,50 @@ export function MobileNav({ items, toolItems = [] }: MobileNavProps) {
                                     </a>
                                 }
                             />
+                        </DrawerMenuGroup>
+
+                        <DrawerMenuSeparator />
+                        <DrawerMenuGroup>
+                            <DrawerMenuGroupLabel>Account</DrawerMenuGroupLabel>
+                            {loading ? (
+                                <div className="flex h-12 items-center justify-center">
+                                    <Spinner />
+                                </div>
+                            ) : user ? (
+                                <>
+                                    <div className="flex items-center gap-3 px-2 py-2 mb-2">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
+                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-medium">{user.nickname ?? "Doctor"}</span>
+                                            <span className="text-xs text-muted-foreground">Level {user.level}</span>
+                                        </div>
+                                    </div>
+                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/my/tier-lists" />} />}>
+                                        <LayoutList className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        My Tier Lists
+                                    </DrawerMenuItem>
+                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/my/settings" />} />}>
+                                        <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        Settings
+                                    </DrawerMenuItem>
+                                    <DrawerMenuItem variant="destructive" onClick={logout}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        Logout
+                                    </DrawerMenuItem>
+                                </>
+                            ) : (
+                                <AuthDialog
+                                    trigger={
+                                        <DrawerMenuItem>
+                                            <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                                            Login
+                                        </DrawerMenuItem>
+                                    }
+                                />
+                            )}
                         </DrawerMenuGroup>
                     </DrawerMenu>
                 </DrawerPanel>
