@@ -97,7 +97,6 @@
   --link-bg-hover: rgba(24, 44, 49, 0.8);
   --hero-a: rgba(96, 215, 207, 0.18);
   --hero-b: rgba(110, 200, 154, 0.12);
-  --background: #070709;
 }
 
 @media (prefers-color-scheme: dark) {

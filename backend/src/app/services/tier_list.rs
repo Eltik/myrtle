@@ -121,12 +121,24 @@ pub async fn update_list(
 }
 
 fn generate_slug(name: &str) -> String {
-    name.to_lowercase()
+    let base: String = name
+        .to_lowercase()
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '-' })
         .collect::<String>()
         .split('-')
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
-        .join("-")
+        .join("-");
+    let suffix: String = (0..6)
+        .map(|_| {
+            let n = rand::random::<u8>() % 36;
+            if n < 10 {
+                (b'0' + n) as char
+            } else {
+                (b'a' + n - 10) as char
+            }
+        })
+        .collect();
+    format!("{base}-{suffix}")
 }
