@@ -25,6 +25,10 @@ pub async fn create(
     Path(slug): Path<String>,
     Json(body): Json<CreateTierRequest>,
 ) -> Result<Json<Tier>, ApiError> {
+    if body.name.chars().count() > 20 {
+        return Err(ApiError::BadRequest("tier name max 20 chars".into()));
+    }
+
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?

@@ -140,10 +140,19 @@ pub async fn create_tier(
     description: Option<&str>,
 ) -> Result<Tier, sqlx::Error> {
     sqlx::query_as::<_, Tier>(
-        "INSERT INTO tiers (tier_list_id, name, display_order, color, description) VALUES ($1,$2,$3,$4,$5) RETURNING *"
+        "INSERT INTO tiers (tier_list_id, name, display_order, color, description)
+          VALUES ($1, $2,
+                  COALESCE((SELECT MAX(display_order)+1 FROM tiers WHERE tier_list_id=$1), 0),
+                  $3, $4)
+          RETURNING *",
     )
-    .bind(tier_list_id).bind(name).bind(display_order).bind(color).bind(description)
-    .fetch_one(pool).await
+    .bind(tier_list_id)
+    .bind(name)
+    .bind(display_order)
+    .bind(color)
+    .bind(description)
+    .fetch_one(pool)
+    .await
 }
 
 pub async fn update_tier(
@@ -186,10 +195,20 @@ pub async fn add_placement(
     notes: Option<&str>,
 ) -> Result<TierPlacement, sqlx::Error> {
     sqlx::query_as::<_, TierPlacement>(
-        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, notes) VALUES ($1,$2,$3,$4) RETURNING *"
+        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, notes)
+          VALUES ($1,$2,$3,$4)
+          ON CONFLICT (tier_id, operator_id)
+          DO UPDATE SET sub_order = EXCLUDED.sub_order,
+                        notes = EXCLUDED.notes,
+                        updated_at = NOW()
+          RETURNING *",
     )
-    .bind(tier_id).bind(operator_id).bind(sub_order).bind(notes)
-    .fetch_one(pool).await
+    .bind(tier_id)
+    .bind(operator_id)
+    .bind(sub_order)
+    .bind(notes)
+    .fetch_one(pool)
+    .await
 }
 
 pub async fn remove_placement(

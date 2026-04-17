@@ -6,10 +6,11 @@ import { useEffect } from "react";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions } from "#/lib/auth/store";
 import Footer from "../components/Footer";
-import Header from "../components/Header";
+import Header from "../components/header/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import StoreDevtools from "../lib/demo-store-devtools";
 import appCss from "../styles.css?url";
+import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 
 interface MyRouterContext {
     queryClient: QueryClient;
@@ -64,9 +65,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
                 <HeadContent />
             </head>
-            <body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
+            <body className="font-sans antialiased wrap-anywhere selection:bg-primary">
                 <Header />
-                {children}
+                <ToastProvider>
+                    <AnchoredToastProvider>{children}</AnchoredToastProvider>
+                </ToastProvider>
                 <Footer />
                 <TanStackDevtools
                     config={{

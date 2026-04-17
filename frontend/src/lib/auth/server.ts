@@ -3,7 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server
 import { env } from "#/env";
 import type { IUserProfile } from "#/types/user";
 import { backendFetch } from "../fetch";
-import { type LoginInput, loginSchema } from "./login";
+import { type AKServer, type LoginInput, loginSchema } from "./login";
 
 export const loginFn = createServerFn({ method: "POST" })
     .inputValidator((d: LoginInput) => loginSchema.parse(d))
@@ -18,6 +18,12 @@ export const getSessionFn = createServerFn({ method: "GET" }).handler(async () =
 export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
     clearAuthCookies();
 });
+
+export const sendCodeFn = createServerFn({ method: "POST" })
+    .inputValidator((d: { email: string; server: AKServer }) => d)
+    .handler(async ({ data }) => {
+        return await sendCode(data);
+    });
 
 const COOKIE_BASE = {
     secure: env.NODE_ENV === "production",
@@ -72,4 +78,25 @@ const getSession = async () => {
     const userRes = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
     if (!userRes.ok) return null;
     return (await userRes.json()) as IUserProfile;
+};
+
+const sendCode = async (data: { email: string; server: AKServer }) => {
+    const req = await backendFetch("/login/send-code", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: data.email, server: data.server }),
+    });
+
+    const res = (await req.json()) as {
+        status: string;
+        error?: string;
+    };
+
+    if (res.status !== "ok") {
+        throw new Error(res.error ?? "Failed to send OTP");
+    }
+
+    return res;
 };
