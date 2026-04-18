@@ -7,18 +7,22 @@ import ThemeToggle from "./impl/ThemeToggle";
 import { useAuth } from "#/hooks/use-auth";
 import UserMenu from "./impl/UserMenu";
 
-const navItems: NavItem[] = [
-    { href: "/", label: "Home" },
-    { href: "/operators", label: "Operators" },
-    { href: "/tools", label: "Tools" },
-    { href: "/about", label: "About" },
-];
-
 const toolItems: NavItem[] = [
     { href: "/recruitment", label: "Recruitment Calculator" },
     { href: "/tier-lists", label: "Tier Lists" },
     { href: "/dps", label: "DPS Charts" },
     { href: "/randomizer", label: "Randomizer" },
+];
+
+const navItems: NavItem[] = [
+    { href: "/", label: "Home" },
+    { href: "/operators", label: "Operators" },
+    {
+        href: "/tools",
+        label: "Tools",
+        items: toolItems,
+    },
+    { href: "/about", label: "About" },
 ];
 
 export default function Header() {
@@ -27,7 +31,7 @@ export default function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/60">
             <div className="md:page-wrap flex h-14 items-center px-2 sm:h-16">
                 <div className="flex flex-1 items-center gap-4">
-                    <MobileNav items={navItems} toolItems={toolItems} />
+                    <MobileNav items={navItems} />
                     <Link to="/" className="flex items-center gap-2 text-foreground no-underline">
                         <span className="md:flex hidden h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-primary to-(--lagoon)">
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="currentColor">
