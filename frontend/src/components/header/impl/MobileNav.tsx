@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronRightIcon, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { ChevronDown, ChevronRightIcon, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerMenuTrigger, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
@@ -9,6 +9,7 @@ import type { NavItem } from "./MainNav";
 import { AuthDialog } from "./AuthDialog";
 import { Spinner } from "#/components/ui/spinner";
 import { ActiveIndicator } from "./ActiveIndicator";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 
 interface MobileNavProps {
     items: NavItem[];
@@ -24,17 +25,21 @@ export function MobileNav({ items }: MobileNavProps) {
 
         if (item.items && item.items.length > 0) {
             return (
-                <Drawer key={item.href} position="left">
-                    <DrawerMenuTrigger>{item.label}</DrawerMenuTrigger>
-                    <DrawerPopup className="w-70 max-w-[calc(100vw-3rem)]">
-                        <DrawerHeader>
-                            <DrawerTitle>{item.label}</DrawerTitle>
-                        </DrawerHeader>
-                        <DrawerPanel>
-                            <DrawerMenu>{item.items.map(renderNavItem)}</DrawerMenu>
-                        </DrawerPanel>
-                    </DrawerPopup>
-                </Drawer>
+                <Collapsible key={item.href} className="flex flex-col">
+                    <CollapsibleTrigger>
+                        <DrawerMenuItem className="justify-between">
+                            {item.label}
+                             <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </DrawerMenuItem>
+                    </CollapsibleTrigger>
+                    <CollapsiblePanel className="flex flex-col border-l border-border ml-4 mt-1 gap-1">
+                        {item.items.map((subItem) => (
+                            <DrawerMenuItem key={subItem.href} className="h-9 text-sm text-muted-foreground hover:text-foreground" render={<DrawerClose render={<Link to={subItem.href} />}></DrawerClose>}>
+                                {subItem.label}
+                            </DrawerMenuItem>
+                        ))}
+                    </CollapsiblePanel>
+                </Collapsible>
             );
         }
 
