@@ -2,22 +2,49 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronRightIcon, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
-import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerMenuTrigger, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
 import { useAuth } from "#/hooks/use-auth";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import type { NavItem } from "./MainNav";
 import { AuthDialog } from "./AuthDialog";
 import { Spinner } from "#/components/ui/spinner";
+import { ActiveIndicator } from "./ActiveIndicator";
 
 interface MobileNavProps {
     items: NavItem[];
-    toolItems?: NavItem[];
 }
 
-export function MobileNav({ items, toolItems = [] }: MobileNavProps) {
+export function MobileNav({ items }: MobileNavProps) {
     const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
+
+    const renderNavItem = (item: NavItem) => {
+        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+
+        if (item.items && item.items.length > 0) {
+            return (
+                <Drawer key={item.href} position="left">
+                    <DrawerMenuTrigger>{item.label}</DrawerMenuTrigger>
+                    <DrawerPopup className="w-70 max-w-[calc(100vw-3rem)]">
+                        <DrawerHeader>
+                            <DrawerTitle>{item.label}</DrawerTitle>
+                        </DrawerHeader>
+                        <DrawerPanel>
+                            <DrawerMenu>{item.items.map(renderNavItem)}</DrawerMenu>
+                        </DrawerPanel>
+                    </DrawerPopup>
+                </Drawer>
+            );
+        }
+
+        return (
+            <DrawerMenuItem key={item.href} className={cn(isActive && "bg-accent text-accent-foreground")} render={<DrawerClose render={<Link to={item.href} />} />}>
+                {item.label}
+                {isActive && <ActiveIndicator />}
+            </DrawerMenuItem>
+        );
+    };
 
     return (
         <Drawer position="left">
@@ -40,55 +67,8 @@ export function MobileNav({ items, toolItems = [] }: MobileNavProps) {
                     <DrawerMenu>
                         <DrawerMenuGroup>
                             <DrawerMenuGroupLabel>Navigation</DrawerMenuGroupLabel>
-                            {items.map((item) => {
-                                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-                                return (
-                                    <DrawerMenuItem key={item.href} className={cn(isActive && "bg-accent text-accent-foreground", "cursor-pointer")} render={<DrawerClose render={<Link to={item.href} />} />}>
-                                        {item.label}
-                                        {isActive && (
-                                            <span
-                                                className="ml-auto h-4 w-4 pointer-events-none z-20 mt-px text-primary/80 text-xs"
-                                                style={{
-                                                    transition: "left 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                                                    textShadow: "0 0 8px var(--glow-text-icon)",
-                                                }}
-                                            >
-                                                ◎
-                                            </span>
-                                        )}
-                                    </DrawerMenuItem>
-                                );
-                            })}
+                            {items.map(renderNavItem)}
                         </DrawerMenuGroup>
-
-                        {toolItems.length > 0 && (
-                            <>
-                                <DrawerMenuSeparator />
-                                <DrawerMenuGroup>
-                                    <DrawerMenuGroupLabel>Tools</DrawerMenuGroupLabel>
-                                    {toolItems.map((item) => {
-                                        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-                                        return (
-                                            <DrawerMenuItem key={item.href} className={cn(isActive && "bg-accent text-accent-foreground", "cursor-pointer")} render={<DrawerClose render={<Link to={item.href} />} />}>
-                                                {item.label}
-                                                {isActive && (
-                                                    <span
-                                                        className="ml-auto h-4 w-4 pointer-events-none z-20 mt-px text-primary/80 text-xs"
-                                                        style={{
-                                                            transition: "left 400ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out",
-                                                            textShadow: "0 0 8px var(--glow-text-icon)",
-                                                        }}
-                                                    >
-                                                        ◎
-                                                    </span>
-                                                )}
-                                            </DrawerMenuItem>
-                                        );
-                                    })}
-                                </DrawerMenuGroup>
-                            </>
-                        )}
-
                         <DrawerMenuSeparator />
                         <DrawerMenuGroup>
                             <DrawerMenuGroupLabel>External</DrawerMenuGroupLabel>
