@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Type — sans scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px; background: var(--card); font-family:"Inter",system-ui; color: var(--foreground); }
+  .row { display:grid; grid-template-columns: 72px 1fr 100px; gap: 14px; align-items: baseline; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .row:last-child { border-bottom: none; }
+  .label { font: 500 11px/1 "Geist Mono", monospace; color: var(--muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; }
+  .tag { font: 400 11px/1.2 "Geist Mono", monospace; color: var(--muted-foreground); text-align:right; }
+  .s1 { font: 700 32px/1.1 "Inter"; letter-spacing: -0.015em; }
+  .s2 { font: 600 22px/1.2 "Inter"; letter-spacing: -0.01em; }
+  .s3 { font: 600 16px/1.4 "Inter"; }
+  .s4 { font: 400 14px/1.5 "Inter"; color: var(--foreground); }
+  .s5 { font: 400 12px/1.4 "Inter"; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+  <div class="row"><span class="label">h1</span><span class="s1">Operators, synced.</span><span class="tag">32 / 700</span></div>
+  <div class="row"><span class="label">h2</span><span class="s2">Recruitment Calculator</span><span class="tag">22 / 600</span></div>
+  <div class="row"><span class="label">h3</span><span class="s3">Tag combinations</span><span class="tag">16 / 600</span></div>
+  <div class="row"><span class="label">body</span><span class="s4">Link your Arknights account to view your roster.</span><span class="tag">14 / 400</span></div>
+  <div class="row"><span class="label">small</span><span class="s5">Not affiliated with Hypergryph or Yostar.</span><span class="tag">12 / 400</span></div>
+</body>
+</html>

@@ -1,18 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
+import { useAuth } from "#/hooks/use-auth";
+import { useCommand } from "#/lib/command-context";
+import { TOOLS } from "#/lib/registry/tools";
+import { Kbd } from "../ui/kbd";
 import { MainNav, type NavItem } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
-import { useAuth } from "#/hooks/use-auth";
 import UserMenu from "./impl/UserMenu";
 
-const toolItems: NavItem[] = [
-    { href: "/recruitment", label: "Recruitment Calculator" },
-    { href: "/tier-lists", label: "Tier Lists" },
-    { href: "/dps", label: "DPS Charts" },
-    { href: "/randomizer", label: "Randomizer" },
-];
+const toolItems: NavItem[] = TOOLS.map((t) => ({
+    href: t.href,
+    label: t.label,
+    desc: t.desc,
+    icon: t.icon,
+    kb: t.kb,
+}));
 
 const navItems: NavItem[] = [
     { href: "/", label: "Home" },
@@ -27,45 +31,64 @@ const navItems: NavItem[] = [
 
 export default function Header() {
     const { user, loading, login, logout } = useAuth();
+    const { open: openCmd } = useCommand();
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/60">
-            <div className="md:page-wrap flex h-14 items-center px-2 sm:h-16">
+        <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
+            <div className="md:page-wrap flex h-14 items-center gap-3.5 px-4 sm:h-16">
                 <div className="flex flex-1 items-center gap-4">
                     <MobileNav items={navItems} />
-                    <Link to="/" className="flex items-center gap-2 text-foreground no-underline">
-                        <span className="md:flex hidden h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-primary to-(--lagoon)">
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="currentColor">
-                                <title>myrtle.moe logo icon</title>
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    <Link to="/" className="flex items-center gap-2 text-foreground no-underline shrink-0">
+                        <span className="brand-bezel" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
+                                <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                             </svg>
                         </span>
-                        <span className="font-semibold tracking-tight">myrtle.moe</span>
+                        <span className="font-semibold tracking-tight text-[15px]">myrtle.moe</span>
+                        <span className="brand-tag">v3</span>
                     </Link>
-                </div>
 
-                <div className="hidden justify-center md:flex md:flex-1">
-                    <MainNav items={navItems} />
-                </div>
+                    <MainNav items={navItems} onOpenCommand={openCmd} />
 
-                <div className="flex flex-1 items-center justify-end gap-2">
-                    <ThemeToggle />
-                    <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="hidden sm:inline-flex"
-                        render={
-                            <a href="https://github.com/myrtle-moe" target="_blank" rel="noreferrer" aria-label="GitHub">
-                                <span className="sr-only">GitHub</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github h-4 w-4" aria-hidden="true">
-                                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-                                    <path d="M9 18c-4.51 2-5-2-7-2" />
-                                </svg>
-                            </a>
-                        }
-                    />
+                    <div className="flex items-center gap-1.5 ml-auto">
+                        <button type="button" className="header-search hidden lg:inline-flex" onClick={openCmd} aria-label="Search operators">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                            <span>Search operators…</span>
+                            <span className="kbd-inline ml-auto flex gap-1">
+                                <Kbd>⌘</Kbd>
+                                <Kbd>K</Kbd>
+                            </span>
+                        </button>
+                        <Button variant="ghost" size="icon" className="lg:hidden" onClick={openCmd} aria-label="Search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                        </Button>
 
-                    <UserMenu loading={loading} user={user} login={login} logout={logout} />
+                        <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+
+                        <ThemeToggle />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="hidden sm:inline-flex"
+                            render={
+                                <a href="https://github.com/Eltik/myrtle" target="_blank" rel="noreferrer" aria-label="GitHub">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                                        <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                                        <path d="M9 18c-4.51 2-5-2-7-2" />
+                                    </svg>
+                                </a>
+                            }
+                        />
+
+                        <UserMenu loading={loading} user={user} login={login} logout={logout} />
+                    </div>
                 </div>
             </div>
         </header>
