@@ -1,10 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Button } from "#/components/ui/button";
-import { cn } from "#/lib/utils";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "#/components/ui/menu";
 import { ChevronDown } from "lucide-react";
-import { Kbd } from "#/components/ui/kbd";
 import { useRef, useState } from "react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
+import { Kbd } from "#/components/ui/kbd";
+import { cn } from "#/lib/utils";
 
 export interface NavItem {
     href: string;
@@ -63,44 +62,64 @@ function ToolsIcon({ name }: { name: string }) {
     }
 }
 
-function ToolsDropdown({ items, onClose, onOpenCommand }: { items: NavItem[]; onClose: () => void; onOpenCommand?: () => void }) {
+function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isActive: boolean; onOpenCommand?: () => void }) {
+    const [open, setOpen] = useState(false);
+    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const openNow = () => {
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        setOpen(true);
+    };
+    const closeSoon = () => {
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        closeTimer.current = setTimeout(() => setOpen(false), 140);
+    };
+
     return (
-        <div className="nav-menu" role="menu">
-            <div className="nav-menu-label">Tools</div>
-            <div className="nav-menu-list">
-                {items.map((t) => (
-                    <Link key={t.href} to={t.href} className="nav-menu-item" role="menuitem" onClick={onClose}>
-                        <span className="nav-menu-icon">{t.icon && <ToolsIcon name={t.icon} />}</span>
-                        <span className="nav-menu-text">
-                            <span className="nav-menu-title">{t.label}</span>
-                            {t.desc && <span className="nav-menu-desc">{t.desc}</span>}
+        <div onMouseEnter={openNow} onMouseLeave={closeSoon}>
+            <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+                <DropdownMenuTrigger className={cn("nav-link", isActive && "is-active")} aria-expanded={open}>
+                    {item.label}
+                    <ChevronDown className={cn("chev", open && "rotate-180 opacity-90")} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className="min-w-[380px] p-2" onMouseEnter={openNow} onMouseLeave={closeSoon}>
+                    <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">Tools</div>
+                    <div className="flex flex-col gap-px">
+                        {item.items?.map((t) => (
+                            <Link key={t.href} to={t.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors hover:bg-accent" onClick={() => setOpen(false)}>
+                                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolsIcon name={t.icon} />}</span>
+                                <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                                    <span className="font-sans text-[13px] font-medium leading-none tracking-tight text-foreground">{t.label}</span>
+                                    {t.desc && <span className="font-sans text-[11.5px] leading-snug text-muted-foreground">{t.desc}</span>}
+                                </span>
+                                {t.kb && (
+                                    <span className="inline-flex shrink-0 gap-0.5">
+                                        {t.kb.map((k, j) => (
+                                            <Kbd key={j}>{k}</Kbd>
+                                        ))}
+                                    </span>
+                                )}
+                            </Link>
+                        ))}
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-white/5 px-3 pt-2.5 pb-2 font-sans text-[11.5px] leading-none text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium">
+                            Press <Kbd>⌘</Kbd>
+                            <Kbd>K</Kbd> for all commands
                         </span>
-                        {t.kb && (
-                            <span className="nav-menu-kbd">
-                                {t.kb.map((k, j) => (
-                                    <Kbd key={j}>{k}</Kbd>
-                                ))}
-                            </span>
-                        )}
-                    </Link>
-                ))}
-            </div>
-            <div className="nav-menu-foot">
-                <span className="small-mono">
-                    Press <Kbd>⌘</Kbd>
-                    <Kbd>K</Kbd> for all commands
-                </span>
-                <button
-                    type="button"
-                    className="pill-link"
-                    onClick={() => {
-                        onClose();
-                        onOpenCommand?.();
-                    }}
-                >
-                    Open palette →
-                </button>
-            </div>
+                        <button
+                            type="button"
+                            className="cursor-pointer border-none bg-transparent p-0 font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]"
+                            onClick={() => {
+                                setOpen(false);
+                                onOpenCommand?.();
+                            }}
+                        >
+                            Open palette →
+                        </button>
+                    </div>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
     );
 }
@@ -108,37 +127,14 @@ function ToolsDropdown({ items, onClose, onOpenCommand }: { items: NavItem[]; on
 export function MainNav({ items, className, onOpenCommand, ...props }: MainNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
-    const [openMenu, setOpenMenu] = useState<string | null>(null);
-    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const openNow = (href: string) => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        setOpenMenu(href);
-    };
-
-    const closeSoon = () => {
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(() => setOpenMenu(null), 140);
-    };
 
     return (
         <nav className={cn("hidden items-center gap-1 lg:flex", className)} {...props}>
             {items.map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-                const isOpen = openMenu === item.href;
 
                 if (item.items) {
-                    return (
-                        <div key={item.href} className="nav-item relative" onMouseEnter={() => openNow(item.href)} onMouseLeave={closeSoon}>
-                            <button type="button" className={cn("nav-link", isActive && "is-active")} aria-haspopup="menu" aria-expanded={isOpen} onClick={() => setOpenMenu(isOpen ? null : item.href)}>
-                                {item.label}
-                                <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? "rotate(180deg)" : undefined, opacity: isOpen ? 0.9 : 0.6 }}>
-                                    <path d="m6 9 6 6 6-6" />
-                                </svg>
-                            </button>
-                            {isOpen && <ToolsDropdown items={item.items} onClose={() => setOpenMenu(null)} onOpenCommand={onOpenCommand} />}
-                        </div>
-                    );
+                    return <HoverDropdown key={item.href} item={item} isActive={isActive} onOpenCommand={onOpenCommand} />;
                 }
 
                 return (

@@ -21,5 +21,5 @@ export function OperatorAvatar({ charId, name, className }: OperatorAvatarProps)
         return <>{name.charAt(0).toUpperCase()}</>;
     }
 
-    return <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" className={className ?? "op-avatar-img"} onError={() => setFailed(true)} />;
+    return <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;
 }

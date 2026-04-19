@@ -1,5 +1,6 @@
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { ROLE_GRADIENT } from "#/lib/role-styles";
 
 export default function CommandPreview() {
     return (
@@ -16,7 +17,7 @@ export default function CommandPreview() {
                 <div className="cmd-group">
                     <div className="cmd-group-label">Operators</div>
                     <div className="cmd-item is-highlighted">
-                        <span className="op-chip c-vanguard" aria-hidden="true">
+                        <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT.Vanguard }}>
                             <OperatorAvatar charId="char_151_myrtle" name="Myrtle" />
                         </span>
                         <span className="cmd-primary">Myrtle</span>
@@ -24,14 +25,14 @@ export default function CommandPreview() {
                         <Kbd>↵</Kbd>
                     </div>
                     <div className="cmd-item">
-                        <span className="op-chip c-caster" aria-hidden="true">
+                        <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT.Caster }}>
                             <OperatorAvatar charId="char_213_mostma" name="Mostima" />
                         </span>
                         <span className="cmd-primary">Mostima</span>
                         <span className="cmd-meta">6★ · Caster · Mystic</span>
                     </div>
                     <div className="cmd-item">
-                        <span className="op-chip c-medic" aria-hidden="true">
+                        <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT.Medic }}>
                             <OperatorAvatar charId="char_117_myrrh" name="Myrrh" />
                         </span>
                         <span className="cmd-primary">Myrrh</span>
