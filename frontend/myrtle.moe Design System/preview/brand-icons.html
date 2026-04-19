@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Iconography — lucide stroke</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px; background: var(--card); font-family:"Inter",system-ui; }
+  .grid { display:grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+  .cell { display:flex; flex-direction:column; align-items:center; gap: 6px; padding: 10px 6px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+  .cell svg { width: 20px; height: 20px; opacity: 0.8; color: var(--foreground); stroke-width: 2; }
+  .cell span { font: 500 10px/1 "Geist Mono", monospace; color: var(--muted-foreground); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg><span>chevron</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>search</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L9 18l-5-5"/></svg><span>check</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg><span>x</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg><span>grid</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg><span>plus</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20a8 8 0 1 0-8-8"/></svg><span>loader</span></div>
+    <div class="cell"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg><span>clock</span></div>
+  </div>
+</body>
+</html>

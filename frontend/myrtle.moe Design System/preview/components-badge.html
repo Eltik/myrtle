@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Badges</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px; background: var(--card); font-family: "Inter",system-ui; display:flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    display:inline-flex; align-items:center; gap: 4px;
+    height: 20px; padding: 0 7px;
+    border-radius: 4px;
+    font: 500 11px/1 "Inter";
+    border: 1px solid transparent;
+  }
+  .default { background: var(--primary); color: var(--primary-foreground); }
+  .secondary { background: var(--secondary); color: var(--secondary-foreground); }
+  .outline { background: var(--card); color: var(--foreground); border-color: var(--input); }
+  .info { background: color-mix(in srgb, var(--info) 8%, transparent); color: var(--info-foreground); }
+  .success { background: color-mix(in srgb, var(--success) 8%, transparent); color: var(--success-foreground); }
+  .warning { background: color-mix(in srgb, var(--warning) 8%, transparent); color: var(--warning-foreground); }
+  .error { background: color-mix(in srgb, var(--destructive) 8%, transparent); color: var(--destructive); }
+  .destructive { background: var(--destructive); color: white; }
+</style>
+</head>
+<body>
+  <span class="badge default">6★</span>
+  <span class="badge secondary">Vanguard</span>
+  <span class="badge outline">E2 · 90</span>
+  <span class="badge info">Synced</span>
+  <span class="badge success">Owned</span>
+  <span class="badge warning">Stale</span>
+  <span class="badge error">Error</span>
+  <span class="badge destructive">Locked</span>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spacing scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px; background: var(--card); font-family: "Inter",system-ui; }
+  table { width:100%; border-collapse: collapse; font-size: 12px; }
+  td { padding: 6px 8px; border-bottom: 1px dashed var(--border); }
+  td.n { font: 500 11px/1 "Geist Mono", monospace; color: var(--muted-foreground); width: 80px; }
+  td.v { font: 400 11px/1 "Geist Mono", monospace; color: var(--muted-foreground); width: 80px; text-align:right; }
+  .bar { height: 12px; background: var(--primary); border-radius: 3px; opacity: 0.9; }
+</style>
+</head>
+<body>
+  <table>
+    <tr><td class="n">1</td><td><div class="bar" style="width:4px"></div></td><td class="v">4px</td></tr>
+    <tr><td class="n">2</td><td><div class="bar" style="width:8px"></div></td><td class="v">8px</td></tr>
+    <tr><td class="n">3</td><td><div class="bar" style="width:12px"></div></td><td class="v">12px</td></tr>
+    <tr><td class="n">4</td><td><div class="bar" style="width:16px"></div></td><td class="v">16px</td></tr>
+    <tr><td class="n">6</td><td><div class="bar" style="width:24px"></div></td><td class="v">24px</td></tr>
+    <tr><td class="n">8</td><td><div class="bar" style="width:32px"></div></td><td class="v">32px</td></tr>
+    <tr><td class="n">12</td><td><div class="bar" style="width:48px"></div></td><td class="v">48px</td></tr>
+  </table>
+</body>
+</html>

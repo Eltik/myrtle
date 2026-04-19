@@ -1,8 +1,19 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { env } from "#/env";
 
 export function cn(...inputs: ClassValue[]): string {
     return twMerge(clsx(inputs));
+}
+
+/**
+ * Build a backend CDN URL for an operator avatar by char_id.
+ * Returns null when the char_id is missing so callers can render a fallback.
+ */
+export function operatorAvatarUrl(charId: string | null | undefined): string | null {
+    if (!charId) return null;
+    const base = env.VITE_BACKEND_URL ?? "";
+    return `${base}/api/avatar/${encodeURIComponent(charId)}`;
 }
 
 type User = {

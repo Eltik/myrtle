@@ -12,6 +12,7 @@ pub mod gacha;
 pub mod health;
 pub mod leaderboard;
 pub mod operator_notes;
+pub mod operators;
 pub mod roster;
 pub mod search;
 pub mod static_data;
@@ -57,6 +58,7 @@ pub fn router() -> Router<AppState> {
         .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))
         .route("/stats", get(stats::stats))
         .route("/admin/stats", get(stats::admin_stats))
+        .route("/operators/index", get(operators::index))
         .route("/dps/operators", get(dps::operators))
         .route("/dps/calculate", post(dps::calculate))
         .route("/operator-notes", get(operator_notes::list))

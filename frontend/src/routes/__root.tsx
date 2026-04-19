@@ -11,6 +11,7 @@ import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import StoreDevtools from "../lib/demo-store-devtools";
 import appCss from "../styles.css?url";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
+import { CommandProvider } from "#/lib/command-context";
 
 interface MyRouterContext {
     queryClient: QueryClient;
@@ -66,11 +67,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <HeadContent />
             </head>
             <body className="font-sans antialiased wrap-anywhere selection:bg-primary">
-                <Header />
-                <ToastProvider>
-                    <AnchoredToastProvider>{children}</AnchoredToastProvider>
-                </ToastProvider>
-                <Footer />
+                <CommandProvider>
+                    <Header />
+                    <ToastProvider>
+                        <AnchoredToastProvider>{children}</AnchoredToastProvider>
+                    </ToastProvider>
+                    <Footer />
+                </CommandProvider>
                 <TanStackDevtools
                     config={{
                         position: "bottom-right",

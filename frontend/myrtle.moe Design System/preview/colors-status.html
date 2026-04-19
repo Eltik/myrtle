@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colors — status (dark)</title>
+<style>
+  /* Self-contained dark tokens so this card stays dark regardless of parent theme. */
+  :root {
+    --bg: oklch(0.13 0.005 285);
+    --card: oklch(0.17 0.005 285);
+    --border: oklch(0.28 0.005 285);
+    --fg: oklch(0.97 0.005 285);
+    --muted: oklch(0.65 0.01 285);
+
+    --info: #60a5fa;             /* blue-400 */
+    --info-fg: #93c5fd;          /* blue-300 */
+    --success: #34d399;          /* emerald-400 */
+    --success-fg: #6ee7b7;       /* emerald-300 */
+    --warning: #fbbf24;          /* amber-400 */
+    --warning-fg: #fcd34d;       /* amber-300 */
+    --destructive: #ef8880;      /* v3 dark-destructive */
+    --destructive-fg: #fca5a5;
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Inter", ui-sans-serif, system-ui; }
+  body { padding: 20px; }
+
+  .head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 14px; }
+  .title { font: 700 11px/1 "Inter"; letter-spacing: 0.22em; text-transform: uppercase; color: #ffc4bd; }
+  .hint { font: 500 11px/1 "Geist Mono", ui-monospace, monospace; color: var(--muted); }
+
+  .row { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .sw { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--card); }
+  .chip {
+    height: 52px; display:flex; align-items:center; justify-content:space-between;
+    padding: 0 12px; font: 600 12px/1 "Inter";
+    color: oklch(0.13 0.005 285);
+  }
+  .chip svg { width: 14px; height: 14px; }
+  .meta { padding: 10px 12px; border-top: 1px solid var(--border); }
+  .pill {
+    display:inline-flex; align-items:center; gap: 6px;
+    padding: 3px 8px; border-radius: 999px;
+    font: 600 10.5px/1 "Inter"; letter-spacing: 0.01em;
+    border: 1px solid;
+  }
+  .pill-dot { width: 6px; height: 6px; border-radius: 999px; }
+  .pill.info    { background: color-mix(in srgb, var(--info) 14%, transparent);       color: var(--info-fg);     border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+  .pill.info .pill-dot    { background: var(--info); }
+  .pill.success { background: color-mix(in srgb, var(--success) 14%, transparent);    color: var(--success-fg);  border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+  .pill.success .pill-dot { background: var(--success); }
+  .pill.warning { background: color-mix(in srgb, var(--warning) 14%, transparent);    color: var(--warning-fg);  border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
+  .pill.warning .pill-dot { background: var(--warning); }
+  .pill.error   { background: color-mix(in srgb, var(--destructive) 14%, transparent);color: var(--destructive-fg); border-color: color-mix(in srgb, var(--destructive) 30%, transparent); }
+  .pill.error .pill-dot   { background: var(--destructive); }
+  .h { font: 400 10.5px/1.2 "Geist Mono", ui-monospace, monospace; color: var(--muted); margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="title">Colors · Status</span>
+    <span class="hint">dark-mode tokens · pills use 14% surface + 30% border</span>
+  </div>
+
+  <div class="row">
+    <div class="sw">
+      <div class="chip" style="background: var(--info)">
+        info
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+      <div class="meta">
+        <span class="pill info"><span class="pill-dot"></span>syncing</span>
+        <div class="h">blue-400 · on dark</div>
+      </div>
+    </div>
+
+    <div class="sw">
+      <div class="chip" style="background: var(--success)">
+        success
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <div class="meta">
+        <span class="pill success"><span class="pill-dot"></span>saved</span>
+        <div class="h">emerald-400 · on dark</div>
+      </div>
+    </div>
+
+    <div class="sw">
+      <div class="chip" style="background: var(--warning)">
+        warning
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 18H2L12 3z"/><path d="M12 9v4M12 17h.01"/></svg>
+      </div>
+      <div class="meta">
+        <span class="pill warning"><span class="pill-dot"></span>stale</span>
+        <div class="h">amber-400 · on dark</div>
+      </div>
+    </div>
+
+    <div class="sw">
+      <div class="chip" style="background: var(--destructive); color: oklch(0.97 0.005 285)">
+        destructive
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+      </div>
+      <div class="meta">
+        <span class="pill error"><span class="pill-dot"></span>failed</span>
+        <div class="h">coral-red · dark variant</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

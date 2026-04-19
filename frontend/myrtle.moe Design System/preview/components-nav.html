@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<title>Nav + tabs</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  /* Dark backdrop with faint coral wash on top-right, echoing the v1 hero */
+  body::before {
+    content: ""; position: fixed; inset: -20% -20% auto auto;
+    width: 70%; height: 60%; pointer-events: none; z-index: 0;
+    background: radial-gradient(closest-side, oklch(0.75 0.15 25 / 0.10), transparent 70%);
+  }
+  .page { position: relative; z-index: 1; padding: 20px; }
+
+  .bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 14px;
+    border: 1px solid oklch(1 0 0 / 0.06);
+    border-radius: 14px;
+    background: linear-gradient(180deg,
+      oklch(0.18 0.008 285 / 0.72) 0%,
+      oklch(0.14 0.006 285 / 0.60) 100%);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.05),
+      inset 0 -1px 0 oklch(0 0 0 / 0.2),
+      0 10px 30px oklch(0 0 0 / 0.35),
+      0 0 0 1px oklch(1 0 0 / 0.02);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+  .bezel {
+    width: 22px; height: 22px; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 120% at 20% 10%, #ffd4d0 0%, #ffc4bd 45%, #f08a84 100%);
+    color: oklch(0.13 0.005 285);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.35),
+      inset 0 -1px 0 oklch(0 0 0 / 0.18),
+      0 0 0 1px oklch(0.55 0.18 25 / 0.55),
+      0 0 14px oklch(0.75 0.15 25 / 0.35);
+  }
+  .bezel svg { width: 12px; height: 12px; }
+
+  .nav { display: flex; gap: 2px; margin-left: 8px; }
+  .nav a {
+    position: relative; display: inline-flex; align-items: center;
+    padding: 7px 12px; border-radius: 8px;
+    font: 500 13px/1 "Inter";
+    color: var(--muted-foreground);
+    text-decoration: none;
+    transition: color 160ms ease, background-color 160ms ease;
+  }
+  .nav a:hover { color: var(--foreground); background: oklch(0.22 0.005 285 / 0.6); }
+  .nav a.active {
+    color: var(--foreground);
+    background: linear-gradient(180deg, oklch(0.24 0.025 25 / 0.5), oklch(0.2 0.02 25 / 0.35));
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.05),
+      inset 0 -1px 0 oklch(0 0 0 / 0.1);
+  }
+  .nav a::after {
+    content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px;
+    height: 2px; border-radius: 2px;
+    background: var(--primary);
+    box-shadow: 0 0 8px oklch(0.75 0.15 25 / 0.6);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 170ms ease;
+  }
+  .nav a:hover::after, .nav a.active::after { transform: scaleX(1); }
+
+  .spacer { flex: 1; }
+
+  .kbd {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px 5px 11px; border-radius: 999px;
+    font: 500 11.5px/1 "Inter"; color: var(--muted-foreground);
+    background: oklch(0.18 0.008 285 / 0.7);
+    border: 1px solid oklch(1 0 0 / 0.05);
+  }
+  .kbd .k {
+    font: 500 10px/1 "Geist Mono", monospace;
+    padding: 3px 6px; border-radius: 4px;
+    background: oklch(0.22 0.005 285);
+    color: var(--foreground);
+    border: 1px solid oklch(1 0 0 / 0.06);
+    box-shadow: inset 0 -1px 0 oklch(0 0 0 / 0.25);
+  }
+
+  .pill {
+    padding: 4px 10px; border-radius: 999px;
+    font: 500 11.5px/1 "Geist Mono", ui-monospace, monospace;
+    background: oklch(0.22 0.005 285 / 0.8);
+    color: var(--muted-foreground);
+    border: 1px solid oklch(1 0 0 / 0.04);
+  }
+
+  .caption {
+    margin-top: 16px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    font: 500 10.5px/1 "Geist Mono", ui-monospace, monospace;
+    color: var(--muted-foreground); letter-spacing: 0.04em;
+  }
+  .caption .lbl {
+    font: 700 10.5px/1 "Inter"; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--primary);
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="bar">
+      <span class="brand">
+        <span class="bezel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </span>
+        myrtle.moe
+      </span>
+      <nav class="nav">
+        <a href="#">Home</a>
+        <a href="#" class="active">Operators</a>
+        <a href="#">Tools</a>
+        <a href="#">About</a>
+      </nav>
+      <span class="spacer"></span>
+      <span class="kbd">Search <span class="k">⌘K</span></span>
+      <span class="pill">v3 · EN</span>
+    </div>
+
+    <div class="caption">
+      <span class="lbl">Header · nav + underline</span>
+      <span>dark · sticky · backdrop-blur · coral underline on hover/active</span>
+    </div>
+  </div>
+</body>
+</html>

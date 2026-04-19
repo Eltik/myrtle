@@ -29,7 +29,7 @@ export function MobileNav({ items }: MobileNavProps) {
                     <CollapsibleTrigger>
                         <DrawerMenuItem className="justify-between">
                             {item.label}
-                             <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </DrawerMenuItem>
                     </CollapsibleTrigger>
                     <CollapsiblePanel className="flex flex-col border-l border-border ml-4 mt-1 gap-1">
@@ -53,7 +53,7 @@ export function MobileNav({ items }: MobileNavProps) {
 
     return (
         <Drawer position="left">
-            <DrawerTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Open navigation menu" />}>
+            <DrawerTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu" />}>
                 <MenuIcon className="h-5 w-5" />
             </DrawerTrigger>
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">

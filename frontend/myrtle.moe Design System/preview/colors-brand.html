@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colors — brand neutrals + coral</title>
+<style>
+  html, body { margin:0; background: oklch(0.13 0.005 285); color: oklch(0.97 0.005 285); font-family: "Inter", ui-sans-serif, system-ui; }
+  body { padding: 20px; }
+
+  .header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom: 14px; }
+  .title {
+    font: 700 11px/1 "Inter"; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #ffc4bd;
+  }
+  .hint {
+    font: 500 11px/1 "Geist Mono", ui-monospace, monospace; color: oklch(0.55 0.01 285);
+  }
+
+  /* Primary strip */
+  .primary-strip {
+    display:flex; align-items:stretch; border-radius: 12px; overflow: hidden;
+    border: 1px solid oklch(0.28 0.005 285);
+    margin-bottom: 14px;
+    box-shadow: 0 6px 18px #ffc4bd26;
+  }
+  .primary-strip .hero {
+    flex: 0 0 42%;
+    background:
+      radial-gradient(120% 160% at 15% 20%, #ffd4d0 0%, #ffc4bd 35%, #f08a84 100%);
+    padding: 16px 18px;
+    display:flex; flex-direction:column; justify-content:space-between; gap: 8px;
+    color: oklch(0.13 0.005 285);
+    position: relative;
+  }
+  .primary-strip .hero::after {
+    content:""; position:absolute; inset: 0;
+    background: radial-gradient(closest-side at 85% 100%, oklch(1 0 0 / 0.14), transparent 60%);
+  }
+  .primary-strip .hero b {
+    font: 700 14px/1 "Inter"; letter-spacing: -0.01em; z-index: 1;
+  }
+  .primary-strip .hero code {
+    font: 500 11px/1 "Geist Mono", monospace; z-index: 1;
+    background: oklch(0.13 0.005 285 / 0.25);
+    padding: 3px 6px; border-radius: 4px;
+    width: fit-content;
+    color: oklch(0.13 0.005 285);
+  }
+  .primary-strip .scale { flex: 1; display:grid; grid-template-columns: repeat(5, 1fr); }
+  .primary-strip .scale .cell { display:flex; align-items:flex-end; padding: 8px 10px; color: oklch(0.13 0.005 285); font: 500 10px/1 "Geist Mono", monospace; }
+  .primary-strip .scale .cell.dark { color: oklch(0.97 0.005 285); }
+
+  /* Neutral ramp */
+  .neutral-title { font: 500 11px/1 "Geist Mono", monospace; color: oklch(0.55 0.01 285); margin-bottom: 6px; }
+  .neutrals { display:grid; grid-template-columns: repeat(11, 1fr); border-radius: 8px; overflow: hidden; border: 1px solid oklch(0.28 0.005 285); }
+  .neutrals .n { height: 40px; position: relative; }
+  .neutrals .n span {
+    position: absolute; left: 6px; bottom: 4px;
+    font: 500 9px/1 "Geist Mono", monospace; color: oklch(0.97 0.005 285 / 0.72);
+  }
+  .neutrals .n.light span { color: oklch(0.13 0.005 285 / 0.72); }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="title">Colors · Brand</span>
+    <span class="hint">dark neutrals + coral primary · #ffc4bd</span>
+  </div>
+
+  <div class="primary-strip">
+    <div class="hero">
+      <b>Primary</b>
+      <code>#ffc4bd</code>
+    </div>
+    <div class="scale">
+      <div class="cell dark" style="background: #6e3a36">−2</div>
+      <div class="cell dark" style="background: #f08a84">−1</div>
+      <div class="cell" style="background: #ffc4bd">base</div>
+      <div class="cell" style="background: oklch(0.85 0.11 25)">+1</div>
+      <div class="cell" style="background: #fee7e4">+2</div>
+    </div>
+  </div>
+
+  <div class="neutral-title">neutrals · oklch 285 hue</div>
+  <div class="neutrals">
+    <div class="n" style="background: oklch(0.13 0.005 285)"><span>0.13</span></div>
+    <div class="n" style="background: oklch(0.17 0.005 285)"><span>0.17</span></div>
+    <div class="n" style="background: oklch(0.22 0.005 285)"><span>0.22</span></div>
+    <div class="n" style="background: oklch(0.28 0.005 285)"><span>0.28</span></div>
+    <div class="n" style="background: oklch(0.45 0.01 285)"><span>0.45</span></div>
+    <div class="n" style="background: oklch(0.55 0.01 285)"><span>0.55</span></div>
+    <div class="n light" style="background: oklch(0.65 0.01 285)"><span>0.65</span></div>
+    <div class="n light" style="background: oklch(0.80 0.005 285)"><span>0.80</span></div>
+    <div class="n light" style="background: oklch(0.88 0.005 285)"><span>0.88</span></div>
+    <div class="n light" style="background: oklch(0.94 0.005 285)"><span>0.94</span></div>
+    <div class="n light" style="background: oklch(0.97 0.005 285)"><span>0.97</span></div>
+  </div>
+</body>
+</html>

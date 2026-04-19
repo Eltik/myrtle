@@ -3,6 +3,7 @@ pub mod dps;
 pub mod gacha;
 pub mod leaderboard;
 pub mod operator_notes;
+pub mod operators;
 pub mod roster;
 pub mod search;
 pub mod static_data;
