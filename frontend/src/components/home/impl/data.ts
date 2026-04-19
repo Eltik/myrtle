@@ -1,14 +1,3 @@
-export const ROLE_CLS: Record<string, string> = {
-    Vanguard: "c-vanguard",
-    Supporter: "c-support",
-    Defender: "c-defender",
-    Sniper: "c-sniper",
-    Caster: "c-caster",
-    Medic: "c-medic",
-    Guard: "c-guard",
-    Specialist: "c-special",
-};
-
 export interface Operator {
     id: string;
     name: string;

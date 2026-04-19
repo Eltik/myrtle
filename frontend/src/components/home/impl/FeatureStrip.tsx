@@ -1,4 +1,5 @@
 import { Kicker } from "#/components/ui/kicker";
+import { featAccentVars } from "#/lib/role-styles";
 
 const FEATURES = [
     {
@@ -57,16 +58,16 @@ function FeatIcon({ name }: { name: string }) {
 
 export default function FeatureStrip() {
     return (
-        <section className="features page-wrap">
+        <section className="page-wrap grid grid-cols-1 gap-3.5 py-2 md:grid-cols-3">
             {FEATURES.map((f, i) => (
-                <div className={`feat-card accent-${f.accent}`} key={i}>
+                <div className="feat-card" key={i} style={featAccentVars(f.accent)}>
                     <div className="feat-icon">
                         <FeatIcon name={f.icon} />
                     </div>
                     <Kicker className="mb-0">{f.k}</Kicker>
-                    <div className="feat-title">{f.t}</div>
-                    <p className="feat-desc">{f.d}</p>
-                    <a className="feat-link" href="#">
+                    <div className="font-sans text-[17px] font-semibold leading-snug tracking-tight text-foreground">{f.t}</div>
+                    <p className="my-1 mb-3 font-sans text-[13.5px] leading-[1.55] text-muted-foreground">{f.d}</p>
+                    <a className="mt-auto inline-flex cursor-pointer items-center gap-1.5 font-sans text-[12.5px] font-medium leading-none text-primary no-underline transition-[gap] hover:gap-2.5 [&>svg]:h-3 [&>svg]:w-3" href="#">
                         Explore{" "}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M5 12h14" />

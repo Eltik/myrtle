@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::core::gamedata::types::operator::{OperatorPosition, OperatorProfession, OperatorRarity};
+use crate::core::gamedata::types::operator::{
+    OperatorPosition, OperatorProfession, OperatorRarity,
+};
 
 /// Compact operator record for client-side search palettes and autocompletes.
 /// Order of fields matches the JSON contract — keep stable.
@@ -37,9 +39,9 @@ pub async fn get_index(state: &AppState) -> Result<Vec<OperatorIndexEntry>, ApiE
     let mut entries: Vec<OperatorIndexEntry> = gd
         .operators
         .iter()
-        .filter_map(|(id, op)| {
+        .map(|(id, op)| {
             let operator_id = op.id.clone().unwrap_or_else(|| id.clone());
-            Some(OperatorIndexEntry {
+            OperatorIndexEntry {
                 id: operator_id,
                 name: op.name.clone(),
                 appellation: op.appellation.clone(),
@@ -50,7 +52,7 @@ pub async fn get_index(state: &AppState) -> Result<Vec<OperatorIndexEntry>, ApiE
                 tag_list: op.tag_list.clone(),
                 nation_id: op.nation_id.clone(),
                 is_not_obtainable: op.is_not_obtainable,
-            })
+            }
         })
         .collect();
     entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
