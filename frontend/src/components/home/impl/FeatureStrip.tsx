@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Kicker } from "#/components/ui/kicker";
 import { featAccentVars } from "#/lib/role-styles";
 
@@ -8,6 +9,7 @@ const FEATURES = [
         t: "400+ operators, instant search",
         d: "Skills, talents, modules, skins, voice lines. Filter by faction, archetype, or tag.",
         accent: "coral",
+        href: "/operators",
     },
     {
         icon: "sync",
@@ -15,6 +17,7 @@ const FEATURES = [
         t: "Your account, mirrored",
         d: "Link a Yostar account and see your live box, E2 progress, base layout in real time.",
         accent: "mint",
+        href: "/players/leaderboard",
     },
     {
         icon: "bolt",
@@ -22,6 +25,7 @@ const FEATURES = [
         t: "DPS, recruit, randomizer",
         d: "Interactive calculators and community-maintained tier lists for every stage meta.",
         accent: "amber",
+        href: "/tools/recruit",
     },
 ];
 
@@ -67,13 +71,13 @@ export default function FeatureStrip() {
                     <Kicker className="mb-0">{f.k}</Kicker>
                     <div className="font-sans text-[17px] font-semibold leading-snug tracking-tight text-foreground">{f.t}</div>
                     <p className="my-1 mb-3 font-sans text-[13.5px] leading-[1.55] text-muted-foreground">{f.d}</p>
-                    <a className="mt-auto inline-flex cursor-pointer items-center gap-1.5 font-sans text-[12.5px] font-medium leading-none text-primary no-underline transition-[gap] hover:gap-2.5 [&>svg]:h-3 [&>svg]:w-3" href="#">
+                    <Link to={f.href} className="group mt-auto inline-flex cursor-pointer items-center font-sans text-[12.5px] font-medium leading-none text-primary no-underline [&>svg]:h-3 [&>svg]:w-3">
                         Explore{" "}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="ml-1.5 transition-[margin-left] duration-200 group-hover:ml-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M5 12h14" />
                             <path d="m12 5 7 7-7 7" />
                         </svg>
-                    </a>
+                    </Link>
                 </div>
             ))}
         </section>

@@ -328,11 +328,9 @@ struct RecentUserRow {
 }
 
 async fn fetch_rosters_stats(db: &PgPool) -> Result<RostersStats, sqlx::Error> {
-    let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(DISTINCT user_id) FROM user_operators",
-    )
-    .fetch_one(db)
-    .await?;
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT user_id) FROM user_operators")
+        .fetch_one(db)
+        .await?;
 
     Ok(RostersStats { total })
 }

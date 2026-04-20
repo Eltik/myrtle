@@ -1,6 +1,7 @@
 import type { ComponentRenderFn, DialogTriggerState } from "@base-ui/react";
 import { useMutation } from "@tanstack/react-query";
-import { type HTMLProps, type JSXElementConstructor, type ReactElement, useEffect, useRef, useState } from "react";
+import { useStore } from "@tanstack/react-store";
+import { type HTMLProps, type JSXElementConstructor, type ReactElement, useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Field, FieldLabel } from "#/components/ui/field";
@@ -13,6 +14,7 @@ import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import type { AKServer } from "#/lib/auth/login";
 import { sendCodeFn } from "#/lib/auth/server";
+import { authActions, authStore } from "#/lib/auth/store";
 
 export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean }[] = [
     { value: "en", label: "Global (EN)", disabled: false },
@@ -38,66 +40,35 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
     const isOpen = openProp !== undefined ? openProp : internalOpen;
     const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
 
-    const [email, setEmail] = useState("");
-    const [otp, setOTP] = useState("");
-    const [server, setServer] = useState<AKServer>("en");
-    const [isOTPSent, setIsOTPSent] = useState(false);
-    const [cooldown, setCooldown] = useState(0);
-    const cooldownRef = useRef<NodeJS.Timeout | null>(null);
+    const email = useStore(authStore, (s) => s.login.email);
+    const otp = useStore(authStore, (s) => s.login.otp);
+    const server = useStore(authStore, (s) => s.login.server);
+    const isOTPSent = useStore(authStore, (s) => s.login.isOTPSent);
+    const cooldownUntil = useStore(authStore, (s) => s.login.cooldownUntil);
+
+    const [cooldown, setCooldown] = useState(() => Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)));
 
     useEffect(() => {
-        return () => {
-            if (cooldownRef.current) clearInterval(cooldownRef.current);
-        };
-    }, []);
-
-    const resetForm = () => {
-        setIsOTPSent(false);
-        setOTP("");
-        if (cooldownRef.current) {
-            clearInterval(cooldownRef.current);
-            cooldownRef.current = null;
+        if (cooldownUntil <= Date.now()) {
+            setCooldown(0);
+            return;
         }
-        setCooldown(0);
-    };
-
-    const handleOpenChange = (open: boolean) => {
-        setOpen(open);
-        if (!open) {
-            // Optional: reset form on close if desired,
-            // but usually better to keep it if they accidentally closed it
-        }
-    };
+        const tick = () => setCooldown(Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)));
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [cooldownUntil]);
 
     const sendOTP = useMutation({
         mutationFn: (vars: { email: string; server: AKServer }) => sendCodeFn({ data: vars }),
         onSuccess: () => {
-            setIsOTPSent(true);
-            setCooldown(60);
-
+            authActions.markOTPSent(60);
             toastManager.add({
                 id: "otp-success",
                 title: "Sent code",
                 description: "Sent OTP code to your email.",
                 type: "success",
             });
-
-            if (cooldownRef.current) {
-                clearInterval(cooldownRef.current);
-            }
-
-            cooldownRef.current = setInterval(() => {
-                setCooldown((prev) => {
-                    if (prev <= 1) {
-                        if (cooldownRef.current) {
-                            clearInterval(cooldownRef.current);
-                            cooldownRef.current = null;
-                        }
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
         },
         onError: (err) =>
             toastManager.add({
@@ -111,17 +82,13 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
     const loginMut = useMutation({
         mutationFn: (vars: { email: string; code: string; server: AKServer }) => login(vars),
         onSuccess: () => {
-            if (cooldownRef.current) {
-                clearInterval(cooldownRef.current);
-                cooldownRef.current = null;
-            }
             toastManager.add({
                 id: "login-success",
                 title: "Logged in successfully.",
                 type: "success",
             });
-            handleOpenChange(false);
-            resetForm();
+            setOpen(false);
+            authActions.resetLoginForm();
         },
         onError: (err) =>
             toastManager.add({
@@ -133,7 +100,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
     });
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <Dialog open={isOpen} onOpenChange={setOpen}>
             {trigger && <DialogTrigger render={trigger} />}
             <DialogPopup className="sm:max-w-sm">
                 <Form
@@ -154,12 +121,12 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
                     <DialogPanel className="grid gap-4">
                         <Field>
                             <FieldLabel>Email</FieldLabel>
-                            <Input placeholder="doctor@rhodes.island" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isOTPSent || sendOTP.isPending} />
+                            <Input placeholder="doctor@rhodes.island" type="email" value={email} onChange={(e) => authActions.setLoginEmail(e.target.value)} disabled={isOTPSent || sendOTP.isPending} />
                         </Field>
                         {isOTPSent ? (
                             <Field>
                                 <FieldLabel>Code</FieldLabel>
-                                <OTPField aria-label="One-time password" length={OTP_LENGTH} onValueChange={setOTP} size="lg">
+                                <OTPField aria-label="One-time password" length={OTP_LENGTH} value={otp} onValueChange={authActions.setLoginOTP} size="lg">
                                     {OTP_SLOT_KEYS.map((slotKey, index) => (
                                         <OTPFieldInput key={slotKey} aria-label={`Character ${index + 1} of ${OTP_LENGTH}`} />
                                     ))}
@@ -173,7 +140,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
                                 defaultValue="en"
                                 value={server}
                                 onValueChange={(v) => {
-                                    if (v) setServer(v as AKServer);
+                                    if (v) authActions.setLoginServer(v as AKServer);
                                 }}
                                 disabled={isOTPSent || sendOTP.isPending}
                             >
@@ -224,7 +191,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialog
                                                 Resend code
                                             </Button>
                                         )}
-                                        <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={resetForm}>
+                                        <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetLoginOTP}>
                                             Change email
                                         </Button>
                                     </div>
