@@ -46,7 +46,7 @@ export default function Header() {
                             </svg>
                         </span>
                         <span className="font-semibold tracking-tight text-[15px]">myrtle.moe</span>
-                        <span className="rounded-[5px] border border-white/5 bg-[oklch(0.22_0.005_285/0.7)] px-1.5 py-0.75 font-mono text-[10.5px] font-medium leading-none text-muted-foreground">v3</span>
+                        <span className="rounded-[5px] border border-white/5 not-dark:bg-[oklch(0.22_0.005_285/0.1)] dark:bg-[oklch(0.22_0.005_285/0.7)] px-1.5 py-0.75 font-mono text-[10.5px] font-medium leading-none text-muted-foreground">v3</span>
                     </Link>
 
                     <MainNav items={navItems} onOpenCommand={openCmd} />
