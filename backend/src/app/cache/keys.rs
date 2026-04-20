@@ -71,7 +71,7 @@ impl CacheKey<'_> {
             CacheKey::Search { .. } => Duration::from_secs(120), // 2 min
             CacheKey::TierList { .. } => Duration::from_secs(600), // 10 min
             CacheKey::GameSession { .. } => Duration::from_secs(3600), // 1 hour
-            CacheKey::PortalSession { .. } => Duration::from_secs(3600), // 1 hour
+            CacheKey::PortalSession { .. } => Duration::from_secs(604800), // 1 week
             CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
             CacheKey::GachaEnhancedStats { .. } => Duration::from_secs(600), // 10 min
         }

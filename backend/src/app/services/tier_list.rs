@@ -14,6 +14,15 @@ pub struct TierListDetail {
     pub tiers: Vec<TierDetail>,
     pub stats: Option<TierListStats>,
     pub flair: Option<TierListFlair>,
+    pub author: Option<TierListAuthor>,
+}
+
+#[derive(Serialize, sqlx::FromRow)]
+pub struct TierListAuthor {
+    pub id: Uuid,
+    pub uid: String,
+    pub nickname: Option<String>,
+    pub avatar_id: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -77,12 +86,24 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
         Some(id) => queries::get_flair_by_id(&state.db, id).await?,
         None => None,
     };
+    let author = match list.created_by {
+        Some(uid) => {
+            sqlx::query_as::<_, TierListAuthor>(
+                "SELECT id, uid, nickname, avatar_id FROM users WHERE id = $1",
+            )
+            .bind(uid)
+            .fetch_optional(&state.db)
+            .await?
+        }
+        None => None,
+    };
 
     Ok(TierListDetail {
         list,
         tiers: tier_details,
         stats,
         flair,
+        author,
     })
 }
 

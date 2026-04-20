@@ -184,7 +184,7 @@ impl AssetIndex {
 }
 
 fn classify_dir(dir_name: &str) -> Option<AssetKind> {
-    if dir_name.starts_with("ui_char_avatar_") {
+    if dir_name.starts_with("ui_char_avatar_") || dir_name.starts_with("ui_player_avatar_list_") {
         Some(AssetKind::Avatar)
     } else if dir_name.starts_with("arts_shop_skin_portrait_") {
         Some(AssetKind::SkinPortrait)
