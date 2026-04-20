@@ -340,6 +340,9 @@ pub async fn record_view(
     user_id: Option<Uuid>,
     session_hash: Option<&str>,
 ) -> Result<bool, sqlx::Error> {
+    // Guard against lists without a stats row (defensive; backfill + create should handle it).
+    ensure_stats_row(pool, tier_list_id).await?;
+
     // Dedupe check
     let dedupe_exists: bool = match (user_id, session_hash) {
         (Some(uid), _) => sqlx::query_scalar(
