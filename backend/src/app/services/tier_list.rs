@@ -12,6 +12,8 @@ pub struct TierListDetail {
     #[serde(flatten)]
     pub list: TierList,
     pub tiers: Vec<TierDetail>,
+    pub stats: Option<TierListStats>,
+    pub flair: Option<TierListFlair>,
 }
 
 #[derive(Serialize)]
@@ -70,9 +72,17 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
         tier_details.push(TierDetail { tier, placements });
     }
 
+    let stats = queries::get_stats(&state.db, list.id).await?;
+    let flair = match list.flair_id {
+        Some(id) => queries::get_flair_by_id(&state.db, id).await?,
+        None => None,
+    };
+
     Ok(TierListDetail {
         list,
         tiers: tier_details,
+        stats,
+        flair,
     })
 }
 
@@ -98,9 +108,9 @@ pub async fn create(
     }
 
     let slug = generate_slug(name);
-    queries::create(&state.db, name, &slug, description, list_type, user_id)
-        .await
-        .map_err(|e| e.into())
+    let list = queries::create(&state.db, name, &slug, description, list_type, user_id).await?;
+    queries::ensure_stats_row(&state.db, list.id).await?;
+    Ok(list)
 }
 
 pub async fn update_list(
