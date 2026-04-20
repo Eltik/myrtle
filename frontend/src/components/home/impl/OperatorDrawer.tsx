@@ -11,8 +11,8 @@ export default function OperatorDrawer({ op, onClose }: { op: Operator; onClose:
         <Sheet open onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="flex flex-col gap-4 p-6">
                 <Kicker>Operator</Kicker>
-                <div className="flex h-[120px] w-full flex-col items-center justify-center gap-2 rounded-xl" style={{ background: ROLE_DRAWER_GRADIENT[op.role as Role] }}>
-                    <span className="inline-flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-card/55 font-sans text-[32px] font-bold tracking-tight leading-none text-foreground">
+                <div className="flex h-30 w-full flex-col items-center justify-center gap-2 rounded-xl" style={{ background: ROLE_DRAWER_GRADIENT[op.role as Role] }}>
+                    <span className="inline-flex h-21 w-21 items-center justify-center overflow-hidden rounded-2xl border border-border/70 bg-card/55 font-sans text-[32px] font-bold tracking-tight leading-none text-foreground">
                         <OperatorAvatar charId={op.id} name={op.name} />
                     </span>
                     <span className="font-sans text-sm font-medium leading-none text-primary tracking-wider">{"★".repeat(op.rarity)}</span>

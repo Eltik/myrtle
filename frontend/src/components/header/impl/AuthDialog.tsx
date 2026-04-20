@@ -1,3 +1,6 @@
+import type { ComponentRenderFn, DialogTriggerState } from "@base-ui/react";
+import { useMutation } from "@tanstack/react-query";
+import { type HTMLProps, type JSXElementConstructor, type ReactElement, useEffect, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Field, FieldLabel } from "#/components/ui/field";
@@ -7,11 +10,9 @@ import { OTPField, OTPFieldInput } from "#/components/ui/otp-field";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Spinner } from "#/components/ui/spinner";
 import { toastManager } from "#/components/ui/toast";
+import { useAuth } from "#/hooks/use-auth";
 import type { AKServer } from "#/lib/auth/login";
 import { sendCodeFn } from "#/lib/auth/server";
-import { useAuth } from "#/hooks/use-auth";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
 
 export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean }[] = [
     { value: "en", label: "Global (EN)", disabled: false },
@@ -26,7 +27,7 @@ const OTP_LENGTH = 6;
 const OTP_SLOT_KEYS = Array.from({ length: OTP_LENGTH }, (_, i) => `otp-slot-${i}`);
 
 interface AuthDialogProps {
-    trigger?: React.ReactNode;
+    trigger?: ReactElement<unknown, string | JSXElementConstructor<any>> | ComponentRenderFn<HTMLProps<any>, DialogTriggerState> | undefined;
     onOpenChange?: (open: boolean) => void;
     open?: boolean;
 }

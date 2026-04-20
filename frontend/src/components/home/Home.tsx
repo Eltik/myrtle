@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useCommand } from "#/lib/command-context";
-import Hero from "./impl/Hero";
-import FeatureStrip from "./impl/FeatureStrip";
-import TierLists from "./impl/TierLists";
-import OperatorDrawer from "./impl/OperatorDrawer";
 import type { Operator } from "./impl/data";
+import FeatureStrip from "./impl/FeatureStrip";
+import Hero from "./impl/Hero";
+import OperatorDrawer from "./impl/OperatorDrawer";
+import TierLists from "./impl/TierLists";
 
 export default function Home() {
     const { open: openCmd } = useCommand();
