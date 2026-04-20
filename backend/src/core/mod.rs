@@ -4,3 +4,4 @@ pub mod dps_watcher;
 pub mod gamedata;
 pub mod grade;
 pub mod hypergryph;
+pub mod trending_job;
