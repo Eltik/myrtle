@@ -14,7 +14,7 @@ export interface Tool {
 export const TOOLS: Tool[] = [
     {
         id: "dps",
-        href: "/dps",
+        href: "/tools/dps",
         label: "DPS charts",
         desc: "Interactive damage curves per skill",
         icon: "chart",
@@ -24,7 +24,7 @@ export const TOOLS: Tool[] = [
     },
     {
         id: "recruitment",
-        href: "/recruitment",
+        href: "/tools/recruitment",
         label: "Recruitment calculator",
         desc: "Guaranteed tag combos · 1h parity",
         icon: "calc",
@@ -34,7 +34,7 @@ export const TOOLS: Tool[] = [
     },
     {
         id: "tier-lists",
-        href: "/tier-lists",
+        href: "/tools/tier-lists",
         label: "Tier lists",
         desc: "Community ranks · live voting",
         icon: "star",
@@ -44,7 +44,7 @@ export const TOOLS: Tool[] = [
     },
     {
         id: "randomizer",
-        href: "/randomizer",
+        href: "/tools/randomizer",
         label: "Randomizer",
         desc: "Pick a squad, break the meta",
         icon: "dice",

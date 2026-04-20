@@ -26,10 +26,10 @@ export default function CommandPreview() {
                     </div>
                     <div className="cmd-item">
                         <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT.Caster }}>
-                            <OperatorAvatar charId="char_213_mostma" name="Mostima" />
+                            <OperatorAvatar charId="char_002_amiya" name="Amiya" />
                         </span>
-                        <span className="cmd-primary">Mostima</span>
-                        <span className="cmd-meta">6★ · Caster · Mystic</span>
+                        <span className="cmd-primary">Amiya</span>
+                        <span className="cmd-meta">6★ · Caster · Core</span>
                     </div>
                     <div className="cmd-item">
                         <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT.Medic }}>

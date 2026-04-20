@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { operatorAvatarUrl } from "#/lib/utils";
+import { getAvatarById } from "#/lib/utils";
 
 interface OperatorAvatarProps {
     charId?: string | null;
@@ -14,12 +14,11 @@ interface OperatorAvatarProps {
  * (e.g. .op-chip, .tl-chip-initials, .drawer-initials).
  */
 export function OperatorAvatar({ charId, name, className }: OperatorAvatarProps) {
-    const src = operatorAvatarUrl(charId);
     const [failed, setFailed] = useState(false);
 
-    if (!src || failed) {
+    if (!charId || failed) {
         return <>{name.charAt(0).toUpperCase()}</>;
     }
 
-    return <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;
+    return <img src={getAvatarById(charId)} alt="" aria-hidden="true" loading="lazy" decoding="async" className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;
 }
