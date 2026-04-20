@@ -1,15 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, ChevronRightIcon, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { ChevronDown, Cog, ExternalLinkIcon, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
-import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerMenuTrigger, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
+import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
 import { cn, getAvatarSkinId } from "#/lib/utils";
-import type { NavItem } from "./MainNav";
-import { AuthDialog } from "./AuthDialog";
-import { Spinner } from "#/components/ui/spinner";
 import { ActiveIndicator } from "./ActiveIndicator";
-import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { AuthDialog } from "./AuthDialog";
+import type { NavItem } from "./MainNav";
 
 interface MobileNavProps {
     items: NavItem[];

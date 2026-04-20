@@ -11,6 +11,7 @@ pub struct StatsResponse {
     pub gacha: GachaPublicStats,
     pub game_data: GameDataStats,
     pub tier_lists: TierListStats,
+    pub rosters: RostersStats,
     pub computed_at: String,
 }
 
@@ -66,6 +67,12 @@ pub struct TierListStats {
     pub total_placements: i64,
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RostersStats {
+    pub total: i64,
+}
+
 pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
     let key = CacheKey::Stats;
     if let Some(cached) = state.cache.get::<StatsResponse>(&key).await {
@@ -73,10 +80,11 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
     }
 
     // Run all DB queries in parallel
-    let (user_row, gacha_row, tier_list_row) = tokio::try_join!(
+    let (user_row, gacha_row, tier_list_row, rosters_row) = tokio::try_join!(
         fetch_user_stats(&state.db),
         fetch_gacha_stats(&state.db),
         fetch_tier_list_stats(&state.db),
+        fetch_rosters_stats(&state.db),
     )?;
 
     // Game data stats are free — just read from memory
@@ -96,6 +104,7 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
         gacha: gacha_row,
         game_data,
         tier_lists: tier_list_row,
+        rosters: rosters_row,
         computed_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
     };
 
@@ -316,4 +325,14 @@ struct RecentUserRow {
     nickname: Option<String>,
     level: Option<i16>,
     created_at: chrono::DateTime<chrono::Utc>,
+}
+
+async fn fetch_rosters_stats(db: &PgPool) -> Result<RostersStats, sqlx::Error> {
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(DISTINCT user_id) FROM user_operators",
+    )
+    .fetch_one(db)
+    .await?;
+
+    Ok(RostersStats { total })
 }

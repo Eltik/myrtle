@@ -1,5 +1,5 @@
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { ROLE_CHIP_GRADIENT, ROLE_SOLID, tlAccentVars, type Role } from "#/lib/role-styles";
+import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
 import { OP_BY_ID, type Operator, type TierList } from "./data";
 
 export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect: (op: Operator) => void }) {
@@ -17,8 +17,8 @@ export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect:
     return (
         <article className="tl-card group" role="link" tabIndex={0} style={tlAccentVars(tl.accent)}>
             <div className="flex flex-col gap-1.5 px-4 pt-3.5 pb-2 pl-4.5">
-                <div className="inline-flex w-max max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-[3px] pl-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-wider text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--tl-a,var(--primary))] shadow-[0_0_6px_var(--tl-a,var(--primary))]" aria-hidden="true" />
+                <div className="inline-flex w-max max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.75 pl-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-wider text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-(--tl-a,var(--primary)) shadow-[0_0_6px_var(--tl-a,var(--primary))]" aria-hidden="true" />
                     <span>{tl.tag}</span>
                     {tl.hot && <span className="ml-0.5 font-semibold normal-case tracking-tight text-primary">· trending</span>}
                 </div>
@@ -27,7 +27,7 @@ export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect:
 
             <div className="flex flex-col gap-2.5 px-4 pt-0.5 pb-3 pl-4.5">
                 <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center rounded-[5px] bg-[var(--tl-a,var(--primary))] px-2 py-[3px] font-sans text-[10.5px] font-bold leading-none tracking-tight text-primary-foreground">S-tier</span>
+                    <span className="inline-flex items-center rounded-[5px] bg-(--tl-a,var(--primary)) px-2 py-0.75 font-sans text-[10.5px] font-bold leading-none tracking-tight text-primary-foreground">S-tier</span>
                     <span className="font-mono text-[11px] font-medium leading-none tracking-wide text-muted-foreground">{tl.tiers.S.length} picks</span>
                 </div>
                 <div className="flex min-w-0 flex-wrap gap-1.5">
@@ -35,7 +35,7 @@ export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect:
                         <button
                             key={op.id}
                             type="button"
-                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-muted py-[3px] pl-[3px] pr-2.5 font-sans text-[11.5px] font-medium leading-none text-foreground transition-[background-color,border-color,transform] hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--primary)_22%,var(--border))]"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-muted py-0.75 pl-0.75 pr-2.5 font-sans text-[11.5px] font-medium leading-none text-foreground transition-[background-color,border-color,transform] hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--primary)_22%,var(--border))]"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onSelect({ ...op, e: 2, lvl: 90, hp: 2020, atk: 510, def: 225, trust: 200, owned: true });
@@ -65,7 +65,7 @@ export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect:
 
             <div className="mt-auto flex items-center justify-between gap-2.5 border-t border-border bg-muted/30 px-4 pt-2.5 pb-3 pl-4.5">
                 <div className="flex min-w-0 items-center gap-2">
-                    <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-gradient-to-br from-muted to-border font-sans text-[9.5px] font-semibold leading-none tracking-tight text-foreground">{tl.author.initials}</span>
+                    <span className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full border border-border bg-linear-to-br from-muted to-border font-sans text-[9.5px] font-semibold leading-none tracking-tight text-foreground">{tl.author.initials}</span>
                     <span className="inline-flex min-w-0 items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[11.5px] leading-none text-muted-foreground">
                         <span className="font-medium text-foreground">{tl.author.name}</span>
                         <span className="opacity-50">·</span>
@@ -73,13 +73,13 @@ export default function TierListCard({ tl, onSelect }: { tl: TierList; onSelect:
                     </span>
                 </div>
                 <div className="inline-flex shrink-0 items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1 font-mono text-[11.5px] font-medium leading-none tracking-tight text-muted-foreground [&>svg]:h-[11px] [&>svg]:w-[11px] [&>svg]:opacity-80" title={`${tl.votes} upvotes`}>
+                    <span className="inline-flex items-center gap-1 font-mono text-[11.5px] font-medium leading-none tracking-tight text-muted-foreground [&>svg]:h-2.75 [&>svg]:w-2.75 [&>svg]:opacity-80" title={`${tl.votes} upvotes`}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m5 15 7-7 7 7" />
                         </svg>
                         {tl.votes > 999 ? (tl.votes / 1000).toFixed(1) + "k" : tl.votes}
                     </span>
-                    <span className="inline-flex items-center gap-1 font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-[13px] [&>svg]:w-[13px] [&>svg]:transition-transform group-hover:[&>svg]:translate-x-[3px]">
+                    <span className="inline-flex items-center gap-1 font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
                         Open
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M5 12h14" />

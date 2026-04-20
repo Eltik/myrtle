@@ -168,7 +168,7 @@ function OperatorSkeletons(): React.ReactElement {
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
                 <div key={i} className="flex items-center gap-2 px-2 py-1.5">
                     <Skeleton className="size-6 rounded-md" />
-                    <Skeleton className="h-3.5 flex-1 max-w-[140px]" />
+                    <Skeleton className="h-3.5 flex-1 max-w-35" />
                     <Skeleton className="h-3 w-16" />
                 </div>
             ))}

@@ -1,11 +1,11 @@
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, Cog, LayoutList, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Spinner } from "#/components/ui/spinner";
 import { getAvatarSkinId } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
-import { Link } from "@tanstack/react-router";
-import { ChevronDown, Cog, LayoutList, LogOut } from "lucide-react";
 import { AuthDialog } from "./AuthDialog";
 
 export default function UserMenu({ user, loading, logout }: { user: IUserProfile | null; loading: boolean; login: any; logout: () => Promise<void> }) {

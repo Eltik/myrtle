@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Kbd } from "#/components/ui/kbd";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
 
 export interface NavItem {
@@ -80,15 +80,15 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isAct
             <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
                 <DropdownMenuTrigger className={cn("nav-link", isActive && "is-active")} aria-expanded={open}>
                     {item.label}
-                    <ChevronDown className={cn("chev", open && "rotate-180 opacity-90")} />
+                    <ChevronDown className={cn("chev", open && "opacity-90")} />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className="min-w-[380px] p-2" onMouseEnter={openNow} onMouseLeave={closeSoon}>
+                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className="min-w-95 p-2" onMouseEnter={openNow} onMouseLeave={closeSoon}>
                     <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">Tools</div>
                     <div className="flex flex-col gap-px">
                         {item.items?.map((t) => (
                             <Link key={t.href} to={t.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors hover:bg-accent" onClick={() => setOpen(false)}>
                                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolsIcon name={t.icon} />}</span>
-                                <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                                <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                                     <span className="font-sans text-[13px] font-medium leading-none tracking-tight text-foreground">{t.label}</span>
                                     {t.desc && <span className="font-sans text-[11.5px] leading-snug text-muted-foreground">{t.desc}</span>}
                                 </span>
