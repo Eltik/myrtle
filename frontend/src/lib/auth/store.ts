@@ -2,7 +2,7 @@ import { Store } from "@tanstack/store";
 import type { AKServer } from "#/lib/auth/login";
 import type { IUserProfile } from "#/types/user";
 
-interface LoginFormState {
+interface ILoginFormState {
     email: string;
     server: AKServer;
     otp: string;
@@ -10,13 +10,13 @@ interface LoginFormState {
     cooldownUntil: number;
 }
 
-interface AuthState {
+interface IAuthState {
     user: IUserProfile | null;
     status: "idle" | "loading" | "ready";
-    login: LoginFormState;
+    login: ILoginFormState;
 }
 
-const initialLogin: LoginFormState = {
+const initialLogin: ILoginFormState = {
     email: "",
     server: "en",
     otp: "",
@@ -24,7 +24,7 @@ const initialLogin: LoginFormState = {
     cooldownUntil: 0,
 };
 
-export const authStore = new Store<AuthState>({ user: null, status: "idle", login: initialLogin });
+export const authStore = new Store<IAuthState>({ user: null, status: "idle", login: initialLogin });
 
 export const authActions = {
     setUser: (user: IUserProfile | null) => authStore.setState((s) => ({ ...s, user, status: "ready" })),

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -67,8 +68,8 @@ export default function TierLists() {
 
             {isLoading ? (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <Skeleton key={i} className="h-60 rounded-lg" />
+                    {["s1", "s2", "s3", "s4", "s5", "s6"].map((k) => (
+                        <Skeleton key={k} className="h-60 rounded-lg" />
                     ))}
                 </div>
             ) : isError ? (
@@ -83,17 +84,17 @@ export default function TierLists() {
                 </div>
             )}
 
-            <a
-                href="#"
+            <Link
+                to="/tier-lists"
                 className="mt-4.5 inline-flex w-max cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-transparent px-3.5 py-2.5 font-sans text-[12.5px] font-medium leading-none text-muted-foreground no-underline transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
             >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
                 <span>Browse all tier lists</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" role="image" aria-label="Right arrow">
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
                 </svg>
-            </a>
+            </Link>
         </section>
     );
 }

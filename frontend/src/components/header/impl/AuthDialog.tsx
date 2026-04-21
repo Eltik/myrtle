@@ -1,7 +1,7 @@
-import type { ComponentRenderFn, DialogTriggerState } from "@base-ui/react";
+import type { DialogTriggerProps } from "@base-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
-import { type HTMLProps, type JSXElementConstructor, type ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Field, FieldLabel } from "#/components/ui/field";
@@ -28,13 +28,13 @@ export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean
 const OTP_LENGTH = 6;
 const OTP_SLOT_KEYS = Array.from({ length: OTP_LENGTH }, (_, i) => `otp-slot-${i}`);
 
-interface AuthDialogProps {
-    trigger?: ReactElement<unknown, string | JSXElementConstructor<any>> | ComponentRenderFn<HTMLProps<any>, DialogTriggerState> | undefined;
+interface IAuthDialogProps {
+    trigger?: DialogTriggerProps["render"];
     onOpenChange?: (open: boolean) => void;
     open?: boolean;
 }
 
-export function AuthDialog({ trigger, onOpenChange, open: openProp }: AuthDialogProps) {
+export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialogProps) {
     const { login } = useAuth();
     const [internalOpen, setInternalOpen] = useState(false);
     const isOpen = openProp !== undefined ? openProp : internalOpen;

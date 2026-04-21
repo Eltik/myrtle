@@ -53,7 +53,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
 
                     <div className="mb-8 flex flex-wrap gap-2.5">
                         <Button variant="default" size="lg" onClick={onOpenCommand}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Search">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
@@ -63,7 +63,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                             trigger={
                                 <Button variant="outline" size="lg">
                                     Link Yostar account
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
                                         <path d="M5 12h14" />
                                         <path d="m12 5 7 7-7 7" />
                                     </svg>

@@ -5,7 +5,7 @@ import { backendFetch } from "#/lib/fetch";
 export type OperatorProfession = "MEDIC" | "CASTER" | "WARRIOR" | "PIONEER" | "SNIPER" | "SPECIAL" | "SUPPORT" | "TANK" | "TOKEN" | "TRAP";
 export type OperatorPosition = "MELEE" | "RANGED" | "ALL" | "NONE";
 
-export interface OperatorIndexEntry {
+export interface IOperatorIndexEntry {
     id: string;
     name: string;
     appellation: string;
@@ -21,7 +21,7 @@ export interface OperatorIndexEntry {
 export const getOperatorsIndexFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/operators/index");
     if (!res.ok) throw new Error(`Failed to load operators index: ${res.status}`);
-    return (await res.json()) as OperatorIndexEntry[];
+    return (await res.json()) as IOperatorIndexEntry[];
 });
 
 export function operatorsIndexQueryOptions() {

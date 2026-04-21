@@ -1,8 +1,8 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import type { Operator, TierEntry, TierList } from "#/components/home/impl/data";
+import type { IOperator, ITierEntry, ITierList } from "#/components/home/impl/data";
 import { backendFetch } from "#/lib/fetch";
-import type { OperatorIndexEntry, OperatorProfession } from "./operators";
+import type { IOperatorIndexEntry, OperatorProfession } from "./operators";
 
 interface BackendTierList {
     id: string;
@@ -99,7 +99,7 @@ const FLAIR_ACCENT: Record<string, string> = {
 
 const FALLBACK_ACCENTS = ["coral", "mint", "amber", "violet"];
 
-function toCardOperator(entry: OperatorIndexEntry): Operator {
+function toCardOperator(entry: IOperatorIndexEntry): IOperator {
     return {
         id: entry.id,
         name: entry.name,
@@ -140,10 +140,10 @@ function tagFromDetail(detail: BackendTierListDetail): string {
 function accentFromDetail(detail: BackendTierListDetail, index: number): string {
     const code = detail.flair?.code;
     if (code && FLAIR_ACCENT[code]) return FLAIR_ACCENT[code];
-    return FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length]!;
+    return FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length] as string;
 }
 
-function mapTiers(tiers: BackendTier[], opById: Record<string, Operator>): TierEntry[] {
+function mapTiers(tiers: BackendTier[], opById: Record<string, IOperator>): ITierEntry[] {
     return [...tiers]
         .sort((a, b) => a.display_order - b.display_order)
         .map((tier) => ({
@@ -151,11 +151,11 @@ function mapTiers(tiers: BackendTier[], opById: Record<string, Operator>): TierE
             operators: [...tier.placements]
                 .sort((a, b) => a.sub_order - b.sub_order)
                 .map((p) => opById[p.operator_id])
-                .filter((op): op is Operator => Boolean(op)),
+                .filter((op): op is IOperator => Boolean(op)),
         }));
 }
 
-function mapDetail(detail: BackendTierListDetail, index: number, opById: Record<string, Operator>): TierList {
+function mapDetail(detail: BackendTierListDetail, index: number, opById: Record<string, IOperator>): ITierList {
     return {
         id: detail.id,
         slug: detail.slug,
@@ -187,14 +187,14 @@ export const recordTierListViewFn = createServerFn({ method: "POST" })
         return (await res.json()) as { unique: boolean };
     });
 
-export const getHomeTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<TierList[]> => {
+export const getHomeTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierList[]> => {
     const [listRes, opsRes] = await Promise.all([backendFetch("/tier-lists"), backendFetch("/operators/index")]);
     if (!listRes.ok) throw new Error(`Failed to load tier lists: ${listRes.status}`);
     if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
 
     const lists = (await listRes.json()) as BackendTierList[];
-    const operators = (await opsRes.json()) as OperatorIndexEntry[];
-    const opById: Record<string, Operator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
+    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
 
     const top = lists.slice(0, HOME_TIER_LIST_LIMIT);
     const details = await Promise.all(

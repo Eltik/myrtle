@@ -1,4 +1,4 @@
-export interface Operator {
+export interface IOperator {
     id: string;
     name: string;
     rarity: number;
@@ -6,12 +6,12 @@ export interface Operator {
     arch: string;
 }
 
-export interface TierEntry {
+export interface ITierEntry {
     name: string;
-    operators: Operator[];
+    operators: IOperator[];
 }
 
-export interface TierList {
+export interface ITierList {
     id: string;
     slug: string;
     title: string;
@@ -24,5 +24,5 @@ export interface TierList {
     comments: number;
     hot?: boolean;
     accent: string;
-    tiers: TierEntry[];
+    tiers: ITierEntry[];
 }

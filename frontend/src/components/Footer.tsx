@@ -4,7 +4,7 @@ export default function Footer() {
             <div className="page-wrap flex flex-col gap-2.5">
                 <div className="inline-flex items-center gap-2.5 font-sans text-sm font-semibold leading-none text-foreground">
                     <span className="brand-bezel small" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Logo">
                             <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                             <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                         </svg>

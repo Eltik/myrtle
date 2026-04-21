@@ -19,9 +19,9 @@ export function useHeroTilt() {
             tx += (dx - tx) * 0.18;
             ty += (dy - ty) * 0.18;
             tz += (dz - tz) * 0.18;
-            el.style.setProperty("--tilt-x", tx.toFixed(2) + "deg");
-            el.style.setProperty("--tilt-y", ty.toFixed(2) + "deg");
-            el.style.setProperty("--tilt-z", tz.toFixed(1) + "px");
+            el.style.setProperty("--tilt-x", `${tx.toFixed(2)}deg`);
+            el.style.setProperty("--tilt-y", `${ty.toFixed(2)}deg`);
+            el.style.setProperty("--tilt-z", `${tz.toFixed(1)}px`);
             if (Math.abs(dx - tx) > 0.05 || Math.abs(dy - ty) > 0.05 || Math.abs(dz - tz) > 0.2) {
                 raf = requestAnimationFrame(step);
             } else {

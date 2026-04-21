@@ -5,17 +5,17 @@ import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
 
-export interface NavItem {
+export interface INavItem {
     href: string;
     label: string;
     desc?: string;
     icon?: string;
     kb?: string[] | null;
-    items?: NavItem[];
+    items?: INavItem[];
 }
 
-interface MainNavProps extends React.ComponentProps<"nav"> {
-    items: NavItem[];
+interface IMainNavProps extends React.ComponentProps<"nav"> {
+    items: INavItem[];
     onOpenCommand?: () => void;
 }
 
@@ -24,34 +24,34 @@ function ToolsIcon({ name }: { name: string }) {
     switch (name) {
         case "chart":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <path d="M3 3v18h18" />
                     <path d="m19 9-5 5-4-4-3 3" />
                 </svg>
             );
         case "calc":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <rect x="4" y="3" width="16" height="18" rx="2" />
                     <path d="M8 7h8M8 12h2M14 12h2M8 17h2M14 17h2" />
                 </svg>
             );
         case "star":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
             );
         case "dice":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <path d="M8 8h.01M16 8h.01M8 16h.01M16 16h.01M12 12h.01" />
                 </svg>
             );
         case "pack":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                     <path d="M3.3 7 12 12l8.7-5" />
                     <path d="M12 22V12" />
@@ -62,7 +62,7 @@ function ToolsIcon({ name }: { name: string }) {
     }
 }
 
-function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isActive: boolean; onOpenCommand?: () => void }) {
+function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isActive: boolean; onOpenCommand?: () => void }) {
     const [open, setOpen] = useState(false);
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,7 +76,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isAct
     };
 
     return (
-        <div onMouseEnter={openNow} onMouseLeave={closeSoon}>
+        <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
             <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
                 <DropdownMenuTrigger className={cn("nav-link", isActive && "is-active")} aria-expanded={open}>
                     {item.label}
@@ -94,8 +94,8 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isAct
                                 </span>
                                 {t.kb && (
                                     <span className="inline-flex shrink-0 gap-0.5">
-                                        {t.kb.map((k, j) => (
-                                            <Kbd key={j}>{k}</Kbd>
+                                        {t.kb.map((k) => (
+                                            <Kbd key={k}>{k}</Kbd>
                                         ))}
                                     </span>
                                 )}
@@ -124,7 +124,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: NavItem; isAct
     );
 }
 
-export function MainNav({ items, className, onOpenCommand, ...props }: MainNavProps) {
+export function MainNav({ items, className, onOpenCommand, ...props }: IMainNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
 

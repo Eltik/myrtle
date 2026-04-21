@@ -1,17 +1,17 @@
 /**
- * Lightweight dependency-free fuzzy scorer tuned for short search-palette items.
+ * Fuzzy scorer tuned for short search-palette items.
  *
  * Each candidate exposes a primary `name` (shown to the user, matched strongest)
  * and an auxiliary `extra` string that concatenates every other searchable field
  * (tags, keywords, profession, appellation, etc.) for secondary matches.
  */
 
-export interface ScoreTarget {
+export interface IScoreTarget {
     name: string;
     extra?: string;
 }
 
-export interface Scored<T> {
+export interface IScored<T> {
     item: T;
     score: number;
 }
@@ -28,7 +28,7 @@ const SCORE_EXTRA_SUBSEQUENCE = 40;
  * Returns a score ≥ 0 for how well `target` matches `query`. 0 means "no match".
  * An empty query returns a small positive score so the list still renders.
  */
-export function scoreMatch(query: string, target: ScoreTarget): number {
+export function scoreMatch(query: string, target: IScoreTarget): number {
     const q = query.trim().toLowerCase();
     if (q.length === 0) return 1;
 
@@ -55,8 +55,8 @@ export function scoreMatch(query: string, target: ScoreTarget): number {
 }
 
 /** Scores and filters an array, returning matches sorted best-first. */
-export function searchAndRank<T>(query: string, items: readonly T[], getTarget: (item: T) => ScoreTarget, limit?: number): Scored<T>[] {
-    const out: Scored<T>[] = [];
+export function searchAndRank<T>(query: string, items: readonly T[], getTarget: (item: T) => IScoreTarget, limit?: number): IScored<T>[] {
+    const out: IScored<T>[] = [];
     for (const item of items) {
         const score = scoreMatch(query, getTarget(item));
         if (score > 0) out.push({ item, score });

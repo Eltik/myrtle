@@ -34,7 +34,7 @@ function FeatIcon({ name }: { name: string }) {
     switch (name) {
         case "database":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <ellipse cx="12" cy="5" rx="9" ry="3" />
                     <path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5" />
                     <path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6" />
@@ -42,7 +42,7 @@ function FeatIcon({ name }: { name: string }) {
             );
         case "sync":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <path d="M21 12a9 9 0 0 0-15-6.7L3 8" />
                     <path d="M3 4v4h4" />
                     <path d="M3 12a9 9 0 0 0 15 6.7l3-2.7" />
@@ -51,7 +51,7 @@ function FeatIcon({ name }: { name: string }) {
             );
         case "bolt":
             return (
-                <svg viewBox="0 0 24 24" {...p}>
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
                     <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
             );
@@ -63,8 +63,8 @@ function FeatIcon({ name }: { name: string }) {
 export default function FeatureStrip() {
     return (
         <section className="page-wrap grid grid-cols-1 gap-3.5 py-2 md:grid-cols-3">
-            {FEATURES.map((f, i) => (
-                <div className="feat-card" key={i} style={featAccentVars(f.accent)}>
+            {FEATURES.map((f) => (
+                <div className="feat-card" key={f.k} style={featAccentVars(f.accent)}>
                     <div className="feat-icon">
                         <FeatIcon name={f.icon} />
                     </div>
@@ -73,7 +73,7 @@ export default function FeatureStrip() {
                     <p className="my-1 mb-3 font-sans text-[13.5px] leading-[1.55] text-muted-foreground">{f.d}</p>
                     <Link to={f.href} className="group mt-auto inline-flex cursor-pointer items-center font-sans text-[12.5px] font-medium leading-none text-primary no-underline [&>svg]:h-3 [&>svg]:w-3">
                         Explore{" "}
-                        <svg className="ml-1.5 transition-[margin-left] duration-200 group-hover:ml-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="ml-1.5 transition-[margin-left] duration-200 group-hover:ml-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
                             <path d="M5 12h14" />
                             <path d="m12 5 7 7-7 7" />
                         </svg>

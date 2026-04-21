@@ -2,14 +2,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
 import { getAvatarById } from "#/lib/utils";
-import type { TierList } from "./data";
+import type { ITierList } from "./data";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 const MAX_TOP_OPS = 4;
 const MAX_GHOST_OPS = 6;
 const MAX_GHOST_TIER_NAMES = 3;
 
-export default function TierListCard({ tl, onOpen }: { tl: TierList; onOpen?: (slug: string) => void }) {
+export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (slug: string) => void }) {
     const [topTier, ...restTiers] = tl.tiers;
     const topOps = (topTier?.operators ?? []).slice(0, MAX_TOP_OPS);
     const ghostOps = restTiers.flatMap((t) => t.operators).slice(0, MAX_GHOST_OPS);
@@ -26,7 +26,6 @@ export default function TierListCard({ tl, onOpen }: { tl: TierList; onOpen?: (s
         <article
             className="tl-card group"
             role="link"
-            tabIndex={0}
             style={tlAccentVars(tl.accent)}
             onClick={open}
             onKeyDown={(e) => {
@@ -71,8 +70,8 @@ export default function TierListCard({ tl, onOpen }: { tl: TierList; onOpen?: (s
                     <div className="flex items-center gap-2.5 pt-0.5">
                         <span className="font-mono text-[11px] leading-none tracking-wide text-muted-foreground">{ghostLabel}</span>
                         <div className="flex items-center">
-                            {ghostOps.map((op, i) => (
-                                <span key={op.id + i} className="-ml-1 h-3.5 w-3.5 rounded-full border-[1.5px] border-card opacity-60 first:ml-0" style={{ background: ROLE_SOLID[op.role as Role] }} title={op.name}>
+                            {ghostOps.map((op) => (
+                                <span key={`ghost-${op.id}`} className="-ml-1 h-3.5 w-3.5 rounded-full border-[1.5px] border-card opacity-60 first:ml-0" style={{ background: ROLE_SOLID[op.role as Role] }} title={op.name}>
                                     <OperatorAvatar charId={op.id} name={op.name} />
                                 </span>
                             ))}
@@ -96,21 +95,21 @@ export default function TierListCard({ tl, onOpen }: { tl: TierList; onOpen?: (s
                 </div>
                 <div className="inline-flex shrink-0 items-center gap-2.5">
                     <span className="inline-flex items-center gap-1 font-mono text-[11.5px] font-medium leading-none tracking-tight text-muted-foreground [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80" title={`${tl.views} views`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Views">
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                         {compact.format(tl.views)}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-[11.5px] font-medium leading-none tracking-tight text-muted-foreground [&>svg]:h-2.75 [&>svg]:w-2.75 [&>svg]:opacity-80" title={`${tl.votes} favorites`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Votes">
                             <path d="m5 15 7-7 7 7" />
                         </svg>
                         {compact.format(tl.votes)}
                     </span>
                     <span className="inline-flex items-center gap-1 font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
                         Open
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
                             <path d="M5 12h14" />
                             <path d="m12 5 7 7-7 7" />
                         </svg>
