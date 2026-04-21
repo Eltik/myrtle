@@ -8,7 +8,7 @@ import { getAvatarSkinId } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { AuthDialog } from "./AuthDialog";
 
-export default function UserMenu({ user, loading, logout }: { user: IUserProfile | null; loading: boolean; login: any; logout: () => Promise<void> }) {
+export default function UserMenu({ user, loading, logout }: { user: IUserProfile | null; loading: boolean; logout: () => Promise<void> }) {
     if (loading) {
         return <Spinner />;
     }

@@ -1,6 +1,6 @@
 export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack";
 
-export interface Tool {
+export interface ITool {
     id: string;
     href: string;
     label: string;
@@ -11,7 +11,7 @@ export interface Tool {
     keywords: string[];
 }
 
-export const TOOLS: Tool[] = [
+export const TOOLS: ITool[] = [
     {
         id: "dps",
         href: "/tools/dps",

@@ -5,12 +5,12 @@ import { useAuth } from "#/hooks/use-auth";
 import { useCommand } from "#/lib/command-context";
 import { TOOLS } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
-import { MainNav, type NavItem } from "./impl/MainNav";
+import { type INavItem, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
 
-const toolItems: NavItem[] = TOOLS.map((t) => ({
+const toolItems: INavItem[] = TOOLS.map((t) => ({
     href: t.href,
     label: t.label,
     desc: t.desc,
@@ -18,7 +18,7 @@ const toolItems: NavItem[] = TOOLS.map((t) => ({
     kb: t.kb,
 }));
 
-const navItems: NavItem[] = [
+const navItems: INavItem[] = [
     { href: "/", label: "Home" },
     { href: "/operators", label: "Operators" },
     {
@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function Header() {
-    const { user, loading, login, logout } = useAuth();
+    const { user, loading, logout } = useAuth();
     const { open: openCmd } = useCommand();
 
     return (
@@ -40,7 +40,7 @@ export default function Header() {
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex items-center gap-2 text-foreground no-underline shrink-0">
                         <span className="brand-bezel" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                                 <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                             </svg>
@@ -53,7 +53,7 @@ export default function Header() {
 
                     <div className="flex items-center gap-1.5 ml-auto">
                         <button type="button" className="header-search hidden lg:inline-flex" onClick={openCmd} aria-label="Search operators">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
@@ -64,7 +64,7 @@ export default function Header() {
                             </span>
                         </button>
                         <Button variant="ghost" size="icon" className="lg:hidden" onClick={openCmd} aria-label="Search">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
@@ -83,11 +83,12 @@ export default function Header() {
                                         <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
                                         <path d="M9 18c-4.51 2-5-2-7-2" />
                                     </svg>
+                                    <span className="sr-only">GitHub</span>
                                 </a>
                             }
                         />
 
-                        <UserMenu loading={loading} user={user} login={login} logout={logout} />
+                        <UserMenu loading={loading} user={user} logout={logout} />
                     </div>
                 </div>
             </div>

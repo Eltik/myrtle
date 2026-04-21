@@ -9,18 +9,18 @@ import { useAuth } from "#/hooks/use-auth";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import { ActiveIndicator } from "./ActiveIndicator";
 import { AuthDialog } from "./AuthDialog";
-import type { NavItem } from "./MainNav";
+import type { INavItem } from "./MainNav";
 
-interface MobileNavProps {
-    items: NavItem[];
+interface IMobileNavProps {
+    items: INavItem[];
 }
 
-export function MobileNav({ items }: MobileNavProps) {
+export function MobileNav({ items }: IMobileNavProps) {
     const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
 
-    const renderNavItem = (item: NavItem) => {
+    const renderNavItem = (item: INavItem) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
 
         if (item.items && item.items.length > 0) {

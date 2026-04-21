@@ -6,7 +6,7 @@ export default function CommandPreview() {
     return (
         <div className="cmd-popup">
             <div className="cmd-head">
-                <svg className="cmd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="cmd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Search">
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                 </svg>
@@ -43,7 +43,7 @@ export default function CommandPreview() {
                 <div className="cmd-group">
                     <div className="cmd-group-label">Tools</div>
                     <div className="cmd-item">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Calculator">
                             <rect x="3" y="3" width="18" height="18" rx="2" />
                             <path d="M3 9h18M9 21V9" />
                         </svg>
@@ -52,7 +52,7 @@ export default function CommandPreview() {
                         <Kbd>R</Kbd>
                     </div>
                     <div className="cmd-item">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Graph">
                             <path d="M3 3v18h18" />
                             <path d="m19 9-5 5-4-4-3 3" />
                         </svg>

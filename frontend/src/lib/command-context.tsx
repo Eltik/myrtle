@@ -1,11 +1,11 @@
 import { createContext, useContext, useState } from "react";
 import { SearchCommand } from "#/components/ui/search-command";
 
-interface CommandContextValue {
+interface ICommandContextValue {
     open: () => void;
 }
 
-const CommandContext = createContext<CommandContextValue>({ open: () => {} });
+const CommandContext = createContext<ICommandContextValue>({ open: () => {} });
 
 export function useCommand() {
     return useContext(CommandContext);

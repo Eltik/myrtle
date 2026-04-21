@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "../fetch";
 
-export interface GameDataStats {
+export interface IGameDataStats {
     operators: number;
     skills: number;
     modules: number;
@@ -12,28 +12,28 @@ export interface GameDataStats {
     enemies: number;
 }
 
-export interface TierListStats {
+export interface ITierListStats {
     total: number;
     active: number;
     totalVersions: number;
     totalPlacements: number;
 }
 
-export interface RostersStats {
+export interface IRostersStats {
     total: number;
 }
 
-export interface StatsResponse {
-    gameData: GameDataStats;
-    tierLists: TierListStats;
-    rosters: RostersStats;
+export interface IStatsResponse {
+    gameData: IGameDataStats;
+    tierLists: ITierListStats;
+    rosters: IRostersStats;
     computedAt: string;
 }
 
 export const getStatsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/stats");
     if (!res.ok) throw new Error(`Failed to load stats: ${res.status}`);
-    return (await res.json()) as StatsResponse;
+    return (await res.json()) as IStatsResponse;
 });
 
 export function statsQueryOptions() {
