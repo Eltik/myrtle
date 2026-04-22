@@ -734,3 +734,975 @@ body::before {
   background: linear-gradient(180deg, var(--tl-a, var(--primary)), var(--tl-b, oklch(0.55 0.16 25)));
   opacity: 0.9;
 }
+
+/* ================================================================
+   /operators page shell
+   ================================================================ */
+.operators-page-wrap {
+  width: min(1400px, calc(100% - 2rem));
+  margin-inline: auto;
+  padding: 0 0 80px;
+  position: relative;
+  z-index: 1;
+}
+
+.operators-page-wrap .page-head {
+  padding: 28px 0 6px;
+}
+.operators-page-wrap .crumbs {
+  display: flex; align-items: center; gap: 6px;
+  font: 500 12px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  margin-bottom: 10px;
+}
+.operators-page-wrap .crumbs .here { color: var(--foreground); }
+.operators-page-wrap .page-head h1 {
+  margin: 0;
+  font: 700 30px/1.1 var(--font-sans);
+  letter-spacing: -0.025em;
+  color: var(--foreground);
+}
+.operators-page-wrap .page-head .meta {
+  margin: 6px 0 0;
+  font: 400 13.5px/1.5 var(--font-sans);
+  color: var(--muted-foreground);
+}
+
+/* Flexbox instead of grid — we need to animate `flex-basis` + `margin`
+   + `opacity` on the sidebar itself, which interpolates cleanly unlike
+   `grid-template-columns` with mixed px / fr units. The results column
+   naturally reclaims the freed space via `flex: 1`. */
+.operators-layout {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding: 20px 0 0;
+}
+@media (max-width: 960px) {
+  .operators-layout { flex-direction: column; gap: 16px; }
+}
+
+.operators-layout .results {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ================================================================
+   Filter sidebar
+   ================================================================ */
+/* Sidebar — the inner `.filter-sidebar__inner` holds the content at a fixed
+   280px so it doesn't reflow while the outer `<aside>` shrinks. Clipping
+   happens on the outer element via `overflow: hidden`. This is the classic
+   "collapsing rail" pattern: single property animates (flex-basis), content
+   keeps its layout so nothing jumps, and a fade runs in parallel. */
+.filter-sidebar {
+  position: sticky; top: 80px;
+  flex: 0 0 280px;
+  width: 280px;
+  align-self: stretch;
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
+  /* Half of the old 28px gap — the rail-toggle button + its own right margin
+     supply the rest, so the visual breathing room to the results column stays
+     the same whether the rail is open or closed. */
+  margin-right: 8px;
+  box-sizing: border-box;
+  opacity: 1;
+  transition:
+    flex-basis 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    width 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    margin-right 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: flex-basis, width, opacity;
+}
+.filter-sidebar__inner {
+  width: 280px;
+  height: 100%;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  display: flex; flex-direction: column; gap: 18px;
+  box-sizing: border-box;
+}
+.filter-sidebar__inner::-webkit-scrollbar { width: 6px; }
+.filter-sidebar__inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+.filter-sidebar--collapsed {
+  flex-basis: 0;
+  width: 0;
+  margin-right: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 960px) {
+  .filter-sidebar {
+    position: static;
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: none;
+    margin-right: 0;
+    max-height: 600px;
+    transition:
+      max-height 300ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      margin-bottom 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .filter-sidebar__inner { width: 100%; max-height: none; }
+  .filter-sidebar--collapsed {
+    max-height: 0;
+    width: 100%;
+    flex-basis: auto;
+    margin-bottom: -16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .filter-sidebar { transition: none; }
+}
+.filter-sidebar::-webkit-scrollbar { width: 6px; }
+.filter-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+.fp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2px;
+}
+.fp-head h3 {
+  margin: 0;
+  font: 600 14px/1 var(--font-sans);
+  color: var(--foreground);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.fp-head h3 svg { color: var(--muted-foreground); }
+.fp-head .clear {
+  all: unset; cursor: pointer;
+  font: 500 11.5px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.fp-head .clear:hover { color: var(--foreground); }
+
+.section-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 2px;
+  background: transparent; border: 0; padding: 0;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.section-head.expandable { cursor: pointer; user-select: none; }
+.section-head .lbl {
+  font: 500 10.5px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+}
+.section-head .line { flex: 1; height: 1px; background: var(--border); }
+.section-head .chev {
+  width: 13px; height: 13px;
+  color: var(--muted-foreground);
+  transition: transform 180ms ease;
+}
+.section-head.expandable.open .chev { transform: rotate(180deg); }
+.section-head .n {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 15px; height: 15px;
+  padding: 0 4px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 999px;
+  font: 600 10px/1 var(--font-mono);
+}
+
+.field + .field { margin-top: 14px; }
+.field-label {
+  font: 500 12px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+
+.class-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.class-btn {
+  all: unset;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--secondary) 50%, transparent);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted-foreground);
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.class-btn:hover {
+  border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+  color: var(--foreground);
+}
+.class-btn.on {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+
+.rarity-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.rarity-btn {
+  all: unset;
+  cursor: pointer;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--secondary) 50%, transparent);
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  box-sizing: border-box;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.rarity-btn.r6 { --rc: var(--rarity-6); }
+.rarity-btn.r5 { --rc: var(--rarity-5); }
+.rarity-btn.r4 { --rc: var(--rarity-4); }
+.rarity-btn.r3 { --rc: var(--rarity-3); }
+.rarity-btn.r2 { --rc: var(--rarity-2); }
+.rarity-btn.r1 { --rc: var(--rarity-1); }
+.rarity-btn:hover {
+  border-color: color-mix(in oklch, var(--rc, var(--primary)) 55%, var(--border));
+  color: var(--foreground);
+}
+.rarity-btn.on {
+  background: color-mix(in oklch, var(--rc) 18%, transparent);
+  color: var(--rc);
+  border-color: var(--rc);
+}
+
+.tag-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag-row .tg {
+  all: unset;
+  cursor: pointer;
+  font: 500 11.5px/1 var(--font-sans);
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--secondary) 50%, transparent);
+  color: var(--muted-foreground);
+  display: inline-flex; align-items: center;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.tag-row .tg:hover { color: var(--foreground); }
+.tag-row .tg.on {
+  background: color-mix(in oklch, var(--primary) 16%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ================================================================
+   Results main column (toolbar + active filter pills + results line)
+   ================================================================ */
+.operators-layout .results { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.toolbar .search {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1;
+  min-width: 240px;
+  max-width: 460px;
+  padding: 0 12px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--secondary) 60%, transparent);
+  border: 1px solid var(--border);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.toolbar .search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.toolbar .search svg { color: var(--muted-foreground); flex-shrink: 0; }
+.toolbar .search input {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  font: 400 14px/1 var(--font-sans);
+  color: var(--foreground);
+}
+.toolbar .search input::placeholder { color: var(--muted-foreground); }
+
+.seg {
+  display: inline-flex; align-items: center;
+  padding: 4px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--secondary) 60%, transparent);
+}
+.seg button {
+  all: unset;
+  cursor: pointer;
+  width: 32px; height: 32px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.seg button.on {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.seg button:hover:not(.on) { color: var(--foreground); }
+
+/* Sort picker — Base UI <Select /> wrapped with a direction toggle. The
+   outer shell hosts a borderless trigger; the trigger's own focus ring comes
+   from the shadcn/ui variant, so we only paint the frame + direction button. */
+.sortpick {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--secondary) 60%, transparent);
+}
+.sortpick .sortpick-trigger {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  min-height: 32px;
+  height: 32px;
+  min-width: 0;
+  padding: 0 8px;
+  font: 500 13px/1 var(--font-sans);
+  color: var(--foreground);
+  gap: 6px;
+}
+.sortpick .sortpick-trigger::before { box-shadow: none; }
+.sortpick .sortpick-trigger:hover { background: color-mix(in oklch, var(--secondary) 80%, transparent); }
+.sortpick-trigger-kicker {
+  font: 500 10px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+  padding-right: 4px;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+.sortpick .dir {
+  all: unset;
+  cursor: pointer;
+  width: 32px; height: 32px;
+  border-radius: var(--radius-md);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted-foreground);
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.sortpick .dir:hover { background: var(--secondary); color: var(--foreground); }
+
+/* Rail toggle — small chevron button inset into the top-right corner of the
+   filter panel (shadcn SidebarTrigger pattern). Absolutely positioned
+   against `.operators-layout` (NOT inside the sidebar, which has
+   overflow: hidden and its own stacking context from position: sticky), so
+   it remains visible + clickable as the rail collapses.
+
+   Using explicit resets rather than `all: unset` — the latter resets
+   `pointer-events` + `user-select` in ways that can subtly break focus/
+   click behavior in some browsers. */
+.rail-toggle {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  position: absolute;
+  /* Open: sits at the top-right of the panel (shadcn SidebarTrigger
+     pattern). 280px sidebar − 24px button + 4px nudge = 260px, so the
+     button peeks just slightly past the rail's right edge for visual
+     separation from the heading row. Still well clear of the search
+     bar, which starts after the 8px sidebar margin. */
+  top: 10px;
+  left: 260px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--secondary) 70%, var(--card));
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+  z-index: 10;
+  box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground) 6%, transparent);
+  transition:
+    left 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    top 300ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 160ms ease;
+}
+/* When the rail collapses, the button slides flush to the left of the
+   results column AND drops down to the toolbar row, so it vertically
+   aligns with the search bar (24px button centered on the 40px toolbar
+   → top: 28px). */
+.rail-toggle--collapsed {
+  top: 28px;
+  left: 0;
+}
+/* Reserve horizontal space in the results column while collapsed so the
+   search bar + toolbar never sit underneath the button. The modifier is
+   matched via `:has()` so the markup stays the same regardless of state. */
+.operators-layout:has(.rail-toggle--collapsed) .results {
+  padding-left: 36px;
+}
+.operators-layout .results {
+  transition: padding-left 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.rail-toggle:hover {
+  background: var(--card);
+  border-color: color-mix(in oklch, var(--primary) 55%, var(--border));
+  color: var(--foreground);
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--foreground) 10%, transparent);
+}
+.rail-toggle:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 24%, transparent);
+}
+.rail-toggle svg { display: block; }
+.rail-toggle-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: 600 9px/1 var(--font-mono);
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 2px var(--background);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-toggle { transition: none; }
+}
+/* Mobile: the rail collapses vertically, so the tiny edge handle isn't the
+   right affordance. Promote it to a full-width horizontal bar above the
+   results column instead. */
+@media (max-width: 960px) {
+  .rail-toggle {
+    position: static;
+    transform: none;
+    width: 100%;
+    height: 32px;
+    margin: 0 0 12px 0;
+    order: -1;
+  }
+  .rail-toggle--collapsed { left: auto; }
+}
+
+.active-filters {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  font: 500 12px/1 var(--font-sans);
+  color: var(--muted-foreground);
+}
+.active-filters .lbl { margin-right: 2px; }
+.active-filters .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
+  color: var(--primary);
+  padding: 4px 4px 4px 9px;
+  border-radius: 999px;
+  font: 500 11.5px/1 var(--font-sans);
+}
+.active-filters .pill button {
+  all: unset;
+  cursor: pointer;
+  width: 15px; height: 15px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--primary) 22%, transparent);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.active-filters .pill button:hover { background: color-mix(in oklch, var(--primary) 32%, transparent); }
+.active-filters .clear {
+  all: unset;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: 500 12px/1 var(--font-sans);
+}
+.active-filters .clear:hover { color: var(--foreground); }
+
+.results-line {
+  font: 500 12.5px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; flex-wrap: wrap;
+}
+
+/* ================================================================
+   Grid view (`.op` — 2:3 portrait card with rarity rule + glow)
+   ================================================================ */
+.op-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 520px) { .op-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 780px) { .op-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
+@media (min-width: 1080px) { .op-grid { grid-template-columns: repeat(5, 1fr); } }
+
+.op {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklch, var(--muted) 50%, transparent);
+  background: var(--card);
+  overflow: hidden;
+  cursor: pointer;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-radius 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.op:hover { border-radius: var(--radius-lg); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); }
+.op.r6 { --c: var(--rarity-6); }
+.op.r5 { --c: var(--rarity-5); }
+.op.r4 { --c: var(--rarity-4); }
+.op.r3 { --c: var(--rarity-3); }
+.op.r2 { --c: var(--rarity-2); }
+.op.r1 { --c: var(--rarity-1); }
+
+.op .faction-bg {
+  position: absolute; top: -16px; left: -32px;
+  width: 240px; height: 240px;
+  opacity: 0.06;
+  color: var(--foreground);
+  transition: opacity 160ms ease;
+  pointer-events: none;
+}
+.op:hover .faction-bg { opacity: 0.14; }
+.op .portrait-wrap {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 200ms ease;
+}
+.op:hover .portrait-wrap { transform: scale(1.04); }
+.op .portrait {
+  width: 100%; height: 100%; position: relative;
+  background: radial-gradient(65% 50% at 50% 38%, color-mix(in oklch, var(--c, var(--rarity-5)) 30%, transparent), transparent 70%);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.op .portrait .initial {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(72px, 11vw, 112px);
+  line-height: 1;
+  color: color-mix(in oklch, var(--c, var(--rarity-5)) 60%, var(--foreground));
+  opacity: 0.62;
+  padding-bottom: 40px;
+  text-shadow: 0 4px 20px color-mix(in oklch, var(--c, var(--rarity-5)) 40%, transparent);
+}
+.op .info-bar { position: absolute; inset: auto 0 0 0; z-index: 2; }
+.op .info-bar .strip {
+  height: 48px; width: 100%;
+  background: color-mix(in oklch, var(--background) 80%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.op .info-bar h2 {
+  position: absolute;
+  bottom: 6px; left: 6px;
+  max-width: 92%;
+  margin: 0;
+  font: 700 13px/1.15 var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.op:hover .info-bar h2 { opacity: 1; }
+.op .info-bar .cls-icon {
+  position: absolute;
+  bottom: 6px; right: 6px;
+  width: 22px; height: 22px;
+  color: var(--foreground);
+  opacity: 0; transform: scale(0.75);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.op:hover .info-bar .cls-icon { opacity: 1; transform: scale(1); }
+.op .rarity-bar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--c, var(--rarity-5));
+  z-index: 3;
+}
+.op .rarity-glow {
+  position: absolute; left: 0; right: 0; bottom: -2px;
+  height: 4px;
+  background: var(--c, var(--rarity-5));
+  filter: blur(4px);
+  opacity: 0.8;
+  z-index: 2;
+}
+
+/* ================================================================
+   Hover preview card (`.op-preview` — inside `<HoverCardContent />`)
+   Widens the default `.preview-card` popup and adds its own layout.
+   Rarity class (`.r1`–`.r6`) keys into the shared `--c` token so the
+   accent rule + name color match the card you hovered over.
+   ================================================================ */
+.op-preview-popup { width: 340px; padding: 0; }
+.op-preview {
+  position: relative;
+  padding: 14px 14px 12px;
+  display: flex; flex-direction: column; gap: 12px;
+  overflow: hidden;
+}
+.op-preview.r6 { --c: var(--rarity-6); }
+.op-preview.r5 { --c: var(--rarity-5); }
+.op-preview.r4 { --c: var(--rarity-4); }
+.op-preview.r3 { --c: var(--rarity-3); }
+.op-preview.r2 { --c: var(--rarity-2); }
+.op-preview.r1 { --c: var(--rarity-1); }
+.op-preview::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 2px;
+  background: var(--c, var(--primary));
+  opacity: 0.9;
+}
+.op-preview__head {
+  display: flex; align-items: center; gap: 12px;
+}
+.op-preview__avatar {
+  position: relative;
+  width: 56px; height: 56px; flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--c, var(--primary)) 14%, var(--secondary));
+  border: 1px solid color-mix(in oklch, var(--c, var(--primary)) 30%, var(--border));
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.op-preview__avatar .initial {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--c, var(--foreground));
+}
+.op-preview__avatar .op-preview__faction {
+  position: absolute; inset: 0;
+  margin: auto;
+  color: var(--foreground);
+  opacity: 0.08;
+}
+.op-preview__title { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.op-preview__name {
+  font: 600 15px/1.2 var(--font-sans);
+  color: var(--foreground);
+  word-break: break-word;
+}
+.op-preview__rarity {
+  display: inline-flex; gap: 1px;
+  color: var(--c, var(--primary));
+  font-size: 11px; line-height: 1;
+}
+.op-preview__nation {
+  font: 500 11px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.op-preview__row {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 12px/1 var(--font-sans);
+  color: var(--foreground);
+}
+.op-preview__row svg { color: var(--muted-foreground); flex-shrink: 0; }
+.op-preview__class { text-transform: capitalize; }
+.op-preview__archetype { color: var(--muted-foreground); text-transform: capitalize; }
+.op-preview__dot { color: var(--muted-foreground); }
+.op-preview__meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.op-preview__meta-item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.op-preview__meta-item .k {
+  font: 500 10px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.op-preview__meta-item .v {
+  font: 500 12px/1 var(--font-sans);
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.op-preview__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.op-preview__stat {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: color-mix(in oklch, var(--secondary) 40%, transparent);
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 0;
+}
+.op-preview__stat .k {
+  font: 500 10px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.op-preview__stat .v {
+  font: 600 13px/1 var(--font-sans);
+  color: var(--foreground);
+}
+.op-preview__hint {
+  font: 500 10.5px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted-foreground);
+  text-align: center;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border);
+}
+
+/* ================================================================
+   Compact view (`.opc` — name / avatar / archetype stack)
+   ================================================================ */
+.op-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+@media (min-width: 520px) { .op-compact-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 780px) { .op-compact-grid { grid-template-columns: repeat(5, 1fr); } }
+@media (min-width: 1080px) { .op-compact-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 1280px) { .op-compact-grid { grid-template-columns: repeat(7, 1fr); } }
+.opc {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 4px 8px 4px 6px;
+  display: flex; flex-direction: column;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 140ms ease;
+}
+.opc:hover { transform: scale(1.02); }
+.opc.r6 { --c: var(--rarity-6); }
+.opc.r5 { --c: var(--rarity-5); }
+.opc.r4 { --c: var(--rarity-4); }
+.opc.r3 { --c: var(--rarity-3); }
+.opc.r2 { --c: var(--rarity-2); }
+.opc.r1 { --c: var(--rarity-1); }
+.opc .nm {
+  font: 500 12px/20px var(--font-sans);
+  color: var(--foreground);
+  text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  height: 20px;
+}
+.opc .avatar-box {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 4px solid var(--c, var(--rarity-5));
+}
+.opc .avatar-box .avatar {
+  width: 100%; height: 100%; position: relative;
+  background: radial-gradient(60% 60% at 50% 40%, color-mix(in oklch, var(--c, var(--rarity-5)) 26%, var(--muted)), var(--muted));
+  display: flex; align-items: center; justify-content: center;
+  color: color-mix(in oklch, var(--c, var(--rarity-5)) 75%, var(--foreground));
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 1;
+}
+.opc .avatar-box .cls-icon {
+  position: absolute; bottom: 0; right: 0;
+  width: 18px; height: 18px;
+  opacity: 0.7;
+  color: var(--foreground);
+}
+.opc:hover .avatar-box .cls-icon { opacity: 1; }
+.opc .arche {
+  font: 500 11px/1.4 var(--font-sans);
+  color: var(--muted-foreground);
+  text-align: center;
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ================================================================
+   List view (`.opl` — 6-column row)
+   ================================================================ */
+.op-list { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; }
+.list-head {
+  display: grid;
+  grid-template-columns: 52px 1fr 96px 128px 160px 32px;
+  gap: 12px;
+  padding: 0 12px 8px;
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  font: 500 10.5px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+  align-items: center;
+}
+@media (max-width: 900px) {
+  .list-head { display: none; }
+}
+.opl {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px 1fr 96px 128px 160px 32px;
+  gap: 12px; align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--card) 50%, transparent);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+@media (max-width: 900px) {
+  .opl {
+    grid-template-columns: 52px 1fr 96px;
+  }
+  .opl .cls-cell, .opl .arch-cell, .opl .faction-cell { display: none; }
+}
+.opl:hover {
+  background: var(--card);
+  border-color: var(--border);
+}
+.opl.r6 { --c: var(--rarity-6); }
+.opl.r5 { --c: var(--rarity-5); }
+.opl.r4 { --c: var(--rarity-4); }
+.opl.r3 { --c: var(--rarity-3); }
+.opl.r2 { --c: var(--rarity-2); }
+.opl.r1 { --c: var(--rarity-1); }
+.opl .side-rule {
+  position: absolute; top: 50%; left: 0;
+  transform: translateY(-50%);
+  width: 2px; height: 32px;
+  border-radius: 2px;
+  background: var(--c, var(--rarity-5));
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+.opl:hover .side-rule { opacity: 1; }
+.opl .portrait-sm {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  background: radial-gradient(65% 50% at 50% 40%, color-mix(in oklch, var(--c, var(--rarity-5)) 28%, var(--muted)), var(--muted));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1;
+  color: color-mix(in oklch, var(--c, var(--rarity-5)) 75%, var(--foreground));
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.opl .nm {
+  font: 600 14px/1.1 var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.opl .cls-cell {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--muted-foreground);
+}
+.opl .cls-cell svg { color: var(--muted-foreground); flex: none; opacity: 0.65; }
+.opl .cls-cell span {
+  font: 400 13px/1 var(--font-sans);
+  color: var(--muted-foreground);
+}
+.opl .arch-cell {
+  font: 400 13px/1 var(--font-sans);
+  color: var(--muted-foreground);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.opl .faction-cell {
+  opacity: 0.4;
+  color: var(--foreground);
+  display: flex; justify-content: center;
+  transition: opacity 160ms ease;
+}
+.opl:hover .faction-cell { opacity: 0.8; }
+
+/* ================================================================
+   Pagination (`.pager`)
+   ================================================================ */
+.pager {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 24px; margin-top: 6px; gap: 16px;
+  flex-wrap: wrap;
+}
+.pager .info {
+  display: flex; align-items: center; gap: 12px;
+  font: 400 13px/1 var(--font-sans);
+  color: var(--muted-foreground);
+}
+.pager .pages {
+  display: flex; align-items: center; gap: 4px;
+}
+.pager .page-btn {
+  all: unset;
+  cursor: pointer;
+  width: 34px; height: 34px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--secondary) 50%, transparent);
+  color: var(--muted-foreground);
+  display: inline-flex; align-items: center; justify-content: center;
+  font: 500 13px/1 var(--font-sans);
+  box-sizing: border-box;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.pager .page-btn:hover:not([disabled]):not(.current) {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+.pager .page-btn.current {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+.pager .page-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.pager .page-ell {
+  padding: 0 6px;
+  color: var(--muted-foreground);
+}

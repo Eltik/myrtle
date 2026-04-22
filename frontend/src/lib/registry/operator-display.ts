@@ -1,4 +1,4 @@
-import type { OperatorProfession } from "#/lib/api/operators";
+import type { OperatorProfession } from "#/types/operators";
 
 /** Maps the raw profession enum to the CSS class used for the role-colored chip. */
 export function professionClass(profession: OperatorProfession): string {

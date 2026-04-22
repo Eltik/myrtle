@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import type { IOperator, ITierEntry, ITierList } from "#/components/home/impl/data";
 import { backendFetch } from "#/lib/fetch";
-import type { IOperatorIndexEntry, OperatorProfession } from "./operators";
+import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
 
 interface BackendTierList {
     id: string;

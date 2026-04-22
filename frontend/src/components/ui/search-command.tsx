@@ -7,7 +7,8 @@ import { Command, CommandDialog, CommandDialogPopup, CommandEmpty, CommandFooter
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
-import { type OperatorIndexEntry, operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import { professionClass, professionLabel } from "#/lib/registry/operator-display";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
 import { TOOLS, type Tool } from "#/lib/registry/tools";
@@ -146,7 +147,7 @@ function ToolRow({ tool, onSelect }: { tool: Tool; onSelect: () => void }): Reac
     );
 }
 
-function OperatorRow({ op, onSelect }: { op: OperatorIndexEntry; onSelect: () => void }): React.ReactElement {
+function OperatorRow({ op, onSelect }: { op: IOperatorIndexEntry; onSelect: () => void }): React.ReactElement {
     const cls = professionClass(op.profession);
     return (
         <CommandItem value={`operator:${op.id}`} onSelect={onSelect} className="flex flex-row gap-2">
