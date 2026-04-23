@@ -4,7 +4,7 @@ import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumb
 import type { OperatorRarityTier } from "#/types/operators";
 import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
 import type { IFilterOptions } from "../types";
-import { ClassIcon } from "./ClassIcon";
+import { CampIcon, ClassIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import { FilterDropdown } from "./FilterDropdown";
 import styles from "./OperatorFilters.module.css";
 
@@ -115,6 +115,7 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                                 groupBy={subProfessionToProfession}
                                 groupOrder={PROFESSION_ORDER}
                                 formatGroup={formatProfession}
+                                renderOptionIcon={(v) => <SubProfessionIcon subProfession={v} size={18} />}
                             />
 
                             <div className={styles.field}>
@@ -131,9 +132,9 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                                 </div>
                             </div>
 
-                            <FilterDropdown label="Nation" placeholder="Select nation" options={props.options.nations} selected={props.selectedNations} onChange={props.onNationsChange} formatOption={(n) => formatNationId(n) ?? n} />
+                            <FilterDropdown label="Nation" placeholder="Select nation" options={props.options.nations} selected={props.selectedNations} onChange={props.onNationsChange} formatOption={(n) => formatNationId(n) ?? n} renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />} />
 
-                            <FilterDropdown label="Faction" placeholder="Select faction" options={props.options.factions} selected={props.selectedFactions} onChange={props.onFactionsChange} formatOption={formatNationId} />
+                            <FilterDropdown label="Faction" placeholder="Select faction" options={props.options.factions} selected={props.selectedFactions} onChange={props.onFactionsChange} formatOption={formatNationId} renderOptionIcon={(v) => <CampIcon groupId={v} size={18} />} />
 
                             <FilterDropdown label="Race" placeholder="Select race" options={props.options.races} selected={props.selectedRaces} onChange={props.onRacesChange} />
 

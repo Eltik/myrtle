@@ -1,4 +1,4 @@
-import { Fragment, useId, useMemo } from "react";
+import { Fragment, type ReactNode, useId, useMemo } from "react";
 import { Combobox, ComboboxCollection, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxSeparator } from "#/components/ui/combobox";
 
 interface IGroup {
@@ -21,9 +21,11 @@ interface IFilterDropdownProps {
     groupOrder?: readonly string[];
     /** Pretty-print a group key for its header label. */
     formatGroup?: (key: string) => string;
+    /** Render a leading icon for each option, placed before the formatted label. */
+    renderOptionIcon?: (value: string) => ReactNode;
 }
 
-export function FilterDropdown({ label, placeholder, options, selected, onChange, formatOption, groupBy, groupOrder, formatGroup }: IFilterDropdownProps) {
+export function FilterDropdown({ label, placeholder, options, selected, onChange, formatOption, groupBy, groupOrder, formatGroup, renderOptionIcon }: IFilterDropdownProps) {
     const id = useId();
     const format = formatOption ?? ((v: string) => v);
 
@@ -77,7 +79,14 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
                                           <ComboboxCollection>
                                               {(option: string) => (
                                                   <ComboboxItem key={option} value={option}>
-                                                      {format(option)}
+                                                      {renderOptionIcon ? (
+                                                          <span className="flex items-center gap-2">
+                                                              {renderOptionIcon(option)}
+                                                              <span>{format(option)}</span>
+                                                          </span>
+                                                      ) : (
+                                                          format(option)
+                                                      )}
                                                   </ComboboxItem>
                                               )}
                                           </ComboboxCollection>
@@ -87,7 +96,14 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
                               )
                             : (option: string) => (
                                   <ComboboxItem key={option} value={option}>
-                                      {format(option)}
+                                      {renderOptionIcon ? (
+                                          <span className="flex items-center gap-2">
+                                              {renderOptionIcon(option)}
+                                              <span>{format(option)}</span>
+                                          </span>
+                                      ) : (
+                                          format(option)
+                                      )}
                                   </ComboboxItem>
                               )}
                     </ComboboxList>
