@@ -13,7 +13,8 @@
     "test": "vitest run",
     "format": "biome format",
     "lint": "biome lint",
-    "check": "biome check"
+    "check": "biome check",
+    "postinstall": "test -f node_modules/@base-ui/utils/addEventListener.js || (mkdir -p node_modules/@base-ui/utils && curl -sL https://registry.npmjs.org/@base-ui/utils/-/utils-0.2.8.tgz | tar -xz -C node_modules/@base-ui/utils --strip-components=1)"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
