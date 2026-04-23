@@ -1,11 +1,12 @@
 import { ChevronDown, Filter, X } from "lucide-react";
 import { useState } from "react";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
-import type { IFilterOptions } from "../types";
 import type { OperatorRarityTier } from "#/types/operators";
 import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
-import { FilterDropdown } from "./FilterDropdown";
+import type { IFilterOptions } from "../types";
 import { ClassIcon } from "./ClassIcon";
+import { FilterDropdown } from "./FilterDropdown";
+import styles from "./OperatorFilters.module.css";
 
 interface IOperatorFiltersProps {
     selectedClasses: string[];
@@ -44,15 +45,15 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
     const advancedCount = props.selectedSubclasses.length + props.selectedGenders.length + props.selectedNations.length + props.selectedFactions.length + props.selectedRaces.length + props.selectedBirthPlaces.length + props.selectedArtists.length + props.selectedVoiceActors.length;
 
     return (
-        <aside className={cn("filter-sidebar", props.collapsed && "filter-sidebar--collapsed")} aria-label="Operator filters" aria-hidden={props.collapsed || undefined} {...(props.collapsed ? { inert: "" as unknown as boolean } : {})}>
-            <div className="filter-sidebar__inner">
-                <div className="fp-head">
+        <aside className={cn(styles.filterSidebar, props.collapsed && styles.filterSidebarCollapsed)} aria-label="Operator filters" aria-hidden={props.collapsed || undefined} {...(props.collapsed ? { inert: "" as unknown as boolean } : {})}>
+            <div className={styles.filterSidebarInner}>
+                <div className={styles.fpHead}>
                     <h3>
                         <Filter className="h-3.5 w-3.5" aria-hidden="true" />
                         Filters
                     </h3>
                     {props.hasActiveFilters && (
-                        <button type="button" className="clear" onClick={props.onClearAll}>
+                        <button type="button" className={styles.clear} onClick={props.onClearAll}>
                             <X className="h-2.5 w-2.5" aria-hidden="true" />
                             Clear all
                         </button>
@@ -60,18 +61,18 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                    <div className="section-head">
-                        <span className="lbl">Basic</span>
-                        <span className="line" />
+                    <div className={styles.sectionHead}>
+                        <span className={styles.lbl}>Basic</span>
+                        <span className={styles.line} />
                     </div>
 
-                    <div className="field">
-                        <div className="field-label">Class</div>
-                        <div className="class-row">
+                    <div className={styles.field}>
+                        <div className={styles.fieldLabel}>Class</div>
+                        <div className={styles.classRow}>
                             {CLASSES.map((cls) => {
                                 const on = props.selectedClasses.includes(cls);
                                 return (
-                                    <button key={cls} type="button" title={formatProfession(cls)} className={cn("class-btn", on && "on")} onClick={() => props.onClassesChange(toggle(props.selectedClasses, cls))} aria-pressed={on}>
+                                    <button key={cls} type="button" title={formatProfession(cls)} className={cn(styles.classBtn, on && styles.on)} onClick={() => props.onClassesChange(toggle(props.selectedClasses, cls))} aria-pressed={on}>
                                         <ClassIcon profession={cls} size={20} />
                                     </button>
                                 );
@@ -79,13 +80,13 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                         </div>
                     </div>
 
-                    <div className="field">
-                        <div className="field-label">Rarity</div>
-                        <div className="rarity-row">
+                    <div className={styles.field}>
+                        <div className={styles.fieldLabel}>Rarity</div>
+                        <div className={styles.rarityRow}>
                             {RARITIES.map((r) => {
                                 const on = props.selectedRarities.includes(r);
                                 return (
-                                    <button key={r} type="button" className={cn("rarity-btn", `r${r}`, on && "on")} onClick={() => props.onRaritiesChange(toggle(props.selectedRarities, r))} aria-pressed={on}>
+                                    <button key={r} type="button" data-rarity={rarityToNumber(r)} className={cn(styles.rarityBtn, on && styles.on)} onClick={() => props.onRaritiesChange(toggle(props.selectedRarities, r))} aria-pressed={on}>
                                         {rarityToNumber(r)}★
                                     </button>
                                 );
@@ -95,11 +96,11 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                    <button type="button" className={cn("section-head expandable", advancedOpen && "open")} onClick={() => setAdvancedOpen((v) => !v)} aria-expanded={advancedOpen}>
-                        <span className="lbl">Advanced</span>
-                        {advancedCount > 0 && <span className="n">{advancedCount}</span>}
-                        <span className="line" />
-                        <ChevronDown className="chev" aria-hidden="true" />
+                    <button type="button" className={cn(styles.sectionHead, styles.expandable, advancedOpen && styles.open)} onClick={() => setAdvancedOpen((v) => !v)} aria-expanded={advancedOpen}>
+                        <span className={styles.lbl}>Advanced</span>
+                        {advancedCount > 0 && <span className={styles.n}>{advancedCount}</span>}
+                        <span className={styles.line} />
+                        <ChevronDown className={styles.chev} aria-hidden="true" />
                     </button>
 
                     {advancedOpen && (
@@ -116,13 +117,13 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                                 formatGroup={formatProfession}
                             />
 
-                            <div className="field">
-                                <div className="field-label">Gender</div>
-                                <div className="tag-row">
+                            <div className={styles.field}>
+                                <div className={styles.fieldLabel}>Gender</div>
+                                <div className={styles.tagRow}>
                                     {GENDERS.map((g) => {
                                         const on = props.selectedGenders.includes(g);
                                         return (
-                                            <button key={g} type="button" className={cn("tg", on && "on")} onClick={() => props.onGendersChange(toggle(props.selectedGenders, g))} aria-pressed={on}>
+                                            <button key={g} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => props.onGendersChange(toggle(props.selectedGenders, g))} aria-pressed={on}>
                                                 {g}
                                             </button>
                                         );

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
+import styles from "./MainNav.module.css";
 
 export interface INavItem {
     href: string;
@@ -78,9 +79,9 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     return (
         <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
             <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-                <DropdownMenuTrigger className={cn("nav-link", isActive && "is-active")} aria-expanded={open}>
+                <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} aria-expanded={open}>
                     {item.label}
-                    <ChevronDown className={cn("chev", open && "opacity-90")} />
+                    <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className="min-w-95 p-2" onMouseEnter={openNow} onMouseLeave={closeSoon}>
                     <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">Tools</div>
@@ -138,7 +139,7 @@ export function MainNav({ items, className, onOpenCommand, ...props }: IMainNavP
                 }
 
                 return (
-                    <Link key={item.href} to={item.href} className={cn("nav-link", isActive && "is-active")}>
+                    <Link key={item.href} to={item.href} className={cn(styles.navLink, isActive && styles.isActive)}>
                         {item.label}
                     </Link>
                 );

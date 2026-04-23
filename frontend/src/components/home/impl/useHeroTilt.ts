@@ -35,14 +35,14 @@ export function useHeroTilt() {
             dy = -nx * MAX_Y;
             dx = ny * MAX_X;
             dz = LIFT;
-            el.classList.add("is-tilting");
+            el.dataset.tilting = "true";
             if (!raf) raf = requestAnimationFrame(step);
         };
         const onLeave = () => {
             dx = 6;
             dy = -4;
             dz = 0;
-            el.classList.remove("is-tilting");
+            delete el.dataset.tilting;
             if (!raf) raf = requestAnimationFrame(step);
         };
         el.addEventListener("mousemove", onMove);

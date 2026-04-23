@@ -6,6 +6,7 @@ import { Kbd } from "#/components/ui/kbd";
 import { Separator } from "#/components/ui/separator";
 import { statsQueryOptions } from "#/lib/api/stats";
 import CommandPreview from "./CommandPreview";
+import styles from "./Hero.module.css";
 import { useHeroTilt } from "./useHeroTilt";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
@@ -20,15 +21,16 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
         { v: stats ? compact.format(stats.rosters.total) : "—", l: "rosters synced" },
     ];
     return (
-        <section className="hero">
-            <div className="hero-bg" aria-hidden="true" />
-            <div className="hero-glow" aria-hidden="true" />
-            <div className="hero-grid" aria-hidden="true" />
+        <section className={styles.hero}>
+            <div className={styles.heroAmbient} aria-hidden="true" />
+            <div className={styles.heroBg} aria-hidden="true" />
+            <div className={styles.heroGlow} aria-hidden="true" />
+            <div className={styles.heroGrid} aria-hidden="true" />
 
             <div className="relative z-3 mx-auto grid w-[min(1080px,calc(100%-2rem))] grid-cols-1 items-center gap-10 md:grid-cols-2 md:gap-12">
                 <div className="flex flex-col">
                     <div className="mb-5 inline-flex w-max items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 pl-2.5">
-                        <span className="dot-pulse" aria-hidden="true" />
+                        <span className={styles.dotPulse} aria-hidden="true" />
                         <span className="font-mono text-[11.5px] font-medium leading-none text-muted-foreground">v3</span>
                         <Separator orientation="vertical" className="h-3.5 bg-white/10" />
                         <Link to="/changelog" className="cursor-pointer font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]" rel="noreferrer">
@@ -82,7 +84,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                     </div>
                 </div>
 
-                <div className="hero-panel" ref={tiltRef} onClick={onOpenCommand} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpenCommand()}>
+                <div className={styles.heroPanel} ref={tiltRef} onClick={onOpenCommand} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpenCommand()}>
                     <CommandPreview />
                 </div>
             </div>

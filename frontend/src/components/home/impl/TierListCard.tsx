@@ -3,6 +3,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
 import { getAvatarById } from "#/lib/utils";
 import type { ITierList } from "./data";
+import styles from "./TierListCard.module.css";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 const MAX_TOP_OPS = 4;
@@ -24,7 +25,7 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
 
     return (
         <article
-            className="tl-card group"
+            className={`${styles.tlCard} group`}
             role="link"
             style={tlAccentVars(tl.accent)}
             onClick={open}
