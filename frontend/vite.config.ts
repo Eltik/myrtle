@@ -7,13 +7,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const config = defineConfig({
-    resolve: {
-        tsconfigPaths: true,
-        dedupe: ["@base-ui/react", "@base-ui/utils"],
-    },
-    optimizeDeps: {
-        include: ["@base-ui/utils", "@base-ui/react"],
-    },
+    resolve: { tsconfigPaths: true },
     plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
 });
 

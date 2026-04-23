@@ -5,5 +5,7 @@ interface IOperatorCardListProps {
 }
 
 export function OperatorCardList({ operator }: IOperatorCardListProps) {
-    return <></>;
+    return (
+        <></>
+    )
 }
