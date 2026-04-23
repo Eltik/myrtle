@@ -5,6 +5,8 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { nitro } from "nitro/vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 const require = createRequire(import.meta.url);
 const utilsPkgJson = require.resolve("@base-ui/utils/package.json");
@@ -12,7 +14,6 @@ const utilsRoot = path.dirname(utilsPkgJson);
 
 const config = defineConfig({
     resolve: {
-        tsconfigPaths: true,
         alias: [
             {
                 find: /^@base-ui\/utils\/store$/,
@@ -24,7 +25,7 @@ const config = defineConfig({
             },
         ],
     },
-    plugins: [devtools(), tailwindcss(), tanstackStart(), viteReact()],
+    plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
 });
 
 export default config;
