@@ -32,5 +32,17 @@
             "bracketSameLine": false,
             "arrowParentheses": "always"
         }
+    },
+    "css": {
+        "formatter": {
+            "enabled": true,
+            "indentStyle": "space",
+            "indentWidth": 4,
+            "lineWidth": 320,
+            "quoteStyle": "double"
+        },
+        "linter": {
+            "enabled": true
+        }
     }
 }

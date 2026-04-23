@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Kicker } from "#/components/ui/kicker";
 import { featAccentVars } from "#/lib/role-styles";
+import styles from "./FeatureStrip.module.css";
 
 const FEATURES = [
     {
@@ -62,10 +63,10 @@ function FeatIcon({ name }: { name: string }) {
 
 export default function FeatureStrip() {
     return (
-        <section className="page-wrap grid grid-cols-1 gap-3.5 py-2 md:grid-cols-3">
+        <section className="mx-auto grid w-[min(1080px,calc(100%-2rem))] grid-cols-1 gap-3.5 py-2 md:grid-cols-3">
             {FEATURES.map((f) => (
-                <div className="feat-card" key={f.k} style={featAccentVars(f.accent)}>
-                    <div className="feat-icon">
+                <div className={styles.featCard} key={f.k} style={featAccentVars(f.accent)}>
+                    <div className={styles.featIcon}>
                         <FeatIcon name={f.icon} />
                     </div>
                     <Kicker className="mb-0">{f.k}</Kicker>

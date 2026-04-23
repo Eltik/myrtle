@@ -5,6 +5,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { useCommand } from "#/lib/command-context";
 import { TOOLS } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
+import styles from "./impl/Header.module.css";
 import { type INavItem, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
@@ -35,11 +36,11 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
-            <div className="md:page-wrap flex h-14 items-center gap-3.5 px-4 sm:h-16">
+            <div className="flex h-14 items-center gap-3.5 px-4 sm:h-16">
                 <div className="flex flex-1 items-center gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex items-center gap-2 text-foreground no-underline shrink-0">
-                        <span className="brand-bezel" aria-hidden="true">
+                        <span className={styles.brandBezel} aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
                                 <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
@@ -52,7 +53,7 @@ export default function Header() {
                     <MainNav items={navItems} onOpenCommand={openCmd} />
 
                     <div className="flex items-center gap-1.5 ml-auto">
-                        <button type="button" className="header-search hidden lg:inline-flex" onClick={openCmd} aria-label="Search operators">
+                        <button type="button" className={`${styles.headerSearch} hidden lg:inline-flex`} onClick={openCmd} aria-label="Search operators">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />

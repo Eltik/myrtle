@@ -1,13 +1,13 @@
 import { Fragment, useId, useMemo } from "react";
 import { Combobox, ComboboxCollection, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxSeparator } from "#/components/ui/combobox";
 
-interface Group {
+interface IGroup {
     key: string;
     label: string;
     items: string[];
 }
 
-interface FilterDropdownProps {
+interface IFilterDropdownProps {
     label: string;
     placeholder: string;
     options: string[];
@@ -23,11 +23,11 @@ interface FilterDropdownProps {
     formatGroup?: (key: string) => string;
 }
 
-export function FilterDropdown({ label, placeholder, options, selected, onChange, formatOption, groupBy, groupOrder, formatGroup }: FilterDropdownProps) {
+export function FilterDropdown({ label, placeholder, options, selected, onChange, formatOption, groupBy, groupOrder, formatGroup }: IFilterDropdownProps) {
     const id = useId();
     const format = formatOption ?? ((v: string) => v);
 
-    const groups = useMemo<Group[] | null>(() => {
+    const groups = useMemo<IGroup[] | null>(() => {
         if (!groupBy) return null;
         const buckets = new Map<string, string[]>();
         for (const opt of options) {
@@ -43,7 +43,7 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
         const labelFor = formatGroup ?? ((k: string) => k);
         return Array.from(buckets.entries())
             .map(
-                ([key, items]): Group => ({
+                ([key, items]): IGroup => ({
                     key,
                     label: labelFor(key),
                     items: [...items].sort((a, b) => format(a).localeCompare(format(b))),
@@ -70,7 +70,7 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
                     <ComboboxEmpty>No matches</ComboboxEmpty>
                     <ComboboxList>
                         {groups
-                            ? (group: Group) => (
+                            ? (group: IGroup) => (
                                   <Fragment key={group.key}>
                                       <ComboboxGroup items={group.items}>
                                           <ComboboxGroupLabel>{group.label}</ComboboxGroupLabel>

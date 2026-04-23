@@ -34,7 +34,7 @@ export default function TierLists() {
     const list = tierLists.filter((t) => filter === "All" || t.tag === filter);
 
     return (
-        <section className="page-wrap my-20">
+        <section className="mx-auto my-20 w-[min(1080px,calc(100%-2rem))]">
             <div className="mb-5.5">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
