@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/geist-mono";
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 @plugin "@tailwindcss/typography";
@@ -75,6 +76,15 @@
   --sidebar-ring: oklch(0.58 0.22 25);
   --glow-primary: oklch(0.58 0.22 25 / 0.35);
   --glow-primary-intense: oklch(0.58 0.22 25 / 0.55);
+
+  --font-display: "Fraunces", Georgia, serif;
+
+  --rarity-6: #f7a452;
+  --rarity-5: #f7e79e;
+  --rarity-4: #bcabdb;
+  --rarity-3: #88c8e3;
+  --rarity-2: #7ef2a3;
+  --rarity-1: #b5b5b5;
 }
 
 :root[data-theme="dark"] {
@@ -339,6 +349,13 @@ pre code {
   --sidebar-ring: oklch(0.75 0.15 25);
   --glow-primary: oklch(0.75 0.15 25 / 0.5);
   --glow-primary-intense: oklch(0.75 0.15 25 / 0.8);
+
+  --rarity-6: #f7a452;
+  --rarity-5: #f7e79e;
+  --rarity-4: #bcabdb;
+  --rarity-3: #88c8e3;
+  --rarity-2: #7ef2a3;
+  --rarity-1: #ffffff;
 }
 
 @layer base {
@@ -356,13 +373,17 @@ pre code {
   }
 }
 
-/* Role-colored operator chip — shared between the Hero command preview and the
-   live ⌘K search palette (src/components/ui/search-command.tsx). Kept global
-   because the search-command sits in the coss UI registry layer (out of scope
-   for CSS Module migration). */
 .op-chip {
   display: inline-flex; align-items: center; justify-content: center;
   width: 24px; height: 24px; border-radius: 6px;
   font: 700 11px/1 var(--font-sans); color: white; letter-spacing: -0.01em; flex-shrink: 0;
   box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.2), inset 0 -1px 0 oklch(0 0 0 / 0.2);
+}
+
+.icon-theme-aware {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.dark .icon-theme-aware {
+    filter: none;
 }

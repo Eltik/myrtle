@@ -221,13 +221,13 @@ export function OperatorsList() {
                             </button>
                         </div>
                     ) : viewMode === "grid" ? (
-                        <div className="grid grid-cols-2 gap-2.5 min-[520px]:grid-cols-3 min-[780px]:grid-cols-4 min-[780px]:gap-3 min-[1080px]:grid-cols-5">
+                        <div className="grid grid-cols-3 gap-2.5 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[780px]:gap-3 min-[1080px]:grid-cols-6 min-[1280px]:gap-4">
                             {paginated.map((op) => (
                                 <OperatorCardGrid key={op.id} operator={op} />
                             ))}
                         </div>
                     ) : viewMode === "compact" ? (
-                        <div className="grid grid-cols-3 gap-1 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1080px]:grid-cols-6 min-[1280px]:grid-cols-7">
+                        <div className="grid grid-cols-3 gap-1 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1080px]:grid-cols-6 min-[1280px]:grid-cols-7 min-[1536px]:grid-cols-8">
                             {paginated.map((op) => (
                                 <OperatorCardCompact key={op.id} operator={op} />
                             ))}
