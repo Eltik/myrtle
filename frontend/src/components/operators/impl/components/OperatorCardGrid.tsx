@@ -5,7 +5,7 @@ import styles from "./OperatorCardGrid.module.css";
 import { cn, rarityToNumber } from "#/lib/utils";
 import { CampIcon, ClassIcon } from "./Icons";
 import { env } from "#/env";
-import { RARITY_BLUR_COLORS, RARITY_COLORS } from "#/operators/impl/constants";
+import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
 import { OperatorPreview } from "./OperatorPreview";
 
 interface IOperatorCardGridProps {

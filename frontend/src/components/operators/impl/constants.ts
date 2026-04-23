@@ -50,3 +50,21 @@ export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: stri
     { key: "artists", prefix: "artist", label: (v) => v },
     { key: "voiceActors", prefix: "va", label: (v) => v },
 ];
+
+export const RARITY_COLORS: Record<number, string> = {
+    6: "#f7a452",
+    5: "#f7e79e",
+    4: "#bcabdb",
+    3: "#88c8e3",
+    2: "#7ef2a3",
+    1: "#ffffff",
+};
+
+export const RARITY_BLUR_COLORS: Record<number, string> = {
+    6: "#cc9b6a",
+    5: "#d6c474",
+    4: "#9e87c7",
+    3: "#62a2bd",
+    2: "#57ab72",
+    1: "#aaaaaa",
+};
