@@ -13,8 +13,12 @@ const config = defineConfig({
         tsconfigPaths: true,
         alias: [
             {
+                find: /^@base-ui\/utils\/store$/,
+                replacement: path.resolve(__dirname, "node_modules/@base-ui/utils/esm/store/index.js"),
+            },
+            {
                 find: /^@base-ui\/utils\/(.+)$/,
-                replacement: path.resolve(__dirname, "node_modules/@base-ui/utils/esm") + "/$1.js",
+                replacement: path.resolve(__dirname, "node_modules/@base-ui/utils") + "/$1.js",
             },
         ],
     },
