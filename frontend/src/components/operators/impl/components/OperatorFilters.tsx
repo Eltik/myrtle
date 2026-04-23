@@ -1,17 +1,11 @@
 import { ChevronDown, Filter, X } from "lucide-react";
 import { useState } from "react";
-import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
 import type { IFilterOptions } from "../types";
 import type { OperatorRarityTier } from "#/types/operators";
-import { env } from "#/env";
-import { CLASSES, GENDERS, RARITIES } from "../constants";
+import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
 import { FilterDropdown } from "./FilterDropdown";
-
-function ClassIcon({ profession, size = 20 }: { profession: string; size?: number }) {
-    const base = env.VITE_BACKEND_URL ?? "";
-    const src = `${base}/api/assets/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`;
-    return <img alt={formatProfession(profession)} src={src} width={size} height={size} />;
-}
+import { ClassIcon } from "./ClassIcon";
 
 interface IOperatorFiltersProps {
     selectedClasses: string[];
@@ -110,7 +104,17 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
 
                     {advancedOpen && (
                         <div className="flex flex-col gap-4">
-                            <FilterDropdown label="Archetype" placeholder="Select archetype" options={props.options.subclasses} selected={props.selectedSubclasses} onChange={props.onSubclassesChange} formatOption={formatSubProfession} />
+                            <FilterDropdown
+                                label="Archetype"
+                                placeholder="Select archetype"
+                                options={props.options.subclasses}
+                                selected={props.selectedSubclasses}
+                                onChange={props.onSubclassesChange}
+                                formatOption={formatSubProfession}
+                                groupBy={subProfessionToProfession}
+                                groupOrder={PROFESSION_ORDER}
+                                formatGroup={formatProfession}
+                            />
 
                             <div className="field">
                                 <div className="field-label">Gender</div>
