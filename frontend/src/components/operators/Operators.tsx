@@ -8,10 +8,14 @@ import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { cn } from "#/lib/utils";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
+import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
+import { OperatorCardList } from "./impl/components/OperatorCardList";
+import { Pagination } from "./impl/components/Pagination";
 
 export function OperatorsList() {
     const { data: operators = [] } = useQuery(operatorsListQueryOptions());
@@ -149,6 +153,67 @@ export function OperatorsList() {
                             </button>
                         </div>
                     </div>
+
+                    {activeChips.length > 0 && (
+                        <div className="active-filters">
+                            <span className="lbl">Active:</span>
+                            {activeChips.map((chip) => (
+                                <span className="pill" key={chip.key}>
+                                    {chip.label}
+                                    <button type="button" onClick={chip.onRemove} aria-label={`Remove ${chip.label}`}>
+                                        <X className="h-2 w-2" aria-hidden="true" />
+                                    </button>
+                                </span>
+                            ))}
+                            <button type="button" className="clear" onClick={clearFilters}>
+                                Clear all
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="results-line">
+                        <span>
+                            Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{filteredOperators.length}</strong> operators
+                        </span>
+                        <span className="hidden font-mono text-[11px] uppercase leading-none tracking-[0.08em] text-muted-foreground md:inline">Hover for preview · Click to open</span>
+                    </div>
+
+                    {filteredOperators.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-card/50 py-16 text-center">
+                            <p className="font-sans text-sm text-muted-foreground">No operators match your filters.</p>
+                            <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-primary hover:underline">
+                                Clear all filters
+                            </button>
+                        </div>
+                    ) : viewMode === "grid" ? (
+                        <div className="op-grid">
+                            {paginated.map((op) => (
+                                <OperatorCardGrid key={op.id} operator={op} />
+                            ))}
+                        </div>
+                    ) : viewMode === "compact" ? (
+                        <div className="op-compact-grid">
+                            {paginated.map((op) => (
+                                <OperatorCardCompact key={op.id} operator={op} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="op-list">
+                            <div className="list-head">
+                                <span />
+                                <span>Name</span>
+                                <span>Rarity</span>
+                                <span>Class</span>
+                                <span>Archetype</span>
+                                <span />
+                            </div>
+                            {paginated.map((op) => (
+                                <OperatorCardList key={op.id} operator={op} />
+                            ))}
+                        </div>
+                    )}
+
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </main>
             </div>
         </div>

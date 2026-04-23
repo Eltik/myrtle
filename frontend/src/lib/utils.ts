@@ -251,6 +251,88 @@ export const formatSubProfession = (subProfession: string): string => {
     }
 };
 
+export const SUB_PROFESSION_TO_PROFESSION: Record<string, string> = {
+    blastcaster: "CASTER",
+    chain: "CASTER",
+    corecaster: "CASTER",
+    funnel: "CASTER",
+    mystic: "CASTER",
+    phalanx: "CASTER",
+    primcaster: "CASTER",
+    soulcaster: "CASTER",
+    splashcaster: "CASTER",
+
+    artsprotector: "TANK",
+    duelist: "TANK",
+    fortress: "TANK",
+    guardian: "TANK",
+    unyield: "TANK",
+    primprotector: "TANK",
+    protector: "TANK",
+    shotprotector: "TANK",
+
+    artsfghter: "WARRIOR",
+    centurion: "WARRIOR",
+    crusher: "WARRIOR",
+    fearless: "WARRIOR",
+    hammer: "WARRIOR",
+    fighter: "WARRIOR",
+    instructor: "WARRIOR",
+    librator: "WARRIOR",
+    lord: "WARRIOR",
+    mercenary: "WARRIOR",
+    primguard: "WARRIOR",
+    reaper: "WARRIOR",
+    musha: "WARRIOR",
+    sword: "WARRIOR",
+
+    chainhealer: "MEDIC",
+    incantationmedic: "MEDIC",
+    physician: "MEDIC",
+    ringhealer: "MEDIC",
+    healer: "MEDIC",
+    wandermedic: "MEDIC",
+
+    aoesniper: "SNIPER",
+    siegesniper: "SNIPER",
+    longrange: "SNIPER",
+    bombarder: "SNIPER",
+    closerange: "SNIPER",
+    hunter: "SNIPER",
+    loopshooter: "SNIPER",
+    fastshot: "SNIPER",
+    skybreaker: "SNIPER",
+    reaperrange: "SNIPER",
+
+    alchemist: "SPECIAL",
+    stalker: "SPECIAL",
+    dollkeeper: "SPECIAL",
+    executor: "SPECIAL",
+    geek: "SPECIAL",
+    hookmaster: "SPECIAL",
+    merchant: "SPECIAL",
+    pusher: "SPECIAL",
+    skywalker: "SPECIAL",
+    traper: "SPECIAL",
+
+    blessing: "SUPPORT",
+    craftsman: "SUPPORT",
+    bard: "SUPPORT",
+    slower: "SUPPORT",
+    underminer: "SUPPORT",
+    ritualist: "SUPPORT",
+    summoner: "SUPPORT",
+
+    agent: "PIONEER",
+    charger: "PIONEER",
+    pioneer: "PIONEER",
+    bearer: "PIONEER",
+    counsellor: "PIONEER",
+    tactician: "PIONEER",
+};
+
+export const subProfessionToProfession = (subProfession: string): string => SUB_PROFESSION_TO_PROFESSION[subProfession] ?? "OTHER";
+
 export const formatNationId = (nationId: string) => {
     switch (nationId.toLowerCase()) {
         case "rhodes":

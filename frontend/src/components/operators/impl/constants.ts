@@ -30,6 +30,8 @@ export const CLASS_SORT_ORDER: Record<string, number> = {
     SPECIAL: 7,
 };
 
+export const PROFESSION_ORDER = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER", "SUPPORT", "MEDIC", "SPECIAL"] as const;
+
 export const VIEW_MODE_KEY = "operators:view-mode";
 export const FILTERS_VISIBLE_KEY = "operators:filters-visible";
 export const ITEMS_PER_PAGE = 30;
