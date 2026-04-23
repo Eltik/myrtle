@@ -53,7 +53,7 @@ export default function Header() {
                     <MainNav items={navItems} onOpenCommand={openCmd} />
 
                     <div className="flex items-center gap-1.5 ml-auto">
-                        <button type="button" className={`${styles.headerSearch} hidden lg:inline-flex`} onClick={openCmd} aria-label="Search operators">
+                        <button type="button" className={`${styles.headerSearch} hidden! lg:inline-flex!`} onClick={openCmd} aria-label="Search operators">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
                                 <path d="m21 21-4.35-4.35" />

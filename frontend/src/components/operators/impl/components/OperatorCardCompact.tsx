@@ -5,6 +5,5 @@ interface IOperatorCardCompactProps {
 }
 
 export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
-    const initial = operator.name.charAt(0).toUpperCase();
     return <></>;
 }

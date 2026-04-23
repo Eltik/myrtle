@@ -1,5 +1,5 @@
 import { env } from "#/env";
-import { formatGroupId, formatProfession, formatSubProfession, formatTeamId } from "#/lib/utils";
+import { cn, formatGroupId, formatProfession, formatSubProfession, formatTeamId } from "#/lib/utils";
 
 export function ClassIcon({ profession, size = 20 }: { profession: string; size?: number }) {
     const base = env.VITE_BACKEND_URL ?? "";
@@ -19,8 +19,8 @@ export function TeamIcon({ teamId, size = 20 }: { teamId: string; size?: number 
     return <img alt={formatTeamId(teamId)} src={src} width={size} height={size} />;
 }
 
-export function CampIcon({ groupId, size = 20 }: { groupId: string; size?: number }) {
+export function CampIcon({ groupId, size = 20, className }: { groupId: string; size?: number; className?: string }) {
     const base = env.VITE_BACKEND_URL ?? "";
     const src = `${base}/api/assets/textures/spritepack/ui_camp_logo_0/logo_${groupId.toLowerCase()}.png`;
-    return <img alt={formatGroupId(groupId)} src={src} width={size} height={size} />;
+    return <img alt={formatGroupId(groupId)} src={src} width={size} height={size} className={cn("icon-theme-aware", className)} />;
 }
