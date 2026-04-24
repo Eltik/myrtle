@@ -36,6 +36,8 @@ export const VIEW_MODE_KEY = "operators:view-mode";
 export const FILTERS_VISIBLE_KEY = "operators:filters-visible";
 export const ITEMS_PER_PAGE = 30;
 
+export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 32px";
+
 export const VIEW_MODES: ReadonlySet<ViewMode> = new Set(["grid", "compact", "list"]);
 
 export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: string) => string }[] = [

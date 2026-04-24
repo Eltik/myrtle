@@ -1,10 +1,10 @@
 import { env } from "#/env";
 import { cn, formatGroupId, formatProfession, formatSubProfession, formatTeamId } from "#/lib/utils";
 
-export function ClassIcon({ profession, size = 20 }: { profession: string; size?: number }) {
+export function ClassIcon({ profession, size = 20, className }: { profession: string; size?: number; className?: string }) {
     const base = env.VITE_BACKEND_URL ?? "";
     const src = `${base}/api/assets/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`;
-    return <img alt={formatProfession(profession)} src={src} width={size} height={size} />;
+    return <img alt={formatProfession(profession)} src={src} width={size} height={size} className={cn("icon-theme-aware", className)} />;
 }
 
 export function SubProfessionIcon({ subProfession, size = 20 }: { subProfession: string; size?: number }) {

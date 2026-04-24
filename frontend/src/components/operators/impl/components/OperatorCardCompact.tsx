@@ -17,15 +17,14 @@ function parseOperatorName(name: string) {
     const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
     const displayName = parts[0] ?? name;
     const subtitle = parts[2] ?? null;
-    const isLong = displayName.split(" ").length > 1 && displayName.length >= 16;
-    return { displayName, subtitle, isLong };
+    return { displayName, subtitle };
 }
 
 export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
     const rarityColor = RARITY_COLORS[rarityToNumber(operator.rarity)] ?? "#ffffff";
     const operatorId = operator.id ?? "";
     const operatorName = operator.name ?? "Unknown";
-    const { displayName, subtitle, isLong } = parseOperatorName(operatorName);
+    const { displayName, subtitle } = parseOperatorName(operatorName);
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
 
     return (
@@ -33,16 +32,8 @@ export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
             <HoverCardTrigger>
                 <Link to={`/operators/${operator.id}`} className="group relative flex flex-col rounded bg-card pt-1 pr-2 pb-1 pl-1.5 transition-transform hover:scale-102">
                     <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                        {subtitle && <span className="text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
-                        <span
-                            className="truncate text-foreground"
-                            style={{
-                                fontSize: isLong ? "9px" : "12px",
-                                lineHeight: isLong ? "9px" : "17px",
-                            }}
-                        >
-                            {displayName}
-                        </span>
+                        {subtitle && <span className="text-[0.625rem] text-foreground leading-normal sm:text-xs sm:leading-loose">{subtitle}</span>}
+                        <span className="truncate text-[0.625rem] text-foreground leading-tight sm:text-xs sm:leading-4.25">{displayName}</span>
                     </div>
                     <div className="relative box-content aspect-square h-20 overflow-hidden sm:h-30" style={{ borderBottom: `4px solid ${rarityColor}` }}>
                         <div className="pointer-events-none absolute -translate-x-3 -translate-y-2">
