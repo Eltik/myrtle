@@ -11,7 +11,7 @@ import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { professionClass, professionLabel } from "#/lib/registry/operator-display";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
-import { TOOLS, type Tool } from "#/lib/registry/tools";
+import { TOOLS, type ITool } from "#/lib/registry/tools";
 import { searchAndRank } from "#/lib/search/fuzzy";
 
 interface SearchCommandProps {
@@ -137,7 +137,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
     );
 }
 
-function ToolRow({ tool, onSelect }: { tool: Tool; onSelect: () => void }): React.ReactElement {
+function ToolRow({ tool, onSelect }: { tool: ITool; onSelect: () => void }): React.ReactElement {
     return (
         <CommandItem value={`tool:${tool.id}`} onSelect={onSelect} className="flex flex-row gap-2">
             <ToolIcon name={tool.icon} className="size-4 text-muted-foreground" />

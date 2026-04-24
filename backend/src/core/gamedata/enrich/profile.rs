@@ -148,7 +148,7 @@ fn parse_race(s: &str) -> OperatorRace {
         "瓦伊凡" | "Vulpo" => OperatorRace::Vulpo,
         "依拉菲亚" | "Elafia" => OperatorRace::Elafia,
         "斐迪亚" | "Phidia" => OperatorRace::Phidia,
-        "阿戈尔" | "Aegir" => OperatorRace::Aegir,
+        "阿戈尔" | "Aegir" | "Ægir" => OperatorRace::Aegir,
         "阿纳缇" | "Anaty" => OperatorRace::Anaty,
         "依特拉" | "Itra" => OperatorRace::Itra,
         "古龙" | "Archosauria" => OperatorRace::Archosauria,

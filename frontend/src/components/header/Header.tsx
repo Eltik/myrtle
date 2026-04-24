@@ -10,6 +10,7 @@ import { type INavItem, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
+import { useIsMac } from "#/hooks/use-is-mac";
 
 const toolItems: INavItem[] = TOOLS.map((t) => ({
     href: t.href,
@@ -33,6 +34,7 @@ const navItems: INavItem[] = [
 export default function Header() {
     const { user, loading, logout } = useAuth();
     const { open: openCmd } = useCommand();
+    const isMac = useIsMac();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
@@ -60,7 +62,7 @@ export default function Header() {
                             </svg>
                             <span>Search operators…</span>
                             <span className="kbd-inline ml-auto flex gap-1">
-                                <Kbd>⌘</Kbd>
+                                <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd>
                                 <Kbd>K</Kbd>
                             </span>
                         </button>
