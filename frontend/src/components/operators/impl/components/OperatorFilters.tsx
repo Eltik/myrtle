@@ -4,8 +4,8 @@ import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumb
 import type { OperatorRarityTier } from "#/types/operators";
 import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
 import type { IFilterOptions } from "../types";
-import { CampIcon, ClassIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import { FilterDropdown } from "./FilterDropdown";
+import { CampIcon, ClassIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import styles from "./OperatorFilters.module.css";
 
 interface IOperatorFiltersProps {

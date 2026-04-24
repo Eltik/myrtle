@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
-import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
-import { CLASS_SORT_ORDER } from "./constants";
 import { rarityToNumber } from "#/lib/utils";
+import { CLASS_SORT_ORDER } from "./constants";
+import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
 
 const initialState: IFilterState = {
     searchQuery: "",
@@ -132,7 +132,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             }
         };
         return [...filtered].sort((a, b) => cmp(a, b) * dir);
-    }, [filtered, filters.sortBy, filters.sortOrder]);
+    }, [filtered, filters.sortBy, filters.sortOrder, filters]);
 
     const clearFilters = useCallback(() => setFilters(initialState), []);
 

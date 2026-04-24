@@ -1,6 +1,6 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { OperatorsList } from "#/components/operators/Operators";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/operators")({
     component: RouteComponent,

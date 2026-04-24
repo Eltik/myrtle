@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
+import { useIsMac } from "#/hooks/use-is-mac";
 import { useCommand } from "#/lib/command-context";
-import { TOOLS, modKey, toolKb } from "#/lib/registry/tools";
+import { modKey, TOOLS, toolKb } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
 import styles from "./impl/Header.module.css";
 import { type INavItem, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
-import { useIsMac } from "#/hooks/use-is-mac";
-import { useMemo } from "react";
 
 export default function Header() {
     const { user, loading, logout } = useAuth();
