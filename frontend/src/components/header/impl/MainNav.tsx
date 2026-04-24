@@ -5,6 +5,8 @@ import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
 import styles from "./MainNav.module.css";
+import { useIsMac } from "#/hooks/use-is-mac";
+import { modKey } from "#/lib/registry/tools";
 
 export interface INavItem {
     href: string;
@@ -76,6 +78,8 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
         closeTimer.current = setTimeout(() => setOpen(false), 140);
     };
 
+    const isMac = useIsMac();
+
     return (
         <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
             <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
@@ -105,7 +109,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                     </div>
                     <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-white/5 px-3 pt-2.5 pb-2 font-sans text-[11.5px] leading-none text-muted-foreground">
                         <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium">
-                            Press <Kbd>⌘</Kbd>
+                            Press <Kbd>{modKey(isMac)}</Kbd>
                             <Kbd>K</Kbd> for all commands
                         </span>
                         <button
