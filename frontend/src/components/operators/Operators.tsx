@@ -11,7 +11,7 @@ import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
-import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
@@ -34,23 +34,31 @@ export function OperatorsList() {
     });
     const toggleFilters = () => setFiltersVisible((v) => !v);
 
+    const [itemsPerPage, setItemsPerPage] = useLocalStorageState<ItemsPerPage>(ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE, {
+        parse: (raw) => {
+            const num = Number(raw);
+            return ITEMS_PER_PAGE_OPTIONS.includes(num as ItemsPerPage) ? (num as ItemsPerPage) : undefined;
+        },
+        serialize: (v) => String(v),
+    });
+
     const [currentPage, setCurrentPage] = useState(1);
     useEffect(() => {
         setCurrentPage(1);
     }, []);
 
-    const totalPages = Math.max(1, Math.ceil(filteredOperators.length / ITEMS_PER_PAGE));
+    const totalPages = Math.max(1, Math.ceil(filteredOperators.length / itemsPerPage));
     const page = Math.min(currentPage, totalPages);
 
     const { paginated, fromIndex, toIndex } = useMemo(() => {
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const end = page * ITEMS_PER_PAGE;
+        const start = (page - 1) * itemsPerPage;
+        const end = page * itemsPerPage;
         return {
             paginated: filteredOperators.slice(start, end),
             fromIndex: filteredOperators.length === 0 ? 0 : start + 1,
             toIndex: Math.min(end, filteredOperators.length),
         };
-    }, [filteredOperators, page]);
+    }, [filteredOperators, page, itemsPerPage]);
 
     const activeChips = useMemo(
         () =>
@@ -210,6 +218,29 @@ export function OperatorsList() {
                             >
                                 {filters.sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
                             </button>
+                        </div>
+
+                        <div className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
+                            <Select
+                                value={String(itemsPerPage)}
+                                onValueChange={(v) => {
+                                    setItemsPerPage(Number(v) as ItemsPerPage);
+                                    setCurrentPage(1);
+                                }}
+                                aria-label="Items per page"
+                            >
+                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-sans text-[13px] font-medium text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                    <span className="mr-1 border-r border-border pr-1 font-mono text-[10px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground">Show</span>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt} value={String(opt)}>
+                                            {opt}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
