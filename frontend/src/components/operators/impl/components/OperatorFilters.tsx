@@ -1,5 +1,6 @@
 import { ChevronDown, Filter, X } from "lucide-react";
 import { useState } from "react";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
 import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
@@ -72,9 +73,18 @@ export function OperatorFilters(props: IOperatorFiltersProps) {
                             {CLASSES.map((cls) => {
                                 const on = props.selectedClasses.includes(cls);
                                 return (
-                                    <button key={cls} type="button" title={formatProfession(cls)} className={cn(styles.classBtn, on && styles.on)} onClick={() => props.onClassesChange(toggle(props.selectedClasses, cls))} aria-pressed={on}>
-                                        <ClassIcon profession={cls} size={20} />
-                                    </button>
+                                    <Tooltip key={`tooltip-${cls}`}>
+                                        <TooltipTrigger
+                                            render={
+                                                <button key={cls} type="button" title={formatProfession(cls)} className={cn(styles.classBtn, on && styles.on)} onClick={() => props.onClassesChange(toggle(props.selectedClasses, cls))} aria-pressed={on}>
+                                                    <ClassIcon profession={cls} size={20} />
+                                                </button>
+                                            }
+                                        />
+                                        <TooltipPopup side="top" sideOffset={8}>
+                                            {formatProfession(cls)}
+                                        </TooltipPopup>
+                                    </Tooltip>
                                 );
                             })}
                         </div>
