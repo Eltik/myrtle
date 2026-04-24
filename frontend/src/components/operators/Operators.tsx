@@ -12,7 +12,7 @@ import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
-import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
@@ -234,17 +234,19 @@ export function OperatorsList() {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1 pt-1">
-                            <div className="grid grid-cols-[52px_1fr_96px_128px_160px_32px] items-center gap-3 border-b border-border/60 px-3 pb-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground max-[900px]:hidden">
+                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground max-[900px]:hidden xl:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                                 <span />
                                 <span>Name</span>
-                                <span>Rarity</span>
-                                <span>Class</span>
-                                <span>Archetype</span>
+                                <span className="text-center">Rarity</span>
+                                <span className="text-center">Class</span>
+                                <span className="text-center">Archetype</span>
                                 <span />
                             </div>
-                            {paginated.map((op) => (
-                                <OperatorCardList key={op.id} operator={op} />
-                            ))}
+                            <div className="grid grid-cols-1 gap-x-3 gap-y-1 xl:grid-cols-2">
+                                {paginated.map((op) => (
+                                    <OperatorCardList key={op.id} operator={op} />
+                                ))}
+                            </div>
                         </div>
                     )}
 
