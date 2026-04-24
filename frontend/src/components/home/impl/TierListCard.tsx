@@ -26,7 +26,6 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
     return (
         <article
             className={`${styles.tlCard} group`}
-            role="link"
             style={tlAccentVars(tl.accent)}
             onClick={open}
             onKeyDown={(e) => {

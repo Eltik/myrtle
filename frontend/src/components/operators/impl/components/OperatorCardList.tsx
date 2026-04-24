@@ -1,8 +1,8 @@
+import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { env } from "#/env";
-import { capitalize, cn, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { cn, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
-import { Link } from "@tanstack/react-router";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
 import { CampIcon, ClassIcon } from "./Icons";
 import { OperatorPreview } from "./OperatorPreview";
@@ -13,8 +13,9 @@ interface IOperatorCardListProps {
 
 function RarityStars({ rarity, className }: { rarity: number; className?: string }) {
     return (
-        <span className={cn("inline-flex items-center gap-0.5", className)} aria-label={`${rarity} star`}>
+        <span role="img" className={cn("inline-flex items-center gap-0.5", className)} aria-label={`${rarity} star`}>
             {Array.from({ length: rarity }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: decorative stars with fixed count
                 <span key={i} aria-hidden="true">
                     ★
                 </span>

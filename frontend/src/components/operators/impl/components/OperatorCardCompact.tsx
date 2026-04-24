@@ -1,11 +1,11 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
-import type { IOperatorListItem } from "#/types/operators";
 import { Link } from "@tanstack/react-router";
-import { OperatorPreview } from "./OperatorPreview";
-import { RARITY_COLORS } from "../constants";
-import { formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { env } from "#/env";
+import { formatSubProfession, rarityToNumber } from "#/lib/utils";
+import type { IOperatorListItem } from "#/types/operators";
+import { RARITY_COLORS } from "../constants";
 import { CampIcon, ClassIcon } from "./Icons";
+import { OperatorPreview } from "./OperatorPreview";
 
 interface IOperatorCardCompactProps {
     operator: IOperatorListItem;

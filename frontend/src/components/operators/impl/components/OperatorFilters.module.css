@@ -165,11 +165,11 @@
     font: 600 10px / 1 var(--font-mono);
 }
 
-.field + .field {
-    margin-top: 14px;
-}
 .field {
     container-type: inline-size;
+}
+.field + .field {
+    margin-top: 14px;
 }
 .fieldLabel {
     font: 500 12px / 1 var(--font-sans);

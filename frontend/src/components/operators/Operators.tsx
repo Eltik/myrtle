@@ -37,7 +37,7 @@ export function OperatorsList() {
     const [currentPage, setCurrentPage] = useState(1);
     useEffect(() => {
         setCurrentPage(1);
-    }, [filters]);
+    }, []);
 
     const totalPages = Math.max(1, Math.ceil(filteredOperators.length / ITEMS_PER_PAGE));
     const page = Math.min(currentPage, totalPages);
@@ -141,6 +141,7 @@ export function OperatorsList() {
                             />
                         </div>
 
+                        {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
                         <div
                             className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground"
                             role="group"

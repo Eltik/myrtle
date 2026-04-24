@@ -4,7 +4,6 @@ interface IPaginationProps {
     onPageChange: (page: number) => void;
 }
 
-export function Pagination({ currentPage, totalPages, onPageChange }: IPaginationProps) {
-    if (totalPages <= 1) return null;
-    return <></>;
+export function Pagination(_props: IPaginationProps) {
+    return null;
 }

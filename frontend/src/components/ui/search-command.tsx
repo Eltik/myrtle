@@ -7,13 +7,13 @@ import { Command, CommandDialog, CommandDialogPopup, CommandEmpty, CommandFooter
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useIsMac } from "#/hooks/use-is-mac";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import type { IOperatorIndexEntry } from "#/types/operators";
 import { professionClass, professionLabel } from "#/lib/registry/operator-display";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
-import { TOOLS, type ITool, toolShortcut } from "#/lib/registry/tools";
-import { useIsMac } from "#/hooks/use-is-mac";
+import { type ITool, TOOLS, toolShortcut } from "#/lib/registry/tools";
 import { searchAndRank } from "#/lib/search/fuzzy";
+import type { IOperatorIndexEntry } from "#/types/operators";
 
 interface SearchCommandProps {
     open: boolean;

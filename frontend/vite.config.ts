@@ -1,11 +1,11 @@
+import { createRequire } from "node:module";
+import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
-import path from "node:path";
-import { createRequire } from "node:module";
 import { nitro } from "nitro/vite";
+import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 const require = createRequire(import.meta.url);

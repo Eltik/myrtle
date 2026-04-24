@@ -3,10 +3,10 @@ import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
-import { cn } from "#/lib/utils";
-import styles from "./MainNav.module.css";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { modKey } from "#/lib/registry/tools";
+import { cn } from "#/lib/utils";
+import styles from "./MainNav.module.css";
 
 export interface INavItem {
     href: string;
@@ -81,6 +81,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     const isMac = useIsMac();
 
     return (
+        // biome-ignore lint/a11y/noStaticElementInteractions: hover timers supplement the already-accessible DropdownMenu
         <div role="presentation" onMouseEnter={openNow} onMouseLeave={closeSoon}>
             <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
                 <DropdownMenuTrigger className={cn(styles.navLink, isActive && styles.isActive)} aria-expanded={open}>

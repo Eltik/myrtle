@@ -27,6 +27,7 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
                     <div className={styles.name}>{operator.name}</div>
                     <div className={styles.rarity}>
                         {Array.from({ length: rarity }, (_, i) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: decorative stars with fixed count
                             <span key={`s${operator.id}-${i}`} aria-hidden="true">
                                 ★
                             </span>
