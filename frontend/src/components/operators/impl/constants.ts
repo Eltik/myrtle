@@ -34,7 +34,10 @@ export const PROFESSION_ORDER = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER
 
 export const VIEW_MODE_KEY = "operators:view-mode";
 export const FILTERS_VISIBLE_KEY = "operators:filters-visible";
+export const ITEMS_PER_PAGE_KEY = "operators:items-per-page";
 export const ITEMS_PER_PAGE = 30;
+export const ITEMS_PER_PAGE_OPTIONS = [12, 24, 30, 48, 60, 100] as const;
+export type ItemsPerPage = (typeof ITEMS_PER_PAGE_OPTIONS)[number];
 
 export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 32px";
 
