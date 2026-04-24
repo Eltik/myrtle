@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { voicesQueryOptions } from "#/lib/api/voices";
-import { cn } from "#/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
@@ -105,34 +104,32 @@ export function OperatorsList() {
                     hasActiveFilters={hasActiveFilters}
                     collapsed={!filtersVisible}
                 />
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <button
-                                type="button"
-                                className={cn(
-                                    "absolute z-10 box-border inline-flex h-6 w-6 cursor-pointer appearance-none items-center justify-center rounded-md border border-border bg-[color-mix(in_oklch,var(--secondary)_70%,var(--card))] p-0 font-[inherit] text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_6%,transparent)] transition-[left,top,background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground hover:shadow-[0_2px_8px_color-mix(in_oklch,var(--foreground)_10%,transparent)] focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_24%,transparent)] focus-visible:outline-none motion-reduce:transition-none max-[960px]:static max-[960px]:-order-1 max-[960px]:mb-3 max-[960px]:h-8 max-[960px]:w-full",
-                                    filtersVisible ? "left-65 top-2.5" : "left-0 top-7 max-[960px]:left-auto",
-                                )}
-                                onClick={toggleFilters}
-                                aria-label={filtersVisible ? "Hide filters" : "Show filters"}
-                                aria-expanded={filtersVisible}
-                            />
-                        }
-                    >
-                        {filtersVisible ? <ChevronLeft className="block h-3.5 w-3.5" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5" aria-hidden="true" />}
-                        {!filtersVisible && activeFilterCount > 0 && (
-                            <span className="absolute -right-1.25 -top-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono text-[9px] font-semibold leading-none text-primary-foreground shadow-[0_0_0_2px_var(--background)]">{activeFilterCount}</span>
-                        )}
-                    </TooltipTrigger>
-                    <TooltipPopup side="right" sideOffset={8}>
-                        Filters
-                    </TooltipPopup>
-                </Tooltip>
 
-                <main className={cn("flex min-w-0 flex-1 flex-col gap-3.5 transition-[padding-left] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]", !filtersVisible && "pl-9 max-[960px]:pl-0")} aria-label="Operator results">
+                <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label="Operator results">
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <div className="flex h-10 max-w-115 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className="relative box-border inline-flex h-6 w-6 shrink-0 cursor-pointer appearance-none items-center justify-center rounded-md border border-border bg-[color-mix(in_oklch,var(--secondary)_70%,var(--card))] p-0 font-[inherit] text-muted-foreground shadow-[0_1px_2px_color-mix(in_oklch,var(--foreground)_6%,transparent)] transition-[background-color,border-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card hover:text-foreground hover:shadow-[0_2px_8px_color-mix(in_oklch,var(--foreground)_10%,transparent)] focus-visible:border-primary focus-visible:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_24%,transparent)] focus-visible:outline-none motion-reduce:transition-none"
+                                        onClick={toggleFilters}
+                                        aria-label={filtersVisible ? "Hide filters" : "Show filters"}
+                                        aria-expanded={filtersVisible}
+                                    />
+                                }
+                            >
+                                {filtersVisible ? <ChevronLeft className="block h-3.5 w-3.5" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5" aria-hidden="true" />}
+                                {!filtersVisible && activeFilterCount > 0 && (
+                                    <span className="absolute -right-1.25 -top-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono text-[9px] font-semibold leading-none text-primary-foreground shadow-[0_0_0_2px_var(--background)]">{activeFilterCount}</span>
+                                )}
+                            </TooltipTrigger>
+                            <TooltipPopup side="top" sideOffset={8}>
+                                Filters
+                            </TooltipPopup>
+                        </Tooltip>
+
+                        <div className="flex h-10 max-w-115 min-w-60 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
                             <Search className="h-3.75 w-3.75" aria-hidden="true" />
                             <input
                                 type="text"
