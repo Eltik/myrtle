@@ -74,7 +74,7 @@ export function OperatorsList() {
                 </nav>
                 <h1 className="m-0 font-sans text-[30px] font-bold leading-[1.1] tracking-[-0.025em] text-foreground">Operators</h1>
                 <p className="mt-1.5 font-sans text-[13.5px] leading-normal text-muted-foreground">
-                    View all the Operators in Arknights. <strong className="text-foreground">{operators.length}</strong> in your roster.
+                    View all <strong className="text-foreground">{operators.length}</strong> operators.
                 </p>
             </div>
             <div className="relative flex items-start pt-5 max-[960px]:flex-col max-[960px]:gap-4">
@@ -147,15 +147,42 @@ export function OperatorsList() {
                             role="group"
                             aria-label="View mode"
                         >
-                            <button type="button" title="Grid" data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
-                                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                            <button type="button" title="Compact" data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
-                                <Rows3 className="h-4 w-4" aria-hidden="true" />
-                            </button>
-                            <button type="button" title="List" data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
-                                <LayoutList className="h-4 w-4" aria-hidden="true" />
-                            </button>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button type="button" title="Grid" data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
+                                            <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                                        </button>
+                                    }
+                                />
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    Grid
+                                </TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button type="button" title="Compact" data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
+                                            <Rows3 className="h-4 w-4" aria-hidden="true" />
+                                        </button>
+                                    }
+                                />
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    Compact
+                                </TooltipPopup>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <button type="button" title="List" data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+                                            <LayoutList className="h-4 w-4" aria-hidden="true" />
+                                        </button>
+                                    }
+                                />
+                                <TooltipPopup side="top" sideOffset={8}>
+                                    List
+                                </TooltipPopup>
+                            </Tooltip>
                         </div>
 
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
