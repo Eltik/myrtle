@@ -6,9 +6,21 @@ export interface ITool {
     label: string;
     desc: string;
     icon: ToolIconName;
-    shortcut?: string;
-    kb?: string[];
+    key?: string;
     keywords: string[];
+}
+
+export function modKey(isMac: boolean): string {
+    return isMac ? "⌘" : "CTRL";
+}
+
+export function toolKb(tool: ITool, isMac: boolean): string[] | undefined {
+    return tool.key ? [modKey(isMac), tool.key] : undefined;
+}
+
+export function toolShortcut(tool: ITool, isMac: boolean): string | undefined {
+    if (!tool.key) return undefined;
+    return isMac ? `⌘${tool.key}` : `CTRL+${tool.key}`;
 }
 
 export const TOOLS: ITool[] = [
@@ -18,8 +30,7 @@ export const TOOLS: ITool[] = [
         label: "DPS charts",
         desc: "Interactive damage curves per skill",
         icon: "chart",
-        shortcut: "⌘D",
-        kb: ["⌘", "D"],
+        key: "D",
         keywords: ["damage", "dps", "chart", "skill", "curve", "calculator"],
     },
     {
@@ -28,8 +39,7 @@ export const TOOLS: ITool[] = [
         label: "Recruitment calculator",
         desc: "Guaranteed tag combos · 1h parity",
         icon: "calc",
-        shortcut: "⌘R",
-        kb: ["⌘", "R"],
+        key: "R",
         keywords: ["recruit", "tag", "calculator", "hire"],
     },
     {
@@ -38,8 +48,7 @@ export const TOOLS: ITool[] = [
         label: "Tier lists",
         desc: "Community ranks · live voting",
         icon: "star",
-        shortcut: "⌘T",
-        kb: ["⌘", "T"],
+        key: "T",
         keywords: ["rank", "tier", "list", "meta", "community"],
     },
     {
@@ -48,8 +57,7 @@ export const TOOLS: ITool[] = [
         label: "Randomizer",
         desc: "Pick a squad, break the meta",
         icon: "dice",
-        shortcut: "⌘Z",
-        kb: ["⌘", "Z"],
+        key: "Z",
         keywords: ["random", "squad", "pick", "roll"],
     },
 ];

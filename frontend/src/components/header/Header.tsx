@@ -3,7 +3,7 @@ import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
 import { useCommand } from "#/lib/command-context";
-import { TOOLS } from "#/lib/registry/tools";
+import { TOOLS, modKey, toolKb } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
 import styles from "./impl/Header.module.css";
 import { type INavItem, MainNav } from "./impl/MainNav";
@@ -11,30 +11,28 @@ import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
 import { useIsMac } from "#/hooks/use-is-mac";
-
-const toolItems: INavItem[] = TOOLS.map((t) => ({
-    href: t.href,
-    label: t.label,
-    desc: t.desc,
-    icon: t.icon,
-    kb: t.kb,
-}));
-
-const navItems: INavItem[] = [
-    { href: "/", label: "Home" },
-    { href: "/operators", label: "Operators" },
-    {
-        href: "/tools",
-        label: "Tools",
-        items: toolItems,
-    },
-    { href: "/about", label: "About" },
-];
+import { useMemo } from "react";
 
 export default function Header() {
     const { user, loading, logout } = useAuth();
     const { open: openCmd } = useCommand();
     const isMac = useIsMac();
+
+    const navItems = useMemo<INavItem[]>(() => {
+        const toolItems: INavItem[] = TOOLS.map((t) => ({
+            href: t.href,
+            label: t.label,
+            desc: t.desc,
+            icon: t.icon,
+            kb: toolKb(t, isMac),
+        }));
+        return [
+            { href: "/", label: "Home" },
+            { href: "/operators", label: "Operators" },
+            { href: "/tools", label: "Tools", items: toolItems },
+            { href: "/about", label: "About" },
+        ];
+    }, [isMac]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
@@ -62,7 +60,7 @@ export default function Header() {
                             </svg>
                             <span>Search operators…</span>
                             <span className="kbd-inline ml-auto flex gap-1">
-                                <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd>
+                                <Kbd>{modKey(isMac)}</Kbd>
                                 <Kbd>K</Kbd>
                             </span>
                         </button>
