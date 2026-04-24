@@ -231,7 +231,7 @@ export function OperatorsList() {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1 pt-1">
-                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground max-[900px]:hidden xl:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
+                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                                 <span />
                                 <span>Name</span>
                                 <span className="text-center">Rarity</span>
@@ -239,7 +239,7 @@ export function OperatorsList() {
                                 <span className="text-center">Archetype</span>
                                 <span />
                             </div>
-                            <div className="grid grid-cols-1 gap-x-3 gap-y-1 xl:grid-cols-2">
+                            <div className="flex flex-col gap-1">
                                 {paginated.map((op) => (
                                     <OperatorCardList key={op.id} operator={op} />
                                 ))}
