@@ -36,7 +36,7 @@ export function OperatorCardList({ operator }: IOperatorCardListProps) {
                 <Link to={`/operators/${operator.id}`} className="group relative block rounded-lg border border-transparent bg-card/50 px-3 py-2.5 transition-colors hover:border-border hover:bg-card">
                     <div className="absolute left-0 top-1/2 h-8 w-0.5 -translate-y-1/2 rounded-full opacity-60 transition-opacity group-hover:opacity-100" style={{ backgroundColor: rarityColor }} />
 
-                    <div className="hidden items-center gap-3 min-[900px]:grid xl:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
+                    <div className="hidden items-center gap-3 min-[900px]:grid" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                         <div className="relative h-12 w-12 overflow-hidden rounded-md border border-border/50 bg-background">
                             <img alt={operator.name} src={portraitSrc} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-110" />
                         </div>
@@ -52,7 +52,7 @@ export function OperatorCardList({ operator }: IOperatorCardListProps) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 min-[900px]:hidden xl:flex">
+                    <div className="flex items-center gap-3 min-[900px]:hidden">
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
                             <img alt={operator.name} src={portraitSrc} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-110" />
                         </div>
