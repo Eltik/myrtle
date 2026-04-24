@@ -8,6 +8,7 @@ import { statsQueryOptions } from "#/lib/api/stats";
 import CommandPreview from "./CommandPreview";
 import styles from "./Hero.module.css";
 import { useHeroTilt } from "./useHeroTilt";
+import { useIsMac } from "#/hooks/use-is-mac";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 
@@ -20,6 +21,8 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
         { v: stats ? stats.tierLists.active.toString() : "—", l: "tier lists" },
         { v: stats ? compact.format(stats.rosters.total) : "—", l: "rosters synced" },
     ];
+
+    const isMac = useIsMac();
     return (
         <section className={styles.hero}>
             <div className={styles.heroAmbient} aria-hidden="true" />
@@ -47,7 +50,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                         <span className="flex flex-row items-center gap-2">
                             Hit{" "}
                             <span>
-                                <Kbd>⌘</Kbd> <Kbd>K</Kbd>
+                                <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd> <Kbd>K</Kbd>
                             </span>{" "}
                             to jump anywhere.
                         </span>

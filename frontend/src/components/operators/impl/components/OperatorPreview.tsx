@@ -11,7 +11,7 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
     const rarity = rarityToNumber(operator.rarity);
     const initial = operator.name.charAt(0).toUpperCase();
     const nationLabel = operator.nationId ? formatNationId(operator.nationId) : null;
-    const archetype = formatSubProfession(operator.subProfessionId);
+    const archetype = formatSubProfession(operator.subProfessionId).replace(formatProfession(operator.profession), "");
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
     const gender = operator.profile?.basicInfo.gender;
     const race = operator.profile?.basicInfo.race;
@@ -65,8 +65,6 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
                     )}
                 </div>
             )}
-
-            <div className={styles.hint}>Click to open profile</div>
         </div>
     );
 }

@@ -1,10 +1,13 @@
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useIsMac } from "#/hooks/use-is-mac";
 import { ROLE_GRADIENT } from "#/lib/role-styles";
 import { cn } from "#/lib/utils";
 import styles from "./Hero.module.css";
 
 export default function CommandPreview() {
+    const isMac = useIsMac();
+
     return (
         <div className={styles.cmdPopup}>
             <div className={styles.cmdHead}>
@@ -50,7 +53,7 @@ export default function CommandPreview() {
                             <path d="M3 9h18M9 21V9" />
                         </svg>
                         <span className={styles.cmdPrimary}>Recruitment calculator</span>
-                        <Kbd>⌘</Kbd>
+                        <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd>
                         <Kbd>R</Kbd>
                     </div>
                     <div className={styles.cmdItem}>
@@ -59,7 +62,7 @@ export default function CommandPreview() {
                             <path d="m19 9-5 5-4-4-3 3" />
                         </svg>
                         <span className={styles.cmdPrimary}>DPS charts</span>
-                        <Kbd>⌘</Kbd>
+                        <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd>
                         <Kbd>D</Kbd>
                     </div>
                 </div>
