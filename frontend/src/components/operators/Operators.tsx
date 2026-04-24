@@ -77,7 +77,7 @@ export function OperatorsList() {
                     View all <strong className="text-foreground">{operators.length}</strong> operators.
                 </p>
             </div>
-            <div className="relative flex items-start pt-5 max-[960px]:flex-col max-[960px]:gap-4">
+            <div className="relative flex items-start pt-5">
                 <OperatorFilters
                     selectedClasses={filters.classes}
                     selectedSubclasses={filters.subclasses}
@@ -103,6 +103,8 @@ export function OperatorsList() {
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
                     collapsed={!filtersVisible}
+                    onToggle={toggleFilters}
+                    activeFilterCount={activeFilterCount}
                 />
 
                 <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label="Operator results">

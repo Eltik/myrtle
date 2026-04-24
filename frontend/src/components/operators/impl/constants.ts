@@ -1,4 +1,4 @@
-import { formatNationId, formatProfession, formatSubProfession } from "#/lib/utils";
+import { formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
 import type { ArrayFilterKey, SortOption, ViewMode } from "./types";
 
@@ -41,7 +41,7 @@ export const LIST_GRID_COLS = "52px 1fr 96px 128px 160px 32px";
 export const VIEW_MODES: ReadonlySet<ViewMode> = new Set(["grid", "compact", "list"]);
 
 export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: string) => string }[] = [
-    { key: "rarities", prefix: "rarity", label: (v) => `${v}★` },
+    { key: "rarities", prefix: "rarity", label: (v) => `${rarityToNumber(v as OperatorRarityTier)}★` },
     { key: "classes", prefix: "class", label: formatProfession },
     { key: "subclasses", prefix: "sub", label: formatSubProfession },
     { key: "nations", prefix: "nation", label: formatNationId },
