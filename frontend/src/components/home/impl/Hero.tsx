@@ -4,11 +4,11 @@ import { AuthDialog } from "#/components/header/impl/AuthDialog";
 import { Button } from "#/components/ui/button";
 import { Kbd } from "#/components/ui/kbd";
 import { Separator } from "#/components/ui/separator";
+import { useIsMac } from "#/hooks/use-is-mac";
 import { statsQueryOptions } from "#/lib/api/stats";
 import CommandPreview from "./CommandPreview";
 import styles from "./Hero.module.css";
 import { useHeroTilt } from "./useHeroTilt";
-import { useIsMac } from "#/hooks/use-is-mac";
 
 const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 
@@ -87,8 +87,8 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                     </div>
                 </div>
 
-                <div className={styles.heroPanel} ref={tiltRef} onClick={onOpenCommand} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && onOpenCommand()}>
-                    <CommandPreview />
+                <div className={styles.heroPanel} ref={tiltRef}>
+                    <CommandPreview onOpenCommand={onOpenCommand} />
                 </div>
             </div>
         </section>
