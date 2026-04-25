@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OperatorsList } from "#/components/operators/list/Operators";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { OperatorDetail } from "#/components/operators/detail/Operators";
+import { operatorQueryOptions } from "#/lib/api/operators";
 
-export const Route = createFileRoute("/operators")({
+export const Route = createFileRoute("/operators_/$id")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
-    loader: ({ context }) => context.queryClient.ensureQueryData(operatorsListQueryOptions()),
+    loader: ({ context, params }) => context.queryClient.ensureQueryData(operatorQueryOptions(params.id)),
 });
 
 function RootErrorComponent({ error }: { error: unknown }) {
@@ -21,5 +21,5 @@ function RootErrorComponent({ error }: { error: unknown }) {
 }
 
 function RouteComponent() {
-    return <OperatorsList />;
+    return <OperatorDetail />;
 }

@@ -58,3 +58,23 @@ export function operatorsListQueryOptions() {
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
+
+export const getOperatorFn = createServerFn({ method: "GET" })
+    .inputValidator((id: string) => id)
+    .handler(async ({ data: id }) => {
+        const res = await backendFetch("/static/operators");
+        if (!res.ok) throw new Error(`Failed to load operators: ${res.status}`);
+        const raw = (await res.json()) as IOperatorsStaticMap;
+        const normalized = deepCamelize(raw);
+        const operators = Object.values(normalized) as IOperatorListItem[];
+        return operators.find((op) => op.id === id);
+    });
+
+export function operatorQueryOptions(id: string) {
+    return queryOptions({
+        queryKey: ["operators", "detail", id],
+        queryFn: () => getOperatorFn({ data: id }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
