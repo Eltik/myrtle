@@ -12,3 +12,11 @@ export function operatorHero(operatorId: string, skin: string | null, portrait: 
 export function campLogo(id: string): string {
     return asset(`/textures/spritepack/ui_camp_logo_0/logo_${id}.png`);
 }
+
+export function eliteIcon(elite: number): string {
+    return asset(`/textures/arts/elite_hub/elite_${elite}.png`);
+}
+
+export function potentialIcon(rank: number): string {
+    return asset(`/textures/arts/potential_hub/potential_${rank}.png`);
+}
