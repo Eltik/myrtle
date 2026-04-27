@@ -49,3 +49,67 @@ export function descriptionToHtml(description: string, blackboard: IBlackboard[]
     html = html.replace(/\n/g, "<br/>");
     return html;
 }
+
+type DiffOp = { type: "equal" | "delete" | "insert"; tokens: string[] };
+
+function tokenizeForDiff(html: string): string[] {
+    const re = /<[^>]+>|\s+|[^\s<]+/g;
+    const out: string[] = [];
+    let m: RegExpExecArray | null;
+    // biome-ignore lint/suspicious/noAssignInExpressions: standard regex iteration
+    while ((m = re.exec(html)) !== null) out.push(m[0]);
+    return out;
+}
+
+function lcsDiff(a: string[], b: string[]): DiffOp[] {
+    const m = a.length;
+    const n = b.length;
+    const dp: Uint16Array[] = [];
+    for (let i = 0; i <= m; i++) dp.push(new Uint16Array(n + 1));
+    for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+            dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+    const stack: { type: DiffOp["type"]; tok: string }[] = [];
+    let i = m;
+    let j = n;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+            stack.push({ type: "equal", tok: a[i - 1] });
+            i--;
+            j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+            stack.push({ type: "insert", tok: b[j - 1] });
+            j--;
+        } else {
+            stack.push({ type: "delete", tok: a[i - 1] });
+            i--;
+        }
+    }
+    const ops: DiffOp[] = [];
+    for (let k = stack.length - 1; k >= 0; k--) {
+        const last = ops[ops.length - 1];
+        if (last && last.type === stack[k].type) last.tokens.push(stack[k].tok);
+        else ops.push({ type: stack[k].type, tokens: [stack[k].tok] });
+    }
+    return ops;
+}
+
+export function renderDescriptionDiffHtml(oldDesc: string | null | undefined, newDesc: string | null | undefined, oldBlackboard: IBlackboard[] | { key: string; value: number }[] = [], newBlackboard: IBlackboard[] | { key: string; value: number }[] = []): string {
+    const newHtml = descriptionToHtml(newDesc ?? "", newBlackboard);
+    if (!oldDesc) return newHtml;
+    const oldHtml = descriptionToHtml(oldDesc, oldBlackboard);
+    if (!oldHtml) return newHtml;
+    if (!newHtml) return oldHtml;
+
+    const ops = lcsDiff(tokenizeForDiff(oldHtml), tokenizeForDiff(newHtml));
+    return ops
+        .map((op) => {
+            const segment = op.tokens.join("");
+            if (op.type === "equal") return segment;
+            if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${segment}</span>`;
+            return `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${segment}</span>`;
+        })
+        .join("");
+}

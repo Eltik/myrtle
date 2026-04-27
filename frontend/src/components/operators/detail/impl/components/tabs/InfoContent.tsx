@@ -6,12 +6,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
 import { Slider } from "#/components/ui/slider";
+import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { rangesQueryOptions } from "#/lib/api/ranges";
 import { cn, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
-import { descriptionToHtml } from "../../description";
+import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getOperatorAttributeStats } from "../../helpers";
 import { OperatorRange } from "../OperatorRange";
 
@@ -41,6 +42,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     const [showProfile, setShowProfile] = useState(true);
     const [showControls, setShowControls] = useState(true);
     const [showModuleDetails, setShowModuleDetails] = useState(true);
+    const [showDiff, setShowDiff] = useState(true);
 
     const descriptionBlackboard = useMemo(() => combinedDescriptionBlackboard(operator), [operator]);
     const description = useMemo(() => descriptionToHtml(operator.description ?? "", descriptionBlackboard), [operator.description, descriptionBlackboard]);
@@ -357,37 +359,69 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
                                 {moduleLevel > 0 && currentModule.data?.phases?.[moduleLevel - 1] ? (
                                     <div className="space-y-2">
-                                        {currentModule.data?.phases?.[moduleLevel - 1].parts.map((part, idx) => {
-                                            if (part.target !== "TALENT_DATA_ONLY" && part.target !== "TALENT") return;
-                                            const candidates = part.addOrOverrideTalentDataBundle.candidates?.filter((c) => c.upgradeDescription || c.description) ?? [];
+                                        {(() => {
+                                            const phase = currentModule.data.phases[moduleLevel - 1];
+                                            const traitPart = phase.parts.find((p) => p.target === "TRAIT" || p.target === "TRAIT_DATA_ONLY");
+                                            const newTraitCand = traitPart?.overrideTraitDataBundle.candidates?.[0];
+                                            const newDesc = newTraitCand?.overrideDescription ?? newTraitCand?.additionalDescription ?? "";
+                                            if (!newDesc) return null;
+                                            const oldTraitCand = operator.trait?.candidates?.[(operator.trait?.candidates?.length ?? 0) - 1];
+                                            const oldFromTrait = newTraitCand?.overrideDescription ? oldTraitCand?.overrideDescription : null;
+                                            const oldDesc = oldFromTrait ?? (newTraitCand?.overrideDescription ? operator.description : null);
+                                            const oldBb = oldFromTrait ? (oldTraitCand?.blackboard ?? []) : descriptionBlackboard;
+                                            const html = showDiff && oldDesc ? renderDescriptionDiffHtml(oldDesc, newDesc, oldBb, newTraitCand?.blackboard ?? []) : descriptionToHtml(newDesc, newTraitCand?.blackboard ?? []);
                                             return (
-                                                <div key={`tc-${idx}-wrapper`}>
+                                                <>
+                                                    <div className="mb-1 flex items-center justify-between">
+                                                        <h6 className="font-medium text-foreground text-xs">Trait Changes</h6>
+                                                        <Tooltip>
+                                                            <TooltipTrigger
+                                                                render={(props) => (
+                                                                    <span {...props}>
+                                                                        <Switch checked={showDiff} onCheckedChange={setShowDiff} />
+                                                                    </span>
+                                                                )}
+                                                            />
+                                                            <TooltipPopup>Show diff vs. base</TooltipPopup>
+                                                        </Tooltip>
+                                                    </div>
+                                                    <div className="rounded-md bg-secondary/20 p-2">
+                                                        <span
+                                                            className="text-muted-foreground text-xs"
+                                                            // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
+                                                            dangerouslySetInnerHTML={{ __html: html }}
+                                                        />
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                        {(() => {
+                                            const phase = currentModule.data.phases[moduleLevel - 1];
+                                            const talentParts = phase.parts.filter((p) => p.target === "TALENT" || p.target === "TALENT_DATA_ONLY");
+                                            const talentCandidates = talentParts.flatMap((p) => p.addOrOverrideTalentDataBundle.candidates?.filter((c) => c.upgradeDescription || c.description) ?? []);
+                                            if (talentCandidates.length === 0) return null;
+                                            return (
+                                                <div>
                                                     <h6 className="mb-1 font-medium text-foreground text-xs">Talent Changes</h6>
-                                                    {candidates.map((c, idx) => (
-                                                        <>
-                                                            <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${idx}-${c.name ?? ""}`}>
+                                                    {talentCandidates.map((c, cIdx) => {
+                                                        const oldTalent = operator.talents?.[c.talentIndex];
+                                                        const oldCand = oldTalent?.candidates?.[oldTalent.candidates.length - 1];
+                                                        const newDesc = c.upgradeDescription || c.description || "";
+                                                        const html = showDiff && oldCand?.description ? renderDescriptionDiffHtml(oldCand.description, newDesc, oldCand.blackboard ?? [], c.blackboard ?? []) : descriptionToHtml(newDesc, c.blackboard ?? []);
+                                                        return (
+                                                            <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${cIdx}-${c.name ?? ""}`}>
                                                                 {c.name && <span className="font-medium text-foreground text-xs">{c.name}: </span>}
                                                                 <span
                                                                     className="text-muted-foreground text-xs"
                                                                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
-                                                                    dangerouslySetInnerHTML={{ __html: descriptionToHtml(c.upgradeDescription || c.description || "") }}
+                                                                    dangerouslySetInnerHTML={{ __html: html }}
                                                                 />
                                                             </div>
-                                                        </>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             );
-                                        })}
-                                        <h6 className="mb-1 font-medium text-foreground text-xs">Trait Changes</h6>
-                                        <div className="rounded-md bg-secondary/20 p-2">
-                                            <span
-                                                className="text-muted-foreground text-xs"
-                                                // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
-                                                dangerouslySetInnerHTML={{
-                                                    __html: descriptionToHtml(currentModule.data?.phases[moduleLevel - 1].parts[0].overrideTraitDataBundle.candidates?.[0]?.overrideDescription ?? currentModule.data?.phases[moduleLevel - 1].parts[0].overrideTraitDataBundle.candidates?.[0].additionalDescription ?? ""),
-                                                }}
-                                            />
-                                        </div>
+                                        })()}
                                     </div>
                                 ) : null}
                             </div>
