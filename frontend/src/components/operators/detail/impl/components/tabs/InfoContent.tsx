@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Dna, Heart, Info, MapPin, Package, Palette, User } from "lucide-react";
+import { ChevronDown, Dna, Heart, Info, LibraryBig, MapPin, Package, Palette, User } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
@@ -13,7 +13,7 @@ import { cn, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
 import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
-import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getOperatorAttributeStats } from "../../helpers";
+import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
 import { OperatorRange } from "../OperatorRange";
 
 interface IInfoContentProps {
@@ -43,6 +43,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     const [showControls, setShowControls] = useState(true);
     const [showModuleDetails, setShowModuleDetails] = useState(true);
     const [showDiff, setShowDiff] = useState(true);
+    const [showTalents, setShowTalents] = useState(true);
 
     const descriptionBlackboard = useMemo(() => combinedDescriptionBlackboard(operator), [operator]);
     const description = useMemo(() => descriptionToHtml(operator.description ?? "", descriptionBlackboard), [operator.description, descriptionBlackboard]);
@@ -154,7 +155,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     }}
                                     type="button"
                                 >
-                                    <img alt={`Elite ${idx}`} className="h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx)} />
+                                    <img alt={`Elite ${idx}`} className="h-6 w-6 object-contain icon-theme-aware" decoding="async" loading="lazy" src={eliteIcon(idx)} />
                                 </button>
                             ))}
                         </div>
@@ -283,7 +284,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             {column.map(({ iconURL, label, value }) => (
                                 <div key={label} className="flex items-center justify-between py-2">
                                     <span className="flex items-center gap-2 text-muted-foreground">
-                                        <img alt={label} src={iconURL} className="h-4 w-4 object-contain" decoding="async" loading="lazy" />
+                                        <img alt={label} src={iconURL} className="h-4 w-4 object-contain icon-theme-aware" decoding="async" loading="lazy" />
                                         <span className="text-sm">{label}</span>
                                     </span>
                                     <span className="font-semibold tabular-nums text-foreground">{value}</span>
@@ -363,13 +364,30 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             const phase = currentModule.data.phases[moduleLevel - 1];
                                             const traitPart = phase.parts.find((p) => p.target === "TRAIT" || p.target === "TRAIT_DATA_ONLY");
                                             const newTraitCand = traitPart?.overrideTraitDataBundle.candidates?.[0];
-                                            const newDesc = newTraitCand?.overrideDescription ?? newTraitCand?.additionalDescription ?? "";
-                                            if (!newDesc) return null;
+                                            if (!newTraitCand) return null;
+                                            const overrideDesc = newTraitCand.overrideDescription ?? "";
+                                            const additionalDesc = newTraitCand.additionalDescription ?? "";
+                                            if (overrideDesc.length === 0 && additionalDesc.length === 0) return null;
                                             const oldTraitCand = operator.trait?.candidates?.[(operator.trait?.candidates?.length ?? 0) - 1];
-                                            const oldFromTrait = newTraitCand?.overrideDescription ? oldTraitCand?.overrideDescription : null;
-                                            const oldDesc = oldFromTrait ?? (newTraitCand?.overrideDescription ? operator.description : null);
-                                            const oldBb = oldFromTrait ? (oldTraitCand?.blackboard ?? []) : descriptionBlackboard;
-                                            const html = showDiff && oldDesc ? renderDescriptionDiffHtml(oldDesc, newDesc, oldBb, newTraitCand?.blackboard ?? []) : descriptionToHtml(newDesc, newTraitCand?.blackboard ?? []);
+                                            const newBb = newTraitCand.blackboard ?? [];
+                                            let oldDesc: string | null;
+                                            let oldBb: typeof descriptionBlackboard;
+                                            let newDesc: string;
+                                            let mergedNewBb: typeof newBb;
+                                            if (overrideDesc.length > 0) {
+                                                const oldFromTrait = oldTraitCand?.overrideDescription ?? null;
+                                                oldDesc = oldFromTrait ?? operator.description ?? null;
+                                                oldBb = oldFromTrait ? (oldTraitCand?.blackboard ?? []) : descriptionBlackboard;
+                                                newDesc = overrideDesc;
+                                                mergedNewBb = newBb;
+                                            } else {
+                                                const baseDesc = operator.description ?? "";
+                                                oldDesc = baseDesc.length > 0 ? baseDesc : null;
+                                                oldBb = descriptionBlackboard;
+                                                newDesc = baseDesc.length > 0 ? `${baseDesc}\n${additionalDesc}` : additionalDesc;
+                                                mergedNewBb = [...descriptionBlackboard, ...newBb];
+                                            }
+                                            const html = showDiff && oldDesc ? renderDescriptionDiffHtml(oldDesc, newDesc, oldBb, mergedNewBb) : descriptionToHtml(newDesc, mergedNewBb);
                                             return (
                                                 <>
                                                     <div className="mb-1 flex items-center justify-between">
@@ -429,6 +447,116 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     </Collapsible>
                 </div>
             )}
+
+            <Collapsible open={showTalents} onOpenChange={setShowTalents}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
+                    <span className="flex items-center gap-2">
+                        <LibraryBig className="h-4 w-4 text-primary" />
+                        <span className="font-medium text-sm">Talents</span>
+                    </span>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                    {(() => {
+                        type Eff = {
+                            key: string;
+                            name: string | null;
+                            description: string;
+                            blackboard: { key: string; value: number; valueStr?: string | null }[];
+                            requiredPotentialRank: number;
+                            baseDescription: string | null;
+                            baseBlackboard: { key: string; value: number; valueStr?: string | null }[];
+                            modifiedByModule: boolean;
+                        };
+
+                        const baseList: Eff[] = (operator.talents ?? []).map((t, idx) => {
+                            const c = getActiveTalentCandidate(t, phaseIndex, level, potentialRank);
+                            return {
+                                key: `t-${idx}`,
+                                name: c?.name ?? null,
+                                description: c?.description ?? "",
+                                blackboard: c?.blackboard ?? [],
+                                requiredPotentialRank: c?.requiredPotentialRank ?? 0,
+                                baseDescription: c?.description ?? null,
+                                baseBlackboard: c?.blackboard ?? [],
+                                modifiedByModule: false,
+                            };
+                        });
+
+                        if (phaseIndex === 2 && currentModule && moduleLevel > 0 && currentModule.data?.phases) {
+                            for (let i = 0; i < Math.min(moduleLevel, currentModule.data.phases.length); i++) {
+                                const phase = currentModule.data.phases[i];
+                                const talentParts = (phase?.parts ?? []).filter((p) => p.target === "TALENT" || p.target === "TALENT_DATA_ONLY");
+                                for (const part of talentParts) {
+                                    const cands = part.addOrOverrideTalentDataBundle?.candidates ?? [];
+                                    let chosen: (typeof cands)[number] | null = null;
+                                    for (const c of cands) {
+                                        if (potentialRank >= c.requiredPotentialRank) chosen = c;
+                                    }
+                                    if (!chosen) continue;
+                                    const newDesc = chosen.upgradeDescription || chosen.description || "";
+                                    const tIdx = chosen.talentIndex;
+                                    if (tIdx >= 0 && tIdx < baseList.length) {
+                                        baseList[tIdx] = {
+                                            ...baseList[tIdx],
+                                            name: chosen.name ?? baseList[tIdx].name,
+                                            description: newDesc,
+                                            blackboard: chosen.blackboard ?? [],
+                                            modifiedByModule: true,
+                                        };
+                                    } else {
+                                        baseList.push({
+                                            key: `t-mod-${tIdx}-${i}`,
+                                            name: chosen.name,
+                                            description: newDesc,
+                                            blackboard: chosen.blackboard ?? [],
+                                            requiredPotentialRank: chosen.requiredPotentialRank ?? 0,
+                                            baseDescription: null,
+                                            baseBlackboard: [],
+                                            modifiedByModule: true,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+
+                        const visible = baseList.filter((t) => t.name || t.description);
+                        if (visible.length === 0) {
+                            return <p className="mt-3 text-muted-foreground text-xs">No talents unlocked at this configuration.</p>;
+                        }
+
+                        return (
+                            <div className="mt-3 space-y-3">
+                                {visible.map((t) => {
+                                    const html = t.modifiedByModule && showDiff && t.baseDescription ? renderDescriptionDiffHtml(t.baseDescription, t.description, t.baseBlackboard, t.blackboard) : descriptionToHtml(t.description, t.blackboard);
+                                    return (
+                                        <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={t.key}>
+                                            <div className="mb-1 flex items-center gap-2">
+                                                <h4 className="font-medium text-foreground text-sm">{t.name ?? "Unnamed Talent"}</h4>
+                                                {t.requiredPotentialRank > 0 && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger render={(props) => <img alt={`Pot ${t.requiredPotentialRank}`} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(t.requiredPotentialRank)} {...props} />} />
+                                                        <TooltipPopup>Requires Potential {t.requiredPotentialRank}</TooltipPopup>
+                                                    </Tooltip>
+                                                )}
+                                                {t.modifiedByModule && (
+                                                    <Badge variant="outline" className="text-[10px]">
+                                                        Module
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <span
+                                                className="text-muted-foreground text-xs"
+                                                // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
+                                                dangerouslySetInnerHTML={{ __html: html }}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()}
+                </CollapsibleContent>
+            </Collapsible>
         </div>
     );
 });

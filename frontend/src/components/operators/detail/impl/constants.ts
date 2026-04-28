@@ -5,7 +5,7 @@ export type TabType = "info" | "skills" | "levelup" | "skins" | "audio" | "lore"
 
 export const TABS: { type: TabType; label: string; icon: React.ElementType }[] = [
     { type: "info", label: "Information", icon: Info },
-    { type: "skills", label: "Skills & Talents", icon: Sparkles },
+    { type: "skills", label: "Skills", icon: Sparkles },
     { type: "levelup", label: "Level-Up Cost", icon: TrendingUp },
     { type: "skins", label: "Skins", icon: Shirt },
     { type: "audio", label: "Audio/SFX", icon: Volume2 },
