@@ -1,6 +1,5 @@
 import { Columns, GitCompareArrows, Rows } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
-import { formatBlackboardValue } from "#/components/operators/detail copy/impl/skill-helpers";
 import { Badge } from "#/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
@@ -9,7 +8,7 @@ import { cn } from "#/lib/utils";
 import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
 import { descriptionToHtml } from "../../description";
-import { computeSkillDiff, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
+import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
 
 interface ISkillsContentProps {
     operator: IOperatorListItem;
