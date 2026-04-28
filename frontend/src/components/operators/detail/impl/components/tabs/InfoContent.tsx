@@ -362,7 +362,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     <div className="space-y-2">
                                         {(() => {
                                             const phase = currentModule.data.phases[moduleLevel - 1];
-                                            const traitPart = phase.parts.find((p) => p.target === "TRAIT" || p.target === "TRAIT_DATA_ONLY");
+                                            const traitPart = phase.parts.find((p) => p.target === "TRAIT" || p.target === "TRAIT_DATA_ONLY" || p.target === "DISPLAY");
                                             const newTraitCand = traitPart?.overrideTraitDataBundle.candidates?.[0];
                                             if (!newTraitCand) return null;
                                             const overrideDesc = newTraitCand.overrideDescription ?? "";

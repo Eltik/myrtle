@@ -26,10 +26,10 @@ export function MobileNav({ items }: IMobileNavProps) {
         if (item.items && item.items.length > 0) {
             return (
                 <Collapsible key={item.href} className="flex flex-col">
-                    <CollapsibleTrigger>
+                    <CollapsibleTrigger className="group">
                         <DrawerMenuItem className="justify-between">
                             {item.label}
-                            <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                            <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
                         </DrawerMenuItem>
                     </CollapsibleTrigger>
                     <CollapsiblePanel className="flex flex-col border-l border-border ml-4 mt-1 gap-1">
