@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
@@ -11,7 +12,7 @@ import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination } from "./impl/components/Pagination";
-import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { CHIP_CONFIG, FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import type { SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
@@ -19,9 +20,14 @@ import { useOperatorFilters } from "./impl/useOperatorFilters";
 export function OperatorsList() {
     const { data: operators = [] } = useQuery(operatorsListQueryOptions());
     const { data: voices } = useQuery(voicesQueryOptions());
-    const enriched = useMemo(() => enrichOperators(operators, voices), [operators, voices]);
+    const { data: notes } = useQuery(operatorNotesListQueryOptions());
+    const notedIds = useMemo(() => {
+        if (!notes) return undefined;
+        return new Set(notes.filter(noteHasContent).map((n) => n.operator_id));
+    }, [notes]);
+    const enriched = useMemo(() => enrichOperators(operators, voices, notedIds), [operators, voices, notedIds]);
 
-    const { filters, filterOptions, filteredOperators, setSearchQuery, setClasses, setSubclasses, setRarities, setGenders, setNations, setFactions, setRaces, setBirthPlaces, setArtists, setVoiceActors, setSortBy, setSortOrder, removeFrom, clearFilters, hasActiveFilters, activeFilterCount } =
+    const { filters, filterOptions, filteredOperators, setSearchQuery, setClasses, setSubclasses, setRarities, setGenders, setNations, setFactions, setRaces, setBirthPlaces, setArtists, setVoiceActors, setHasNotes, setSortBy, setSortOrder, removeFrom, clearFilters, hasActiveFilters, activeFilterCount } =
         useOperatorFilters(enriched);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
@@ -60,17 +66,23 @@ export function OperatorsList() {
         };
     }, [filteredOperators, page, itemsPerPage]);
 
-    const activeChips = useMemo(
-        () =>
-            CHIP_CONFIG.flatMap(({ key, prefix, label }) =>
-                (filters[key] as string[]).map((v) => ({
-                    key: `${prefix}-${v}`,
-                    label: label(v),
-                    onRemove: () => removeFrom(key, v),
-                })),
-            ),
-        [filters, removeFrom],
-    );
+    const activeChips = useMemo(() => {
+        const chips = CHIP_CONFIG.flatMap(({ key, prefix, label }) =>
+            (filters[key] as string[]).map((v) => ({
+                key: `${prefix}-${v}`,
+                label: label(v),
+                onRemove: () => removeFrom(key, v),
+            })),
+        );
+        if (filters.hasNotes !== "any") {
+            chips.push({
+                key: `notes-${filters.hasNotes}`,
+                label: HAS_NOTES_LABELS[filters.hasNotes],
+                onRemove: () => setHasNotes("any"),
+            });
+        }
+        return chips;
+    }, [filters, removeFrom, setHasNotes]);
 
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
@@ -97,6 +109,7 @@ export function OperatorsList() {
                     selectedBirthPlaces={filters.birthPlaces}
                     selectedArtists={filters.artists}
                     selectedVoiceActors={filters.voiceActors}
+                    selectedHasNotes={filters.hasNotes}
                     options={filterOptions}
                     onClassesChange={setClasses}
                     onSubclassesChange={setSubclasses}
@@ -108,6 +121,7 @@ export function OperatorsList() {
                     onBirthPlacesChange={setBirthPlaces}
                     onArtistsChange={setArtists}
                     onVoiceActorsChange={setVoiceActors}
+                    onHasNotesChange={setHasNotes}
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
                     collapsed={!filtersVisible}

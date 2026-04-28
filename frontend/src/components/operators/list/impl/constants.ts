@@ -1,11 +1,23 @@
 import { formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
-import type { ArrayFilterKey, SortOption, ViewMode } from "./types";
+import type { ArrayFilterKey, HasNotesFilter, SortOption, ViewMode } from "./types";
 
 export const RARITIES: readonly OperatorRarityTier[] = ["TIER_6", "TIER_5", "TIER_4", "TIER_3", "TIER_2", "TIER_1"] as const;
 export const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER", "SPECIAL", "PIONEER"] as const;
 export const GENDERS = ["Male", "Female", "Conviction"] as const;
 export type Gender = (typeof GENDERS)[number];
+
+export const HAS_NOTES_OPTIONS: { value: HasNotesFilter; label: string }[] = [
+    { value: "any", label: "Any" },
+    { value: "yes", label: "Has notes" },
+    { value: "no", label: "No notes" },
+];
+
+export const HAS_NOTES_LABELS: Record<HasNotesFilter, string> = {
+    any: "Any",
+    yes: "Has notes",
+    no: "No notes",
+};
 
 export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: "rarity", label: "Rarity" },

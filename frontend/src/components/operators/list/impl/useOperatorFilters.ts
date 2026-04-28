@@ -15,6 +15,7 @@ const initialState: IFilterState = {
     birthPlaces: [],
     artists: [],
     voiceActors: [],
+    hasNotes: "any",
     sortBy: "rarity",
     sortOrder: "desc",
 };
@@ -101,9 +102,11 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             if (sets.birthPlaces.size && (!op.placeOfBirth || !sets.birthPlaces.has(op.placeOfBirth))) return false;
             if (sets.artists.size && !op.artists.some((a) => sets.artists.has(a))) return false;
             if (sets.voiceActors.size && !op.voiceActors.some((v) => sets.voiceActors.has(v))) return false;
+            if (filters.hasNotes === "yes" && !op.hasNotes) return false;
+            if (filters.hasNotes === "no" && op.hasNotes) return false;
             return true;
         });
-    }, [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors]);
+    }, [data, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.genders, filters.nations, filters.factions, filters.races, filters.birthPlaces, filters.artists, filters.voiceActors, filters.hasNotes]);
 
     const filteredOperators = useMemo(() => {
         const { sortBy, sortOrder } = filters;
@@ -137,7 +140,18 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const clearFilters = useCallback(() => setFilters(initialState), []);
 
     const activeFilterCount =
-        filters.classes.length + filters.subclasses.length + filters.rarities.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length + (filters.searchQuery ? 1 : 0);
+        filters.classes.length +
+        filters.subclasses.length +
+        filters.rarities.length +
+        filters.genders.length +
+        filters.nations.length +
+        filters.factions.length +
+        filters.races.length +
+        filters.birthPlaces.length +
+        filters.artists.length +
+        filters.voiceActors.length +
+        (filters.searchQuery ? 1 : 0) +
+        (filters.hasNotes !== "any" ? 1 : 0);
 
     const setters = useMemo(
         () => ({
@@ -152,6 +166,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             setBirthPlaces: (v: string[]) => set("birthPlaces", v),
             setArtists: (v: string[]) => set("artists", v),
             setVoiceActors: (v: string[]) => set("voiceActors", v),
+            setHasNotes: (v: IFilterState["hasNotes"]) => set("hasNotes", v),
             setSortBy: (v: IFilterState["sortBy"]) => set("sortBy", v),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),

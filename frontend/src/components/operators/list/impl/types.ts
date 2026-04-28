@@ -3,6 +3,7 @@ import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 export type ViewMode = "grid" | "compact" | "list";
 export type SortOption = "rarity" | "name" | "class" | "hp" | "atk" | "def" | "res" | "cost" | "block";
 export type SortOrder = "asc" | "desc";
+export type HasNotesFilter = "any" | "yes" | "no";
 
 export interface IOperatorStats {
     hp: number;
@@ -24,6 +25,7 @@ export interface IOperatorView extends IOperatorListItem {
     placeOfBirth: string | null;
     voiceActors: string[];
     stats: IOperatorStats | null;
+    hasNotes: boolean;
 }
 
 export interface IFilterState {
@@ -38,6 +40,7 @@ export interface IFilterState {
     birthPlaces: string[];
     artists: string[];
     voiceActors: string[];
+    hasNotes: HasNotesFilter;
     sortBy: SortOption;
     sortOrder: SortOrder;
 }
@@ -69,6 +72,7 @@ export interface IUseOperatorFiltersReturn {
     setBirthPlaces: (v: string[]) => void;
     setArtists: (v: string[]) => void;
     setVoiceActors: (v: string[]) => void;
+    setHasNotes: (v: HasNotesFilter) => void;
     setSortBy: (v: SortOption) => void;
     setSortOrder: (v: SortOrder) => void;
     removeFrom: (key: ArrayFilterKey, value: string) => void;

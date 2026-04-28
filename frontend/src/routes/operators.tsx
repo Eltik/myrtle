@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorsList } from "#/components/operators/list/Operators";
+import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
 
 export const Route = createFileRoute("/operators")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
-    loader: ({ context }) => context.queryClient.ensureQueryData(operatorsListQueryOptions()),
+    loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(operatorsListQueryOptions()), context.queryClient.prefetchQuery(operatorNotesListQueryOptions())]),
 });
 
 function RootErrorComponent({ error }: { error: unknown }) {
