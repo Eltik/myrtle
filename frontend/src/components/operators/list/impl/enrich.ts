@@ -2,6 +2,8 @@ import type { IOperatorListItem } from "#/types/operators";
 import type { IVoices } from "#/types/voices";
 import type { IOperatorStats, IOperatorView } from "./types";
 
+export type NotedSet = ReadonlySet<string>;
+
 function extractVoiceActors(charId: string, voices: IVoices | undefined): string[] {
     const entry = voices?.voiceLangDict[charId];
     if (!entry) return [];
@@ -27,7 +29,7 @@ function extractStats(op: IOperatorListItem): IOperatorStats | null {
     };
 }
 
-export function enrichOperator(op: IOperatorListItem, voices: IVoices | undefined): IOperatorView {
+export function enrichOperator(op: IOperatorListItem, voices: IVoices | undefined, notedIds: NotedSet | undefined): IOperatorView {
     const info = op.profile?.basicInfo;
     return {
         ...op,
@@ -36,9 +38,10 @@ export function enrichOperator(op: IOperatorListItem, voices: IVoices | undefine
         placeOfBirth: info?.placeOfBirth ?? null,
         voiceActors: op.id ? extractVoiceActors(op.id, voices) : [],
         stats: extractStats(op),
+        hasNotes: op.id ? (notedIds?.has(op.id) ?? false) : false,
     };
 }
 
-export function enrichOperators(ops: IOperatorListItem[], voices: IVoices | undefined): IOperatorView[] {
-    return ops.map((op) => enrichOperator(op, voices));
+export function enrichOperators(ops: IOperatorListItem[], voices: IVoices | undefined, notedIds: NotedSet | undefined): IOperatorView[] {
+    return ops.map((op) => enrichOperator(op, voices, notedIds));
 }

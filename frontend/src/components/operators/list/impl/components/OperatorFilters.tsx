@@ -5,8 +5,8 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
-import { CLASSES, GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
-import type { IFilterOptions } from "../types";
+import { CLASSES, GENDERS, HAS_NOTES_OPTIONS, PROFESSION_ORDER, RARITIES } from "../constants";
+import type { HasNotesFilter, IFilterOptions } from "../types";
 import { FilterDropdown } from "./FilterDropdown";
 import { CampIcon, ClassIcon, SubProfessionIcon, TeamIcon } from "./Icons";
 import styles from "./OperatorFilters.module.css";
@@ -22,6 +22,7 @@ interface IOperatorFiltersProps {
     selectedBirthPlaces: string[];
     selectedArtists: string[];
     selectedVoiceActors: string[];
+    selectedHasNotes: HasNotesFilter;
     options: IFilterOptions;
     onClassesChange: (v: string[]) => void;
     onSubclassesChange: (v: string[]) => void;
@@ -33,6 +34,7 @@ interface IOperatorFiltersProps {
     onBirthPlacesChange: (v: string[]) => void;
     onArtistsChange: (v: string[]) => void;
     onVoiceActorsChange: (v: string[]) => void;
+    onHasNotesChange: (v: HasNotesFilter) => void;
     onClearAll: () => void;
     hasActiveFilters: boolean;
     collapsed?: boolean;
@@ -88,6 +90,20 @@ function FiltersContent(props: Omit<IOperatorFiltersProps, "collapsed" | "onTogg
                             return (
                                 <button key={r} type="button" data-rarity={rarityToNumber(r)} className={cn(styles.rarityBtn, on && styles.on)} onClick={() => props.onRaritiesChange(toggle(props.selectedRarities, r))} aria-pressed={on}>
                                     {rarityToNumber(r)}★
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className={styles.field}>
+                    <div className={styles.fieldLabel}>Notes</div>
+                    <div className={styles.tagRow}>
+                        {HAS_NOTES_OPTIONS.map((opt) => {
+                            const on = props.selectedHasNotes === opt.value;
+                            return (
+                                <button key={opt.value} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => props.onHasNotesChange(opt.value)} aria-pressed={on}>
+                                    {opt.label}
                                 </button>
                             );
                         })}
