@@ -250,3 +250,11 @@ export function computeSkillDiff(prev: ISkillLevel | null, curr: ISkillLevel): I
         blackboardChanges,
     };
 }
+
+export function formatBlackboardValue(key: string, value: number): string {
+    const percentageKeys = ["atk", "attack_speed", "def", "max_hp", "hp_recovery_per_sec", "sp_recovery_per_sec", "damage_scale", "atk_scale", "def_scale"];
+    const isPct = percentageKeys.some((k) => key.toLowerCase().includes(k));
+    if (isPct && Math.abs(value) < 10) return `${Math.round(value * 100)}%`;
+    if (Number.isInteger(value)) return String(value);
+    return value.toFixed(1);
+}
