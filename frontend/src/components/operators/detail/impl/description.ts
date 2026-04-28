@@ -27,7 +27,7 @@ export function descriptionToHtml(description: string, blackboard: IBlackboard[]
 
     const interp = new Map<string, number>();
     for (const b of blackboard) {
-        if (b?.key) interp.set(b.key.toLowerCase(), b.value);
+        if (b?.key) interp.set(b.key.toLowerCase(), Number.parseFloat(b.value.toPrecision(6)));
     }
 
     let html = description.replace(/&/g, "&amp;");
