@@ -1,4 +1,4 @@
-import type { IAttributeData, IBlackboard, IOperatorListItem, IOperatorModule, IOperatorPhase, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
+import type { IAttributeData, IBlackboard, IOperatorListItem, IOperatorModule, IOperatorPhase, ISkillLevel, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
 
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
     return (blackboard ?? []).filter((b) => b.key != null).map((b) => ({ key: b.key, value: b.value }));
@@ -194,4 +194,59 @@ export function getActiveTalentCandidate(talent: ITalent, phaseIndex: number, le
         if (isUnlocked(c.unlockCondition, c.requiredPotentialRank, phaseIndex, level, potentialRank)) chosen = c;
     }
     return chosen;
+}
+
+export function formatSkillLevel(idx: number): string {
+    if (idx < 7) return `Lv.${idx + 1}`;
+    return `M${idx - 6}`;
+}
+
+export function getSpTypeLabel(spType: string | number): string {
+    const map: Record<string, string> = {
+        INCREASE_WITH_TIME: "Auto Recovery",
+        "1": "Auto Recovery",
+        INCREASE_WHEN_ATTACK: "Offensive Recovery",
+        "2": "Offensive Recovery",
+        INCREASE_WHEN_TAKEN_DAMAGE: "Defensive Recovery",
+        "4": "Defensive Recovery",
+        ON_DEPLOYMENT: "On Deployment",
+        "8": "On Deployment",
+    };
+    return map[String(spType)] ?? String(spType);
+}
+
+export function getSkillTypeLabel(skillType: string | number): string {
+    const map: Record<string, string> = {
+        PASSIVE: "Passive",
+        "0": "Passive",
+        MANUAL: "Manual Trigger",
+        "1": "Manual Trigger",
+        AUTO: "Auto Trigger",
+        "2": "Auto Trigger",
+    };
+    return map[String(skillType)] ?? String(skillType);
+}
+
+interface ISkillDiff {
+    spCostChanged: boolean;
+    initSpChanged: boolean;
+    durationChanged: boolean;
+    blackboardChanges: Map<string, { prev: number; curr: number }>;
+}
+
+export function computeSkillDiff(prev: ISkillLevel | null, curr: ISkillLevel): ISkillDiff {
+    const blackboardChanges = new Map<string, { prev: number; curr: number }>();
+    if (prev) {
+        const prevBb = new Map((prev.blackboard ?? []).map((b) => [b.key.toLowerCase(), b.value]));
+        for (const c of curr.blackboard ?? []) {
+            const p = prevBb.get(c.key.toLowerCase());
+            if (p !== undefined && p !== c.value) blackboardChanges.set(c.key.toLowerCase(), { prev: p, curr: c.value });
+        }
+    }
+    return {
+        spCostChanged: prev !== null && prev.spData?.spCost !== curr.spData?.spCost,
+        initSpChanged: prev !== null && prev.spData?.initSp !== curr.spData?.initSp,
+        durationChanged: prev !== null && prev.duration !== curr.duration,
+        blackboardChanges,
+    };
 }
