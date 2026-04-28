@@ -98,7 +98,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
                                 <CommandGroup>
                                     <CommandGroupLabel>Tools</CommandGroupLabel>
                                     {toolResults.map(({ item: tool }) => (
-                                        <ToolRow key={tool.id} tool={tool} onSelect={() => closeAndGo(tool.href)} />
+                                        <ToolRow key={tool.id} tool={tool} onClick={() => closeAndGo(tool.href)} />
                                     ))}
                                 </CommandGroup>
                             )}
@@ -116,7 +116,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
                                         <div className="px-2 py-3 text-xs text-muted-foreground">No operators match "{query}".</div>
                                     ) : null
                                 ) : (
-                                    operatorResults.map(({ item: op }) => <OperatorRow key={op.id} op={op} onSelect={() => closeAndGo(`/operators/${op.id}`)} />)
+                                    operatorResults.map(({ item: op }) => <OperatorRow key={op.id} op={op} onClick={() => closeAndGo(`/operators/${op.id}`)} />)
                                 )}
                             </CommandGroup>
                         </CommandList>
@@ -138,11 +138,11 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
     );
 }
 
-function ToolRow({ tool, onSelect }: { tool: ITool; onSelect: () => void }): React.ReactElement {
+function ToolRow({ tool, onClick }: { tool: ITool; onClick: () => void }): React.ReactElement {
     const isMac = useIsMac();
     const shortcut = toolShortcut(tool, isMac);
     return (
-        <CommandItem value={`tool:${tool.id}`} onSelect={onSelect} className="flex flex-row gap-2">
+        <CommandItem value={`tool:${tool.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <ToolIcon name={tool.icon} className="size-4 text-muted-foreground" />
             <span className="flex-1">{tool.label}</span>
             {shortcut && <CommandShortcut>{shortcut}</CommandShortcut>}
@@ -150,10 +150,10 @@ function ToolRow({ tool, onSelect }: { tool: ITool; onSelect: () => void }): Rea
     );
 }
 
-function OperatorRow({ op, onSelect }: { op: IOperatorIndexEntry; onSelect: () => void }): React.ReactElement {
+function OperatorRow({ op, onClick }: { op: IOperatorIndexEntry; onClick: () => void }): React.ReactElement {
     const cls = professionClass(op.profession);
     return (
-        <CommandItem value={`operator:${op.id}`} onSelect={onSelect} className="flex flex-row gap-2">
+        <CommandItem value={`operator:${op.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <span className={`op-chip ${cls}`} aria-hidden="true">
                 <OperatorAvatar charId={op.id} name={op.name} />
             </span>
