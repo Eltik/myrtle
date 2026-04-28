@@ -83,6 +83,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
             <div className="mb-6 flex flex-wrap gap-2">
                 {operator.skills.map((skill, idx) => {
                     const name = skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`;
+                    const image = skill.static?.image;
                     const isSelected = selectedSkillIndex === idx;
                     return (
                         <button
@@ -91,6 +92,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             onClick={() => handleSkillChange(idx)}
                             className={cn("flex items-center gap-2 rounded-lg border px-4 py-2 font-medium text-sm transition-colors", isSelected ? "border-primary bg-primary/10 text-primary" : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/50 hover:text-foreground")}
                         >
+                            {image && <img alt="" className="h-5 w-5 shrink-0 object-contain" decoding="async" loading="lazy" src={asset(image)} />}
                             {name}
                         </button>
                     );

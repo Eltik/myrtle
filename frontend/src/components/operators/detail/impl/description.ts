@@ -1,7 +1,7 @@
 import type { IBlackboard } from "#/types/operators";
 
 const DESCRIPTION_COLORS = {
-    valueUp: "#d597da",
+    valueUp: "#6495ED",
     valueDown: "#ff847d",
     reminder: "#da9a46",
     keyword: "#49b3ff",

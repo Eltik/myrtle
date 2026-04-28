@@ -20,3 +20,8 @@ export function eliteIcon(elite: number): string {
 export function potentialIcon(rank: number): string {
     return asset(`/textures/arts/potential_hub/potential_${rank}.png`);
 }
+
+export function itemIcon(id: string, iconId: string | null | undefined, image: string | null | undefined): string {
+    if (image) return asset(image);
+    return asset(`/textures/arts/items/icons/${iconId ?? id}.png`);
+}
