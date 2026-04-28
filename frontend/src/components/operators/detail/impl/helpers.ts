@@ -1,4 +1,4 @@
-import type { IAttributeData, IBlackboard, IOperatorListItem, IOperatorModule, IOperatorPhase } from "#/types/operators";
+import type { IAttributeData, IBlackboard, IOperatorListItem, IOperatorModule, IOperatorPhase, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
 
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
     return (blackboard ?? []).filter((b) => b.key != null).map((b) => ({ key: b.key, value: b.value }));
@@ -170,4 +170,28 @@ export function formatStatValue(value: number): string {
         return `${pct >= 0 ? "+" : ""}${pct}%`;
     }
     return `${value >= 0 ? "+" : ""}${value}`;
+}
+
+export function phaseToIndex(phase: IUnlockCondition["phase"]): number {
+    if (phase === "PHASE_1") return 1;
+    if (phase === "PHASE_2") return 2;
+    return 0;
+}
+
+export function isUnlocked(uc: { phase: string; level: number } | undefined, requiredPot: number, phaseIndex: number, level: number, potentialRank: number): boolean {
+    if (!uc) return false;
+    const reqPhase = phaseToIndex(uc.phase as IUnlockCondition["phase"]);
+    if (phaseIndex < reqPhase) return false;
+    if (phaseIndex === reqPhase && level < uc.level) return false;
+    if (potentialRank < requiredPot) return false;
+    return true;
+}
+
+export function getActiveTalentCandidate(talent: ITalent, phaseIndex: number, level: number, potentialRank: number): ITalentCandidate | null {
+    const candidates = talent.candidates ?? [];
+    let chosen: ITalentCandidate | null = null;
+    for (const c of candidates) {
+        if (isUnlocked(c.unlockCondition, c.requiredPotentialRank, phaseIndex, level, potentialRank)) chosen = c;
+    }
+    return chosen;
 }
