@@ -10,6 +10,7 @@ import { type ISkin, skinsQueryOptions } from "#/lib/api/skins";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
+import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
 
 interface ISkinsContentProps {
     operator: IOperatorListItem;
@@ -36,7 +37,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
 
     const chibiCharacter: IChibiCharacter | null = useMemo(() => chibis?.characters?.find((c) => c.operatorCode === operator.id) ?? null, [chibis, operator.id]);
-    const _chibiSkin = useMemo(() => {
+    const chibiSkin = useMemo(() => {
         if (!chibiCharacter || !selected) return null;
         const key = chibiSkinKey(selected.id);
         return chibiCharacter.skins.find((s) => s.name === key) ?? chibiCharacter.skins[0] ?? null;
@@ -177,6 +178,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                         </div>
                     );
                 })()}
+            {chibiCharacter && <DynamicChibiViewer chibi={chibiCharacter} skin={chibiSkin} />}
         </div>
     );
 });
