@@ -5,7 +5,9 @@ import { Spinner } from "#/components/ui/spinner";
 import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
 import { capitalize } from "#/lib/utils";
 import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, EXPORT_HEIGHT, EXPORT_WIDTH, type ViewType } from "./constants";
+import { DownloadButton } from "./download-button";
 import { getAvailableViewTypes, getChibiSkinData, loadSpineWithEncodedURLs } from "./helpers";
+import { useRecorder } from "./use-recorder";
 
 interface IChibiViewerProps {
     chibi: IChibiCharacter | null;
@@ -25,6 +27,13 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
     const [viewType, setViewType] = useState<ViewType>("front");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const { isRecording, progress, startRecording, cancelRecording } = useRecorder({
+        appRef,
+        spineRef,
+        selectedAnimation,
+        recordingRef,
+    });
 
     const availableViewTypes = useMemo(() => getAvailableViewTypes(chibi, skin?.name ?? null), [chibi, skin?.name]);
 
@@ -180,7 +189,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
             <h4 className="mb-2 font-medium text-foreground">Chibi Preview</h4>
 
             <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Select disabled={isLoading || availableViewTypes.length <= 1} onValueChange={handleViewTypeChange} value={viewType}>
+                <Select disabled={isLoading || availableViewTypes.length <= 1 || isRecording} onValueChange={handleViewTypeChange} value={viewType}>
                     <SelectTrigger className="h-8 w-22.5 text-xs">
                         <SelectValue placeholder="View">
                             {(value: string) => {
@@ -195,7 +204,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
                     </SelectContent>
                 </Select>
 
-                <Select disabled={isLoading || availableAnimations.length === 0} onValueChange={handleAnimationChange} value={selectedAnimation}>
+                <Select disabled={isLoading || availableAnimations.length === 0 || isRecording} onValueChange={handleAnimationChange} value={selectedAnimation}>
                     <SelectTrigger className="h-8 min-w-25 flex-1 text-xs">
                         <SelectValue placeholder="Animation" />
                     </SelectTrigger>
@@ -207,6 +216,8 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
                         ))}
                     </SelectContent>
                 </Select>
+
+                <DownloadButton disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
             </div>
             <div className="relative h-45 w-full overflow-hidden rounded-md bg-[#111014]">
                 <div className="h-full w-full" ref={canvasContainerRef} />
