@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AudioTestRouteImport } from './routes/audio-test'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +26,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AudioTestRoute = AudioTestRouteImport.update({
+  id: '/audio-test',
+  path: '/audio-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -55,6 +61,7 @@ const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audio-test': typeof AudioTestRoute
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/audio-test': typeof AudioTestRoute
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/about': typeof AboutRoute
+  '/audio-test': typeof AudioTestRoute
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/_authed/settings': typeof AuthedSettingsRoute
@@ -83,17 +92,26 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/audio-test'
     | '/login'
     | '/operators'
     | '/settings'
     | '/operators/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/login' | '/operators' | '/settings' | '/operators/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/audio-test'
+    | '/login'
+    | '/operators'
+    | '/settings'
+    | '/operators/$id'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/about'
+    | '/audio-test'
     | '/login'
     | '/operators'
     | '/_authed/settings'
@@ -104,6 +122,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  AudioTestRoute: typeof AudioTestRoute
   LoginRoute: typeof LoginRoute
   OperatorsRoute: typeof OperatorsRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
@@ -123,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audio-test': {
+      id: '/audio-test'
+      path: '/audio-test'
+      fullPath: '/audio-test'
+      preLoaderRoute: typeof AudioTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -178,6 +204,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   AboutRoute: AboutRoute,
+  AudioTestRoute: AudioTestRoute,
   LoginRoute: LoginRoute,
   OperatorsRoute: OperatorsRoute,
   OperatorsIdRoute: OperatorsIdRoute,
