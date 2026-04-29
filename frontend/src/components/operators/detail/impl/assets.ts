@@ -9,6 +9,21 @@ export function operatorHero(operatorId: string, skin: string | null, portrait: 
     return asset(skin ?? portrait ?? `/textures/chararts/${operatorId}/${operatorId}_2.png`);
 }
 
+export function operatorElite0(opId: string, skin: string | null, portrait: string | null): string {
+    const path = (skin ?? portrait ?? `/textures/chararts/${opId}/${opId}_1.png`).replace(/_2\.png$/, "_1.png");
+    return asset(path);
+}
+
+export function operatorElite2(opId: string, skin: string | null, portrait: string | null): string {
+    const path = (skin ?? portrait ?? `/textures/chararts/${opId}/${opId}_2.png`).replace(/_1\.png$/, "_2.png");
+    return asset(path);
+}
+
+export function skinTexture(opId: string, skinId: string): string {
+    const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
+    return asset(`/textures/skinpack/${opId}/${file}.png`);
+}
+
 export function campLogo(id: string): string {
     return asset(`/textures/spritepack/ui_camp_logo_0/logo_${id}.png`);
 }
