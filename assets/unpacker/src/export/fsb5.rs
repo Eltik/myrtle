@@ -281,20 +281,14 @@ pub fn fsb5_to_ogg(data: &[u8]) -> Result<Vec<(String, Vec<u8>)>, String> {
                 }
 
                 match chunk_type {
-                    CHUNK_VORBISDATA => {
-                        if chunk_size >= 4 {
-                            vorbis_setup_id = r32(pos);
-                        }
+                    CHUNK_VORBISDATA if chunk_size >= 4 => {
+                        vorbis_setup_id = r32(pos);
                     }
-                    CHUNK_FREQUENCY => {
-                        if chunk_size >= 4 {
-                            frequency = r32(pos);
-                        }
+                    CHUNK_FREQUENCY if chunk_size >= 4 => {
+                        frequency = r32(pos);
                     }
-                    CHUNK_CHANNELS => {
-                        if chunk_size >= 1 {
-                            channels = data[pos];
-                        }
+                    CHUNK_CHANNELS if chunk_size >= 1 => {
+                        channels = data[pos];
                     }
                     _ => {}
                 }
@@ -406,13 +400,15 @@ fn rebuild_ogg(
     );
     page_seq += 1;
 
-    // Audio pages
+    // Audio pages. OGG limits each page to 255 segments (the segment count is
+    // a single byte at offset 26). Each packet contributes `len/255 + 1`
+    // segments (the +1 is the terminator, which is 0 when len is a multiple
+    // of 255). We flush before a packet that would push us past 255.
     let mut data_pos = 0usize;
     let mut granule_pos: i64 = 0;
     let mut prev_blocksize: u32 = 0;
     let mut page_packets: Vec<Vec<u8>> = Vec::new();
-    let mut page_data_size = 0usize;
-    let max_page_size = 65025;
+    let mut page_segments: usize = 0;
 
     while data_pos + 2 <= sample_data.len() {
         let packet_size =
@@ -429,7 +425,16 @@ fn rebuild_ogg(
         let packet = &sample_data[data_pos..data_pos + packet_size];
         data_pos += packet_size;
 
-        // Update granule position
+        let packet_segments = packet_size / 255 + 1;
+
+        if !page_packets.is_empty() && page_segments + packet_segments > 255 {
+            let refs: Vec<&[u8]> = page_packets.iter().map(|p| p.as_slice()).collect();
+            write_ogg_page(&mut out, 0x00, granule_pos, serial, page_seq, &refs);
+            page_seq += 1;
+            page_packets.clear();
+            page_segments = 0;
+        }
+
         let blocksize = get_packet_blocksize(packet, &block_flags);
         if blocksize > 0 && prev_blocksize > 0 {
             granule_pos += ((blocksize + prev_blocksize) / 4) as i64;
@@ -438,16 +443,8 @@ fn rebuild_ogg(
             prev_blocksize = blocksize;
         }
 
-        page_data_size += packet_size;
         page_packets.push(packet.to_vec());
-
-        if page_data_size >= max_page_size || page_packets.len() >= 255 {
-            let refs: Vec<&[u8]> = page_packets.iter().map(|p| p.as_slice()).collect();
-            write_ogg_page(&mut out, 0x00, granule_pos, serial, page_seq, &refs);
-            page_seq += 1;
-            page_packets.clear();
-            page_data_size = 0;
-        }
+        page_segments += packet_segments;
     }
 
     // Flush remaining as EOS page

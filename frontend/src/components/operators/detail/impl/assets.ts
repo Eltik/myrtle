@@ -40,3 +40,7 @@ export function itemIcon(id: string, iconId: string | null | undefined, image: s
     if (image) return asset(image);
     return asset(`/textures/arts/items/icons/${iconId ?? id}.png`);
 }
+
+export function voiceAudio(voiceUrl: string): string {
+    return `${env.VITE_BACKEND_URL}/api/assets/audio${voiceUrl}`;
+}

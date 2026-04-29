@@ -1,17 +1,22 @@
 use anyhow::Result;
 use axum::Router;
 use tower_http::compression::CompressionLayer;
+use tower_http::compression::predicate::{DefaultPredicate, NotForContentType, Predicate};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
 use crate::app::{routes, state::AppState};
 
 pub async fn run(state: AppState) -> Result<()> {
+    let compression_predicate = DefaultPredicate::new()
+        .and(NotForContentType::const_new("audio/"))
+        .and(NotForContentType::const_new("video/"));
+
     let app = Router::new()
         .nest("/api", routes::router())
         .with_state(state)
         .layer(TraceLayer::new_for_http())
-        .layer(CompressionLayer::new())
+        .layer(CompressionLayer::new().compress_when(compression_predicate))
         .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3060").await?;
