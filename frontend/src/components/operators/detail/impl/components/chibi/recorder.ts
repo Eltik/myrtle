@@ -254,8 +254,9 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
 
         checkAborted(signal);
 
+        const encoder = gif;
+        if (!encoder) throw new Error("GIF encoder was not initialized");
         const result = await new Promise<IRecordingResult>((resolve, reject) => {
-            const encoder = gif!;
             encoder.on("progress", (p) => onProgress?.(50 + p * 50));
             encoder.on("finished", (blob) => {
                 resolve({

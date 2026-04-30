@@ -123,6 +123,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             </SelectTrigger>
                             <SelectContent>
                                 {operator.skills[selectedSkillIndex].static?.levels.map((_, i) => (
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: skill level index is the canonical identifier
                                     <SelectItem key={`level-${i}`} value={String(i)}>
                                         {formatSkillLevel(i)}
                                     </SelectItem>
@@ -304,6 +305,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                 {showDifferencesOnly && !isFirst && diffSummary && diffSummary.length > 0 ? (
                     <div className="space-y-2.5">
                         {diffSummary.map((c, idx) => (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: diff entries are positionally generated and stable per render
                             <div className="flex items-baseline gap-3 rounded-sm border border-border bg-muted/30 px-4 py-2.5" key={`${c.label}-${idx}`}>
                                 <span className="shrink-0 font-medium text-muted-foreground text-xs uppercase tracking-wide">{c.label}</span>
                                 <span className="font-medium font-mono text-foreground text-sm">{c.value}</span>

@@ -21,9 +21,11 @@ export function OperatorRange({ range, className }: IOperatorRangeProps) {
             <table className="border-collapse">
                 <tbody>
                     {Array.from({ length: rows }).map((_, r) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
                         <tr key={r}>
                             {Array.from({ length: cols }).map((_, c) => {
                                 const cell = grid[r]?.[c];
+                                // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
                                 return <td key={c} className={cn("h-5 w-5 border border-border/30 sm:h-6 sm:w-6", cell === GridCell.active && "border-2 border-primary/60 bg-primary/20", cell === GridCell.operator && "bg-primary")} />;
                             })}
                         </tr>

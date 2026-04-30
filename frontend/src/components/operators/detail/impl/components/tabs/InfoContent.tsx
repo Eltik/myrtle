@@ -148,6 +148,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             {operator.phases.map((_, idx) => (
                                 <button
                                     className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-colors", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: phase ordering is fixed by elite tier
                                     key={`phase-${idx}`}
                                     onClick={() => {
                                         setPhaseIndex(idx);
@@ -193,6 +194,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 {Array.from({ length: (operator.potentialRanks?.length ?? 0) + 1 }).map((_, idx) => {
                                     const rank = idx === 0 ? null : operator.potentialRanks?.[idx - 1];
                                     return (
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: potential rank is positionally stable
                                         <Tooltip key={`pot-${idx}`}>
                                             <TooltipTrigger
                                                 render={(props) => (
@@ -280,6 +282,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 <h3 className="mb-4 font-medium text-foreground">Combat Stats</h3>
                 <div className="grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-card md:grid-cols-2 md:divide-x md:divide-y-0">
                     {[leftStats, rightStats].map((column, colIdx) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: fixed two-column split, order is stable
                         <div key={colIdx} className="px-5 py-2">
                             {column.map(({ iconURL, label, value }) => (
                                 <div key={label} className="flex items-center justify-between py-2">
@@ -427,6 +430,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         const newDesc = c.upgradeDescription || c.description || "";
                                                         const html = showDiff && oldCand?.description ? renderDescriptionDiffHtml(oldCand.description, newDesc, oldCand.blackboard ?? [], c.blackboard ?? []) : descriptionToHtml(newDesc, c.blackboard ?? []);
                                                         return (
+                                                            // biome-ignore lint/suspicious/noArrayIndexKey: candidate order is determined by module phase data
                                                             <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${cIdx}-${c.name ?? ""}`}>
                                                                 {c.name && <span className="font-medium text-foreground text-xs">{c.name}: </span>}
                                                                 <span
