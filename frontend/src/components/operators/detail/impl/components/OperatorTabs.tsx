@@ -67,7 +67,6 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                         <TooltipTrigger render={<TabsTab className="group h-11 justify-start gap-3 rounded-lg px-3 text-left font-medium text-muted-foreground text-sm hover:text-foreground data-active:text-foreground!" value={tab.type} />}>
                                             <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70 transition-colors group-hover:text-foreground group-data-active:text-primary" />
                                             <span className="truncate">{tab.label}</span>
-                                            <span aria-hidden className="ml-auto h-1.5 w-1.5 rounded-full bg-primary opacity-0 shadow-[0_0_8px_hsl(var(--primary))] transition-opacity group-data-active:opacity-100" />
                                         </TooltipTrigger>
                                         <TooltipPopup side="right">{tab.label}</TooltipPopup>
                                     </Tooltip>

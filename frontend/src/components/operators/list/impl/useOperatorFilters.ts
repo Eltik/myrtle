@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { rarityToNumber } from "#/lib/utils";
 import { CLASS_SORT_ORDER } from "./constants";
 import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
@@ -21,9 +22,9 @@ const initialState: IFilterState = {
 };
 
 export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersReturn {
-    const [filters, setFilters] = useState<IFilterState>(initialState);
+    const [filters, setFilters] = useLocalStorageState<IFilterState>("operators:filters", initialState);
 
-    const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), []);
+    const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), [setFilters]);
 
     const removeFrom = useCallback(
         (key: ArrayFilterKey, value: string) =>
@@ -31,7 +32,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
                 ...prev,
                 [key]: (prev[key] as string[]).filter((v) => v !== value),
             })),
-        [],
+        [setFilters],
     );
 
     // Build the option-lists for the sidebar from the full dataset.
@@ -137,7 +138,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
         return [...filtered].sort((a, b) => cmp(a, b) * dir);
     }, [filtered, filters.sortBy, filters.sortOrder, filters]);
 
-    const clearFilters = useCallback(() => setFilters(initialState), []);
+    const clearFilters = useCallback(() => setFilters(initialState), [setFilters]);
 
     const activeFilterCount =
         filters.classes.length +
