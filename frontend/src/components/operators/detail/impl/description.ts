@@ -4,9 +4,9 @@ const DESCRIPTION_COLORS = {
     valueUp: "#6495ED",
     valueDown: "#ff847d",
     reminder: "#da9a46",
-    keyword: "#49b3ff",
-    potential: "#49b3ff",
-    skillTooltip: "#49b3ff",
+    keyword: "#27e8e7",
+    potential: "#27e8e7",
+    skillTooltip: "#27e8e7",
 };
 
 function colorForTag(tag: string): string {

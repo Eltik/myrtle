@@ -10,8 +10,8 @@ import { voicesQueryOptions } from "#/lib/api/voices";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IVoice, LangType } from "#/types/voices";
-import { VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABELS, VOICE_LANGUAGE_ORDER } from "../../constants";
 import { voiceAudio } from "../../assets";
+import { VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABELS, VOICE_LANGUAGE_ORDER } from "../../constants";
 
 function sanitize(name: string): string {
     return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
@@ -90,7 +90,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
     useEffect(() => {
         setErroredUrls(new Set());
-    }, [operator.id]);
+    }, []);
 
     useEffect(() => {
         const a = audioRef.current;
@@ -106,7 +106,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
         }
         setPlayingId(null);
         setProgress(0);
-    }, [selectedLanguage]);
+    }, []);
 
     const operatorName = operator.name ?? operator.id ?? "voice";
 
@@ -299,13 +299,7 @@ interface IVoiceLineRowProps {
 
 function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDownloading, isUnavailable, onPlay, onDownload }: IVoiceLineRowProps) {
     return (
-        <div
-            className={cn(
-                "group relative overflow-hidden rounded-lg border transition-colors",
-                isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30",
-                isUnavailable && "opacity-60",
-            )}
-        >
+        <div className={cn("group relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
             <div className="flex items-start gap-3 p-3">
                 <div className="flex shrink-0 gap-1">
                     <button
@@ -313,10 +307,7 @@ function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDown
                         onClick={onPlay}
                         disabled={!canPlay && !isPlaying}
                         aria-label={isPlaying ? "Pause" : isUnavailable ? "Unavailable" : "Play"}
-                        className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                            isPlaying ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80",
-                        )}
+                        className={cn("flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50", isPlaying ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80")}
                     >
                         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </button>
