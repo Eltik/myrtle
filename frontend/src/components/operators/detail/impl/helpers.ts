@@ -125,7 +125,8 @@ export function getOperatorAttributeStats(operator: IOperatorListItem, ctx: ISta
 
     const trust = trustStats(operator, ctx.favorPoint);
     const pot = potStats(operator, ctx.potentialRank);
-    const mod = ctx.phaseIndex === 2 && ctx.moduleId ? moduleStats(operator.modules.find((m) => m.uniEquipId === ctx.moduleId)!, ctx.moduleLevel) : { ...ZERO_STATS };
+    const activeModule = ctx.phaseIndex === 2 && ctx.moduleId ? operator.modules.find((m) => m.uniEquipId === ctx.moduleId) : undefined;
+    const mod = activeModule ? moduleStats(activeModule, ctx.moduleLevel) : { ...ZERO_STATS };
 
     const maxHp = lerpByLevel(level, phase.maxLevel, start.maxHp, end.maxHp) + trust.maxHp + pot.maxHp + mod.maxHp;
     const atk = lerpByLevel(level, phase.maxLevel, start.atk, end.atk) + trust.atk + pot.atk + mod.atk;

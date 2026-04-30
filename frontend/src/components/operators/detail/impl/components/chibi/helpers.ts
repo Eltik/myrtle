@@ -90,12 +90,13 @@ function buildPageTexture(img: HTMLImageElement, declaredW: number, declaredH: n
 function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; declaredH: number }> {
     const pages = new Map<string, { declaredW: number; declaredH: number }>();
     ATLAS_PAGE_RE.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = ATLAS_PAGE_RE.exec(atlasText)) !== null) {
+    let match = ATLAS_PAGE_RE.exec(atlasText);
+    while (match !== null) {
         pages.set(match[1].trim(), {
             declaredW: Number.parseInt(match[2], 10),
             declaredH: Number.parseInt(match[3], 10),
         });
+        match = ATLAS_PAGE_RE.exec(atlasText);
     }
     return pages;
 }

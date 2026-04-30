@@ -180,6 +180,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
+            {/* biome-ignore lint/a11y/useMediaCaption: voice line audio has no transcript track available */}
             <audio
                 ref={audioRef}
                 preload="auto"
