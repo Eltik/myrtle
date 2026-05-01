@@ -45,6 +45,7 @@
 - [ ] **Restyle the attack range block.** It currently looks like a button - try a different color (base orange?) and consider centering it.
 - [ ] **Skin dialog: support scroll-wheel zoom** instead of only zoom buttons.
 - [ ] **Update `descriptionToHtml`:** map blue highlight color to `#27e8e7`.
+- [ ] Attack ranges for skills
 
 ---
 
