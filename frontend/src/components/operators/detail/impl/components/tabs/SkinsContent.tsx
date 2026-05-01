@@ -1,7 +1,7 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, Download, FileText, Maximize2, MessageCircle, Palette, RotateCcw, Sparkles, ZoomIn, ZoomOut } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -192,31 +192,59 @@ interface ISkinViewerDialogProps {
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.25;
+const ZOOM_WHEEL_SENSITIVITY = 0.0015;
 const BASE_SCALE = 1.15;
 
+interface ITransform {
+    zoom: number;
+    pan: { x: number; y: number };
+}
+
+const INITIAL_TRANSFORM: ITransform = { zoom: 1, pan: { x: 0, y: 0 } };
+
+const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
+
 export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, children }: ISkinViewerDialogProps) {
-    const [zoom, setZoom] = useState(1);
-    const [pan, setPan] = useState({ x: 0, y: 0 });
+    const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
     const [isPanning, setIsPanning] = useState(false);
     const panStartRef = useRef({ x: 0, y: 0 });
     const panOffsetRef = useRef({ x: 0, y: 0 });
-    const containerRef = useRef<HTMLDivElement>(null);
+    const wheelCleanupRef = useRef<(() => void) | null>(null);
 
-    const reset = useCallback(() => {
-        setZoom(1);
-        setPan({ x: 0, y: 0 });
+    const reset = useCallback(() => setTransform(INITIAL_TRANSFORM), []);
+
+    const zoomBy = useCallback((delta: number) => {
+        setTransform((prev) => {
+            const next = clampZoom(prev.zoom + delta);
+            return next === prev.zoom ? prev : { ...prev, zoom: next };
+        });
     }, []);
 
-    useEffect(() => {
-        const el = containerRef.current;
+    const setContainerRef = useCallback((el: HTMLDivElement | null) => {
+        wheelCleanupRef.current?.();
+        wheelCleanupRef.current = null;
         if (!el) return;
         const onWheel = (e: WheelEvent) => {
             e.preventDefault();
-            const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-            setZoom((p) => Math.min(Math.max(p + delta, MIN_ZOOM), MAX_ZOOM));
+            const rect = el.getBoundingClientRect();
+            const fx = e.clientX - rect.left - rect.width / 2;
+            const fy = e.clientY - rect.top - rect.height / 2;
+            const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
+            setTransform((prev) => {
+                const nextZoom = clampZoom(prev.zoom * factor);
+                if (nextZoom === prev.zoom) return prev;
+                const ratio = nextZoom / prev.zoom;
+                return {
+                    zoom: nextZoom,
+                    pan: {
+                        x: fx + (prev.pan.x - fx) * ratio,
+                        y: fy + (prev.pan.y - fy) * ratio,
+                    },
+                };
+            });
         };
         el.addEventListener("wheel", onWheel, { passive: false });
-        return () => el.removeEventListener("wheel", onWheel);
+        wheelCleanupRef.current = () => el.removeEventListener("wheel", onWheel);
     }, []);
 
     const onPointerDown = useCallback(
@@ -225,24 +253,28 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             (e.target as HTMLElement).setPointerCapture(e.pointerId);
             setIsPanning(true);
             panStartRef.current = { x: e.clientX, y: e.clientY };
-            panOffsetRef.current = { x: pan.x, y: pan.y };
+            panOffsetRef.current = { x: transform.pan.x, y: transform.pan.y };
         },
-        [pan],
+        [transform.pan],
     );
 
     const onPointerMove = useCallback(
         (e: React.PointerEvent) => {
             if (!isPanning) return;
-            setPan({
-                x: panOffsetRef.current.x + (e.clientX - panStartRef.current.x),
-                y: panOffsetRef.current.y + (e.clientY - panStartRef.current.y),
-            });
+            const dx = e.clientX - panStartRef.current.x;
+            const dy = e.clientY - panStartRef.current.y;
+            setTransform((prev) => ({
+                ...prev,
+                pan: { x: panOffsetRef.current.x + dx, y: panOffsetRef.current.y + dy },
+            }));
         },
         [isPanning],
     );
 
     const onPointerUp = useCallback(() => setIsPanning(false), []);
-    const onDoubleClick = useCallback(() => (zoom === 1 ? setZoom(2) : reset()), [zoom, reset]);
+    const onDoubleClick = useCallback(() => {
+        setTransform((prev) => (prev.zoom === 1 ? { ...prev, zoom: 2 } : INITIAL_TRANSFORM));
+    }, []);
 
     const onDownload = useCallback(async () => {
         try {
@@ -275,11 +307,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
                 <div className="absolute left-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    <ToolButton onClick={() => setZoom((p) => Math.max(p - ZOOM_STEP, MIN_ZOOM))} disabled={zoom <= MIN_ZOOM} label="Zoom out">
+                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
-                    <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(zoom * 100)}%</span>
-                    <ToolButton onClick={() => setZoom((p) => Math.min(p + ZOOM_STEP, MAX_ZOOM))} disabled={zoom >= MAX_ZOOM} label="Zoom in">
+                    <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
+                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>
                     <div className="mx-1 h-4 w-px bg-border" />
@@ -291,11 +323,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     </ToolButton>
                 </div>
 
-                <div ref={containerRef} role="application" className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
+                <div ref={setContainerRef} role="application" className={cn("relative h-full w-full cursor-grab select-none overflow-hidden", isPanning && "cursor-grabbing")} onDoubleClick={onDoubleClick} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
                     <div
                         className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
                         style={{
-                            transform: `scale(${BASE_SCALE * zoom}) translate(${pan.x / (BASE_SCALE * zoom)}px, ${pan.y / (BASE_SCALE * zoom)}px)`,
+                            transform: `scale(${BASE_SCALE * transform.zoom}) translate(${transform.pan.x / (BASE_SCALE * transform.zoom)}px, ${transform.pan.y / (BASE_SCALE * transform.zoom)}px)`,
                         }}
                     >
                         <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />

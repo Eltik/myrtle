@@ -32,7 +32,7 @@
 ## `/operators/{id}` (Operator Detail Page)
 
 - [X] **Remove the dot on the sidebar** in the operator page.
-- [ ] **Trait/talent change view setting.** Add a Settings option to render trait/talent changes on a separate line, e.g.:
+- [X] **Trait/talent change view setting.** Add a Settings option to render trait/talent changes on a separate line, e.g.:
 
   ```
   Base Trait:
@@ -42,10 +42,10 @@
   ~~Can attack~~ Simultaneously attacks all blocked enemies.
   ```
 
-- [ ] **Restyle the attack range block.** It currently looks like a button - try a different color (base orange?) and consider centering it.
-- [ ] **Skin dialog: support scroll-wheel zoom** instead of only zoom buttons.
-- [ ] **Update `descriptionToHtml`:** map blue highlight color to `#27e8e7`.
-- [ ] Attack ranges for skills
+- [X] **Restyle the attack range block.** It currently looks like a button - try a different color (base orange?) and consider centering it.
+- [X] **Skin dialog: support scroll-wheel zoom** instead of only zoom buttons.
+- [X] **Update `descriptionToHtml`:** map blue highlight color to `#27e8e7`.
+- [X] Attack ranges for skills
 
 ---
 
