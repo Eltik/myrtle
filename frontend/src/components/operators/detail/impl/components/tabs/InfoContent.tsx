@@ -390,7 +390,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                 newDesc = baseDesc.length > 0 ? `${baseDesc}\n${additionalDesc}` : additionalDesc;
                                                 mergedNewBb = [...descriptionBlackboard, ...newBb];
                                             }
-                                            const html = showDiff && oldDesc ? renderDescriptionDiffHtml(oldDesc, newDesc, oldBb, mergedNewBb) : descriptionToHtml(newDesc, mergedNewBb);
+                                            const renderingDiff = showDiff && !!oldDesc;
+                                            const html = renderingDiff ? renderDescriptionDiffHtml(oldDesc, newDesc, oldBb, mergedNewBb) : descriptionToHtml(newDesc, mergedNewBb);
+                                            const baseHtml = renderingDiff ? descriptionToHtml(oldDesc ?? "", oldBb) : null;
                                             return (
                                                 <>
                                                     <div className="mb-1 flex items-center justify-between">
@@ -407,6 +409,17 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         </Tooltip>
                                                     </div>
                                                     <div className="rounded-md bg-secondary/20 p-2">
+                                                        {baseHtml && (
+                                                            <div className="mb-2 border-border/40 border-b pb-2 opacity-50">
+                                                                <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Base Trait</div>
+                                                                <span
+                                                                    className="block text-muted-foreground text-xs"
+                                                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
+                                                                    dangerouslySetInnerHTML={{ __html: baseHtml }}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {baseHtml && <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Changes</div>}
                                                         <span
                                                             className="text-muted-foreground text-xs"
                                                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
@@ -428,10 +441,24 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         const oldTalent = operator.talents?.[c.talentIndex];
                                                         const oldCand = oldTalent?.candidates?.[oldTalent.candidates.length - 1];
                                                         const newDesc = c.upgradeDescription || c.description || "";
-                                                        const html = showDiff && oldCand?.description ? renderDescriptionDiffHtml(oldCand.description, newDesc, oldCand.blackboard ?? [], c.blackboard ?? []) : descriptionToHtml(newDesc, c.blackboard ?? []);
+                                                        const renderingDiff = showDiff && !!oldCand?.description;
+                                                        const html = renderingDiff ? renderDescriptionDiffHtml(oldCand?.description ?? "", newDesc, oldCand?.blackboard ?? [], c.blackboard ?? []) : descriptionToHtml(newDesc, c.blackboard ?? []);
+                                                        const baseHtml = renderingDiff ? descriptionToHtml(oldCand?.description ?? "", oldCand?.blackboard ?? []) : null;
                                                         return (
                                                             // biome-ignore lint/suspicious/noArrayIndexKey: candidate order is determined by module phase data
                                                             <div className="rounded-md bg-secondary/20 px-2 py-1" key={`tc-${cIdx}-${c.name ?? ""}`}>
+                                                                {baseHtml && (
+                                                                    <div className="mb-2 border-border/40 border-b pb-2 opacity-50">
+                                                                        <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Base Talent</div>
+                                                                        {c.name && <span className="font-medium text-foreground text-xs">{c.name}: </span>}
+                                                                        <span
+                                                                            className="text-muted-foreground text-xs"
+                                                                            // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
+                                                                            dangerouslySetInnerHTML={{ __html: baseHtml }}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                                {baseHtml && <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Changes</div>}
                                                                 {c.name && <span className="font-medium text-foreground text-xs">{c.name}: </span>}
                                                                 <span
                                                                     className="text-muted-foreground text-xs"
@@ -531,7 +558,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         return (
                             <div className="mt-3 space-y-3">
                                 {visible.map((t) => {
-                                    const html = t.modifiedByModule && showDiff && t.baseDescription ? renderDescriptionDiffHtml(t.baseDescription, t.description, t.baseBlackboard, t.blackboard) : descriptionToHtml(t.description, t.blackboard);
+                                    const renderingDiff = t.modifiedByModule && showDiff && !!t.baseDescription;
+                                    const html = renderingDiff ? renderDescriptionDiffHtml(t.baseDescription ?? "", t.description, t.baseBlackboard, t.blackboard) : descriptionToHtml(t.description, t.blackboard);
+                                    const baseHtml = renderingDiff ? descriptionToHtml(t.baseDescription ?? "", t.baseBlackboard) : null;
                                     return (
                                         <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={t.key}>
                                             <div className="mb-1 flex items-center gap-2">
@@ -548,6 +577,17 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                     </Badge>
                                                 )}
                                             </div>
+                                            {baseHtml && (
+                                                <div className="mb-2 border-border/40 border-b pb-2 opacity-50">
+                                                    <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Base Talent</div>
+                                                    <span
+                                                        className="block text-muted-foreground text-xs"
+                                                        // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
+                                                        dangerouslySetInnerHTML={{ __html: baseHtml }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {baseHtml && <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Changes</div>}
                                             <span
                                                 className="text-muted-foreground text-xs"
                                                 // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
