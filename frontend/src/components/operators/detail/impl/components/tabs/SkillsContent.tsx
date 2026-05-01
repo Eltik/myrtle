@@ -1,14 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import { Columns, GitCompareArrows, Rows } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { type IRange, rangesQueryOptions } from "#/lib/api/ranges";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
 import { descriptionToHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
+import { OperatorRange } from "../OperatorRange";
 
 interface ISkillsContentProps {
     operator: IOperatorListItem;
@@ -20,11 +23,19 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
     const [comparisonMode, setComparisonMode] = useState(false);
     const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
     const [comparisonSelection, setComparisonSelection] = useState<number[] | null>(null);
+    const [showRangeDiff, setShowRangeDiff] = useState(false);
 
     const skillData = (operator.skills[selectedSkillIndex].static?.levels ?? [])[skillLevel];
     const skillDescription = useMemo(() => descriptionToHtml(skillData?.description ?? "", skillData?.blackboard ?? []), [skillData?.description, skillData?.blackboard]);
 
     const levelsCount = (operator.skills[selectedSkillIndex].static?.levels ?? []).length;
+
+    const { data: ranges } = useQuery(rangesQueryOptions());
+    const baseRangeId = operator.phases[operator.phases.length - 1]?.rangeId ?? null;
+    const baseRange: IRange | undefined = baseRangeId ? ranges?.[baseRangeId] : undefined;
+    const skillRangeId = skillData?.rangeId ?? null;
+    const rangeChanges = skillRangeId !== null && skillRangeId !== baseRangeId;
+    const skillRange: IRange | undefined = rangeChanges && skillRangeId ? ranges?.[skillRangeId] : undefined;
 
     const defaultComparison = useMemo(() => {
         if (levelsCount >= 10) return [6, 7, 8, 9];
@@ -213,6 +224,38 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             dangerouslySetInnerHTML={{ __html: skillDescription }}
                         />
                     </div>
+
+                    {skillRange && (
+                        <div className="mt-5 rounded-sm border border-border/50 bg-secondary/10 p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Range</span>
+                                {baseRange && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRangeDiff((s) => !s)}
+                                        className={cn("inline-flex h-8 items-center gap-2 rounded-sm border px-3 font-medium text-xs transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
+                                    >
+                                        <GitCompareArrows className="h-4 w-4" />
+                                        {showRangeDiff ? "Hide Diff" : "Show Diff"}
+                                    </button>
+                                )}
+                            </div>
+                            {showRangeDiff && baseRange ? (
+                                <div className="flex flex-wrap items-start gap-6">
+                                    <div className="space-y-1.5">
+                                        <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Original</span>
+                                        <OperatorRange range={baseRange} />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">On Skill</span>
+                                        <OperatorRange range={skillRange} />
+                                    </div>
+                                </div>
+                            ) : (
+                                <OperatorRange range={skillRange} />
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
             {comparisonMode && (
@@ -251,7 +294,24 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             const data = operator.skills[selectedSkillIndex].static?.levels[idx];
                             if (!data) return null;
                             const prev = i > 0 ? (operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[i - 1]] ?? null) : null;
-                            return <SkillComparisonRow key={`cmp-${idx}`} levelIndex={idx} levelData={data} prevLevelData={prev} isFirst={i === 0} isLast={i === comparisonLevels.length - 1} showDifferencesOnly={showDifferencesOnly} />;
+                            const rowRangeId = data.rangeId ?? null;
+                            const rowRangeChanges = rowRangeId !== null && rowRangeId !== baseRangeId;
+                            const rowRange = rowRangeChanges && rowRangeId ? ranges?.[rowRangeId] : undefined;
+                            return (
+                                <SkillComparisonRow
+                                    key={`cmp-${idx}`}
+                                    levelIndex={idx}
+                                    levelData={data}
+                                    prevLevelData={prev}
+                                    isFirst={i === 0}
+                                    isLast={i === comparisonLevels.length - 1}
+                                    showDifferencesOnly={showDifferencesOnly}
+                                    range={rowRange}
+                                    baseRange={baseRange}
+                                    showRangeDiff={showRangeDiff}
+                                    onToggleRangeDiff={() => setShowRangeDiff((s) => !s)}
+                                />
+                            );
                         })}
                     </div>
                 </div>
@@ -267,9 +327,13 @@ interface ISkillComparisonRowProps {
     isFirst?: boolean;
     isLast?: boolean;
     showDifferencesOnly?: boolean;
+    range?: IRange;
+    baseRange?: IRange;
+    showRangeDiff?: boolean;
+    onToggleRangeDiff?: () => void;
 }
 
-export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex, levelData, prevLevelData, isFirst, isLast, showDifferencesOnly }: ISkillComparisonRowProps) {
+export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex, levelData, prevLevelData, isFirst, isLast, showDifferencesOnly, range, baseRange, showRangeDiff, onToggleRangeDiff }: ISkillComparisonRowProps) {
     const descriptionHtml = useMemo(() => descriptionToHtml(levelData.description ?? "", levelData.blackboard ?? []), [levelData.description, levelData.blackboard]);
     const diff = useMemo(() => computeSkillDiff(prevLevelData, levelData), [prevLevelData, levelData]);
     const hasChanges = diff.spCostChanged || diff.initSpChanged || diff.durationChanged || diff.blackboardChanges.size > 0;
@@ -318,6 +382,37 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
                         dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                     />
+                )}
+                {range && (
+                    <div className="mt-4 rounded-sm border border-border/50 bg-secondary/10 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                            <span className="font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Range</span>
+                            {baseRange && onToggleRangeDiff && (
+                                <button
+                                    type="button"
+                                    onClick={onToggleRangeDiff}
+                                    className={cn("inline-flex h-7 items-center gap-1.5 rounded-sm border px-2 font-medium text-[0.625rem] transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
+                                >
+                                    <GitCompareArrows className="h-3 w-3" />
+                                    {showRangeDiff ? "Hide Diff" : "Show Diff"}
+                                </button>
+                            )}
+                        </div>
+                        {showRangeDiff && baseRange ? (
+                            <div className="flex flex-wrap items-start gap-4">
+                                <div className="space-y-1.5">
+                                    <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Original</span>
+                                    <OperatorRange range={baseRange} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">On Skill</span>
+                                    <OperatorRange range={range} />
+                                </div>
+                            </div>
+                        ) : (
+                            <OperatorRange range={range} />
+                        )}
+                    </div>
                 )}
             </div>
 
