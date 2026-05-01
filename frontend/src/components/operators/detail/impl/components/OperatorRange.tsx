@@ -18,15 +18,25 @@ export function OperatorRange({ range, className }: IOperatorRangeProps) {
 
     return (
         <div className={cn("max-w-full overflow-x-auto", className)}>
-            <table className="border-collapse">
+            <table className="border-separate border-spacing-1">
                 <tbody>
                     {Array.from({ length: rows }).map((_, r) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
                         <tr key={r}>
                             {Array.from({ length: cols }).map((_, c) => {
                                 const cell = grid[r]?.[c];
-                                // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
-                                return <td key={c} className={cn("h-5 w-5 border border-border/30 sm:h-6 sm:w-6", cell === GridCell.active && "border-2 border-primary/60 bg-primary/20", cell === GridCell.operator && "bg-primary")} />;
+                                return (
+                                    <td
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: grid cells are positionally stable
+                                        key={c}
+                                        className={cn(
+                                            "h-5 w-5 sm:h-6 sm:w-6",
+                                            cell === GridCell.empty && "border border-[#e8973c]/25 border-dashed",
+                                            cell === GridCell.active && "border border-[#e8973c] bg-[repeating-linear-gradient(135deg,#e8973c_0_3px,transparent_3px_7px)]",
+                                            cell === GridCell.operator && "border border-foreground bg-foreground",
+                                        )}
+                                    />
+                                );
                             })}
                         </tr>
                     ))}
