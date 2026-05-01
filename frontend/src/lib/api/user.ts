@@ -11,7 +11,7 @@ export interface IRosterMastery {
 export interface IRosterModule {
     id: string;
     level: number;
-    locked?: boolean;
+    locked: boolean;
 }
 
 export interface IRosterEntry {
@@ -29,8 +29,8 @@ export interface IRosterEntry {
     current_equip: string | null;
     current_tmpl: string | null;
     obtained_at: number | null;
-    masteries: IRosterMastery[] | null;
-    modules: IRosterModule[] | null;
+    masteries: IRosterMastery[];
+    modules: IRosterModule[];
 }
 
 export interface IUserScore {
@@ -68,9 +68,9 @@ export function userQueryOptions(uid: string) {
 }
 
 export const getUserRosterFn = createServerFn({ method: "GET" })
-    .inputValidator((uid: string) => uid)
-    .handler(async ({ data: uid }) => {
-        const res = await backendFetch(`/roster?uid=${encodeURIComponent(uid)}`);
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const res = await backendFetch(`/roster?uid=${encodeURIComponent(uid)}`, { bearerToken });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load roster: ${res.status}`);
@@ -78,10 +78,57 @@ export const getUserRosterFn = createServerFn({ method: "GET" })
         return (await res.json()) as IRosterEntry[];
     });
 
-export function userRosterQueryOptions(uid: string) {
+export function userRosterQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["user", "roster", uid],
-        queryFn: () => getUserRosterFn({ data: uid }),
+        queryKey: ["user", "roster", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserRosterFn({ data: { uid, bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export const getUserRosterOperatorFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; operatorId: string }) => data)
+    .handler(async ({ data: { uid, operatorId } }) => {
+        const res = await backendFetch(
+            `/roster/${encodeURIComponent(operatorId)}?uid=${encodeURIComponent(uid)}`,
+        );
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            throw new Error(`Failed to load roster operator: ${res.status}`);
+        }
+        return (await res.json()) as IRosterEntry;
+    });
+
+export function userRosterOperatorQueryOptions(uid: string, operatorId: string) {
+    return queryOptions({
+        queryKey: ["user", "roster", uid, operatorId],
+        queryFn: () => getUserRosterOperatorFn({ data: { uid, operatorId } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export interface IInventoryItem {
+    item_id: string;
+    quantity: number;
+}
+
+export const getUserInventoryFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const res = await backendFetch(`/inventory?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            throw new Error(`Failed to load inventory: ${res.status}`);
+        }
+        return (await res.json()) as IInventoryItem[];
+    });
+
+export function userInventoryQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "inventory", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserInventoryFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
