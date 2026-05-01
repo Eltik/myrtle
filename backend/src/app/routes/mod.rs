@@ -10,6 +10,7 @@ pub mod auth;
 pub mod dps;
 pub mod gacha;
 pub mod health;
+pub mod inventory;
 pub mod leaderboard;
 pub mod operator_notes;
 pub mod operators;
@@ -53,6 +54,7 @@ pub fn router() -> Router<AppState> {
         .route("/refresh", post(auth::refresh))
         .route("/roster", get(roster::get_roster))
         .route("/roster/{operator_id}", get(roster::get_operator))
+        .route("/inventory", get(inventory::get_inventory))
         .route("/gacha/fetch", post(gacha::fetch))
         .route("/gacha/global-stats", get(gacha::global_stats))
         .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))
