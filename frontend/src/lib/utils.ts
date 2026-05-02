@@ -22,7 +22,13 @@ function avatarBase(): string {
 // Backend asset stems use `_` where game data uses `@`, and keep `#`.
 // encodeURIComponent handles `#` → `%23` so it survives the URL path.
 function toAvatarStem(id: string): string {
-    return encodeURIComponent(id.replaceAll("@", "_"));
+    if (id.includes("@")) {
+        // Skin: char_X@winter#1 → char_X_winter#1
+        return encodeURIComponent(id.replaceAll("@", "_"));
+    }
+    // Base art: char_X#1 → char_X, char_X#2 → char_X_2
+    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+)$/, "_$1");
+    return encodeURIComponent(stem);
 }
 
 export function getAvatarById(charId: string): string {
@@ -31,11 +37,7 @@ export function getAvatarById(charId: string): string {
 
 function resolveSecretarySkinId(user: User): string | null {
     if (!user?.secretary) return null;
-
-    const { secretary, secretary_skin_id = "" } = user;
-    const isDefaultSkin = !secretary_skin_id?.includes("@") && secretary_skin_id?.endsWith("#1");
-
-    return isDefaultSkin ? secretary : secretary_skin_id;
+    return user.secretary_skin_id || user.secretary;
 }
 
 export function getSecretaryAvatarURL(user: User): string {
