@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UserIdRoute = UserIdRouteImport.update({
+  id: '/user/$id',
+  path: '/user/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperatorsIdRoute = OperatorsIdRouteImport.update({
   id: '/operators_/$id',
   path: '/operators/$id',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/user/$id': typeof UserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/user/$id': typeof UserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/operators': typeof OperatorsRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/operators_/$id': typeof OperatorsIdRoute
+  '/user/$id': typeof UserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,8 +96,16 @@ export interface FileRouteTypes {
     | '/operators'
     | '/settings'
     | '/operators/$id'
+    | '/user/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/login' | '/operators' | '/settings' | '/operators/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/login'
+    | '/operators'
+    | '/settings'
+    | '/operators/$id'
+    | '/user/$id'
   id:
     | '__root__'
     | '/'
@@ -98,6 +115,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/_authed/settings'
     | '/operators_/$id'
+    | '/user/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -107,6 +125,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OperatorsRoute: typeof OperatorsRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
+  UserIdRoute: typeof UserIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -146,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/user/$id': {
+      id: '/user/$id'
+      path: '/user/$id'
+      fullPath: '/user/$id'
+      preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operators_/$id': {
       id: '/operators_/$id'
       path: '/operators/$id'
@@ -181,6 +207,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OperatorsRoute: OperatorsRoute,
   OperatorsIdRoute: OperatorsIdRoute,
+  UserIdRoute: UserIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

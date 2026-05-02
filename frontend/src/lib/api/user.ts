@@ -90,9 +90,7 @@ export function userRosterQueryOptions(uid: string, bearerToken?: string) {
 export const getUserRosterOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; operatorId: string }) => data)
     .handler(async ({ data: { uid, operatorId } }) => {
-        const res = await backendFetch(
-            `/roster/${encodeURIComponent(operatorId)}?uid=${encodeURIComponent(uid)}`,
-        );
+        const res = await backendFetch(`/roster/${encodeURIComponent(operatorId)}?uid=${encodeURIComponent(uid)}`);
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load roster operator: ${res.status}`);
