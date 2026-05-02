@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { Fragment, type ReactNode, useId, useMemo } from "react";
 import { Combobox, ComboboxCollection, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxSeparator } from "#/components/ui/combobox";
 
@@ -109,6 +110,24 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
                     </ComboboxList>
                 </ComboboxPopup>
             </Combobox>
+            {selected.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                    {selected.map((opt) => (
+                        <FilterTag key={opt} label={format(opt)} onRemove={() => onChange(selected.filter((v) => v !== opt))} />
+                    ))}
+                </div>
+            )}
         </div>
+    );
+}
+
+function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
+    return (
+        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-xs text-foreground">
+            {label}
+            <button type="button" className="hover:text-destructive" onClick={onRemove}>
+                <X className="h-3 w-3" />
+            </button>
+        </span>
     );
 }

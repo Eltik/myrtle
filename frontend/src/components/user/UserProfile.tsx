@@ -1,19 +1,34 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
-import { userQueryOptions, userRosterQueryOptions } from "#/lib/api/user";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { Hero } from "./impl/Hero";
+import { ProfileTabs } from "./impl/ProfileTabs";
 import { StatStrip } from "./impl/StatStrip";
 
-type TabId = "roster" | "inventory" | "stats" | "score";
+export type TabId = "roster" | "inventory" | "stats" | "score";
 
 export function UserProfile() {
     const { id } = useParams({ from: "/user/$id" });
-    const [_activeTab, _setActiveTab] = useState<TabId>("roster");
+    const [activeTab, setActiveTab] = useState<TabId>("roster");
 
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
+    const { data: inventory } = useQuery(userInventoryQueryOptions(id));
+    const { data: score } = useQuery(userScoreQueryOptions(id));
+    const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
+
+    const tabs = useMemo(
+        () => [
+            { id: "roster" as TabId, label: "Roster", count: data?.operator_count ?? roster?.length ?? undefined },
+            { id: "inventory" as TabId, label: "Inventory", count: data?.item_count ?? inventory?.length ?? undefined },
+            { id: "stats" as TabId, label: "Stats" },
+            { id: "score" as TabId, label: "Score" },
+        ],
+        [data, roster, inventory],
+    );
 
     if (isLoading) {
         return (
@@ -98,6 +113,7 @@ export function UserProfile() {
         <main className="flex-1 w-[min(1080px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
             <Hero profile={data} />
             <StatStrip profile={data} rosterCount={roster?.length} />
+            <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
         </main>
     );
 }
