@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry } from "#/types/operators";
+import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import { filterEntries, sortEntries } from "./helpers";
 import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type ViewMode } from "./types";
 
@@ -17,7 +17,7 @@ const INITIAL: IRosterFilterState = {
 
 const PAGE_SIZE: Record<ViewMode, number> = { detailed: 24, compact: 48 };
 
-export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[]) {
+export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[]) {
     const [filters, setFilters] = useLocalStorageState<IRosterFilterState>("user:roster:filters", INITIAL);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -42,20 +42,33 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
 
     const ownedIds = useMemo(() => new Set(roster.map((r) => r.operator_id)), [roster]);
 
+    const staticMap = useMemo(() => {
+        const m = new Map<string, IOperatorListItem>();
+        for (const op of operatorsStatic) if (op.id) m.set(op.id, op);
+        return m;
+    }, [operatorsStatic]);
+
     const allEntries = useMemo<IDisplayEntry[]>(() => {
         const owned: IDisplayEntry[] = roster.map((r) => {
             const meta = indexMap.get(r.operator_id) ?? null;
-            return { ...r, isOwned: true, meta, name: meta?.name ?? r.operator_id, rarity: meta?.rarity ?? 1 };
+            return {
+                ...r,
+                isOwned: true,
+                meta,
+                static: staticMap.get(r.operator_id) ?? null,
+                name: meta?.name ?? r.operator_id,
+                rarity: meta?.rarity ?? 1,
+            };
         });
         if (filters.ownership === "owned") return owned;
 
         const unowned: IDisplayEntry[] = [];
         for (const op of operatorsIndex) {
             if (op.isNotObtainable || ownedIds.has(op.id)) continue;
-            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op });
+            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticMap.get(op.id) ?? null });
         }
         return filters.ownership === "unowned" ? unowned : [...owned, ...unowned];
-    }, [roster, operatorsIndex, indexMap, ownedIds, filters.ownership]);
+    }, [roster, operatorsIndex, indexMap, staticMap, ownedIds, filters.ownership]);
 
     const filtered = useMemo(() => filterEntries(allEntries, filters.rarity, filters.search), [allEntries, filters.rarity, filters.search]);
 

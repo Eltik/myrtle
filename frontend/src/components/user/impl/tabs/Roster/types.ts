@@ -1,5 +1,5 @@
 import type { IRosterEntry } from "#/lib/api/user";
-import type { IOperatorIndexEntry, OperatorRarityTier } from "#/types/operators";
+import type { IOperatorIndexEntry, IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 
 export type SortKey = "level" | "rarity" | "obtained" | "potential";
 export type SortOrder = "asc" | "desc";
@@ -10,6 +10,7 @@ export type ViewMode = "detailed" | "compact";
 export interface IOwnedEntry extends IRosterEntry {
     isOwned: true;
     meta: IOperatorIndexEntry | null;
+    static: IOperatorListItem | null;
     name: string;
     rarity: number;
 }
@@ -20,6 +21,7 @@ export interface IUnownedEntry {
     name: string;
     rarity: number;
     meta: IOperatorIndexEntry;
+    static: IOperatorListItem | null;
 }
 
 export type IDisplayEntry = IOwnedEntry | IUnownedEntry;

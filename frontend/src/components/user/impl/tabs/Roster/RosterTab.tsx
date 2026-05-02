@@ -5,13 +5,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IRosterEntry } from "#/lib/api/user";
 import { capitalize, rarityToNumber } from "#/lib/utils";
-import type { IOperatorIndexEntry, OperatorRarityTier } from "#/types/operators";
+import type { IOperatorIndexEntry, IOperatorListItem, OperatorRarityTier } from "#/types/operators";
+import { CompactCard } from "./CompactCard";
 import type { OwnershipFilter, RarityFilter, SortKey, ViewMode } from "./types";
 import { useRoster } from "./useRoster";
 
 interface IRosterTabProps {
     roster: IRosterEntry[];
     operatorsIndex: IOperatorIndexEntry[];
+    operatorsStatic: IOperatorListItem[];
 }
 
 const OWNERSHIP_LABELS: Record<OwnershipFilter, string> = {
@@ -34,8 +36,8 @@ function getRarityLabel(value: RarityFilter): string {
     return `${rarityToNumber(value)} Star`;
 }
 
-export function RosterTab({ roster, operatorsIndex }: IRosterTabProps) {
-    const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef } = useRoster(roster, operatorsIndex);
+export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTabProps) {
+    const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef } = useRoster(roster, operatorsIndex, operatorsStatic);
     const { search, ownership, sortBy, sortOrder, rarity, viewMode } = filters;
 
     return (
@@ -108,6 +110,27 @@ export function RosterTab({ roster, operatorsIndex }: IRosterTabProps) {
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
+                {filters.viewMode === "compact" ? (
+                    <div className="3xl:grid-cols-7 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                        {visible.map((entry, i) => {
+                            const isLast = i === visible.length - 1;
+                            const ref = isLast ? lastRef : null;
+                            const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
+
+                            // Until UnownedCard / DetailedCard exist, only owned + compact renders.
+                            if (!entry.isOwned) return null;
+                            return <CompactCard key={key} entry={entry} lastRef={ref} />;
+                        })}
+                    </div>
+                ) : (
+                    // DetailedCard goes here later; placeholder for now
+                    <p className="text-sm text-muted-foreground">Detailed view coming soon.</p>
+                )}
+                {displayCount < totalCount && (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                        Showing {displayCount} of {totalCount} operators. Scroll to load more.
+                    </p>
+                )}
             </div>
         </section>
     );

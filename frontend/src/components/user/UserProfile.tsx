@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { Hero } from "./impl/Hero";
 import { ProfileTabs } from "./impl/ProfileTabs";
@@ -20,6 +20,7 @@ export function UserProfile() {
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
     const { data: score } = useQuery(userScoreQueryOptions(id));
     const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
+    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
 
     const tabs = useMemo(
         () => [
@@ -115,7 +116,7 @@ export function UserProfile() {
             <Hero profile={data} />
             <StatStrip profile={data} rosterCount={roster?.length} />
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-            {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} />}
+            {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
         </main>
     );
 }
