@@ -19,16 +19,16 @@ interface ISkillsContentProps {
 
 export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsContentProps) {
     const [selectedSkillIndex, setSelectedSkillIndex] = useState(operator.skills.length > 0 ? operator.skills.length - 1 : 0);
-    const [skillLevel, setSkillLevel] = useState(Math.max(0, (operator.skills[selectedSkillIndex].static?.levels ?? []).length - 1));
+    const [skillLevel, setSkillLevel] = useState(Math.max(0, (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length - 1));
     const [comparisonMode, setComparisonMode] = useState(false);
     const [showDifferencesOnly, setShowDifferencesOnly] = useState(false);
     const [comparisonSelection, setComparisonSelection] = useState<number[] | null>(null);
     const [showRangeDiff, setShowRangeDiff] = useState(false);
 
-    const skillData = (operator.skills[selectedSkillIndex].static?.levels ?? [])[skillLevel];
+    const skillData = (operator.skills[selectedSkillIndex]?.static?.levels ?? [])[skillLevel];
     const skillDescription = useMemo(() => descriptionToHtml(skillData?.description ?? "", skillData?.blackboard ?? []), [skillData?.description, skillData?.blackboard]);
 
-    const levelsCount = (operator.skills[selectedSkillIndex].static?.levels ?? []).length;
+    const levelsCount = (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length;
 
     const { data: ranges } = useQuery(rangesQueryOptions());
     const baseRangeId = operator.phases[operator.phases.length - 1]?.rangeId ?? null;
@@ -77,8 +77,16 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
 
     if (!operator.skills || operator.skills.length === 0) {
         return (
-            <div className="flex items-center justify-center p-12">
-                <p className="text-muted-foreground">No skills available for this operator.</p>
+            <div className="flex flex-col items-center justify-center gap-4 p-16 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div className="space-y-1">
+                    <p className="font-medium text-foreground text-sm">No Skills</p>
+                    <p className="max-w-xs text-muted-foreground text-xs leading-relaxed">This operator has no active skills. They may rely solely on their talent or passive abilities.</p>
+                </div>
             </div>
         );
     }
