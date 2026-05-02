@@ -107,7 +107,7 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                         </svg>
                         {compact.format(tl.votes)}
                     </span>
-                    <span className="inline-flex items-center gap-1 font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
+                    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
                         Open
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
                             <path d="M5 12h14" />
