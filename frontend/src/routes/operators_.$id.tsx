@@ -10,6 +10,9 @@ export const Route = createFileRoute("/operators_/$id")({
 
 function RootErrorComponent({ error }: { error: unknown }) {
     console.error("Router error:", error);
+    if (error instanceof Error) {
+        console.error(error.stack);
+    }
 
     return (
         <div style={{ padding: 20 }}>
