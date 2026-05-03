@@ -128,7 +128,6 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-hidden p-0">
             <DialogTitle className="sr-only">{entry.name}</DialogTitle>
             <div ref={setScroller} className="max-h-[90vh] overflow-y-auto" style={{ scrollbarGutter: "stable" }}>
-                {/* Hero image */}
                 <div className="relative h-80 overflow-hidden bg-linear-to-br from-primary/10 via-background to-background">
                     <div ref={artRef} className="absolute inset-x-0 top-0 h-[140%] origin-top" style={{ transform: "translate3d(0, 0, 0) scale(1)" }}>
                         <img alt={entry.name} className="h-full w-full object-contain object-top" decoding="async" loading="eager" src={ownedHeroURL(entry)} />
@@ -142,9 +141,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                         {op && <p className="mt-1 text-sm text-muted-foreground">{formatProfession(op.profession)}</p>}
                     </div>
                 </div>
-
-                {/* Pills */}
-                <div ref={pillsRef} className="relative z-10 -mt-6 px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
+                <div ref={pillsRef} className="relative z-5 -mt-6 px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-card/80 p-2 shadow-lg backdrop-blur">
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain icon-theme-aware" decoding="async" src={eliteIcon(entry.elite)} />
@@ -166,7 +163,6 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                 </div>
 
                 <div className="space-y-6 px-6 pt-6 pb-6">
-                    {/* Combat Stats */}
                     {stats && (
                         <section>
                             <header className="mb-3 flex items-center gap-3">
@@ -193,8 +189,6 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                             </div>
                         </section>
                     )}
-
-                    {/* Skills */}
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
@@ -228,8 +222,6 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                             <p className="rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{op ? "No skills found." : "Loading…"}</p>
                         )}
                     </section>
-
-                    {/* Modules */}
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
@@ -258,8 +250,6 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                             <p className="rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{op ? "No modules unlocked." : "Loading…"}</p>
                         )}
                     </section>
-
-                    {/* Info */}
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />

@@ -46,7 +46,6 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
     return (
         <section className="flex flex-col gap-4" aria-label="Operator roster">
             <div className="flex flex-col gap-3">
-                {/* Filters */}
                 <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <Input className="w-full sm:w-64 sm:flex-1 sm:min-w-48 sm:max-w-80" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
                     <Select onValueChange={(value) => value && set("ownership", value as OwnershipFilter)} value={ownership}>
@@ -115,7 +114,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                     </ToggleGroup>
                 </div>
                 {filters.viewMode === "detailed" ? (
-                    <div className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))]">
+                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))]">
                         {visible.map((entry, i) => {
                             const isLast = i === visible.length - 1;
                             const ref = isLast ? lastRef : null;

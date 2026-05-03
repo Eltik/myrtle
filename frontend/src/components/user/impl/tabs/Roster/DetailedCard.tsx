@@ -4,7 +4,7 @@ import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "#/components/ui/accordion";
 import { Card, CardContent } from "#/components/ui/card";
-import { Dialog, DialogTrigger } from "#/components/ui/dialog";
+import { Dialog } from "#/components/ui/dialog";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
@@ -33,6 +33,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
     const [hovered, setHovered] = useState(false);
     const [levelProgress, setLevelProgress] = useState(0);
     const [trustProgress, setTrustProgress] = useState(0);
+    const [dialogOpen, setDialogOpen] = useState(false);
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -75,69 +76,82 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
 
     return (
         <div ref={lastRef ?? undefined} className="w-full">
-            <Dialog>
-                <DialogTrigger render={<button type="button" className="block w-full text-left" />}>
-                    <Card
-                        ref={cardRef}
-                        className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all
-  duration-300 hover:border-muted hover:shadow-lg"
-                        onMouseEnter={() => setHovered(true)}
-                        onMouseLeave={() => setHovered(false)}
-                        style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
-                    >
-                        <div className="relative">
-                            <div className="relative aspect-[5/4] w-full cursor-pointer overflow-hidden">
-                                <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-transform duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
-                                <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
-                                <div className="absolute right-0 bottom-0 left-0 p-4">
-                                    <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
-                                    <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
-                                        <div className="flex items-center gap-2">
-                                            <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
-                                            {op && (
-                                                <div className="flex flex-row items-center gap-1">
-                                                    <ClassIcon profession={op.profession} size={20} />
-                                                    <span className="text-sm text-white">{formatProfession(op.profession)}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
+            <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
+                <Card
+                    ref={cardRef}
+                    aria-label={`Open details for ${entry.name}`}
+                    className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={(e) => {
+                        if ((e.target as HTMLElement).closest("[data-roster-card-accordion]")) return;
+                        setDialogOpen(true);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setDialogOpen(true);
+                        }
+                    }}
+                    onMouseEnter={() => setHovered(true)}
+                    onMouseLeave={() => setHovered(false)}
+                    role="button"
+                    style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
+                    tabIndex={0}
+                >
+                    <div className="relative">
+                        <div className="relative aspect-5/4 w-full cursor-pointer overflow-hidden">
+                            <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-transform duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                            <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
+                            <div className="absolute right-0 bottom-0 left-0 p-4">
+                                <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
+                                <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
+                                    <div className="flex items-center gap-2">
+                                        <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
+                                        {op && (
+                                            <div className="flex flex-row items-center gap-1">
+                                                <ClassIcon profession={op.profession} size={20} />
+                                                <span className="text-sm text-white">{formatProfession(op.profession)}</span>
+                                            </div>
+                                        )}
                                     </div>
+                                    <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
                                 </div>
                             </div>
-                            {maxed && (
-                                <div className="absolute top-2 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
-                                    Maxed
-                                </div>
-                            )}
                         </div>
-                        <CardContent className="min-w-0 flex-1 overflow-hidden px-4 pt-2 pb-2">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-medium text-sm">Level</span>
-                                        <span className="font-bold text-sm">{entry.level}</span>
-                                    </div>
-                                    <Progress className="h-1.5 transition-all duration-1000 ease-out" value={levelProgress} />
-                                </div>
-                                <div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-medium text-sm">Trust</span>
-                                        <span className="font-bold text-sm">{trustPct}%</span>
-                                    </div>
-                                    <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
-                                </div>
+                        {maxed && (
+                            <div className="absolute top-2 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
+                                Maxed
                             </div>
-                            <Separator className="my-3" />
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                                <Stat label="HP" value={stats?.maxHp} />
-                                <Stat label="ATK" value={stats?.atk} />
-                                <Stat label="DEF" value={stats?.def} />
-                                <Stat label="RES" value={stats?.magicResistance} />
-                                <Stat label="Cost" value={stats?.cost} />
-                                <Stat label="Block" value={stats?.blockCnt} />
+                        )}
+                    </div>
+                    <CardContent className="min-w-0 flex-1 overflow-hidden px-4 pt-2 pb-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-medium text-sm">Level</span>
+                                    <span className="font-bold text-sm">{entry.level}</span>
+                                </div>
+                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={levelProgress} />
                             </div>
-                            <Separator className="my-3" />
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-medium text-sm">Trust</span>
+                                    <span className="font-bold text-sm">{trustPct}%</span>
+                                </div>
+                                <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
+                            </div>
+                        </div>
+                        <Separator className="my-3" />
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <Stat label="HP" value={stats?.maxHp} />
+                            <Stat label="ATK" value={stats?.atk} />
+                            <Stat label="DEF" value={stats?.def} />
+                            <Stat label="RES" value={stats?.magicResistance} />
+                            <Stat label="Cost" value={stats?.cost} />
+                            <Stat label="Block" value={stats?.blockCnt} />
+                        </div>
+                        <Separator className="my-3" />
+                        <div data-roster-card-accordion>
                             <Accordion className="w-full" multiple>
                                 <AccordionItem className="border-b-0" value="potential">
                                     <AccordionTrigger className="py-2 font-medium text-sm hover:underline">Potential</AccordionTrigger>
@@ -182,9 +196,9 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
-                        </CardContent>
-                    </Card>
-                </DialogTrigger>
+                        </div>
+                    </CardContent>
+                </Card>
                 <OperatorDialog entry={entry} />
             </Dialog>
         </div>
