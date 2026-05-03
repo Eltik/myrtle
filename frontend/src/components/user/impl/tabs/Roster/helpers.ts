@@ -1,5 +1,6 @@
 import { rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
+import { isMaxed } from "./helpers.card";
 import type { IDisplayEntry, RarityFilter, SortKey, SortOrder } from "./types";
 
 export function filterEntries(entries: IDisplayEntry[], rarity: RarityFilter, search: string): IDisplayEntry[] {
@@ -30,6 +31,10 @@ function trustKey(e: IDisplayEntry): number {
     return e.isOwned ? e.favor_point : -1;
 }
 
+function maxedKey(e: IDisplayEntry): number {
+    return e.isOwned && isMaxed(e) ? 1 : 0;
+}
+
 function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
     switch (key) {
         case "rarity":
@@ -49,6 +54,12 @@ function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
         case "trust": {
             const diff = trustKey(a) - trustKey(b);
             return diff !== 0 ? diff : a.rarity - b.rarity;
+        }
+        case "maxed": {
+            const diff = maxedKey(a) - maxedKey(b);
+            if (diff !== 0) return diff;
+            const lvl = levelKey(a) - levelKey(b);
+            return lvl !== 0 ? lvl : a.rarity - b.rarity;
         }
     }
 }
