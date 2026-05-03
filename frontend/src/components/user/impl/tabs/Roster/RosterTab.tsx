@@ -7,7 +7,9 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { capitalize, rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 import { CompactCard } from "./CompactCard";
+import { DetailedCard } from "./DetailedCard";
 import type { OwnershipFilter, RarityFilter, SortKey, ViewMode } from "./types";
+import { UnownedCard } from "./UnownedCard";
 import { useRoster } from "./useRoster";
 
 interface IRosterTabProps {
@@ -110,21 +112,25 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                         </ToggleGroupItem>
                     </ToggleGroup>
                 </div>
-                {filters.viewMode === "compact" ? (
+                {filters.viewMode === "detailed" ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {visible.map((entry, i) => {
+                            const isLast = i === visible.length - 1;
+                            const ref = isLast ? lastRef : null;
+                            const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
+                            return entry.isOwned ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <UnownedCard key={key} entry={entry} viewMode={filters.viewMode} lastRef={ref} />;
+                        })}
+                    </div>
+                ) : (
                     <div className="3xl:grid-cols-7 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                         {visible.map((entry, i) => {
                             const isLast = i === visible.length - 1;
                             const ref = isLast ? lastRef : null;
                             const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;
 
-                            // Until UnownedCard / DetailedCard exist, only owned + compact renders.
-                            if (!entry.isOwned) return null;
-                            return <CompactCard key={key} entry={entry} lastRef={ref} />;
+                            return entry.isOwned ? <CompactCard key={key} entry={entry} lastRef={ref} /> : <UnownedCard key={key} entry={entry} viewMode={filters.viewMode} lastRef={ref} />;
                         })}
                     </div>
-                ) : (
-                    // DetailedCard goes here later; placeholder for now
-                    <p className="text-sm text-muted-foreground">Detailed view coming soon.</p>
                 )}
                 {displayCount < totalCount && (
                     <p className="py-4 text-center text-sm text-muted-foreground">

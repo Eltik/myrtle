@@ -6,6 +6,15 @@ import type { IOwnedEntry } from "./types";
 
 const MAX_FAVOR_POINT = 25570;
 
+export function ownedHeroURL(entry: IOwnedEntry): string {
+    if (entry.skin_id?.includes("@")) {
+        const file = entry.skin_id.replaceAll("@", "_").replaceAll("#", "%23");
+        return asset(`/textures/skinpack/${entry.operator_id}/${file}.png`);
+    }
+    const suffix = entry.elite >= 2 ? "_2" : "_1";
+    return asset(`/textures/chararts/${entry.operator_id}/${entry.operator_id}${suffix}.png`);
+}
+
 export function rarityIcon(starCount: number): string {
     return asset(`/textures/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`);
 }

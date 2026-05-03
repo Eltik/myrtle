@@ -42,9 +42,9 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                     }}
                 >
                     <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                        {subtitle && <span className="text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
+                        {subtitle && <span className="text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose z-10">{subtitle}</span>}
                         <span
-                            className="text-foreground"
+                            className="text-foreground z-10"
                             style={{
                                 fontSize: nameIsLong ? "9px" : "12px",
                                 lineHeight: nameIsLong ? "9px" : "17px",
