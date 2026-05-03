@@ -26,6 +26,10 @@ function potentialKey(e: IDisplayEntry): number {
     return e.isOwned ? e.potential : -1;
 }
 
+function trustKey(e: IDisplayEntry): number {
+    return e.isOwned ? e.favor_point : -1;
+}
+
 function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
     switch (key) {
         case "rarity":
@@ -40,6 +44,10 @@ function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
         }
         case "potential": {
             const diff = potentialKey(a) - potentialKey(b);
+            return diff !== 0 ? diff : a.rarity - b.rarity;
+        }
+        case "trust": {
+            const diff = trustKey(a) - trustKey(b);
             return diff !== 0 ? diff : a.rarity - b.rarity;
         }
     }

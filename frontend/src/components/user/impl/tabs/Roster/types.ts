@@ -1,7 +1,7 @@
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorIndexEntry, IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 
-export type SortKey = "level" | "rarity" | "obtained" | "potential";
+export type SortKey = "level" | "rarity" | "obtained" | "potential" | "trust";
 export type SortOrder = "asc" | "desc";
 export type RarityFilter = "all" | OperatorRarityTier;
 export type OwnershipFilter = "all" | "owned" | "unowned";
@@ -35,4 +35,4 @@ export interface IRosterFilterState {
     viewMode: ViewMode;
 }
 
-export const OWNED_ONLY_SORTS: ReadonlySet<SortKey> = new Set(["level", "obtained", "potential"]);
+export const OWNED_ONLY_SORTS: ReadonlySet<SortKey> = new Set(["level", "obtained", "potential", "trust"]);
