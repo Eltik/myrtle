@@ -30,6 +30,7 @@ const SORT_LABELS: Record<SortKey, string> = {
     obtained: "Sort by Obtained",
     potential: "Sort by Potential",
     trust: "Sort by Trust",
+    maxed: "Sort by Maxed",
 };
 
 const RARITY_TIERS: OperatorRarityTier[] = ["TIER_6", "TIER_5", "TIER_4", "TIER_3", "TIER_2", "TIER_1"];
@@ -75,6 +76,9 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                             </SelectItem>
                             <SelectItem disabled={ownership === "unowned"} value="trust">
                                 Sort by Trust
+                            </SelectItem>
+                            <SelectItem disabled={ownership === "unowned"} value="maxed">
+                                Sort by Maxed
                             </SelectItem>
                         </SelectContent>
                     </Select>
