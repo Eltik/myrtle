@@ -29,7 +29,7 @@ export function ProfileTabs({ tabs, active, onChange }: ProfileTabsProps) {
     }, [active]);
 
     return (
-        <div className={styles.tabs} role="tablist" aria-label="Profile sections">
+        <div className={cn(styles.tabs, "overflow-y-hidden")} role="tablist" aria-label="Profile sections">
             <div className={styles.inner} ref={wrapRef}>
                 {tabs.map((tab) => (
                     <button key={tab.id} type="button" role="tab" aria-selected={active === tab.id} data-tab={tab.id} className={cn(styles.tab, active === tab.id && styles.tabActive)} onClick={() => onChange(tab.id as SetStateAction<TabId>)}>
