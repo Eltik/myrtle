@@ -47,60 +47,58 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
         <section className="flex flex-col gap-4" aria-label="Operator roster">
             <div className="flex flex-col gap-3">
                 {/* Filters */}
-                <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                    <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-                        <Input className="w-full sm:w-70" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
-                        <Select onValueChange={(value) => value && set("ownership", value as OwnershipFilter)} value={ownership}>
-                            <SelectTrigger className="w-full sm:w-45">
-                                <SelectValue placeholder="Ownership">{(value) => OWNERSHIP_LABELS[value as OwnershipFilter] ?? value}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="owned">Owned</SelectItem>
-                                <SelectItem value="unowned">Unowned</SelectItem>
-                                <SelectItem value="all">All Operators</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select onValueChange={(value) => value && set("sortBy", value as SortKey)} value={sortBy}>
-                            <SelectTrigger className="w-full sm:w-45">
-                                <SelectValue placeholder="Sort by">{(value) => SORT_LABELS[value as SortKey] ?? value}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem disabled={ownership === "unowned"} value="level">
-                                    Sort by Level
+                <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                    <Input className="w-full sm:w-64 sm:flex-1 sm:min-w-48 sm:max-w-80" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
+                    <Select onValueChange={(value) => value && set("ownership", value as OwnershipFilter)} value={ownership}>
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Ownership">{(value) => OWNERSHIP_LABELS[value as OwnershipFilter] ?? value}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="owned">Owned</SelectItem>
+                            <SelectItem value="unowned">Unowned</SelectItem>
+                            <SelectItem value="all">All Operators</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={(value) => value && set("sortBy", value as SortKey)} value={sortBy}>
+                        <SelectTrigger className="w-full sm:w-40">
+                            <SelectValue placeholder="Sort by">{(value) => SORT_LABELS[value as SortKey] ?? value}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem disabled={ownership === "unowned"} value="level">
+                                Sort by Level
+                            </SelectItem>
+                            <SelectItem value="rarity">Sort by Rarity</SelectItem>
+                            <SelectItem disabled={ownership === "unowned"} value="obtained">
+                                Sort by Obtained
+                            </SelectItem>
+                            <SelectItem disabled={ownership === "unowned"} value="potential">
+                                Sort by Potential
+                            </SelectItem>
+                            <SelectItem disabled={ownership === "unowned"} value="trust">
+                                Sort by Trust
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Select onValueChange={(value) => value && set("rarity", value as RarityFilter)} value={rarity}>
+                        <SelectTrigger className="w-full sm:w-36">
+                            <SelectValue placeholder="Filter by Rarity">{(value) => getRarityLabel(value as RarityFilter)}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Rarities</SelectItem>
+                            {RARITY_TIERS.map((tier) => (
+                                <SelectItem key={tier} value={tier}>
+                                    {getRarityLabel(tier)}
                                 </SelectItem>
-                                <SelectItem value="rarity">Sort by Rarity</SelectItem>
-                                <SelectItem disabled={ownership === "unowned"} value="obtained">
-                                    Sort by Obtained
-                                </SelectItem>
-                                <SelectItem disabled={ownership === "unowned"} value="potential">
-                                    Sort by Potential
-                                </SelectItem>
-                                <SelectItem disabled={ownership === "unowned"} value="trust">
-                                    Sort by Trust
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Select onValueChange={(value) => value && set("rarity", value as RarityFilter)} value={rarity}>
-                            <SelectTrigger className="w-full sm:w-40">
-                                <SelectValue placeholder="Filter by Rarity">{(value) => getRarityLabel(value as RarityFilter)}</SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All Rarities</SelectItem>
-                                {RARITY_TIERS.map((tier) => (
-                                    <SelectItem key={tier} value={tier}>
-                                        {getRarityLabel(tier)}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button className="w-full sm:w-auto" onClick={toggleSortOrder} variant="outline">
-                            <span>{capitalize(sortOrder)}</span>
-                            {sortOrder === "asc" ? <ArrowUp /> : <ArrowDown />}
-                        </Button>
-                    </div>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button className="w-full sm:w-auto" onClick={toggleSortOrder} variant="outline">
+                        <span>{capitalize(sortOrder)}</span>
+                        {sortOrder === "asc" ? <ArrowUp /> : <ArrowDown />}
+                    </Button>
                     <ToggleGroup
                         aria-label="View mode"
-                        className="md:bg-secondary/50"
+                        className="sm:ml-auto md:bg-secondary/50"
                         onValueChange={(value) => {
                             const next = value[0] as ViewMode | undefined;
                             if (next) set("viewMode", next);
@@ -117,7 +115,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                     </ToggleGroup>
                 </div>
                 {filters.viewMode === "detailed" ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))]">
                         {visible.map((entry, i) => {
                             const isLast = i === visible.length - 1;
                             const ref = isLast ? lastRef : null;
@@ -126,7 +124,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                         })}
                     </div>
                 ) : (
-                    <div className="3xl:grid-cols-7 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-9">
                         {visible.map((entry, i) => {
                             const isLast = i === visible.length - 1;
                             const ref = isLast ? lastRef : null;

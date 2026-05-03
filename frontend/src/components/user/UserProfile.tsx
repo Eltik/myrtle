@@ -34,7 +34,7 @@ export function UserProfile() {
 
     if (isLoading) {
         return (
-            <main className="flex-1 w-[min(1080px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
+            <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
                 <div className="relative h-48 w-full rounded-3xl border border-border/50 bg-card/40 overflow-hidden">
                     <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
                     <div className="relative flex items-center gap-6 p-6 h-full">
@@ -99,7 +99,7 @@ export function UserProfile() {
     }
     if (!data) {
         return (
-            <main className="flex-1 w-[min(1080px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
+            <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
                 <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
                     <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Doctor</span>
                     <h1 className="text-2xl font-bold tracking-tight">Profile not found</h1>
@@ -112,7 +112,7 @@ export function UserProfile() {
     }
 
     return (
-        <main className="flex-1 w-[min(1080px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
+        <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
             <Hero profile={data} />
             <StatStrip profile={data} rosterCount={roster?.length} />
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />

@@ -74,9 +74,9 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
         .filter((m) => !m.locked && m.level > 0);
 
     return (
-        <div ref={lastRef ?? undefined}>
+        <div ref={lastRef ?? undefined} className="w-full">
             <Dialog>
-                <DialogTrigger>
+                <DialogTrigger render={<button type="button" className="block w-full text-left" />}>
                     <Card
                         ref={cardRef}
                         className="fade-in slide-in-from-bottom-4 flex w-full animate-in flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 transition-all
@@ -86,27 +86,25 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                         style={maxed ? { boxShadow: `0 0 20px ${rarityColor}60, 0 0 40px ${rarityColor}40` } : undefined}
                     >
                         <div className="relative">
-                            <button type="button" className="block w-full text-left">
-                                <div className="relative h-64 w-full cursor-pointer overflow-hidden">
-                                    <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-contain object-top transition-transform duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
-                                    <div className={`absolute inset-0 bg-linear-to-t from-black/50 to-transparent transition-opacity duration-300 ${hovered ? "opacity-90" : "opacity-70"}`} />
-                                    <div className="absolute right-0 bottom-0 left-0 p-4">
-                                        <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
-                                        <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
-                                            <div className="flex items-center gap-2">
-                                                <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
-                                                {op && (
-                                                    <div className="flex flex-row items-center gap-1">
-                                                        <ClassIcon profession={op.profession} size={20} />
-                                                        <span className="text-sm text-white">{formatProfession(op.profession)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
+                            <div className="relative aspect-[5/4] w-full cursor-pointer overflow-hidden">
+                                <img alt={entry.name} src={ownedHeroURL(entry)} className={`h-full w-full object-cover object-top transition-transform duration-300 ${hovered ? "scale-105" : "scale-100"}`} decoding="async" loading="lazy" />
+                                <div className={`absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ${hovered ? "opacity-100" : "opacity-90"}`} />
+                                <div className="absolute right-0 bottom-0 left-0 p-4">
+                                    <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
+                                    <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
+                                        <div className="flex items-center gap-2">
+                                            <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
+                                            {op && (
+                                                <div className="flex flex-row items-center gap-1">
+                                                    <ClassIcon profession={op.profession} size={20} />
+                                                    <span className="text-sm text-white">{formatProfession(op.profession)}</span>
+                                                </div>
+                                            )}
                                         </div>
+                                        <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
                                     </div>
                                 </div>
-                            </button>
+                            </div>
                             {maxed && (
                                 <div className="absolute top-2 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
                                     Maxed
