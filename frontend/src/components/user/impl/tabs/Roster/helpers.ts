@@ -14,20 +14,34 @@ export function filterEntries(entries: IDisplayEntry[], rarity: RarityFilter, se
     });
 }
 
+function levelKey(e: IDisplayEntry): number {
+    return e.isOwned ? e.elite * 1000 + e.level : -1;
+}
+
+function obtainedKey(e: IDisplayEntry): number {
+    return e.isOwned ? (e.obtained_at ?? 0) : -1;
+}
+
+function potentialKey(e: IDisplayEntry): number {
+    return e.isOwned ? e.potential : -1;
+}
+
 function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
-    if (key === "rarity") return a.rarity - b.rarity;
-
-    if (!a.isOwned && !b.isOwned) return a.rarity - b.rarity;
-    if (!a.isOwned) return 1;
-    if (!b.isOwned) return -1;
-
     switch (key) {
-        case "level":
-            return a.elite !== b.elite ? a.elite - b.elite : a.level - b.level;
-        case "obtained":
-            return (a.obtained_at ?? 0) - (b.obtained_at ?? 0);
-        case "potential":
-            return (a.potential ?? 0) - (b.potential ?? 0);
+        case "rarity":
+            return a.rarity - b.rarity;
+        case "level": {
+            const diff = levelKey(a) - levelKey(b);
+            return diff !== 0 ? diff : a.rarity - b.rarity;
+        }
+        case "obtained": {
+            const diff = obtainedKey(a) - obtainedKey(b);
+            return diff !== 0 ? diff : a.rarity - b.rarity;
+        }
+        case "potential": {
+            const diff = potentialKey(a) - potentialKey(b);
+            return diff !== 0 ? diff : a.rarity - b.rarity;
+        }
     }
 }
 
