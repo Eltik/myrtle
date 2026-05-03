@@ -1,6 +1,6 @@
 .tabs {
     position: sticky;
-    top: 64px;
+    top: 56px;
     z-index: 30;
     border-bottom: 1px solid var(--border);
     background: color-mix(in srgb, var(--background) 80%, transparent);
@@ -13,6 +13,11 @@
 }
 .tabs::-webkit-scrollbar {
     display: none;
+}
+@media (min-width: 640px) {
+    .tabs {
+        top: 64px;
+    }
 }
 .inner {
     position: relative;
