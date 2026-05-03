@@ -2,6 +2,7 @@ import { MoreHorizontal, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
+import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
 import { getAvatarSkinId } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import shared from "./shared.module.css";
@@ -12,6 +13,7 @@ interface IHeroProps {
 
 export function Hero({ profile }: IHeroProps) {
     const [avatarErrored, setAvatarErrored] = useState(false);
+    const levelProgress = getLevelProgress(profile.level, profile.exp);
 
     const handleShare = async () => {
         const url = window.location.href;
@@ -78,6 +80,8 @@ export function Hero({ profile }: IHeroProps) {
 
                     {profile.resume && <p className="mb-3.5 max-w-135 font-sans text-[14.5px] font-normal leading-normal text-muted-foreground">{profile.resume}</p>}
 
+                    {levelProgress && <LevelProgressBar progress={levelProgress} />}
+
                     <div className="mt-1.5 inline-flex items-center gap-2 font-sans text-xs font-medium leading-none text-muted-foreground">
                         <span className={shared.dotPulse} aria-hidden="true" />
                         <span>
@@ -96,5 +100,31 @@ export function Hero({ profile }: IHeroProps) {
                 </div>
             </div>
         </section>
+    );
+}
+
+function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
+    const { level, isMax, currentExp, requiredExp, ratio } = progress;
+    const percent = Math.round(ratio * 100);
+    const ariaLabel = isMax ? `Level ${level} (max)` : `Level ${level}, ${currentExp.toLocaleString()} of ${requiredExp?.toLocaleString()} EXP to level ${level + 1}`;
+
+    return (
+        <div className="mb-3.5 max-w-135">
+            <div className="mb-1.5 flex items-baseline justify-between gap-3 font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">
+                <span>
+                    Lv <span className="tabular-nums text-foreground">{level}</span>
+                    {!isMax && (
+                        <>
+                            {"/"}
+                            <span className="tabular-nums text-foreground">120</span>
+                        </>
+                    )}
+                </span>
+                <span className="tabular-nums">{isMax ? `Max · ${MAX_PLAYER_LEVEL}` : `${currentExp.toLocaleString()} / ${requiredExp?.toLocaleString()} EXP`}</span>
+            </div>
+            <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={ariaLabel} className="h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />
+            </div>
+        </div>
     );
 }
