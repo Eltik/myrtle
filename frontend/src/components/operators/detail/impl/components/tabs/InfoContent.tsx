@@ -15,6 +15,7 @@ import { asset, eliteIcon, potentialIcon } from "../../assets";
 import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
 import { OperatorRange } from "../OperatorRange";
+import { SummonsSection } from "../SummonsSection";
 
 interface IInfoContentProps {
     operator: IOperatorListItem;
@@ -601,6 +602,13 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     })()}
                 </CollapsibleContent>
             </Collapsible>
+
+            {operator.drones && operator.drones.length > 0 && (
+                <>
+                    <Separator className="my-6" />
+                    <SummonsSection drones={operator.drones} parentPhaseIndex={phaseIndex} parentLevel={level} />
+                </>
+            )}
         </div>
     );
 });

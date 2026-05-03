@@ -1,4 +1,4 @@
-import type { IAttributeData, IBlackboard, IOperatorListItem, IOperatorModule, IOperatorPhase, ISkillLevel, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
+import type { IAttributeData, IBlackboard, IDrone, IOperatorListItem, IOperatorModule, IOperatorPhase, ISkillLevel, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
 
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
     return (blackboard ?? []).filter((b) => b.key != null).map((b) => ({ key: b.key, value: b.value }));
@@ -146,6 +146,46 @@ export function getOperatorAttributeStats(operator: IOperatorListItem, ctx: ISta
         baseAttackTime: start.baseAttackTime,
         attackSpeed: Math.round((start.baseAttackTime * 30) / (aspd / 100)) / 30,
     };
+}
+
+export function clampDronePhase(drone: IDrone, parentPhaseIndex: number): number {
+    const last = Math.max(0, drone.phases.length - 1);
+    return Math.max(0, Math.min(parentPhaseIndex, last));
+}
+
+export function getDroneAttributeStats(drone: IDrone, parentPhaseIndex: number, parentLevel: number): IAttributeData | null {
+    if (!drone.phases || drone.phases.length === 0) return null;
+    const phaseIndex = clampDronePhase(drone, parentPhaseIndex);
+    const phase = drone.phases[phaseIndex];
+    const frames = phase?.attributesKeyFrames;
+    if (!phase || !frames || frames.length === 0) return null;
+
+    const level = Math.max(1, Math.min(parentLevel, phase.maxLevel));
+    const start = frames[0].data;
+    const end = frames[frames.length - 1].data;
+
+    const aspd = 100;
+    return {
+        ...end,
+        maxHp: lerpByLevel(level, phase.maxLevel, start.maxHp, end.maxHp),
+        atk: lerpByLevel(level, phase.maxLevel, start.atk, end.atk),
+        def: lerpByLevel(level, phase.maxLevel, start.def, end.def),
+        magicResistance: lerpByLevel(level, phase.maxLevel, start.magicResistance, end.magicResistance),
+        cost: start.cost,
+        blockCnt: start.blockCnt,
+        respawnTime: start.respawnTime,
+        baseAttackTime: start.baseAttackTime,
+        attackSpeed: Math.round((start.baseAttackTime * 30) / (aspd / 100)) / 30,
+    };
+}
+
+export function droneTalentBlackboard(drone: IDrone): { key: string; value: number }[] {
+    const out: IBlackboard[] = [];
+    for (const t of drone.talents ?? []) {
+        const c = t.candidates?.[t.candidates.length - 1];
+        if (c?.blackboard) out.push(...c.blackboard);
+    }
+    return blackboardKeyMap(out);
 }
 
 export function formatAttributeKey(key: string): string {
