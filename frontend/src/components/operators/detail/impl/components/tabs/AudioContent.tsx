@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { Download, Loader2, Pause, Play, Search, Volume2, VolumeX, X } from "lucide-react";
+import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
@@ -12,6 +12,8 @@ import type { IOperatorListItem } from "#/types/operators";
 import type { IVoice, LangType } from "#/types/voices";
 import { voiceAudio } from "../../assets";
 import { VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABELS, VOICE_LANGUAGE_ORDER } from "../../constants";
+
+const ALL_CATEGORY_ID = "all";
 
 function sanitize(name: string): string {
     return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
@@ -70,8 +72,22 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
             const list = map.get(id);
             if (list?.length) ordered.push({ id, name, lines: list });
         }
+        if (ordered.length > 0) {
+            ordered.unshift({ id: ALL_CATEGORY_ID, name: "All", lines: operatorVoices });
+        }
         return ordered;
     }, [operatorVoices]);
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const filteredCategories: IVoiceCategory[] = useMemo(() => {
+        if (!normalizedQuery) return categories;
+        return categories.map((c) => ({
+            ...c,
+            lines: c.lines.filter((v) => v.voiceTitle.toLowerCase().includes(normalizedQuery) || v.voiceText.toLowerCase().includes(normalizedQuery)),
+        }));
+    }, [categories, normalizedQuery]);
 
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     useEffect(() => {
@@ -238,6 +254,22 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                         </button>
                         <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} />
                     </div>
+                    <div className="flex h-9 max-w-115 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+                        <Search className="h-3.75 w-3.75" aria-hidden="true" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search voice lines..."
+                            aria-label="Search voice lines"
+                            className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
+                        />
+                        {searchQuery && (
+                            <button type="button" aria-label="Clear search" onClick={() => setSearchQuery("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -245,7 +277,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                 <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(String(v))} className="w-full">
                     <div className="mb-4 overflow-x-auto">
                         <TabsList variant="underline">
-                            {categories.map((c) => (
+                            {filteredCategories.map((c) => (
                                 <TabsTrigger key={c.id} value={c.id}>
                                     {c.name}
                                     <span className="ml-1.5 text-muted-foreground text-xs">({c.lines.length})</span>
@@ -253,29 +285,36 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                             ))}
                         </TabsList>
                     </div>
-                    {categories.map((c) => (
+                    {filteredCategories.map((c) => (
                         <TabsContent key={c.id} value={c.id} className="mt-0">
-                            <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
-                                {c.lines.map((voice) => {
-                                    const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-                                    const fullUrl = url ? voiceAudio(url) : null;
-                                    const isUnavailable = !url || (fullUrl !== null && erroredUrls.has(fullUrl));
-                                    return (
-                                        <VoiceLineRow
-                                            key={voice.id ?? voice.charWordId}
-                                            voice={voice}
-                                            isPlaying={playingId === voice.id}
-                                            progress={playingId === voice.id ? progress : 0}
-                                            canPlay={!isUnavailable}
-                                            canDownload={!isUnavailable}
-                                            isDownloading={downloadingId === voice.id}
-                                            isUnavailable={isUnavailable}
-                                            onPlay={() => playVoice(voice)}
-                                            onDownload={() => onDownload(voice)}
-                                        />
-                                    );
-                                })}
-                            </div>
+                            {c.lines.length === 0 ? (
+                                <div className="py-12 text-center text-muted-foreground text-sm">No voice lines match &ldquo;{searchQuery}&rdquo;.</div>
+                            ) : (
+                                <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
+                                    {c.lines.map((voice) => {
+                                        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
+                                        const fullUrl = url ? voiceAudio(url) : null;
+                                        const isUnavailable = !url || (fullUrl !== null && erroredUrls.has(fullUrl));
+                                        const categoryLabel = c.id === ALL_CATEGORY_ID ? (VOICE_CATEGORY_MAP[voice.placeType] ?? "Other") : null;
+                                        return (
+                                            <VoiceLineRow
+                                                key={voice.id ?? voice.charWordId}
+                                                voice={voice}
+                                                isPlaying={playingId === voice.id}
+                                                progress={playingId === voice.id ? progress : 0}
+                                                canPlay={!isUnavailable}
+                                                canDownload={!isUnavailable}
+                                                isDownloading={downloadingId === voice.id}
+                                                isUnavailable={isUnavailable}
+                                                categoryLabel={categoryLabel}
+                                                highlight={normalizedQuery}
+                                                onPlay={() => playVoice(voice)}
+                                                onDownload={() => onDownload(voice)}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </TabsContent>
                     ))}
                 </Tabs>
@@ -294,11 +333,14 @@ interface IVoiceLineRowProps {
     canDownload: boolean;
     isDownloading: boolean;
     isUnavailable: boolean;
+    categoryLabel: string | null;
+    highlight: string;
     onPlay: () => void;
     onDownload: () => void;
 }
 
-function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDownloading, isUnavailable, onPlay, onDownload }: IVoiceLineRowProps) {
+function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDownloading, isUnavailable, categoryLabel, highlight, onPlay, onDownload }: IVoiceLineRowProps) {
+    const hasQuery = highlight.length > 0;
     return (
         <div className={cn("group relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
             <div className="flex items-start gap-3 p-3">
@@ -331,11 +373,16 @@ function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDown
                     </Tooltip>
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <div className="font-medium text-foreground text-sm">{voice.voiceTitle}</div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="font-medium text-foreground text-sm">
+                            <HighlightedText text={voice.voiceTitle} query={highlight} />
+                        </div>
+                        {categoryLabel && <span className="rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">{categoryLabel}</span>}
                         {isUnavailable && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">Unavailable</span>}
                     </div>
-                    <p className={cn("text-muted-foreground text-xs duration-300", isPlaying ? "" : "line-clamp-2")}>{voice.voiceText}</p>
+                    <p className={cn("text-muted-foreground text-xs duration-300", isPlaying || hasQuery ? "" : "line-clamp-2")}>
+                        <HighlightedText text={voice.voiceText} query={highlight} />
+                    </p>
                 </div>
             </div>
             {isPlaying && (
@@ -344,6 +391,32 @@ function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDown
                 </div>
             )}
         </div>
+    );
+}
+
+function HighlightedText({ text, query }: { text: string; query: string }) {
+    if (!query) return <>{text}</>;
+    const lower = text.toLowerCase();
+    const q = query.toLowerCase();
+    if (!lower.includes(q)) return <>{text}</>;
+    const segments: { value: string; match: boolean; offset: number }[] = [];
+    let i = 0;
+    while (i < text.length) {
+        const idx = lower.indexOf(q, i);
+        if (idx === -1) {
+            segments.push({ value: text.slice(i), match: false, offset: i });
+            break;
+        }
+        if (idx > i) segments.push({ value: text.slice(i, idx), match: false, offset: i });
+        segments.push({ value: text.slice(idx, idx + q.length), match: true, offset: idx });
+        i = idx + q.length;
+    }
+    return (
+        <>
+            {segments.map((seg) => (
+                <Fragment key={`${seg.offset}-${seg.match ? "m" : "t"}`}>{seg.match ? <mark className="rounded-sm bg-primary/30 px-0.5 text-foreground">{seg.value}</mark> : seg.value}</Fragment>
+            ))}
+        </>
     );
 }
 
