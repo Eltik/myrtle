@@ -82,7 +82,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
 
                 <Card aria-labelledby={`panel-${activeTab}`} className="min-w-0 flex-1 overflow-hidden border-border/60 bg-card/60 backdrop-blur-md" id={`panel-${activeTab}`} render={<section />} role="tabpanel">
                     <CardPanel className="animate-in fade-in-50 slide-in-from-bottom-1 p-0 duration-300" key={activeTab}>
-                        <ActiveContent operator={operator} />
+                        <ActiveContent key={operator.id ?? operator.name} operator={operator} />
                     </CardPanel>
                 </Card>
             </div>
