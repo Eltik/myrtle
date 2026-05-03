@@ -36,8 +36,8 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
-            <div className="flex h-14 items-center gap-3.5 px-4 sm:h-16">
-                <div className="flex flex-1 items-center gap-4">
+            <div className="flex h-14 items-center gap-3.5 px-3 sm:h-16 sm:px-4">
+                <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex items-center gap-2 text-foreground no-underline shrink-0">
                         <span className={styles.brandBezel} aria-hidden="true">
@@ -47,12 +47,12 @@ export default function Header() {
                             </svg>
                         </span>
                         <span className="font-semibold tracking-tight text-[15px]">myrtle.moe</span>
-                        <span className="rounded-[5px] border border-white/5 not-dark:bg-[oklch(0.22_0.005_285/0.1)] dark:bg-[oklch(0.22_0.005_285/0.7)] px-1.5 py-0.75 font-mono text-[10.5px] font-medium leading-none text-muted-foreground">v3</span>
+                        <span className="hidden rounded-[5px] border border-white/5 px-1.5 py-0.75 font-mono text-[10.5px] font-medium leading-none text-muted-foreground not-dark:bg-[oklch(0.22_0.005_285/0.1)] sm:inline-block dark:bg-[oklch(0.22_0.005_285/0.7)]">v3</span>
                     </Link>
 
                     <MainNav items={navItems} onOpenCommand={openCmd} />
 
-                    <div className="flex items-center gap-1.5 ml-auto">
+                    <div className="flex items-center gap-1 ml-auto sm:gap-1.5">
                         <button type="button" className={`${styles.headerSearch} hidden! lg:inline-flex!`} onClick={openCmd} aria-label="Search operators">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />

@@ -141,7 +141,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                         {op && <p className="mt-1 text-sm text-muted-foreground">{formatProfession(op.profession)}</p>}
                     </div>
                 </div>
-                <div ref={pillsRef} className="relative z-5 -mt-6 px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
+                <div ref={pillsRef} className="relative z-5 -mt-6 px-6 truncate" style={{ transform: "translate3d(0, 0, 0)" }}>
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-card/80 p-2 shadow-lg backdrop-blur">
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain icon-theme-aware" decoding="async" src={eliteIcon(entry.elite)} />

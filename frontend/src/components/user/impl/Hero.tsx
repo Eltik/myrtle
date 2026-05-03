@@ -36,7 +36,7 @@ export function Hero({ profile }: IHeroProps) {
     };
 
     return (
-        <section className="relative overflow-hidden rounded-3xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm">
+        <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
             <div
                 className="pointer-events-none absolute inset-0"
                 style={{
@@ -52,9 +52,15 @@ export function Hero({ profile }: IHeroProps) {
                     WebkitMaskImage: "radial-gradient(ellipse 60% 50% at 30% 50%, black 0%, transparent 80%)",
                 }}
             />
-            <div className="relative grid grid-cols-[auto_1fr_auto] items-center gap-7 px-8 pt-8 pb-7">
+
+            {/* Mobile-first: stacked grid; on sm+ becomes the original 3-column row */}
+            <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
+                {/* Avatar */}
                 <div className="relative">
-                    <div className="relative flex h-30 w-30 items-center justify-center overflow-hidden rounded-[26px] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_-2px_0_rgb(0_0_0/0.18),0_0_0_1px_rgb(255_255_255/0.06),0_8px_24px_rgb(0_0_0/0.12)]" aria-hidden="true">
+                    <div
+                        className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_-2px_0_rgb(0_0_0/0.18),0_0_0_1px_rgb(255_255_255/0.06),0_8px_24px_rgb(0_0_0/0.12)] sm:h-24 sm:w-24 sm:rounded-[22px] lg:h-30 lg:w-30 lg:rounded-[26px]"
+                        aria-hidden="true"
+                    >
                         {avatarErrored ? (
                             <span className="flex size-full items-center justify-center bg-muted">{profile.nickname?.slice(0, 1)}</span>
                         ) : (
@@ -70,33 +76,40 @@ export function Hero({ profile }: IHeroProps) {
                         )}
                     </div>
                 </div>
-                <div className="flex min-w-0 flex-col">
-                    <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
-                        <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{profile.uid}</span>
-                        <span className="inline-flex items-center gap-1.25 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2.25 py-0.75 font-mono text-[11px] font-medium leading-none text-muted-foreground">{profile.server} server</span>
-                    </div>
 
-                    <h1 className="mb-1 font-sans text-[36px] font-bold leading-[1.05] tracking-tight">{profile.nickname ?? `Doctor ${profile.uid}`}</h1>
-
-                    {profile.resume && <p className="mb-3.5 max-w-135 font-sans text-[14.5px] font-normal leading-normal text-muted-foreground">{profile.resume}</p>}
-
-                    {levelProgress && <LevelProgressBar progress={levelProgress} />}
-
-                    <div className="mt-1.5 inline-flex items-center gap-2 font-sans text-xs font-medium leading-none text-muted-foreground">
-                        <span className={shared.dotPulse} aria-hidden="true" />
-                        <span>
-                            Registered · <b>{new Date((profile.register_ts ?? 0) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</b>
-                        </span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 self-start pt-1">
+                {/* Action buttons - shown top-right on mobile via grid placement */}
+                <div className="flex items-center justify-end gap-2 self-start sm:order-3 sm:pt-1">
                     <Button variant="outline" size="sm" onClick={handleShare} className="gap-1.5">
                         <Share2 className="size-3.5" />
-                        Share
+                        <span className="hidden xs:inline sm:inline">Share</span>
                     </Button>
                     <Button variant="ghost" size="icon" className="size-8" aria-label="More options">
                         <MoreHorizontal className="size-3.5" />
                     </Button>
+                </div>
+
+                {/* Main info: spans full width on mobile, normal column on sm+ */}
+                <div className="col-span-2 flex min-w-0 flex-col sm:col-span-1 sm:order-2">
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{profile.uid}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-mono text-[11px] font-medium leading-none text-muted-foreground">{profile.server} server</span>
+                    </div>
+                    <h1 className="mb-1 wrap-break-word font-sans text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">{profile.nickname ?? `Doctor ${profile.uid}`}</h1>
+                    {profile.resume && <p className="mb-3.5 max-w-prose font-sans text-sm font-normal leading-normal text-muted-foreground sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
+                    {levelProgress && <LevelProgressBar progress={levelProgress} />}
+                    <div className="mt-1.5 inline-flex items-center gap-2 font-sans text-xs font-medium leading-none text-muted-foreground">
+                        <span className={shared.dotPulse} aria-hidden="true" />
+                        <span>
+                            Registered ·{" "}
+                            <b>
+                                {new Date((profile.register_ts ?? 0) * 1000).toLocaleDateString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                })}
+                            </b>
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -109,8 +122,8 @@ function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
     const ariaLabel = isMax ? `Level ${level} (max)` : `Level ${level}, ${currentExp.toLocaleString()} of ${requiredExp?.toLocaleString()} EXP to level ${level + 1}`;
 
     return (
-        <div className="mb-3.5 max-w-135">
-            <div className="mb-1.5 flex items-baseline justify-between gap-3 font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">
+        <div className="mb-3.5 w-full max-w-prose lg:max-w-135">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">
                 <span>
                     Lv <span className="tabular-nums text-foreground">{level}</span>
                     {!isMax && (
