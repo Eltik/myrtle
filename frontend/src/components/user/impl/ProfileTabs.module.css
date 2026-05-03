@@ -6,15 +6,22 @@
     background: color-mix(in srgb, var(--background) 80%, transparent);
     backdrop-filter: blur(12px) saturate(150%);
     -webkit-backdrop-filter: blur(12px) saturate(150%);
-    margin: 0 calc(-1 * max(1rem, (100vw - 1080px) / 2));
-    padding: 0 max(1rem, (100vw - 1080px) / 2);
+    margin: 0 calc(-1 * max(1rem, (100vw - 1440px) / 2));
+    padding: 0 max(1rem, (100vw - 1440px) / 2);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 .inner {
     position: relative;
     display: flex;
     gap: 2px;
-    max-width: 1080px;
+    max-width: 1440px;
     margin: 0 auto;
+    width: max-content;
+    min-width: 100%;
 }
 .tab {
     position: relative;
@@ -28,6 +35,10 @@
     color: var(--muted-foreground);
     cursor: pointer;
     transition: color 120ms;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    flex-shrink: 0;
 }
 .tab:hover {
     color: var(--foreground);
@@ -41,6 +52,9 @@
     background: var(--muted);
     padding: 2px 6px;
     border-radius: 999px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
 }
 .tabActive .count {
     color: var(--foreground);
