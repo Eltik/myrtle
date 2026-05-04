@@ -1,5 +1,20 @@
+import { formatProfession } from "#/lib/utils";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
-import { BrandRow, FG, FG_06, FG_08, FG_45, FG_55, FG_70, FootRow, RARITY_COLOR, RainbowStrip, siteHost } from "./Frame";
+import { AccentStrip, BG, BrandRow, FG, FG_06, FG_08, FG_55, FG_70, FootRow, RARITY_COLOR, siteHost } from "./Frame";
+
+export interface IOperatorStat {
+    label: string;
+    value: string;
+}
+
+/** Step the name font size down for longer names so the title fits the text column. */
+function nameFontSize(name: string): number {
+    const len = name.length;
+    if (len <= 10) return 112;
+    if (len <= 16) return 92;
+    if (len <= 22) return 72;
+    return 56;
+}
 
 export interface IOperatorOgData {
     name: string;
@@ -9,14 +24,25 @@ export interface IOperatorOgData {
     subProfession?: string;
     position?: string;
     nationId?: string;
+    factionLabel?: string;
     charArtUrl?: string;
     factionLogoUrl?: string;
+    professionIconUrl?: string;
+    stats?: IOperatorStat[];
 }
 
 export function OperatorTemplate(data: IOperatorOgData) {
-    const { name, appellation, profession, rarity, subProfession = "", position = "", nationId = "", charArtUrl, factionLogoUrl } = data;
+    const { name, appellation, profession, rarity, subProfession = "", position = "", nationId = "", factionLabel, charArtUrl, factionLogoUrl, professionIconUrl, stats = [] } = data;
     const rarityColor = RARITY_COLOR[rarity] ?? RARITY_COLOR[6];
     const tags = [position, subProfession, nationId].filter(Boolean);
+
+    // Render the full operator name. Many operators have descriptive suffixes
+    // ("Exusiai the New Covenant", "Reed the Flame Shadow") that are part of
+    // their canonical name — splitting them off looks worse than letting the
+    // size adapt to fit. Appellation is only meaningful when it's a foreign-
+    // language alt name; the EN-only data ships it as `" "` (single space),
+    // which we filter out with a trim check.
+    const altName = appellation.trim();
 
     return (
         <div
@@ -71,53 +97,80 @@ export function OperatorTemplate(data: IOperatorOgData) {
                 <BrandRow kicker="OPERATOR · COMPANION" />
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", marginTop: 40 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                        {/* rarity badge — single inline-SVG star (Inter has no ★ glyph
+                            and the rarity_yellow_N.png assets bake N stars in a row) */}
                         <div
                             style={{
                                 display: "flex",
                                 alignItems: "center",
                                 gap: 6,
-                                padding: "6px 16px",
+                                padding: "6px 16px 6px 12px",
                                 borderRadius: 999,
                                 background: rarityColor,
                                 color: "#1c1209",
                                 fontWeight: 800,
-                                fontSize: 22,
+                                fontSize: 24,
                                 letterSpacing: "0.02em",
+                                lineHeight: 1,
                             }}
                         >
-                            <div style={{ display: "flex", fontSize: 24, lineHeight: 1 }}>★</div>
+                            {/* biome-ignore lint/a11y/noSvgWithoutTitle: Satori renders <title> as visible text */}
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="#1c1209">
+                                <path d="M12 2.5l2.92 5.92 6.53.95-4.72 4.6 1.11 6.51L12 17.5l-5.84 3.07 1.11-6.51-4.72-4.6 6.53-.95L12 2.5z" />
+                            </svg>
                             <div style={{ display: "flex" }}>{rarity}</div>
                         </div>
+                        {/* profession as icon + text */}
                         {profession ? (
-                            <div
-                                style={{
-                                    display: "flex",
-                                    fontFamily: "Geist Mono",
-                                    fontSize: 18,
-                                    letterSpacing: "0.22em",
-                                    textTransform: "uppercase",
-                                    color: FG_70,
-                                }}
-                            >
-                                {profession}
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {professionIconUrl ? (
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            width: 30,
+                                            height: 30,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            background: FG_06,
+                                            border: `1px solid ${FG_08}`,
+                                            borderRadius: 6,
+                                        }}
+                                    >
+                                        <img alt="" src={professionIconUrl} width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
+                                    </div>
+                                ) : null}
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        fontFamily: "Geist Mono",
+                                        fontSize: 16,
+                                        letterSpacing: "0.22em",
+                                        textTransform: "uppercase",
+                                        color: FG_70,
+                                    }}
+                                >
+                                    {formatProfession(profession)}
+                                </div>
                             </div>
                         ) : null}
                     </div>
+                    {/* name — full canonical name, font size adapts to length so
+                        "Exusiai the New Covenant" still fits on two lines. */}
                     <div
                         style={{
                             display: "flex",
-                            fontSize: name.length > 14 ? 88 : 108,
+                            fontSize: nameFontSize(name),
                             fontWeight: 700,
                             lineHeight: 0.95,
                             letterSpacing: "-0.025em",
                             color: FG,
                             marginTop: 20,
-                            maxWidth: 700,
+                            maxWidth: 620,
                         }}
                     >
                         {name}
                     </div>
-                    {appellation ? (
+                    {altName && altName !== name ? (
                         <div
                             style={{
                                 display: "flex",
@@ -126,9 +179,10 @@ export function OperatorTemplate(data: IOperatorOgData) {
                                 marginTop: 16,
                                 fontStyle: "italic",
                                 fontWeight: 300,
+                                maxWidth: 620,
                             }}
                         >
-                            {`"${appellation}"`}
+                            {`"${altName}"`}
                         </div>
                     ) : null}
                     {tags.length > 0 ? (
@@ -154,6 +208,35 @@ export function OperatorTemplate(data: IOperatorOgData) {
                             ))}
                         </div>
                     ) : null}
+                    {stats.length > 0 ? (
+                        <div
+                            style={{
+                                display: "flex",
+                                marginTop: 28,
+                                background: FG_06,
+                                border: `1px solid ${FG_08}`,
+                                borderRadius: 12,
+                                overflow: "hidden",
+                            }}
+                        >
+                            {stats.map((s, i) => (
+                                <div
+                                    key={s.label}
+                                    style={{
+                                        flex: 1,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 4,
+                                        padding: "12px 16px",
+                                        borderLeft: i === 0 ? "none" : `1px solid ${FG_08}`,
+                                    }}
+                                >
+                                    <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>{s.label}</div>
+                                    <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: FG, lineHeight: 1, letterSpacing: "-0.01em" }}>{s.value}</div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
                 <div
                     style={{
@@ -167,24 +250,39 @@ export function OperatorTemplate(data: IOperatorOgData) {
                 <div
                     style={{
                         position: "absolute",
-                        right: 64,
-                        bottom: 56,
+                        right: 56,
+                        bottom: 64,
                         display: "flex",
                         alignItems: "center",
-                        gap: 12,
-                        fontFamily: "Geist Mono",
-                        fontSize: 12,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: FG_45,
+                        gap: 14,
+                        padding: "10px 16px 10px 14px",
+                        borderRadius: 12,
+                        background: "rgba(13,18,22,0.78)",
+                        border: `1px solid ${FG_08}`,
                     }}
                 >
-                    <div style={{ display: "flex" }}>FACTION</div>
-                    <img alt="" src={factionLogoUrl} width={56} height={56} style={{ width: 56, height: 56, opacity: 0.85 }} />
+                    <div
+                        style={{
+                            display: "flex",
+                            width: 56,
+                            height: 56,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: BG,
+                            border: `1px solid ${FG_08}`,
+                            borderRadius: 8,
+                        }}
+                    >
+                        <img alt="" src={factionLogoUrl} width={42} height={42} style={{ width: 42, height: 42, objectFit: "contain" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>Faction</div>
+                        <div style={{ display: "flex", fontSize: 16, fontWeight: 600, color: FG, letterSpacing: "-0.005em", lineHeight: 1 }}>{factionLabel ?? ""}</div>
+                    </div>
                 </div>
             ) : null}
             <FootRow path={`${siteHost()} / operators`} />
-            <RainbowStrip />
+            <AccentStrip color={rarityColor} />
         </div>
     );
 }

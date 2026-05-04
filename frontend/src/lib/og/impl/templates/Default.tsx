@@ -1,4 +1,4 @@
-import { BrandRow, FG, FG_06, FG_08, FG_55, FootRow, RainbowStrip } from "./Frame";
+import { AccentStrip, BrandRow, FG, FG_06, FG_08, FG_55, FootRow } from "./Frame";
 
 export interface IDefaultOgData {
     title: string;
@@ -70,7 +70,7 @@ export function DefaultTemplate(data: IDefaultOgData) {
             </div>
 
             <FootRow />
-            <RainbowStrip />
+            <AccentStrip />
         </div>
     );
 }
