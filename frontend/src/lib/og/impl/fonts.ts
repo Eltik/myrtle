@@ -1,45 +1,35 @@
-// SERVER ONLY — uses node:fs and node:module.
-// Imported by render.ts (the API route + prerender script). Never reaches the client.
 import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
 import type { SatoriOptions } from "satori";
+import { OG_CONFIG } from "./config";
 
 type FontInput = NonNullable<SatoriOptions["fonts"]>[number];
 
-const require = createRequire(import.meta.url);
-
-function interPath(file: string): string {
-    return require.resolve(`@fontsource/inter/files/${file}`);
-}
-
-function geistMonoPath(file: string): string {
-    return require.resolve(`@fontsource/geist-mono/files/${file}`);
-}
+const FONT_BASE = `${OG_CONFIG.siteURL.replace(/\/$/, "")}/fonts`;
 
 const FONTS = [
     {
         name: "Inter",
         weight: 400 as const,
         style: "normal" as const,
-        source: interPath("inter-latin-400-normal.woff"),
+        source: `${FONT_BASE}/inter-latin-400-normal.woff`,
     },
     {
         name: "Inter",
         weight: 700 as const,
         style: "normal" as const,
-        source: interPath("inter-latin-700-normal.woff"),
+        source: `${FONT_BASE}/inter-latin-700-normal.woff`,
     },
     {
         name: "Geist Mono",
         weight: 500 as const,
         style: "normal" as const,
-        source: geistMonoPath("geist-mono-latin-500-normal.woff"),
+        source: `${FONT_BASE}/geist-mono-latin-500-normal.woff`,
     },
     {
         name: "Geist Mono",
         weight: 700 as const,
         style: "normal" as const,
-        source: geistMonoPath("geist-mono-latin-700-normal.woff"),
+        source: `${FONT_BASE}/geist-mono-latin-700-normal.woff`,
     },
 ];
 
