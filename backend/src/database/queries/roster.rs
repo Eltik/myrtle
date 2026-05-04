@@ -50,9 +50,10 @@ pub async fn sync_user_data(
     medals: &serde_json::Value,
     building: &serde_json::Value,
     checkin: &[i16],
+    supports: &serde_json::Value,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)"
+        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)"
     )
     .bind(uid)
     .bind(server_id)
@@ -74,7 +75,43 @@ pub async fn sync_user_data(
     .bind(medals)
     .bind(building)
     .bind(checkin)
+    .bind(supports)
     .execute(pool)
     .await?;
     Ok(())
+}
+
+/// Get support units for a user (joined with operator state).
+pub async fn get_supports(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Vec<crate::database::models::roster::SupportUnit>, sqlx::Error> {
+    sqlx::query_as::<_, crate::database::models::roster::SupportUnit>(
+        r#"
+        SELECT
+            su.slot,
+            su.operator_id,
+            COALESCE(su.skin_id, uo.skin_id) AS skin_id,
+            su.skill_index,
+            COALESCE(su.current_equip, uo.current_equip) AS current_equip,
+            uo.elite,
+            uo.level,
+            uo.potential,
+            uo.skill_level,
+            uo.favor_point,
+            COALESCE(s.specialize_level, 0::SMALLINT) AS specialize_level
+        FROM user_support_units su
+        LEFT JOIN user_operators uo
+          ON uo.user_id = su.user_id AND uo.operator_id = su.operator_id
+        LEFT JOIN user_operator_skills s
+          ON s.user_id = su.user_id
+         AND s.operator_id = su.operator_id
+         AND s.skill_index = su.skill_index
+        WHERE su.user_id = $1
+        ORDER BY su.slot
+        "#,
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
 }

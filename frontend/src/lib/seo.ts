@@ -46,7 +46,7 @@ export function seo(input: SeoInput): SeoOutput {
 
 function absolute(pathOrUrl: string): string {
     if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-    const base = OG_CONFIG.siteUrl.replace(/\/$/, "");
+    const base = OG_CONFIG.siteURL.replace(/\/$/, "");
     const tail = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
     return `${base}${tail}`;
 }

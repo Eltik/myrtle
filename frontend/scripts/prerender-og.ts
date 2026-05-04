@@ -16,13 +16,13 @@ import { stat } from "node:fs/promises";
 import path from "node:path";
 import { readCache, writeCache } from "../src/lib/og/impl/cache";
 import { OG_CONFIG } from "../src/lib/og/impl/config";
-import { type AnyOgHandler, ogRegistry } from "../src/lib/og/impl/registry";
+import { type IAnyOgHandler, ogRegistry } from "../src/lib/og/impl/registry";
 import { renderOgPng } from "../src/lib/og/impl/render";
 
 const CONCURRENCY = 6;
 
 async function prerenderKind(kind: string) {
-    const handler = (ogRegistry as Record<string, AnyOgHandler>)[kind];
+    const handler = (ogRegistry as Record<string, IAnyOgHandler>)[kind];
     if (!handler.listIds) {
         console.log(`[og] skip ${kind} (no listIds)`);
         return;
