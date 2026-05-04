@@ -21,7 +21,7 @@ function avatarBase(): string {
 // Skin IDs from game data look like `char_002_amiya@winter#1`.
 // Backend asset stems use `_` where game data uses `@`, and keep `#`.
 // encodeURIComponent handles `#` → `%23` so it survives the URL path.
-function toAvatarStem(id: string): string {
+export function toAvatarStem(id: string): string {
     if (id.includes("@")) {
         // Skin: char_X@winter#1 → char_X_winter#1
         return encodeURIComponent(id.replaceAll("@", "_"));
@@ -47,23 +47,30 @@ export function getSecretaryAvatarURL(user: User): string {
 
 export const getAvatarSkinId = getSecretaryAvatarURL;
 
-export function rarityToNumber(rarity: OperatorRarityTier): OperatorRarity {
-    switch (rarity) {
-        case "TIER_1":
-            return 1;
-        case "TIER_2":
-            return 2;
-        case "TIER_3":
-            return 3;
-        case "TIER_4":
-            return 4;
-        case "TIER_5":
-            return 5;
-        case "TIER_6":
-            return 6;
-        default:
-            return 1;
-    }
+export function rarityToNumber(rarity: OperatorRarityTier | string | null | undefined, fallback: OperatorRarity = 1): OperatorRarity {
+    const n = Number(String(rarity ?? "").replace("TIER_", ""));
+    return n >= 1 && n <= 6 ? (n as OperatorRarity) : fallback;
+}
+
+const NAME_SPLIT_REGEX = /( the )|\(/gi;
+
+/** "Reed (the Flame Shadow)" → { displayName: "Reed", subtitle: "the Flame Shadow" }. */
+export function parseOperatorName(name: string): { displayName: string; subtitle: string | null } {
+    const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
+    return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
+}
+
+/** Locale number formatting — "1,234,567". */
+export function formatNumber(n: number | null | undefined): string {
+    return Number(n ?? 0).toLocaleString("en-US");
+}
+
+/** Brand-style compact: 1.2k / 2.3M (lowercase k, uppercase M). */
+export function formatNumberCompact(n: number | null | undefined): string {
+    const v = Number(n ?? 0);
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+    return formatNumber(v);
 }
 
 export const formatProfession = (profession: string): string => {

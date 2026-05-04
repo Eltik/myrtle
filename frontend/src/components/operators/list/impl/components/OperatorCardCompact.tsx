@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
-import { env } from "#/env";
-import { formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { formatSubProfession, getAvatarById, parseOperatorName, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { RARITY_COLORS } from "../constants";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -9,15 +8,6 @@ import { OperatorPreview } from "./OperatorPreview";
 
 interface IOperatorCardCompactProps {
     operator: IOperatorListItem;
-}
-
-const NAME_SPLIT_REGEX = /( the )|\(/gi;
-
-function parseOperatorName(name: string) {
-    const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
-    const displayName = parts[0] ?? name;
-    const subtitle = parts[2] ?? null;
-    return { displayName, subtitle };
 }
 
 export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
@@ -39,7 +29,7 @@ export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
                         <div className="pointer-events-none absolute -translate-x-3 -translate-y-2">
                             <CampIcon groupId={factionLogoId} className="opacity-5 transition-opacity group-hover:opacity-10" size={140} />
                         </div>
-                        <img alt={operatorName} className="relative h-full w-full object-contain" height={120} loading="lazy" src={`${env.VITE_BACKEND_URL}/api/avatar/${operatorId}`} width={120} />
+                        <img alt={operatorName} className="relative h-full w-full object-contain" height={120} loading="lazy" src={getAvatarById(operatorId)} width={120} />
 
                         <div className="absolute right-0 bottom-0 h-4 w-4 opacity-70 group-hover:opacity-100 sm:h-5 sm:w-5">
                             <ClassIcon profession={operator.profession} size={80} />
