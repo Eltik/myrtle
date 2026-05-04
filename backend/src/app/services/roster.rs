@@ -41,6 +41,24 @@ pub struct GameUser {
     pub sandbox_perm: Option<serde_json::Value>,
     #[serde(rename = "checkIn")]
     pub checkin: Option<CheckIn>,
+    pub social: Option<Social>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Social {
+    /// Up to 3 entries (some may be `null` for empty slots) — references
+    /// troop slots by `charInstId`. Resolved to operator_id in
+    /// `extract_supports`.
+    pub assist_char_list: Option<Vec<Option<AssistChar>>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistChar {
+    pub char_inst_id: Option<i64>,
+    pub skill_index: Option<i64>,
+    pub current_equip: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -204,6 +222,7 @@ pub async fn refresh(
     let items = extract_items(&user.inventory);
     let skins = extract_skins(&user.skin);
     let status_json = extract_status(status);
+    let supports = extract_supports(&user.troop, &user.social);
     let stages = user
         .dungeon
         .as_ref()
@@ -238,6 +257,7 @@ pub async fn refresh(
         &medals,
         &building,
         &checkin,
+        &supports,
     )
     .await?;
 
@@ -449,6 +469,35 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
                 "first_ts": entry.fts.unwrap_or(0),
                 "reach_ts": entry.rts.unwrap_or(0),
             })
+        })
+        .collect();
+
+    serde_json::to_value(entries).unwrap_or_default()
+}
+
+fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_json::Value {
+    let Some(list) = social.as_ref().and_then(|s| s.assist_char_list.as_ref()) else {
+        return serde_json::json!([]);
+    };
+    let chars = troop.as_ref().and_then(|t| t.chars.as_ref());
+
+    let entries: Vec<serde_json::Value> = list
+        .iter()
+        .enumerate()
+        .filter_map(|(slot, maybe)| {
+            let assist = maybe.as_ref()?;
+            let inst_id = assist.char_inst_id?;
+            let troop_entry = chars?.get(&inst_id.to_string())?;
+            let parsed: TroopChar = serde_json::from_value(troop_entry.clone()).ok()?;
+            let char_id = parsed.char_id?;
+            let skin_id = parsed.skin.filter(|s| !s.is_empty());
+            Some(serde_json::json!({
+                "slot": slot as i16,
+                "operator_id": char_id,
+                "skin_id": skin_id,
+                "skill_index": assist.skill_index.unwrap_or(0),
+                "current_equip": assist.current_equip,
+            }))
         })
         .collect();
 

@@ -5,5 +5,5 @@ export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(t
     const handler = ogRegistry[kind];
     // biome-ignore lint/suspicious/noExplicitAny: bridging typed registry to runtime
     const hash = handler.hash(data as any);
-    return `${OG_CONFIG.siteUrl}/api/og/${kind}/${encodeURIComponent(id)}?v=${hash}`;
+    return `${OG_CONFIG.siteURL}/api/og/${kind}/${encodeURIComponent(id)}?v=${hash}`;
 }

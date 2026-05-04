@@ -8,24 +8,38 @@ type FontInput = NonNullable<SatoriOptions["fonts"]>[number];
 
 const require = createRequire(import.meta.url);
 
-function fontsourcePath(file: string): string {
+function interPath(file: string): string {
     return require.resolve(`@fontsource/inter/files/${file}`);
 }
 
-// Edit this list to add weights, italics, or custom display fonts.
-// Each entry's `source` may be a filesystem path or an http(s):// URL.
+function geistMonoPath(file: string): string {
+    return require.resolve(`@fontsource/geist-mono/files/${file}`);
+}
+
 const FONTS = [
     {
         name: "Inter",
         weight: 400 as const,
         style: "normal" as const,
-        source: fontsourcePath("inter-latin-400-normal.woff"),
+        source: interPath("inter-latin-400-normal.woff"),
     },
     {
         name: "Inter",
         weight: 700 as const,
         style: "normal" as const,
-        source: fontsourcePath("inter-latin-700-normal.woff"),
+        source: interPath("inter-latin-700-normal.woff"),
+    },
+    {
+        name: "Geist Mono",
+        weight: 500 as const,
+        style: "normal" as const,
+        source: geistMonoPath("geist-mono-latin-500-normal.woff"),
+    },
+    {
+        name: "Geist Mono",
+        weight: 700 as const,
+        style: "normal" as const,
+        source: geistMonoPath("geist-mono-latin-700-normal.woff"),
     },
 ];
 
