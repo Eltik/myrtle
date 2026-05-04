@@ -51,9 +51,10 @@ pub async fn sync_user_data(
     building: &serde_json::Value,
     checkin: &[i16],
     supports: &serde_json::Value,
+    nick_number: Option<&str>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)"
+        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)"
     )
     .bind(uid)
     .bind(server_id)
@@ -76,6 +77,7 @@ pub async fn sync_user_data(
     .bind(building)
     .bind(checkin)
     .bind(supports)
+    .bind(nick_number)
     .execute(pool)
     .await?;
     Ok(())

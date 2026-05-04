@@ -76,7 +76,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
     },
 };
 
-const USER_HASH_VERSION = "v10";
+const USER_HASH_VERSION = "v11";
 
 interface ISupportUnitResponse {
     slot: number;
@@ -229,6 +229,7 @@ const userHandler: IOgHandler<IUserOgData> = {
 
         return {
             nickname: u.nickname ?? "Doctor",
+            nickNumber: u.nick_number,
             uid: u.uid ?? uid,
             level: u.level,
             grade: u.grade,
@@ -248,6 +249,7 @@ const userHandler: IOgHandler<IUserOgData> = {
             "user",
             USER_HASH_VERSION,
             data.nickname,
+            data.nickNumber ?? "",
             data.uid,
             data.level,
             data.grade,

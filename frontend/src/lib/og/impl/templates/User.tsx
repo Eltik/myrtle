@@ -27,6 +27,8 @@ export interface IUserSupportUnit {
 
 export interface IUserOgData {
     nickname: string;
+    /** In-game discriminator (`Eltik#1234` → "1234"). Rendered as a small mono suffix. */
+    nickNumber?: string | null;
     uid?: string;
     level: number | null;
     grade: string | null;
@@ -42,7 +44,7 @@ export interface IUserOgData {
 }
 
 export function UserTemplate(data: IUserOgData) {
-    const { nickname, uid = "—", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
+    const { nickname, nickNumber, uid = "—", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
 
     return (
         <div
@@ -122,18 +124,35 @@ export function UserTemplate(data: IUserOgData) {
                     }}
                 >
                     <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", color: FG_55 }}>DOCTOR</div>
-                    <div
-                        style={{
-                            display: "flex",
-                            fontSize: 84,
-                            fontWeight: 700,
-                            lineHeight: 0.95,
-                            letterSpacing: "-0.025em",
-                            color: FG,
-                            marginTop: 8,
-                        }}
-                    >
-                        {nickname}
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 14, marginTop: 8 }}>
+                        <div
+                            style={{
+                                display: "flex",
+                                fontSize: 84,
+                                fontWeight: 700,
+                                lineHeight: 0.95,
+                                letterSpacing: "-0.025em",
+                                color: FG,
+                            }}
+                        >
+                            {nickname}
+                        </div>
+                        {nickNumber ? (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    fontFamily: "Geist Mono",
+                                    fontSize: 30,
+                                    fontWeight: 500,
+                                    color: FG_45,
+                                    letterSpacing: "0.02em",
+                                    lineHeight: 1,
+                                    paddingBottom: 8,
+                                }}
+                            >
+                                #{nickNumber}
+                            </div>
+                        ) : null}
                     </div>
                     <div
                         style={{
