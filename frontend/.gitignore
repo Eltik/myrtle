@@ -13,3 +13,4 @@ dist-ssr
 __unconfig*
 todos.json
 user copy/
+.og-cache/
