@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { env } from "#/env";
+import { deepCamelize } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
-import { rarityToNumber, toAvatarStem } from "#/lib/utils";
+import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
@@ -45,16 +46,34 @@ const campLogoURL = (id: string) => assetURL(`/textures/spritepack/ui_camp_logo_
 const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
 const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
 const secretaryArtURL = (operatorId: string, skinId: string | null) => (skinId?.includes("@") ? skinpackURL(operatorId, skinId) : charartURL(operatorId));
+const professionIconURL = (profession: string) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`);
 
-const OPERATOR_HASH_VERSION = "v2";
+const OPERATOR_HASH_VERSION = "v8";
 
 const operatorHandler: IOgHandler<IOperatorOgData> = {
     fetch: async (id) => {
         const res = await backendFetch("/static/operators");
         if (!res.ok) return null;
-        const map = (await res.json()) as IOperatorsStaticMap;
+        // Backend uses PascalCase for nested phases/skills/etc. — normalize so
+        // we can reach `phases[].attributesKeyFrames[].data.maxHp` etc.
+        const map = deepCamelize((await res.json()) as IOperatorsStaticMap);
         const op = (Object.values(map) as IOperatorListItem[]).find((o) => o.id === id);
         if (!op) return null;
+        const rarity = rarityToNumber(op.rarity);
+        // Faction display chooses the most specific source the data has;
+        // matches how OperatorCardCompact picks its logo id.
+        const factionId = op.nationId || op.teamId || op.groupId || "";
+        const factionLabel = op.teamId ? formatTeamId(op.teamId) : op.groupId ? formatGroupId(op.groupId) : op.nationId ? formatNationId(op.nationId) : undefined;
+        const lastPhase = op.phases?.[op.phases.length - 1];
+        const lastFrame = lastPhase?.attributesKeyFrames?.[lastPhase.attributesKeyFrames.length - 1]?.data;
+        const stats = lastFrame
+            ? [
+                  { label: "HP", value: formatNumber(lastFrame.maxHp) },
+                  { label: "ATK", value: formatNumber(lastFrame.atk) },
+                  { label: "DEF", value: formatNumber(lastFrame.def) },
+                  { label: "RES", value: formatNumber(lastFrame.magicResistance) },
+              ]
+            : undefined;
         return {
             name: op.name,
             appellation: op.appellation ?? "",
@@ -62,12 +81,15 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
             subProfession: op.subProfessionId ?? "",
             position: op.position ?? "",
             nationId: op.nationId ?? "",
-            rarity: rarityToNumber(op.rarity),
+            rarity,
             charArtUrl: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`),
-            factionLogoUrl: op.nationId ? campLogoURL(op.nationId) : undefined,
+            factionLogoUrl: factionId ? campLogoURL(factionId) : undefined,
+            factionLabel,
+            professionIconUrl: op.profession ? professionIconURL(op.profession) : undefined,
+            stats,
         };
     },
-    hash: (data) => ogHash(["operator", OPERATOR_HASH_VERSION, data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId]),
+    hash: (data) => ogHash(["operator", OPERATOR_HASH_VERSION, data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconUrl ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")]),
     template: (data) => OperatorTemplate(data),
     listIds: async () => {
         const res = await backendFetch("/operators/index");
@@ -76,7 +98,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
     },
 };
 
-const USER_HASH_VERSION = "v11";
+const USER_HASH_VERSION = "v13";
 
 interface ISupportUnitResponse {
     slot: number;
@@ -272,7 +294,7 @@ const userHandler: IOgHandler<IUserOgData> = {
     template: (data) => UserTemplate(data),
 };
 
-const DEFAULT_HASH_VERSION = "v2";
+const DEFAULT_HASH_VERSION = "v4";
 
 const defaultHandler: IOgHandler<IDefaultOgData> = {
     fetch: async (id) => ({ title: decodeURIComponent(id), subtitle: undefined }),

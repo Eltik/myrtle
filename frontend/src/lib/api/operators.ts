@@ -17,7 +17,7 @@ function normalizeKey(key: string): string {
     return trimmed;
 }
 
-function deepCamelize<T>(value: T): T {
+export function deepCamelize<T>(value: T): T {
     if (Array.isArray(value)) return value.map(deepCamelize) as unknown as T;
     if (value !== null && typeof value === "object") {
         const out: Record<string, unknown> = {};

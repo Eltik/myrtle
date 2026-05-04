@@ -29,23 +29,8 @@ export const BG = "#0d1216";
 
 export function BrandMark({ size = 28 }: { size?: number }) {
     return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: size,
-                height: size,
-                borderRadius: 8,
-                background: FG_06,
-                border: `1px solid ${FG_08}`,
-            }}
-        >
-            {/* biome-ignore lint/a11y/noSvgWithoutTitle: Satori renders <title> as visible text */}
-            <svg width={size * 0.64} height={size * 0.64} viewBox="0 0 24 24" fill="none" stroke="#ec6f5d" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
-                <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
-            </svg>
+        <div style={{ display: "flex", width: size, height: size }}>
+            <img alt="" src={`${OG_CONFIG.siteURL.replace(/\/$/, "")}/logo/bust_transparent.png`} width={size} height={size} style={{ width: size, height: size, objectFit: "contain" }} />
         </div>
     );
 }
@@ -95,7 +80,8 @@ export function FootRow({ path = siteHost(), version = "v3" }: { path?: string; 
     );
 }
 
-export function RainbowStrip() {
+/** Bottom accent — single-color gradient that fades transparent → solid → transparent. */
+export function AccentStrip({ color = "#ec6f5d" }: { color?: string } = {}) {
     return (
         <div
             style={{
@@ -103,9 +89,10 @@ export function RainbowStrip() {
                 left: 0,
                 right: 0,
                 bottom: 0,
+                width: 1200,
                 height: 6,
                 display: "flex",
-                background: `linear-gradient(90deg, ${RARITY_COLOR[1]} 0% 16.66%, ${RARITY_COLOR[2]} 16.66% 33.33%, ${RARITY_COLOR[3]} 33.33% 50%, ${RARITY_COLOR[4]} 50% 66.66%, ${RARITY_COLOR[5]} 66.66% 83.33%, ${RARITY_COLOR[6]} 83.33% 100%)`,
+                background: `linear-gradient(90deg, ${color}00 0%, ${color} 50%, ${color}00 100%)`,
             }}
         />
     );

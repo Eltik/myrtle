@@ -40,12 +40,7 @@ export default function Header() {
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex items-center gap-2 text-foreground no-underline shrink-0">
-                        <span className={styles.brandBezel} aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M4 18c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
-                                <path d="M4 12c2.5 0 2.5-4 5-4s2.5 4 5 4 2.5-4 5-4" />
-                            </svg>
-                        </span>
+                        <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         <span className="font-semibold tracking-tight text-[15px]">myrtle.moe</span>
                         <span className="hidden rounded-[5px] border border-white/5 px-1.5 py-0.75 font-mono text-[10.5px] font-medium leading-none text-muted-foreground not-dark:bg-[oklch(0.22_0.005_285/0.1)] sm:inline-block dark:bg-[oklch(0.22_0.005_285/0.7)]">v3</span>
                     </Link>

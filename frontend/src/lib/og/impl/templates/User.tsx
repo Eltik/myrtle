@@ -1,5 +1,5 @@
 import { formatNumber, formatNumberCompact } from "#/lib/utils";
-import { BG, BrandMark, FG, FG_06, FG_08, FG_45, FG_55, FG_70, FootRow, RARITY_COLOR, RainbowStrip } from "./Frame";
+import { AccentStrip, BG, BrandMark, FG, FG_06, FG_08, FG_45, FG_55, FG_70, FootRow, RARITY_COLOR } from "./Frame";
 
 export interface IUserSupportSkill {
     iconUrl?: string;
@@ -360,7 +360,7 @@ function SupportUnitRow({ unit }: { unit: IUserSupportUnit }) {
 
 function RarityDistributionBar({ counts }: { counts?: Record<number, number> }) {
     const total = counts ? [1, 2, 3, 4, 5, 6].reduce((sum, r) => sum + (counts[r] ?? 0), 0) : 0;
-    if (!counts || total === 0) return <RainbowStrip />;
+    if (!counts || total === 0) return <AccentStrip />;
 
     return (
         <div

@@ -9,7 +9,7 @@ export const OG_CONFIG = {
     siteName: "Myrtle",
     siteURL: env.VITE_SITE_URL ?? "http://localhost:3000",
 
-    defaultImage: "/og/default.png",
+    defaultImage: "/api/og/default",
 
     cacheDir: ".og-cache",
 } as const;
