@@ -6,11 +6,10 @@ import { Kbd } from "#/components/ui/kbd";
 import { Separator } from "#/components/ui/separator";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { statsQueryOptions } from "#/lib/api/stats";
+import { formatNumberCompact } from "#/lib/utils";
 import CommandPreview from "./CommandPreview";
 import styles from "./Hero.module.css";
 import { useHeroTilt } from "./useHeroTilt";
-
-const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 
 export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
     const tiltRef = useHeroTilt();
@@ -19,7 +18,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
     const heroStats = [
         { v: stats ? stats.gameData.operators.toString() : "—", l: "operators" },
         { v: stats ? stats.tierLists.active.toString() : "—", l: "tier lists" },
-        { v: stats ? compact.format(stats.rosters.total) : "—", l: "rosters synced" },
+        { v: stats ? formatNumberCompact(stats.rosters.total) : "—", l: "rosters synced" },
     ];
 
     const isMac = useIsMac();

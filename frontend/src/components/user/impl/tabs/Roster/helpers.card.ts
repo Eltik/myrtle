@@ -4,6 +4,8 @@ import { getAvatarById } from "#/lib/utils";
 import type { IAttributeKeyFrame, IEnrichedSkill, IModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
 import type { IOwnedEntry } from "./types";
 
+export { parseOperatorName } from "#/lib/utils";
+
 const MAX_FAVOR_POINT = 25570;
 
 export function ownedHeroURL(entry: IOwnedEntry): string {
@@ -79,13 +81,6 @@ export function isMaxed(entry: IOwnedEntry): boolean {
 
 export function getTrustPercent(rawFavorPoint: number): number {
     return Math.min(200, Math.round((rawFavorPoint / MAX_FAVOR_POINT) * 200));
-}
-
-const NAME_SPLIT_REGEX = /( the )|\(/gi;
-
-export function parseOperatorName(name: string): { displayName: string; subtitle: string | null } {
-    const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
-    return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
 }
 
 export interface IDerivedStats {

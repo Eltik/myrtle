@@ -1,3 +1,4 @@
+import { formatNumber, formatNumberCompact } from "#/lib/utils";
 import { BG, BrandMark, FG, FG_06, FG_08, FG_45, FG_55, FG_70, FootRow, RARITY_COLOR, RainbowStrip } from "./Frame";
 
 export interface IUserSupportSkill {
@@ -39,14 +40,6 @@ export interface IUserOgData {
     supportUnitsKind?: "supports" | "roster";
     rarityCounts?: Record<number, number>;
 }
-
-const fmt = (n: number | null | undefined) => Number(n ?? 0).toLocaleString("en-US");
-const compact = (n: number | null | undefined) => {
-    const v = Number(n ?? 0);
-    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
-    if (v >= 1_000) return `${(v / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
-    return fmt(v);
-};
 
 export function UserTemplate(data: IUserOgData) {
     const { nickname, uid = "—", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
@@ -172,7 +165,7 @@ export function UserTemplate(data: IUserOgData) {
                             {grade ?? "—"}
                         </div>
                         <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
-                        <div style={{ display: "flex" }}>{fmt(totalScore)} pts</div>
+                        <div style={{ display: "flex" }}>{formatNumber(totalScore)} pts</div>
                     </div>
                 </div>
             </div>
@@ -207,10 +200,10 @@ export function UserTemplate(data: IUserOgData) {
                     }}
                 >
                     {[
-                        { k: "Operators", v: fmt(operatorCount), red: true },
-                        { k: "Skins", v: fmt(skinCount), red: false },
-                        { k: "Items", v: compact(itemCount), red: false },
-                        { k: "LMD", v: compact(lmd), red: false },
+                        { k: "Operators", v: formatNumber(operatorCount), red: true },
+                        { k: "Skins", v: formatNumber(skinCount), red: false },
+                        { k: "Items", v: formatNumberCompact(itemCount), red: false },
+                        { k: "LMD", v: formatNumberCompact(lmd), red: false },
                     ].map((s) => (
                         <div
                             key={s.k}

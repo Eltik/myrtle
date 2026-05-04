@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { env } from "#/env";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
-import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap, OperatorRarity } from "#/types/operators";
+import { rarityToNumber, toAvatarStem } from "#/lib/utils";
+import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
@@ -29,15 +30,7 @@ function assetURL(path: string): string {
 function avatarURL(charId: string): string {
     const base = backendBaseURL();
     if (!base) return "";
-    let stem: string;
-    if (charId.includes("@")) {
-        stem = charId.replaceAll("@", "_");
-    } else if (charId.endsWith("#1")) {
-        stem = charId.slice(0, -2);
-    } else {
-        stem = charId.replace(/#(\d+)$/, "_$1");
-    }
-    return `${base}/api/avatar/${encodeURIComponent(stem)}`;
+    return `${base}/api/avatar/${toAvatarStem(charId)}`;
 }
 
 function skillIconURL(iconId: string): string {
@@ -52,10 +45,6 @@ const campLogoURL = (id: string) => assetURL(`/textures/spritepack/ui_camp_logo_
 const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
 const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
 const secretaryArtURL = (operatorId: string, skinId: string | null) => (skinId?.includes("@") ? skinpackURL(operatorId, skinId) : charartURL(operatorId));
-
-function rarityFromTier(tier: string | null | undefined, fallback = 1): number {
-    return Number(String(tier ?? "").replace("TIER_", "")) || fallback;
-}
 
 const OPERATOR_HASH_VERSION = "v2";
 
@@ -73,7 +62,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
             subProfession: op.subProfessionId ?? "",
             position: op.position ?? "",
             nationId: op.nationId ?? "",
-            rarity: rarityFromTier(op.rarity) as OperatorRarity,
+            rarity: rarityToNumber(op.rarity),
             charArtUrl: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`),
             factionLogoUrl: op.nationId ? campLogoURL(op.nationId) : undefined,
         };
@@ -131,7 +120,7 @@ function buildSupportUnit(args: { id: string; elite: number; level: number; skin
     return {
         id,
         name: op.name,
-        rarity: rarityFromTier(op.rarity),
+        rarity: rarityToNumber(op.rarity),
         elite,
         level,
         avatarUrl: avatarURL(skinId || id),
@@ -152,8 +141,8 @@ function indexRoster(roster: IRosterEntry[], opByIdMap: Map<string, IOperatorLis
         byId.set(entry.operator_id, entry);
         const op = opByIdMap.get(entry.operator_id);
         if (!op) continue;
-        const rarity = rarityFromTier(op.rarity, 0);
-        if (rarity >= 1 && rarity <= 6) rarityCounts[rarity]++;
+        const rarity = rarityToNumber(op.rarity);
+        rarityCounts[rarity]++;
     }
     return { byId, rarityCounts };
 }
@@ -162,9 +151,9 @@ function topRosterPicks(roster: IRosterEntry[], opByIdMap: Map<string, IOperator
     return roster
         .map((entry) => {
             const op = opByIdMap.get(entry.operator_id);
-            return op ? { entry, op, rarity: rarityFromTier(op.rarity) } : null;
+            return op ? { entry, op, rarity: rarityToNumber(op.rarity) } : null;
         })
-        .filter((x): x is { entry: IRosterEntry; op: IOperatorListItem; rarity: number } => x !== null)
+        .filter((x) => x !== null)
         .sort((a, b) => {
             if (b.entry.elite !== a.entry.elite) return b.entry.elite - a.entry.elite;
             if (b.entry.level !== a.entry.level) return b.entry.level - a.entry.level;

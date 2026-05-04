@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
-import { env } from "#/env";
-import { cn, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { cn, formatProfession, formatSubProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -28,7 +27,7 @@ export function OperatorCardList({ operator }: IOperatorCardListProps) {
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
-    const portraitSrc = `${env.VITE_BACKEND_URL}/api/avatar/${operator.id}`;
+    const portraitSrc = getAvatarById(operator.id ?? "");
     const archetype = formatSubProfession(operator.subProfessionId.toLowerCase()).replace(formatProfession(operator.profession), "");
 
     return (

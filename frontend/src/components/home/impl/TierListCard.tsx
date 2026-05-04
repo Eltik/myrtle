@@ -1,11 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
-import { getAvatarById } from "#/lib/utils";
+import { formatNumberCompact, getAvatarById } from "#/lib/utils";
 import type { ITierList } from "./data";
 import styles from "./TierListCard.module.css";
 
-const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
 const MAX_TOP_OPS = 4;
 const MAX_GHOST_OPS = 6;
 const MAX_GHOST_TIER_NAMES = 3;
@@ -99,13 +98,13 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                             <circle cx="12" cy="12" r="3" />
                         </svg>
-                        {compact.format(tl.views)}
+                        {formatNumberCompact(tl.views)}
                     </span>
                     <span className="inline-flex items-center gap-1 font-mono text-[11.5px] font-medium leading-none tracking-tight text-muted-foreground [&>svg]:h-2.75 [&>svg]:w-2.75 [&>svg]:opacity-80" title={`${tl.votes} favorites`}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Votes">
                             <path d="m5 15 7-7 7 7" />
                         </svg>
-                        {compact.format(tl.votes)}
+                        {formatNumberCompact(tl.votes)}
                     </span>
                     <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-sans text-xs font-medium leading-none tracking-tight text-foreground transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
                         Open

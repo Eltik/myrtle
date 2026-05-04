@@ -3,9 +3,8 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
-import { env } from "#/env";
 import { rangesQueryOptions } from "#/lib/api/ranges";
-import { cn } from "#/lib/utils";
+import { cn, getAvatarById } from "#/lib/utils";
 import type { IDrone } from "#/types/operators";
 import { descriptionToHtml } from "../description";
 import { clampDronePhase, droneTalentBlackboard, getDroneAttributeStats } from "../helpers";
@@ -87,7 +86,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) 
     const description = useMemo(() => descriptionToHtml(drone.description ?? "", blackboard), [drone.description, blackboard]);
 
     const range = phase?.rangeId ? ranges?.[phase.rangeId] : undefined;
-    const avatarSrc = drone.id ? `${env.VITE_BACKEND_URL}/api/avatar/${drone.id}` : null;
+    const avatarSrc = drone.id ? getAvatarById(drone.id) : null;
     const positionLabel = POSITION_LABEL[drone.position] ?? drone.position;
 
     const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : "—");
