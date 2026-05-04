@@ -3,6 +3,7 @@ import { OperatorDetail } from "#/components/operators/detail/Operators";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { ogURL } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
+import { formatProfession, formatSubProfession } from "#/lib/utils";
 
 export const Route = createFileRoute("/operators_/$id")({
     component: RouteComponent,
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/operators_/$id")({
         };
         return seo({
             title: loaderData.name,
-            description: `${rarityNum}★ ${loaderData.profession} • ${loaderData.appellation ?? ""}`.trim(),
+            description: `${rarityNum}★ ${formatProfession(loaderData.profession)} • ${formatSubProfession(loaderData.subProfessionId ?? "")}`.trim(),
             image: ogURL("operator", params.id, ogData),
             path: `/operators/${params.id}`,
             type: "profile",

@@ -21,7 +21,7 @@ export const Route = createFileRoute("/user/$id")({
         };
         return seo({
             title: ogData.nickname,
-            description: `Doctor profile${loaderData.level != null ? ` • Lv ${loaderData.level}` : ""}${loaderData.grade ? ` • ${loaderData.grade}` : ""}`,
+            description: loaderData.resume ? loaderData.resume : `Doctor profile${loaderData.level != null ? ` • Lv ${loaderData.level}` : ""}${loaderData.grade ? ` • ${loaderData.grade}` : ""}`,
             image: ogURL("user", params.id, ogData),
             path: `/user/${params.id}`,
             type: "profile",
