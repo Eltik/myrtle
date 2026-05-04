@@ -38,10 +38,6 @@ const config = defineConfig({
             },
         ],
     },
-    // The `externalizeResvg()` plugin (enforce: "pre") covers both dev and
-    // prod externalization for the whole `@resvg/*` namespace, so we don't
-    // need a separate `ssr.external` entry here. `optimizeDeps.exclude` keeps
-    // Vite from trying to pre-bundle the native binary in dev.
     plugins: [externalizeResvg(), devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
     optimizeDeps: { exclude: ["@resvg/resvg-js"] },
 });
