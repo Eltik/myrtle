@@ -10,6 +10,7 @@ pub struct LeaderboardEntry {
     pub id: Uuid,
     pub uid: String,
     pub nickname: Option<String>,
+    pub nick_number: Option<String>,
     pub level: Option<i16>,
     pub avatar_id: Option<String>,
     pub secretary: Option<String>,

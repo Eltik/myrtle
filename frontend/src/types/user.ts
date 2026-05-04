@@ -2,6 +2,8 @@ export interface IUserProfile {
     id: string;
     uid: string;
     nickname: string | null;
+    /** In-game discriminator suffix (`Eltik#1234`). String of digits, may be null. */
+    nick_number: string | null;
     level: number | null;
     avatar_id: string | null;
     secretary: string | null;

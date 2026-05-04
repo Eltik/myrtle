@@ -308,6 +308,9 @@ fn main() -> Result<()> {
             .and_then(|s| s.get("nickName"))
             .and_then(|v| v.as_str())
             .unwrap_or("");
+        let nick_number = status
+            .and_then(|s| s.get("nickNumber"))
+            .and_then(|v| v.as_str());
         let level = status
             .and_then(|s| s.get("level"))
             .and_then(|v| v.as_i64())
@@ -332,6 +335,7 @@ fn main() -> Result<()> {
             "uid": uid,
             "server_id": server_id,
             "nickname": nickname,
+            "nick_number": nick_number,
             "level": level,
             "role": role,
             "avatar_id": avatar_id,

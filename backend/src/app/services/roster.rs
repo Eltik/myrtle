@@ -208,6 +208,12 @@ pub async fn refresh(
     let status = user.status.as_ref();
 
     let nickname = status.and_then(|s| s.nick_name.as_deref()).unwrap_or("");
+    // nickNumber comes from Hypergryph as either a string ("1234") or an
+    // integer (1234) depending on server/version, and may live on
+    // `status` or as a sibling of it. Probe both paths and accept either
+    // type. Stored as string so leading zeros survive.
+    let nick_number_owned = extract_nick_number(&raw);
+    let nick_number = nick_number_owned.as_deref();
     let level = status.and_then(|s| s.level).unwrap_or(0) as i16;
     let avatar_id = status
         .and_then(|s| s.avatar.as_ref())
@@ -258,6 +264,7 @@ pub async fn refresh(
         &building,
         &checkin,
         &supports,
+        nick_number,
     )
     .await?;
 
@@ -284,6 +291,29 @@ pub async fn refresh(
     }
 
     Ok(raw)
+}
+
+/// Pull `nickNumber` out of the raw syncData. Tolerates string,
+/// integer, or absent values, and probes the few paths Arknights has
+/// been observed to put it under.
+fn extract_nick_number(raw: &serde_json::Value) -> Option<String> {
+    let candidates = [
+        raw.pointer("/user/status/nickNumber"),
+        raw.pointer("/user/social/nickNumber"),
+        raw.pointer("/user/nickNumber"),
+    ];
+
+    for candidate in candidates.into_iter().flatten() {
+        let value = match candidate {
+            serde_json::Value::String(s) if !s.is_empty() => Some(s.clone()),
+            serde_json::Value::Number(n) => Some(n.to_string()),
+            _ => None,
+        };
+        if value.is_some() {
+            return value;
+        }
+    }
+    None
 }
 
 fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
