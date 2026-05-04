@@ -7,6 +7,7 @@ import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions } from "#/lib/auth/store";
 import { CommandProvider } from "#/lib/command-context";
+import { seo } from "#/lib/seo";
 import Footer from "../components/Footer";
 import Header from "../components/header/Header";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -24,26 +25,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         const user = await getSessionFn();
         return { user };
     },
-    head: () => ({
-        meta: [
-            {
-                charSet: "utf-8",
-            },
-            {
-                name: "viewport",
-                content: "width=device-width, initial-scale=1",
-            },
-            {
-                title: "TanStack Start Starter",
-            },
-        ],
-        links: [
-            {
-                rel: "stylesheet",
-                href: appCss,
-            },
-        ],
-    }),
+    head: () => {
+        const { meta, links } = seo({
+            title: "Myrtle",
+            description: "Arknights companion - operators, rosters, tier lists.",
+        });
+        return {
+            meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],
+            links: [{ rel: "stylesheet", href: appCss }, ...links],
+        };
+    },
     component: RootComponent,
     shellComponent: RootDocument,
 });

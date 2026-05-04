@@ -26,6 +26,10 @@ const config = defineConfig({
         ],
     },
     plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact(), tsconfigPaths()],
+    // @resvg/resvg-js ships a native .node binary that Vite/esbuild cannot bundle.
+    // Keep it external so it's `require()`d at runtime on the server only.
+    optimizeDeps: { exclude: ["@resvg/resvg-js"] },
+    ssr: { external: ["@resvg/resvg-js"] },
 });
 
 export default config;

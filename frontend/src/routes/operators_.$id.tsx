@@ -1,11 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
 import { operatorQueryOptions } from "#/lib/api/operators";
+import { ogURL } from "#/lib/og/impl/url";
+import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/operators_/$id")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: ({ context, params }) => context.queryClient.ensureQueryData(operatorQueryOptions(params.id)),
+    head: ({ loaderData, params }) => {
+        if (!loaderData) return seo({ title: "Operator", path: `/operators/${params.id}` });
+        const rarityNum = Number(String(loaderData.rarity).replace("TIER_", "")) || 1;
+        const ogData = {
+            name: loaderData.name,
+            appellation: loaderData.appellation ?? "",
+            profession: loaderData.profession,
+            rarity: rarityNum as 1 | 2 | 3 | 4 | 5 | 6,
+        };
+        return seo({
+            title: loaderData.name,
+            description: `${rarityNum}★ ${loaderData.profession} • ${loaderData.appellation ?? ""}`.trim(),
+            image: ogURL("operator", params.id, ogData),
+            path: `/operators/${params.id}`,
+            type: "profile",
+        });
+    },
 });
 
 function RootErrorComponent({ error }: { error: unknown }) {
