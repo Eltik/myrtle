@@ -9,6 +9,7 @@ import { ProfileTabs } from "./impl/ProfileTabs";
 import { StatStrip } from "./impl/StatStrip";
 import { ItemsTab } from "./impl/tabs/Items/ItemsTab";
 import { RosterTab } from "./impl/tabs/Roster/RosterTab";
+import { StatsTab } from "./impl/tabs/Stats/StatsTab";
 
 export type TabId = "roster" | "inventory" | "stats" | "score";
 
@@ -119,6 +120,7 @@ export function UserProfile() {
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
+            {activeTab === "stats" && <StatsTab roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
         </main>
     );
 }
