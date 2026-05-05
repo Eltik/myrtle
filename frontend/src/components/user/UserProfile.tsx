@@ -7,6 +7,7 @@ import { userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, us
 import { Hero } from "./impl/Hero";
 import { ProfileTabs } from "./impl/ProfileTabs";
 import { StatStrip } from "./impl/StatStrip";
+import { ItemsTab } from "./impl/tabs/Items/ItemsTab";
 import { RosterTab } from "./impl/tabs/Roster/RosterTab";
 
 export type TabId = "roster" | "inventory" | "stats" | "score";
@@ -117,6 +118,7 @@ export function UserProfile() {
             <StatStrip profile={data} rosterCount={roster?.length} />
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
+            {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
         </main>
     );
 }
