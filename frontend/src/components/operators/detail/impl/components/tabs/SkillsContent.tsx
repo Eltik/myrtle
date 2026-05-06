@@ -79,7 +79,8 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
         return (
             <div className="flex flex-col items-center justify-center gap-4 p-16 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} role="img" aria-label="No skills">
+                        <title>No skills</title>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                 </div>

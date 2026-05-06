@@ -54,7 +54,8 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         totalByProfession[op.profession] = (totalByProfession[op.profession] ?? 0) + 1;
 
         if (op.subProfessionId) {
-            const subTotals = (totalBySubProfession[op.profession] ??= {});
+            totalBySubProfession[op.profession] ??= {};
+            const subTotals = totalBySubProfession[op.profession];
             subTotals[op.subProfessionId] = (subTotals[op.subProfessionId] ?? 0) + 1;
         }
     }
@@ -84,7 +85,8 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         ownedByProfession[staticOp.profession] = (ownedByProfession[staticOp.profession] ?? 0) + 1;
 
         if (staticOp.subProfessionId) {
-            const subOwned = (ownedBySubProfession[staticOp.profession] ??= {});
+            ownedBySubProfession[staticOp.profession] ??= {};
+            const subOwned = ownedBySubProfession[staticOp.profession];
             subOwned[staticOp.subProfessionId] = (subOwned[staticOp.subProfessionId] ?? 0) + 1;
         }
 

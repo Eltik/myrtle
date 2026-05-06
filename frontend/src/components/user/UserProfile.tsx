@@ -13,6 +13,19 @@ import { StatsTab } from "./impl/tabs/Stats/StatsTab";
 
 export type TabId = "roster" | "inventory" | "stats" | "score";
 
+const SKELETON_TAG_WIDTHS = [
+    { id: "tag-1", width: 64 },
+    { id: "tag-2", width: 80 },
+    { id: "tag-3", width: 72 },
+    { id: "tag-4", width: 88 },
+    { id: "tag-5", width: 76 },
+    { id: "tag-6", width: 84 },
+    { id: "tag-7", width: 80 },
+    { id: "tag-8", width: 92 },
+] as const;
+
+const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
+
 export function UserProfile() {
     const { id } = useParams({ from: "/user/$id" });
     const [activeTab, setActiveTab] = useState<TabId>("roster");
@@ -20,7 +33,7 @@ export function UserProfile() {
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
-    const { data: score } = useQuery(userScoreQueryOptions(id));
+    useQuery(userScoreQueryOptions(id));
     const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
     const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
 
@@ -86,14 +99,14 @@ export function UserProfile() {
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {[64, 80, 72, 88, 76, 84, 80, 92].map((w, i) => (
-                            <Skeleton key={i} className="h-8 rounded-full" style={{ width: `${w}px` }} />
+                        {SKELETON_TAG_WIDTHS.map(({ id, width }) => (
+                            <Skeleton className="h-8 rounded-full" key={id} style={{ width: `${width}px` }} />
                         ))}
                     </div>
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2.5">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                        <Skeleton key={i} className="aspect-3/4 w-full rounded-xl" />
+                    {SKELETON_GRID_IDS.map((id) => (
+                        <Skeleton className="aspect-3/4 w-full rounded-xl" key={id} />
                     ))}
                 </div>
             </main>
