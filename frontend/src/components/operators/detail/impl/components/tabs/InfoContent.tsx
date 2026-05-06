@@ -14,6 +14,7 @@ import type { IOperatorListItem } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
 import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
+import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
 
@@ -130,6 +131,10 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                     </div>
                 </CollapsibleContent>
             </Collapsible>
+
+            <Separator className="my-6" />
+
+            <OperatorNotes operatorId={operator.id ?? null} />
 
             <Separator className="my-6" />
 
