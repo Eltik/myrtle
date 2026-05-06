@@ -9,6 +9,7 @@ import { ProfileTabs } from "./impl/ProfileTabs";
 import { StatStrip } from "./impl/StatStrip";
 import { ItemsTab } from "./impl/tabs/Items/ItemsTab";
 import { RosterTab } from "./impl/tabs/Roster/RosterTab";
+import { ScoreTab } from "./impl/tabs/Score/ScoreTab";
 import { StatsTab } from "./impl/tabs/Stats/StatsTab";
 
 export type TabId = "roster" | "inventory" | "stats" | "score";
@@ -33,7 +34,7 @@ export function UserProfile() {
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
-    useQuery(userScoreQueryOptions(id));
+    const { data: score, isLoading: isScoreLoading } = useQuery(userScoreQueryOptions(id));
     const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
     const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
 
@@ -134,6 +135,7 @@ export function UserProfile() {
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
             {activeTab === "stats" && <StatsTab roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+            {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} />}
         </main>
     );
 }
