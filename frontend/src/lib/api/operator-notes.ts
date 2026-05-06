@@ -30,6 +30,26 @@ export function operatorNotesListQueryOptions() {
     });
 }
 
+export const getOperatorNoteFn = createServerFn({ method: "GET" })
+    .inputValidator((operatorId: string) => operatorId)
+    .handler(async ({ data: operatorId }) => {
+        const res = await backendFetch(`/operator-notes/${encodeURIComponent(operatorId)}`);
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            throw new Error(`Failed to load operator note: ${res.status}`);
+        }
+        return (await res.json()) as IOperatorNote;
+    });
+
+export function operatorNoteQueryOptions(operatorId: string) {
+    return queryOptions({
+        queryKey: ["operator-notes", "detail", operatorId],
+        queryFn: () => getOperatorNoteFn({ data: operatorId }),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
+}
+
 export function noteHasContent(note: IOperatorNote): boolean {
     if (note.pros?.trim()) return true;
     if (note.cons?.trim()) return true;

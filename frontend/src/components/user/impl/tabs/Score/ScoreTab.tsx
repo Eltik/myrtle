@@ -18,7 +18,7 @@ export function ScoreTab({ score, isLoading }: IScoreTabProps) {
         <div className="flex flex-col gap-3 pb-8">
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
                 <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-muted-foreground">Beta</span>
-                <span className="text-[12px] text-muted-foreground">Scoring is subject to change.</span>
+                <span className="text-[12px] text-muted-foreground">Scoring is subject to change and in the very early stages of development.</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
                 <OverallGradeCard score={score} />
