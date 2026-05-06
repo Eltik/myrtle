@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
@@ -42,6 +43,11 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserSearchRoute = UserSearchRouteImport.update({
+  id: '/user/search',
+  path: '/user/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UserIdRoute = UserIdRouteImport.update({
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/_authed/settings': typeof AuthedSettingsRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/operators/$id'
     | '/user/$id'
+    | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/operators/$id'
     | '/user/$id'
+    | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   id:
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/_authed/settings'
     | '/operators_/$id'
     | '/user/$id'
+    | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   fileRoutesById: FileRoutesById
@@ -150,6 +162,7 @@ export interface RootRouteChildren {
   OperatorsRoute: typeof OperatorsRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   UserIdRoute: typeof UserIdRoute
+  UserSearchRoute: typeof UserSearchRoute
   ApiOgDefaultRoute: typeof ApiOgDefaultRoute
   ApiOgKindIdRoute: typeof ApiOgKindIdRoute
 }
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/search': {
+      id: '/user/search'
+      path: '/user/search'
+      fullPath: '/user/search'
+      preLoaderRoute: typeof UserSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/user/$id': {
@@ -248,6 +268,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsRoute: OperatorsRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   UserIdRoute: UserIdRoute,
+  UserSearchRoute: UserSearchRoute,
   ApiOgDefaultRoute: ApiOgDefaultRoute,
   ApiOgKindIdRoute: ApiOgKindIdRoute,
 }

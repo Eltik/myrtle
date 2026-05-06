@@ -4,14 +4,16 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::{
-    app::{error::ApiError, extractors::pagination::Pagination, services, state::AppState},
-    database::models::user::UserProfile,
+use crate::app::{
+    error::ApiError,
+    extractors::pagination::Pagination,
+    services::{self, search::SearchPage},
+    state::AppState,
 };
 
 #[derive(Deserialize)]
 pub struct SearchParams {
-    pub q: String,
+    pub q: Option<String>,
     #[serde(flatten)]
     pub pagination: Pagination,
 }
@@ -19,13 +21,14 @@ pub struct SearchParams {
 pub async fn search(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,
-) -> Result<Json<Vec<UserProfile>>, ApiError> {
-    let results = services::search::search_users(
+) -> Result<Json<SearchPage>, ApiError> {
+    let q = params.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
+    let page = services::search::search_users(
         &state,
-        &params.q,
+        q,
         params.pagination.limit(),
         params.pagination.offset(),
     )
     .await?;
-    Ok(Json(results))
+    Ok(Json(page))
 }

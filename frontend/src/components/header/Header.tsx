@@ -29,8 +29,15 @@ export default function Header() {
         return [
             { href: "/", label: "Home" },
             { href: "/operators", label: "Operators" },
+            {
+                href: "/user",
+                label: "Players",
+                items: [
+                    { href: "/user/search", label: "Search", desc: "Find Doctor profiles by nickname or UID", icon: "search" },
+                    { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
+                ],
+            },
             { href: "/tools", label: "Tools", items: toolItems },
-            { href: "/about", label: "About" },
         ];
     }, [isMac]);
 
