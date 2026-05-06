@@ -151,3 +151,94 @@ export function userScoreQueryOptions(uid: string) {
         gcTime: 5 * 60 * 1000,
     });
 }
+
+export interface ISearchUsersInput {
+    q?: string;
+    limit?: number;
+    offset?: number;
+}
+
+export interface ISearchPage {
+    entries: IUserProfile[];
+    total: number;
+}
+
+export const searchUsersFn = createServerFn({ method: "GET" })
+    .inputValidator((data: ISearchUsersInput) => data)
+    .handler(async ({ data: { q, limit, offset } }) => {
+        const params = new URLSearchParams();
+        if (q) params.set("q", q);
+        if (limit !== undefined) params.set("limit", String(limit));
+        if (offset !== undefined) params.set("offset", String(offset));
+
+        const res = await backendFetch(`/search?${params.toString()}`);
+        if (!res.ok) throw new Error(`Failed to search users: ${res.status}`);
+        return (await res.json()) as ISearchPage;
+    });
+
+export function searchUsersQueryOptions(input: ISearchUsersInput) {
+    return queryOptions({
+        queryKey: ["user", "search", input.q ?? null, input.limit ?? null, input.offset ?? null],
+        queryFn: () => searchUsersFn({ data: input }),
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export interface ILeaderboardEntry {
+    id: string;
+    uid: string;
+    nickname: string | null;
+    nick_number: string | null;
+    level: number | null;
+    avatar_id: string | null;
+    secretary: string | null;
+    secretary_skin_id: string | null;
+    server: string;
+    total_score: number | null;
+    grade: string | null;
+    operator_score: number | null;
+    stage_score: number | null;
+    roguelike_score: number | null;
+    sandbox_score: number | null;
+    medal_score: number | null;
+    base_score: number | null;
+    skin_score: number | null;
+    rank_global: number | null;
+    rank_server: number | null;
+}
+
+export interface ILeaderboardPage {
+    entries: ILeaderboardEntry[];
+    total: number;
+}
+
+export interface ILeaderboardInput {
+    sort?: string;
+    server?: string;
+    limit?: number;
+    offset?: number;
+}
+
+export const getLeaderboardFn = createServerFn({ method: "GET" })
+    .inputValidator((data: ILeaderboardInput) => data)
+    .handler(async ({ data: { sort, server, limit, offset } }) => {
+        const params = new URLSearchParams();
+        if (sort) params.set("sort", sort);
+        if (server) params.set("server", server);
+        if (limit !== undefined) params.set("limit", String(limit));
+        if (offset !== undefined) params.set("offset", String(offset));
+
+        const res = await backendFetch(`/leaderboard?${params.toString()}`);
+        if (!res.ok) throw new Error(`Failed to load leaderboard: ${res.status}`);
+        return (await res.json()) as ILeaderboardPage;
+    });
+
+export function leaderboardQueryOptions(input: ILeaderboardInput = {}) {
+    return queryOptions({
+        queryKey: ["user", "leaderboard", input.sort ?? null, input.server ?? null, input.limit ?? null, input.offset ?? null],
+        queryFn: () => getLeaderboardFn({ data: input }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}

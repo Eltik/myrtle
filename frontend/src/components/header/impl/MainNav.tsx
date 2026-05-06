@@ -60,6 +60,21 @@ function ToolsIcon({ name }: { name: string }) {
                     <path d="M12 22V12" />
                 </svg>
             );
+        case "search":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.5-3.5" />
+                </svg>
+            );
+        case "trophy":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <path d="M6 4h12v3a6 6 0 1 1-12 0V4z" />
+                    <path d="M6 6H4a2 2 0 0 0 2 4M18 6h2a2 2 0 0 1-2 4" />
+                    <path d="M9 17h6M10 17v3h4v-3M8 20h8" />
+                </svg>
+            );
         default:
             return null;
     }
@@ -79,6 +94,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     };
 
     const isMac = useIsMac();
+    const hasIcons = item.items?.some((t) => t.icon);
 
     return (
         // biome-ignore lint/a11y/noStaticElementInteractions: hover timers supplement the already-accessible DropdownMenu
@@ -88,12 +104,12 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                     {item.label}
                     <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className="min-w-95 p-2" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-                    <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">Tools</div>
+                <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")} onMouseEnter={openNow} onMouseLeave={closeSoon}>
+                    <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{item.label}</div>
                     <div className="flex flex-col gap-px">
                         {item.items?.map((t) => (
                             <Link key={t.href} to={t.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors hover:bg-accent" onClick={() => setOpen(false)}>
-                                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolsIcon name={t.icon} />}</span>
+                                {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolsIcon name={t.icon} />}</span>}
                                 <span className="flex min-w-0 flex-1 flex-col gap-0.75">
                                     <span className="font-sans text-[13px] font-medium leading-none tracking-tight text-foreground">{t.label}</span>
                                     {t.desc && <span className="font-sans text-[11.5px] leading-snug text-muted-foreground">{t.desc}</span>}
@@ -108,22 +124,24 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                             </Link>
                         ))}
                     </div>
-                    <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-white/5 px-3 pt-2.5 pb-2 font-sans text-[11.5px] leading-none text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium">
-                            Press <Kbd>{modKey(isMac)}</Kbd>
-                            <Kbd>K</Kbd> for all commands
-                        </span>
-                        <button
-                            type="button"
-                            className="cursor-pointer border-none bg-transparent p-0 font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]"
-                            onClick={() => {
-                                setOpen(false);
-                                onOpenCommand?.();
-                            }}
-                        >
-                            Open palette →
-                        </button>
-                    </div>
+                    {hasIcons && (
+                        <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-white/5 px-3 pt-2.5 pb-2 font-sans text-[11.5px] leading-none text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium">
+                                Press <Kbd>{modKey(isMac)}</Kbd>
+                                <Kbd>K</Kbd> for all commands
+                            </span>
+                            <button
+                                type="button"
+                                className="cursor-pointer border-none bg-transparent p-0 font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]"
+                                onClick={() => {
+                                    setOpen(false);
+                                    onOpenCommand?.();
+                                }}
+                            >
+                                Open palette →
+                            </button>
+                        </div>
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
