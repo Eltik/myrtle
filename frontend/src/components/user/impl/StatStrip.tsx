@@ -33,27 +33,18 @@ function formatCompact(value: string | number | null) {
 
 function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
     const interactive = typeof onClick === "function";
-    return (
-        <div
-            onClick={onClick}
-            role={interactive ? "button" : undefined}
-            tabIndex={interactive ? 0 : undefined}
-            onKeyDown={
-                interactive
-                    ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              onClick?.();
-                          }
-                      }
-                    : undefined
-            }
-            className={cn("group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl", "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-200", "hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]", interactive && "cursor-pointer select-none")}
-            style={{
-                padding: "clamp(0.75rem, 1.2vw + 0.5rem, 1.25rem)",
-                gap: "clamp(0.375rem, 0.4vw + 0.25rem, 0.625rem)",
-            }}
-        >
+    const className = cn(
+        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl text-left",
+        "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-200",
+        "hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]",
+        interactive && "cursor-pointer select-none",
+    );
+    const style = {
+        padding: "clamp(0.75rem, 1.2vw + 0.5rem, 1.25rem)",
+        gap: "clamp(0.375rem, 0.4vw + 0.25rem, 0.625rem)",
+    };
+    const inner = (
+        <>
             {accent && <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-px h-px bg-linear-to-r from-transparent via-primary/60 to-transparent" />}
             <div className="flex items-center gap-1.5 sm:gap-2">
                 {live && (
@@ -99,6 +90,19 @@ function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatt
             >
                 {sub}
             </p>
+        </>
+    );
+
+    if (interactive) {
+        return (
+            <button className={className} onClick={onClick} style={style} type="button">
+                {inner}
+            </button>
+        );
+    }
+    return (
+        <div className={className} style={style}>
+            {inner}
         </div>
     );
 }
