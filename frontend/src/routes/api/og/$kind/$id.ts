@@ -30,8 +30,9 @@ export const Route = createFileRoute("/api/og/$kind/$id")({
                     status: 200,
                     headers: {
                         "Content-Type": "image/png",
-                        // Hash-versioned URL → safe to cache forever at the edge.
-                        "Cache-Control": "public, max-age=31536000, immutable",
+                        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+                        "CDN-Cache-Control": "public, max-age=31536000, immutable",
+                        "Vercel-CDN-Cache-Control": "public, max-age=31536000, immutable, stale-while-revalidate=86400",
                         ETag: `"${hash}"`,
                     },
                 });
