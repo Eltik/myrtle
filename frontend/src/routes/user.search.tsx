@@ -1,5 +1,5 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
-import { UserSearch } from "#/components/user/UserSearch";
+import { UserSearch } from "#/components/user/search/UserSearch";
 import { seo } from "#/lib/seo";
 
 const SEARCH_DEFAULTS = { q: "", page: 1 } as const;

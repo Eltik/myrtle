@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { UserProfile } from "#/components/user/UserProfile";
+import { UserProfile } from "#/components/user/profile/UserProfile";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { userQueryOptions, userRosterQueryOptions } from "#/lib/api/user";
 import { ogURL } from "#/lib/og/impl/url";

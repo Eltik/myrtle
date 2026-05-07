@@ -4,15 +4,14 @@ import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
-import { Hero } from "./impl/Hero";
-import { ProfileTabs } from "./impl/ProfileTabs";
-import { StatStrip } from "./impl/StatStrip";
-import { ItemsTab } from "./impl/tabs/Items/ItemsTab";
-import { RosterTab } from "./impl/tabs/Roster/RosterTab";
-import { ScoreTab } from "./impl/tabs/Score/ScoreTab";
-import { StatsTab } from "./impl/tabs/Stats/StatsTab";
-
-export type TabId = "roster" | "inventory" | "stats" | "score";
+import { Hero } from "./impl/components/Hero";
+import { ProfileTabs } from "./impl/components/ProfileTabs";
+import { StatStrip } from "./impl/components/StatStrip";
+import { ItemsTab } from "./impl/components/tabs/Items/ItemsTab";
+import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
+import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
+import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
+import type { TabId } from "./impl/types";
 
 const SKELETON_TAG_WIDTHS = [
     { id: "tag-1", width: 64 },
