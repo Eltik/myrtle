@@ -1,38 +1,56 @@
-import { MoreHorizontal, Share2 } from "lucide-react";
+import { Copy, Hash, ImageIcon, MoreHorizontal, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { toastManager } from "#/components/ui/toast";
+import { ogURL } from "#/lib/og/impl/url";
 import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
-import { getAvatarSkinId } from "#/lib/utils";
+import { getAvatarById } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import shared from "./shared.module.css";
+
+const DEFAULT_AVATAR_ID = "char_002_amiya";
 
 interface IHeroProps {
     profile: IUserProfile;
 }
 
+async function copyToClipboard(text: string, successTitle: string, successDescription: string, errorTitle: string) {
+    try {
+        await navigator.clipboard.writeText(text);
+        toastManager.add({
+            id: `copy-${Date.now()}`,
+            title: successTitle,
+            description: successDescription,
+            type: "success",
+        });
+    } catch {
+        toastManager.add({
+            id: `copy-error-${Date.now()}`,
+            title: errorTitle,
+            description: "Clipboard access was denied.",
+            type: "error",
+        });
+    }
+}
+
 export function Hero({ profile }: IHeroProps) {
     const [avatarErrored, setAvatarErrored] = useState(false);
     const levelProgress = getLevelProgress(profile.level, profile.exp);
+    const avatarSrc = getAvatarById(profile.avatar_id ?? DEFAULT_AVATAR_ID);
 
-    const handleShare = async () => {
-        const url = window.location.href;
-        try {
-            await navigator.clipboard.writeText(url);
-            toastManager.add({
-                id: "share-success",
-                title: "Link copied",
-                description: "Profile link copied to clipboard.",
-                type: "success",
-            });
-        } catch {
-            toastManager.add({
-                id: "share-error",
-                title: "Couldn't copy link",
-                description: "Clipboard access was denied.",
-                type: "error",
-            });
-        }
+    const handleShare = () => copyToClipboard(window.location.href, "Link copied", "Profile link copied to clipboard.", "Couldn't copy link");
+
+    const handleCopyUid = () => copyToClipboard(profile.uid, "UID copied", `${profile.uid} copied to clipboard.`, "Couldn't copy UID");
+
+    const handleOpenOgImage = () => {
+        const ogImageUrl = ogURL("user", profile.uid, {
+            nickname: profile.nickname ?? "Doctor",
+            level: profile.level,
+            grade: profile.grade,
+            totalScore: profile.total_score,
+        });
+        window.open(ogImageUrl, "_blank", "noopener,noreferrer");
     };
 
     return (
@@ -66,7 +84,7 @@ export function Hero({ profile }: IHeroProps) {
                         ) : (
                             <img
                                 alt={profile.nickname ?? profile.uid}
-                                src={getAvatarSkinId(profile)}
+                                src={avatarSrc}
                                 onLoad={(e) => {
                                     if (e.currentTarget.naturalWidth === 0) setAvatarErrored(true);
                                 }}
@@ -83,9 +101,28 @@ export function Hero({ profile }: IHeroProps) {
                         <Share2 className="size-3.5" />
                         <span className="hidden xs:inline sm:inline">Share</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-8" aria-label="More options">
-                        <MoreHorizontal className="size-3.5" />
-                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger>
+                            <Button variant="ghost" size="icon" className="size-8" aria-label="More options">
+                                <MoreHorizontal className="size-3.5" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem onClick={handleCopyUid} className="cursor-pointer">
+                                <Hash className="size-3.5 text-muted-foreground" />
+                                Copy UID
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
+                                <Copy className="size-3.5 text-muted-foreground" />
+                                Copy profile link
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleOpenOgImage} className="cursor-pointer">
+                                <ImageIcon className="size-3.5 text-muted-foreground" />
+                                Open share image
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {/* Main info: spans full width on mobile, normal column on sm+ */}
