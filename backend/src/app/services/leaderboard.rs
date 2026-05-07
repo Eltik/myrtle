@@ -27,7 +27,8 @@ pub async fn get_leaderboard(
     let key = CacheKey::Leaderboard {
         sort: sort_by,
         server,
-        page: offset / limit,
+        limit,
+        offset,
     };
     if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);

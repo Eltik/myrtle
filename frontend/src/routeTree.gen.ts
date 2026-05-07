@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
+import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
@@ -42,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
 const UserSearchRoute = UserSearchRouteImport.update({
   id: '/user/search',
   path: '/user/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UserLeaderboardRoute = UserLeaderboardRouteImport.update({
+  id: '/user/leaderboard',
+  path: '/user/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UserIdRoute = UserIdRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthedSettingsRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/_authed/settings': typeof AuthedSettingsRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
+  '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/operators/$id'
     | '/user/$id'
+    | '/user/leaderboard'
     | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/operators/$id'
     | '/user/$id'
+    | '/user/leaderboard'
     | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/_authed/settings'
     | '/operators_/$id'
     | '/user/$id'
+    | '/user/leaderboard'
     | '/user/search'
     | '/api/og/default'
     | '/api/og/$kind/$id'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   OperatorsRoute: typeof OperatorsRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   UserIdRoute: typeof UserIdRoute
+  UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
   ApiOgDefaultRoute: typeof ApiOgDefaultRoute
   ApiOgKindIdRoute: typeof ApiOgKindIdRoute
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/user/search'
       fullPath: '/user/search'
       preLoaderRoute: typeof UserSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/user/leaderboard': {
+      id: '/user/leaderboard'
+      path: '/user/leaderboard'
+      fullPath: '/user/leaderboard'
+      preLoaderRoute: typeof UserLeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/user/$id': {
@@ -247,6 +267,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsRoute: OperatorsRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   UserIdRoute: UserIdRoute,
+  UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,
   ApiOgDefaultRoute: ApiOgDefaultRoute,
   ApiOgKindIdRoute: ApiOgKindIdRoute,
