@@ -4,11 +4,14 @@ use axum::{
 };
 use serde::Deserialize;
 
-use crate::app::{
-    error::ApiError,
-    extractors::pagination::Pagination,
-    services::{self, leaderboard::LeaderboardPage},
-    state::AppState,
+use crate::{
+    app::{
+        error::ApiError,
+        extractors::pagination::Pagination,
+        services::{self, leaderboard::LeaderboardPage},
+        state::AppState,
+    },
+    database::models::score::{LeaderboardMover, PlayerStanding, ServerShare},
 };
 
 #[derive(Deserialize)]
@@ -33,4 +36,69 @@ pub async fn leaderboard(
     )
     .await?;
     Ok(Json(page))
+}
+
+#[derive(Deserialize)]
+pub struct MoversParams {
+    pub direction: Option<String>, // "up" (default) or "down"
+    pub interval: Option<String>,  // "1 day", "7 days" (default), "30 days"
+    pub server: Option<String>,
+    pub limit: Option<u32>,
+}
+
+pub async fn top_movers(
+    State(state): State<AppState>,
+    Query(params): Query<MoversParams>,
+) -> Result<Json<Vec<LeaderboardMover>>, ApiError> {
+    let direction = params.direction.as_deref().unwrap_or("up");
+    if direction != "up" && direction != "down" {
+        return Err(ApiError::BadRequest(
+            "direction must be 'up' or 'down'".into(),
+        ));
+    }
+    let interval = params.interval.as_deref().unwrap_or("7 days");
+    if !matches!(interval, "1 day" | "7 days" | "30 days") {
+        return Err(ApiError::BadRequest("invalid interval".into()));
+    }
+    let limit = params.limit.unwrap_or(50).min(100);
+    let movers = services::leaderboard::get_top_movers(
+        &state,
+        direction,
+        interval,
+        params.server.as_deref(),
+        limit,
+    )
+    .await?;
+    Ok(Json(movers))
+}
+
+#[derive(Deserialize)]
+pub struct DistributionParams {
+    pub top: Option<u32>,
+}
+
+pub async fn distribution(
+    State(state): State<AppState>,
+    Query(params): Query<DistributionParams>,
+) -> Result<Json<Vec<ServerShare>>, ApiError> {
+    let top_n = params.top.unwrap_or(250).min(10_000);
+    let dist = services::leaderboard::get_distribution(&state, top_n).await?;
+    Ok(Json(dist))
+}
+
+#[derive(Deserialize)]
+pub struct StandingParams {
+    pub uid: String,
+    pub server: String,
+    pub window: Option<u32>,
+}
+
+pub async fn standing(
+    State(state): State<AppState>,
+    Query(params): Query<StandingParams>,
+) -> Result<Json<PlayerStanding>, ApiError> {
+    let window = params.window.unwrap_or(5).min(50);
+    let standing =
+        services::leaderboard::get_standing(&state, &params.uid, &params.server, window).await?;
+    Ok(Json(standing))
 }

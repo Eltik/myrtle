@@ -84,8 +84,9 @@ async fn main() {
     // Spawn DPS formula auto-update watcher (polls GitHub for upstream changes)
     backend::core::dps_watcher::spawn(state.clone());
 
-    // Spawn tier list trending cron job
+    // Spawn cron jobs
     backend::core::trending_job::spawn(state.clone());
+    backend::core::leaderboard_snapshot_job::spawn(state.clone());
 
     backend::app::server::run(state)
         .await
