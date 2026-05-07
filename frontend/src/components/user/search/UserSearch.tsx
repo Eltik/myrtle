@@ -1,33 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Search, Trophy, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
-import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
-import { Card } from "#/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
-import { Skeleton } from "#/components/ui/skeleton";
 import { searchUsersQueryOptions } from "#/lib/api/user";
-import { formatNumber, getAvatarById } from "#/lib/utils";
+import { formatNumber } from "#/lib/utils";
 import { Route } from "#/routes/user.search";
-import type { IUserProfile } from "#/types/user";
-
-const PAGE_SIZE = 24;
-const DEFAULT_AVATAR_ID = "char_002_amiya";
-
-type DisplayUser = Pick<IUserProfile, "uid" | "nickname" | "level" | "avatar_id" | "server" | "grade" | "total_score" | "operator_count" | "skin_count">;
-
-function useDebounce<T>(value: T, delay: number): T {
-    const [debounced, setDebounced] = useState(value);
-    useEffect(() => {
-        const id = setTimeout(() => setDebounced(value), delay);
-        return () => clearTimeout(id);
-    }, [value, delay]);
-    return debounced;
-}
+import { UserCard } from "./impl/components/UserCard";
+import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
+import { PAGE_SIZE } from "./impl/constants";
+import type { DisplayUser } from "./impl/types";
+import { useDebounce } from "./impl/useDebounce";
 
 export function UserSearch() {
     const { q: initialQ, page: initialPage } = Route.useSearch();
@@ -177,99 +163,5 @@ export function UserSearch() {
                 {!isLoading && users.length > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
             </div>
         </div>
-    );
-}
-
-function UserCard({ user }: { user: DisplayUser }) {
-    const nickname = user.nickname ?? `Doctor ${user.uid}`;
-    const initials = (user.nickname ?? user.uid).slice(0, 2).toUpperCase();
-    const avatarSrc = getAvatarById(user.avatar_id ?? DEFAULT_AVATAR_ID);
-
-    return (
-        <Card className="group transition-shadow duration-150 hover:shadow-md">
-            <Link to="/user/$id" params={{ id: user.uid }} className="flex items-center gap-3.5 px-4 py-3.5 no-underline">
-                <Avatar className="h-14 w-14 shrink-0 rounded-xl border border-border transition-transform duration-200 group-hover:scale-105">
-                    <AvatarImage src={avatarSrc} alt={nickname} />
-                    <AvatarFallback className="rounded-xl text-sm">{initials}</AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 truncate">
-                        <span className="truncate font-sans text-[14px] font-semibold leading-snug text-foreground transition-colors duration-150 group-hover:text-primary">{nickname}</span>
-                        {user.grade && (
-                            <Badge variant="outline" size="sm" className="font-mono">
-                                {user.grade}
-                            </Badge>
-                        )}
-                    </div>
-
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="font-mono text-[11px] leading-none text-muted-foreground tabular-nums">{user.uid}</span>
-                        <Badge variant="secondary" size="sm" className="font-mono uppercase">
-                            {user.server}
-                        </Badge>
-                    </div>
-
-                    <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] leading-none text-muted-foreground">
-                        {user.level != null && (
-                            <span>
-                                <span className="font-medium text-foreground">Lv {user.level}</span>
-                            </span>
-                        )}
-                        {user.total_score != null && (
-                            <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.total_score)}</span> pts
-                            </span>
-                        )}
-                        {user.operator_count != null && (
-                            <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.operator_count)}</span> ops
-                            </span>
-                        )}
-                        {user.skin_count != null && (
-                            <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.skin_count)}</span> skins
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
-        </Card>
-    );
-}
-
-function UserGridSkeleton() {
-    return (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: PAGE_SIZE }, (_, i) => `skel-${i}`).map((id) => (
-                <UserCardSkeleton key={id} />
-            ))}
-        </div>
-    );
-}
-
-function UserCardSkeleton() {
-    return (
-        <Card>
-            <div className="flex items-center gap-3.5 px-4 py-3.5">
-                <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
-                <div className="min-w-0 flex-1 flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5">
-                        <Skeleton className="h-3.5 w-28 rounded-md" />
-                        <Skeleton className="h-4 w-8 rounded-full" />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <Skeleton className="h-2.5 w-16 rounded" />
-                        <Skeleton className="h-3.5 w-10 rounded-sm" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-2.5 w-12 rounded" />
-                        <Skeleton className="h-2.5 w-20 rounded" />
-                    </div>
-                </div>
-            </div>
-        </Card>
     );
 }

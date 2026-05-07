@@ -1,6 +1,6 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
 import { cn } from "#/lib/utils";
-import type { TabId } from "../UserProfile";
+import type { TabId } from "../types";
 import styles from "./ProfileTabs.module.css";
 
 interface Tab {
