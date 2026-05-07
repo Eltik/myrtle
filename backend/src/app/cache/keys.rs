@@ -13,7 +13,8 @@ pub enum CacheKey<'a> {
     Leaderboard {
         sort: &'a str,
         server: Option<&'a str>,
-        page: u32,
+        limit: u32,
+        offset: u32,
     },
     Search {
         query_hash: u64,
@@ -59,9 +60,14 @@ impl CacheKey<'_> {
             } => {
                 format!("static:{resource}:{fields_hash}:{page}")
             }
-            CacheKey::Leaderboard { sort, server, page } => {
+            CacheKey::Leaderboard {
+                sort,
+                server,
+                limit,
+                offset,
+            } => {
                 let srv = server.unwrap_or("all");
-                format!("leaderboard:{sort}:{srv}:{page}")
+                format!("leaderboard:{sort}:{srv}:{limit}:{offset}")
             }
             CacheKey::Search { query_hash } => format!("search:{query_hash}"),
             CacheKey::TierList { slug } => format!("tierlist:{slug}"),
