@@ -32,6 +32,19 @@ pub enum CacheKey<'a> {
         top_n: u32,
         include_timing: bool,
     },
+    LeaderboardMovers {
+        direction: &'a str,
+        interval: &'a str,
+        server: Option<&'a str>,
+    },
+    LeaderboardDistribution {
+        top_n: u32,
+    },
+    LeaderboardStanding {
+        uid: &'a str,
+        server: &'a str,
+        window: u32,
+    },
 }
 
 impl CacheKey<'_> {
@@ -59,6 +72,25 @@ impl CacheKey<'_> {
                 top_n,
                 include_timing,
             } => format!("gacha:enhanced_stats:{top_n}:{include_timing}"),
+            CacheKey::LeaderboardMovers {
+                direction,
+                interval,
+                server,
+            } => {
+                let srv = server.unwrap_or("all");
+                let i = interval.replace(' ', "_");
+                format!("leaderboard:movers:{direction}:{i}:{srv}")
+            }
+            CacheKey::LeaderboardDistribution { top_n } => {
+                format!("leaderboard:distribution:{top_n}")
+            }
+            CacheKey::LeaderboardStanding {
+                uid,
+                server,
+                window,
+            } => {
+                format!("leaderboard:standing:{server}:{uid}:{window}")
+            }
         }
     }
 
@@ -74,6 +106,9 @@ impl CacheKey<'_> {
             CacheKey::PortalSession { .. } => Duration::from_secs(604800), // 1 week
             CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
             CacheKey::GachaEnhancedStats { .. } => Duration::from_secs(600), // 10 min
+            CacheKey::LeaderboardMovers { .. } => Duration::from_secs(900), // 15 min
+            CacheKey::LeaderboardDistribution { .. } => Duration::from_secs(600), // 10 min
+            CacheKey::LeaderboardStanding { .. } => Duration::from_secs(60), // 1 min
         }
     }
 }

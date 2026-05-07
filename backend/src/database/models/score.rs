@@ -44,3 +44,31 @@ pub struct UserScore {
     pub grade: Option<String>,
     pub calculated_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct LeaderboardMover {
+    pub uid: String,
+    pub nickname: Option<String>,
+    pub nick_number: Option<String>,
+    pub avatar_id: Option<String>,
+    pub server: String,
+    pub current_rank: i64,
+    pub previous_rank: i64,
+    pub rank_delta: i64, // positive = climbed
+    pub current_score: Option<f64>,
+    pub score_delta: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ServerShare {
+    pub server: String,
+    pub players: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PlayerStanding {
+    pub player: LeaderboardEntry,
+    pub neighbors: Vec<LeaderboardEntry>,
+    pub percentile: f64,            // 0.0 = top, 1.0 = bottom
+    pub rank_delta_7d: Option<i64>, // None if no baseline
+}
