@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import type { IDatePullData, IDayOfWeekPullData, IHourlyPullData, IPullTimingData } from "#/lib/api/gacha";
 import styles from "./CommunityPage.module.css";
@@ -115,6 +116,24 @@ function ActivityChart({ data, days, color, height }: { data: number[]; days: st
 
     const fillId = "ac-fill-gacha-community";
 
+    const plotRef = useRef<HTMLDivElement>(null);
+    const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (data.length === 0 || !plotRef.current) return;
+        const rect = plotRef.current.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        setHoverIdx(data.length > 1 ? Math.round(ratio * (data.length - 1)) : 0);
+    };
+    const onPointerLeave = () => setHoverIdx(null);
+
+    const plotInnerH = Math.max(0, height - PAD_T - PAD_B);
+    const hoverLeftPct = hoverIdx != null && data.length > 1 ? (hoverIdx / (data.length - 1)) * 100 : hoverIdx != null ? 50 : 0;
+    const hoverTopPx = hoverIdx != null ? PAD_T + (1 - data[hoverIdx] / max) * plotInnerH : 0;
+    // Flip the card horizontally near the edges so it doesn't clip.
+    const cardTransform = hoverIdx == null ? "" : hoverLeftPct < 12 ? "translate(0, calc(-100% - 10px))" : hoverLeftPct > 88 ? "translate(-100%, calc(-100% - 10px))" : "translate(-50%, calc(-100% - 10px))";
+
     return (
         <div className={styles.activityChart} style={{ height }}>
             <div className={styles.acYaxis} style={{ paddingTop: PAD_T, paddingBottom: PAD_B }}>
@@ -124,7 +143,7 @@ function ActivityChart({ data, days, color, height }: { data: number[]; days: st
                     </span>
                 ))}
             </div>
-            <div className={styles.acPlot} style={{ paddingTop: PAD_T, paddingBottom: PAD_B }}>
+            <div className={styles.acPlot} style={{ paddingTop: PAD_T, paddingBottom: PAD_B }} ref={plotRef} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
                 <svg viewBox={`0 0 ${VBW} ${VBH}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block", overflow: "visible" }} role="presentation" aria-hidden="true">
                     <defs>
                         <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
@@ -152,6 +171,20 @@ function ActivityChart({ data, days, color, height }: { data: number[]; days: st
                     {data.length > 0 ? <path d={`${linePath(data)} L ${VBW} ${VBH} L 0 ${VBH} Z`} fill={`url(#${fillId})`} /> : null}
                     {data.length > 0 ? <path d={linePath(data)} fill="none" stroke={color} strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" /> : null}
                 </svg>
+                {hoverIdx != null ? (
+                    <>
+                        <div className={styles.acGuide} style={{ left: `${hoverLeftPct}%`, top: PAD_T, bottom: PAD_B }} />
+                        <div className={styles.acDot} style={{ left: `${hoverLeftPct}%`, top: hoverTopPx, background: color }} />
+                        <div className={styles.acHoverCard} style={{ left: `${hoverLeftPct}%`, top: hoverTopPx, transform: cardTransform }}>
+                            <div className={styles.acHoverCardDate}>{days[hoverIdx]}</div>
+                            <div className={styles.acHoverCardValue}>
+                                <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: color }} />
+                                {data[hoverIdx].toLocaleString()}
+                                <span className={styles.acHoverCardLabel}>pulls</span>
+                            </div>
+                        </div>
+                    </>
+                ) : null}
                 <div className={styles.acXaxis}>
                     {xTickIdx.map((idx) => {
                         const left = days.length > 1 ? (idx / (days.length - 1)) * 100 : 0;

@@ -210,6 +210,77 @@
     white-space: nowrap;
     line-height: 1;
 }
+.acGuide {
+    position: absolute;
+    width: 1px;
+    background: var(--border);
+    pointer-events: none;
+    transform: translateX(-50%);
+}
+.acDot {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 2px var(--card);
+    pointer-events: none;
+    transition:
+        left 60ms ease-out,
+        top 60ms ease-out;
+}
+.acHoverCard {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+    background: var(--popover);
+    color: var(--popover-foreground);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px 8px;
+    box-shadow:
+        0 6px 16px -8px rgb(0 0 0 / 0.18),
+        0 1px 2px rgb(0 0 0 / 0.06);
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    transition:
+        left 60ms ease-out,
+        top 60ms ease-out;
+}
+.acHoverCardDate {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted-foreground);
+    margin-bottom: 3px;
+}
+.acHoverCardValue {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.acHoverCardSwatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.acHoverCardLabel {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted-foreground);
+    margin-left: 1px;
+}
 
 .pageAmbient {
     position: fixed;
