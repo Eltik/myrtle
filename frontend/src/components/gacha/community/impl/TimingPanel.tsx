@@ -11,11 +11,11 @@ export function TimingPanel({ timing }: ITimingPanelProps) {
     if (!timing) return null;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[22px_24px]">
-            <header className="flex items-start justify-between gap-4">
+        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+            <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">Pull timing</Kicker>
-                    <h2 className="m-0 font-sans text-[22px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance">When the community pulls.</h2>
+                    <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance sm:text-[22px]">When the community pulls.</h2>
                 </div>
                 <div className="inline-flex items-center gap-3.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
                     <span className="inline-flex items-center">

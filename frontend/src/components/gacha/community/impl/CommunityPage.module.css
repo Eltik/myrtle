@@ -84,6 +84,15 @@
     gap: 4px;
     height: 130px;
 }
+@media (max-width: 520px) {
+    .hourGrid {
+        gap: 2px;
+        height: 110px;
+    }
+    .hourLabel {
+        font-size: 7.5px;
+    }
+}
 .hourCell {
     display: flex;
     flex-direction: column;
