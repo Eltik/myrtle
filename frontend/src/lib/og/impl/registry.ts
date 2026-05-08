@@ -7,6 +7,7 @@ import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumb
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
+import { DEFAULT_OG_PRESETS } from "./presets";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
@@ -294,21 +295,22 @@ const userHandler: IOgHandler<IUserOgData> = {
     template: (data) => UserTemplate(data),
 };
 
-const DEFAULT_HASH_VERSION = "v4";
+const DEFAULT_HASH_VERSION = "v5";
 
-// Canonical id for the site-wide fallback OG image. Anything else passed to
-// the dynamic /api/og/default/$id route is treated as a literal (encoded) title.
+// Canonical id for the site-wide fallback OG image. Slugs registered in
+// DEFAULT_OG_PRESETS resolve to their preset; anything else is treated as a
+// literal (URL-encoded) title for one-off pages.
 export const DEFAULT_OG_ID = "_root";
-const DEFAULT_OG_TITLE = "Operator data, rosters, and tier lists.";
 
 const defaultHandler: IOgHandler<IDefaultOgData> = {
-    fetch: async (id) => ({
-        title: id === DEFAULT_OG_ID ? DEFAULT_OG_TITLE : decodeURIComponent(id),
-        subtitle: undefined,
-    }),
-    hash: (data) => ogHash(["default", DEFAULT_HASH_VERSION, data.title, data.subtitle ?? ""]),
+    fetch: async (id) => {
+        const preset = (DEFAULT_OG_PRESETS as Record<string, IDefaultOgData>)[id];
+        if (preset) return preset;
+        return { title: decodeURIComponent(id) };
+    },
+    hash: (data) => ogHash(["default", DEFAULT_HASH_VERSION, data.title, data.subtitle ?? "", data.activeTag ?? ""]),
     template: (data) => DefaultTemplate(data),
-    listIds: async () => [DEFAULT_OG_ID],
+    listIds: async () => Object.keys(DEFAULT_OG_PRESETS),
 };
 
 export const ogRegistry = {

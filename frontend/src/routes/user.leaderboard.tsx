@@ -1,6 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { type LeaderboardScope, SERVERS, type ServerCode } from "#/components/user/leaderboard/impl/constants";
 import { Leaderboard } from "#/components/user/leaderboard/Leaderboard";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 interface ILeaderboardSearch {
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/user/leaderboard")({
             title: "Leaderboard",
             description: "Top Doctors ranked by score across servers.",
             path: "/user/leaderboard",
+            image: defaultOgURL("user-leaderboard"),
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

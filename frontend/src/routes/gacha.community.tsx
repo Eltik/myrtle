@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { CommunityPage } from "#/components/gacha/community/CommunityPage";
 import { gachaEnhancedStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/gacha/community")({
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/gacha/community")({
             title: "Gacha · Community",
             description: "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in doctors.",
             path: "/gacha/community",
+            image: defaultOgURL("gacha-community"),
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

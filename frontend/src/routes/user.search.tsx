@@ -1,5 +1,6 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { UserSearch } from "#/components/user/search/UserSearch";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 const SEARCH_DEFAULTS = { q: "", page: 1 } as const;
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/user/search")({
             title: "Search Doctors",
             description: "Find and browse user profiles.",
             path: "/user/search",
+            image: defaultOgURL("user-search"),
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

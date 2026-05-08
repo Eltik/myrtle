@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { OperatorsList } from "#/components/operators/list/Operators";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/operators")({
@@ -12,6 +13,8 @@ export const Route = createFileRoute("/operators")({
         const { meta, links } = seo({
             title: "Operators",
             description: "View all operators released in Arknights.",
+            path: "/operators",
+            image: defaultOgURL("operators"),
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],
