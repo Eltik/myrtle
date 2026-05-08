@@ -1,11 +1,20 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
+use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::yostar::AccountPortalSession;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::queries::gacha;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+/// Look up a char_id's canonical rarity from game data. The Yostar API echoes a
+/// `star` value with each pull, but it has been wrong/stale in the past, so we
+/// always prefer the value from `character_table`. Returns `None` if the char
+/// isn't in game data — callers may fall back to whatever the API reported.
+pub fn rarity_from_gamedata(gd: &GameData, char_id: &str) -> Option<i16> {
+    gd.operators.get(char_id).map(|op| op.rarity.to_star_int())
+}
 
 #[derive(Deserialize)]
 pub struct GachaApiResponse {
@@ -31,8 +40,8 @@ pub struct GachaApiItem {
 }
 
 impl GachaApiItem {
-    /// Parse the "star" string ("6", "5", etc.) to i16 rarity
-    fn rarity(&self) -> i16 {
+    /// Fallback rarity from the Yostar `star` field if game data has no entry.
+    fn api_rarity(&self) -> i16 {
         self.star.parse().unwrap_or(3)
     }
 
@@ -53,12 +62,22 @@ impl GachaApiItem {
         }
     }
 
-    /// Convert to the JSONB shape that sp_insert_gacha_batch expects
-    fn to_record_json(&self) -> serde_json::Value {
+    /// Convert to the JSONB shape that `sp_insert_gacha_batch` expects.
+    /// Rarity is sourced from game data (`character_table`) keyed on `char_id`;
+    /// the `star` field from the Yostar API is only used as a fallback.
+    fn to_record_json(&self, gd: &GameData) -> serde_json::Value {
+        let rarity = rarity_from_gamedata(gd, &self.char_id).unwrap_or_else(|| {
+            tracing::warn!(
+                char_id = %self.char_id,
+                star = %self.star,
+                "char_id missing from game data; falling back to API star value"
+            );
+            self.api_rarity()
+        });
         serde_json::json!({
             "char_id": self.char_id,
             "pool_id": self.pool_id,
-            "rarity": self.rarity(),
+            "rarity": rarity,
             "pull_timestamp": self.at,
             "pool_name": self.pool_name,
             "gacha_type": self.gacha_type(),
@@ -153,8 +172,11 @@ pub async fn fetch_and_store(
         });
     }
 
-    let records_json: Vec<serde_json::Value> =
-        all_items.iter().map(|item| item.to_record_json()).collect();
+    let gd = state.game_data.load();
+    let records_json: Vec<serde_json::Value> = all_items
+        .iter()
+        .map(|item| item.to_record_json(&gd))
+        .collect();
 
     let records_value =
         serde_json::to_value(&records_json).map_err(|e| ApiError::Internal(e.into()))?;
