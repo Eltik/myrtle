@@ -16,6 +16,7 @@ pub mod operator_notes;
 pub mod operators;
 pub mod roster;
 pub mod search;
+pub mod social;
 pub mod static_data;
 pub mod stats;
 pub mod tier_lists;
@@ -74,5 +75,7 @@ pub fn router() -> Router<AppState> {
             "/operator-notes/{operator_id}/audit",
             get(operator_notes::audit_log),
         )
+        .route("/friends", get(social::get_friends))
+        .route("/players/search", get(social::search_players))
         .merge(tier_lists::router())
 }
