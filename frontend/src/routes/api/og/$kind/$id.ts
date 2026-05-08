@@ -1,42 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { readCache, writeCache } from "#/lib/og/impl/cache";
-import { getHandler } from "#/lib/og/impl/registry";
-import { renderOgPng } from "#/lib/og/impl/render";
+import { ogResponse } from "#/lib/og/impl/respond";
 
 export const Route = createFileRoute("/api/og/$kind/$id")({
     server: {
         handlers: {
-            GET: async ({ params }) => {
-                const { kind, id } = params;
-                const handler = getHandler(kind);
-
-                const data = await handler.fetch(id);
-                if (!data) return new Response("Not found", { status: 404 });
-
-                const hash = handler.hash(data);
-
-                let png = await readCache(kind, id, hash);
-                if (!png) {
-                    try {
-                        png = await renderOgPng(handler.template(data));
-                        await writeCache(kind, id, hash, png);
-                    } catch (err) {
-                        console.error(`[og] render failed for ${kind}/${id}:`, err);
-                        return new Response("Render failed", { status: 500 });
-                    }
-                }
-
-                return new Response(new Uint8Array(png), {
-                    status: 200,
-                    headers: {
-                        "Content-Type": "image/png",
-                        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
-                        "CDN-Cache-Control": "public, max-age=31536000, immutable",
-                        "Vercel-CDN-Cache-Control": "public, max-age=31536000, immutable, stale-while-revalidate=86400",
-                        ETag: `"${hash}"`,
-                    },
-                });
-            },
+            GET: ({ params }) => ogResponse({ kind: params.kind, fetchId: params.id }),
         },
     },
 });

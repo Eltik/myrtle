@@ -7,3 +7,8 @@ export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(t
     const hash = handler.hash(data as any);
     return `${OG_CONFIG.siteURL}/api/og/${kind}/${encodeURIComponent(id)}?v=${hash}`;
 }
+
+export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0]): void {
+    if (typeof window !== "undefined") return;
+    fetch(ogURL(kind, id, data)).catch(() => {});
+}
