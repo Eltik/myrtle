@@ -37,6 +37,14 @@ export default function Header() {
                     { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
                 ],
             },
+            {
+                href: "/gacha",
+                label: "Gacha",
+                items: [
+                    { href: "/gacha/community", label: "Community", desc: "Pull rates, top operators, and timing across opted-in doctors", icon: "users" },
+                    { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
+                ],
+            },
             { href: "/tools", label: "Tools", items: toolItems },
         ];
     }, [isMac]);

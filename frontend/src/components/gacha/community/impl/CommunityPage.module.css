@@ -1,0 +1,228 @@
+.sectionBar {
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in oklch, var(--background) 60%, transparent);
+}
+.sectionBarInner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 10px 32px;
+    gap: 24px;
+}
+.crumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted-foreground);
+}
+.crumbs svg {
+    opacity: 0.5;
+}
+.crumb:hover {
+    color: var(--foreground);
+}
+.crumbCurrent {
+    color: var(--foreground);
+}
+.subNav {
+    display: flex;
+    gap: 2px;
+}
+.subLink {
+    position: relative;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    border-radius: 7px;
+    transition:
+        color 160ms ease,
+        background-color 160ms ease;
+}
+.subLink:hover {
+    color: var(--foreground);
+}
+.subLink:hover:is(:global(.dark) *) {
+    background: oklch(0.22 0.005 285 / 0.5);
+}
+.subLink:hover:not(*:is(:global(.dark) *)) {
+    background: rgb(130 129 129 / 0.18);
+}
+.subLinkActive {
+    color: var(--foreground);
+}
+.subLinkActive::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: -11px;
+    height: 2px;
+    background: var(--primary);
+    border-radius: 1px;
+}
+
+@media (max-width: 760px) {
+    .sectionBarInner {
+        padding: 10px 16px;
+    }
+    .subNav {
+        display: none;
+    }
+}
+
+.hourGrid {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    align-items: flex-end;
+    gap: 4px;
+    height: 130px;
+}
+.hourCell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 6px;
+    position: relative;
+}
+.hourBar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    transition: filter 0.15s;
+}
+.hourCell:hover .hourBar {
+    filter: brightness(1.25);
+}
+.hourLabel {
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+}
+
+.dowList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dowRow {
+    display: grid;
+    grid-template-columns: 36px 1fr 56px;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+}
+.dowName {
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10.5px;
+}
+.dowBar {
+    height: 10px;
+    background: oklch(0.88 0.005 285);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.dowBar:is(:global(.dark) *) {
+    background: oklch(0.22 0.005 285);
+}
+.dowBar > div {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--primary), oklch(0.78 0.16 25));
+}
+.dowPct {
+    color: var(--muted-foreground);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.activityChart {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+    width: 100%;
+}
+.acYaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.acYtick {
+    transform: translateY(-50%);
+}
+.acYtick:first-child {
+    transform: translateY(0);
+}
+.acYtick:last-child {
+    transform: translateY(0);
+}
+.acPlot {
+    position: relative;
+    min-width: 0;
+    height: 100%;
+}
+.acPlot > svg {
+    height: calc(100% - 32px); /* PAD_T(8) + PAD_B(24) */
+}
+.acXaxis {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+}
+.acXtick {
+    position: absolute;
+    top: 6px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.pageAmbient {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 50% at 0% 0%, oklch(0.58 0.22 25 / 0.06), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.04), transparent 70%);
+}
+
+.dotPulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: oklch(0.78 0.18 152);
+    box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.5);
+    animation: pulseDot 1.6s ease-out infinite;
+}
+@keyframes pulseDot {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.6);
+    }
+    50% {
+        box-shadow: 0 0 0 5px oklch(0.78 0.18 152 / 0);
+    }
+}
