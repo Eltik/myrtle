@@ -17,6 +17,7 @@ import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
+import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
@@ -61,6 +62,11 @@ const OperatorsIdRoute = OperatorsIdRouteImport.update({
   path: '/operators/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GachaHistoryRoute = GachaHistoryRouteImport.update({
+  id: '/gacha/history',
+  path: '/gacha/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GachaCommunityRoute = GachaCommunityRouteImport.update({
   id: '/gacha/community',
   path: '/gacha/community',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
+  '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/operators': typeof OperatorsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
+  '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/operators': typeof OperatorsRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
+  '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/settings'
     | '/gacha/community'
+    | '/gacha/history'
     | '/operators/$id'
     | '/user/$id'
     | '/user/leaderboard'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/settings'
     | '/gacha/community'
+    | '/gacha/history'
     | '/operators/$id'
     | '/user/$id'
     | '/user/leaderboard'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/operators'
     | '/_authed/settings'
     | '/gacha/community'
+    | '/gacha/history'
     | '/operators_/$id'
     | '/user/$id'
     | '/user/leaderboard'
@@ -172,6 +184,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OperatorsRoute: typeof OperatorsRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
+  GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperatorsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gacha/history': {
+      id: '/gacha/history'
+      path: '/gacha/history'
+      fullPath: '/gacha/history'
+      preLoaderRoute: typeof GachaHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gacha/community': {
       id: '/gacha/community'
       path: '/gacha/community'
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OperatorsRoute: OperatorsRoute,
   GachaCommunityRoute: GachaCommunityRoute,
+  GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,

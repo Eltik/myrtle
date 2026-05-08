@@ -178,6 +178,76 @@ export interface IGachaRecords {
     special: IGachaTypeRecords;
 }
 
+/**
+ * Client-side 4-bucket grouping derived from `IGachaItem.typeName`.
+ *
+ * Backend merges `limited`+`linkage` into the wire-level "limited" bucket and
+ * `single`+`boot` into "special", but they have meaningfully different pity rules
+ * and rate-up semantics (e.g. linkage has a 120-pull hard guarantee), so the UI
+ * separates them.
+ */
+export type ClientGachaGroup = "limited" | "linkage" | "regular" | "special";
+
+export interface IClientGachaTypeRecords {
+    gacha_type: ClientGachaGroup;
+    records: IGachaItem[];
+    total: number;
+}
+
+export interface IClientGachaRecords {
+    limited: IClientGachaTypeRecords;
+    linkage: IClientGachaTypeRecords;
+    regular: IClientGachaTypeRecords;
+    special: IClientGachaTypeRecords;
+}
+
+/**
+ * Classify a record by its `pool_id` prefix (the same logic the backend uses
+ * during ingestion). `typeName` is consulted only as a fallback for older rows
+ * whose pool_id may not match a known prefix.
+ */
+export function classifyClientGachaGroup(item: { poolId: string; typeName: string }): ClientGachaGroup {
+    const id = item.poolId ?? "";
+    if (id.startsWith("LIMITED_")) return "limited";
+    if (id.startsWith("LINKAGE_")) return "linkage";
+    // FESCLASSIC_ is the festival/anniversary kernel banner — same pool as CLASSIC_/BOOT_.
+    if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_") || id.startsWith("BOOT_")) return "special";
+    if (id.startsWith("SINGLE_") || id.startsWith("NORM_")) return "regular";
+
+    switch (item.typeName) {
+        case "limited":
+            return "limited";
+        case "linkage":
+            return "linkage";
+        case "classic":
+        case "boot":
+            return "special";
+        default:
+            // "single" (debut/rerun rate-up) and "normal" (standard headhunting) both belong here.
+            return "regular";
+    }
+}
+
+export function deriveClientGachaRecords(records: IGachaRecords): IClientGachaRecords {
+    const buckets: Record<ClientGachaGroup, IGachaItem[]> = {
+        limited: [],
+        linkage: [],
+        regular: [],
+        special: [],
+    };
+
+    for (const item of [...records.limited.records, ...records.regular.records, ...records.special.records]) {
+        buckets[classifyClientGachaGroup(item)].push(item);
+    }
+
+    return {
+        limited: { gacha_type: "limited", records: buckets.limited, total: buckets.limited.length },
+        linkage: { gacha_type: "linkage", records: buckets.linkage, total: buckets.linkage.length },
+        regular: { gacha_type: "regular", records: buckets.regular, total: buckets.regular.length },
+        special: { gacha_type: "special", records: buckets.special, total: buckets.special.length },
+    };
+}
+
 export interface IGachaPaginationInfo {
     limit: number;
     offset: number;
@@ -273,6 +343,28 @@ export function gachaStoredRecordsQueryOptions(bearerToken?: string) {
     return queryOptions({
         queryKey: ["gacha", "stored-records", bearerToken ? "auth" : "anon"],
         queryFn: () => getGachaStoredRecordsFn({ data: { bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/** Server fn variant that pulls the auth cookie automatically. Returns null when unauthenticated. */
+export const getMyGachaStoredRecordsFn = createServerFn({ method: "GET" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) return null;
+    const res = await backendFetch("/gacha/stored-records", { bearerToken: token });
+    if (!res.ok) {
+        if (res.status === 401) return null;
+        throw new Error(`Failed to load stored gacha records: ${res.status}`);
+    }
+    return (await res.json()) as IGachaRecords;
+});
+
+export function myGachaStoredRecordsQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["gacha", "my-stored-records", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getMyGachaStoredRecordsFn() : Promise.resolve(null)),
+        enabled: authed,
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
@@ -382,3 +474,23 @@ export const fetchGachaRecordsFn = createServerFn({ method: "POST" })
         if (!res.ok) throw new Error(`Failed to fetch gacha records: ${res.status}`);
         return (await res.json()) as IGachaFetchResult;
     });
+
+/**
+ * Cookie-driven variant. Triggers `/gacha/fetch` (POST) which pulls the latest
+ * pulls from Yostar and persists any new ones. Requires a live portal session
+ * cached server-side from a recent login.
+ */
+export const fetchMyGachaRecordsFn = createServerFn({ method: "POST" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) throw new Error("Not signed in.");
+    const res = await backendFetch("/gacha/fetch", {
+        method: "POST",
+        bearerToken: token,
+        body: "{}",
+    });
+    if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || `Failed to refresh gacha records: ${res.status}`);
+    }
+    return (await res.json()) as IGachaFetchResult;
+});
