@@ -16,13 +16,13 @@ interface IStatCardProps {
 }
 
 function formatValue(value: string | number | null) {
-    if (value === null || value === undefined) return "—";
+    if (value === null || value === undefined) return "-";
     if (typeof value === "number") return value.toLocaleString();
     return value;
 }
 
 function formatCompact(value: string | number | null) {
-    if (value === null || value === undefined) return "—";
+    if (value === null || value === undefined) return "-";
     if (typeof value !== "number") return value;
     const abs = Math.abs(value);
     const sign = value < 0 ? "-" : "";
@@ -71,7 +71,7 @@ function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatt
                 }}
             >
                 {unformatted ? (
-                    (value ?? "—")
+                    (value ?? "-")
                 ) : compactOnMobile ? (
                     <>
                         <span className="sm:hidden">{formatCompact(value)}</span>

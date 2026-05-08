@@ -67,7 +67,7 @@ function MedalistRow({ entry, rank }: { entry: LeaderboardEntry; rank: number })
                 </div>
                 <div className="flex items-center gap-2.5 font-mono tabular-nums">
                     <GradeBadge grade={entry.grade} className="size-8 text-sm" />
-                    <span className="font-mono text-[17px] font-bold leading-none text-foreground tabular-nums">{entry.total_score == null ? "—" : formatNumber(entry.total_score)}</span>
+                    <span className="font-mono text-[17px] font-bold leading-none text-foreground tabular-nums">{entry.total_score == null ? "-" : formatNumber(entry.total_score)}</span>
                 </div>
             </div>
         </Link>
@@ -87,7 +87,7 @@ function MedalistSkeleton({ rank, loading }: { rank: number; loading?: boolean }
                     <span className="h-3.5 w-32 rounded bg-muted" />
                     <span className="h-2.5 w-20 rounded bg-muted/70" />
                 </div>
-                <span className="font-mono text-[11px] uppercase leading-none tracking-[0.14em] text-muted-foreground">{loading ? "Loading…" : "—"}</span>
+                <span className="font-mono text-[11px] uppercase leading-none tracking-[0.14em] text-muted-foreground">{loading ? "Loading…" : "-"}</span>
             </div>
         </div>
     );

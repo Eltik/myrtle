@@ -14,7 +14,7 @@ const EXCLUDED_MODULE_KEYS = ["uniequip_000", "uniequip_001"];
 
 /**
  * Investment-weighted score for ranking the top operators.
- * Weights are intentionally rough — they only have to produce a sensible
+ * Weights are intentionally rough - they only have to produce a sensible
  * ordering for the showcase.
  */
 const SCORE_WEIGHTS = {

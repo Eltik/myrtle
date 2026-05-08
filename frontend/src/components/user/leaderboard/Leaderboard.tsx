@@ -106,7 +106,7 @@ export function Leaderboard() {
                         {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} referenceScore={referenceScore} isLoading={isLoading} />}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
                             <span className="font-mono text-xs leading-none text-muted-foreground tabular-nums">
-                                Showing {start}–{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
+                                Showing {start}-{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
                             </span>
                             <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} className="mt-0" />
                         </div>

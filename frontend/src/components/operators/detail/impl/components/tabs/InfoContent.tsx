@@ -52,7 +52,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
     const stats = useMemo(() => getOperatorAttributeStats(operator, { phaseIndex, favorPoint: trustLevel, potentialRank, moduleId, moduleLevel }, level), [operator, phaseIndex, level, trustLevel, potentialRank, moduleId, moduleLevel]);
 
-    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : (n ?? "—"));
+    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : (n ?? "-"));
 
     const leftStats: Stat[] = [
         { iconURL: "/stat-icons/HP.png", label: "Health", value: fmt(stats?.maxHp) },

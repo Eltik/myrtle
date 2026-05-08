@@ -30,7 +30,7 @@ export function OverallGradeCard({ score }: IOverallGradeCardProps) {
                                 color,
                             }}
                         >
-                            {score.grade ?? "—"}
+                            {score.grade ?? "-"}
                         </span>
                         <div className="flex flex-col gap-0.5">
                             <span className="font-bold text-2xl tabular-nums leading-none" style={{ color }}>

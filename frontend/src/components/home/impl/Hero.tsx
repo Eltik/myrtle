@@ -16,9 +16,9 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
     const { data: stats } = useQuery(statsQueryOptions());
 
     const heroStats = [
-        { v: stats ? stats.gameData.operators.toString() : "—", l: "operators" },
-        { v: stats ? stats.tierLists.active.toString() : "—", l: "tier lists" },
-        { v: stats ? formatNumberCompact(stats.rosters.total) : "—", l: "rosters synced" },
+        { v: stats ? stats.gameData.operators.toString() : "-", l: "operators" },
+        { v: stats ? stats.tierLists.active.toString() : "-", l: "tier lists" },
+        { v: stats ? formatNumberCompact(stats.rosters.total) : "-", l: "rosters synced" },
     ];
 
     const isMac = useIsMac();

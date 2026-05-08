@@ -9,9 +9,9 @@ interface IHeroProps {
 }
 
 function formatRelative(iso: string | null): string {
-    if (!iso) return "—";
+    if (!iso) return "-";
     const ts = Date.parse(iso);
-    if (Number.isNaN(ts)) return "—";
+    if (Number.isNaN(ts)) return "-";
     const seconds = Math.max(0, Math.floor((Date.now() - ts) / 1000));
     if (seconds < 60) return "moments ago";
     const minutes = Math.floor(seconds / 60);
@@ -45,9 +45,9 @@ export function Hero({ rankedDoctors, topScore, updatedAt, isLoading }: IHeroPro
                 </div>
 
                 <div className="flex items-center gap-4 self-center sm:gap-5">
-                    <HeroStat label="Doctors ranked" value={rankedDoctors == null ? "—" : formatNumberCompact(rankedDoctors)} loading={isLoading} />
+                    <HeroStat label="Doctors ranked" value={rankedDoctors == null ? "-" : formatNumberCompact(rankedDoctors)} loading={isLoading} />
                     <span aria-hidden className="h-10 w-px bg-border" />
-                    <HeroStat label="Top score" value={topScore == null ? "—" : formatNumberCompact(topScore)} loading={isLoading} />
+                    <HeroStat label="Top score" value={topScore == null ? "-" : formatNumberCompact(topScore)} loading={isLoading} />
                     <span aria-hidden className="h-10 w-px bg-border" />
                     <HeroStat label="Updated" value={formatRelative(updatedAt)} small loading={isLoading} />
                 </div>

@@ -19,7 +19,7 @@ export function ItemIcon({ item, size = 64, className = "" }: IItemIconProps) {
     const url = itemIconUrl(item.iconId, item.item_id);
     const initials =
         item.name
-            .replace(/[-–]/g, " ")
+            .replace(/[--]/g, " ")
             .split(" ")
             .filter(Boolean)
             .slice(0, 2)

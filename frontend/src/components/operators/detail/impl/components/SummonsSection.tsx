@@ -20,7 +20,7 @@ const POSITION_LABEL: Record<string, string> = {
     MELEE: "Melee",
     RANGED: "Ranged",
     ALL: "Melee/Ranged",
-    NONE: "—",
+    NONE: "-",
 };
 
 export function SummonsSection({ drones, parentPhaseIndex, parentLevel }: ISummonsSectionProps) {
@@ -89,7 +89,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) 
     const avatarSrc = drone.id ? getAvatarById(drone.id) : null;
     const positionLabel = POSITION_LABEL[drone.position] ?? drone.position;
 
-    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : "—");
+    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : "-");
 
     const leftStats = [
         { iconURL: "/stat-icons/HP.png", label: "Health", value: fmt(stats?.maxHp) },
