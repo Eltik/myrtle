@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import type { SatoriOptions } from "satori";
 import { OG_CONFIG } from "./config";
 
@@ -50,11 +49,7 @@ async function loadFonts(): Promise<FontInput[]> {
 }
 
 async function loadSource(source: string): Promise<ArrayBuffer> {
-    if (/^https?:\/\//i.test(source)) {
-        const res = await fetch(source);
-        if (!res.ok) throw new Error(`Failed to fetch font ${source}: ${res.status}`);
-        return res.arrayBuffer();
-    }
-    const buf = await readFile(source);
-    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    const res = await fetch(source);
+    if (!res.ok) throw new Error(`Failed to fetch font ${source}: ${res.status}`);
+    return res.arrayBuffer();
 }

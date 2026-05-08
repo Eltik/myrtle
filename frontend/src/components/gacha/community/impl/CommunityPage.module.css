@@ -82,12 +82,13 @@
     grid-template-columns: repeat(24, 1fr);
     align-items: flex-end;
     gap: 4px;
-    height: 130px;
+    flex: 1;
+    min-height: 130px;
 }
 @media (max-width: 520px) {
     .hourGrid {
         gap: 2px;
-        height: 110px;
+        min-height: 110px;
     }
     .hourLabel {
         font-size: 7.5px;

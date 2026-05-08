@@ -181,14 +181,26 @@ pub async fn refresh(
     let mut session: AuthSession = serde_json::from_str(&session_json)
         .map_err(|_| ApiError::BadRequest("invalid game session".into()))?;
 
-    let response = auth_request(
+    let response = match auth_request(
         &state.http_client,
         "account/syncData",
         Some(&serde_json::json!({"platform": 1})),
         &mut session,
         server,
     )
-    .await?;
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::warn!(
+                uid = %user_id,
+                server = server.as_str(),
+                error = ?e,
+                "yostar refresh (account/syncData) failed"
+            );
+            return Err(e.into());
+        }
+    };
 
     let bytes = response
         .bytes()

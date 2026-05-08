@@ -18,6 +18,8 @@ export interface IGachaCollectiveStats {
     totalFiveStars: number;
     totalFourStars: number;
     totalThreeStars: number;
+    /** Unix seconds. Omitted by the server when the corpus is empty. */
+    firstPullAt?: number;
 }
 
 export interface IGachaPullRates {
@@ -129,7 +131,9 @@ export interface IGachaStats {
     six_star_count: number | null;
     five_star_count: number | null;
     four_star_count: number | null;
+    /** Unix milliseconds (sourced from Yostar's `at` field, which is ms). */
     first_pull: number | null;
+    /** Unix milliseconds (sourced from Yostar's `at` field, which is ms). */
     last_pull: number | null;
 }
 
@@ -142,7 +146,7 @@ export interface IGachaRecordEntry {
     poolId: string;
     poolName: string;
     gachaType: string;
-    /** Unix seconds. */
+    /** Unix milliseconds (Yostar's `at` field, persisted as-is). Multiply by `* 1` (no-op) for `new Date(...)`. */
     pullTimestamp: number;
     pullTimestampStr: string | null;
 }
@@ -155,7 +159,7 @@ export interface IGachaItem {
     poolId: string;
     poolName: string;
     typeName: string;
-    /** Unix seconds. */
+    /** Unix milliseconds (Yostar's `at` field, persisted as-is). Pass directly to `new Date(...)`. */
     at: number;
     atStr: string;
 }
@@ -199,9 +203,9 @@ export interface IGachaHistoryInput {
     rarity?: number;
     gachaType?: string;
     charId?: string;
-    /** Unix seconds, inclusive. */
+    /** Unix milliseconds, inclusive. Matched directly against `gacha_records.pull_timestamp` (also ms). */
     from?: number;
-    /** Unix seconds, inclusive. */
+    /** Unix milliseconds, inclusive. Matched directly against `gacha_records.pull_timestamp` (also ms). */
     to?: number;
     order?: "asc" | "desc";
     limit?: number;

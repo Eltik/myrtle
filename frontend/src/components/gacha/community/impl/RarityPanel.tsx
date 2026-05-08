@@ -82,7 +82,7 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
                 })}
             </div>
 
-            <Legend />
+            <Legend showPersonal={showPersonal} />
         </section>
     );
 }
@@ -168,15 +168,17 @@ function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData 
     );
 }
 
-function Legend() {
+function Legend({ showPersonal }: { showPersonal: boolean }) {
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
                 <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> advertised
             </span>
-            <span className="inline-flex items-center gap-1.5">
-                <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> you
-            </span>
+            {showPersonal ? (
+                <span className="inline-flex items-center gap-1.5">
+                    <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> you
+                </span>
+            ) : null}
             <span className="opacity-60">comparisons scale to baseline (e.g. 4% vs 2% expected = 200% of expected, not "+2%")</span>
         </div>
     );

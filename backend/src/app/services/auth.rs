@@ -23,7 +23,15 @@ pub fn parse_server(s: &str) -> Result<Server, ApiError> {
 }
 
 pub async fn send_code(state: &AppState, email: &str, server: Server) -> Result<(), ApiError> {
-    yostar::send_code(&state.http_client, email, server).await?;
+    if let Err(e) = yostar::send_code(&state.http_client, email, server).await {
+        tracing::warn!(
+            email = %email,
+            server = server.as_str(),
+            error = ?e,
+            "yostar send_code failed"
+        );
+        return Err(e.into());
+    }
     Ok(())
 }
 
@@ -40,7 +48,18 @@ pub async fn login(
     code: &str,
     server: Server,
 ) -> Result<LoginResponse, ApiError> {
-    let result = session::login(&state.http_client, email, code, server).await?;
+    let result = match session::login(&state.http_client, email, code, server).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::warn!(
+                email = %email,
+                server = server.as_str(),
+                error = ?e,
+                "yostar login failed"
+            );
+            return Err(e.into());
+        }
+    };
     let session_json =
         serde_json::to_string(&result.session).map_err(|e| ApiError::Internal(e.into()))?;
     let uid = &*result.session.uid;
