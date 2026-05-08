@@ -19,17 +19,17 @@ export function RarityPanel({ data }: IRarityPanelProps) {
     const total = cs?.totalPulls ?? 0;
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex items-start justify-between gap-4">
                 <div>
                     <Kicker className="mb-1.5">{cs ? `Outcome mix · ${formatNumberCompact(total)} pulls` : "Outcome mix"}</Kicker>
-                    <h2 className="m-0 font-sans text-[22px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance">Where every pull lands.</h2>
+                    <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance sm:text-[22px]">Where every pull lands.</h2>
                 </div>
             </header>
 
             <div className="grid items-center gap-5.5 grid-cols-[auto_1fr] max-[520px]:grid-cols-1 max-[520px]:justify-items-center">
-                <Donut value={cs?.totalSixStars ?? 0} total={total || 1} label="6★" color="oklch(0.85 0.18 80)" size={140} />
-                <div className="flex min-w-0 flex-col gap-3">
+                <Donut value={cs?.totalSixStars ?? 0} total={total || 1} label="6★" color="oklch(0.85 0.18 80)" />
+                <div className="flex min-w-0 flex-col gap-3 max-[520px]:w-full">
                     {RARITY_ROWS.map((row) => {
                         const count = cs ? cs[row.key] : 0;
                         const frac = total > 0 ? count / total : 0;
@@ -62,18 +62,18 @@ function StackBar({ fillPct, fillColor }: { fillPct: number; fillColor: string }
     );
 }
 
-function Donut({ value, total, label, color, size }: { value: number; total: number; label: string; color: string; size: number }) {
+function Donut({ value, total, label, color }: { value: number; total: number; label: string; color: string }) {
     const r = 42;
     const c = 2 * Math.PI * r;
     const pct = total > 0 ? value / total : 0;
     return (
-        <div className="relative" style={{ width: size, height: size }}>
-            <svg width={size} height={size} viewBox="0 0 100 100" role="presentation" aria-hidden="true">
+        <div className="relative h-30 w-30 sm:h-35 sm:w-35">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" role="presentation" aria-hidden="true">
                 <circle cx="50" cy="50" r={r} stroke="oklch(0.88 0.005 285)" strokeWidth="9" fill="none" className="dark:stroke-[oklch(0.28_0.005_285)]" />
                 <circle cx="50" cy="50" r={r} stroke={color} strokeWidth="9" fill="none" strokeDasharray={`${pct * c} ${c}`} strokeLinecap="round" transform="rotate(-90 50 50)" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-                <div className="font-sans text-[26px] font-bold tracking-[-0.03em] tabular-nums text-foreground">
+                <div className="font-sans text-[22px] font-bold tracking-[-0.03em] tabular-nums text-foreground sm:text-[26px]">
                     {(pct * 100).toFixed(2)}
                     <span className="ml-px font-mono text-xs text-muted-foreground">%</span>
                 </div>

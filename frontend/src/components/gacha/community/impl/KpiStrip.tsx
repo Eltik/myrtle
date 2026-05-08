@@ -15,13 +15,13 @@ interface IKpiProps {
 function Kpi({ label, value, meta, featured }: IKpiProps) {
     return (
         <div
-            className={`relative flex flex-col gap-2.5 px-5 py-4.5 not-last:border-r not-last:border-border max-[1180px]:not-last:border-r-0 max-[1180px]:not-last:border-b max-[1180px]:not-last:border-border max-[1180px]:nth-[2n-1]:border-r max-[1180px]:nth-[2n-1]:border-border ${featured ? "bg-linear-[150deg] from-primary/8 to-transparent" : ""}`}
+            className={`relative flex flex-col gap-2 px-4 py-3.5 not-last:border-r not-last:border-border sm:gap-2.5 sm:px-5 sm:py-4.5 max-[1180px]:not-last:border-r-0 max-[1180px]:not-last:border-b max-[1180px]:not-last:border-border max-[1180px]:nth-[2n-1]:border-r max-[1180px]:nth-[2n-1]:border-border max-[520px]:nth-[2n-1]:border-r-0 ${featured ? "bg-linear-[150deg] from-primary/8 to-transparent" : ""}`}
         >
             <div className="inline-flex items-center gap-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">
                 {featured ? <span className="block h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_3px_oklch(0.58_0.22_25/0.18)]" aria-hidden /> : null}
                 {label}
             </div>
-            <div className={`flex items-baseline gap-1 font-sans text-[42px] font-bold leading-[0.95] tracking-[-0.045em] tabular-nums ${featured ? "text-[oklch(0.92_0.12_25)]" : "text-foreground"}`}>{value}</div>
+            <div className={`flex items-baseline gap-1 font-sans text-[30px] font-bold leading-[0.95] tracking-[-0.04em] tabular-nums sm:text-[36px] sm:tracking-[-0.045em] lg:text-[42px] ${featured ? "text-[oklch(0.92_0.12_25)]" : "text-foreground"}`}>{value}</div>
             <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-muted-foreground">{meta}</div>
         </div>
     );
@@ -34,7 +34,7 @@ export function KpiStrip({ data }: IKpiStripProps) {
     const pr = data?.pullRates;
 
     return (
-        <div className="grid overflow-hidden rounded-[14px] border border-border bg-card grid-cols-[1.4fr_1fr_1fr_1fr] max-[1180px]:grid-cols-2">
+        <div className="grid overflow-hidden rounded-[14px] border border-border bg-card grid-cols-[1.4fr_1fr_1fr_1fr] max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
             <Kpi
                 featured
                 label="6★ rate · all-time"
