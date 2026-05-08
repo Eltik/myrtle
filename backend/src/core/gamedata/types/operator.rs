@@ -50,6 +50,19 @@ pub enum OperatorRarity {
     OneStar,
 }
 
+impl OperatorRarity {
+    pub const fn to_star_int(&self) -> i16 {
+        match self {
+            Self::SixStar => 6,
+            Self::FiveStar => 5,
+            Self::FourStar => 4,
+            Self::ThreeStar => 3,
+            Self::TwoStar => 2,
+            Self::OneStar => 1,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]
