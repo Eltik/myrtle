@@ -296,10 +296,19 @@ const userHandler: IOgHandler<IUserOgData> = {
 
 const DEFAULT_HASH_VERSION = "v4";
 
+// Canonical id for the site-wide fallback OG image. Anything else passed to
+// the dynamic /api/og/default/$id route is treated as a literal (encoded) title.
+export const DEFAULT_OG_ID = "_root";
+const DEFAULT_OG_TITLE = "Operator data, rosters, and tier lists.";
+
 const defaultHandler: IOgHandler<IDefaultOgData> = {
-    fetch: async (id) => ({ title: decodeURIComponent(id), subtitle: undefined }),
+    fetch: async (id) => ({
+        title: id === DEFAULT_OG_ID ? DEFAULT_OG_TITLE : decodeURIComponent(id),
+        subtitle: undefined,
+    }),
     hash: (data) => ogHash(["default", DEFAULT_HASH_VERSION, data.title, data.subtitle ?? ""]),
     template: (data) => DefaultTemplate(data),
+    listIds: async () => [DEFAULT_OG_ID],
 };
 
 export const ogRegistry = {

@@ -7,11 +7,14 @@ export interface SeoInput {
     path?: string;
     type?: "website" | "article" | "profile";
     noindex?: boolean;
+    // Emit a `<link rel="preload" as="image">` for the og:image. Use on pages
+    // that supply their own image; skip when falling back to the site default.
+    preloadImage?: boolean;
 }
 
 export interface SeoOutput {
     meta: Array<{ title?: string; name?: string; property?: string; content?: string }>;
-    links: Array<{ rel: string; href: string }>;
+    links: Array<{ rel: string; href: string; as?: string }>;
 }
 
 export function seo(input: SeoInput): SeoOutput {
@@ -38,10 +41,10 @@ export function seo(input: SeoInput): SeoOutput {
 
     if (input.noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
-    return {
-        meta,
-        links: [{ rel: "canonical", href: url }],
-    };
+    const links: SeoOutput["links"] = [{ rel: "canonical", href: url }];
+    if (input.preloadImage && input.image) links.push({ rel: "preload", as: "image", href: image });
+
+    return { meta, links };
 }
 
 function absolute(pathOrUrl: string): string {
