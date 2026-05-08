@@ -103,7 +103,7 @@ export interface IVoiceLangDictEntry {
 export interface IVoiceLang {
     wordkeys: string[];
     charId: string;
-    /** Keyed by `LangType` (e.g. "JP", "EN") — each entry lists the CV names for that language. */
+    /** Keyed by `LangType` (e.g. "JP", "EN") - each entry lists the CV names for that language. */
     dict: Record<string, IVoiceLangDictEntry>;
 }
 
@@ -129,7 +129,7 @@ export interface IVoice {
 export interface IVoices {
     charWords: Record<string, IVoice>;
     charExtraWords: Record<string, ICharExtraWord>;
-    /** Primary lookup for "voice actors of operator X" — keyed by operator/char id. */
+    /** Primary lookup for "voice actors of operator X" - keyed by operator/char id. */
     voiceLangDict: Record<string, IVoiceLang>;
     defaultLangType: string;
     newTagList: string[];

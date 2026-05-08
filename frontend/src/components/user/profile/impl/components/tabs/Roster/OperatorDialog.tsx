@@ -96,7 +96,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
             const artScale = 1 - progress * 0.08;
             const shadeOpacity = Math.min(0.78, 0.32 + progress * 0.4);
 
-            // Title fades and lifts faster than the image — gone by ~30% scroll
+            // Title fades and lifts faster than the image - gone by ~30% scroll
             const tp = Math.min(1, progress / 0.3);
             const titleY = Math.round(tp * -14);
             const titleOpacity = 1 - tp;

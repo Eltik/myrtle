@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
 
 /** Lightweight community summary. Rates are fractions in [0, 1]. */
@@ -288,6 +289,28 @@ export function gachaStatsQueryOptions(bearerToken?: string) {
     return queryOptions({
         queryKey: ["gacha", "stats", bearerToken ? "auth" : "anon"],
         queryFn: () => getGachaStatsFn({ data: { bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/** Server fn variant that pulls the auth cookie automatically. Returns null when unauthenticated. */
+export const getMyGachaStatsFn = createServerFn({ method: "GET" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) return null;
+    const res = await backendFetch("/gacha/stats", { bearerToken: token });
+    if (!res.ok) {
+        if (res.status === 404 || res.status === 401) return null;
+        throw new Error(`Failed to load gacha stats: ${res.status}`);
+    }
+    return (await res.json()) as IGachaStats;
+});
+
+export function myGachaStatsQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["gacha", "my-stats", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getMyGachaStatsFn() : Promise.resolve(null)),
+        enabled: authed,
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

@@ -5,7 +5,7 @@ export interface IUserSupportSkill {
     iconUrl?: string;
     mastery: number;
     skillLevel: number;
-    /** /textures/arts/specialized_hub/specialized_{mastery}.png — only set when mastery >= 1. */
+    /** /textures/arts/specialized_hub/specialized_{mastery}.png - only set when mastery >= 1. */
     masteryIconUrl?: string;
 }
 
@@ -44,7 +44,7 @@ export interface IUserOgData {
 }
 
 export function UserTemplate(data: IUserOgData) {
-    const { nickname, nickNumber, uid = "—", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
+    const { nickname, nickNumber, uid = "-", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
 
     return (
         <div
@@ -166,7 +166,7 @@ export function UserTemplate(data: IUserOgData) {
                             marginTop: 14,
                         }}
                     >
-                        <div style={{ display: "flex" }}>Lv {level ?? "—"}</div>
+                        <div style={{ display: "flex" }}>Lv {level ?? "-"}</div>
                         <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
                         <div
                             style={{
@@ -181,7 +181,7 @@ export function UserTemplate(data: IUserOgData) {
                                 letterSpacing: "0.05em",
                             }}
                         >
-                            {grade ?? "—"}
+                            {grade ?? "-"}
                         </div>
                         <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
                         <div style={{ display: "flex" }}>{formatNumber(totalScore)} pts</div>

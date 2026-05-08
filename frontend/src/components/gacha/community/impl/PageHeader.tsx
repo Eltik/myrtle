@@ -22,7 +22,7 @@ export function PageHeader({ data, isLoading }: IPageHeaderProps) {
                     What everyone&rsquo;s <em className="not-italic text-primary">pulling</em>.
                 </h1>
                 <p className="m-0 max-w-[60ch] font-sans text-muted-foreground">
-                    Aggregated across <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "—" : `${formatNumber(totalUsers)} doctors`}</strong> who opted into anonymous sharing. Rates are observational, not official.
+                    Aggregated across <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "-" : `${formatNumber(totalUsers)} doctors`}</strong> who opted into anonymous sharing. Rates are observational, not official.
                 </p>
             </div>
             <div className="flex flex-wrap gap-2">

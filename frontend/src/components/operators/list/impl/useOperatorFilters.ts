@@ -68,7 +68,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
         };
     }, [data]);
 
-    // Filter first, then sort — separating the two memos means changing sort
+    // Filter first, then sort - separating the two memos means changing sort
     // doesn't rerun the (more expensive) filter pass.
     const filtered = useMemo(() => {
         const query = filters.searchQuery.trim().toLowerCase();

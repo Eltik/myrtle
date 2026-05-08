@@ -54,7 +54,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
     fetch: async (id) => {
         const res = await backendFetch("/static/operators");
         if (!res.ok) return null;
-        // Backend uses PascalCase for nested phases/skills/etc. — normalize so
+        // Backend uses PascalCase for nested phases/skills/etc. - normalize so
         // we can reach `phases[].attributesKeyFrames[].data.maxHp` etc.
         const map = deepCamelize((await res.json()) as IOperatorsStaticMap);
         const op = (Object.values(map) as IOperatorListItem[]).find((o) => o.id === id);

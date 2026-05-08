@@ -63,7 +63,7 @@ function checkAborted(signal?: AbortSignal): void {
 
 /**
  * Snapshot of mutable spine state that we need to restore after recording.
- * Captured once, restored once — no scattered originalX/originalY locals.
+ * Captured once, restored once - no scattered originalX/originalY locals.
  */
 interface ISpineSnapshot {
     timeScale: number;
@@ -194,7 +194,7 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
     const settings: IExportSettings = { ...DEFAULT_EXPORT_SETTINGS, ...options.settings };
 
     // GIF delays are quantized to 10ms (min 20ms for browser compatibility).
-    // frameDelta MUST equal frameDelayMs / 1000 — otherwise the captured spine
+    // frameDelta MUST equal frameDelayMs / 1000 - otherwise the captured spine
     // state and the GIF playback timeline drift apart.
     const frameDelayMs = Math.max(20, Math.round(1000 / settings.fps / 10) * 10);
     const frameDelta = frameDelayMs / 1000;
@@ -339,7 +339,7 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
             framerate: settings.fps,
         });
 
-        // VideoFrame can take the WebGL canvas directly — the extra 2D context
+        // VideoFrame can take the WebGL canvas directly - the extra 2D context
         // copy in the original code was pure overhead.
         const canvas = ctx.app.view as HTMLCanvasElement;
 

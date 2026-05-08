@@ -76,7 +76,7 @@ function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; refere
         <tr className="group cursor-pointer transition-colors">
             <td className={cellCls}>
                 <Link to="/user/$id" params={{ id: entry.uid }} className="inline-flex min-w-14 items-center font-mono text-sm font-semibold leading-none text-foreground tabular-nums no-underline">
-                    #{entry.rank_global ?? "—"}
+                    #{entry.rank_global ?? "-"}
                 </Link>
             </td>
             <td className={cellCls}>
@@ -99,13 +99,13 @@ function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; refere
             </td>
             <td className={cn(cellCls, "text-right")}>
                 <div className="ml-auto inline-flex min-w-24 flex-col items-end gap-1.5">
-                    <span className="font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">{score == null ? "—" : formatNumber(score)}</span>
+                    <span className="font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">{score == null ? "-" : formatNumber(score)}</span>
                     <span className="relative block h-0.75 w-full overflow-hidden rounded-full bg-muted">
                         <span className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-primary/70 to-primary" style={{ width: `${ratio}%` }} />
                     </span>
                 </div>
             </td>
-            <td className={cn(cellCls, "text-right font-mono text-xs tabular-nums")}>{entry.level == null ? "—" : entry.level}</td>
+            <td className={cn(cellCls, "text-right font-mono text-xs tabular-nums")}>{entry.level == null ? "-" : entry.level}</td>
         </tr>
     );
 }
@@ -117,7 +117,7 @@ function MobileRow({ entry }: { entry: LeaderboardEntry }) {
 
     return (
         <Link to="/user/$id" params={{ id: entry.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", entry.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
-            <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "—"}</span>
+            <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "-"}</span>
             <div className="flex min-w-0 flex-col gap-1">
                 <div className="flex min-w-0 items-center gap-2">
                     <Avatar className="size-7 rounded-lg">
@@ -133,7 +133,7 @@ function MobileRow({ entry }: { entry: LeaderboardEntry }) {
             </div>
             <div className="flex flex-col items-end gap-1.5">
                 <GradeBadge grade={entry.grade} />
-                <span className="font-mono text-sm font-bold leading-none tracking-tight tabular-nums text-foreground">{entry.total_score == null ? "—" : formatNumber(entry.total_score)}</span>
+                <span className="font-mono text-sm font-bold leading-none tracking-tight tabular-nums text-foreground">{entry.total_score == null ? "-" : formatNumber(entry.total_score)}</span>
             </div>
         </Link>
     );

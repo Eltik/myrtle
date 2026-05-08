@@ -470,9 +470,9 @@ export interface IOperatorListItem {
     profile: IOperatorProfile | null;
     artists: string[];
     baseSkills: IOperatorBaseSkill[];
-    /** Small portrait image (headshot) — /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
+    /** Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
     portrait: string | null;
-    /** Full character art — /upk/chararts/{id}/{id}_{1|2}.png; null → use portrait as fallback */
+    /** Full character art - /upk/chararts/{id}/{id}_{1|2}.png; null → use portrait as fallback */
     skin: string | null;
 }
 

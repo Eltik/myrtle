@@ -60,7 +60,7 @@ export function parseOperatorName(name: string): { displayName: string; subtitle
     return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
 }
 
-/** Locale number formatting — "1,234,567". */
+/** Locale number formatting - "1,234,567". */
 export function formatNumber(n: number | null | undefined): string {
     return Number(n ?? 0).toLocaleString("en-US");
 }

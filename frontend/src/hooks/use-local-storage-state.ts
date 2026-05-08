@@ -29,7 +29,7 @@ export function useLocalStorageState<T>(key: string, initial: T, options?: Optio
             const next = parse ? parse(raw) : (JSON.parse(raw) as T);
             if (next !== undefined) setValue(next);
         } catch {
-            // Malformed value — leave initial in place.
+            // Malformed value - leave initial in place.
         }
     }, [key]);
 

@@ -38,7 +38,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
 
     // Render the full operator name. Many operators have descriptive suffixes
     // ("Exusiai the New Covenant", "Reed the Flame Shadow") that are part of
-    // their canonical name — splitting them off looks worse than letting the
+    // their canonical name - splitting them off looks worse than letting the
     // size adapt to fit. Appellation is only meaningful when it's a foreign-
     // language alt name; the EN-only data ships it as `" "` (single space),
     // which we filter out with a trim check.
@@ -97,7 +97,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                 <BrandRow kicker="OPERATOR · COMPANION" />
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", marginTop: 40 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                        {/* rarity badge — single inline-SVG star (Inter has no ★ glyph
+                        {/* rarity badge - single inline-SVG star (Inter has no ★ glyph
                             and the rarity_yellow_N.png assets bake N stars in a row) */}
                         <div
                             style={{
@@ -154,7 +154,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                             </div>
                         ) : null}
                     </div>
-                    {/* name — full canonical name, font size adapts to length so
+                    {/* name - full canonical name, font size adapts to length so
                         "Exusiai the New Covenant" still fits on two lines. */}
                     <div
                         style={{

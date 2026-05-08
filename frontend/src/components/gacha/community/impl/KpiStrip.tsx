@@ -54,7 +54,7 @@ export function KpiStrip({ data }: IKpiStripProps) {
                             {formatNumber(cs.totalSixStars)} of {formatNumber(cs.totalPulls)} pulls
                         </span>
                     ) : (
-                        <span>—</span>
+                        <span>-</span>
                     )
                 }
             />
@@ -70,10 +70,10 @@ export function KpiStrip({ data }: IKpiStripProps) {
                         SKELETON
                     )
                 }
-                meta={cs ? <span>{formatNumber(cs.totalFiveStars)} pulls</span> : <span>—</span>}
+                meta={cs ? <span>{formatNumber(cs.totalFiveStars)} pulls</span> : <span>-</span>}
             />
-            <Kpi label="Avg pulls / 6★" value={data ? data.averagePullsToSixStar.toFixed(1) : SKELETON} meta={data ? <span>avg pulls / 5★ · {data.averagePullsToFiveStar.toFixed(1)}</span> : <span>—</span>} />
-            <Kpi label="Total pulls" value={cs ? formatNumberCompact(cs.totalPulls) : SKELETON} meta={cs ? <span>{formatNumberCompact(cs.totalUsers)} contributing doctors</span> : <span>—</span>} />
+            <Kpi label="Avg pulls / 6★" value={data ? data.averagePullsToSixStar.toFixed(1) : SKELETON} meta={data ? <span>avg pulls / 5★ · {data.averagePullsToFiveStar.toFixed(1)}</span> : <span>-</span>} />
+            <Kpi label="Total pulls" value={cs ? formatNumberCompact(cs.totalPulls) : SKELETON} meta={cs ? <span>{formatNumberCompact(cs.totalUsers)} contributing doctors</span> : <span>-</span>} />
         </div>
     );
 }

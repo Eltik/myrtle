@@ -23,10 +23,10 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     const percentileFromRank = rank != null && rankedDoctors && rankedDoctors > 0 ? (1 - rank / rankedDoctors) * 100 : null;
     const percentile = percentileFromRank ?? (1 - standing.percentile) * 100;
     const delta = standing.rank_delta_7d;
-    const grade = player.grade ?? "—";
+    const grade = player.grade ?? "-";
 
     const deltaColor = delta == null ? "text-muted-foreground" : delta > 0 ? "text-success-foreground" : delta < 0 ? "text-destructive-foreground" : "text-muted-foreground";
-    const deltaText = delta == null ? "—" : `${delta > 0 ? "+" : ""}${delta}`;
+    const deltaText = delta == null ? "-" : `${delta > 0 ? "+" : ""}${delta}`;
 
     const handleShare = async () => {
         try {
@@ -52,7 +52,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
             <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)" }} />
             <div className="relative mb-3 flex items-center justify-between font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground">
                 <span>Your standing</span>
-                <span className="rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "—"}</span>
+                <span className="rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "-"}</span>
             </div>
             <div className="relative flex items-center gap-3">
                 <Avatar className="size-12 rounded-2xl">

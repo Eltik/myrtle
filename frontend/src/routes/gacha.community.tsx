@@ -12,7 +12,7 @@ export const Route = createFileRoute("/gacha/community")({
     head: () => {
         const { meta, links } = seo({
             title: "Gacha · Community",
-            description: "Community-wide gacha statistics — pull rates, most-pulled operators, and pull timing across opted-in doctors.",
+            description: "Community-wide gacha statistics - pull rates, most-pulled operators, and pull timing across opted-in doctors.",
             path: "/gacha/community",
         });
         return {
