@@ -64,7 +64,7 @@ export function CommunityPage() {
                     <RarityPanel data={data} personal={personalRates} />
                 </div>
 
-                <TimingPanel timing={data?.pullTiming} />
+                <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} />
             </section>
         </>
     );

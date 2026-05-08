@@ -5,10 +5,14 @@ import { fmtPct } from "./format";
 
 interface ITimingPanelProps {
     timing: IPullTimingData | null | undefined;
+    firstPullAt?: number;
 }
 
-export function TimingPanel({ timing }: ITimingPanelProps) {
+export function TimingPanel({ timing, firstPullAt }: ITimingPanelProps) {
     if (!timing) return null;
+
+    const byDate = [...(timing.byDate ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+    const dayCount = firstPullAt ? Math.floor((Date.now() / 1000 - firstPullAt) / 86_400) + 1 : 0;
 
     return (
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
@@ -26,14 +30,14 @@ export function TimingPanel({ timing }: ITimingPanelProps) {
             </header>
 
             <div className="grid gap-y-4 gap-x-6 grid-cols-1 md:grid-cols-2">
-                {timing.byDate && timing.byDate.length > 0 ? (
+                {byDate.length > 0 ? (
                     <div className="md:col-span-2">
-                        <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By date · last {timing.byDate.length} days</div>
-                        <TimingByDate rows={timing.byDate} />
+                        <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By date · last {dayCount} days</div>
+                        <TimingByDate rows={byDate} />
                     </div>
                 ) : null}
 
-                <div>
+                <div className="flex flex-col">
                     <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By hour of day · UTC</div>
                     <TimingByHour rows={timing.byHour} />
                 </div>

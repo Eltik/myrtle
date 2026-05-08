@@ -246,6 +246,9 @@ pub struct CollectiveStats {
     pub total_five_stars: i64,
     pub total_four_stars: i64,
     pub total_three_stars: i64,
+    /// Unix seconds. None when the corpus is empty.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub first_pull_at: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -335,6 +338,7 @@ pub async fn get_enhanced_stats(
         total_five_stars: i64,
         total_four_stars: i64,
         total_three_stars: i64,
+        first_pull_at: Option<i64>,
     }
 
     let collective = sqlx::query_as::<_, CollectiveRow>(
@@ -345,7 +349,8 @@ pub async fn get_enhanced_stats(
             COUNT(*) FILTER (WHERE rarity = 6) AS total_six_stars,
             COUNT(*) FILTER (WHERE rarity = 5) AS total_five_stars,
             COUNT(*) FILTER (WHERE rarity = 4) AS total_four_stars,
-            COUNT(*) FILTER (WHERE rarity = 3) AS total_three_stars
+            COUNT(*) FILTER (WHERE rarity = 3) AS total_three_stars,
+            (MIN(gr.pull_timestamp) / 1000) AS first_pull_at
         FROM gacha_records gr
         JOIN user_settings us ON us.user_id = gr.user_id
         WHERE us.share_stats = true
@@ -362,6 +367,7 @@ pub async fn get_enhanced_stats(
         total_five_stars: collective.total_five_stars,
         total_four_stars: collective.total_four_stars,
         total_three_stars: collective.total_three_stars,
+        first_pull_at: collective.first_pull_at,
     };
     let pull_rates = PullRates {
         six_star_rate: collective.total_six_stars as f64 / total,
@@ -444,7 +450,7 @@ pub async fn get_enhanced_stats(
 
         let hours = sqlx::query_as::<_, HourRow>(
             r#"
-            SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp))::int AS hour,
+            SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp / 1000))::int AS hour,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
@@ -458,7 +464,7 @@ pub async fn get_enhanced_stats(
 
         let dows = sqlx::query_as::<_, DowRow>(
             r#"
-            SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp))::int AS day,
+            SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp / 1000))::int AS day,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
@@ -472,7 +478,7 @@ pub async fn get_enhanced_stats(
 
         let dates = sqlx::query_as::<_, DateRow>(
             r#"
-            SELECT to_char(to_timestamp(gr.pull_timestamp), 'YYYY-MM-DD') AS date,
+            SELECT to_char(to_timestamp(gr.pull_timestamp / 1000), 'YYYY-MM-DD') AS date,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
