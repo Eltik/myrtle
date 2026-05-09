@@ -177,11 +177,21 @@ export const calculateDpsFn = createServerFn({ method: "POST" })
     });
 
 /**
- * Stable serialisation for use in a react-query key. Fields are sorted so that
- * `{ a: 1, b: 2 }` and `{ b: 2, a: 1 }` produce the same key.
+ * Stable serialisation for use in a react-query key. Recursively sorts keys so
+ * `{ a: 1, b: 2 }` and `{ b: 2, a: 1 }` hash identically — and nested objects
+ * (conditionals, buffs, shred) are included in full rather than stripped by
+ * `JSON.stringify`'s replacer-array filter.
  */
 function dpsRequestKey(req: IDpsCalculateRequest): string {
-    return JSON.stringify(req, Object.keys(req).sort());
+    return stableStringify(req);
+}
+
+function stableStringify(value: unknown): string {
+    if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(",")}}`;
 }
 
 /**
