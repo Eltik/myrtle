@@ -140,6 +140,13 @@ export function DpsCalculator(): React.ReactElement {
                         </Popover>
                     </div>
                     <p className="mt-1.5 font-sans text-[13.5px] leading-normal text-muted-foreground">Compare operator output across enemy DEF or RES sweeps. Add multiple instances of the same operator to compare masteries, modules, and conditional setups side-by-side.</p>
+                    <p className="max-w-xl font-sans text-[13.5px] leading-normal text-muted-foreground">
+                        <b>Note:</b> All calculations go to the credit of{" "}
+                        <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank">
+                            WhoAteMyCQQkie's
+                        </a>{" "}
+                        GitHub repository.
+                    </p>
                 </div>
                 {hasInstances && (
                     <AlertDialog>
