@@ -5,6 +5,7 @@ import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/dps")({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/tools/dps")({
             title: "DPS Calculator",
             description: "Compare Arknights operator DPS across varying enemy DEF, RES, or target count. Configure skills, modules, buffs, and conditionals.",
             path: "/tools/dps",
+            image: defaultOgURL("tools-dps"),
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

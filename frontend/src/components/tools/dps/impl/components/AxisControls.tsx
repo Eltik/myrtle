@@ -3,6 +3,7 @@ import { Label } from "#/components/ui/label";
 import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { cn } from "#/lib/utils";
 import { STEP_OPTIONS, X_AXIS_LABELS, Y_METRIC_LABELS } from "../constants";
 import type { ISweepRange, XAxisKind, YMetric } from "../types";
 
@@ -15,9 +16,11 @@ interface AxisControlsProps {
     onChangeAxis: (axis: XAxisKind) => void;
     onChangeMetric: (metric: YMetric) => void;
     onChangeSweep: (patch: Partial<ISweepRange>) => void;
+    /** Optional trailing element rendered in the same baseline as the sweep-range inputs (e.g. an export button). */
+    rangeAction?: React.ReactNode;
 }
 
-export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAxis, onChangeMetric, onChangeSweep }: AxisControlsProps): React.ReactElement {
+export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAxis, onChangeMetric, onChangeSweep, rangeAction }: AxisControlsProps): React.ReactElement {
     const stepValue = (sweep.max - sweep.min) / Math.max(1, sweep.steps - 1);
     const sweepStep = xAxis === "defense" ? 100 : 5;
     const sweepMaxBound = xAxis === "defense" ? 5000 : 100;
@@ -50,7 +53,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
                 </div>
             </div>
             <div className="flex w-full flex-col items-stretch gap-1 sm:ml-auto sm:w-auto">
-                <div className="grid grid-cols-[1fr_1fr_auto] items-end gap-2 sm:flex sm:items-end sm:gap-2">
+                <div className={cn("grid items-end gap-2 sm:flex sm:items-end sm:gap-2", rangeAction ? "grid-cols-[1fr_1fr_auto_auto]" : "grid-cols-[1fr_1fr_auto]")}>
                     <NumberField key={`${xAxis}-min-${hydrationToken}`} defaultValue={sweep.min} min={0} max={sweep.max - 1} step={sweepStep} onValueChange={(v) => onChangeSweep({ min: v ?? 0 })} size="sm" className="sm:w-24">
                         <Label className="block text-[10.5px] leading-none text-muted-foreground/80">From</Label>
                         <NumberFieldGroup>
@@ -82,6 +85,15 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
                             </SelectContent>
                         </Select>
                     </div>
+                    {rangeAction && (
+                        <div className="space-y-1">
+                            {/* invisible spacer so the button shares its column height with the labelled inputs above */}
+                            <span aria-hidden="true" className="block text-[10.5px] leading-none">
+                                &nbsp;
+                            </span>
+                            {rangeAction}
+                        </div>
+                    )}
                 </div>
                 <p className="font-mono text-[10.5px] text-muted-foreground/80 sm:text-right">
                     {sweep.steps} points · ~{Math.round(stepValue)}
