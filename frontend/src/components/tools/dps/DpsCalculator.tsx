@@ -59,7 +59,7 @@ export function DpsCalculator(): React.ReactElement {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <h1 className="m-0 font-bold font-sans text-[30px] leading-[1.1] tracking-tight text-foreground">DPS Calculator</h1>
+                        <h1 className="m-0 font-bold font-sans text-[24px] leading-[1.1] tracking-tight text-foreground sm:text-[30px]">DPS Calculator</h1>
                         <Popover>
                             <PopoverTrigger
                                 render={(p) => (
@@ -114,7 +114,7 @@ export function DpsCalculator(): React.ReactElement {
             </div>
 
             <div className="mt-6 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
-                <aside className="flex flex-col gap-4">
+                <aside className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between gap-2 grid-rows-1">
                             <CardTitle className="min-w-0 flex-1 truncate text-[15px]">
@@ -140,28 +140,9 @@ export function DpsCalculator(): React.ReactElement {
                     </Card>
 
                     <EnemyPanel hydrationToken={hydrationToken} enemy={state.enemy} onChangeEnemy={(patch) => dispatch({ type: "SET_ENEMY", patch })} onChangeShred={(patch) => dispatch({ type: "SET_SHRED", patch })} />
-
-                    {state.instances.map((inst, idx) => (
-                        <InstanceCard
-                            key={inst.uid}
-                            inst={inst}
-                            index={idx}
-                            isFirst={idx === 0}
-                            isLast={idx === state.instances.length - 1}
-                            onUpdate={(patch) => dispatch({ type: "UPDATE_CONFIG", uid: inst.uid, patch })}
-                            onUpdateBuffs={(patch) => dispatch({ type: "UPDATE_BUFFS", uid: inst.uid, patch })}
-                            onToggleConditional={(key, value) => dispatch({ type: "TOGGLE_CONDITIONAL", uid: inst.uid, key, value })}
-                            onToggleVisibility={() => dispatch({ type: "TOGGLE_VISIBILITY", uid: inst.uid })}
-                            onToggleCollapsed={() => dispatch({ type: "TOGGLE_COLLAPSED", uid: inst.uid })}
-                            onMoveUp={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "up" })}
-                            onMoveDown={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "down" })}
-                            onDuplicate={() => dispatch({ type: "DUPLICATE_INSTANCE", uid: inst.uid })}
-                            onRemove={() => dispatch({ type: "REMOVE_INSTANCE", uid: inst.uid })}
-                        />
-                    ))}
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                <main className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                     <Card>
                         <CardHeader className="pb-3">
                             <AxisControls
@@ -181,6 +162,27 @@ export function DpsCalculator(): React.ReactElement {
 
                     <KpiPanel instances={state.instances} snapshots={snapshots} yMetric={state.yMetric} />
                 </main>
+
+                <section aria-label="Configured operators" className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-2">
+                    {state.instances.map((inst, idx) => (
+                        <InstanceCard
+                            key={inst.uid}
+                            inst={inst}
+                            index={idx}
+                            isFirst={idx === 0}
+                            isLast={idx === state.instances.length - 1}
+                            onUpdate={(patch) => dispatch({ type: "UPDATE_CONFIG", uid: inst.uid, patch })}
+                            onUpdateBuffs={(patch) => dispatch({ type: "UPDATE_BUFFS", uid: inst.uid, patch })}
+                            onToggleConditional={(key, value) => dispatch({ type: "TOGGLE_CONDITIONAL", uid: inst.uid, key, value })}
+                            onToggleVisibility={() => dispatch({ type: "TOGGLE_VISIBILITY", uid: inst.uid })}
+                            onToggleCollapsed={() => dispatch({ type: "TOGGLE_COLLAPSED", uid: inst.uid })}
+                            onMoveUp={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "up" })}
+                            onMoveDown={() => dispatch({ type: "REORDER_INSTANCE", uid: inst.uid, direction: "down" })}
+                            onDuplicate={() => dispatch({ type: "DUPLICATE_INSTANCE", uid: inst.uid })}
+                            onRemove={() => dispatch({ type: "REMOVE_INSTANCE", uid: inst.uid })}
+                        />
+                    ))}
+                </section>
             </div>
         </div>
     );
