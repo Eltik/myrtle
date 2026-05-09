@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AlertTriangle } from "lucide-react";
+import { DpsCalculator } from "#/components/tools/dps/DpsCalculator";
+import { Button } from "#/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
+import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
-    loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(dpsOperatorsQueryOptions()),
+    errorComponent: DpsErrorComponent,
+    loader: ({ context: { queryClient } }) => Promise.all([queryClient.prefetchQuery(dpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions())]),
     head: () => {
         const { meta, links } = seo({
             title: "DPS Calculator",
@@ -19,5 +25,25 @@ export const Route = createFileRoute("/tools/dps")({
 });
 
 function RouteComponent() {
-    return <></>;
+    return <DpsCalculator />;
+}
+
+function DpsErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
+            <Empty>
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <AlertTriangle className="text-destructive" />
+                    </EmptyMedia>
+                    <EmptyTitle>DPS calculator failed to load</EmptyTitle>
+                    <EmptyDescription>{message || "An unexpected error occurred while loading the DPS engine. Try again, or check the browser console for details."}</EmptyDescription>
+                </EmptyHeader>
+                <Button onClick={reset} variant="outline">
+                    Retry
+                </Button>
+            </Empty>
+        </div>
+    );
 }
