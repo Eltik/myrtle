@@ -47,32 +47,37 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 
     return (
         <Card>
-            <CardHeader className="flex-row items-center gap-2.5 px-4 py-3">
+            <CardHeader className="flex flex-row items-center gap-2.5 px-4 py-3 grid-rows-1">
                 <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[10px] font-semibold" style={{ boxShadow: `inset 0 0 0 2px ${color}` }}>
                     <OperatorAvatar charId={op.id} name={op.name} />
                 </span>
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                         <span className="truncate font-semibold text-[13px] leading-tight">{op.name}</span>
-                        <span className="rounded bg-muted px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">#{index + 1}</span>
+                        <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">#{index + 1}</span>
                     </div>
                     <div className="truncate text-[11px] text-muted-foreground">
                         {skillSummary} · {moduleSummary}
                     </div>
                 </div>
-                <div className="ml-auto flex items-center gap-0.5">
+                <div className="flex shrink-0 items-center gap-0.5">
                     <IconButton label={visible ? "Hide curve" : "Show curve"} onClick={onToggleVisibility}>
                         {visible ? <Eye /> : <EyeOff />}
                     </IconButton>
+                    {/* Reorder controls take space, so hide on the smallest screens — duplicate/remove still let users prune */}
                     {!isFirst && (
-                        <IconButton label="Move up" onClick={onMoveUp}>
-                            <ArrowUp />
-                        </IconButton>
+                        <span className="hidden sm:inline-flex">
+                            <IconButton label="Move up" onClick={onMoveUp}>
+                                <ArrowUp />
+                            </IconButton>
+                        </span>
                     )}
                     {!isLast && (
-                        <IconButton label="Move down" onClick={onMoveDown}>
-                            <ArrowDown />
-                        </IconButton>
+                        <span className="hidden sm:inline-flex">
+                            <IconButton label="Move down" onClick={onMoveDown}>
+                                <ArrowDown />
+                            </IconButton>
+                        </span>
                     )}
                     <IconButton label="Duplicate" onClick={onDuplicate}>
                         <Copy />
