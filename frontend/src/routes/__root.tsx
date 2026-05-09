@@ -10,6 +10,7 @@ import { CommandProvider } from "#/lib/command-context";
 import { seo } from "#/lib/seo";
 import Footer from "../components/Footer";
 import Header from "../components/header/Header";
+import { RouterProgress } from "../components/RouterProgress";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -57,6 +58,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <HeadContent />
             </head>
             <body className="font-sans antialiased wrap-anywhere selection:bg-primary">
+                <RouterProgress />
                 <CommandProvider>
                     <Header />
                     <ToastProvider>
