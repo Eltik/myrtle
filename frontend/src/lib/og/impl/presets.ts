@@ -34,6 +34,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Find and browse user profiles.",
         activeTag: "Tools",
     },
+    "tools-dps": {
+        title: "DPS Calculator",
+        subtitle: "Compare Arknights operator DPS.",
+        activeTag: "Tools",
+    },
     operators: {
         title: "Operators",
         subtitle: "Every operator released in Arknights.",

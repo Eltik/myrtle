@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, HelpCircle, RefreshCw } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
@@ -13,6 +13,8 @@ import { EnemyPanel } from "./impl/components/EnemyPanel";
 import { InstanceCard } from "./impl/components/InstanceCard";
 import { KpiPanel } from "./impl/components/KpiPanel";
 import { OperatorPicker } from "./impl/components/OperatorPicker";
+import { formatLargeNumber } from "./impl/constants";
+import { exportSvgAsPng } from "./impl/exportChart";
 import { useDpsCurves } from "./impl/useDpsCurves";
 import { useDpsResults } from "./impl/useDpsResults";
 import { useDpsState } from "./impl/useDpsState";
@@ -35,6 +37,58 @@ export function DpsCalculator(): React.ReactElement {
         dispatch({ type: "SET_ALL_COLLAPSED", collapsed: !allCollapsed });
     }, [allCollapsed, dispatch]);
 
+    const chartContainerRef = React.useRef<HTMLDivElement>(null);
+    const [isExporting, setIsExporting] = React.useState(false);
+    const onExportChart = React.useCallback(async () => {
+        const svg = findChartSvg(chartContainerRef.current);
+        if (!svg) return;
+        const stamp = new Date().toISOString().slice(0, 10);
+        const axis = state.xAxis === "defense" ? "def" : "res";
+        const filename = `dps-${axis}-${state.yMetric}-${stamp}.png`;
+
+        const sameOpCounts = new Map<string, number>();
+        for (const i of state.instances) sameOpCounts.set(i.op.id, (sameOpCounts.get(i.op.id) ?? 0) + 1);
+
+        const visibleInstances = state.instances.filter((i) => i.visible);
+        const legend = visibleInstances.map((inst, idx) => {
+            const dupSuffix = (sameOpCounts.get(inst.op.id) ?? 1) > 1 ? ` #${idx + 1}` : "";
+            const moduleSummary = inst.config.moduleIndex > 0 ? `Mod${inst.config.moduleIndex} L${inst.config.moduleLevel}` : "no module";
+            return {
+                color: inst.color,
+                label: `${inst.op.name}${dupSuffix}`,
+                sublabel: `S${inst.config.skillIndex} · M${inst.config.masteryLevel} · ${moduleSummary}`,
+            };
+        });
+
+        const enemyDesc = `DEF ${state.enemy.defense} · RES ${state.enemy.res}% · ${state.enemy.targets} target${state.enemy.targets === 1 ? "" : "s"}`;
+        const yMetricLabel = state.yMetric === "skill_dps" ? "Skill DPS" : state.yMetric === "average_dps" ? "Average DPS" : "Total Damage";
+        const xMetricLabel = state.xAxis === "defense" ? "Enemy DEF" : "Enemy RES";
+        const title = `${yMetricLabel} vs ${xMetricLabel} — ${enemyDesc}`;
+
+        const snapshotEntries = visibleInstances
+            .map((inst, idx) => {
+                const dupSuffix = (sameOpCounts.get(inst.op.id) ?? 1) > 1 ? ` #${idx + 1}` : "";
+                const snap = snapshots.find((s) => s.uid === inst.uid);
+                const value = snap?.data?.[state.yMetric];
+                if (typeof value !== "number") return null;
+                return { color: inst.color, name: `${inst.op.name}${dupSuffix}`, value: formatLargeNumber(value) };
+            })
+            .filter((e): e is { color: string; name: string; value: string } => e !== null);
+
+        const snapshotHeading = state.xAxis === "defense" ? `@ DEF ${state.enemy.defense}` : `@ RES ${state.enemy.res}%`;
+        const snapshot = snapshotEntries.length > 0 ? { heading: snapshotHeading, entries: snapshotEntries } : undefined;
+
+        setIsExporting(true);
+        try {
+            await exportSvgAsPng(svg, { filename, title, legend, snapshot });
+        } catch (err) {
+            console.error("DPS chart export failed:", err);
+            if (typeof window !== "undefined") window.alert(`Couldn't export chart: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setIsExporting(false);
+        }
+    }, [state.xAxis, state.yMetric, state.instances, state.enemy, snapshots]);
+
     // After hydrating from localStorage, swap each instance's `op` reference
     // for the latest entry from the engine — covers cases where the engine
     // adds modules / conditionals to an operator since the user's last visit.
@@ -50,7 +104,7 @@ export function DpsCalculator(): React.ReactElement {
     }, [latestOps, state.instances, dispatch]);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
+        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20 py-5">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] leading-none text-muted-foreground">
                 <span>Tools</span>
                 <ChevronRight className="size-2.5" />
@@ -153,10 +207,33 @@ export function DpsCalculator(): React.ReactElement {
                                 onChangeAxis={(axis) => dispatch({ type: "SET_AXIS", axis })}
                                 onChangeMetric={(metric) => dispatch({ type: "SET_METRIC", metric })}
                                 onChangeSweep={(patch) => dispatch({ type: "SET_SWEEP", axis: state.xAxis, patch })}
+                                rangeAction={
+                                    hasInstances ? (
+                                        <Tooltip>
+                                            <TooltipTrigger
+                                                render={(p) => (
+                                                    <Button {...p} aria-label="Download chart as PNG" variant="outline" size="icon-sm" loading={isExporting} onClick={onExportChart} className="mb-1">
+                                                        <Download />
+                                                    </Button>
+                                                )}
+                                            />
+                                            <TooltipPopup>Download chart as PNG</TooltipPopup>
+                                        </Tooltip>
+                                    ) : undefined
+                                }
                             />
                         </CardHeader>
                         <CardPanel className="pt-0">
-                            <DpsChart instances={state.instances} rows={curves.rows} xAxis={state.xAxis} yMetric={state.yMetric} snapshotX={state.xAxis === "defense" ? state.enemy.defense : state.enemy.res} isLoading={curves.isPending} onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })} />
+                            <DpsChart
+                                instances={state.instances}
+                                rows={curves.rows}
+                                xAxis={state.xAxis}
+                                yMetric={state.yMetric}
+                                snapshotX={state.xAxis === "defense" ? state.enemy.defense : state.enemy.res}
+                                isLoading={curves.isPending}
+                                onLegendClick={(uid) => dispatch({ type: "TOGGLE_VISIBILITY", uid })}
+                                containerRef={chartContainerRef}
+                            />
                         </CardPanel>
                     </Card>
 
@@ -186,4 +263,28 @@ export function DpsCalculator(): React.ReactElement {
             </div>
         </div>
     );
+}
+
+/**
+ * recharts uses the `recharts-surface` class for both the main chart canvas
+ * AND the small SVG icons inside the default Legend. Picking the first match
+ * by selector grabs a 14×14 legend dot, so we filter to the largest SVG by
+ * pixel area — that's reliably the chart canvas.
+ */
+function findChartSvg(container: HTMLDivElement | null): SVGSVGElement | null {
+    if (!container) return null;
+    const wrapperChild = container.querySelector<SVGSVGElement>(".recharts-wrapper > svg");
+    if (wrapperChild) return wrapperChild;
+    const candidates = Array.from(container.querySelectorAll<SVGSVGElement>("svg"));
+    let best: SVGSVGElement | null = null;
+    let bestArea = 0;
+    for (const svg of candidates) {
+        const r = svg.getBoundingClientRect();
+        const area = r.width * r.height;
+        if (area > bestArea) {
+            best = svg;
+            bestArea = area;
+        }
+    }
+    return best;
 }

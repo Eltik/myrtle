@@ -14,9 +14,11 @@ interface DpsChartProps {
     snapshotX: number;
     isLoading: boolean;
     onLegendClick: (uid: string) => void;
+    /** The chart's outer container — exposed so the parent can locate the rendered SVG for export. */
+    containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading, onLegendClick }: DpsChartProps): React.ReactElement {
+export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading, onLegendClick, containerRef }: DpsChartProps): React.ReactElement {
     const visible = React.useMemo(() => instances.filter((i) => i.visible), [instances]);
     const sameOpCounts = React.useMemo(() => {
         const counts = new Map<string, number>();
@@ -55,12 +57,12 @@ export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading
     }
 
     return (
-        <div className="relative h-85 w-full sm:h-100 xl:h-110" role="img" aria-label={`${Y_METRIC_LABELS[yMetric]} by ${X_AXIS_LABELS[xAxis]} for ${visible.length} operator${visible.length === 1 ? "" : "s"}`}>
+        <div ref={containerRef} className="relative h-85 w-full sm:h-100 xl:h-110" role="img" aria-label={`${Y_METRIC_LABELS[yMetric]} by ${X_AXIS_LABELS[xAxis]} for ${visible.length} operator${visible.length === 1 ? "" : "s"}`}>
             {isLoading && (
-                <div aria-live="polite" className="absolute right-2 top-2 z-10 inline-flex items-center gap-1.5 rounded-md bg-background/72 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
+                <span aria-live="polite" className="absolute left-1/2 top-2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-background/72 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
                     <Spinner className="size-3" />
                     Calculating
-                </div>
+                </span>
             )}
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={rows} margin={{ top: 12, right: 24, left: 12, bottom: 28 }}>
