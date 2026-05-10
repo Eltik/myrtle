@@ -6,7 +6,7 @@ import { Spinner } from "#/components/ui/spinner";
 import { formatLargeNumber, X_AXIS_LABELS, Y_METRIC_LABELS } from "../constants";
 import type { ICurvePoint, IDpsInstance, XAxisKind, YMetric } from "../types";
 
-interface DpsChartProps {
+interface IDpsChartProps {
     instances: IDpsInstance[];
     rows: ICurvePoint[];
     xAxis: XAxisKind;
@@ -18,7 +18,7 @@ interface DpsChartProps {
     containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading, onLegendClick, containerRef }: DpsChartProps): React.ReactElement {
+export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading, onLegendClick, containerRef }: IDpsChartProps): React.ReactElement {
     const visible = React.useMemo(() => instances.filter((i) => i.visible), [instances]);
     const sameOpCounts = React.useMemo(() => {
         const counts = new Map<string, number>();

@@ -9,13 +9,13 @@ import type { IDpsInstance, YMetric } from "../types";
 import type { IInstanceSnapshot } from "../useDpsResults";
 import { useOperatorDetail } from "../useOperatorDetail";
 
-interface KpiPanelProps {
+interface IKpiPanelProps {
     instances: IDpsInstance[];
     snapshots: IInstanceSnapshot[];
     yMetric: YMetric;
 }
 
-export function KpiPanel({ instances, snapshots, yMetric }: KpiPanelProps): React.ReactElement | null {
+export function KpiPanel({ instances, snapshots, yMetric }: IKpiPanelProps): React.ReactElement | null {
     if (instances.length === 0) return null;
 
     const leaderUid = pickLeader(snapshots, yMetric);

@@ -10,7 +10,7 @@ import { cn } from "#/lib/utils";
 import { ENEMY_PRESETS } from "../constants";
 import type { IEnemyConfig } from "../types";
 
-interface EnemyPanelProps {
+interface IEnemyPanelProps {
     enemy: IEnemyConfig;
     /** Bumped once after `localStorage` hydration so uncontrolled NumberFields remount with the persisted values. */
     hydrationToken: number;
@@ -18,7 +18,7 @@ interface EnemyPanelProps {
     onChangeShred: (patch: Partial<IDpsCalculateShred>) => void;
 }
 
-export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeShred }: EnemyPanelProps): React.ReactElement {
+export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeShred }: IEnemyPanelProps): React.ReactElement {
     const hasShred = (enemy.shred.def ?? 0) > 0 || (enemy.shred.defFlat ?? 0) > 0 || (enemy.shred.res ?? 0) > 0 || (enemy.shred.resFlat ?? 0) > 0;
     const [shredOpen, setShredOpen] = React.useState(hasShred);
     // Bumped each time a preset is applied so the uncontrolled NumberFields

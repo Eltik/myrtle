@@ -9,7 +9,7 @@ import { professionLabel } from "#/lib/registry/operator-display";
 import { scoreMatch } from "#/lib/search/fuzzy";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
-interface OperatorPickerProps {
+interface IOperatorPickerProps {
     onAdd: (op: IDpsOperatorListEntry) => void;
     existingCount: number;
 }
@@ -19,7 +19,7 @@ interface IPickerEntry {
     index?: IOperatorIndexEntry;
 }
 
-export function OperatorPicker({ onAdd, existingCount }: OperatorPickerProps): React.ReactElement {
+export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): React.ReactElement {
     const operatorsQuery = useQuery(dpsOperatorsQueryOptions());
     const { data: operators = [], isLoading, isError, error } = operatorsQuery;
     const { data: indexEntries } = useQuery(operatorsIndexQueryOptions());
