@@ -15,7 +15,7 @@ import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon 
 import type { IDpsInstance, IDpsInstanceConfig } from "../types";
 import { useOperatorDetail } from "../useOperatorDetail";
 
-interface InstanceCardProps {
+interface IInstanceCardProps {
     inst: IDpsInstance;
     index: number;
     isFirst: boolean;
@@ -31,7 +31,7 @@ interface InstanceCardProps {
     onRemove: () => void;
 }
 
-export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateBuffs, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove }: InstanceCardProps): React.ReactElement {
+export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateBuffs, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove }: IInstanceCardProps): React.ReactElement {
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
     const detail = useOperatorDetail(op.id);

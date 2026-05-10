@@ -7,7 +7,7 @@ import { cn } from "#/lib/utils";
 import { STEP_OPTIONS, X_AXIS_LABELS, Y_METRIC_LABELS } from "../constants";
 import type { ISweepRange, XAxisKind, YMetric } from "../types";
 
-interface AxisControlsProps {
+interface IAxisControlsProps {
     xAxis: XAxisKind;
     yMetric: YMetric;
     sweep: ISweepRange;
@@ -20,7 +20,7 @@ interface AxisControlsProps {
     rangeAction?: React.ReactNode;
 }
 
-export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAxis, onChangeMetric, onChangeSweep, rangeAction }: AxisControlsProps): React.ReactElement {
+export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAxis, onChangeMetric, onChangeSweep, rangeAction }: IAxisControlsProps): React.ReactElement {
     const stepValue = (sweep.max - sweep.min) / Math.max(1, sweep.steps - 1);
     const sweepStep = xAxis === "defense" ? 100 : 5;
     const sweepMaxBound = xAxis === "defense" ? 5000 : 100;
