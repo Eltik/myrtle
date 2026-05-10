@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
+import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
@@ -56,6 +57,11 @@ const UserLeaderboardRoute = UserLeaderboardRouteImport.update({
 const UserIdRoute = UserIdRouteImport.update({
   id: '/user/$id',
   path: '/user/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
+  id: '/tools/recruitment',
+  path: '/tools/recruitment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsDpsRoute = ToolsDpsRouteImport.update({
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tools/dps'
+    | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tools/dps'
+    | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators_/$id'
     | '/tools/dps'
+    | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
+  ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/user/$id'
       fullPath: '/user/$id'
       preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/recruitment': {
+      id: '/tools/recruitment'
+      path: '/tools/recruitment'
+      fullPath: '/tools/recruitment'
+      preLoaderRoute: typeof ToolsRecruitmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/dps': {
@@ -329,6 +349,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   ToolsDpsRoute: ToolsDpsRoute,
+  ToolsRecruitmentRoute: ToolsRecruitmentRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,

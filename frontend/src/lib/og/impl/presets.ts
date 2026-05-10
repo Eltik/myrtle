@@ -39,6 +39,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Compare Arknights operator DPS.",
         activeTag: "Tools",
     },
+    "tools-recruitment": {
+        title: "Recruitment Calculator",
+        subtitle: "Calculate recruitment combos.",
+        activeTag: "Tools",
+    },
     operators: {
         title: "Operators",
         subtitle: "Every operator released in Arknights.",

@@ -143,7 +143,7 @@ impl AssetIndex {
     pub fn charart_path(&self, char_id: &str) -> Option<String> {
         let suffixes = self.chararts.get(char_id)?;
         for preferred in &["_2", "_1"] {
-            if suffixes.contains(&"_2".to_owned()) {
+            if suffixes.iter().any(|s| s == preferred) {
                 return Some(format!(
                     "/textures/chararts/{char_id}/{char_id}{preferred}.png"
                 ));
