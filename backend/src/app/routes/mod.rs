@@ -17,6 +17,7 @@ pub mod operators;
 pub mod roster;
 pub mod search;
 pub mod social;
+pub mod stages;
 pub mod static_data;
 pub mod stats;
 pub mod tier_lists;
@@ -58,6 +59,7 @@ pub fn router() -> Router<AppState> {
         .route("/refresh", post(auth::refresh))
         .route("/roster", get(roster::get_roster))
         .route("/roster/{operator_id}", get(roster::get_operator))
+        .route("/stage-clears", get(stages::get_stage_clears))
         .route("/get-user-supports", get(roster::get_supports))
         .route("/inventory", get(inventory::get_inventory))
         .route("/gacha/fetch", post(gacha::fetch))
