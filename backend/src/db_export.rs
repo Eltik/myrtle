@@ -21,14 +21,21 @@ pub const TABLES: &[&str] = &[
     "user_building",
     "user_checkin",
     "user_scores",
+    "user_support_units",
     "gacha_records",
+    "tier_list_flairs",
     "tier_lists",
     "tiers",
     "tier_placements",
     "tier_list_versions",
     "tier_list_permissions",
+    "tier_list_stats",
+    "tier_list_view_events",
+    "tier_list_favorites",
     "operator_notes",
     "operator_notes_audit_log",
+    "leaderboard_snapshots",
+    "leaderboard_snapshot_entries",
     "audit_log",
 ];
 
@@ -36,7 +43,10 @@ pub const TABLES: &[&str] = &[
 /// future inserts don't collide with restored ids.
 pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("gacha_records", "id"),
+    ("tier_list_flairs", "id"),
+    ("tier_list_view_events", "id"),
     ("operator_notes_audit_log", "id"),
+    ("leaderboard_snapshots", "id"),
     ("audit_log", "id"),
 ];
 

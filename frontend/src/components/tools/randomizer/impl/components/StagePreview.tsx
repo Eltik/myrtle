@@ -4,7 +4,7 @@ import * as React from "react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import { stagePreviewUrls } from "#/lib/api/stages";
+import { stagePreviewURLs } from "#/lib/api/stages";
 import { cn } from "#/lib/utils";
 import type { IStage } from "#/types/stages";
 
@@ -13,37 +13,58 @@ interface IStagePreviewProps {
     className?: string;
 }
 
-/**
- * Map preview thumbnail for a stage. Walks each candidate URL in order — the
- * same map can live under several folder variants (`_a_0`, `_1_0`, `_0`, …)
- * and stages reuse maps across CM/Hard/Challenge variants — falling through
- * to a tile placeholder when none of them resolve. Clicking the thumbnail
- * opens a viewer modeled after the operator skin viewer (wheel zoom, drag
- * to pan, double-click to toggle 1×/2×).
- */
+const RESOLVED_PREVIEW = new Map<string, string>();
+const FAILED_PREVIEW = new Set<string>();
+
 export function StagePreview({ stage, className }: IStagePreviewProps): React.ReactElement {
-    const urls = React.useMemo(() => stagePreviewUrls(stage), [stage]);
-    const [idx, setIdx] = useState(0);
-    const [failed, setFailed] = useState(false);
+    const urls = React.useMemo(() => stagePreviewURLs(stage), [stage]);
+    const cached = RESOLVED_PREVIEW.get(stage.stageId) ?? null;
+    const [resolved, setResolved] = useState<string | null>(cached);
+    const [resolving, setResolving] = useState<boolean>(cached === null);
 
     useEffect(() => {
-        setIdx(0);
-        setFailed(false);
-    }, [stage.stageId]);
+        const hit = RESOLVED_PREVIEW.get(stage.stageId);
+        if (hit) {
+            setResolved(hit);
+            setResolving(false);
+            return;
+        }
+        setResolved(null);
+        setResolving(true);
 
-    const candidate = urls[idx];
-    const onError = useCallback(() => {
-        setIdx((current) => {
-            const next = current + 1;
-            if (next >= urls.length) {
-                setFailed(true);
-                return current;
+        let cancelled = false;
+        let i = 0;
+        const probe = () => {
+            while (i < urls.length && FAILED_PREVIEW.has(urls[i]!)) i++;
+            if (cancelled) return;
+            if (i >= urls.length) {
+                setResolving(false);
+                return;
             }
-            return next;
-        });
-    }, [urls.length]);
+            const url = urls[i]!;
+            const img = new Image();
+            img.onload = () => {
+                if (cancelled) return;
+                RESOLVED_PREVIEW.set(stage.stageId, url);
+                setResolved(url);
+                setResolving(false);
+            };
+            img.onerror = () => {
+                FAILED_PREVIEW.add(url);
+                i++;
+                probe();
+            };
+            img.src = url;
+        };
+        probe();
 
-    const canExpand = !failed && candidate !== undefined;
+        return () => {
+            cancelled = true;
+        };
+    }, [stage.stageId, urls]);
+
+    const failed = !resolving && resolved === null;
+    const canExpand = resolved !== null;
     const labelName = stage.name ? `${stage.code} — ${stage.name}` : stage.code;
 
     const thumbnail = (
@@ -52,15 +73,15 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
             disabled={!canExpand}
             aria-label={canExpand ? `Expand ${labelName} map preview` : `No preview available for ${stage.code}`}
             className={cn(
-                "group relative block aspect-[16/9] w-full overflow-hidden rounded-lg border border-border/60 bg-muted/40 outline-none transition-shadow",
+                "group relative block aspect-video w-full overflow-hidden rounded-lg border border-border/60 bg-muted/40 outline-none transition-shadow",
                 canExpand && "cursor-zoom-in focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 !canExpand && "cursor-default",
                 className,
             )}
         >
-            {!failed && candidate && <img key={candidate} src={candidate} alt={`${labelName} map preview`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]" onError={onError} />}
+            {resolved && <img src={resolved} alt={`${labelName} map preview`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]" />}
             {failed && <PreviewFallback code={stage.code} />}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent dark:from-black/60" />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/40 to-transparent dark:from-black/60" />
             {canExpand && (
                 <span aria-hidden="true" className="pointer-events-none absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <Maximize2 className="size-3.5" />
@@ -69,12 +90,12 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
         </button>
     );
 
-    if (!canExpand || !candidate) {
+    if (!resolved) {
         return thumbnail;
     }
 
     return (
-        <StageViewerDialog imageSrc={candidate} stageName={labelName}>
+        <StageViewerDialog imageSrc={resolved} stageName={labelName}>
             {thumbnail}
         </StageViewerDialog>
     );

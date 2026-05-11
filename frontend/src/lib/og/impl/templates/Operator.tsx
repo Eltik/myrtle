@@ -25,14 +25,14 @@ export interface IOperatorOgData {
     position?: string;
     nationId?: string;
     factionLabel?: string;
-    charArtUrl?: string;
-    factionLogoUrl?: string;
-    professionIconUrl?: string;
+    charArtURL?: string;
+    factionLogoURL?: string;
+    professionIconURL?: string;
     stats?: IOperatorStat[];
 }
 
 export function OperatorTemplate(data: IOperatorOgData) {
-    const { name, appellation, profession, rarity, subProfession = "", position = "", nationId = "", factionLabel, charArtUrl, factionLogoUrl, professionIconUrl, stats = [] } = data;
+    const { name, appellation, profession, rarity, subProfession = "", position = "", nationId = "", factionLabel, charArtURL, factionLogoURL, professionIconURL, stats = [] } = data;
     const rarityColor = RARITY_COLOR[rarity] ?? RARITY_COLOR[6];
     const tags = [position, subProfession, nationId].filter(Boolean);
 
@@ -75,7 +75,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                         background: `radial-gradient(circle at 50% 40%, ${rarityColor}33, transparent 55%)`,
                     }}
                 />
-                {charArtUrl ? <img alt="" src={charArtUrl} width={760} height={760} style={{ width: 760, height: 760, objectFit: "contain", objectPosition: "center top" }} /> : null}
+                {charArtURL ? <img alt="" src={charArtURL} width={760} height={760} style={{ width: 760, height: 760, objectFit: "contain", objectPosition: "center top" }} /> : null}
             </div>
             <div
                 style={{
@@ -123,7 +123,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                         {/* profession as icon + text */}
                         {profession ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                {professionIconUrl ? (
+                                {professionIconURL ? (
                                     <div
                                         style={{
                                             display: "flex",
@@ -136,7 +136,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                                             borderRadius: 6,
                                         }}
                                     >
-                                        <img alt="" src={professionIconUrl} width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
+                                        <img alt="" src={professionIconURL} width={22} height={22} style={{ width: 22, height: 22, objectFit: "contain" }} />
                                     </div>
                                 ) : null}
                                 <div
@@ -246,7 +246,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                     }}
                 />
             </div>
-            {factionLogoUrl ? (
+            {factionLogoURL ? (
                 <div
                     style={{
                         position: "absolute",
@@ -273,7 +273,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                             borderRadius: 8,
                         }}
                     >
-                        <img alt="" src={factionLogoUrl} width={42} height={42} style={{ width: 42, height: 42, objectFit: "contain" }} />
+                        <img alt="" src={factionLogoURL} width={42} height={42} style={{ width: 42, height: 42, objectFit: "contain" }} />
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>Faction</div>

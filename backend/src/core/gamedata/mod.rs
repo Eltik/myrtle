@@ -23,6 +23,7 @@ use crate::core::gamedata::{
         module::{BattleEquipTableFile, UniequipTableFile},
         operator::CharacterTable,
         range::Ranges,
+        retro::RetroTableFile,
         roguelike::{RoguelikeGameData, RoguelikeTopicTableFile},
         sandbox_universe::SandboxUniverse,
         skill::SkillTableFile,
@@ -73,6 +74,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
     let activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
+    let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
 
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
@@ -155,6 +157,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         chibis: init_chibi_data(assets_dir),
         zones,
         stages,
+        activities: activity_file.basic_info,
+        retro_acts: retro_file.retro_act_list,
         medals,
         roguelike,
         enemies,

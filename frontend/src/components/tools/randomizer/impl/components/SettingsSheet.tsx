@@ -22,13 +22,13 @@ interface ISettingsSheetProps {
 export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
     return (
         <Sheet open={props.open} onOpenChange={props.onOpenChange}>
-            <SheetPopup side="right" variant="inset" className="w-[min(520px,100vw)] sm:max-w-[520px]">
+            <SheetPopup side="right" variant="inset" className="w-[min(520px,100vw)] sm:max-w-130">
                 <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                         <Filter aria-hidden="true" className="size-4 text-muted-foreground" />
-                        Briefing settings
+                        Settings
                     </SheetTitle>
-                    <p className="text-sm text-muted-foreground">Constrain the draw — by class, rarity, owned operators, or stage availability.</p>
+                    <p className="text-sm text-muted-foreground">Constrain the randomizer - by class, rarity, owned operators, or stage availability.</p>
                 </SheetHeader>
                 <SheetPanel className="px-5 pb-6">
                     <Tabs defaultValue="operators" className="gap-4">

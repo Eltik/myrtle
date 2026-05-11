@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
-import type { IStage, IZone, StageClearsMap } from "#/types/stages";
+import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
 
 const PREVIEW_BASE = "/api/assets/textures/arts/ui";
 const PREVIEW_SUFFIX_RE = /#[a-z]#?$/i;
@@ -68,7 +68,7 @@ function stageFamily(stageId: string): string {
  * the stage data, so we emit a small product of candidates and let the consumer
  * fall through on 404.
  */
-export function stagePreviewUrls(stage: IStage): string[] {
+export function stagePreviewURLs(stage: IStage): string[] {
     const ids = stagePreviewCandidates(stage);
     const families = new Set<string>();
     for (const id of ids) families.add(stageFamily(id));
@@ -120,6 +120,38 @@ export function zonesQueryOptions() {
     return queryOptions({
         queryKey: ["static", "zones"],
         queryFn: () => getZonesFn(),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+export const getActivitiesFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/activities");
+    if (!res.ok) throw new Error(`Failed to load activities: ${res.status}`);
+    const raw = (await res.json()) as Record<string, IActivity>;
+    return Object.values(raw);
+});
+
+export function activitiesQueryOptions() {
+    return queryOptions({
+        queryKey: ["static", "activities"],
+        queryFn: () => getActivitiesFn(),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+export const getRetroActsFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/retro_acts");
+    if (!res.ok) throw new Error(`Failed to load retro acts: ${res.status}`);
+    const raw = (await res.json()) as Record<string, IRetroAct>;
+    return Object.values(raw);
+});
+
+export function retroActsQueryOptions() {
+    return queryOptions({
+        queryKey: ["static", "retro_acts"],
+        queryFn: () => getRetroActsFn(),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

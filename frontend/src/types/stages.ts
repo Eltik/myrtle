@@ -60,3 +60,23 @@ export interface IStageClear {
 }
 
 export type StageClearsMap = Record<string, IStageClear>;
+
+export interface IActivity {
+    id: string;
+    name: string;
+    startTime: number;
+    endTime: number;
+    hasStage: boolean;
+    isReplicate: boolean;
+}
+
+export type RetroActType = "SIDESTORY" | "BRANCHLINE" | string;
+
+export interface IRetroAct {
+    retroId: string;
+    name: string;
+    index: number;
+    startTime: number;
+    type: RetroActType;
+    linkedActId: string[];
+}

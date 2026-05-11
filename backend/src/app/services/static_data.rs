@@ -29,6 +29,8 @@ fn serialize_resource(data: &GameData, resource: &str) -> Result<Value, ApiError
         "materials" => serde_json::to_value(&data.materials),
         "stages" => serde_json::to_value(&data.stages),
         "zones" => serde_json::to_value(&data.zones),
+        "activities" => serde_json::to_value(&data.activities),
+        "retro_acts" => serde_json::to_value(&data.retro_acts),
         "enemies" => serde_json::to_value(&data.enemies),
         "gacha" => serde_json::to_value(&data.gacha),
         "voices" => serde_json::to_value(&data.voices),

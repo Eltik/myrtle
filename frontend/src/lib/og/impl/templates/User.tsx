@@ -2,15 +2,15 @@ import { formatNumber, formatNumberCompact } from "#/lib/utils";
 import { AccentStrip, BG, BrandMark, FG, FG_06, FG_08, FG_45, FG_55, FG_70, FootRow, RARITY_COLOR } from "./Frame";
 
 export interface IUserSupportSkill {
-    iconUrl?: string;
+    iconURL?: string;
     mastery: number;
     skillLevel: number;
     /** /textures/arts/specialized_hub/specialized_{mastery}.png - only set when mastery >= 1. */
-    masteryIconUrl?: string;
+    masteryIconURL?: string;
 }
 
 export interface IUserSupportModule {
-    iconUrl?: string;
+    iconURL?: string;
     level: number;
 }
 
@@ -20,7 +20,7 @@ export interface IUserSupportUnit {
     rarity: number;
     elite: number;
     level: number;
-    avatarUrl?: string;
+    avatarURL?: string;
     skills?: IUserSupportSkill[];
     modules?: IUserSupportModule[];
 }
@@ -37,14 +37,14 @@ export interface IUserOgData {
     skinCount?: number;
     itemCount?: number;
     lmd?: number;
-    secretaryArtUrl?: string;
+    secretaryArtURL?: string;
     supportUnits?: IUserSupportUnit[];
     supportUnitsKind?: "supports" | "roster";
     rarityCounts?: Record<number, number>;
 }
 
 export function UserTemplate(data: IUserOgData) {
-    const { nickname, nickNumber, uid = "-", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtUrl, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
+    const { nickname, nickNumber, uid = "-", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtURL, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
 
     return (
         <div
@@ -68,7 +68,7 @@ export function UserTemplate(data: IUserOgData) {
                     background: "linear-gradient(135deg, #2b3a4a 0%, #11171c 70%)",
                 }}
             >
-                {secretaryArtUrl ? <img alt="" src={secretaryArtUrl} width={720} height={700} style={{ position: "absolute", left: -30, top: -20, width: 720, height: 700, objectFit: "cover" }} /> : null}
+                {secretaryArtURL ? <img alt="" src={secretaryArtURL} width={720} height={700} style={{ position: "absolute", left: -30, top: -20, width: 720, height: 700, objectFit: "cover" }} /> : null}
                 <div
                     style={{
                         position: "absolute",
@@ -315,7 +315,7 @@ function SupportUnitRow({ unit }: { unit: IUserSupportUnit }) {
                     flexShrink: 0,
                 }}
             >
-                {unit.avatarUrl ? <img alt="" src={unit.avatarUrl} width={52} height={52} style={{ width: 52, height: 52, objectFit: "cover" }} /> : null}
+                {unit.avatarURL ? <img alt="" src={unit.avatarURL} width={52} height={52} style={{ width: 52, height: 52, objectFit: "cover" }} /> : null}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4, width: 110, flexShrink: 0 }}>
                 <div style={{ display: "flex", fontSize: 13, fontWeight: 700, color: FG, lineHeight: 1.05, letterSpacing: "-0.01em" }}>{unit.name}</div>
@@ -342,7 +342,7 @@ function SupportUnitRow({ unit }: { unit: IUserSupportUnit }) {
             <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                 {skills.map((s, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: skill index is a stable positional slot
-                    <IconCell key={i} iconUrl={s.iconUrl} badge={s.mastery >= 1 ? `M${s.mastery}` : `Lv${s.skillLevel}`} badgeIconUrl={s.mastery >= 1 ? s.masteryIconUrl : undefined} highlight={s.mastery >= 1} />
+                    <IconCell key={i} iconURL={s.iconURL} badge={s.mastery >= 1 ? `M${s.mastery}` : `Lv${s.skillLevel}`} badgeIconURL={s.mastery >= 1 ? s.masteryIconURL : undefined} highlight={s.mastery >= 1} />
                 ))}
             </div>
             {modules.length > 0 ? <div style={{ display: "flex", width: 1, height: 36, background: FG_08, flexShrink: 0 }} /> : null}
@@ -350,7 +350,7 @@ function SupportUnitRow({ unit }: { unit: IUserSupportUnit }) {
                 <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                     {modules.map((m, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: module slot is a stable positional index
-                        <IconCell key={i} iconUrl={m.iconUrl} badge={m.level > 0 ? `L${m.level}` : "MOD"} dim={m.level === 0} />
+                        <IconCell key={i} iconURL={m.iconURL} badge={m.level > 0 ? `L${m.level}` : "MOD"} dim={m.level === 0} />
                     ))}
                 </div>
             ) : null}
@@ -384,7 +384,7 @@ function RarityDistributionBar({ counts }: { counts?: Record<number, number> }) 
     );
 }
 
-function IconCell({ iconUrl, badge, badgeIconUrl, highlight = false, dim = false }: { iconUrl?: string; badge: string; badgeIconUrl?: string; highlight?: boolean; dim?: boolean }) {
+function IconCell({ iconURL, badge, badgeIconURL, highlight = false, dim = false }: { iconURL?: string; badge: string; badgeIconURL?: string; highlight?: boolean; dim?: boolean }) {
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, opacity: dim ? 0.45 : 1 }}>
             <div
@@ -400,10 +400,10 @@ function IconCell({ iconUrl, badge, badgeIconUrl, highlight = false, dim = false
                     overflow: "hidden",
                 }}
             >
-                {iconUrl ? <img alt="" src={iconUrl} width={32} height={32} style={{ width: 32, height: 32, objectFit: "contain" }} /> : null}
+                {iconURL ? <img alt="" src={iconURL} width={32} height={32} style={{ width: 32, height: 32, objectFit: "contain" }} /> : null}
             </div>
-            {badgeIconUrl ? (
-                <img alt="" src={badgeIconUrl} width={16} height={16} style={{ width: 16, height: 16, objectFit: "contain" }} />
+            {badgeIconURL ? (
+                <img alt="" src={badgeIconURL} width={16} height={16} style={{ width: 16, height: 16, objectFit: "contain" }} />
             ) : (
                 <div
                     style={{

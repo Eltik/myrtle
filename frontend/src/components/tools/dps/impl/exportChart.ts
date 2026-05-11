@@ -106,9 +106,9 @@ export async function exportSvgAsPng(svg: SVGSVGElement, options: IExportSvgOpti
     const xml = new XMLSerializer().serializeToString(cloned);
     // Use a data URL: same-origin so the resulting canvas is never tainted by
     // the rasterised image, which avoids `canvas.toBlob` returning null.
-    const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
+    const dataURL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
 
-    const img = await loadImage(dataUrl);
+    const img = await loadImage(dataURL);
 
     const canvas = document.createElement("canvas");
     canvas.width = Math.ceil(chartWidth * pixelRatio);
@@ -123,15 +123,15 @@ export async function exportSvgAsPng(svg: SVGSVGElement, options: IExportSvgOpti
         // Fallback path for the rare case where toBlob returns null — convert
         // the dataURL into a Blob ourselves so the user still gets a download.
         const dataPng = canvas.toDataURL("image/png");
-        const fallback = dataUrlToBlob(dataPng);
+        const fallback = dataURLToBlob(dataPng);
         downloadBlob(fallback, filename);
         return;
     }
     downloadBlob(blob, filename);
 }
 
-function dataUrlToBlob(dataUrl: string): Blob {
-    const [header, base64] = dataUrl.split(",", 2);
+function dataURLToBlob(dataURL: string): Blob {
+    const [header, base64] = dataURL.split(",", 2);
     const mime = /data:(.*?);base64/.exec(header)?.[1] ?? "image/png";
     const bytes = atob(base64);
     const buf = new Uint8Array(bytes.length);
