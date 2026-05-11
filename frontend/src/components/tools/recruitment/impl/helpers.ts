@@ -1,16 +1,12 @@
 import { TAG_ID_TO_TYPE_MAP } from "./constants";
 import type { IRecruitmentTag, TagType } from "./types";
 
-// Backend tag format
 export interface IGachaTag {
     tagId: number;
     tagName: string;
     tagGroup: number;
 }
 
-/**
- * Transform backend tags to frontend format with type information
- */
 export function transformTags(tags: IGachaTag[]): IRecruitmentTag[] {
     return tags.map((tag) => ({
         id: tag.tagId,
@@ -19,9 +15,6 @@ export function transformTags(tags: IGachaTag[]): IRecruitmentTag[] {
     }));
 }
 
-/**
- * Group tags by their type
- */
 export function groupTagsByType(tags: IRecruitmentTag[]): Record<TagType, IRecruitmentTag[]> {
     const groups: Record<TagType, IRecruitmentTag[]> = {
         qualification: [],
@@ -37,9 +30,6 @@ export function groupTagsByType(tags: IRecruitmentTag[]): Record<TagType, IRecru
     return groups;
 }
 
-/**
- * Generate stars string based on rarity
- */
 export function getStarsDisplay(rarity: number): string {
     return "★".repeat(rarity);
 }

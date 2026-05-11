@@ -1,13 +1,7 @@
 import type { TagType } from "./types";
 
-// Maximum number of tags that can be selected
 export const MAX_SELECTED_TAGS = 5;
 
-// Tag ID to type mapping
-// Position: Melee (9), Ranged (10)
-// Class: Guard (1), Sniper (2), Defender (3), Medic (4), Supporter (5), Caster (6), Specialist (7), Vanguard (8)
-// Qualification: Top Operator (11), Senior Operator (14), Starter (17), Robot (28)
-// Affix: Everything else
 export const TAG_ID_TO_TYPE_MAP: Record<number, TagType> = {
     // Class tags (1-8)
     1: "class", // Guard
@@ -28,10 +22,7 @@ export const TAG_ID_TO_TYPE_MAP: Record<number, TagType> = {
     28: "qualification", // Robot
 };
 
-// Display order for tag groups
 export const TAG_GROUP_ORDER: TagType[] = ["qualification", "position", "class", "affix"];
-
-// Tag group display labels
 export const TAG_GROUP_LABELS: Record<TagType, string> = {
     qualification: "Qualification",
     position: "Position",
@@ -39,12 +30,11 @@ export const TAG_GROUP_LABELS: Record<TagType, string> = {
     affix: "Affix",
 };
 
-// Special tag IDs for guaranteed rarity calculations
 export const TOP_OPERATOR_TAG_ID = 11;
 export const SENIOR_OPERATOR_TAG_ID = 14;
+export const STARTER_TAG_ID = 17;
 export const ROBOT_TAG_ID = 28;
 
-// Rarity star colors for display
 export const RARITY_COLORS: Record<number, { bg: string; text: string; border: string }> = {
     6: { bg: "bg-orange-500/15", text: "text-orange-600 dark:text-orange-400", border: "border-orange-500/30" },
     5: { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30" },
@@ -54,7 +44,6 @@ export const RARITY_COLORS: Record<number, { bg: string; text: string; border: s
     1: { bg: "bg-zinc-500/15", text: "text-zinc-600 dark:text-zinc-400", border: "border-zinc-500/30" },
 };
 
-// Profession display names
 export const PROFESSION_LABELS: Record<string, string> = {
     WARRIOR: "Guard",
     SNIPER: "Sniper",

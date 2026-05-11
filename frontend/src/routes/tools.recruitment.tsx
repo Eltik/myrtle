@@ -1,9 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AlertTriangle } from "lucide-react";
+import { RecruitmentCalculator } from "#/components/tools/recruitment/RecruitmentCalculator";
+import { Button } from "#/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/recruitment")({
     component: RouteComponent,
+    errorComponent: RecruitmentErrorComponent,
+    loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(recruitmentDataQueryOptions()),
     head: () => {
         const { meta, links } = seo({
             title: "Recruitment Calculator",
@@ -19,5 +26,25 @@ export const Route = createFileRoute("/tools/recruitment")({
 });
 
 function RouteComponent() {
-    return null;
+    return <RecruitmentCalculator />;
+}
+
+function RecruitmentErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
+    const message = error instanceof Error ? error.message : String(error);
+    return (
+        <div className="relative z-1 mx-auto w-[min(640px,calc(100%-2rem))] py-20">
+            <Empty>
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <AlertTriangle className="text-destructive" />
+                    </EmptyMedia>
+                    <EmptyTitle>Recruitment calculator failed to load</EmptyTitle>
+                    <EmptyDescription>{message || "An unexpected error occurred while loading recruitment data. Try again, or check the browser console for details."}</EmptyDescription>
+                </EmptyHeader>
+                <Button onClick={reset} variant="outline">
+                    Retry
+                </Button>
+            </Empty>
+        </div>
+    );
 }

@@ -28,9 +28,6 @@ function parseRecruitableNames(recruitDetail: string): Set<string> {
             continue;
         }
 
-        // Strip markup tags before splitting on "/". Otherwise the "/" inside
-        // a closing </> tag splits the tag across fragments, leaving a stray
-        // "<" attached to every <@rc.eml>-wrapped operator name (e.g. "PhonoR-0<").
         const stripped = line.replace(/<[^>]*>/g, "");
 
         const lineNames = stripped
