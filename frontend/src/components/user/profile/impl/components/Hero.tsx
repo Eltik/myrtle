@@ -42,6 +42,10 @@ export function Hero({ profile }: IHeroProps) {
 
     const handleCopyUid = () => copyToClipboard(profile.uid, "UID copied", `${profile.uid} copied to clipboard.`, "Couldn't copy UID");
 
+    const displayNickname = profile.nickname ?? `Doctor ${profile.uid}`;
+    const usernameWithDiscriminator = profile.nick_number ? `${displayNickname}#${profile.nick_number}` : displayNickname;
+    const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, "Username copied", `${usernameWithDiscriminator} copied to clipboard.`, "Couldn't copy username");
+
     return (
         <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
             <div
@@ -108,7 +112,19 @@ export function Hero({ profile }: IHeroProps) {
                         <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{profile.uid}</span>
                         <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-mono text-[11px] font-medium leading-none text-muted-foreground">{profile.server} server</span>
                     </div>
-                    <h1 className="mb-1 wrap-break-word font-sans text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">{profile.nickname ?? `Doctor ${profile.uid}`}</h1>
+                    <h1 className="mb-1 flex flex-wrap items-baseline gap-x-1.5 wrap-break-word font-sans text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={(triggerProps) => (
+                                    <button {...triggerProps} type="button" onClick={handleCopyUsername} aria-label="Copy username" className="cursor-pointer rounded-sm text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                        {displayNickname}
+                                        {profile.nick_number && <span className="ml-1 font-mono font-medium text-muted-foreground text-base sm:text-lg lg:text-xl">#{profile.nick_number}</span>}
+                                    </button>
+                                )}
+                            />
+                            <TooltipPopup>Copy username</TooltipPopup>
+                        </Tooltip>
+                    </h1>
                     {profile.resume && <p className="mb-3.5 max-w-prose font-sans text-sm font-normal leading-normal text-muted-foreground sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
                     {levelProgress && <LevelProgressBar progress={levelProgress} />}
                     <div className="mt-1.5 inline-flex items-center gap-2 font-sans text-xs font-medium leading-none text-muted-foreground">

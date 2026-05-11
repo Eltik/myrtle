@@ -53,11 +53,11 @@
 
 - [X] **Reorder profile sections.** Show `Stats` → `Score` first, then `Roster` → `Inventory` below.
 - [X] **Replace the three-dot menu next to Share with a "Copy UID" button.**
-- [ ] **Module titles.** Display module titles like `X` / `Y` instead of `N3`, etc. (See: [Discord reference](https://discord.com/channels/1461861870972436513/1461861872901951572/1495822322526060654))
-- [ ] **Split the user dropdown into two controls.** The username and avatar should be a direct "view profile" link; keep the dropdown arrow as a separate button for the menu.
-- [ ] **Update "copy username"** to include the discriminator/numbers.
-- [ ] **Fix unowned operators display.**
-- [ ] **Fix trust calculation** for the user roster.
+- [X] **Module titles.** Display module titles like `X` / `Y` instead of `N3`, etc. (See: [Discord reference](https://discord.com/channels/1461861870972436513/1461861872901951572/1495822322526060654))
+- [X] **Split the user dropdown into two controls.** The username and avatar should be a direct "view profile" link; keep the dropdown arrow as a separate button for the menu.
+- [X] **Update "copy username"** to include the discriminator/numbers.
+- [X] **Fix unowned operators display.**
+- [X] **Fix trust calculation** for the user roster.
 - [ ] **Optimize operator visuals loading.** Profile-section operator art loads slowly - likely because the site fetches the full multi-MB E2 PNG for every operator. Options:
   - [ ] Use face-crop images (matches how the game itself handles roster views).
   - [ ] Or, if keeping full E2 art, serve a compressed version.
