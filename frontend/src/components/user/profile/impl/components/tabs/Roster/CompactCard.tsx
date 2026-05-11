@@ -1,7 +1,7 @@
 import { eliteIcon, potentialIcon } from "#/components/operators/detail/impl/assets";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
-import { isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, ownedAvatar, parseOperatorName, specializedIcon } from "./helpers.card";
+import { isMaxed, MAX_LEVEL_BY_RARITY, moduleBadgeLetter, moduleIconURL, ownedAvatar, parseOperatorName, specializedIcon } from "./helpers.card";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
 
@@ -132,10 +132,11 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                                 {unlockedModules.map((module) => {
                                     const rosterMod = entry.modules.find((m) => m.id === module.uniEquipId);
                                     const moduleLevel = rosterMod?.level ?? 0;
-                                    const typeLetter = module.typeName1?.slice(-1) ?? "X";
+                                    const typeLetter = moduleBadgeLetter(module);
+                                    const titleLabel = module.typeName1 && module.typeName2 ? `${module.typeName1}-${module.typeName2}` : (module.typeName1 ?? "Module");
                                     return (
-                                        <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${module.typeName1} Stage ${moduleLevel}`}>
-                                            <img alt={module.typeName1 ?? "Module"} className="h-full w-full object-contain" decoding="async" height={32} loading="lazy" src={moduleIconURL(module)} width={32} />
+                                        <div className="relative aspect-square h-6 overflow-hidden rounded bg-secondary sm:h-8" key={module.uniEquipId} title={`${titleLabel} Stage ${moduleLevel}`}>
+                                            <img alt={titleLabel} className="h-full w-full object-contain" decoding="async" height={32} loading="lazy" src={moduleIconURL(module)} width={32} />
                                             <span className="absolute right-0 bottom-0 rounded-tl bg-secondary/90 px-0.5 font-medium text-[0.5625rem] leading-none sm:text-[0.625rem]">
                                                 {typeLetter}
                                                 {moduleLevel}

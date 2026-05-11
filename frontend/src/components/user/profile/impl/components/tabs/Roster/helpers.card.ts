@@ -36,6 +36,20 @@ export function moduleIconURL(mod: IModule): string {
     return asset(`/textures/spritepack/ui_equip_big_img_hub_0/${mod.uniEquipIcon}.png`);
 }
 
+/**
+ * Short label for the module-stage badge on operator cards.
+ * Special cases: ISW → IS, RA → RA (Reclamation Algorithm),
+ * typeName2 "D" → Δ (Delta module). Otherwise uses typeName2
+ * (the X/Y/Z designator) and falls back to typeName1.
+ */
+export function moduleBadgeLetter(mod: Pick<IModule, "typeName1" | "typeName2">): string {
+    const t1 = mod.typeName1?.toUpperCase();
+    if (t1 === "ISW") return "IS";
+    if (t1 === "RA") return "RA";
+    if (mod.typeName2 === "D") return "Δ";
+    return mod.typeName2 ?? mod.typeName1 ?? "X";
+}
+
 /** Skin-aware avatar. `getAvatarById` already normalizes `@`-skins and `#1` base IDs. */
 export function ownedAvatar(opId: string, skinId: string | null): string {
     return getAvatarById(skinId ?? opId);
