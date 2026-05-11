@@ -87,27 +87,19 @@
 
 ## `/user/leaderboard`
 
-- [ ] **Make the entire row a single button** that navigates to the user's page.
-- [ ] **Hide server share for now** - comment out the code rather than deleting it.
-- [ ] **Remove the "Top 3 Overall" component entirely** - redundant with the main leaderboard rows.
+- [X] **Make the entire row a single button** that navigates to the user's page.
+- [X] **Hide server share for now** - comment out the code rather than deleting it.
+- [X] **Remove the "Top 3 Overall" component entirely** - redundant with the main leaderboard rows.
 - [ ] **Configurable items per page.**
 
 ---
 
 ## `/tools/recruitment`
 
-- [ ] **Layout: force-wrap "Starter".** Qualifications display is fine, but "Starter" sitting on the same line is awkward.
-- [ ] **Default accordions to closed** in the result box when selecting tags (currently open by default).
-- [ ] **Merge duplicate result combinations.** When different tag sets yield the *same* operator pool, combine them. Example: `Melee, Specialist, Debuff` and `Melee, Debuff` both yield only Waai Fu - these should be a single combined result with both tag combinations shown together.
-- [ ] **Reverse lookup on hover/click.** When hovering or clicking an operator, show that operator's tag combinations.
-- [ ] **Closing an accordion should close it completely** - verify this looks right.
 
 ---
 
 ## `/tools/dps`
-
-- [ ] **Add character art** to operators in this tool.
-- [ ] **Make the popup larger.**
 
 ---
 
@@ -120,14 +112,6 @@
 
 ## Pull Stats / Statistics
 
-- [ ] **Show 3★ and 4★ rates** in addition to 5★/6★.
-- [ ] **Better deviance calculation.** The current "above/below expected by X%" framing is misleading because it uses simple subtraction. Example: a 6★ rate of 4% (vs. 2% expected) shows as "above by 2%" - but that's *double* the expected rate. Conversely, a 5★ rate of 6% (vs. 8% expected) shows as "below by 2%" but is missing a quarter of the advertised rate.
-
-  Switch to a percentage-of-expected calculation, displayed as either:
-  - "X% of the expected rate", or
-  - "above/below expected by X%" with the percentage scaled to expected.
-
-- [ ] **Community average comparison.** Similar to how expected rate is shown and confirmed, also show the community average and compare against it.
 
 ---
 

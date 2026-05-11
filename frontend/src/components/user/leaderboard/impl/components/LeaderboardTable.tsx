@@ -12,6 +12,8 @@ interface ILeaderboardTableProps {
     isLoading?: boolean;
 }
 
+const DESKTOP_GRID = "grid-cols-[80px_minmax(0,1fr)_100px_90px_180px_60px]";
+
 export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeaderboardTableProps) {
     if (!isLoading && entries.length === 0) {
         return <div className="px-6 py-12 text-center font-sans text-sm text-muted-foreground">No Doctors match these filters.</div>;
@@ -19,26 +21,24 @@ export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeader
 
     return (
         <>
-            <div className="hidden overflow-x-auto md:block">
-                <table className="w-full border-separate border-spacing-0">
-                    <thead>
-                        <tr>
-                            <Th>Rank</Th>
-                            <Th>Doctor</Th>
-                            <Th>Server</Th>
-                            <Th>Grade</Th>
-                            <Th align="right" sorted>
-                                Score <span className="ml-1 text-[10px] text-primary">▼</span>
-                            </Th>
-                            <Th align="right">Lv</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {entries.map((entry) => (
-                            <DesktopRow key={entry.id} entry={entry} referenceScore={referenceScore} />
-                        ))}
-                    </tbody>
-                </table>
+            <div className="hidden md:block">
+                <div className={cn("grid items-center gap-4 border-b border-border bg-[color-mix(in_srgb,var(--muted)_35%,transparent)] px-4 py-3.5", DESKTOP_GRID)}>
+                    <Th>Rank</Th>
+                    <Th>Doctor</Th>
+                    <Th>Server</Th>
+                    <Th>Grade</Th>
+                    <Th align="right" sorted>
+                        Score <span className="ml-1 text-[10px] text-primary">▼</span>
+                    </Th>
+                    <Th align="right">Lv</Th>
+                </div>
+                <ul className="contents">
+                    {entries.map((entry) => (
+                        <li key={entry.id} className="contents">
+                            <DesktopRow entry={entry} referenceScore={referenceScore} />
+                        </li>
+                    ))}
+                </ul>
             </div>
             <div className="block p-3 md:hidden">
                 <div className="flex flex-col gap-2">
@@ -52,14 +52,7 @@ export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeader
 }
 
 function Th({ children, align, sorted }: { children: React.ReactNode; align?: "right"; sorted?: boolean }) {
-    return (
-        <th
-            scope="col"
-            className={cn("border-b border-border bg-[color-mix(in_srgb,var(--muted)_35%,transparent)] px-4 py-3.5 font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground whitespace-nowrap", align === "right" ? "text-right" : "text-left", sorted && "text-foreground")}
-        >
-            {children}
-        </th>
-    );
+    return <span className={cn("font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground whitespace-nowrap", align === "right" ? "text-right" : "text-left", sorted && "text-foreground")}>{children}</span>;
 }
 
 function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; referenceScore: number | null }) {
@@ -69,44 +62,37 @@ function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; refere
     const score = entry.total_score;
     const ratio = score == null || referenceScore == null || referenceScore <= 0 ? 0 : Math.max(0, Math.min(100, (score / referenceScore) * 100));
 
-    const cellBg = entry.isSelf ? "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "hover:bg-[color-mix(in_srgb,var(--accent)_50%,transparent)]";
-    const cellCls = cn("border-b border-[color-mix(in_srgb,var(--border)_60%,transparent)] px-4 py-3 align-middle font-sans text-[13px] text-foreground", cellBg);
+    const rowBg = entry.isSelf ? "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "hover:bg-[color-mix(in_srgb,var(--accent)_50%,transparent)]";
 
     return (
-        <tr className="group cursor-pointer transition-colors">
-            <td className={cellCls}>
-                <Link to="/user/$id" params={{ id: entry.uid }} className="inline-flex min-w-14 items-center font-mono text-sm font-semibold leading-none text-foreground tabular-nums no-underline">
-                    #{entry.rank_global ?? "-"}
-                </Link>
-            </td>
-            <td className={cellCls}>
-                <Link to="/user/$id" params={{ id: entry.uid }} className="inline-flex max-w-80 min-w-0 items-center gap-3 no-underline">
-                    <Avatar className="size-9 rounded-[10px]">
-                        <AvatarImage src={avatarSrc} alt={nickname} />
-                        <AvatarFallback className="rounded-[10px] text-xs">{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">{nickname}</span>
-                        <span className="truncate font-mono text-[11px] leading-none text-muted-foreground tabular-nums before:opacity-50 before:content-['#']">{entry.uid}</span>
-                    </div>
-                </Link>
-            </td>
-            <td className={cellCls}>
+        <Link to="/user/$id" params={{ id: entry.uid }} aria-label={`View ${nickname} profile`} className={cn("group grid items-center gap-4 border-b border-[color-mix(in_srgb,var(--border)_60%,transparent)] px-4 py-3 font-sans text-[13px] text-foreground no-underline transition-colors", DESKTOP_GRID, rowBg)}>
+            <span className="inline-flex min-w-14 items-center font-mono text-sm font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "-"}</span>
+            <span className="inline-flex max-w-80 min-w-0 items-center gap-3">
+                <Avatar className="size-9 rounded-[10px]">
+                    <AvatarImage src={avatarSrc} alt={nickname} />
+                    <AvatarFallback className="rounded-[10px] text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">{nickname}</span>
+                    <span className="truncate font-mono text-[11px] leading-none text-muted-foreground tabular-nums before:opacity-50 before:content-['#']">{entry.uid}</span>
+                </span>
+            </span>
+            <span>
                 <ServerTag server={entry.server} />
-            </td>
-            <td className={cellCls}>
+            </span>
+            <span>
                 <GradeBadge grade={entry.grade} />
-            </td>
-            <td className={cn(cellCls, "text-right")}>
-                <div className="ml-auto inline-flex min-w-24 flex-col items-end gap-1.5">
+            </span>
+            <span className="text-right">
+                <span className="ml-auto inline-flex min-w-24 flex-col items-end gap-1.5">
                     <span className="font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">{score == null ? "-" : formatNumber(score)}</span>
                     <span className="relative block h-0.75 w-full overflow-hidden rounded-full bg-muted">
                         <span className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-primary/70 to-primary" style={{ width: `${ratio}%` }} />
                     </span>
-                </div>
-            </td>
-            <td className={cn(cellCls, "text-right font-mono text-xs tabular-nums")}>{entry.level == null ? "-" : entry.level}</td>
-        </tr>
+                </span>
+            </span>
+            <span className="text-right font-mono text-xs tabular-nums">{entry.level == null ? "-" : entry.level}</span>
+        </Link>
     );
 }
 
@@ -144,11 +130,11 @@ export function LeaderboardTableSkeleton({ rows = 8 }: { rows?: number }) {
         <>
             <div className="hidden md:block">
                 <div className="px-4 pt-3 pb-1">
-                    <div className="grid h-9 grid-cols-[80px_1fr_80px_60px_140px_60px] items-center gap-4 border-b border-border" />
+                    <div className={cn("grid h-9 items-center gap-4 border-b border-border", DESKTOP_GRID)} />
                 </div>
                 <div className="divide-y divide-border/60">
                     {Array.from({ length: rows }, (_, i) => `row-skeleton-${i}-of-${rows}`).map((key) => (
-                        <div key={key} className="grid grid-cols-[80px_1fr_80px_60px_140px_60px] items-center gap-4 px-4 py-3">
+                        <div key={key} className={cn("grid items-center gap-4 px-4 py-3", DESKTOP_GRID)}>
                             <span className="h-4 w-12 rounded bg-muted" />
                             <div className="flex items-center gap-3">
                                 <span className="size-9 rounded-[10px] bg-muted" />
