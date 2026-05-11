@@ -128,7 +128,21 @@ export function Randomizer(): React.ReactElement {
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}
             </div>
 
-            <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={updateSettings} operators={randomizerOperators} rosterSelection={effectiveRosterSet} onRosterChange={(next) => setRosterSelection(Array.from(next))} rosterIndex={rosterIndex} hasProfile={hasProfile} />
+            <SettingsSheet
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+                settings={settings}
+                onChange={updateSettings}
+                operators={randomizerOperators}
+                rosterSelection={effectiveRosterSet}
+                onRosterChange={(next) => setRosterSelection(Array.from(next))}
+                rosterIndex={rosterIndex}
+                hasProfile={hasProfile}
+                stages={playableStages}
+                zones={zones}
+                activityLookup={activityLookup}
+                stageClears={stageClears ?? null}
+            />
         </div>
     );
 }
