@@ -99,6 +99,28 @@ pub async fn fetch_domain(
     fetch(client, &raw_url, req).await
 }
 
+pub async fn parse_json<T: serde::de::DeserializeOwned>(
+    response: Response,
+    context: &str,
+) -> Result<T, FetchError> {
+    let status = response.status();
+    let text = response
+        .text()
+        .await
+        .map_err(|e| FetchError::ParseError(format!("{context}: read body: {e}")))?;
+
+    serde_json::from_str::<T>(&text).map_err(|e| {
+        tracing::warn!(
+            context = context,
+            status = %status,
+            body = %text,
+            error = %e,
+            "failed to parse response body"
+        );
+        FetchError::ParseError(format!("{context}: {e} (status={status}, body={text})"))
+    })
+}
+
 pub async fn auth_request(
     client: &Client,
     endpoint: &str,

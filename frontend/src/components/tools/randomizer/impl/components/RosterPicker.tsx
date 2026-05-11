@@ -2,8 +2,7 @@ import { Check, Search, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { getAvatarById } from "#/lib/utils";
-import { cn } from "#/lib/utils";
+import { cn, getAvatarById } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import type { IRandomizerOperator, IRosterIndex } from "../types";
 
@@ -95,11 +94,7 @@ function RosterChip({ op, selected, onToggle }: { op: IRandomizerOperator; selec
             type="button"
             onClick={onToggle}
             aria-pressed={selected}
-            className={cn(
-                "group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150",
-                "focus-visible:ring-2 focus-visible:ring-ring",
-                selected ? "border-primary/80 shadow-sm shadow-primary/20" : "border-border/50 opacity-60 hover:opacity-95",
-            )}
+            className={cn("group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150", "focus-visible:ring-2 focus-visible:ring-ring", selected ? "border-primary/80 shadow-sm shadow-primary/20" : "border-border/50 opacity-60 hover:opacity-95")}
             title={op.name}
         >
             <img

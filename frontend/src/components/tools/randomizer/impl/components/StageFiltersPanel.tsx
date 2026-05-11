@@ -21,14 +21,7 @@ export function StageFiltersPanel({ settings, onChange, hasProfile }: IStageFilt
         <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-2.5">
                 <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/90">Source</p>
-                <ToggleGroup
-                    aria-label="Allowed zone types"
-                    multiple
-                    value={settings.allowedZoneTypes}
-                    onValueChange={(next) => onChange({ allowedZoneTypes: (next as string[]) ?? [] })}
-                    variant="outline"
-                    className="flex-wrap"
-                >
+                <ToggleGroup aria-label="Allowed zone types" multiple value={settings.allowedZoneTypes} onValueChange={(next) => onChange({ allowedZoneTypes: (next as string[]) ?? [] })} variant="outline" className="flex-wrap">
                     {ZONE_OPTIONS.map((opt) => (
                         <ToggleGroupItem key={opt.value} value={opt.value} className="h-auto px-3 py-2">
                             <div className="text-left">

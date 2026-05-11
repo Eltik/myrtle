@@ -1,67 +1,146 @@
 import type React from "react";
 
-/**
- * Empty state when nothing has been rolled yet. Avoids generic "press the button"
- * spinner empties — uses an isometric stack of dice rendered as inline SVG with
- * the project's lagoon/palm/sea-ink palette.
- */
 export function EmptyState(): React.ReactElement {
     return (
         <section className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-card/60 px-6 py-10 shadow-xs/5 sm:py-14">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
                 <DiceStack />
-                <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">No orders rolled</p>
-                <h2 className="mt-2 font-[var(--font-display)] text-2xl font-semibold text-foreground sm:text-3xl">Awaiting orders.</h2>
-                <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-                    Hit <span className="font-mono">Roll Squad</span> above to draw a random stage, a squad of operators, and a challenge modifier.
+                <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">No squads rolled</p>
+                <h2 className="mt-2 font-(--font-display) text-2xl text-foreground sm:text-3xl">Awaiting randomizer.</h2>
+                <p className="mt-3 max-w-prose text-pretty text-sm leading-relaxed text-muted-foreground">
+                    Hit <kbd className="mx-0.5 inline-flex -translate-y-px items-center rounded-sm border border-border/70 bg-foreground/5 px-1.5 py-px font-mono text-[11px] font-medium tracking-tight text-foreground shadow-xs/5">Roll Squad</kbd> above to draw a random stage, a squad of operators, and a challenge
+                    modifier.
                 </p>
             </div>
         </section>
     );
 }
 
+type Matrix = readonly [number, number, number, number, number, number];
+
+const FACE_SIZE = 32;
+const FACE_SKEW = 14;
+const FACE_HEIGHT = 46;
+const CORNER_R = 5;
+const PIP_R = 1.7;
+
+const PIP_PATTERNS: Record<number, ReadonlyArray<[number, number]>> = {
+    1: [[0.5, 0.5]],
+    2: [
+        [0.3, 0.3],
+        [0.7, 0.7],
+    ],
+    3: [
+        [0.25, 0.25],
+        [0.5, 0.5],
+        [0.75, 0.75],
+    ],
+    4: [
+        [0.3, 0.3],
+        [0.7, 0.3],
+        [0.3, 0.7],
+        [0.7, 0.7],
+    ],
+    5: [
+        [0.25, 0.25],
+        [0.75, 0.25],
+        [0.5, 0.5],
+        [0.25, 0.75],
+        [0.75, 0.75],
+    ],
+    6: [
+        [0.27, 0.28],
+        [0.73, 0.28],
+        [0.27, 0.5],
+        [0.73, 0.5],
+        [0.27, 0.72],
+        [0.73, 0.72],
+    ],
+};
+
 function DiceStack(): React.ReactElement {
     return (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 200 130"
-            className="h-24 w-auto text-foreground sm:h-28"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            {/* die 1 — back-left */}
-            <g style={{ color: "var(--sea-ink-soft)" }}>
-                <path d="M40 32 L72 18 L104 32 L72 46 Z" />
-                <path d="M40 32 L40 78 L72 92 L72 46 Z" />
-                <path d="M72 46 L104 32 L104 78 L72 92 Z" fill="var(--surface, rgba(255,255,255,.5))" />
-                <circle cx="56" cy="62" r="2.2" fill="currentColor" />
-                <circle cx="88" cy="56" r="2.2" fill="currentColor" />
-                <circle cx="88" cy="70" r="2.2" fill="currentColor" />
-            </g>
-            {/* die 2 — middle */}
-            <g style={{ color: "var(--lagoon-deep)" }}>
-                <path d="M86 50 L120 34 L154 50 L120 66 Z" />
-                <path d="M86 50 L86 96 L120 112 L120 66 Z" />
-                <path d="M120 66 L154 50 L154 96 L120 112 Z" fill="var(--surface, rgba(255,255,255,.5))" />
-                <circle cx="103" cy="78" r="2.2" fill="currentColor" />
-                <circle cx="137" cy="74" r="2.2" fill="currentColor" />
-                <circle cx="137" cy="86" r="2.2" fill="currentColor" />
-                <circle cx="137" cy="98" r="2.2" fill="currentColor" />
-            </g>
-            {/* die 3 — front-right */}
-            <g style={{ color: "var(--palm)" }}>
-                <path d="M130 32 L162 18 L194 32 L162 46 Z" />
-                <path d="M130 32 L130 78 L162 92 L162 46 Z" />
-                <path d="M162 46 L194 32 L194 78 L162 92 Z" fill="var(--surface, rgba(255,255,255,.5))" />
-                <circle cx="146" cy="55" r="2.2" fill="currentColor" />
-                <circle cx="146" cy="69" r="2.2" fill="currentColor" />
-                <circle cx="178" cy="48" r="2.2" fill="currentColor" />
-                <circle cx="178" cy="62" r="2.2" fill="currentColor" />
-                <circle cx="178" cy="76" r="2.2" fill="currentColor" />
-            </g>
+        <svg aria-hidden="true" viewBox="0 0 200 130" className="h-24 w-auto text-foreground sm:h-28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <Die ftx={72} fty={46} top={5} left={2} right={3} color="var(--sea-ink-soft)" />
+            <Die ftx={120} fty={66} top={3} left={4} right={6} color="var(--lagoon-deep)" />
+            <Die ftx={162} fty={46} top={2} left={1} right={4} color="var(--palm)" />
         </svg>
     );
+}
+
+interface IDieProps {
+    ftx: number;
+    fty: number;
+    top: number;
+    left: number;
+    right: number;
+    color: string;
+}
+
+function Die({ ftx, fty, top, left, right, color }: IDieProps): React.ReactElement {
+    const ax = FACE_SIZE;
+    const ay = FACE_SKEW;
+    const h = FACE_HEIGHT;
+
+    const ft: [number, number] = [ftx, fty];
+    const rt: [number, number] = [ftx + ax, fty - ay];
+    const lt: [number, number] = [ftx - ax, fty - ay];
+    const bt: [number, number] = [ftx, fty - 2 * ay];
+    const fb: [number, number] = [ftx, fty + h];
+    const rb: [number, number] = [ftx + ax, fty - ay + h];
+    const lb: [number, number] = [ftx - ax, fty - ay + h];
+
+    // Face-local (u, v) ∈ [0,1]² → screen (x, y) for pip placement.
+    const topMat: Matrix = [ax, -ay, -ax, -ay, ftx, fty];
+    const leftMat: Matrix = [-ax, -ay, 0, h, ftx, fty];
+    const rightMat: Matrix = [ax, -ay, 0, h, ftx, fty];
+
+    return (
+        <g style={{ color }}>
+            <path d={roundedPath([lt, bt, rt, ft], CORNER_R)} />
+            <path d={roundedPath([lt, ft, fb, lb], CORNER_R)} />
+            <path d={roundedPath([ft, rt, rb, fb], CORNER_R)} fill="var(--surface, rgba(255,255,255,.5))" />
+            <Pips count={top} matrix={topMat} />
+            <Pips count={left} matrix={leftMat} />
+            <Pips count={right} matrix={rightMat} />
+        </g>
+    );
+}
+
+function Pips({ count, matrix }: { count: number; matrix: Matrix }): React.ReactElement {
+    const pattern = PIP_PATTERNS[count] ?? [];
+    return (
+        <>
+            {pattern.map(([u, v], i) => {
+                const x = matrix[0] * u + matrix[2] * v + matrix[4];
+                const y = matrix[1] * u + matrix[3] * v + matrix[5];
+                return <circle key={i} cx={x} cy={y} r={PIP_R} fill="currentColor" stroke="none" />;
+            })}
+        </>
+    );
+}
+
+function roundedPath(points: ReadonlyArray<[number, number]>, radius: number): string {
+    const n = points.length;
+    let d = "";
+    for (let i = 0; i < n; i++) {
+        const prev = points[(i - 1 + n) % n];
+        const curr = points[i];
+        const next = points[(i + 1) % n];
+        const inX = curr[0] - prev[0];
+        const inY = curr[1] - prev[1];
+        const lenIn = Math.hypot(inX, inY);
+        const outX = next[0] - curr[0];
+        const outY = next[1] - curr[1];
+        const lenOut = Math.hypot(outX, outY);
+        const rIn = Math.min(radius, lenIn / 2);
+        const rOut = Math.min(radius, lenOut / 2);
+        const sx = curr[0] - (inX / lenIn) * rIn;
+        const sy = curr[1] - (inY / lenIn) * rIn;
+        const ex = curr[0] + (outX / lenOut) * rOut;
+        const ey = curr[1] + (outY / lenOut) * rOut;
+        d += i === 0 ? `M ${sx} ${sy}` : ` L ${sx} ${sy}`;
+        d += ` Q ${curr[0]} ${curr[1]} ${ex} ${ey}`;
+    }
+    return `${d} Z`;
 }

@@ -1,7 +1,7 @@
 import { Flag, RotateCcw, Sparkles, Target } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
-import type { IChallenge, ChallengeKind } from "../types";
+import type { ChallengeKind, IChallenge } from "../types";
 import { SlabFrame } from "./SlabFrame";
 
 interface IModifierSlabProps {

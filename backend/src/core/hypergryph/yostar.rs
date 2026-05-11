@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::core::hypergryph::{
     constants::Server,
-    fetch::{FetchError, FetchRequest, fetch},
+    fetch::{FetchError, FetchRequest, fetch, parse_json},
 };
 
 #[derive(Serialize)]
@@ -43,10 +43,7 @@ pub async fn send_code(
     )
     .await?;
 
-    response
-        .json()
-        .await
-        .map_err(|e| FetchError::ParseError(e.to_string()))
+    parse_json(response, "yostar::send_code").await
 }
 
 #[derive(Serialize)]
@@ -103,10 +100,7 @@ pub async fn submit_auth(
     )
     .await?;
 
-    let data: AuthFetchResponse = response
-        .json()
-        .await
-        .map_err(|e| FetchError::ParseError(e.to_string()))?;
+    let data: AuthFetchResponse = parse_json(response, "yostar::submit_auth").await?;
 
     if data.code != 200 {
         return Err(FetchError::ParseError(format!(
@@ -206,10 +200,7 @@ pub async fn request_token(
     )
     .await?;
 
-    let data: TokenFetchResponse = response
-        .json()
-        .await
-        .map_err(|e| FetchError::ParseError(e.to_string()))?;
+    let data: TokenFetchResponse = parse_json(response, "yostar::request_token").await?;
 
     Ok(TokenResponse {
         uid: data.data.user_info.id,

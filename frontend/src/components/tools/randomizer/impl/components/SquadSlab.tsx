@@ -20,7 +20,10 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
                 <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     <Users aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>
-                        Deployment · <span className="font-mono normal-case tracking-normal text-foreground/80">{filled}/{squadSize}</span>
+                        Deployment ·{" "}
+                        <span className="font-mono normal-case tracking-normal text-foreground/80">
+                            {filled}/{squadSize}
+                        </span>
                     </span>
                 </div>
                 <Button onClick={onReroll} size="xs" variant="outline" aria-label="Reroll squad">
@@ -43,10 +46,7 @@ function OperatorTile({ op, index }: { op: IRandomizerOperator; index: number })
     const rarityVar = `var(--rarity-${op.rarity})`;
     const delay = `${Math.min(index, 11) * 28}ms`;
     return (
-        <div
-            className="group relative aspect-square overflow-hidden rounded-md border border-border/60 bg-secondary/40 motion-safe:animate-[squadTileIn_.45s_cubic-bezier(.2,.7,.2,1)_both]"
-            style={{ ["--rarity-tint" as string]: rarityVar, animationDelay: delay }}
-        >
+        <div className="group relative aspect-square overflow-hidden rounded-md border border-border/60 bg-secondary/40 motion-safe:animate-[squadTileIn_.45s_cubic-bezier(.2,.7,.2,1)_both]" style={{ ["--rarity-tint" as string]: rarityVar, animationDelay: delay }}>
             <img
                 src={getAvatarById(op.id)}
                 alt={op.name}

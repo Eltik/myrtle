@@ -18,14 +18,7 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
     return (
         <div className="flex flex-col gap-5">
             <FieldGroup label="Class">
-                <ToggleGroup
-                    aria-label="Allowed classes"
-                    multiple
-                    value={settings.allowedClasses}
-                    onValueChange={(next) => onChange({ allowedClasses: (next as OperatorProfession[]) ?? [] })}
-                    variant="outline"
-                    className="flex-wrap"
-                >
+                <ToggleGroup aria-label="Allowed classes" multiple value={settings.allowedClasses} onValueChange={(next) => onChange({ allowedClasses: (next as OperatorProfession[]) ?? [] })} variant="outline" className="flex-wrap">
                     {ALL_CLASSES.map((cls) => (
                         <ToggleGroupItem key={cls} value={cls} aria-label={CLASS_LABEL[cls]}>
                             <span className="text-[12px]">{CLASS_LABEL[cls]}</span>
@@ -35,13 +28,7 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
             </FieldGroup>
 
             <FieldGroup label="Rarity">
-                <ToggleGroup
-                    aria-label="Allowed rarities"
-                    multiple
-                    value={settings.allowedRarities.map(String)}
-                    onValueChange={(next) => onChange({ allowedRarities: (next as string[]).map((n) => Number(n) as OperatorRarity) })}
-                    variant="outline"
-                >
+                <ToggleGroup aria-label="Allowed rarities" multiple value={settings.allowedRarities.map(String)} onValueChange={(next) => onChange({ allowedRarities: (next as string[]).map((n) => Number(n) as OperatorRarity) })} variant="outline">
                     {ALL_RARITIES.map((r) => (
                         <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`}>
                             <span className="font-mono text-[12px]">{r}★</span>
@@ -69,20 +56,8 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
             <FieldGroup label="Rules">
                 <SwitchRow label="Allow duplicates" description="Same operator can appear twice in a squad." checked={settings.allowDuplicates} onChange={(v) => onChange({ allowDuplicates: v })} />
                 <SwitchRow label="Hide unplayable operators" description="Exclude tokens, support-only, and reserve operators." checked={settings.hideUnplayableOperators} onChange={(v) => onChange({ hideUnplayableOperators: v })} />
-                <SwitchRow
-                    label="Only operators I own"
-                    description="Restrict to your roster from the linked profile."
-                    checked={settings.onlyOwnedOperators}
-                    onChange={(v) => onChange({ onlyOwnedOperators: v, onlyE2Operators: v ? settings.onlyE2Operators : false })}
-                    locked={!hasProfile}
-                />
-                <SwitchRow
-                    label="E2 only"
-                    description="Restrict further to operators at elite 2 in your roster."
-                    checked={settings.onlyE2Operators}
-                    onChange={(v) => onChange({ onlyE2Operators: v, onlyOwnedOperators: v ? true : settings.onlyOwnedOperators })}
-                    locked={!hasProfile}
-                />
+                <SwitchRow label="Only operators I own" description="Restrict to your roster from the linked profile." checked={settings.onlyOwnedOperators} onChange={(v) => onChange({ onlyOwnedOperators: v, onlyE2Operators: v ? settings.onlyE2Operators : false })} locked={!hasProfile} />
+                <SwitchRow label="E2 only" description="Restrict further to operators at elite 2 in your roster." checked={settings.onlyE2Operators} onChange={(v) => onChange({ onlyE2Operators: v, onlyOwnedOperators: v ? true : settings.onlyOwnedOperators })} locked={!hasProfile} />
             </FieldGroup>
         </div>
     );
