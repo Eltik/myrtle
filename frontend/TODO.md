@@ -19,7 +19,7 @@
 
 ## General UI
 
-- [ ] **Higher-quality Myrtle logo.** Swap in a higher-resolution version of the site logo.
+- [X] **Higher-quality Myrtle logo.** Swap in a higher-resolution version of the site logo.
 
 ---
 
@@ -49,8 +49,10 @@
 
 ---
 
-## Profile Page
+## `/user/{id}` (Profile Page)
 
+- [X] **Reorder profile sections.** Show `Stats` → `Score` first, then `Roster` → `Inventory` below.
+- [X] **Replace the three-dot menu next to Share with a "Copy UID" button.**
 - [ ] **Module titles.** Display module titles like `X` / `Y` instead of `N3`, etc. (See: [Discord reference](https://discord.com/channels/1461861870972436513/1461861872901951572/1495822322526060654))
 - [ ] **Split the user dropdown into two controls.** The username and avatar should be a direct "view profile" link; keep the dropdown arrow as a separate button for the menu.
 - [ ] **Update "copy username"** to include the discriminator/numbers.
@@ -62,6 +64,12 @@
   - [ ] Or strip transparency by converting to JPG and storing separately (scriptable in bulk).
 
   This should reduce backend load and noticeably improve frontend responsiveness.
+
+---
+
+## `/user/search`
+
+- [ ] **Substring matching for usernames.** Searching `cr` should surface usernames containing `cr` (e.g. `Wisecrack`), not only ones that start with `cr`.
 
 ---
 
@@ -77,8 +85,11 @@
 
 ---
 
-## `/leaderboard`
+## `/user/leaderboard`
 
+- [ ] **Make the entire row a single button** that navigates to the user's page.
+- [ ] **Hide server share for now** - comment out the code rather than deleting it.
+- [ ] **Remove the "Top 3 Overall" component entirely** - redundant with the main leaderboard rows.
 - [ ] **Configurable items per page.**
 
 ---
@@ -97,6 +108,13 @@
 
 - [ ] **Add character art** to operators in this tool.
 - [ ] **Make the popup larger.**
+
+---
+
+## `/gacha/history`
+
+- [ ] **Banner name layout.** Keep the banner name on a single line, and/or fetch the actual banner name rather than a truncated/generic label.
+- [ ] **Limited & collab pity reset handling.** Pity does not carry over between limited/collab banners. Verify whether a new limited banner pull is treated as the same banner as before, and **add a notification on collab and limited banners explaining that pity does not carry over**.
 
 ---
 
