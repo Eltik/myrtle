@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 import type React from "react";
+import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -18,10 +19,10 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
     return (
         <div className="flex flex-col gap-5">
             <FieldGroup label="Class">
-                <ToggleGroup aria-label="Allowed classes" multiple value={settings.allowedClasses} onValueChange={(next) => onChange({ allowedClasses: (next as OperatorProfession[]) ?? [] })} variant="outline" className="flex-wrap">
+                <ToggleGroup aria-label="Allowed classes" multiple value={settings.allowedClasses} onValueChange={(next) => onChange({ allowedClasses: (next as OperatorProfession[]) ?? [] })} variant="outline" size="lg" className="flex-wrap">
                     {ALL_CLASSES.map((cls) => (
-                        <ToggleGroupItem key={cls} value={cls} aria-label={CLASS_LABEL[cls]}>
-                            <span className="text-[12px]">{CLASS_LABEL[cls]}</span>
+                        <ToggleGroupItem key={cls} value={cls} aria-label={CLASS_LABEL[cls]} title={CLASS_LABEL[cls]} className="px-2 not-data-pressed:bg-transparent dark:not-data-pressed:bg-transparent [&:not([data-pressed])_img]:opacity-35">
+                            <ClassIcon profession={cls} size={24} className="size-6!" />
                         </ToggleGroupItem>
                     ))}
                 </ToggleGroup>
@@ -30,7 +31,7 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
             <FieldGroup label="Rarity">
                 <ToggleGroup aria-label="Allowed rarities" multiple value={settings.allowedRarities.map(String)} onValueChange={(next) => onChange({ allowedRarities: (next as string[]).map((n) => Number(n) as OperatorRarity) })} variant="outline">
                     {ALL_RARITIES.map((r) => (
-                        <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`}>
+                        <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`} className="not-data-pressed:bg-transparent dark:not-data-pressed:bg-transparent [&:not([data-pressed])>span]:opacity-35">
                             <span className="font-mono text-[12px]">{r}★</span>
                         </ToggleGroupItem>
                     ))}
