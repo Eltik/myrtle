@@ -4,15 +4,15 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { useAuth } from "#/hooks/use-auth";
-import { leaderboardDistributionQueryOptions, leaderboardMoversQueryOptions, leaderboardQueryOptions, playerStandingQueryOptions } from "#/lib/api/user";
+import { leaderboardMoversQueryOptions, leaderboardQueryOptions, playerStandingQueryOptions } from "#/lib/api/user";
+// import { leaderboardDistributionQueryOptions } from "#/lib/api/user"; // hidden: server share
 import { formatNumber } from "#/lib/utils";
 import { Route } from "#/routes/user.leaderboard";
 import { useDebounce } from "../search/impl/useDebounce";
 import { Hero } from "./impl/components/Hero";
 import { LeaderboardTable, LeaderboardTableSkeleton } from "./impl/components/LeaderboardTable";
-import { Medalists } from "./impl/components/Medalists";
 import { MoversCard } from "./impl/components/MoversCard";
-import { ServerSplitCard } from "./impl/components/ServerSplitCard";
+// import { ServerSplitCard } from "./impl/components/ServerSplitCard"; // hidden: server share
 import { Toolbar } from "./impl/components/Toolbar";
 import { YouCard } from "./impl/components/YouCard";
 import { type LeaderboardScope, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
@@ -41,7 +41,7 @@ export function Leaderboard() {
     const pageQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: PAGE_SIZE, offset }));
     const topQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: 3, offset: 0 }));
     const moversQuery = useQuery(leaderboardMoversQueryOptions({ direction: "up", interval: "7 days", limit: 3, server: apiServer }));
-    const distributionQuery = useQuery(leaderboardDistributionQueryOptions({ top: 250 }));
+    // const distributionQuery = useQuery(leaderboardDistributionQueryOptions({ top: 250 })); // hidden: server share
 
     const standingQuery = useQuery({
         ...playerStandingQueryOptions({ uid: user?.uid ?? "", server: user?.server ?? "" }),
@@ -98,8 +98,6 @@ export function Leaderboard() {
 
             <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6">
                 <div className="flex min-w-0 flex-col gap-4">
-                    <Medalists entries={topThree} isLoading={topQuery.isLoading} />
-
                     <Toolbar scope={scope} onScope={handleScope} server={server} onServer={handleServer} query={inputValue} onQuery={setInputValue} />
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -116,7 +114,7 @@ export function Leaderboard() {
                 <div className="flex flex-col gap-4 lg:gap-5">
                     {user ? <YouCard standing={standingQuery.data ?? null} rankedDoctors={totalEntries || null} /> : null}
                     <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} />
-                    {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null}
+                    {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
             </div>
         </div>
