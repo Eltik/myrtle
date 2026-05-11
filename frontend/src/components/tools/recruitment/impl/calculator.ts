@@ -1,27 +1,19 @@
 import { rarityToNumber } from "#/lib/utils";
-import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
+import { SENIOR_OPERATOR_TAG_ID, STARTER_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { ICalculatorOptions, IRecruitableOperator, IRecruitableOperatorWithTags, ITagCombinationResult, OperatorSortMode } from "./types";
 
-/**
- * Get sort priority for "common-first" mode
- * Common operators (4, 3, 2) appear before uncommon (5, 1)
- * Order: 4 -> 3 -> 2 -> 5 -> 1
- */
 function getCommonFirstPriority(rarity: number): number {
     const priorityMap: Record<number, number> = {
-        4: 0, // Most common, shown first
+        4: 0,
         3: 1,
         2: 2,
-        5: 3, // Uncommon
-        1: 4, // Robots, shown last
-        6: 5, // 6 rarely in recruitment pool anyway
+        5: 3,
+        1: 4,
+        6: 5,
     };
     return priorityMap[rarity] ?? 99;
 }
 
-/**
- * Sort operators based on the selected sort mode
- */
 function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode): IRecruitableOperator[] {
     return [...operators].sort((a, b) => {
         if (mode === "common-first") {
@@ -33,9 +25,6 @@ function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode
     });
 }
 
-/**
- * Check if an operator matches a specific tag
- */
 function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tagName: string): boolean {
     const rarity = rarityToNumber(op.rarity);
 
@@ -45,37 +34,34 @@ function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tag
         case 10:
             return op.position === "RANGED";
         case 1:
-            return op.profession === "WARRIOR"; // Guard
+            return op.profession === "WARRIOR";
         case 2:
             return op.profession === "SNIPER";
         case 3:
-            return op.profession === "TANK"; // Defender
+            return op.profession === "TANK";
         case 4:
             return op.profession === "MEDIC";
         case 5:
-            return op.profession === "SUPPORT"; // Supporter
+            return op.profession === "SUPPORT";
         case 6:
             return op.profession === "CASTER";
         case 7:
-            return op.profession === "SPECIAL"; // Specialist
+            return op.profession === "SPECIAL";
         case 8:
-            return op.profession === "PIONEER"; // Vanguard
+            return op.profession === "PIONEER";
         case 11:
-            return rarity === 6; // Top Operator
+            return rarity === 6;
         case 14:
-            return rarity === 5; // Senior Operator
+            return rarity === 5;
         case 17:
-            return rarity === 2; // Starter
+            return rarity === 2;
         case 28:
-            return rarity === 1; // Robot
+            return rarity === 1;
         default:
             return op.tagList.includes(tagName);
     }
 }
 
-/**
- * Get all combinations of items from an array up to a certain size
- */
 export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
     const result: T[][] = [];
 
@@ -99,9 +85,6 @@ export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
     return result;
 }
 
-/**
- * Calculate recruitment results
- */
 export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperatorWithTags[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
     const { showLowRarity = false, includeRobots = true, operatorSortMode = "rarity-desc" } = options;
 
@@ -115,11 +98,8 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
     for (const combo of combinations) {
         const matching = allOperators.filter((op) => {
             const rarity = rarityToNumber(op.rarity);
-
-            // 6-star operators can only be recruited with Top Operator tag
             if (!hasTopOperator && rarity === 6) return false;
 
-            // Operator must match ALL tags in the combination
             return combo.every((tag) => operatorMatchesTag(op, tag.id, tag.name));
         });
 
@@ -133,14 +113,15 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
             position: op.position,
         }));
 
-        // Filter out robots if option is disabled
+        const tagIds = combo.map((t) => t.id);
+
         if (!includeRobots) {
             filteredOps = filteredOps.filter((op) => op.rarity !== 1);
         }
 
-        // Filter low rarity if option is disabled
         if (!showLowRarity) {
-            filteredOps = filteredOps.filter((op) => op.rarity >= 3 || op.rarity === 1);
+            const wantsStarter = tagIds.includes(STARTER_TAG_ID);
+            filteredOps = filteredOps.filter((op) => op.rarity >= 3 || op.rarity === 1 || (op.rarity === 2 && wantsStarter));
         }
 
         if (filteredOps.length === 0) continue;
@@ -148,15 +129,11 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         const minRarity = Math.min(...filteredOps.map((op) => op.rarity));
         const maxRarity = Math.max(...filteredOps.map((op) => op.rarity));
 
-        const tagIds = combo.map((t) => t.id);
         let guaranteedRarity = minRarity;
 
-        // Top Operator guarantees 6-star
         if (tagIds.includes(TOP_OPERATOR_TAG_ID)) {
             guaranteedRarity = 6;
-        }
-        // Senior Operator guarantees at least 5-star
-        else if (tagIds.includes(SENIOR_OPERATOR_TAG_ID)) {
+        } else if (tagIds.includes(SENIOR_OPERATOR_TAG_ID)) {
             guaranteedRarity = Math.max(5, minRarity);
         }
 
@@ -170,7 +147,6 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         });
     }
 
-    // Sort results: highest guaranteed rarity first, then by operator count (fewer = more specific), then by max rarity
     return results.sort((a, b) => {
         if (b.guaranteedRarity !== a.guaranteedRarity) {
             return b.guaranteedRarity - a.guaranteedRarity;
