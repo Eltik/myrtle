@@ -12,6 +12,7 @@ export interface IRecruitableOperator {
     rarity: number;
     profession: string;
     position: string;
+    tagList: string[];
 }
 
 export interface IRecruitableOperatorWithTags {
