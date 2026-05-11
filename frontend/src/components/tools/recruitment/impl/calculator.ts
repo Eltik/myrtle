@@ -111,6 +111,7 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
             rarity: rarityToNumber(op.rarity),
             profession: op.profession,
             position: op.position,
+            tagList: op.tagList,
         }));
 
         const tagIds = combo.map((t) => t.id);

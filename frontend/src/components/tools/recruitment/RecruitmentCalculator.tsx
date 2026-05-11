@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
+import { Route } from "#/routes/tools.recruitment";
 import { calculateResults } from "./impl/calculator";
 import { CalculatorOptionsPanel } from "./impl/components/CalculatorOptionsPanel";
 import { ResultsList } from "./impl/components/ResultsList";
@@ -20,11 +22,12 @@ const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
 
 export function RecruitmentCalculator(): React.ReactElement {
     const { data } = useQuery(recruitmentDataQueryOptions());
+    const { tags: selectedIds } = Route.useSearch();
+    const navigate = useNavigate({ from: Route.fullPath });
 
     const tags = data?.tags ?? [];
     const operators = data?.operators ?? [];
 
-    const [selectedIds, setSelectedIds] = React.useState<ReadonlyArray<number>>([]);
     const [options, setOptions] = React.useState<Required<ICalculatorOptions>>(DEFAULT_OPTIONS);
 
     const allTags: IRecruitmentTag[] = React.useMemo(() => transformTags(tags), [tags]);
@@ -42,21 +45,40 @@ export function RecruitmentCalculator(): React.ReactElement {
 
     const results = React.useMemo(() => calculateResults(selectedTags, operators, options), [selectedTags, operators, options]);
 
-    const onToggle = React.useCallback((id: number) => {
-        setSelectedIds((prev) => {
-            if (prev.includes(id)) return prev.filter((x) => x !== id);
-            if (prev.length >= MAX_SELECTED_TAGS) return prev;
-            return [...prev, id];
-        });
-    }, []);
+    const setSelectedIds = React.useCallback(
+        (updater: (prev: ReadonlyArray<number>) => ReadonlyArray<number>) => {
+            navigate({
+                search: (prev) => {
+                    const next = updater(prev.tags ?? []);
+                    return { ...prev, tags: [...next] };
+                },
+                replace: true,
+            });
+        },
+        [navigate],
+    );
 
-    const onRemove = React.useCallback((id: number) => {
-        setSelectedIds((prev) => prev.filter((x) => x !== id));
-    }, []);
+    const onToggle = React.useCallback(
+        (id: number) => {
+            setSelectedIds((prev) => {
+                if (prev.includes(id)) return prev.filter((x) => x !== id);
+                if (prev.length >= MAX_SELECTED_TAGS) return prev;
+                return [...prev, id];
+            });
+        },
+        [setSelectedIds],
+    );
+
+    const onRemove = React.useCallback(
+        (id: number) => {
+            setSelectedIds((prev) => prev.filter((x) => x !== id));
+        },
+        [setSelectedIds],
+    );
 
     const onReset = React.useCallback(() => {
-        setSelectedIds([]);
-    }, []);
+        setSelectedIds(() => []);
+    }, [setSelectedIds]);
 
     const onChangeShowLowRarity = React.useCallback((value: boolean) => {
         setOptions((prev) => ({ ...prev, showLowRarity: value }));
