@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Download, Loader2, Pause, Play, Search, Volume2, VolumeX, X } from "lucide-react";
-import { Fragment, memo, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Download, Loader2, Pause, Play, Search, Volume2, VolumeX, X } from "lucide-react";
+import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
@@ -275,7 +275,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
             {categories.length > 0 && activeCategory ? (
                 <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(String(v))} className="w-full">
-                    <div className="mb-4 overflow-x-auto">
+                    <div className="mb-4 overflow-x-auto overflow-y-hidden">
                         <TabsList variant="underline">
                             {filteredCategories.map((c) => (
                                 <TabsTrigger key={c.id} value={c.id}>
@@ -341,6 +341,27 @@ interface IVoiceLineRowProps {
 
 function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDownloading, isUnavailable, categoryLabel, highlight, onPlay, onDownload }: IVoiceLineRowProps) {
     const hasQuery = highlight.length > 0;
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [canExpand, setCanExpand] = useState(false);
+    const textRef = useRef<HTMLParagraphElement | null>(null);
+
+    const showFull = isExpanded || isPlaying || hasQuery;
+
+    useLayoutEffect(() => {
+        if (showFull) return;
+        const el = textRef.current;
+        if (!el) return;
+        const measure = () => {
+            setCanExpand(el.scrollHeight > el.clientHeight + 1);
+        };
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [showFull]);
+
+    const showToggle = isExpanded || (canExpand && !isPlaying && !hasQuery);
+
     return (
         <div className={cn("group relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
             <div className="flex items-start gap-3 p-3">
@@ -380,9 +401,27 @@ function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDown
                         {categoryLabel && <span className="rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">{categoryLabel}</span>}
                         {isUnavailable && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide">Unavailable</span>}
                     </div>
-                    <p className={cn("text-muted-foreground text-xs duration-300", isPlaying || hasQuery ? "" : "line-clamp-2")}>
+                    <p ref={textRef} className={cn("text-muted-foreground text-xs duration-300", showFull ? "" : "line-clamp-2")}>
                         <HighlightedText text={voice.voiceText} query={highlight} />
                     </p>
+                    {showToggle && (
+                        <button
+                            type="button"
+                            onClick={() => setIsExpanded((v) => !v)}
+                            aria-expanded={isExpanded}
+                            className="mt-1 inline-flex items-center gap-1 rounded text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            {isExpanded ? (
+                                <>
+                                    Show less <ChevronUp className="h-3 w-3" />
+                                </>
+                            ) : (
+                                <>
+                                    Show more <ChevronDown className="h-3 w-3" />
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
             {isPlaying && (

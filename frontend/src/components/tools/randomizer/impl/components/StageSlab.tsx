@@ -6,6 +6,7 @@ import type { IStage, IZone } from "#/types/stages";
 import { getActivityIdFromZoneId, getEventNameFromZoneId, getPermanentZoneName } from "../activity-names";
 import { getZoneDisplayName } from "../utils";
 import { SlabFrame } from "./SlabFrame";
+import { StagePreview } from "./StagePreview";
 
 interface IStageSlabProps {
     stage: IStage;
@@ -42,35 +43,41 @@ export function StageSlab({ stage, zone, onReroll }: IStageSlabProps): React.Rea
                 </Button>
             </div>
 
-            <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="mt-3 grid gap-4 md:grid-cols-[1fr_minmax(220px,320px)] md:items-end md:gap-6">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-2">
                         <h2 className="m-0 font-bold font-[var(--font-display)] text-[44px] leading-none tracking-tight text-foreground sm:text-[56px]">{stage.code}</h2>
-                        {codeIsCM && <Badge variant="outline" className="font-mono uppercase tracking-[0.18em]">CM</Badge>}
+                        {codeIsCM && (
+                            <Badge variant="outline" className="font-mono uppercase tracking-[0.18em]">
+                                CM
+                            </Badge>
+                        )}
                     </div>
                     {stage.name && <p className="mt-2 text-sm text-muted-foreground sm:text-base">{stage.name}</p>}
                     <p className="mt-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-muted-foreground/80">
                         {display}
                         {family && <span className="text-muted-foreground/50"> · {family}</span>}
                     </p>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
+                            AP {stage.apCost}
+                        </Badge>
+                        {stage.dangerLevel && (
+                            <Badge variant="secondary" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
+                                LV {stage.dangerLevel}
+                            </Badge>
+                        )}
+                        {stage.bossMark && (
+                            <Badge variant="error" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
+                                <Skull aria-hidden="true" className="h-3 w-3" />
+                                Boss
+                            </Badge>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
-                        AP {stage.apCost}
-                    </Badge>
-                    {stage.dangerLevel && (
-                        <Badge variant="secondary" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
-                            LV {stage.dangerLevel}
-                        </Badge>
-                    )}
-                    {stage.bossMark && (
-                        <Badge variant="error" className="h-7 px-2.5 font-mono uppercase tracking-[0.12em]">
-                            <Skull aria-hidden="true" className="h-3 w-3" />
-                            Boss
-                        </Badge>
-                    )}
-                </div>
+                <StagePreview stage={stage} className="md:max-w-[320px]" />
             </div>
         </SlabFrame>
     );

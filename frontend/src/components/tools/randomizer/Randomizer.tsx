@@ -51,15 +51,19 @@ export function Randomizer(): React.ReactElement {
     const rosterIndex = React.useMemo(() => buildRosterIndex(hasProfile ? rosterEntries : null), [hasProfile, rosterEntries]);
     const zoneById = React.useMemo(() => new Map(zones.map((z) => [z.zoneId, z])), [zones]);
 
-    const [persisted, setPersisted] = useLocalStorageState<IPersistedSettings>(STORAGE_KEY_SETTINGS, { ...DEFAULT_SETTINGS, _version: SETTINGS_VERSION }, {
-        parse: (raw) => {
-            try {
-                return JSON.parse(raw) as IPersistedSettings;
-            } catch {
-                return undefined;
-            }
+    const [persisted, setPersisted] = useLocalStorageState<IPersistedSettings>(
+        STORAGE_KEY_SETTINGS,
+        { ...DEFAULT_SETTINGS, _version: SETTINGS_VERSION },
+        {
+            parse: (raw) => {
+                try {
+                    return JSON.parse(raw) as IPersistedSettings;
+                } catch {
+                    return undefined;
+                }
+            },
         },
-    });
+    );
     const settings = React.useMemo(() => migrateSettings(persisted), [persisted]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
@@ -75,7 +79,7 @@ export function Randomizer(): React.ReactElement {
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null), [playableStages, zones, settings, stageClears]);
 
-    const [rolledStage, setRolledStage] = React.useState<typeof playableStages[number] | null>(null);
+    const [rolledStage, setRolledStage] = React.useState<(typeof playableStages)[number] | null>(null);
     const [rolledSquad, setRolledSquad] = React.useState<IRandomizerOperator[]>([]);
     const [rolledChallenge, setRolledChallenge] = React.useState<IChallenge | null>(null);
     const [rollSeq, setRollSeq] = React.useState(0);
@@ -110,35 +114,16 @@ export function Randomizer(): React.ReactElement {
                 <span className="text-foreground">Randomizer</span>
             </nav>
 
-            <BriefingHero
-                operatorsAvailable={availableOperators.length}
-                operatorsRoster={effectiveRosterSet.size}
-                stagesAvailable={availableStages.length}
-                hasResult={hasResult}
-                canRoll={canRoll}
-                onRollAll={rollAll}
-                onReset={reset}
-                onOpenSettings={() => setSettingsOpen(true)}
-            />
+            <BriefingHero operatorsAvailable={availableOperators.length} operatorsRoster={effectiveRosterSet.size} stagesAvailable={availableStages.length} hasResult={hasResult} canRoll={canRoll} onRollAll={rollAll} onReset={reset} onOpenSettings={() => setSettingsOpen(true)} />
 
-            <div className="mt-5 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
+            <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
                 {!hasResult && <EmptyState />}
                 {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} onReroll={rollStage} />}
                 {rolledSquad.length > 0 && <SquadSlab operators={rolledSquad} squadSize={settings.squadSize} onReroll={rollSquad} />}
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}
             </div>
 
-            <SettingsSheet
-                open={settingsOpen}
-                onOpenChange={setSettingsOpen}
-                settings={settings}
-                onChange={updateSettings}
-                operators={randomizerOperators}
-                rosterSelection={effectiveRosterSet}
-                onRosterChange={(next) => setRosterSelection(Array.from(next))}
-                rosterIndex={rosterIndex}
-                hasProfile={hasProfile}
-            />
+            <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={updateSettings} operators={randomizerOperators} rosterSelection={effectiveRosterSet} onRosterChange={(next) => setRosterSelection(Array.from(next))} rosterIndex={rosterIndex} hasProfile={hasProfile} />
         </div>
     );
 }
