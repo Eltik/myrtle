@@ -17,6 +17,7 @@ use export::alpha_merge;
 use export::audio::export_audio;
 use export::portrait;
 use export::spine;
+use export::stage_preview::{self, StageAspectMap};
 use export::text_asset::export_text_asset;
 use export::texture::{decode_texture_object, save_decoded_texture};
 use unity::bundle::BundleFile;
@@ -99,6 +100,20 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let extract_portrait = args.extract_all() || args.portrait;
     let merge_alpha = !args.no_merge && extract_image;
 
+    // Pre-pass: build the stage_id → tile-grid-dims map needed to unsquash
+    // `stage_mappreview_h2_*` thumbnails back to their natural aspect. Skipped
+    // entirely when image extraction is off or when the input has no
+    // mappreview bundles.
+    let stage_aspects: StageAspectMap =
+        if extract_image && stage_preview::input_has_mappreview_bundles(&files) {
+            println!("Scanning level data for mappreview aspect ratios...");
+            let map = stage_preview::build_stage_aspect_map(&files);
+            println!("  found {} stage(s) with grid metadata", map.len());
+            map
+        } else {
+            std::sync::Arc::new(std::collections::HashMap::new())
+        };
+
     let exported = AtomicUsize::new(0);
 
     std::fs::create_dir_all(&args.output).unwrap();
@@ -115,6 +130,7 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             extract_spine,
             extract_portrait,
             merge_alpha,
+            &stage_aspects,
         );
         if count > 0 {
             let prev = exported.fetch_add(count, Ordering::Relaxed);
@@ -164,6 +180,7 @@ fn process_bundle(
     extract_spine: bool,
     extract_portrait: bool,
     merge_alpha: bool,
+    stage_aspects: &StageAspectMap,
 ) -> usize {
     let data = match std::fs::read(file_path) {
         Ok(d) => d,
@@ -420,6 +437,15 @@ fn process_bundle(
         if !decoded_textures.is_empty() {
             let dir = output_dir.join("textures").join(&bundle_subdir);
             std::fs::create_dir_all(&dir).ok();
+
+            // Unsquash stage mappreview thumbnails to their natural aspect.
+            // Arknights packs these as 512×512 squares; we resize back using
+            // the level's tile grid dims (with a 16:9 fallback).
+            if stage_preview::detect_mappreview_bundle(&bundle_subdir) {
+                for tex in decoded_textures.values_mut() {
+                    stage_preview::unsquash_mappreview_texture(tex, stage_aspects);
+                }
+            }
 
             if merge_alpha {
                 exported += alpha_merge::merge_and_export(decoded_textures, &dir);
