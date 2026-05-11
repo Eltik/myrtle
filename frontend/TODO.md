@@ -69,7 +69,7 @@
 
 ## `/user/search`
 
-- [ ] **Substring matching for usernames.** Searching `cr` should surface usernames containing `cr` (e.g. `Wisecrack`), not only ones that start with `cr`.
+- [X] **Substring matching for usernames.** Searching `cr` should display usernames FIRST that start with `cr` (e.g. "Crimson"). Users that contain the string (e.g. `Wisecrack`) should be displayed, but only after. If possible, order alphabetically. Search algorithm should stay the same for the backend, just the frontend should update things.
 
 ---
 

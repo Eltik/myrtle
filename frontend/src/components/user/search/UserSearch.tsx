@@ -12,6 +12,7 @@ import { Route } from "#/routes/user.search";
 import { UserCard } from "./impl/components/UserCard";
 import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
 import { PAGE_SIZE } from "./impl/constants";
+import { sortBySubstringMatch } from "./impl/sortBySubstringMatch";
 import type { DisplayUser } from "./impl/types";
 import { useDebounce } from "./impl/useDebounce";
 
@@ -55,7 +56,8 @@ export function UserSearch() {
     const searchQuery = useQuery(searchUsersQueryOptions({ q: debouncedQuery || undefined, limit: PAGE_SIZE, offset }));
 
     const isLoading = searchQuery.isLoading || searchQuery.isFetching;
-    const users: DisplayUser[] = searchQuery.data?.entries ?? [];
+    const rawUsers: DisplayUser[] = searchQuery.data?.entries ?? [];
+    const users: DisplayUser[] = isSearching ? sortBySubstringMatch(rawUsers, debouncedQuery) : rawUsers;
     const totalCount = searchQuery.data?.total ?? null;
     const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
     const showResults = !isLoading && users.length > 0;
