@@ -4,8 +4,9 @@ import * as React from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
-import { stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
+import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { userRosterQueryOptions } from "#/lib/api/user";
+import { buildActivityLookup } from "./impl/activity-lookup";
 import { BriefingHero } from "./impl/components/BriefingHero";
 import { EmptyState } from "./impl/components/EmptyState";
 import { ModifierSlab } from "./impl/components/ModifierSlab";
@@ -35,8 +36,12 @@ export function Randomizer(): React.ReactElement {
     const { data: operatorsStatic = [] } = useQuery(operatorsListQueryOptions());
     const { data: stages = [] } = useQuery(stagesQueryOptions());
     const { data: zones = [] } = useQuery(zonesQueryOptions());
+    const { data: activities = [] } = useQuery(activitiesQueryOptions());
+    const { data: retroActs = [] } = useQuery(retroActsQueryOptions());
     const { data: rosterEntries } = useQuery(userRosterQueryOptions(uid ?? ""));
     const { data: stageClears } = useQuery(userStageClearsQueryOptions(uid));
+
+    const activityLookup = React.useMemo(() => buildActivityLookup(activities, retroActs), [activities, retroActs]);
 
     const randomizerOperators = React.useMemo<IRandomizerOperator[]>(
         () =>
@@ -47,7 +52,7 @@ export function Randomizer(): React.ReactElement {
         [operatorsStatic],
     );
 
-    const playableStages = React.useMemo(() => filterPlayableStages(stages), [stages]);
+    const playableStages = React.useMemo(() => filterPlayableStages(stages, activityLookup), [stages, activityLookup]);
     const rosterIndex = React.useMemo(() => buildRosterIndex(hasProfile ? rosterEntries : null), [hasProfile, rosterEntries]);
     const zoneById = React.useMemo(() => new Map(zones.map((z) => [z.zoneId, z])), [zones]);
 
@@ -77,7 +82,7 @@ export function Randomizer(): React.ReactElement {
         return filtered.filter((op) => effectiveRosterSet.has(op.id));
     }, [randomizerOperators, settings, rosterIndex, effectiveRosterSet]);
 
-    const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null), [playableStages, zones, settings, stageClears]);
+    const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
 
     const [rolledStage, setRolledStage] = React.useState<(typeof playableStages)[number] | null>(null);
     const [rolledSquad, setRolledSquad] = React.useState<IRandomizerOperator[]>([]);
@@ -118,7 +123,7 @@ export function Randomizer(): React.ReactElement {
 
             <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
                 {!hasResult && <EmptyState />}
-                {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} onReroll={rollStage} />}
+                {rolledStage && <StageSlab stage={rolledStage} zone={zoneById.get(rolledStage.zoneId)} lookup={activityLookup} onReroll={rollStage} />}
                 {rolledSquad.length > 0 && <SquadSlab operators={rolledSquad} squadSize={settings.squadSize} onReroll={rollSquad} />}
                 {rolledChallenge && <ModifierSlab challenge={rolledChallenge} onReroll={rollChallenge} />}
             </div>

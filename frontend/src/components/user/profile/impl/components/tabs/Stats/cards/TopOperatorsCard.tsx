@@ -82,7 +82,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
     const { entry, op, rarity } = ranked;
     const rarityColor = RARITY_COLORS[rarity] ?? "#ffffff";
     const { displayName } = parseOperatorName(op.name);
-    const avatarUrl = ownedAvatar(entry.operator_id, entry.skin_id);
+    const avatarURL = ownedAvatar(entry.operator_id, entry.skin_id);
     const hasMasteries = entry.masteries.some((m) => m.mastery > 0);
 
     return (
@@ -92,7 +92,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
 
             <div className="flex items-center gap-2.5 pt-0.5">
                 <div className="relative shrink-0">
-                    <img alt={displayName} className="h-10 w-10 rounded-lg object-cover" src={avatarUrl} style={{ background: `${rarityColor}18` }} />
+                    <img alt={displayName} className="h-10 w-10 rounded-lg object-cover" src={avatarURL} style={{ background: `${rarityColor}18` }} />
                     <img alt={`E${entry.elite}`} className="absolute -right-1.5 -bottom-1.5 h-4 w-4" src={eliteIcon(entry.elite)} />
                 </div>
                 <div className="min-w-0 flex-1">

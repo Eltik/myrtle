@@ -83,14 +83,14 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
             position: op.position ?? "",
             nationId: op.nationId ?? "",
             rarity,
-            charArtUrl: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`),
-            factionLogoUrl: factionId ? campLogoURL(factionId) : undefined,
+            charArtURL: assetURL(op.skin ?? op.portrait ?? `/textures/chararts/${id}/${id}_2.png`),
+            factionLogoURL: factionId ? campLogoURL(factionId) : undefined,
             factionLabel,
-            professionIconUrl: op.profession ? professionIconURL(op.profession) : undefined,
+            professionIconURL: op.profession ? professionIconURL(op.profession) : undefined,
             stats,
         };
     },
-    hash: (data) => ogHash(["operator", OPERATOR_HASH_VERSION, data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconUrl ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")]),
+    hash: (data) => ogHash(["operator", OPERATOR_HASH_VERSION, data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|")]),
     template: (data) => OperatorTemplate(data),
     listIds: async () => {
         const res = await backendFetch("/operators/index");
@@ -122,13 +122,13 @@ function buildSupportUnit(args: { id: string; elite: number; level: number; skin
 
     const skills: IUserSupportSkill[] = (op.skills ?? []).map((sk, idx) => {
         const iconId = sk.static?.iconId ?? sk.static?.skillId ?? sk.skillId;
-        const iconUrl = sk.static?.image ? assetURL(sk.static.image) : iconId ? skillIconURL(iconId) : undefined;
+        const iconURL = sk.static?.image ? assetURL(sk.static.image) : iconId ? skillIconURL(iconId) : undefined;
         const mastery = masteryByIndex.get(idx) ?? 0;
         return {
-            iconUrl,
+            iconURL,
             mastery,
             skillLevel: rosterEntry?.skill_level ?? 7,
-            masteryIconUrl: mastery >= 1 ? masteryIconURL(mastery) : undefined,
+            masteryIconURL: mastery >= 1 ? masteryIconURL(mastery) : undefined,
         };
     });
 
@@ -136,7 +136,7 @@ function buildSupportUnit(args: { id: string; elite: number; level: number; skin
         .filter((m) => m.typeName1 !== "ORIGINAL")
         .slice(0, 3)
         .map((m) => ({
-            iconUrl: m.image ? assetURL(m.image) : moduleIconURL(m.uniEquipIcon),
+            iconURL: m.image ? assetURL(m.image) : moduleIconURL(m.uniEquipIcon),
             level: moduleStateById.get(m.uniEquipId)?.level ?? 0,
         }));
 
@@ -146,7 +146,7 @@ function buildSupportUnit(args: { id: string; elite: number; level: number; skin
         rarity: rarityToNumber(op.rarity),
         elite,
         level,
-        avatarUrl: avatarURL(skinId || id),
+        avatarURL: avatarURL(skinId || id),
         skills,
         modules,
     };
@@ -261,7 +261,7 @@ const userHandler: IOgHandler<IUserOgData> = {
             skinCount: u.skin_count ?? 0,
             itemCount: u.item_count ?? 0,
             lmd: u.lmd ?? 0,
-            secretaryArtUrl: u.secretary ? secretaryArtURL(u.secretary, u.secretary_skin_id) : undefined,
+            secretaryArtURL: u.secretary ? secretaryArtURL(u.secretary, u.secretary_skin_id) : undefined,
             supportUnits,
             supportUnitsKind,
             rarityCounts: hasRarityCounts ? rarityCounts : undefined,
@@ -281,7 +281,7 @@ const userHandler: IOgHandler<IUserOgData> = {
             data.skinCount,
             data.itemCount,
             data.lmd,
-            data.secretaryArtUrl ?? "",
+            data.secretaryArtURL ?? "",
             data.supportUnitsKind ?? "",
             (data.supportUnits ?? [])
                 .map((u) => {

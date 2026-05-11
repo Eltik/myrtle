@@ -11,6 +11,9 @@ pub struct ActivityBasicInfo {
     #[serde(alias = "Id")]
     pub id: String,
 
+    #[serde(alias = "Name", default)]
+    pub name: String,
+
     #[serde(alias = "StartTime", default)]
     pub start_time: i64,
 
@@ -19,6 +22,9 @@ pub struct ActivityBasicInfo {
 
     #[serde(alias = "HasStage", default)]
     pub has_stage: bool,
+
+    #[serde(alias = "IsReplicate", default)]
+    pub is_replicate: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

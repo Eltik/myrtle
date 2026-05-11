@@ -57,8 +57,8 @@ function OperatorTile({ op, index }: { op: IRandomizerOperator; index: number })
                     e.currentTarget.style.display = "none";
                 }}
             />
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-[var(--rarity-tint)] mix-blend-multiply dark:mix-blend-screen" />
-            <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/72 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-(--rarity-tint) mix-blend-multiply dark:mix-blend-screen" />
+            <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/72 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <p className="truncate px-1.5 pb-1 text-[10.5px] font-medium text-white">{op.name}</p>
             </div>
         </div>

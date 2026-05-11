@@ -41,6 +41,6 @@ export function itemIcon(id: string, iconId: string | null | undefined, image: s
     return asset(`/textures/arts/items/icons/${iconId ?? id}.png`);
 }
 
-export function voiceAudio(voiceUrl: string): string {
-    return `${env.VITE_BACKEND_URL}/api/assets/audio${voiceUrl}`;
+export function voiceAudio(voiceURL: string): string {
+    return `${env.VITE_BACKEND_URL}/api/assets/audio${voiceURL}`;
 }

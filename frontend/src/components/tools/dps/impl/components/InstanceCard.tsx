@@ -99,7 +99,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                     key={`prom-${p}`}
                                     selected={promotion === p}
                                     label={`E${p}`}
-                                    iconUrl={eliteIcon(p)}
+                                    iconURL={eliteIcon(p)}
                                     onClick={() => {
                                         const newMax = detail.maxLevelForPromotion(p);
                                         // If `level` was at the previous max (or undefined → "max" sentinel), keep
@@ -351,11 +351,11 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 interface IconChipProps {
     selected: boolean;
     label: string;
-    iconUrl: string;
+    iconURL: string;
     onClick: () => void;
 }
 
-function IconChip({ selected, label, iconUrl, onClick }: IconChipProps): React.ReactElement {
+function IconChip({ selected, label, iconURL, onClick }: IconChipProps): React.ReactElement {
     return (
         <button
             type="button"
@@ -367,7 +367,7 @@ function IconChip({ selected, label, iconUrl, onClick }: IconChipProps): React.R
                 selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
             )}
         >
-            <img alt="" aria-hidden="true" className="size-6 object-contain icon-theme-aware" decoding="async" loading="lazy" src={iconUrl} />
+            <img alt="" aria-hidden="true" className="size-6 object-contain icon-theme-aware" decoding="async" loading="lazy" src={iconURL} />
         </button>
     );
 }

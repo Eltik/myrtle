@@ -3,7 +3,7 @@ import type React from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import type { IStage, IZone } from "#/types/stages";
-import { getActivityIdFromZoneId, getEventNameFromZoneId, getPermanentZoneName } from "../activity-names";
+import { type ActivityLookup, getActivityIdFromZoneId, getEventNameFromZoneId, getPermanentZoneName } from "../activity-lookup";
 import { getZoneDisplayName } from "../utils";
 import { SlabFrame } from "./SlabFrame";
 import { StagePreview } from "./StagePreview";
@@ -11,23 +11,24 @@ import { StagePreview } from "./StagePreview";
 interface IStageSlabProps {
     stage: IStage;
     zone: IZone | undefined;
+    lookup: ActivityLookup;
     onReroll: () => void;
 }
 
-function resolveZoneLabel(stage: IStage, zone: IZone | undefined): { display: string; family: string | null } {
+function resolveZoneLabel(stage: IStage, zone: IZone | undefined, lookup: ActivityLookup): { display: string; family: string | null } {
     const display = getZoneDisplayName(zone, stage.zoneId);
-    const permanent = getPermanentZoneName(stage.zoneId);
+    const permanent = getPermanentZoneName(stage.zoneId, lookup);
     if (permanent) return { display: permanent, family: display };
     const activityId = getActivityIdFromZoneId(stage.zoneId);
     if (activityId) {
-        const event = getEventNameFromZoneId(stage.zoneId);
+        const event = getEventNameFromZoneId(stage.zoneId, lookup);
         if (event !== stage.zoneId) return { display: event, family: display };
     }
     return { display, family: null };
 }
 
-export function StageSlab({ stage, zone, onReroll }: IStageSlabProps): React.ReactElement {
-    const { display, family } = resolveZoneLabel(stage, zone);
+export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): React.ReactElement {
+    const { display, family } = resolveZoneLabel(stage, zone, lookup);
     const codeIsCM = stage.difficulty === "FOUR_STAR";
 
     return (
@@ -46,7 +47,7 @@ export function StageSlab({ stage, zone, onReroll }: IStageSlabProps): React.Rea
             <div className="mt-3 grid gap-4 md:grid-cols-[1fr_minmax(220px,320px)] md:items-end md:gap-6">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-2">
-                        <h2 className="m-0 font-bold font-[var(--font-display)] text-[44px] leading-none tracking-tight text-foreground sm:text-[56px]">{stage.code}</h2>
+                        <h2 className="m-0 font-bold text-[44px] leading-none tracking-tight text-foreground sm:text-[56px]">{stage.code}</h2>
                         {codeIsCM && (
                             <Badge variant="outline" className="font-mono uppercase tracking-[0.18em]">
                                 CM

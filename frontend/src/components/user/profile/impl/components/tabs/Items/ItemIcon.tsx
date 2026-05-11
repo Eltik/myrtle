@@ -9,14 +9,14 @@ interface IItemIconProps {
     className?: string;
 }
 
-function itemIconUrl(iconId: string | null, fallbackId: string): string {
+function itemIconURL(iconId: string | null, fallbackId: string): string {
     return `${env.VITE_BACKEND_URL ?? ""}/api/item-icon/${iconId ?? fallbackId}`;
 }
 
 export function ItemIcon({ item, size = 64, className = "" }: IItemIconProps) {
     const [errored, setErrored] = useState(false);
     const color = RARITY_COLORS[item.rarityNum] ?? "#b5b5b5";
-    const url = itemIconUrl(item.iconId, item.item_id);
+    const url = itemIconURL(item.iconId, item.item_id);
     const initials =
         item.name
             .replace(/[--]/g, " ")

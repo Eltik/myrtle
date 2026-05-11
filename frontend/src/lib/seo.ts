@@ -47,9 +47,9 @@ export function seo(input: SeoInput): SeoOutput {
     return { meta, links };
 }
 
-function absolute(pathOrUrl: string): string {
-    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+function absolute(pathOrURL: string): string {
+    if (/^https?:\/\//i.test(pathOrURL)) return pathOrURL;
     const base = OG_CONFIG.siteURL.replace(/\/$/, "");
-    const tail = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+    const tail = pathOrURL.startsWith("/") ? pathOrURL : `/${pathOrURL}`;
     return `${base}${tail}`;
 }

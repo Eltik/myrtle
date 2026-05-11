@@ -38,7 +38,7 @@ export function ModifierSlab({ challenge, onReroll }: IModifierSlabProps): React
             </div>
 
             <div className="mt-3">
-                <h3 className="m-0 font-bold font-[var(--font-display)] text-[28px] leading-tight tracking-tight text-foreground sm:text-[34px]">{challenge.title}</h3>
+                <h3 className="m-0 font-semibold text-[28px] leading-tight tracking-tight text-foreground sm:text-[34px]">{challenge.title}</h3>
                 <p className="mt-2 max-w-prose text-sm text-muted-foreground sm:text-base">{challenge.description}</p>
             </div>
         </SlabFrame>

@@ -11,6 +11,7 @@ pub mod medal;
 pub mod module;
 pub mod operator;
 pub mod range;
+pub mod retro;
 pub mod roguelike;
 pub mod sandbox_universe;
 pub mod serde_helpers;
@@ -22,6 +23,7 @@ pub mod trust;
 pub mod voice;
 pub mod zone;
 
+use activity::ActivityBasicInfo;
 use building::BuildingDataFile;
 use chibi::ChibiData;
 use enemy::EnemyHandbook;
@@ -32,6 +34,7 @@ use medal::MedalData;
 use module::Modules;
 use operator::Operator;
 use range::Ranges;
+use retro::RetroAct;
 use roguelike::RoguelikeGameData;
 use sandbox_universe::SandboxUniverse;
 use skill::Skill;
@@ -57,6 +60,8 @@ pub struct GameData {
     pub chibis: ChibiData,
     pub zones: HashMap<String, Zone>,
     pub stages: HashMap<String, Stage>,
+    pub activities: HashMap<String, ActivityBasicInfo>,
+    pub retro_acts: HashMap<String, RetroAct>,
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,

@@ -2,32 +2,35 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
-import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen, PERMANENT_EVENTS } from "./activity-names";
+import { type ActivityLookup, getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen } from "./activity-lookup";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 
-const HEART_OF_SURGING_FLAME_IDS = new Set(["act3d0", "act11d7"]);
-const HEART_OF_SURGING_FLAME_PERMANENT_PREFIX = "permanent_sidestory_2";
+const HEART_OF_SURGING_FLAME_NAME = "Heart of Surging Flame";
 
-function isHeartOfSurgingFlameStage(zoneId: string): boolean {
+function isHeartOfSurgingFlameStage(zoneId: string, lookup: ActivityLookup): boolean {
     const permanentPrefix = getPermanentZonePrefix(zoneId);
-    if (permanentPrefix === HEART_OF_SURGING_FLAME_PERMANENT_PREFIX) return true;
+    if (permanentPrefix) {
+        const retro = lookup.retroByZonePrefix.get(permanentPrefix);
+        if (retro?.name === HEART_OF_SURGING_FLAME_NAME) return true;
+    }
 
     const activityId = getActivityIdFromZoneId(zoneId);
-    if (activityId && HEART_OF_SURGING_FLAME_IDS.has(activityId)) return true;
+    if (!activityId) return false;
 
-    if (activityId) {
-        const permanentInfo = PERMANENT_EVENTS[activityId];
-        if (permanentInfo?.retroId.includes("Heart_Of_Surging_Flame")) return true;
-    }
+    const activityName = lookup.activityById.get(activityId)?.name;
+    if (activityName === HEART_OF_SURGING_FLAME_NAME || activityName === `${HEART_OF_SURGING_FLAME_NAME} - Rerun`) return true;
+
+    const linkedRetro = lookup.retroByActivityId.get(activityId);
+    if (linkedRetro?.name === HEART_OF_SURGING_FLAME_NAME) return true;
 
     return false;
 }
 
-function shouldIncludeBySanityCost(stage: IStage): boolean {
+function shouldIncludeBySanityCost(stage: IStage, lookup: ActivityLookup): boolean {
     if (stage.apCost > 0) return true;
 
-    if (isHeartOfSurgingFlameStage(stage.zoneId)) {
+    if (isHeartOfSurgingFlameStage(stage.zoneId, lookup)) {
         const code = stage.code.toUpperCase();
         if (code.includes("ST") || code.includes("TR")) return false;
         return true;
@@ -37,8 +40,8 @@ function shouldIncludeBySanityCost(stage: IStage): boolean {
 }
 
 /** Drops 0-AP tutorial/story-only stages (except Heart of Surging Flame playables). */
-export function filterPlayableStages(stages: IStage[]): IStage[] {
-    return stages.filter(shouldIncludeBySanityCost);
+export function filterPlayableStages(stages: IStage[], lookup: ActivityLookup): IStage[] {
+    return stages.filter((stage) => shouldIncludeBySanityCost(stage, lookup));
 }
 
 export function buildRosterIndex(roster: IRosterEntry[] | null | undefined): IRosterIndex {
@@ -76,7 +79,7 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
     });
 }
 
-export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined): IStage[] {
+export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: ActivityLookup): IStage[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const now = Math.floor(Date.now() / 1000);
 
@@ -95,8 +98,8 @@ export function selectAvailableStages(stages: IStage[], zones: IZone[], settings
             if (getPermanentZonePrefix(stage.zoneId)) return true;
             const activityId = getActivityIdFromZoneId(stage.zoneId);
             if (!activityId) return false;
-            if (getPermanentEventInfo(activityId)) return true;
-            return isActivityCurrentlyOpen(activityId, now);
+            if (getPermanentEventInfo(activityId, lookup)) return true;
+            return isActivityCurrentlyOpen(activityId, lookup, now);
         }
 
         return true;

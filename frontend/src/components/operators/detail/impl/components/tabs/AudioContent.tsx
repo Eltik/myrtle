@@ -102,10 +102,10 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
-    const [erroredUrls, setErroredUrls] = useState<Set<string>>(() => new Set());
+    const [erroredURLs, setErroredURLs] = useState<Set<string>>(() => new Set());
 
     useEffect(() => {
-        setErroredUrls(new Set());
+        setErroredURLs(new Set());
     }, []);
 
     useEffect(() => {
@@ -139,17 +139,17 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
         if (!url) return;
-        const fullUrl = voiceAudio(url);
-        if (erroredUrls.has(fullUrl)) return;
+        const fullURL = voiceAudio(url);
+        if (erroredURLs.has(fullURL)) return;
 
-        a.src = fullUrl;
+        a.src = fullURL;
         setProgress(0);
         setPlayingId(voice.id);
         a.play().catch(() => {
-            setErroredUrls((prev) => {
-                if (prev.has(fullUrl)) return prev;
+            setErroredURLs((prev) => {
+                if (prev.has(fullURL)) return prev;
                 const next = new Set(prev);
-                next.add(fullUrl);
+                next.add(fullURL);
                 return next;
             });
             setPlayingId(null);
@@ -160,31 +160,31 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
     const onDownload = async (voice: IVoice) => {
         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
         if (!url || !voice.id) return;
-        const fullUrl = voiceAudio(url);
-        if (erroredUrls.has(fullUrl)) return;
+        const fullURL = voiceAudio(url);
+        if (erroredURLs.has(fullURL)) return;
         setDownloadingId(voice.id);
         try {
             const ext = url.split(".").pop()?.split("?")[0] ?? "mp3";
             const langLabel = VOICE_LANGUAGE_LABELS[selectedLanguage] ?? selectedLanguage;
-            const res = await fetch(fullUrl);
+            const res = await fetch(fullURL);
             if (!res.ok) {
-                setErroredUrls((prev) => {
-                    if (prev.has(fullUrl)) return prev;
+                setErroredURLs((prev) => {
+                    if (prev.has(fullURL)) return prev;
                     const next = new Set(prev);
-                    next.add(fullUrl);
+                    next.add(fullURL);
                     return next;
                 });
                 throw new Error(`Voice file unavailable (${res.status})`);
             }
             const blob = await res.blob();
-            const objectUrl = URL.createObjectURL(blob);
+            const objectURL = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.href = objectUrl;
+            link.href = objectURL;
             link.download = `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${ext}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(objectUrl);
+            URL.revokeObjectURL(objectURL);
         } catch (e) {
             console.error("Failed to download voice line", e);
         } finally {
@@ -212,7 +212,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                     const el = audioRef.current;
                     const src = el?.currentSrc;
                     if (src) {
-                        setErroredUrls((prev) => {
+                        setErroredURLs((prev) => {
                             if (prev.has(src)) return prev;
                             const next = new Set(prev);
                             next.add(src);
@@ -293,8 +293,8 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                                     {c.lines.map((voice) => {
                                         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-                                        const fullUrl = url ? voiceAudio(url) : null;
-                                        const isUnavailable = !url || (fullUrl !== null && erroredUrls.has(fullUrl));
+                                        const fullURL = url ? voiceAudio(url) : null;
+                                        const isUnavailable = !url || (fullURL !== null && erroredURLs.has(fullURL));
                                         const categoryLabel = c.id === ALL_CATEGORY_ID ? (VOICE_CATEGORY_MAP[voice.placeType] ?? "Other") : null;
                                         return (
                                             <VoiceLineRow
