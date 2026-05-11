@@ -17,6 +17,7 @@ import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
+import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
@@ -64,6 +65,11 @@ const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
   path: '/tools/recruitment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ToolsRandomizerRoute = ToolsRandomizerRouteImport.update({
+  id: '/tools/randomizer',
+  path: '/tools/randomizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ToolsDpsRoute = ToolsDpsRouteImport.update({
   id: '/tools/dps',
   path: '/tools/dps',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tools/dps'
+    | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tools/dps'
+    | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators_/$id'
     | '/tools/dps'
+    | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
     | '/user/leaderboard'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
+  ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
@@ -275,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/tools/recruitment'
       fullPath: '/tools/recruitment'
       preLoaderRoute: typeof ToolsRecruitmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/randomizer': {
+      id: '/tools/randomizer'
+      path: '/tools/randomizer'
+      fullPath: '/tools/randomizer'
+      preLoaderRoute: typeof ToolsRandomizerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/dps': {
@@ -349,6 +369,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   ToolsDpsRoute: ToolsDpsRoute,
+  ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,

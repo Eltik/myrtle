@@ -44,6 +44,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Calculate recruitment combos.",
         activeTag: "Tools",
     },
+    "tools-randomizer": {
+        title: "Randomizer",
+        subtitle: "Roll a random stage, squad, and modifier for your next run.",
+        activeTag: "Tools",
+    },
     operators: {
         title: "Operators",
         subtitle: "Every operator released in Arknights.",

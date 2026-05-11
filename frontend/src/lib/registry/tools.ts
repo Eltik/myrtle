@@ -43,15 +43,6 @@ export const TOOLS: ITool[] = [
         keywords: ["recruit", "tag", "calculator", "hire"],
     },
     {
-        id: "tier-lists",
-        href: "/tools/tier-lists",
-        label: "Tier lists",
-        desc: "Community ranks · live voting",
-        icon: "star",
-        key: "T",
-        keywords: ["rank", "tier", "list", "meta", "community"],
-    },
-    {
         id: "randomizer",
         href: "/tools/randomizer",
         label: "Randomizer",
