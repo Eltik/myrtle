@@ -12,8 +12,6 @@ interface IResultCardProps {
 }
 
 export function ResultCard({ result }: IResultCardProps): React.ReactElement {
-    const guaranteedColor = RARITY_COLORS[result.guaranteedRarity];
-
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 py-3 grid-rows-1">
@@ -24,7 +22,6 @@ export function ResultCard({ result }: IResultCardProps): React.ReactElement {
                         </Badge>
                     ))}
                 </div>
-                {guaranteedColor && <span className={cn("shrink-0 rounded-md border px-2 py-0.5 font-medium text-xs", guaranteedColor.bg, guaranteedColor.text, guaranteedColor.border)}>Guaranteed {result.guaranteedRarity}★</span>}
             </CardHeader>
             <CardPanel className="px-4 pt-0 pb-3">
                 <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">

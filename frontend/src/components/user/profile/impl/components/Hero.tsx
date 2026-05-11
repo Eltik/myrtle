@@ -1,9 +1,8 @@
-import { Copy, Hash, ImageIcon, MoreHorizontal, Share2 } from "lucide-react";
+import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { toastManager } from "#/components/ui/toast";
-import { ogURL } from "#/lib/og/impl/url";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
 import { getAvatarById } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
@@ -42,16 +41,6 @@ export function Hero({ profile }: IHeroProps) {
     const handleShare = () => copyToClipboard(window.location.href, "Link copied", "Profile link copied to clipboard.", "Couldn't copy link");
 
     const handleCopyUid = () => copyToClipboard(profile.uid, "UID copied", `${profile.uid} copied to clipboard.`, "Couldn't copy UID");
-
-    const handleOpenOgImage = () => {
-        const ogImageUrl = ogURL("user", profile.uid, {
-            nickname: profile.nickname ?? "Doctor",
-            level: profile.level,
-            grade: profile.grade,
-            totalScore: profile.total_score,
-        });
-        window.open(ogImageUrl, "_blank", "noopener,noreferrer");
-    };
 
     return (
         <section className="relative overflow-hidden rounded-2xl border border-[oklch(0.28_0.005_285)] bg-card shadow-sm sm:rounded-3xl">
@@ -101,28 +90,16 @@ export function Hero({ profile }: IHeroProps) {
                         <Share2 className="size-3.5" />
                         <span className="hidden xs:inline sm:inline">Share</span>
                     </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger>
-                            <Button variant="ghost" size="icon" className="size-8" aria-label="More options">
-                                <MoreHorizontal className="size-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem onClick={handleCopyUid} className="cursor-pointer">
-                                <Hash className="size-3.5 text-muted-foreground" />
-                                Copy UID
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleShare} className="cursor-pointer">
-                                <Copy className="size-3.5 text-muted-foreground" />
-                                Copy profile link
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleOpenOgImage} className="cursor-pointer">
-                                <ImageIcon className="size-3.5 text-muted-foreground" />
-                                Open share image
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={(triggerProps) => (
+                                <Button {...triggerProps} variant="outline" size="icon" onClick={handleCopyUid} aria-label="Copy UID" className="size-8">
+                                    <Copy className="size-3.5" />
+                                </Button>
+                            )}
+                        />
+                        <TooltipPopup>Copy UID</TooltipPopup>
+                    </Tooltip>
                 </div>
 
                 {/* Main info: spans full width on mobile, normal column on sm+ */}

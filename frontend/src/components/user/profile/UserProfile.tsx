@@ -28,7 +28,7 @@ const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
 
 export function UserProfile() {
     const { id } = useParams({ from: "/user/$id" });
-    const [activeTab, setActiveTab] = useState<TabId>("roster");
+    const [activeTab, setActiveTab] = useState<TabId>("stats");
 
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
@@ -39,10 +39,10 @@ export function UserProfile() {
 
     const tabs = useMemo(
         () => [
-            { id: "roster" as TabId, label: "Roster", count: data?.operator_count ?? roster?.length ?? undefined },
-            { id: "inventory" as TabId, label: "Inventory", count: data?.item_count ?? inventory?.length ?? undefined },
             { id: "stats" as TabId, label: "Stats" },
             { id: "score" as TabId, label: "Score" },
+            { id: "roster" as TabId, label: "Roster", count: data?.operator_count ?? roster?.length ?? undefined },
+            { id: "inventory" as TabId, label: "Inventory", count: data?.item_count ?? inventory?.length ?? undefined },
         ],
         [data, roster, inventory],
     );

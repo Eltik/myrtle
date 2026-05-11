@@ -1,1 +1,1 @@
-export type TabId = "roster" | "inventory" | "stats" | "score";
+export type TabId = "stats" | "score" | "roster" | "inventory";
