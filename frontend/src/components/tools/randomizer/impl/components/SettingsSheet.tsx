@@ -2,6 +2,8 @@ import { Filter, MapPinned, Users } from "lucide-react";
 import type React from "react";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import type { IStage, IZone, StageClearsMap } from "#/types/stages";
+import type { ActivityLookup } from "../activity-lookup";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
 import { OperatorFiltersPanel } from "./OperatorFiltersPanel";
 import { RosterPicker } from "./RosterPicker";
@@ -17,6 +19,10 @@ interface ISettingsSheetProps {
     onRosterChange: (next: Set<string>) => void;
     rosterIndex: IRosterIndex;
     hasProfile: boolean;
+    stages: IStage[];
+    zones: IZone[];
+    activityLookup: ActivityLookup;
+    stageClears: StageClearsMap | null;
 }
 
 export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
@@ -52,7 +58,7 @@ export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
                         </TabsContent>
 
                         <TabsContent value="stages">
-                            <StageFiltersPanel settings={props.settings} onChange={props.onChange} hasProfile={props.hasProfile} />
+                            <StageFiltersPanel settings={props.settings} onChange={props.onChange} hasProfile={props.hasProfile} stages={props.stages} zones={props.zones} activityLookup={props.activityLookup} stageClears={props.stageClears} />
                         </TabsContent>
 
                         <TabsContent value="roster">

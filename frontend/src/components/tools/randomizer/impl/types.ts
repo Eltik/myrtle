@@ -20,6 +20,8 @@ export interface IRandomizerSettings {
     onlyCompletedStages: boolean;
     onlyAvailableStages: boolean;
     onlyE2Operators: boolean;
+    /** Stage IDs the user has explicitly opted out of. Empty = all stages allowed. */
+    deselectedStageIds: string[];
 }
 
 export type ChallengeKind = "restriction" | "modifier" | "objective";

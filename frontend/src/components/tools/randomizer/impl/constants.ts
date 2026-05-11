@@ -63,4 +63,5 @@ export const DEFAULT_SETTINGS = {
     onlyCompletedStages: false,
     onlyAvailableStages: true,
     onlyE2Operators: false,
+    deselectedStageIds: [] as string[],
 };

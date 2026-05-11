@@ -81,16 +81,17 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
 
 export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: ActivityLookup): IStage[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
+    const deselectedStages = new Set(settings.deselectedStageIds);
     const now = Math.floor(Date.now() / 1000);
 
     return stages.filter((stage) => {
         const zone = zoneById.get(stage.zoneId);
         if (!zone) return false;
         if (!settings.allowedZoneTypes.includes(zone.type)) return false;
+        if (deselectedStages.has(stage.stageId)) return false;
 
         if (settings.onlyCompletedStages) {
-            const clear = stageClears?.[stage.stageId];
-            if (!clear || (clear.completeTimes ?? 0) <= 0) return false;
+            if (!isStageCleared(stage.stageId, stageClears)) return false;
         }
 
         if (settings.onlyAvailableStages) {
@@ -173,3 +174,193 @@ export function getZoneDisplayName(zone: IZone | undefined, stageZoneId: string)
     if (!zone) return stageZoneId;
     return zone.zoneNameSecond ?? zone.zoneNameFirst ?? stageZoneId;
 }
+
+/**
+ * A stage is cleared when its `state` is 3 (passed). Note that for adverse/tough
+ * variants, clearing the harder version auto-passes the Normal/Easy variant with
+ * `state: 3` and `completeTimes: 0`, so checking `completeTimes` alone would miss them.
+ */
+export function isStageCleared(stageId: string, stageClears: StageClearsMap | null | undefined): boolean {
+    const clear = stageClears?.[stageId];
+    return !!clear && (clear.state ?? 0) >= 3;
+}
+
+export type StageGroupSection = "MAIN" | "EVENT" | "OTHER";
+
+export interface IStageGroup {
+    id: string;
+    label: string;
+    sublabel?: string;
+    section: StageGroupSection;
+    /** Underlying zone type bucket (MAINLINE vs ACTIVITY) for cross-referencing source filters. */
+    zoneType: string;
+    /** Whether the event is currently open / always-available (permanent or mainline). */
+    isOpen: boolean;
+    sortKey: number;
+    stages: IStage[];
+}
+
+function natCompareCode(a: string, b: string): number {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+}
+
+/** Activity ID suffixes that mark non-mainstream content (mini events, sandbox, fun, etc.). */
+const OTHER_ACTIVITY_SUFFIXES = ["mini", "fun", "festival", "melee", "rune", "sandbox", "april", "vsint", "trial", "training"];
+
+function isOtherActivity(activityId: string): boolean {
+    const m = activityId.match(/^act\d+([a-z]+)$/i);
+    if (!m) return false;
+    const suffix = (m[1] ?? "").toLowerCase();
+    return OTHER_ACTIVITY_SUFFIXES.includes(suffix);
+}
+
+/**
+ * Extract the activity id from a stageId prefix. Some legacy event stages
+ * (e.g. `act7d5_04`, `act4d0_05`) are attached to a `main_X` zone in the
+ * game data despite being event content; the stageId itself is the reliable
+ * source of truth for which activity they actually belong to.
+ */
+function getActivityIdFromStageId(stageId: string): string | null {
+    const underscore = stageId.indexOf("_");
+    if (underscore <= 0) return null;
+    const prefix = stageId.slice(0, underscore);
+    return /^act\d/i.test(prefix) ? prefix : null;
+}
+
+/**
+ * Bucket the supplied stages into user-facing groups partitioned into three sections:
+ * Main Story (one per mainline episode), Events (full sidestories / permanent SS/BL),
+ * and Other (mini events, sandbox, festivals, etc.).
+ */
+export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: ActivityLookup): IStageGroup[] {
+    const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
+    const now = Math.floor(Date.now() / 1000);
+
+    const groups = new Map<string, IStageGroup>();
+
+    for (const stage of stages) {
+        const zone = zoneById.get(stage.zoneId);
+        if (!zone) continue;
+
+        let groupId: string;
+        let label: string;
+        let sublabel: string | undefined;
+        let section: StageGroupSection;
+        let isOpen: boolean;
+        let sortKey: number;
+
+        const stageActivityId = getActivityIdFromStageId(stage.stageId);
+        const stageActivity = stageActivityId ? lookup.activityById.get(stageActivityId) : undefined;
+        const stageRetro = stageActivityId ? lookup.retroByActivityId.get(stageActivityId) : undefined;
+        const stageBelongsToActivity = !!(stageActivity || stageRetro);
+
+        const isMainlineZoneType = zone.type === "MAINLINE" || zone.type === "MAINLINE_ACTIVITY" || zone.type === "MAINLINE_RETRO";
+        // Stage IDs for genuine mainline content are `main_/tough_/easy_/hard_/st_` prefixed;
+        // legacy event stages (e.g. `act7d5_04`) sometimes share a `main_X` zone but should
+        // NOT be considered main story.
+        const stageIdPrefix = stage.stageId.split("_", 1)[0] ?? "";
+        const isMainlineStageId = /^(main|tough|easy|hard|st)$/i.test(stageIdPrefix);
+        const isTrueMainStory = isMainlineZoneType && isMainlineStageId;
+
+        if (isTrueMainStory) {
+            const chapterNumber = zone.zoneNameTitleCurrent?.replace(/^0+/, "") || String(zone.zoneIndex ?? 0);
+            const chapterName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zone.zoneId;
+            // Group by chapter number so MAINLINE / MAINLINE_ACTIVITY / MAINLINE_RETRO
+            // variants of the same chapter merge into one entry.
+            groupId = `mainline:${chapterNumber || zone.zoneId}`;
+            label = `Chapter ${chapterNumber} - ${chapterName}`;
+            sublabel = zone.zoneNameFirst && zone.zoneNameFirst !== chapterName ? zone.zoneNameFirst : undefined;
+            section = "MAIN";
+            isOpen = true;
+            sortKey = Number.parseInt(zone.zoneNameTitleCurrent ?? "", 10);
+            if (!Number.isFinite(sortKey)) sortKey = zone.zoneIndex ?? 0;
+        } else if (stageBelongsToActivity && stageActivityId) {
+            const activityId = stageActivityId;
+            const activity = stageActivity;
+            const retro = stageRetro;
+            groupId = `activity:${activityId}`;
+            label = activity?.name ?? retro?.name ?? activityId;
+
+            const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
+            if (isPermanentSideOrBranch) {
+                sublabel = "Permanent";
+                isOpen = true;
+            } else if (activity) {
+                isOpen = activity.startTime <= now && now <= activity.endTime;
+                sublabel = activity.isReplicate ? "Rerun" : undefined;
+            } else {
+                isOpen = false;
+            }
+
+            section = isOtherActivity(activityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
+            sortKey = activity?.startTime ?? retro?.startTime ?? 0;
+        } else {
+            const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
+            const zoneActivityId = getActivityIdFromZoneId(stage.zoneId);
+
+            if (permanentPrefix) {
+                const retro = lookup.retroByZonePrefix.get(permanentPrefix);
+                groupId = `permanent:${permanentPrefix}`;
+                label = retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
+                sublabel = "Permanent";
+                section = "EVENT";
+                isOpen = true;
+                sortKey = retro?.startTime ?? 0;
+            } else if (zoneActivityId) {
+                const activity = lookup.activityById.get(zoneActivityId);
+                const retro = lookup.retroByActivityId.get(zoneActivityId);
+                groupId = `activity:${zoneActivityId}`;
+                label = activity?.name ?? retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
+
+                const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
+                if (isPermanentSideOrBranch) {
+                    sublabel = "Permanent";
+                    isOpen = true;
+                } else if (activity) {
+                    isOpen = activity.startTime <= now && now <= activity.endTime;
+                    sublabel = activity.isReplicate ? "Rerun" : undefined;
+                } else {
+                    isOpen = false;
+                }
+
+                section = isOtherActivity(zoneActivityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
+                sortKey = activity?.startTime ?? retro?.startTime ?? 0;
+            } else {
+                groupId = `zone:${stage.zoneId}`;
+                label = getZoneDisplayName(zone, zone.zoneId);
+                section = "OTHER";
+                isOpen = false;
+                sortKey = zone.zoneIndex ?? 0;
+            }
+        }
+
+        let group = groups.get(groupId);
+        if (!group) {
+            group = { id: groupId, label, sublabel, section, zoneType: zone.type, isOpen, sortKey, stages: [] };
+            groups.set(groupId, group);
+        }
+        group.stages.push(stage);
+    }
+
+    const out = Array.from(groups.values());
+
+    for (const g of out) {
+        g.stages.sort((a, b) => natCompareCode(a.code, b.code) || a.stageId.localeCompare(b.stageId));
+    }
+
+    const SECTION_ORDER: Record<StageGroupSection, number> = { MAIN: 0, EVENT: 1, OTHER: 2 };
+    out.sort((a, b) => {
+        const sec = SECTION_ORDER[a.section] - SECTION_ORDER[b.section];
+        if (sec !== 0) return sec;
+        if (a.section === "MAIN") return a.sortKey - b.sortKey;
+        return b.sortKey - a.sortKey;
+    });
+
+    return out;
+}
+
+export const STAGE_SECTION_LABEL: Record<StageGroupSection, string> = {
+    MAIN: "Main Story",
+    EVENT: "Events",
+    OTHER: "Other",
+};
