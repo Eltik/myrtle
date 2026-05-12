@@ -35,13 +35,13 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
         let cancelled = false;
         let i = 0;
         const probe = () => {
-            while (i < urls.length && FAILED_PREVIEW.has(urls[i]!)) i++;
+            while (i < urls.length && FAILED_PREVIEW.has(urls[i] ?? "")) i++;
             if (cancelled) return;
             if (i >= urls.length) {
                 setResolving(false);
                 return;
             }
-            const url = urls[i]!;
+            const url = urls[i] ?? "";
             const img = new Image();
             img.onload = () => {
                 if (cancelled) return;

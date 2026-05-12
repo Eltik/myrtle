@@ -34,6 +34,7 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
 
             <div className="mt-4 grid grid-cols-4 gap-1.5 sm:grid-cols-6 sm:gap-2 md:grid-cols-8 xl:grid-cols-12">
                 {operators.map((op, idx) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: squad allows duplicate operators, so index is part of the slot identity
                     <OperatorTile key={`${op.id}-${idx}`} op={op} index={idx} />
                 ))}
                 {filled === 0 && <p className="col-span-full font-mono text-sm text-muted-foreground">No matching operators — relax your filters.</p>}

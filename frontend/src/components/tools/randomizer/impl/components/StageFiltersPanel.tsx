@@ -239,6 +239,7 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
                         const isDeselected = deselected.has(stage.stageId);
                         return (
                             <li key={stage.stageId}>
+                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox is a Base UI primitive with its own aria-label; wrapping label provides the click target */}
                                 <label className={cn("flex items-center gap-2.5 rounded-sm px-1.5 py-1.5 cursor-pointer transition-colors hover:bg-accent/40", isDeselected && "opacity-60")}>
                                     <Checkbox checked={!isDeselected} onCheckedChange={() => onToggleStage(stage.stageId)} aria-label={`Toggle ${stage.code}${stage.name ? ` - ${stage.name}` : ""}`} />
                                     <StageModeBadge stage={stage} />
@@ -289,6 +290,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 
 function SwitchRow({ label, description, checked, onChange, locked = false }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; locked?: boolean }) {
     return (
+        // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
         <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
             <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-foreground">

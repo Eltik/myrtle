@@ -111,10 +111,10 @@ function Pips({ count, matrix }: { count: number; matrix: Matrix }): React.React
     const pattern = PIP_PATTERNS[count] ?? [];
     return (
         <>
-            {pattern.map(([u, v], i) => {
+            {pattern.map(([u, v]) => {
                 const x = matrix[0] * u + matrix[2] * v + matrix[4];
                 const y = matrix[1] * u + matrix[3] * v + matrix[5];
-                return <circle key={i} cx={x} cy={y} r={PIP_R} fill="currentColor" stroke="none" />;
+                return <circle key={`${u}-${v}`} cx={x} cy={y} r={PIP_R} fill="currentColor" stroke="none" />;
             })}
         </>
     );
