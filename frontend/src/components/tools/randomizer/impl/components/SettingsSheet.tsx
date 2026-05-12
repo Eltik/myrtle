@@ -14,9 +14,15 @@ interface ISettingsSheetProps {
     onOpenChange: (open: boolean) => void;
     settings: IRandomizerSettings;
     onChange: (next: Partial<IRandomizerSettings>) => void;
-    operators: IRandomizerOperator[];
+    /** Complete operator list, used by the roster picker as the "universe". */
+    allOperators: IRandomizerOperator[];
+    /** Operators that pass the operator-tab constraints (class/rarity/unplayable). */
+    rosterPickerOperators: IRandomizerOperator[];
     rosterSelection: Set<string>;
+    /** True once the user has explicitly set the roster (vs. the "all" default). */
+    rosterIsExplicit: boolean;
     onRosterChange: (next: Set<string>) => void;
+    onRosterReset: () => void;
     rosterIndex: IRosterIndex;
     hasProfile: boolean;
     stages: IStage[];
@@ -62,7 +68,17 @@ export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
                         </TabsContent>
 
                         <TabsContent value="roster">
-                            <RosterPicker operators={props.operators} selected={props.rosterSelection} onChange={props.onRosterChange} rosterIndex={props.rosterIndex} hasProfile={props.hasProfile} />
+                            <RosterPicker
+                                allOperators={props.allOperators}
+                                visibleOperators={props.rosterPickerOperators}
+                                selected={props.rosterSelection}
+                                isExplicit={props.rosterIsExplicit}
+                                onChange={props.onRosterChange}
+                                onReset={props.onRosterReset}
+                                rosterIndex={props.rosterIndex}
+                                hasProfile={props.hasProfile}
+                                settings={props.settings}
+                            />
                         </TabsContent>
                     </Tabs>
                 </SheetPanel>
