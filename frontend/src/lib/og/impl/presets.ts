@@ -12,27 +12,37 @@ export const DEFAULT_OG_PRESETS = {
     login: {
         title: "Log in to Myrtle",
         subtitle: "Sign in to track your roster, gacha history, and tier lists.",
-        activeTag: "About",
+        activeTag: "Players",
     },
     settings: {
         title: "Settings",
         subtitle: "Manage your account, profile, and preferences.",
-        activeTag: "About",
+        activeTag: "Players",
     },
-    "gacha-community": {
-        title: "Gacha · Community",
-        subtitle: "Community-wide pull rates, top operators, and pull timing.",
-        activeTag: "Tools",
-    },
-    "user-leaderboard": {
-        title: "Doctor Leaderboard",
-        subtitle: "Top Doctors ranked by score across servers.",
-        activeTag: "Tools",
+    operators: {
+        title: "Operators",
+        subtitle: "Every operator released in Arknights.",
+        activeTag: "Operators",
     },
     "user-search": {
         title: "Search Doctors",
         subtitle: "Find and browse user profiles.",
-        activeTag: "Tools",
+        activeTag: "Players",
+    },
+    "user-leaderboard": {
+        title: "Doctor Leaderboard",
+        subtitle: "Top Doctors ranked by score across servers.",
+        activeTag: "Players",
+    },
+    "gacha-community": {
+        title: "Gacha · Community",
+        subtitle: "Community-wide pull rates, top operators, and pull timing.",
+        activeTag: "Gacha",
+    },
+    "gacha-history": {
+        title: "Gacha · My History",
+        subtitle: "Your synced pulls, rarity splits, and pity counters.",
+        activeTag: "Gacha",
     },
     "tools-dps": {
         title: "DPS Calculator",
@@ -48,11 +58,6 @@ export const DEFAULT_OG_PRESETS = {
         title: "Randomizer",
         subtitle: "Roll a random stage, squad, and modifier for your next run.",
         activeTag: "Tools",
-    },
-    operators: {
-        title: "Operators",
-        subtitle: "Every operator released in Arknights.",
-        activeTag: "Operators",
     },
 } as const satisfies Record<string, IDefaultOgData>;
 
