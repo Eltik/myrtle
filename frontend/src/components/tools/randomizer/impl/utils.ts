@@ -3,6 +3,7 @@ import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import { type ActivityLookup, getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen } from "./activity-lookup";
+import { CHALLENGES } from "./challenges";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 
@@ -139,38 +140,63 @@ export function pickRandomSquad(operators: IRandomizerOperator[], squadSize: num
     return out;
 }
 
-const CHALLENGES: IChallenge[] = [
-    { kind: "restriction", title: "No Guards", description: "Cannot deploy any Guard operators." },
-    { kind: "restriction", title: "No Medics", description: "Cannot deploy any Medic operators." },
-    { kind: "restriction", title: "No Casters", description: "Cannot deploy any Caster operators." },
-    { kind: "restriction", title: "No Snipers", description: "Cannot deploy any Sniper operators." },
-    { kind: "restriction", title: "No Defenders", description: "Cannot deploy any Defender operators." },
-    { kind: "restriction", title: "Low rarity only", description: "Only 1★–3★ operators allowed." },
-    { kind: "restriction", title: "Four-star ceiling", description: "No operators above 4★ rarity." },
-    { kind: "restriction", title: "Ranged only", description: "Only ranged operators allowed." },
-    { kind: "restriction", title: "Melee only", description: "Only melee operators allowed." },
-    { kind: "restriction", title: "Half squad", description: "Deploy at most 6 operators total." },
+export interface IChallengePickContext {
+    /** The rolled stage. Stage-specific challenges check this. */
+    stage: IStage;
+    /**
+     * Full operator pool after settings + roster filtering. Squad-filter
+     * challenges run their predicate against this list.
+     */
+    operators: IOperatorListItem[];
+    /** Minimum pool size a SQUAD_FILTER challenge must yield to be eligible. */
+    squadSize: number;
+}
 
-    { kind: "modifier", title: "Speed run", description: "Complete the stage as quickly as you can." },
-    { kind: "modifier", title: "Minimal deployment", description: "Use the fewest operators possible." },
-    { kind: "modifier", title: "No retreating", description: "Once deployed, no operator may be retreated." },
-    { kind: "modifier", title: "Roster order", description: "Deploy operators left-to-right in the assigned order." },
-    { kind: "modifier", title: "First attempt", description: "Must clear on the first try — no retries." },
-    { kind: "modifier", title: "Auto only", description: "Use auto-deploy after the initial clear." },
+export interface IPickedChallenge {
+    challenge: IChallenge;
+    /** For SQUAD_FILTER: the operators that survived the filter. Undefined for PLAIN/STAGE. */
+    filteredOperators?: IOperatorListItem[];
+}
 
-    { kind: "objective", title: "No leaks", description: "Do not let any enemy through." },
-    { kind: "objective", title: "Three-star clear", description: "Must achieve a 3-star rating." },
-    { kind: "objective", title: "Trust farm", description: "Fill remaining slots with operators for trust." },
-];
+/**
+ * Weighted random pick over the challenge registry, respecting eligibility:
+ *   - PLAIN: always eligible.
+ *   - STAGE: eligible iff match(stage) returns true.
+ *   - SQUAD_FILTER: eligible iff the filtered pool has at least squadSize operators.
+ *
+ * Returns null only if no challenge is eligible (e.g. empty operator pool and no
+ * applicable stage / plain challenges in the registry).
+ */
+export function pickRandomChallenge(ctx: IChallengePickContext): IPickedChallenge | null {
+    type Entry = { challenge: IChallenge; weight: number; filteredOperators?: IOperatorListItem[] };
+    const eligible: Entry[] = [];
 
-export function pickRandomChallenge(): IChallenge {
-    return (
-        CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)] ?? {
-            kind: "restriction" as const,
-            title: "Random Challenge",
-            description: "Complete the stage with any restriction you choose.",
+    for (const ch of CHALLENGES) {
+        const weight = ch.weight ?? 1;
+        if (weight <= 0) continue;
+
+        if (ch.type === "PLAIN") {
+            eligible.push({ challenge: ch, weight });
+        } else if (ch.type === "STAGE") {
+            if (ch.match(ctx.stage)) eligible.push({ challenge: ch, weight });
+        } else {
+            const filtered = ctx.operators.filter(ch.filter);
+            if (filtered.length >= ctx.squadSize) {
+                eligible.push({ challenge: ch, weight, filteredOperators: filtered });
+            }
         }
-    );
+    }
+
+    if (eligible.length === 0) return null;
+
+    const total = eligible.reduce((s, e) => s + e.weight, 0);
+    let r = Math.random() * total;
+    for (const e of eligible) {
+        r -= e.weight;
+        if (r <= 0) return { challenge: e.challenge, filteredOperators: e.filteredOperators };
+    }
+    const last = eligible[eligible.length - 1];
+    return last ? { challenge: last.challenge, filteredOperators: last.filteredOperators } : null;
 }
 
 export function getZoneDisplayName(zone: IZone | undefined, stageZoneId: string): string {

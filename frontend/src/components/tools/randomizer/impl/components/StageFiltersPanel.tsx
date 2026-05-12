@@ -242,7 +242,7 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
                                 <label className={cn("flex items-center gap-2.5 rounded-sm px-1.5 py-1.5 cursor-pointer transition-colors hover:bg-accent/40", isDeselected && "opacity-60")}>
                                     <Checkbox checked={!isDeselected} onCheckedChange={() => onToggleStage(stage.stageId)} aria-label={`Toggle ${stage.code}${stage.name ? ` - ${stage.name}` : ""}`} />
                                     <StageModeBadge stage={stage} />
-                                    <span className="inline-flex min-w-[3.25rem] shrink-0 justify-start font-mono text-[11.5px] font-medium text-foreground">{stage.code}</span>
+                                    <span className="inline-flex min-w-13 shrink-0 justify-start font-mono text-[11.5px] font-medium text-foreground">{stage.code}</span>
                                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">{stage.name ?? ""}</span>
                                     {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-500/90">CM</span>}
                                 </label>
