@@ -75,6 +75,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 
 function SwitchRow({ label, description, checked, onChange, locked = false }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; locked?: boolean }) {
     return (
+        // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
         <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
             <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-foreground">
