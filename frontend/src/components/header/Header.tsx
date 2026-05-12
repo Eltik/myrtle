@@ -33,8 +33,8 @@ export default function Header() {
                 href: "/user",
                 label: "Players",
                 items: [
-                    ...(user ? [{ href: `/user/${user.uid}`, label: "Me", desc: "Open your Doctor profile", icon: "user" }] : []),
-                    { href: "/user/search", label: "Search", desc: "Find Doctor profiles by nickname or UID", icon: "search" },
+                    ...(user ? [{ href: `/user/${user.uid}`, label: "My Profile", desc: "Open your profile", icon: "user" }] : []),
+                    { href: "/user/search", label: "Search", desc: "Find profiles by nickname or UID", icon: "search" },
                     { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
                 ],
             },
