@@ -79,6 +79,9 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
     });
 }
 
+/** Zone types whose stages are always available (mainline, retro, daily farming, annihilation). */
+const PERMANENT_ZONE_TYPES = new Set(["MAINLINE", "MAINLINE_ACTIVITY", "MAINLINE_RETRO", "WEEKLY", "CAMPAIGN"]);
+
 export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: ActivityLookup): IStage[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const deselectedStages = new Set(settings.deselectedStageIds);
@@ -95,7 +98,7 @@ export function selectAvailableStages(stages: IStage[], zones: IZone[], settings
         }
 
         if (settings.onlyAvailableStages) {
-            if (zone.type === "MAINLINE") return true;
+            if (PERMANENT_ZONE_TYPES.has(zone.type)) return true;
             if (getPermanentZonePrefix(stage.zoneId)) return true;
             const activityId = getActivityIdFromZoneId(stage.zoneId);
             if (!activityId) return false;
@@ -329,7 +332,7 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: Activ
                 groupId = `zone:${stage.zoneId}`;
                 label = getZoneDisplayName(zone, zone.zoneId);
                 section = "OTHER";
-                isOpen = false;
+                isOpen = PERMANENT_ZONE_TYPES.has(zone.type);
                 sortKey = zone.zoneIndex ?? 0;
             }
         }
