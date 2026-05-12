@@ -1,4 +1,5 @@
-import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import type { IOperatorListItem, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import type { IStage } from "#/types/stages";
 
 export interface IRandomizerOperator {
     id: string;
@@ -26,11 +27,41 @@ export interface IRandomizerSettings {
 
 export type ChallengeKind = "restriction" | "modifier" | "objective";
 
-export interface IChallenge {
+export type ChallengeType = "PLAIN" | "SQUAD_FILTER" | "STAGE";
+
+export interface IChallengeBase {
+    /** Stable identifier for the challenge (used for keys / debugging). */
+    id: string;
     kind: ChallengeKind;
     title: string;
     description: string;
+    /** Relative weight in the weighted pick (defaults to 1). Use 0 to disable temporarily. */
+    weight?: number;
 }
+
+/** A challenge with no automatic effect */
+export interface IPlainChallenge extends IChallengeBase {
+    type: "PLAIN";
+}
+
+/** A challenge that filters the squad pool before the squad is rolled. */
+export interface ISquadFilterChallenge extends IChallengeBase {
+    type: "SQUAD_FILTER";
+    /**
+     * Predicate applied to the full operator data. Return true to KEEP the operator.
+     * Filter runs after settings/roster filtering.
+     */
+    filter: (op: IOperatorListItem) => boolean;
+}
+
+/** A challenge that only applies when the rolled stage matches a predicate. */
+export interface IStageChallenge extends IChallengeBase {
+    type: "STAGE";
+    /** Return true if this challenge should be eligible for the given rolled stage. */
+    match: (stage: IStage) => boolean;
+}
+
+export type IChallenge = IPlainChallenge | ISquadFilterChallenge | IStageChallenge;
 
 export interface IRosterIndex {
     /** Set of operator IDs the user owns. */
