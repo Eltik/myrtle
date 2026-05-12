@@ -17,7 +17,7 @@ import { DEFAULT_SETTINGS, SETTINGS_VERSION, STORAGE_KEY_SETTINGS } from "./impl
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings } from "./impl/types";
 import { buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
 
-const ROSTER_STORAGE_KEY = "randomizer-roster-v3";
+const ROSTER_STORAGE_KEY = "randomizer-roster-v4";
 
 interface IPersistedSettings extends IRandomizerSettings {
     _version?: number;
@@ -72,15 +72,34 @@ export function Randomizer(): React.ReactElement {
     const settings = React.useMemo(() => migrateSettings(persisted), [persisted]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
-    // Roster selection — defaults to "all known operators" until the user prunes it.
-    const [rosterSelection, setRosterSelection] = useLocalStorageState<string[]>(ROSTER_STORAGE_KEY, []);
-    const rosterSet = React.useMemo(() => new Set(rosterSelection), [rosterSelection]);
-    const effectiveRosterSet = React.useMemo(() => (rosterSelection.length === 0 ? new Set(randomizerOperators.map((op) => op.id)) : rosterSet), [rosterSelection, rosterSet, randomizerOperators]);
+    // Roster selection: `null` means "user hasn't pruned the roster yet" → treat as all
+    // operators. Any array (even empty) is an explicit choice the user made.
+    const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, {
+        parse: (raw) => {
+            try {
+                const parsed = JSON.parse(raw) as unknown;
+                if (parsed === null) return null;
+                return Array.isArray(parsed) ? (parsed as string[]) : undefined;
+            } catch {
+                return undefined;
+            }
+        },
+    });
+    const effectiveRosterSet = React.useMemo(() => {
+        if (rosterStored === null) return new Set(randomizerOperators.map((op) => op.id));
+        return new Set(rosterStored);
+    }, [rosterStored, randomizerOperators]);
+    const setRosterSelection = React.useCallback((next: Set<string>) => setRosterStored(Array.from(next)), [setRosterStored]);
+    const resetRosterSelection = React.useCallback(() => setRosterStored(null), [setRosterStored]);
 
     const availableOperators = React.useMemo(() => {
         const filtered = selectAvailableOperators(randomizerOperators, settings, rosterIndex);
         return filtered.filter((op) => effectiveRosterSet.has(op.id));
     }, [randomizerOperators, settings, rosterIndex, effectiveRosterSet]);
+
+    // The roster picker mirrors every operator-tab constraint, so flipping a setting
+    // immediately prunes the roster view to match what the randomizer can actually draw.
+    const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex), [randomizerOperators, settings, rosterIndex]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
 
@@ -174,9 +193,12 @@ export function Randomizer(): React.ReactElement {
                 onOpenChange={setSettingsOpen}
                 settings={settings}
                 onChange={updateSettings}
-                operators={randomizerOperators}
+                allOperators={randomizerOperators}
+                rosterPickerOperators={rosterPickerOperators}
                 rosterSelection={effectiveRosterSet}
-                onRosterChange={(next) => setRosterSelection(Array.from(next))}
+                rosterIsExplicit={rosterStored !== null}
+                onRosterChange={setRosterSelection}
+                onRosterReset={resetRosterSelection}
                 rosterIndex={rosterIndex}
                 hasProfile={hasProfile}
                 stages={playableStages}

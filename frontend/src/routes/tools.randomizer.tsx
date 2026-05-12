@@ -15,7 +15,7 @@ export const Route = createFileRoute("/tools/randomizer")({
     head: () => {
         const { meta, links } = seo({
             title: "Randomizer",
-            description: "Roll a random Arknights stage, squad, and challenge modifier. Logged-in operators can constrain rolls to stages they've cleared and operators they own.",
+            description: "Roll a random Arknights stage, squad, and challenge modifier. Logged-in users can constrain rolls to stages they've cleared and operators they own.",
             path: "/tools/randomizer",
             image: defaultOgURL("tools-randomizer"),
         });
