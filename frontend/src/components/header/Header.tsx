@@ -33,6 +33,7 @@ export default function Header() {
                 href: "/user",
                 label: "Players",
                 items: [
+                    ...(user ? [{ href: `/user/${user.uid}`, label: "Me", desc: "Open your Doctor profile", icon: "user" }] : []),
                     { href: "/user/search", label: "Search", desc: "Find Doctor profiles by nickname or UID", icon: "search" },
                     { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
                 ],
@@ -47,7 +48,7 @@ export default function Header() {
             },
             { href: "/tools", label: "Tools", items: toolItems },
         ];
-    }, [isMac]);
+    }, [isMac, user]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg supports-backdrop-filter:bg-background/60 backdrop-saturate-150">
