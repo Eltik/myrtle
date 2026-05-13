@@ -18,6 +18,13 @@ use crate::{
 pub struct LeaderboardParams {
     pub sort: Option<String>,   // defaults to "total_score"
     pub server: Option<String>, // optional server filter
+    /// When set, each row is enriched with `rank_delta` vs. the most recent
+    /// snapshot taken before this interval. Valid: "1 day" | "7 days" | "30 days".
+    pub movement_interval: Option<String>,
+    /// When true (requires `movement_interval`), the result is restricted to
+    /// users whose rank has changed since the baseline.
+    #[serde(default)]
+    pub movement_only: bool,
     #[serde(flatten)]
     pub pagination: Pagination,
 }
@@ -27,10 +34,24 @@ pub async fn leaderboard(
     Query(params): Query<LeaderboardParams>,
 ) -> Result<Json<LeaderboardPage>, ApiError> {
     let sort = params.sort.as_deref().unwrap_or("total_score");
+    let movement_interval = params.movement_interval.as_deref();
+    if let Some(interval) = movement_interval {
+        if !matches!(interval, "1 day" | "7 days" | "30 days") {
+            return Err(ApiError::BadRequest(
+                "movement_interval must be '1 day', '7 days', or '30 days'".into(),
+            ));
+        }
+    } else if params.movement_only {
+        return Err(ApiError::BadRequest(
+            "movement_only requires movement_interval".into(),
+        ));
+    }
     let page = services::leaderboard::get_leaderboard(
         &state,
         sort,
         params.server.as_deref(),
+        movement_interval,
+        params.movement_only,
         params.pagination.limit(),
         params.pagination.offset(),
     )

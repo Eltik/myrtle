@@ -13,6 +13,8 @@ pub enum CacheKey<'a> {
     Leaderboard {
         sort: &'a str,
         server: Option<&'a str>,
+        movement_interval: Option<&'a str>,
+        movement_only: bool,
         limit: u32,
         offset: u32,
     },
@@ -63,11 +65,17 @@ impl CacheKey<'_> {
             CacheKey::Leaderboard {
                 sort,
                 server,
+                movement_interval,
+                movement_only,
                 limit,
                 offset,
             } => {
                 let srv = server.unwrap_or("all");
-                format!("leaderboard:{sort}:{srv}:{limit}:{offset}")
+                let mv = movement_interval
+                    .map(|s| s.replace(' ', "_"))
+                    .unwrap_or_else(|| "none".to_owned());
+                let mo = if *movement_only { "only" } else { "all" };
+                format!("leaderboard:{sort}:{srv}:{mv}:{mo}:{limit}:{offset}")
             }
             CacheKey::Search { query_hash } => format!("search:{query_hash}"),
             CacheKey::TierList { slug } => format!("tierlist:{slug}"),

@@ -523,3 +523,480 @@ export function tierListFlairsQueryOptions() {
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
+
+/** Permission level a collaborator may be granted on a tier list. */
+export type TierListPermissionLevel = "view" | "edit" | "publish" | "admin";
+
+/** Plain JSON value - used for tier list version snapshots. */
+export type TierListJsonValue = string | number | boolean | null | TierListJsonValue[] | { [key: string]: TierListJsonValue };
+
+export interface ICreateTierListInput {
+    name: string;
+    description?: string | null;
+    /**
+     * `"community"` is the default for normal users (limited to 10 per user).
+     * `"official"` is restricted to global tier-list admins.
+     */
+    listType: TierListType;
+}
+
+export interface IUpdateTierListInput {
+    slug: string;
+    name: string;
+    description?: string | null;
+}
+
+export interface ICreateTierInput {
+    slug: string;
+    name: string;
+    displayOrder: number;
+    color?: string | null;
+    description?: string | null;
+}
+
+export interface IUpdateTierInput extends ICreateTierInput {
+    tierId: string;
+}
+
+export interface IDeleteTierInput {
+    slug: string;
+    tierId: string;
+}
+
+export interface IAddPlacementInput {
+    slug: string;
+    tierId: string;
+    operatorId: string;
+    subOrder?: number;
+    notes?: string | null;
+}
+
+export interface IRemovePlacementInput {
+    slug: string;
+    operatorId: string;
+}
+
+export interface IMovePlacementInput {
+    slug: string;
+    operatorId: string;
+    newTierId: string;
+    subOrder?: number;
+}
+
+export interface ISetTierListFlairInput {
+    slug: string;
+    flairId: number | null;
+}
+
+export interface IPublishTierListVersionInput {
+    slug: string;
+    changelog?: string | null;
+}
+
+export interface IGrantTierListPermissionInput {
+    slug: string;
+    userId: string;
+    permission: TierListPermissionLevel;
+}
+
+export interface IRevokeTierListPermissionInput {
+    slug: string;
+    userId: string;
+}
+
+export interface ITierListSummary {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    listType: TierListType;
+    createdBy: string | null;
+    isActive: boolean;
+    flairId: number | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ITierSummary {
+    id: string;
+    tierListId: string;
+    name: string;
+    displayOrder: number;
+    color: string | null;
+    description: string | null;
+}
+
+export interface ITierPlacementSummary {
+    tierId: string;
+    operatorId: string;
+    subOrder: number;
+    notes: string | null;
+    updatedAt: string;
+}
+
+export interface ITierListVersion {
+    id: string;
+    tierListId: string;
+    version: number;
+    snapshot: TierListJsonValue;
+    changelog: string | null;
+    publishedBy: string | null;
+    publishedAt: string;
+}
+
+export interface ITierListPermissionEntry {
+    tierListId: string;
+    userId: string;
+    permission: TierListPermissionLevel;
+    grantedBy: string | null;
+    grantedAt: string;
+}
+
+interface IBackendTierRaw {
+    id: string;
+    tier_list_id: string;
+    name: string;
+    display_order: number;
+    color: string | null;
+    description: string | null;
+}
+
+interface IBackendTierListVersion {
+    id: string;
+    tier_list_id: string;
+    version: number;
+    snapshot: TierListJsonValue;
+    changelog: string | null;
+    published_by: string | null;
+    published_at: string;
+}
+
+interface IBackendTierListPermission {
+    tier_list_id: string;
+    user_id: string;
+    permission: TierListPermissionLevel;
+    granted_by: string | null;
+    granted_at: string;
+}
+
+interface IBackendStatus {
+    status: string;
+}
+
+function mapTierListSummary(raw: IBackendTierList): ITierListSummary {
+    return {
+        id: raw.id,
+        name: raw.name,
+        slug: raw.slug,
+        description: raw.description,
+        listType: raw.list_type === "official" ? "official" : "community",
+        createdBy: raw.created_by,
+        isActive: raw.is_active,
+        flairId: raw.flair_id,
+        createdAt: raw.created_at,
+        updatedAt: raw.updated_at,
+    };
+}
+
+function mapTierSummary(raw: IBackendTierRaw): ITierSummary {
+    return {
+        id: raw.id,
+        tierListId: raw.tier_list_id,
+        name: raw.name,
+        displayOrder: raw.display_order,
+        color: raw.color,
+        description: raw.description,
+    };
+}
+
+function mapPlacementSummary(raw: IBackendPlacement): ITierPlacementSummary {
+    return {
+        tierId: raw.tier_id,
+        operatorId: raw.operator_id,
+        subOrder: raw.sub_order,
+        notes: raw.notes,
+        updatedAt: raw.updated_at,
+    };
+}
+
+function mapTierListVersion(raw: IBackendTierListVersion): ITierListVersion {
+    return {
+        id: raw.id,
+        tierListId: raw.tier_list_id,
+        version: raw.version,
+        snapshot: raw.snapshot,
+        changelog: raw.changelog,
+        publishedBy: raw.published_by,
+        publishedAt: raw.published_at,
+    };
+}
+
+function mapTierListPermission(raw: IBackendTierListPermission): ITierListPermissionEntry {
+    return {
+        tierListId: raw.tier_list_id,
+        userId: raw.user_id,
+        permission: raw.permission,
+        grantedBy: raw.granted_by,
+        grantedAt: raw.granted_at,
+    };
+}
+
+export class TierListApiError extends Error {
+    constructor(
+        public readonly status: number,
+        message: string,
+    ) {
+        super(message);
+        this.name = "TierListApiError";
+    }
+}
+
+async function parseError(res: Response): Promise<TierListApiError> {
+    let message = `Request failed: ${res.status}`;
+    try {
+        const data = (await res.json()) as { error?: string; message?: string };
+        message = data.error ?? data.message ?? message;
+    } catch {
+        // Body wasn't JSON; keep the default message.
+    }
+    return new TierListApiError(res.status, message);
+}
+
+function requireSiteToken(): string {
+    const token = getCookie("site_token");
+    if (!token) throw new TierListApiError(401, "Not signed in");
+    return token;
+}
+
+export const createTierListFn = createServerFn({ method: "POST" })
+    .inputValidator((data: ICreateTierListInput) => data)
+    .handler(async ({ data }): Promise<ITierListSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch("/tier-lists", {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({
+                name: data.name,
+                description: data.description ?? null,
+                list_type: data.listType,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapTierListSummary((await res.json()) as IBackendTierList);
+    });
+
+export const updateTierListFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IUpdateTierListInput) => data)
+    .handler(async ({ data }): Promise<ITierListSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}`, {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify({
+                name: data.name,
+                description: data.description ?? null,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapTierListSummary((await res.json()) as IBackendTierList);
+    });
+
+export const deleteTierListFn = createServerFn({ method: "POST" })
+    .inputValidator((slug: string) => slug)
+    .handler(async ({ data: slug }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}`, {
+            method: "DELETE",
+            bearerToken: token,
+        });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });
+
+export const getMyTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListSummary[]> => {
+    const token = getCookie("site_token");
+    if (!token) return [];
+    const res = await backendFetch("/tier-lists/mine", { bearerToken: token });
+    if (res.status === 401) return [];
+    if (!res.ok) throw await parseError(res);
+    const raw = (await res.json()) as IBackendTierList[];
+    return raw.map(mapTierListSummary);
+});
+
+export function myTierListsQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["tier-lists", "mine", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getMyTierListsFn() : Promise.resolve([] as ITierListSummary[])),
+        enabled: authed,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export const createTierFn = createServerFn({ method: "POST" })
+    .inputValidator((data: ICreateTierInput) => data)
+    .handler(async ({ data }): Promise<ITierSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/tiers`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({
+                name: data.name,
+                display_order: data.displayOrder,
+                color: data.color ?? null,
+                description: data.description ?? null,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapTierSummary((await res.json()) as IBackendTierRaw);
+    });
+
+export const updateTierFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IUpdateTierInput) => data)
+    .handler(async ({ data }): Promise<ITierSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/tiers/${encodeURIComponent(data.tierId)}`, {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify({
+                name: data.name,
+                display_order: data.displayOrder,
+                color: data.color ?? null,
+                description: data.description ?? null,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapTierSummary((await res.json()) as IBackendTierRaw);
+    });
+
+export const deleteTierFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IDeleteTierInput) => data)
+    .handler(async ({ data }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/tiers/${encodeURIComponent(data.tierId)}`, { method: "DELETE", bearerToken: token });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });
+
+export const addTierListPlacementFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IAddPlacementInput) => data)
+    .handler(async ({ data }): Promise<ITierPlacementSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({
+                tier_id: data.tierId,
+                operator_id: data.operatorId,
+                sub_order: data.subOrder ?? 0,
+                notes: data.notes ?? null,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapPlacementSummary((await res.json()) as IBackendPlacement);
+    });
+
+export const removeTierListPlacementFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IRemovePlacementInput) => data)
+    .handler(async ({ data }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}`, { method: "DELETE", bearerToken: token });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });
+
+export const moveTierListPlacementFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IMovePlacementInput) => data)
+    .handler(async ({ data }): Promise<ITierPlacementSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}/move`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({
+                new_tier_id: data.newTierId,
+                sub_order: data.subOrder ?? 0,
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapPlacementSummary((await res.json()) as IBackendPlacement);
+    });
+
+export const setTierListFlairFn = createServerFn({ method: "POST" })
+    .inputValidator((data: ISetTierListFlairInput) => data)
+    .handler(async ({ data }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/flair`, {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify({ flair_id: data.flairId }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });
+
+// --- Versions (publish snapshots) -------------------------------------------
+
+export const publishTierListVersionFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IPublishTierListVersionInput) => data)
+    .handler(async ({ data }): Promise<ITierListVersion> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/publish`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ changelog: data.changelog ?? null }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapTierListVersion((await res.json()) as IBackendTierListVersion);
+    });
+
+export const getTierListVersionsFn = createServerFn({ method: "GET" })
+    .inputValidator((slug: string) => slug)
+    .handler(async ({ data: slug }): Promise<ITierListVersion[]> => {
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}/versions`);
+        if (!res.ok) throw await parseError(res);
+        const raw = (await res.json()) as IBackendTierListVersion[];
+        return raw.map(mapTierListVersion);
+    });
+
+export function tierListVersionsQueryOptions(slug: string) {
+    return queryOptions({
+        queryKey: ["tier-lists", "versions", slug],
+        queryFn: () => getTierListVersionsFn({ data: slug }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export const getTierListPermissionsFn = createServerFn({ method: "GET" })
+    .inputValidator((slug: string) => slug)
+    .handler(async ({ data: slug }): Promise<ITierListPermissionEntry[]> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}/permissions`, {
+            bearerToken: token,
+        });
+        if (!res.ok) throw await parseError(res);
+        const raw = (await res.json()) as IBackendTierListPermission[];
+        return raw.map(mapTierListPermission);
+    });
+
+export const grantTierListPermissionFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IGrantTierListPermissionInput) => data)
+    .handler(async ({ data }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions`, {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ user_id: data.userId, permission: data.permission }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });
+
+export const revokeTierListPermissionFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IRevokeTierListPermissionInput) => data)
+    .handler(async ({ data }): Promise<IBackendStatus> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions/${encodeURIComponent(data.userId)}`, { method: "DELETE", bearerToken: token });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IBackendStatus;
+    });

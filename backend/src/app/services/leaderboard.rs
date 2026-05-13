@@ -20,6 +20,8 @@ pub async fn get_leaderboard(
     state: &AppState,
     sort_by: &str,
     server: Option<&str>,
+    movement_interval: Option<&str>,
+    movement_only: bool,
     limit: u32,
     offset: u32,
 ) -> Result<LeaderboardPage, ApiError> {
@@ -27,6 +29,8 @@ pub async fn get_leaderboard(
     let key = CacheKey::Leaderboard {
         sort: sort_by,
         server,
+        movement_interval,
+        movement_only,
         limit,
         offset,
     };
@@ -36,8 +40,16 @@ pub async fn get_leaderboard(
 
     // Run count + data in parallel
     let (entries, total, updated_at) = tokio::try_join!(
-        score::get_leaderboard(&state.db, server, sort_by, limit as i64, offset as i64),
-        score::count_leaderboard(&state.db, server),
+        score::get_leaderboard(
+            &state.db,
+            server,
+            sort_by,
+            movement_interval,
+            movement_only,
+            limit as i64,
+            offset as i64
+        ),
+        score::count_leaderboard(&state.db, server, movement_interval, movement_only),
         score::get_last_updated(&state.db, server),
     )?;
 
