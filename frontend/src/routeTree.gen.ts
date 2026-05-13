@@ -28,6 +28,7 @@ import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
+import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/tier-lists_.my_.$id.edit'
 
 const TierListsRoute = TierListsRouteImport.update({
   id: '/tier-lists',
@@ -123,6 +124,11 @@ const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   path: '/api/og/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
+  id: '/tier-lists_/my_/$id/edit',
+  path: '/tier-lists/my/$id/edit',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/_authed/tier-lists_/my_/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/tier-lists/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
+    | '/tier-lists/my/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/tier-lists/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
+    | '/tier-lists/my/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/_authed/tier-lists_/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
+    | '/_authed/tier-lists_/my_/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -405,17 +417,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/tier-lists_/my_/$id/edit': {
+      id: '/_authed/tier-lists_/my_/$id/edit'
+      path: '/tier-lists/my/$id/edit'
+      fullPath: '/tier-lists/my/$id/edit'
+      preLoaderRoute: typeof AuthedTierListsMyIdEditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedTierListsMyRoute: typeof AuthedTierListsMyRoute
+  AuthedTierListsMyIdEditRoute: typeof AuthedTierListsMyIdEditRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedTierListsMyRoute: AuthedTierListsMyRoute,
+  AuthedTierListsMyIdEditRoute: AuthedTierListsMyIdEditRoute,
 }
 
 const AuthedRouteWithChildren =
