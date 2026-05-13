@@ -37,9 +37,16 @@ export type EditAction =
     | { type: "RESET"; state: IEditState };
 
 const DEFAULT_TIER_COLORS = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 export function nextFallbackTierColor(existing: number): string {
     return DEFAULT_TIER_COLORS[existing % DEFAULT_TIER_COLORS.length] ?? "#8a8a8a";
+}
+
+function sanitizeTierColor(raw: string | null | undefined, index: number): string {
+    const trimmed = raw?.trim() ?? "";
+    const withHash = trimmed.startsWith("#") ? trimmed : trimmed ? `#${trimmed}` : "";
+    return HEX_RE.test(withHash) ? withHash.toLowerCase() : nextFallbackTierColor(index);
 }
 
 export function detailToEditState(detail: ITierListDetail): IEditState {
@@ -51,7 +58,7 @@ export function detailToEditState(detail: ITierListDetail): IEditState {
         return {
             id: t.id,
             name: t.name,
-            color: t.color?.trim() || nextFallbackTierColor(i),
+            color: sanitizeTierColor(t.color, i),
             description: t.description ?? "",
             operatorIds: sortedOps.map((op) => op.id),
         };

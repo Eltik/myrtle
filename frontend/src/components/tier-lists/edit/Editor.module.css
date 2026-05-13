@@ -1,10 +1,11 @@
 .board {
-    --tier-row-min: 80px;
-    --tier-label-w: 96px;
-    --op-size: 52px;
-    --op-gap: 4px;
-    --op-pad-x: 8px;
-    --op-pad-y: 8px;
+    --tier-row-min: 56px;
+    --tier-label-h: 40px;
+    --tier-label-w: 100%;
+    --op-size: 68px;
+    --op-gap: 6px;
+    --op-pad-x: 10px;
+    --op-pad-y: 10px;
     --op-radius: 8px;
     border-radius: 12px;
     overflow: hidden;
@@ -16,9 +17,9 @@
 @media (min-width: 640px) {
     .board {
         --tier-row-min: 90px;
+        --tier-label-h: 100%;
         --tier-label-w: 108px;
         --op-size: 58px;
-        --op-gap: 6px;
         --op-pad-x: 10px;
         --op-pad-y: 10px;
     }
@@ -35,11 +36,21 @@
 .row {
     --row-color: var(--primary);
     display: grid;
-    grid-template-columns: var(--tier-label-w) 1fr auto;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "label actions"
+        "drop drop";
     align-items: stretch;
     min-height: var(--tier-row-min);
     background: linear-gradient(to right, color-mix(in srgb, var(--row-color) 8%, transparent), transparent 70%);
     transition: background 160ms ease;
+}
+
+@media (min-width: 640px) {
+    .row {
+        grid-template-columns: var(--tier-label-w) 1fr auto;
+        grid-template-areas: "label drop actions";
+    }
 }
 
 .row + .row {
@@ -51,12 +62,13 @@
     border: 0;
     margin: 0;
     width: 100%;
-    height: 100%;
-    min-height: var(--tier-row-min);
+    height: var(--tier-label-h, 100%);
+    min-height: var(--tier-label-h, var(--tier-row-min));
+    grid-area: label;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: 8px 14px;
     background: var(--row-color);
     color: var(--tier-fg, white);
     text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.3));
@@ -64,13 +76,19 @@
     overflow: hidden;
     font-family: var(--font-sans);
     font-weight: 800;
-    font-size: clamp(14px, 1.4vw, 18px);
+    font-size: clamp(15px, 1.4vw, 18px);
     line-height: 1.15;
     letter-spacing: -0.005em;
     text-wrap: balance;
     word-break: normal;
     overflow-wrap: break-word;
     transition: filter 160ms ease;
+}
+
+@media (min-width: 640px) {
+    .label {
+        padding: 12px;
+    }
 }
 
 .label:hover,
@@ -84,6 +102,7 @@
 }
 
 .dropArea {
+    grid-area: drop;
     display: flex;
     flex-wrap: wrap;
     gap: var(--op-gap, 6px);
@@ -91,8 +110,14 @@
     align-content: flex-start;
     align-items: flex-start;
     min-width: 0;
-    min-height: var(--tier-row-min);
+    min-height: calc(var(--op-size) + var(--op-pad-y) * 2);
     position: relative;
+}
+
+@media (min-width: 640px) {
+    .dropArea {
+        min-height: var(--tier-row-min);
+    }
 }
 
 .dropArea[data-empty="true"] {
@@ -211,12 +236,22 @@
 }
 
 .rowActions {
+    grid-area: actions;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 4px;
-    padding: 8px;
-    border-left: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
-    background: var(--card);
+    padding: 6px 8px;
+    align-items: center;
+    background: color-mix(in srgb, var(--row-color) 6%, var(--card));
+}
+
+@media (min-width: 640px) {
+    .rowActions {
+        flex-direction: column;
+        padding: 8px;
+        border-left: 1px dashed color-mix(in srgb, var(--border) 80%, transparent);
+        background: var(--card);
+    }
 }
 
 .swatch {

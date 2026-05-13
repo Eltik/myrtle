@@ -55,16 +55,18 @@ pub async fn remove(
     services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
         .await?;
 
-    // Find which tier this operator is in, then remove
+    // Find which tier this operator is in, then remove. Idempotent: if the
+    // placement is already gone (e.g. cascade-deleted by a prior tier delete in
+    // the same save batch), report success rather than NotFound.
     let tiers = queries::get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
         let placements = queries::get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
             queries::remove_placement(&state.db, tier.id, &operator_id).await?;
-            return Ok(Json(serde_json::json!({ "status": "ok" })));
+            break;
         }
     }
-    Err(ApiError::NotFound)
+    Ok(Json(serde_json::json!({ "status": "ok" })))
 }
 
 #[derive(Deserialize)]

@@ -10,6 +10,7 @@ import type { IEditTier } from "./state";
 
 const NAME_MAX = 24;
 const DESC_MAX = 200;
+const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 interface ITierSettingsDialogProps {
     tier: IEditTier | null;
@@ -37,12 +38,13 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete 
     }, [tier]);
 
     const trimmedName = name.trim();
-    const canSave = trimmedName.length > 0 && trimmedName.length <= NAME_MAX;
+    const validColor = HEX_RE.test(color);
+    const canSave = trimmedName.length > 0 && trimmedName.length <= NAME_MAX && validColor;
 
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         if (!canSave) return;
-        onSave({ name: trimmedName, color, description: description.trim() });
+        onSave({ name: trimmedName, color: color.toLowerCase(), description: description.trim() });
     };
 
     return (
