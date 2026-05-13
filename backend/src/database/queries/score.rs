@@ -210,6 +210,14 @@ pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::
     Ok(())
 }
 
+pub async fn latest_leaderboard_snapshot_at(
+    pool: &PgPool,
+) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
+    sqlx::query_scalar("SELECT MAX(taken_at) FROM leaderboard_snapshots")
+        .fetch_one(pool)
+        .await
+}
+
 /// Snapshot the current leaderboard. Returns the new snapshot id.
 pub async fn take_leaderboard_snapshot(pool: &PgPool) -> Result<i64, sqlx::Error> {
     let mut tx = pool.begin().await?;
