@@ -350,63 +350,54 @@ function HeroPanel({ title, description, listType, flairLabel, authorName, autho
     );
 }
 
+const TIER_BADGE_SIZE = 128;
+
 function TierStack({ tiers }: { tiers: ITierListTierPreview[] }) {
     if (tiers.length === 0) return null;
     return (
         <div
             style={{
                 position: "absolute",
-                top: 40,
-                right: -80,
+                top: 56,
+                right: -32,
                 display: "flex",
                 flexDirection: "column",
-                gap: 14,
-                transform: "rotate(-8deg)",
+                gap: 16,
+                transform: "rotate(-4deg)",
                 opacity: 0.96,
+                transformOrigin: "center",
             }}
         >
             {tiers.map((tier, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: stack order is a stable positional slot
-                <TierStackBadge key={i} tier={tier} index={i} />
+                <TierStackBadge key={i} tier={tier} />
             ))}
         </div>
     );
 }
 
-function TierStackBadge({ tier, index: i }: { tier: ITierListTierPreview; index: number }) {
-    const scale = 1 - i * 0.08;
-    const size = Math.round(150 * scale);
-    const offset = i * 50;
+function TierStackBadge({ tier }: { tier: ITierListTierPreview }) {
     const text = readableOn(tier.color);
     return (
         <div
             style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 14,
-                marginRight: offset,
+                justifyContent: "center",
+                width: TIER_BADGE_SIZE,
+                height: TIER_BADGE_SIZE,
+                borderRadius: 22,
+                background: tier.color,
+                color: text,
+                fontFamily: "Inter",
+                fontWeight: 800,
+                fontSize: Math.round(TIER_BADGE_SIZE * 0.55),
+                letterSpacing: "-0.04em",
+                lineHeight: 1,
+                boxShadow: `0 18px 36px rgba(0,0,0,0.35), 0 0 0 1px ${tier.color}55`,
             }}
         >
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    width: size,
-                    height: size,
-                    borderRadius: 22,
-                    background: tier.color,
-                    color: text,
-                    fontFamily: "Inter",
-                    fontWeight: 800,
-                    fontSize: Math.round(size * 0.55),
-                    letterSpacing: "-0.04em",
-                    lineHeight: 1,
-                    boxShadow: `0 18px 36px rgba(0,0,0,0.35), 0 0 0 1px ${tier.color}55`,
-                }}
-            >
-                {tierGlyph(tier.name)}
-            </div>
+            {tierGlyph(tier.name)}
         </div>
     );
 }

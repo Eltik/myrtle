@@ -334,21 +334,23 @@ export interface IPlayerStanding {
     neighbors: ILeaderboardEntry[];
     /** 0.0 = top, 1.0 = bottom. */
     percentile: number;
-    /** Positive = climbed since the 7-day baseline. `null` if no baseline exists. */
-    rank_delta_7d: number | null;
+    /** Positive = climbed since the requested interval's baseline. `null` if no baseline exists. */
+    rank_delta: number | null;
 }
 
 export interface IPlayerStandingInput {
     uid: string;
     server: string;
     window?: number;
+    interval?: LeaderboardMoverInterval;
 }
 
 export const getPlayerStandingFn = createServerFn({ method: "GET" })
     .inputValidator((data: IPlayerStandingInput) => data)
-    .handler(async ({ data: { uid, server, window } }) => {
+    .handler(async ({ data: { uid, server, window, interval } }) => {
         const params = new URLSearchParams({ uid, server });
         if (window !== undefined) params.set("window", String(window));
+        if (interval) params.set("interval", interval);
 
         const res = await backendFetch(`/leaderboard/standing?${params.toString()}`);
         if (!res.ok) {
@@ -360,7 +362,7 @@ export const getPlayerStandingFn = createServerFn({ method: "GET" })
 
 export function playerStandingQueryOptions(input: IPlayerStandingInput) {
     return queryOptions({
-        queryKey: ["user", "leaderboard", "standing", input.uid, input.server, input.window ?? null],
+        queryKey: ["user", "leaderboard", "standing", input.uid, input.server, input.window ?? null, input.interval ?? null],
         queryFn: () => getPlayerStandingFn({ data: input }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
