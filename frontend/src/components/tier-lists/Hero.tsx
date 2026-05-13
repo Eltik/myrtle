@@ -26,7 +26,11 @@ export function Hero({ total, canCreate }: IHeroProps) {
                 </div>
 
                 {canCreate ? (
-                    <Link to="/" className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-primary px-3.5 py-2 font-sans text-sm font-medium leading-none text-primary-foreground no-underline shadow-xs transition-shadow hover:shadow-md">
+                    <Link
+                        to="/tier-lists/my"
+                        search={{ sort: "recent", type: "all", view: "grid", q: "" }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-primary px-3.5 py-2 font-sans text-sm font-medium leading-none text-primary-foreground no-underline shadow-xs transition-shadow hover:shadow-md"
+                    >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />

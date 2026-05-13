@@ -103,7 +103,7 @@ export function Randomizer(): React.ReactElement {
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
 
-    /** Full operator entities (skills, modules, etc) for the available pool — fed into challenge filters. */
+    /** Full operator entities (skills, modules, etc) for the available pool - fed into challenge filters. */
     const availableOperatorsFull = React.useMemo(() => {
         const allowed = new Set(availableOperators.map((op) => op.id));
         return operatorsStatic.filter((op) => op.id !== null && allowed.has(op.id));

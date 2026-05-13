@@ -8,7 +8,7 @@ import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
 
 interface IRosterPickerProps {
-    /** Complete operator list — needed so "select all visible" doesn't drop hidden operators from the explicit set. */
+    /** Complete operator list - needed so "select all visible" doesn't drop hidden operators from the explicit set. */
     allOperators: IRandomizerOperator[];
     /** Operators that pass the operator-tab filters (class / rarity / hide unplayable). */
     visibleOperators: IRandomizerOperator[];

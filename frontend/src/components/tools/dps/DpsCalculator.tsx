@@ -63,7 +63,7 @@ export function DpsCalculator(): React.ReactElement {
         const enemyDesc = `DEF ${state.enemy.defense} · RES ${state.enemy.res}% · ${state.enemy.targets} target${state.enemy.targets === 1 ? "" : "s"}`;
         const yMetricLabel = state.yMetric === "skill_dps" ? "Skill DPS" : state.yMetric === "average_dps" ? "Average DPS" : "Total Damage";
         const xMetricLabel = state.xAxis === "defense" ? "Enemy DEF" : "Enemy RES";
-        const title = `${yMetricLabel} vs ${xMetricLabel} — ${enemyDesc}`;
+        const title = `${yMetricLabel} vs ${xMetricLabel} - ${enemyDesc}`;
 
         const snapshotEntries = visibleInstances
             .map((inst, idx) => {
@@ -90,7 +90,7 @@ export function DpsCalculator(): React.ReactElement {
     }, [state.xAxis, state.yMetric, state.instances, state.enemy, snapshots]);
 
     // After hydrating from localStorage, swap each instance's `op` reference
-    // for the latest entry from the engine — covers cases where the engine
+    // for the latest entry from the engine - covers cases where the engine
     // adds modules / conditionals to an operator since the user's last visit.
     const { data: latestOps } = useQuery(dpsOperatorsQueryOptions());
     React.useEffect(() => {
@@ -129,7 +129,7 @@ export function DpsCalculator(): React.ReactElement {
                                         <span className="font-medium text-foreground">Skill DPS</span> is damage per second while the skill is active.
                                     </li>
                                     <li>
-                                        <span className="font-medium text-foreground">Average DPS</span> averages skill uptime against SP recharge — the long-run sustainable rate.
+                                        <span className="font-medium text-foreground">Average DPS</span> averages skill uptime against SP recharge - the long-run sustainable rate.
                                     </li>
                                     <li>
                                         <span className="font-medium text-foreground">Total Damage</span> is skill DPS × duration (or just skill DPS for passive skills).
@@ -276,7 +276,7 @@ export function DpsCalculator(): React.ReactElement {
  * recharts uses the `recharts-surface` class for both the main chart canvas
  * AND the small SVG icons inside the default Legend. Picking the first match
  * by selector grabs a 14×14 legend dot, so we filter to the largest SVG by
- * pixel area — that's reliably the chart canvas.
+ * pixel area - that's reliably the chart canvas.
  */
 function findChartSvg(container: HTMLDivElement | null): SVGSVGElement | null {
     if (!container) return null;

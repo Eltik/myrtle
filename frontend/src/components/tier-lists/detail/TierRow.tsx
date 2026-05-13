@@ -52,7 +52,7 @@ export function TierRow({ tier, index }: ITierRowProps) {
             <HoverCard>
                 <HoverCardTrigger
                     render={
-                        <button type="button" onClick={openDialog} className={styles.tierLabel} id={labelledById} data-size={tierLabelSize(tier.name)} aria-label={`Tier ${tier.name}${hasDescription ? ` — ${tier.description}` : ""} — view details`}>
+                        <button type="button" onClick={openDialog} className={styles.tierLabel} id={labelledById} data-size={tierLabelSize(tier.name)} aria-label={`Tier ${tier.name}${hasDescription ? ` - ${tier.description}` : ""} - view details`}>
                             <span className={styles.tierLabelGlyph}>{tier.name}</span>
                         </button>
                     }

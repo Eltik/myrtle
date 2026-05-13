@@ -31,7 +31,7 @@ export function PickTierDialog({ operator, currentTierId, tiers, onClose, onPick
                             <span className="font-sans">Place {operator?.name ?? ""}</span>
                         </span>
                     </DialogTitle>
-                    <DialogDescription>Pick a tier — or remove from the list. You can also drag operators directly onto a tier.</DialogDescription>
+                    <DialogDescription>Pick a tier - or remove from the list. You can also drag operators directly onto a tier.</DialogDescription>
                 </DialogHeader>
 
                 <div className="flex flex-col gap-1.5 px-6 pb-2">

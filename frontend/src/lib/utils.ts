@@ -453,9 +453,9 @@ export function capitalize(s: string): string {
 export const DEFAULT_AVATAR_ID = "char_002_amiya";
 
 export function formatRelative(iso: string | null | undefined): string {
-    if (!iso) return "—";
+    if (!iso) return "-";
     const then = new Date(iso).getTime();
-    if (Number.isNaN(then)) return "—";
+    if (Number.isNaN(then)) return "-";
     const diffMs = Date.now() - then;
     if (diffMs < 60_000) return "just now";
     const mins = Math.floor(diffMs / 60_000);

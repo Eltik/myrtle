@@ -37,7 +37,7 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
                     // biome-ignore lint/suspicious/noArrayIndexKey: squad allows duplicate operators, so index is part of the slot identity
                     <OperatorTile key={`${op.id}-${idx}`} op={op} index={idx} />
                 ))}
-                {filled === 0 && <p className="col-span-full font-mono text-sm text-muted-foreground">No matching operators — relax your filters.</p>}
+                {filled === 0 && <p className="col-span-full font-mono text-sm text-muted-foreground">No matching operators - relax your filters.</p>}
             </div>
         </SlabFrame>
     );

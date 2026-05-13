@@ -60,7 +60,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
     const handleShare = async () => {
         if (typeof window === "undefined") return;
         const url = `${window.location.origin}/tier-lists/${detail.slug}`;
-        const shareData = { title: detail.title, text: detail.description || `${detail.title} — tier list on myrtle.moe`, url };
+        const shareData = { title: detail.title, text: detail.description || `${detail.title} - tier list on myrtle.moe`, url };
 
         if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
             try {

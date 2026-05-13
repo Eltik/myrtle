@@ -28,7 +28,7 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
             draggable={!disabled}
             data-dragging={isDragging || undefined}
             data-disabled={disabled || undefined}
-            aria-label={`${operator.name} (${operator.rarity}★)${placed ? " — already placed" : ""}`}
+            aria-label={`${operator.name} (${operator.rarity}★)${placed ? " - already placed" : ""}`}
             title={title ?? `${operator.name} (${operator.rarity}★)`}
             onClick={() => !disabled && onActivate?.(operator)}
             onDragStart={(e) => {

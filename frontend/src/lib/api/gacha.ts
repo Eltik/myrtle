@@ -210,7 +210,7 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
     const id = item.poolId ?? "";
     if (id.startsWith("LIMITED_")) return "limited";
     if (id.startsWith("LINKAGE_")) return "linkage";
-    // FESCLASSIC_ is the festival/anniversary kernel banner — same pool as CLASSIC_/BOOT_.
+    // FESCLASSIC_ is the festival/anniversary kernel banner - same pool as CLASSIC_/BOOT_.
     if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_") || id.startsWith("BOOT_")) return "special";
     if (id.startsWith("SINGLE_") || id.startsWith("NORM_")) return "regular";
 
