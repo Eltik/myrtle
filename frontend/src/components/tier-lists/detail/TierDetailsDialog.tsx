@@ -3,10 +3,10 @@ import { ArrowUpRight, MessageSquareText } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
-import { formatProfession, formatSubProfession, RARITY_LABELS } from "#/lib/utils";
+import { formatProfession, formatRelative, formatSubProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
-import { computeTierStats, formatRelative } from "./tierStats";
+import { computeTierStats } from "./tierStats";
 
 interface ITierDetailsDialogProps {
     tier: ITierEntryFull;

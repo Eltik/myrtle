@@ -1,8 +1,6 @@
 import type { ITierEntryFull, ITierOperator } from "#/lib/api/tier-lists";
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 
-export { formatRelative } from "#/lib/utils";
-
 export interface ITierStats {
     total: number;
     rarity: { rarity: OperatorRarity; count: number }[];

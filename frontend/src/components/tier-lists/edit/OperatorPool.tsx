@@ -15,28 +15,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/comp
 import type { ITierOperator } from "#/lib/api/tier-lists";
 import { formatProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
+import { indexEntryToTierOperator } from "../shared";
 import { hasOperatorDrag, readOperatorDrag } from "./dnd";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
 
 const RARITY_OPTIONS = [6, 5, 4, 3, 2, 1] as const;
 const CLASS_OPTIONS: OperatorProfession[] = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER", "MEDIC", "SUPPORT", "SPECIAL"];
-
-function indexEntryToTierOperator(entry: IOperatorIndexEntry): ITierOperator {
-    return {
-        id: entry.id,
-        name: entry.name,
-        appellation: entry.appellation || null,
-        rarity: entry.rarity,
-        profession: entry.profession,
-        subProfessionId: entry.subProfessionId,
-        position: entry.position,
-        nationId: entry.nationId || null,
-        subOrder: 0,
-        notes: null,
-        updatedAt: new Date().toISOString(),
-    };
-}
 
 interface IOperatorPoolProps {
     operators: IOperatorIndexEntry[];

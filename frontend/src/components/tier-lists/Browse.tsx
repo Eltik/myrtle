@@ -10,46 +10,13 @@ import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
 import { Hero } from "./Hero";
 import { OfficialRail } from "./OfficialRail";
+import { matchesBrowseQuery, sortBrowseItems } from "./shared";
 import { TrendingStrip } from "./TrendingStrip";
 
 const PAGE_INCREMENT = 24;
 const INITIAL_PAGE_SIZE = 24;
 const TRENDING_LIMIT = 3;
 const OFFICIAL_RAIL_LIMIT = 8;
-
-function sortLists(lists: ITierListBrowseItem[], sort: TierListSort): ITierListBrowseItem[] {
-    const arr = [...lists];
-    switch (sort) {
-        case "trending":
-            return arr.sort((a, b) => {
-                if (a.isTrending !== b.isTrending) return a.isTrending ? -1 : 1;
-                if (a.trendingScore !== b.trendingScore) return b.trendingScore - a.trendingScore;
-                return b.views24h - a.views24h;
-            });
-        case "recent":
-            return arr.sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-        case "newest":
-            return arr.sort((a, b) => b.createdAtMs - a.createdAtMs);
-        case "views":
-            return arr.sort((a, b) => b.views - a.views);
-        case "favorites":
-            return arr.sort((a, b) => b.favorites - a.favorites);
-        case "shares":
-            return arr.sort((a, b) => b.shares - a.shares);
-        default:
-            return arr;
-    }
-}
-
-function matchesQuery(list: ITierListBrowseItem, q: string): boolean {
-    if (!q) return true;
-    const needle = q.toLowerCase();
-    if (list.title.toLowerCase().includes(needle)) return true;
-    if (list.description.toLowerCase().includes(needle)) return true;
-    if (list.author.name.toLowerCase().includes(needle)) return true;
-    if (list.flairLabel?.toLowerCase().includes(needle)) return true;
-    return false;
-}
 
 export function Browse() {
     const queryClient = useQueryClient();
@@ -97,7 +64,7 @@ export function Browse() {
 
     const officialFeatured = useMemo(
         () =>
-            sortLists(
+            sortBrowseItems(
                 allLists.filter((l) => l.listType === "official"),
                 "trending",
             ).slice(0, OFFICIAL_RAIL_LIMIT),
@@ -106,13 +73,13 @@ export function Browse() {
 
     const trendingExplicit = useMemo(
         () =>
-            sortLists(
+            sortBrowseItems(
                 allLists.filter((l) => l.isTrending),
                 "trending",
             ).slice(0, TRENDING_LIMIT),
         [allLists],
     );
-    const trendingFallback = useMemo(() => sortLists(allLists, "trending").slice(0, TRENDING_LIMIT), [allLists]);
+    const trendingFallback = useMemo(() => sortBrowseItems(allLists, "trending").slice(0, TRENDING_LIMIT), [allLists]);
     const trendingTop = trendingExplicit.length > 0 ? trendingExplicit : trendingFallback;
     const isTrendingMode = trendingExplicit.length > 0;
 
@@ -120,12 +87,12 @@ export function Browse() {
         return allLists.filter((list) => {
             if (search.type !== "all" && list.listType !== search.type) return false;
             if (search.flair.length > 0 && (!list.flairCode || !search.flair.includes(list.flairCode))) return false;
-            if (!matchesQuery(list, debouncedQuery)) return false;
+            if (!matchesBrowseQuery(list, debouncedQuery)) return false;
             return true;
         });
     }, [allLists, search.type, search.flair, debouncedQuery]);
 
-    const sorted = useMemo(() => sortLists(filtered, search.sort), [filtered, search.sort]);
+    const sorted = useMemo(() => sortBrowseItems(filtered, search.sort), [filtered, search.sort]);
     const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
     const hasMore = sorted.length > visibleCount;
 

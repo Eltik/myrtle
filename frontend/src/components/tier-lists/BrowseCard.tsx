@@ -1,14 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import type { IOperator } from "#/components/home/impl/data";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
-import { FALLBACK_TIER_COLORS, formatNumberCompact, getAvatarById } from "#/lib/utils";
+import { formatNumberCompact, getAvatarById } from "#/lib/utils";
 import styles from "./BrowseCard.module.css";
-
-const MAX_THUMB_TIERS = 5;
-const OPS_PER_ROW_BY_COUNT: Record<number, number> = { 1: 4, 2: 6, 3: 7 };
-const DEFAULT_OPS_PER_ROW = 9;
+import { buildThumbRows, MAX_THUMB_TIERS } from "./shared";
 
 type Size = "default" | "trending";
 
@@ -19,26 +15,8 @@ interface IBrowseCardProps {
     onOpen?: (slug: string) => void;
 }
 
-interface IThumbRow {
-    name: string;
-    color: string;
-    visible: IOperator[];
-    overflow: number;
-}
-
-function buildThumb(tl: ITierListBrowseItem): IThumbRow[] {
-    const slice = tl.tiers.slice(0, MAX_THUMB_TIERS);
-    const opsPerRow = OPS_PER_ROW_BY_COUNT[slice.length] ?? DEFAULT_OPS_PER_ROW;
-    return slice.map((t, idx): IThumbRow => {
-        const color = t.color ?? FALLBACK_TIER_COLORS[idx % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
-        const visible = t.operators.slice(0, opsPerRow);
-        const overflow = Math.max(0, t.operators.length - visible.length);
-        return { name: t.name, color, visible, overflow };
-    });
-}
-
 export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrowseCardProps) {
-    const rows = buildThumb(tl);
+    const rows = buildThumbRows(tl);
     const isOfficial = tl.listType === "official";
     const trending = size === "trending";
     const hasOps = rows.some((r) => r.visible.length > 0);

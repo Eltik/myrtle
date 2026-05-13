@@ -1,15 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
-import type { IOperator } from "#/components/home/impl/data";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
-import { FALLBACK_TIER_COLORS, formatNumberCompact } from "#/lib/utils";
+import { formatNumberCompact } from "#/lib/utils";
+import { buildThumbRows, MAX_THUMB_TIERS } from "../shared";
 import styles from "./MyListCard.module.css";
-
-const MAX_THUMB_TIERS = 5;
-const OPS_PER_ROW_BY_COUNT: Record<number, number> = { 1: 4, 2: 6, 3: 7 };
-const DEFAULT_OPS_PER_ROW = 9;
 
 interface IMyListCardProps {
     tl: ITierListBrowseItem;
@@ -18,26 +14,8 @@ interface IMyListCardProps {
     onCopyLink: (slug: string) => void;
 }
 
-interface IThumbRow {
-    name: string;
-    color: string;
-    visible: IOperator[];
-    overflow: number;
-}
-
-function buildThumb(tl: ITierListBrowseItem): IThumbRow[] {
-    const slice = tl.tiers.slice(0, MAX_THUMB_TIERS);
-    const opsPerRow = OPS_PER_ROW_BY_COUNT[slice.length] ?? DEFAULT_OPS_PER_ROW;
-    return slice.map((t, idx): IThumbRow => {
-        const color = t.color ?? FALLBACK_TIER_COLORS[idx % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
-        const visible = t.operators.slice(0, opsPerRow);
-        const overflow = Math.max(0, t.operators.length - visible.length);
-        return { name: t.name, color, visible, overflow };
-    });
-}
-
 export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProps) {
-    const rows = buildThumb(tl);
+    const rows = buildThumbRows(tl);
     const hasOps = rows.some((r) => r.visible.length > 0);
     const isEmpty = !hasOps;
     const isOfficial = tl.listType === "official";
