@@ -59,6 +59,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Roll a random stage, squad, and modifier for your next run.",
         activeTag: "Tools",
     },
+    "tier-lists": {
+        title: "Tier Lists",
+        subtitle: "Browse official and community tier lists.",
+        activeTag: "Home",
+    },
 } as const satisfies Record<string, IDefaultOgData>;
 
 export type DefaultOgPresetSlug = keyof typeof DEFAULT_OG_PRESETS;

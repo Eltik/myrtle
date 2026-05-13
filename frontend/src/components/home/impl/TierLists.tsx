@@ -86,6 +86,7 @@ export default function TierLists() {
 
             <Link
                 to="/tier-lists"
+                search={{ type: "all", sort: "trending", q: "", flair: [] }}
                 className="mt-4.5 inline-flex w-max cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-transparent px-3.5 py-2.5 font-sans text-[12.5px] font-medium leading-none text-muted-foreground no-underline transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
             >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />

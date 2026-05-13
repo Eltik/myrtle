@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack" | "search" | "trophy" | "users" | "history";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack" | "search" | "trophy" | "users" | "history" | "tiers";
 
 export interface ITool {
     id: string;

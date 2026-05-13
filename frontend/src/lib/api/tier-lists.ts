@@ -73,6 +73,7 @@ interface BackendTierListDetail extends BackendTierList {
 }
 
 const HOME_TIER_LIST_LIMIT = 6;
+const BROWSE_TIER_LIST_LIMIT = 200;
 
 const PROFESSION_TO_ROLE: Record<OperatorProfession, string> = {
     PIONEER: "Vanguard",
@@ -148,6 +149,7 @@ function mapTiers(tiers: BackendTier[], opById: Record<string, IOperator>): ITie
         .sort((a, b) => a.display_order - b.display_order)
         .map((tier) => ({
             name: tier.name,
+            color: tier.color,
             operators: [...tier.placements]
                 .sort((a, b) => a.sub_order - b.sub_order)
                 .map((p) => opById[p.operator_id])
@@ -212,6 +214,79 @@ export function homeTierListsQueryOptions() {
     return queryOptions({
         queryKey: ["tier-lists", "home"],
         queryFn: () => getHomeTierListsFn(),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
+}
+
+export type TierListType = "official" | "community";
+
+export interface ITierListBrowseItem extends ITierList {
+    listType: TierListType;
+    description: string;
+    createdAtMs: number;
+    updatedAtMs: number;
+    flairCode: string | null;
+    flairLabel: string | null;
+    flairColor: string | null;
+    favorites: number;
+    shares: number;
+    views24h: number;
+    views7d: number;
+    trendingScore: number;
+    isTrending: boolean;
+}
+
+function mapBrowseItem(detail: BackendTierListDetail, index: number, opById: Record<string, IOperator>): ITierListBrowseItem {
+    const base = mapDetail(detail, index, opById);
+    const listType: TierListType = detail.list_type === "official" ? "official" : "community";
+    return {
+        ...base,
+        listType,
+        description: detail.description ?? "",
+        createdAtMs: Date.parse(detail.created_at) || 0,
+        updatedAtMs: Date.parse(detail.updated_at) || 0,
+        flairCode: detail.flair?.code ?? null,
+        flairLabel: detail.flair?.label ?? null,
+        flairColor: detail.flair?.color ?? null,
+        favorites: detail.stats?.favorite_count ?? 0,
+        shares: detail.stats?.share_count ?? 0,
+        views24h: detail.stats?.views_last_24h ?? 0,
+        views7d: detail.stats?.views_last_7d ?? 0,
+        trendingScore: detail.stats?.trending_score ?? 0,
+        isTrending: detail.stats?.is_trending ?? false,
+    };
+}
+
+export const getBrowseTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
+    const [listRes, opsRes] = await Promise.all([backendFetch("/tier-lists"), backendFetch("/operators/index")]);
+    if (!listRes.ok) throw new Error(`Failed to load tier lists: ${listRes.status}`);
+    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
+
+    const lists = (await listRes.json()) as BackendTierList[];
+    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
+    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+
+    const subset = lists.slice(0, BROWSE_TIER_LIST_LIMIT);
+    const settled = await Promise.allSettled(
+        subset.map(async (tl) => {
+            const res = await backendFetch(`/tier-lists/${tl.slug}`);
+            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
+            return (await res.json()) as BackendTierListDetail;
+        }),
+    );
+
+    const details: BackendTierListDetail[] = [];
+    for (const result of settled) {
+        if (result.status === "fulfilled") details.push(result.value);
+    }
+    return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+});
+
+export function browseTierListsQueryOptions() {
+    return queryOptions({
+        queryKey: ["tier-lists", "browse"],
+        queryFn: () => getBrowseTierListsFn(),
         staleTime: 5 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
     });

@@ -9,6 +9,7 @@ export interface IOperator {
 export interface ITierEntry {
     name: string;
     operators: IOperator[];
+    color?: string | null;
 }
 
 export interface ITierList {
