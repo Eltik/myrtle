@@ -45,7 +45,7 @@ export function MyHero({ total, communityCount, communityQuota, officialCount, t
                                 Manage, refine, and share <span className="font-mono tabular-nums text-foreground">{formatNumber(total)}</span> {total === 1 ? "list" : "lists"} you've built. Edits sync to anyone who visits.
                             </>
                         ) : (
-                            <>You haven't created any tier lists yet. Spin up your first one — drafts publish instantly to your share link.</>
+                            <>You haven't created any tier lists yet. Spin up your first one - drafts publish instantly to your share link.</>
                         )}
                     </p>
                 </div>

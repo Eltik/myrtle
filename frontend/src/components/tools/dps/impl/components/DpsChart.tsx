@@ -14,7 +14,7 @@ interface IDpsChartProps {
     snapshotX: number;
     isLoading: boolean;
     onLegendClick: (uid: string) => void;
-    /** The chart's outer container — exposed so the parent can locate the rendered SVG for export. */
+    /** The chart's outer container - exposed so the parent can locate the rendered SVG for export. */
     containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -126,7 +126,7 @@ function DpsTooltip({ instances, xAxis, yMetric, ...rest }: ITooltipPayload & { 
                                 <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ backgroundColor: inst.color }} />
                                 <span className="font-medium">{inst.op.name}</span>
                             </span>
-                            <span className="font-mono tabular-nums">{p.value == null ? "—" : formatLargeNumber(p.value)}</span>
+                            <span className="font-mono tabular-nums">{p.value == null ? "-" : formatLargeNumber(p.value)}</span>
                         </div>
                     );
                 })}

@@ -64,7 +64,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                     <IconButton label={visible ? "Hide curve" : "Show curve"} onClick={onToggleVisibility}>
                         {visible ? <Eye /> : <EyeOff />}
                     </IconButton>
-                    {/* Reorder controls take space, so hide on the smallest screens — duplicate/remove still let users prune */}
+                    {/* Reorder controls take space, so hide on the smallest screens - duplicate/remove still let users prune */}
                     {!isFirst && (
                         <span className="hidden sm:inline-flex">
                             <IconButton label="Move up" onClick={onMoveUp}>

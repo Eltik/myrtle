@@ -9,7 +9,7 @@
  * Run manually:    bun run scripts/prerender-og.ts
  * Or postbuild:    add "postbuild": "bun run scripts/prerender-og.ts" to package.json scripts.
  *
- * Safe to run repeatedly — already-cached entries (matching hash) are skipped,
+ * Safe to run repeatedly - already-cached entries (matching hash) are skipped,
  * so this is fast on subsequent runs and only does work for new/changed data.
  */
 import { stat } from "node:fs/promises";

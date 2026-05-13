@@ -7,7 +7,7 @@
  *  - Stage: predicate over IStage; only eligible when the rolled stage matches.
  *
  * The picker handles eligibility (stage match, sufficient pool size for filters)
- * and weighted random selection automatically — adding an entry here is the only
+ * and weighted random selection automatically - adding an entry here is the only
  * step needed.
  */
 

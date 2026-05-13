@@ -12,7 +12,7 @@ export interface IInstanceSnapshot {
 }
 
 /**
- * Per-instance snapshot at the current enemy DEF/RES — powers the KPI panel.
+ * Per-instance snapshot at the current enemy DEF/RES - powers the KPI panel.
  * Cache is keyed by `dpsRequestKey` so editing one instance does not refetch
  * the others.
  */

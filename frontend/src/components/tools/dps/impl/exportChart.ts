@@ -122,7 +122,7 @@ export async function exportSvgAsPng(svg: SVGSVGElement, options: IExportSvgOpti
 
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) {
-        // Fallback path for the rare case where toBlob returns null — convert
+        // Fallback path for the rare case where toBlob returns null - convert
         // the dataURL into a Blob ourselves so the user still gets a download.
         const dataPng = canvas.toDataURL("image/png");
         const fallback = dataURLToBlob(dataPng);

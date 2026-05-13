@@ -43,7 +43,7 @@ export function useDpsState(): IDpsStateHandle {
             const merged = mergeWithDefaults(parsed);
             if (merged) dispatch({ type: "HYDRATE", state: merged });
         } catch {
-            // Malformed stored value — ignore and fall back to the default state.
+            // Malformed stored value - ignore and fall back to the default state.
         }
         hydratedRef.current = true;
         setHydrationToken((t) => t + 1);
@@ -54,7 +54,7 @@ export function useDpsState(): IDpsStateHandle {
         try {
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch {
-            // Storage quota exhausted or other failure — silently ignore.
+            // Storage quota exhausted or other failure - silently ignore.
         }
     }, [state]);
 
@@ -65,7 +65,7 @@ export function useDpsState(): IDpsStateHandle {
  * Validates the shape of a stored state and fills in any missing fields from
  * `INITIAL_STATE`. Returns `null` when the value is unusable (not an object,
  * `instances` not an array, etc.). Tolerant of forward changes in `IDpsState`
- * — new top-level fields fall back to defaults instead of dropping the save.
+ * - new top-level fields fall back to defaults instead of dropping the save.
  */
 function mergeWithDefaults(value: unknown): IDpsState | null {
     if (!value || typeof value !== "object") return null;

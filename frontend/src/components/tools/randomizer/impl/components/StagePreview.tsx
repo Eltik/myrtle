@@ -65,7 +65,7 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
 
     const failed = !resolving && resolved === null;
     const canExpand = resolved !== null;
-    const labelName = stage.name ? `${stage.code} — ${stage.name}` : stage.code;
+    const labelName = stage.name ? `${stage.code} - ${stage.name}` : stage.code;
 
     const thumbnail = (
         <button

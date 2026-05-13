@@ -39,7 +39,7 @@ export function buildSweepPoints(range: ISweepRange): number[] {
 }
 
 export function formatLargeNumber(n: number | null | undefined): string {
-    if (n == null || !Number.isFinite(n)) return "—";
+    if (n == null || !Number.isFinite(n)) return "-";
     const v = Math.abs(n);
     if (v >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
     if (v >= 10_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;

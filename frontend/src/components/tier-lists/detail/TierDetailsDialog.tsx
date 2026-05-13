@@ -69,7 +69,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                 {total > 0 && (
                     <section aria-label="Tier overview" className="grid grid-cols-3 gap-2">
                         <Stat label="Operators" value={String(total)} />
-                        <Stat label="Avg ★" value={stats.averageRarity ? stats.averageRarity.toFixed(1) : "—"} />
+                        <Stat label="Avg ★" value={stats.averageRarity ? stats.averageRarity.toFixed(1) : "-"} />
                         <Stat label="Melee / Ranged" value={`${stats.position.melee} / ${stats.position.ranged}`} />
                     </section>
                 )}

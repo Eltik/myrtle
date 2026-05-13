@@ -38,7 +38,7 @@ export interface IDpsOperatorListEntry {
 }
 
 /**
- * External buffs applied on top of the operator's own stats — matches the
+ * External buffs applied on top of the operator's own stats - matches the
  * backend's `OperatorBuffs`. All fields are optional.
  */
 export interface IDpsCalculateBuffs {
@@ -53,7 +53,7 @@ export interface IDpsCalculateBuffs {
 }
 
 /**
- * DEF/RES shred applied to the enemy — matches `OperatorShred`. The percent
+ * DEF/RES shred applied to the enemy - matches `OperatorShred`. The percent
  * fields are integers (e.g. `def: 40` = -40% DEF), not decimals.
  */
 export interface IDpsCalculateShred {
@@ -81,7 +81,7 @@ export interface IDpsCalculateConditionals {
 }
 
 /**
- * Body for `POST /dps/calculate`. Only `operatorId` is required — every other
+ * Body for `POST /dps/calculate`. Only `operatorId` is required - every other
  * field has a backend-side default that mirrors the Python reference.
  */
 export interface IDpsCalculateRequest {
@@ -178,7 +178,7 @@ export const calculateDpsFn = createServerFn({ method: "POST" })
 
 /**
  * Stable serialisation for use in a react-query key. Recursively sorts keys so
- * `{ a: 1, b: 2 }` and `{ b: 2, a: 1 }` hash identically — and nested objects
+ * `{ a: 1, b: 2 }` and `{ b: 2, a: 1 }` hash identically - and nested objects
  * (conditionals, buffs, shred) are included in full rather than stripped by
  * `JSON.stringify`'s replacer-array filter.
  */
@@ -196,8 +196,8 @@ function stableStringify(value: unknown): string {
 
 /**
  * Cache-keyed variant for parametric DPS calculation. Useful when the same
- * (operator, config) tuple is rendered repeatedly — e.g. plotting a curve
- * across skill levels — and the caller wants react-query deduplication.
+ * (operator, config) tuple is rendered repeatedly - e.g. plotting a curve
+ * across skill levels - and the caller wants react-query deduplication.
  *
  * For one-off "user clicked Recalculate" flows, prefer `useMutation` against
  * {@link calculateDpsFn} directly so retries and loading state are explicit.

@@ -220,7 +220,7 @@ export interface ILeaderboardPage {
 export interface ILeaderboardInput {
     sort?: string;
     server?: string;
-    /** "1 day" | "7 days" | "30 days" — when set, each entry receives `rank_delta`. */
+    /** "1 day" | "7 days" | "30 days" - when set, each entry receives `rank_delta`. */
     movement_interval?: string;
     /** When true (requires `movement_interval`), only users with non-zero movement are returned. */
     movement_only?: boolean;
