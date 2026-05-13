@@ -4,6 +4,7 @@ import { Button } from "#/components/ui/button";
 import type { ITierOperator } from "#/lib/api/tier-lists";
 import { readableTextColor } from "../detail/contrast";
 import { hasOperatorDrag, readOperatorDrag } from "./dnd";
+import { useTierDropIndex } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
 import type { IEditTier } from "./state";
@@ -23,54 +24,56 @@ interface IEditTierRowProps {
 
 export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onActivateOperator }: IEditTierRowProps) {
     const textColor = readableTextColor(tier.color);
-    const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+    const touchDropIndex = useTierDropIndex(tier.id);
+    const [mouseDropIndex, setMouseDropIndex] = useState<number | null>(null);
     const dropAreaRef = useRef<HTMLUListElement | null>(null);
 
     const lastIndex = tier.operatorIds.length;
+    const dropIndex = touchDropIndex ?? mouseDropIndex;
 
     const handleOver = useCallback(
         (e: React.DragEvent) => {
             if (!hasOperatorDrag(e)) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
-            if (dropTargetIndex === null) setDropTargetIndex(lastIndex);
+            if (mouseDropIndex === null) setMouseDropIndex(lastIndex);
         },
-        [dropTargetIndex, lastIndex],
+        [mouseDropIndex, lastIndex],
     );
 
     const handleLeave = useCallback((e: React.DragEvent) => {
         const related = e.relatedTarget as Node | null;
         if (related && dropAreaRef.current?.contains(related)) return;
-        setDropTargetIndex(null);
+        setMouseDropIndex(null);
     }, []);
 
     const handleDrop = useCallback(
         (e: React.DragEvent) => {
             const payload = readOperatorDrag(e);
-            setDropTargetIndex(null);
+            setMouseDropIndex(null);
             if (!payload) return;
             e.preventDefault();
-            const index = dropTargetIndex ?? lastIndex;
+            const index = mouseDropIndex ?? lastIndex;
             onPlace(payload.operatorId, tier.id, index);
         },
-        [dropTargetIndex, lastIndex, onPlace, tier.id],
+        [mouseDropIndex, lastIndex, onPlace, tier.id],
     );
 
     const handleChipDragOver = useCallback(
         (operatorId: string, side: "before" | "after") => {
             const idx = tier.operatorIds.indexOf(operatorId);
             if (idx < 0) {
-                setDropTargetIndex(lastIndex);
+                setMouseDropIndex(lastIndex);
                 return;
             }
-            setDropTargetIndex(side === "before" ? idx : idx + 1);
+            setMouseDropIndex(side === "before" ? idx : idx + 1);
         },
         [lastIndex, tier.operatorIds],
     );
 
     const isEmpty = operators.length === 0;
     const labelledById = `tier-edit-${tier.id}-label`;
-    const showMarker = (i: number) => dropTargetIndex === i;
+    const showMarker = (i: number) => dropIndex === i;
 
     return (
         <section
@@ -86,7 +89,7 @@ export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp,
                 <span>{tier.name}</span>
             </button>
 
-            <ul ref={dropAreaRef} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropTargetIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={`Operators in tier ${tier.name}`}>
+            <ul ref={dropAreaRef} data-tl-drop-tier={tier.id} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={`Operators in tier ${tier.name}`}>
                 {operators.map((op, i) => {
                     if (!op) return null;
                     return (
