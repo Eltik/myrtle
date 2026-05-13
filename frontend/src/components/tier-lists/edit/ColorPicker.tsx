@@ -27,6 +27,10 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
         if (HEX_RE.test(withHash)) onChange(withHash.toLowerCase());
     };
 
+    const handleHexBlur = () => {
+        if (!HEX_RE.test(hex)) setHex(value);
+    };
+
     return (
         <div className="flex flex-col gap-3.5">
             <div>
@@ -70,6 +74,7 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
                             setHex(next);
                             commitHex(next);
                         }}
+                        onBlur={handleHexBlur}
                         placeholder="#dc4d56"
                         aria-invalid={!HEX_RE.test(hex) || undefined}
                         size="sm"

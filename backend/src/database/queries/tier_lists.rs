@@ -142,9 +142,7 @@ pub async fn create_tier(
 ) -> Result<Tier, sqlx::Error> {
     sqlx::query_as::<_, Tier>(
         "INSERT INTO tiers (tier_list_id, name, display_order, color, description)
-          VALUES ($1, $2,
-                  COALESCE((SELECT MAX(display_order)+1 FROM tiers WHERE tier_list_id=$1), 0),
-                  $3, $4)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING *",
     )
     .bind(tier_list_id)
