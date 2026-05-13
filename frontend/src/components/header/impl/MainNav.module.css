@@ -8,6 +8,7 @@
     font-size: 13px;
     font-weight: 500;
     line-height: 1;
+    white-space: nowrap;
     text-decoration: none;
     color: var(--muted-foreground);
     cursor: pointer;
