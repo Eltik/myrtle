@@ -110,11 +110,11 @@ export function MobileNav({ items }: IMobileNavProps) {
                                             <span className="text-xs text-muted-foreground">Level {user.level}</span>
                                         </div>
                                     </div>
-                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/my/tier-lists" />} />}>
+                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} />}>
                                         <LayoutList className="mr-2 h-4 w-4 text-muted-foreground" />
                                         My Tier Lists
                                     </DrawerMenuItem>
-                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/my/settings" />} />}>
+                                    <DrawerMenuItem render={<DrawerClose render={<Link to="/settings" />} />}>
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
                                         Settings
                                     </DrawerMenuItem>
