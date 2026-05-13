@@ -40,7 +40,7 @@ export function Leaderboard() {
 
     const pageQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: PAGE_SIZE, offset }));
     const topQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: 3, offset: 0 }));
-    const moversQuery = useQuery(leaderboardMoversQueryOptions({ direction: "up", interval: "7 days", limit: 3, server: apiServer }));
+    const moversQuery = useQuery(leaderboardMoversQueryOptions({ direction: "up", interval: "1 day", limit: 3, server: apiServer }));
     // const distributionQuery = useQuery(leaderboardDistributionQueryOptions({ top: 250 })); // hidden: server share
 
     const standingQuery = useQuery({

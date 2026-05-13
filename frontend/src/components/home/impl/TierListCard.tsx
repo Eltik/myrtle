@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
@@ -20,27 +21,17 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
     const extraGhost = Math.max(0, restTiers.length - MAX_GHOST_TIER_NAMES);
     const ghostLabel = ghostNames.length > 0 ? `+ ${ghostNames.join(", ")}${extraGhost > 0 ? ` +${extraGhost}` : ""} ${restTiers.length > 1 ? "tiers" : "tier"}` : null;
 
-    const open = () => onOpen?.(tl.slug);
-
     return (
-        <article
-            className={`${styles.tlCard} group`}
-            style={tlAccentVars(tl.accent)}
-            onClick={open}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    open();
-                }
-            }}
-        >
+        <Link to="/tier-lists/$id" params={{ id: tl.slug }} aria-labelledby={`home-tl-${tl.id}-title`} className={`${styles.tlCard} group`} style={tlAccentVars(tl.accent)} onClick={() => onOpen?.(tl.slug)}>
             <div className="flex flex-col gap-1.5 px-4 pt-3.5 pb-2 pl-4.5">
                 <div className="inline-flex w-max max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.75 pl-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-wider text-muted-foreground">
                     <span className="h-1.5 w-1.5 rounded-full bg-(--tl-a,var(--primary)) shadow-[0_0_6px_var(--tl-a,var(--primary))]" aria-hidden="true" />
                     <span>{tl.tag}</span>
                     {tl.hot && <span className="ml-0.5 font-semibold normal-case tracking-tight text-primary">· trending</span>}
                 </div>
-                <h3 className="m-0 line-clamp-2 font-sans text-base font-semibold leading-snug tracking-tight text-foreground">{tl.title}</h3>
+                <h3 id={`home-tl-${tl.id}-title`} className="m-0 line-clamp-2 font-sans text-base font-semibold leading-snug tracking-tight text-foreground">
+                    {tl.title}
+                </h3>
             </div>
 
             <div className="flex flex-col gap-2.5 px-4 pt-0.5 pb-3 pl-4.5">
@@ -115,6 +106,6 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                     </span>
                 </div>
             </div>
-        </article>
+        </Link>
     );
 }
