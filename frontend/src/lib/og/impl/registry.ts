@@ -10,6 +10,7 @@ import { ogHash } from "./hash";
 import { DEFAULT_OG_PRESETS } from "./presets";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
+import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
 
 export interface IOgHandler<TData> {
@@ -295,6 +296,150 @@ const userHandler: IOgHandler<IUserOgData> = {
     template: (data) => UserTemplate(data),
 };
 
+const TIER_LIST_HASH_VERSION = "v3";
+
+const HEX_COLOR_RE = /^#([0-9a-fA-F]{6})$/;
+const FALLBACK_TIER_HEX = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
+
+function toHex(color: string | null | undefined, fallback: string): string {
+    if (!color) return fallback;
+    const trimmed = color.trim();
+    if (HEX_COLOR_RE.test(trimmed)) return trimmed;
+    return fallback;
+}
+
+interface IBackendTierListAuthor {
+    id: string;
+    uid: string;
+    nickname: string | null;
+    avatar_id: string | null;
+}
+
+interface IBackendTierListFlair {
+    id: number;
+    code: string;
+    label: string;
+    color: string | null;
+    display_order: number;
+    is_active: boolean;
+}
+
+interface IBackendTierListStats {
+    view_count: number;
+    favorite_count: number;
+    is_trending: boolean;
+}
+
+interface IBackendTierListPlacement {
+    operator_id: string;
+    sub_order: number;
+}
+
+interface IBackendTierListTier {
+    id: string;
+    name: string;
+    display_order: number;
+    color: string | null;
+    placements: IBackendTierListPlacement[];
+}
+
+interface IBackendTierListResponse {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    list_type: string;
+    updated_at: string;
+    flair: IBackendTierListFlair | null;
+    author: IBackendTierListAuthor | null;
+    stats: IBackendTierListStats | null;
+    tiers: IBackendTierListTier[];
+}
+
+const tierListHandler: IOgHandler<ITierListOgData> = {
+    fetch: async (slug) => {
+        const enc = encodeURIComponent(slug);
+        const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
+        if (!detailRes.ok) return null;
+        const detail = (await detailRes.json()) as IBackendTierListResponse;
+        const opIndex = opsRes.ok ? ((await opsRes.json()) as IOperatorIndexEntry[]) : [];
+        const opById = new Map<string, IOperatorIndexEntry>(opIndex.map((op) => [op.id, op]));
+
+        const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
+
+        const tiers: ITierListTierPreview[] = sortedTiers.slice(0, 4).map((t, i) => {
+            const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
+            const placements = [...t.placements].sort((a, b) => a.sub_order - b.sub_order);
+            const operators: ITierListOperatorPreview[] = placements
+                .slice(0, 5)
+                .map((p): ITierListOperatorPreview | null => {
+                    const op = opById.get(p.operator_id);
+                    if (!op) return null;
+                    return {
+                        id: op.id,
+                        name: op.name,
+                        rarity: op.rarity,
+                        avatarURL: avatarURL(op.id),
+                    };
+                })
+                .filter((x): x is ITierListOperatorPreview => x !== null);
+            return {
+                name: t.name,
+                color: toHex(t.color, fallback),
+                operators,
+                operatorCount: t.placements.length,
+            };
+        });
+
+        const totalOperators = detail.tiers.reduce((sum, t) => sum + t.placements.length, 0);
+        const listType = detail.list_type === "official" ? "official" : "community";
+
+        const updatedDate = new Date(detail.updated_at);
+        const updatedRelative = Number.isNaN(updatedDate.getTime()) ? undefined : updatedDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+        const flairColor = toHex(detail.flair?.color, "");
+
+        return {
+            title: detail.name,
+            slug: detail.slug,
+            description: detail.description ?? undefined,
+            listType,
+            flairLabel: detail.flair?.label,
+            flairColor: flairColor || undefined,
+            authorName: detail.author?.nickname?.trim() || (listType === "official" ? "Myrtle" : "Community"),
+            authorAvatarURL: detail.author?.avatar_id ? avatarURL(detail.author.avatar_id) : undefined,
+            views: detail.stats?.view_count ?? 0,
+            favorites: detail.stats?.favorite_count ?? 0,
+            isTrending: detail.stats?.is_trending ?? false,
+            updatedRelative,
+            totalOperators,
+            tierCount: detail.tiers.length,
+            tiers,
+        };
+    },
+    hash: (data) =>
+        ogHash([
+            "tier-list",
+            TIER_LIST_HASH_VERSION,
+            data.title,
+            data.slug,
+            data.description ?? "",
+            data.listType,
+            data.flairLabel ?? "",
+            data.flairColor ?? "",
+            data.authorName ?? "",
+            data.authorAvatarURL ?? "",
+            data.views ?? 0,
+            data.favorites ?? 0,
+            data.isTrending ? 1 : 0,
+            data.updatedRelative ?? "",
+            data.totalOperators,
+            data.tierCount,
+            data.tiers.map((t) => `${t.name}:${t.color}:${t.operatorCount}:${t.operators.map((o) => o.id).join(",")}`).join("|"),
+        ]),
+    template: (data) => TierListTemplate(data),
+};
+
 const DEFAULT_HASH_VERSION = "v5";
 
 // Canonical id for the site-wide fallback OG image. Slugs registered in
@@ -316,6 +461,7 @@ const defaultHandler: IOgHandler<IDefaultOgData> = {
 export const ogRegistry = {
     operator: operatorHandler,
     user: userHandler,
+    "tier-list": tierListHandler,
     default: defaultHandler,
 };
 
