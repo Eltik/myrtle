@@ -1,0 +1,181 @@
+import { Input } from "#/components/ui/input";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
+import { cn } from "#/lib/utils";
+
+export type TierListType = "all" | "official" | "community";
+
+export type TierListSort = "trending" | "recent" | "newest" | "views" | "favorites" | "shares";
+
+export const SORT_OPTIONS: Array<{ value: TierListSort; label: string; hint: string }> = [
+    { value: "trending", label: "Trending", hint: "Hot in the last 24h" },
+    { value: "recent", label: "Recently updated", hint: "Latest edits first" },
+    { value: "newest", label: "Newest", hint: "Most recently created" },
+    { value: "views", label: "Most viewed", hint: "All-time view count" },
+    { value: "favorites", label: "Most favorited", hint: "All-time favorites" },
+    { value: "shares", label: "Most shared", hint: "All-time shares" },
+];
+
+export interface FlairOption {
+    code: string;
+    label: string;
+    color: string | null;
+}
+
+interface Props {
+    type: TierListType;
+    sort: TierListSort;
+    query: string;
+    selectedFlairs: string[];
+    flairOptions: FlairOption[];
+    resultCount: number;
+    totalCount: number;
+    onTypeChange: (next: TierListType) => void;
+    onSortChange: (next: TierListSort) => void;
+    onQueryChange: (next: string) => void;
+    onFlairToggle: (code: string) => void;
+    onClearFlairs: () => void;
+}
+
+const TYPE_TABS: Array<{ value: TierListType; label: string }> = [
+    { value: "all", label: "All" },
+    { value: "official", label: "Official" },
+    { value: "community", label: "Community" },
+];
+
+export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: Props) {
+    const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
+    const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "trending";
+
+    return (
+        <div className="sticky top-14 z-30 -mx-3 border-y border-border bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
+            <div className="mx-auto w-[min(1080px,100%)] py-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <div role="tablist" aria-label="Tier list type" className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
+                        {TYPE_TABS.map((tab) => {
+                            const active = type === tab.value;
+                            return (
+                                <button
+                                    key={tab.value}
+                                    role="tab"
+                                    type="button"
+                                    aria-selected={active}
+                                    onClick={() => onTypeChange(tab.value)}
+                                    className={cn(
+                                        "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-sans text-xs font-medium leading-none transition-colors",
+                                        active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                                    )}
+                                >
+                                    {tab.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <Menu>
+                        <MenuTrigger
+                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
+                            aria-label={`Sort: ${activeSort?.label}`}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M3 6h18" />
+                                <path d="M7 12h10" />
+                                <path d="M11 18h2" />
+                            </svg>
+                            <span className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">Sort</span>
+                            <span>{activeSort?.label}</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </MenuTrigger>
+                        <MenuPopup align="start" sideOffset={6} className="min-w-56">
+                            {SORT_OPTIONS.map((opt) => (
+                                <MenuItem key={opt.value} onClick={() => onSortChange(opt.value)} className={cn("flex-col items-start gap-0.5 py-1.5", opt.value === sort && "bg-accent/60 text-accent-foreground")}>
+                                    <span className="font-medium">{opt.label}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground">{opt.hint}</span>
+                                </MenuItem>
+                            ))}
+                        </MenuPopup>
+                    </Menu>
+
+                    <div className="relative ml-auto w-full max-w-72 sm:w-72">
+                        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-muted-foreground">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                            </svg>
+                        </span>
+                        <Input type="search" size="sm" value={query} onChange={(e) => onQueryChange((e.target as HTMLInputElement).value)} placeholder="Search lists…" aria-label="Search tier lists" className="pl-7.5" />
+                        {query.length > 0 && (
+                            <button type="button" onClick={() => onQueryChange("")} aria-label="Clear search" className="absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {flairOptions.length > 0 && (
+                    <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                        <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">Flairs</span>
+                        {flairOptions.map((flair) => {
+                            const active = selectedFlairs.includes(flair.code);
+                            const color = flair.color ?? "var(--primary)";
+                            return (
+                                <button
+                                    key={flair.code}
+                                    type="button"
+                                    onClick={() => onFlairToggle(flair.code)}
+                                    aria-pressed={active}
+                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs font-medium leading-none transition-colors")}
+                                    style={
+                                        active
+                                            ? {
+                                                  background: `color-mix(in srgb, ${color} 18%, transparent)`,
+                                                  borderColor: `color-mix(in srgb, ${color} 50%, transparent)`,
+                                                  color,
+                                              }
+                                            : {
+                                                  background: "var(--muted)",
+                                                  borderColor: "var(--border)",
+                                                  color: "var(--muted-foreground)",
+                                              }
+                                    }
+                                >
+                                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden="true" />
+                                    {flair.label}
+                                </button>
+                            );
+                        })}
+                        {selectedFlairs.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={onClearFlairs}
+                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-dashed border-border bg-transparent px-2.5 py-1 font-sans text-xs font-medium leading-none text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                </svg>
+                                Clear
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {hasActiveFilters && (
+                    <p aria-live="polite" className="mt-2 font-mono text-[10.5px] leading-none tracking-wide text-muted-foreground">
+                        <span className="tabular-nums text-foreground">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
+                        {query.length > 0 && (
+                            <>
+                                {" "}
+                                · matching <span className="text-foreground">"{query}"</span>
+                            </>
+                        )}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}

@@ -29,6 +29,7 @@ export default function Header() {
         return [
             { href: "/", label: "Home" },
             { href: "/operators", label: "Operators" },
+            { href: "/tier-lists", label: "Tier Lists" },
             {
                 href: "/user",
                 label: "Players",

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
@@ -26,6 +27,11 @@ import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
 
+const TierListsRoute = TierListsRouteImport.update({
+  id: '/tier-lists',
+  path: '/tier-lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperatorsRoute = OperatorsRouteImport.update({
   id: '/operators',
   path: '/operators',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
+  '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
+  '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
+  '/tier-lists': typeof TierListsRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/operators'
+    | '/tier-lists'
     | '/settings'
     | '/gacha/community'
     | '/gacha/history'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/operators'
+    | '/tier-lists'
     | '/settings'
     | '/gacha/community'
     | '/gacha/history'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/login'
     | '/operators'
+    | '/tier-lists'
     | '/_authed/settings'
     | '/gacha/community'
     | '/gacha/history'
@@ -219,6 +231,7 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
   OperatorsRoute: typeof OperatorsRoute
+  TierListsRoute: typeof TierListsRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
@@ -234,6 +247,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tier-lists': {
+      id: '/tier-lists'
+      path: '/tier-lists'
+      fullPath: '/tier-lists'
+      preLoaderRoute: typeof TierListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operators': {
       id: '/operators'
       path: '/operators'
@@ -365,6 +385,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
   OperatorsRoute: OperatorsRoute,
+  TierListsRoute: TierListsRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,

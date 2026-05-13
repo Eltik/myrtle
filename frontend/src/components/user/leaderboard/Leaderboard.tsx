@@ -32,7 +32,7 @@ export function Leaderboard() {
     useEffect(() => {
         const next = inputValue.trim();
         if (next === search.q) return;
-        navigate({ search: { ...search, q: next, page: 1 }, replace: true });
+        navigate({ search: { ...search, q: next, page: 1 }, replace: true, resetScroll: false });
     }, [inputValue, navigate, search]);
 
     const apiServer = server === "All" ? undefined : server;
@@ -70,18 +70,18 @@ export function Leaderboard() {
     const end = Math.min(offset + (pageQuery.data?.entries.length ?? 0), totalEntries);
 
     const handlePageChange = (next: number) => {
-        navigate({ search: { ...search, page: next }, replace: false });
+        navigate({ search: { ...search, page: next }, replace: false, resetScroll: false });
         if (typeof window !== "undefined") {
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     };
 
     const handleScope = (next: LeaderboardScope) => {
-        navigate({ search: { ...search, scope: next, page: 1 }, replace: true });
+        navigate({ search: { ...search, scope: next, page: 1 }, replace: true, resetScroll: false });
     };
 
     const handleServer = (next: ServerCode | "All") => {
-        navigate({ search: { ...search, server: next, page: 1 }, replace: true });
+        navigate({ search: { ...search, server: next, page: 1 }, replace: true, resetScroll: false });
     };
 
     return (

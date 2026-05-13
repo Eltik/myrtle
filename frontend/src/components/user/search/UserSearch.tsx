@@ -37,7 +37,7 @@ export function UserSearch() {
     }, [debouncedQuery]);
 
     useEffect(() => {
-        navigate({ search: { q: inputValue.trim(), page: currentPage }, replace: true });
+        navigate({ search: { q: inputValue.trim(), page: currentPage }, replace: true, resetScroll: false });
     }, [inputValue, currentPage, navigate]);
 
     useEffect(() => {

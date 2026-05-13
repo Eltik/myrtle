@@ -20,6 +20,14 @@ export const PAGES: IPage[] = [
         keywords: ["operator", "roster", "characters", "list", "browse"],
     },
     {
+        id: "tier-lists",
+        href: "/tier-lists",
+        label: "Tier Lists",
+        desc: "Official and community tier lists for every operator",
+        icon: "tiers",
+        keywords: ["tier", "tierlist", "ranking", "meta", "rank", "community", "official"],
+    },
+    {
         id: "players-search",
         href: "/user/search",
         label: "Search Doctors",

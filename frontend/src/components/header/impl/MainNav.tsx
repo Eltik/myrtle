@@ -99,6 +99,14 @@ function ToolsIcon({ name }: { name: string }) {
                     <path d="M12 7v5l3 2" />
                 </svg>
             );
+        case "tiers":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <rect x="3" y="3.5" width="18" height="5" rx="1.2" />
+                    <rect x="3" y="9.5" width="13" height="5" rx="1.2" />
+                    <rect x="3" y="15.5" width="8" height="5" rx="1.2" />
+                </svg>
+            );
         default:
             return null;
     }
