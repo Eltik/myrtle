@@ -1,20 +1,26 @@
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search, TrendingUp, X } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
-import { type LeaderboardScope, SERVERS, type ServerCode } from "../constants";
+import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, SERVERS, type ServerCode } from "../constants";
 
 interface IToolbarProps {
     scope: LeaderboardScope;
     onScope: (next: LeaderboardScope) => void;
     server: ServerCode | "All";
     onServer: (next: ServerCode | "All") => void;
+    interval: LeaderboardInterval;
+    onInterval: (next: LeaderboardInterval) => void;
+    movementOnly: boolean;
+    onMovementOnly: (next: boolean) => void;
     query: string;
     onQuery: (next: string) => void;
 }
 
-export function Toolbar({ scope, onScope, server, onServer, query, onQuery }: IToolbarProps) {
+export function Toolbar({ scope, onScope, server, onServer, interval, onInterval, movementOnly, onMovementOnly, query, onQuery }: IToolbarProps) {
+    const intervalShort = INTERVALS.find((i) => i.value === interval)?.short ?? "1d";
+
     return (
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
@@ -43,6 +49,34 @@ export function Toolbar({ scope, onScope, server, onServer, query, onQuery }: IT
                         ))}
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <DropdownMenu>
+                    <DropdownMenuTrigger className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:border-foreground/20" aria-label="Change movement interval">
+                        <span className="font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">Interval</span>
+                        <span className="font-semibold text-foreground tabular-nums">{intervalShort}</span>
+                        <ChevronDown className="size-3 opacity-70" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-44">
+                        {INTERVALS.map((opt) => (
+                            <DropdownMenuItem key={opt.value} onClick={() => onInterval(opt.value)} className={cn("cursor-pointer", interval === opt.value && "font-semibold text-primary")}>
+                                {opt.label}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={movementOnly}
+                    onClick={() => onMovementOnly(!movementOnly)}
+                    title={movementOnly ? "Showing only Doctors with movement" : "Show only Doctors with movement"}
+                    className={cn(
+                        "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-sans text-xs font-medium leading-none transition-colors",
+                        movementOnly ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20",
+                    )}
+                >
+                    <TrendingUp className={cn("size-3.5", movementOnly ? "opacity-100" : "opacity-70")} aria-hidden />
+                    <span>Movement only</span>
+                </button>
             </div>
 
             <InputGroup className="w-full max-w-80 sm:w-80">

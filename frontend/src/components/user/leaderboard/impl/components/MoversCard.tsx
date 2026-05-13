@@ -5,11 +5,11 @@ import type { ILeaderboardMover } from "#/lib/api/user";
 import { getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
 
-export function MoversCard({ movers, isLoading }: { movers: ILeaderboardMover[]; isLoading?: boolean }) {
+export function MoversCard({ movers, isLoading, intervalLabel = "today" }: { movers: ILeaderboardMover[]; isLoading?: boolean; intervalLabel?: string }) {
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground">Top movers · today</span>
+                <span className="font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground">Top movers · {intervalLabel}</span>
                 <span className="font-mono text-[10px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">Δ Rank</span>
             </div>
             <div className="flex flex-col gap-2.5">

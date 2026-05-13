@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { cn, formatNumber, getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
@@ -10,11 +11,12 @@ interface ILeaderboardTableProps {
     entries: LeaderboardEntry[];
     referenceScore: number | null;
     isLoading?: boolean;
+    intervalLabel?: string;
 }
 
 const DESKTOP_GRID = "grid-cols-[80px_minmax(0,1fr)_100px_90px_180px_60px]";
 
-export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeaderboardTableProps) {
+export function LeaderboardTable({ entries, referenceScore, isLoading, intervalLabel = "since yesterday" }: ILeaderboardTableProps) {
     if (!isLoading && entries.length === 0) {
         return <div className="px-6 py-12 text-center font-sans text-sm text-muted-foreground">No Doctors match these filters.</div>;
     }
@@ -35,7 +37,7 @@ export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeader
                 <ul className="contents">
                     {entries.map((entry) => (
                         <li key={entry.id} className="contents">
-                            <DesktopRow entry={entry} referenceScore={referenceScore} />
+                            <DesktopRow entry={entry} referenceScore={referenceScore} intervalLabel={intervalLabel} />
                         </li>
                     ))}
                 </ul>
@@ -43,7 +45,7 @@ export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeader
             <div className="block p-3 md:hidden">
                 <div className="flex flex-col gap-2">
                     {entries.map((entry) => (
-                        <MobileRow key={entry.id} entry={entry} />
+                        <MobileRow key={entry.id} entry={entry} intervalLabel={intervalLabel} />
                     ))}
                 </div>
             </div>
@@ -51,11 +53,31 @@ export function LeaderboardTable({ entries, referenceScore, isLoading }: ILeader
     );
 }
 
+function RankMovement({ delta, intervalLabel = "since yesterday" }: { delta: number | null; intervalLabel?: string }) {
+    if (delta == null) return null;
+    if (delta === 0) {
+        return (
+            <span className="inline-flex items-center gap-0.5 font-mono text-[10px] font-semibold leading-none text-muted-foreground tabular-nums" title={`No change in rank ${intervalLabel}`}>
+                <Minus className="size-2.5" aria-hidden /> 0
+            </span>
+        );
+    }
+    const isUp = delta > 0;
+    const Icon = isUp ? ChevronUp : ChevronDown;
+    const color = isUp ? "text-success-foreground" : "text-destructive-foreground";
+    const label = `${isUp ? "Climbed" : "Fell"} ${Math.abs(delta)} ${Math.abs(delta) === 1 ? "rank" : "ranks"} ${intervalLabel}`;
+    return (
+        <span className={cn("inline-flex items-center gap-0.5 font-mono text-[10px] font-semibold leading-none tabular-nums", color)} title={label}>
+            <Icon className="size-2.5" aria-hidden /> {Math.abs(delta)}
+        </span>
+    );
+}
+
 function Th({ children, align, sorted }: { children: React.ReactNode; align?: "right"; sorted?: boolean }) {
     return <span className={cn("font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground whitespace-nowrap", align === "right" ? "text-right" : "text-left", sorted && "text-foreground")}>{children}</span>;
 }
 
-function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; referenceScore: number | null }) {
+function DesktopRow({ entry, referenceScore, intervalLabel }: { entry: LeaderboardEntry; referenceScore: number | null; intervalLabel?: string }) {
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
@@ -66,7 +88,10 @@ function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; refere
 
     return (
         <Link to="/user/$id" params={{ id: entry.uid }} aria-label={`View ${nickname} profile`} className={cn("group grid items-center gap-4 border-b border-[color-mix(in_srgb,var(--border)_60%,transparent)] px-4 py-3 font-sans text-[13px] text-foreground no-underline transition-colors", DESKTOP_GRID, rowBg)}>
-            <span className="inline-flex min-w-14 items-center font-mono text-sm font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "-"}</span>
+            <span className="inline-flex min-w-14 flex-col items-start gap-1 font-mono text-sm font-semibold leading-none text-foreground tabular-nums">
+                <span>#{entry.rank_global ?? "-"}</span>
+                <RankMovement delta={entry.rank_delta} intervalLabel={intervalLabel} />
+            </span>
             <span className="inline-flex max-w-80 min-w-0 items-center gap-3">
                 <Avatar className="size-9 rounded-[10px]">
                     <AvatarImage src={avatarSrc} alt={nickname} />
@@ -96,14 +121,17 @@ function DesktopRow({ entry, referenceScore }: { entry: LeaderboardEntry; refere
     );
 }
 
-function MobileRow({ entry }: { entry: LeaderboardEntry }) {
+function MobileRow({ entry, intervalLabel }: { entry: LeaderboardEntry; intervalLabel?: string }) {
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
 
     return (
         <Link to="/user/$id" params={{ id: entry.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", entry.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
-            <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "-"}</span>
+            <span className="inline-flex flex-col items-center gap-1">
+                <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono text-[13px] font-semibold leading-none text-foreground tabular-nums">#{entry.rank_global ?? "-"}</span>
+                <RankMovement delta={entry.rank_delta} intervalLabel={intervalLabel} />
+            </span>
             <div className="flex min-w-0 flex-col gap-1">
                 <div className="flex min-w-0 items-center gap-2">
                     <Avatar className="size-7 rounded-lg">

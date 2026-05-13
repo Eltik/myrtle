@@ -206,6 +206,9 @@ export interface ILeaderboardEntry {
     skin_score: number | null;
     rank_global: number | null;
     rank_server: number | null;
+    /** Rank change vs. the snapshot baseline for the requested movement_interval.
+     *  Positive = climbed. Null when movement wasn't requested or there's no baseline yet. */
+    rank_delta: number | null;
 }
 
 export interface ILeaderboardPage {
@@ -217,16 +220,22 @@ export interface ILeaderboardPage {
 export interface ILeaderboardInput {
     sort?: string;
     server?: string;
+    /** "1 day" | "7 days" | "30 days" — when set, each entry receives `rank_delta`. */
+    movement_interval?: string;
+    /** When true (requires `movement_interval`), only users with non-zero movement are returned. */
+    movement_only?: boolean;
     limit?: number;
     offset?: number;
 }
 
 export const getLeaderboardFn = createServerFn({ method: "GET" })
     .inputValidator((data: ILeaderboardInput) => data)
-    .handler(async ({ data: { sort, server, limit, offset } }) => {
+    .handler(async ({ data: { sort, server, movement_interval, movement_only, limit, offset } }) => {
         const params = new URLSearchParams();
         if (sort) params.set("sort", sort);
         if (server) params.set("server", server);
+        if (movement_interval) params.set("movement_interval", movement_interval);
+        if (movement_only) params.set("movement_only", "true");
         if (limit !== undefined) params.set("limit", String(limit));
         if (offset !== undefined) params.set("offset", String(offset));
 
@@ -237,7 +246,7 @@ export const getLeaderboardFn = createServerFn({ method: "GET" })
 
 export function leaderboardQueryOptions(input: ILeaderboardInput = {}) {
     return queryOptions({
-        queryKey: ["user", "leaderboard", input.sort ?? null, input.server ?? null, input.limit ?? null, input.offset ?? null],
+        queryKey: ["user", "leaderboard", input.sort ?? null, input.server ?? null, input.movement_interval ?? null, input.movement_only ?? false, input.limit ?? null, input.offset ?? null],
         queryFn: () => getLeaderboardFn({ data: input }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,

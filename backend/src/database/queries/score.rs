@@ -34,15 +34,8 @@ pub async fn get_score_by_user_id(
         .await
 }
 
-/// Get leaderboard with pagination
-pub async fn get_leaderboard(
-    pool: &PgPool,
-    server: Option<&str>,
-    sort_by: &str,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<LeaderboardEntry>, sqlx::Error> {
-    let sort_col = match sort_by {
+fn sort_column(sort_by: &str) -> &'static str {
+    match sort_by {
         "operator_score" => "operator_score",
         "stage_score" => "stage_score",
         "roguelike_score" => "roguelike_score",
@@ -51,46 +44,138 @@ pub async fn get_leaderboard(
         "base_score" => "base_score",
         "skin_score" => "skin_score",
         _ => "total_score",
-    };
-
-    let query = if server.is_some() {
-        format!(
-            "SELECT * FROM v_leaderboard WHERE server = $1 ORDER BY {sort_col} DESC NULLS LAST LIMIT $2 OFFSET $3"
-        )
-    } else {
-        format!(
-            "SELECT * FROM v_leaderboard ORDER BY {sort_col} DESC NULLS LAST LIMIT $1 OFFSET $2"
-        )
-    };
-
-    if let Some(srv) = server {
-        sqlx::query_as::<_, LeaderboardEntry>(&query)
-            .bind(srv)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
-    } else {
-        sqlx::query_as::<_, LeaderboardEntry>(&query)
-            .bind(limit)
-            .bind(offset)
-            .fetch_all(pool)
-            .await
     }
 }
 
-/// Count leaderboard entries
-pub async fn count_leaderboard(pool: &PgPool, server: Option<&str>) -> Result<i64, sqlx::Error> {
-    if let Some(srv) = server {
-        sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard WHERE server = $1")
-            .bind(srv)
-            .fetch_one(pool)
-            .await
+/// Get leaderboard with pagination.
+///
+/// When `movement_interval` is provided, each row is enriched with `rank_delta`
+/// computed against the most recent snapshot taken before that interval.
+/// When `movement_only` is also true, rows whose rank hasn't changed (or which
+/// have no baseline yet) are excluded — count and pagination both reflect the
+/// filtered population, so the caller can paginate normally.
+pub async fn get_leaderboard(
+    pool: &PgPool,
+    server: Option<&str>,
+    sort_by: &str,
+    movement_interval: Option<&str>,
+    movement_only: bool,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<LeaderboardEntry>, sqlx::Error> {
+    let sort_col = sort_column(sort_by);
+
+    let Some(interval) = movement_interval else {
+        let query = if server.is_some() {
+            format!(
+                "SELECT * FROM v_leaderboard WHERE server = $1 ORDER BY {sort_col} DESC NULLS LAST LIMIT $2 OFFSET $3"
+            )
+        } else {
+            format!(
+                "SELECT * FROM v_leaderboard ORDER BY {sort_col} DESC NULLS LAST LIMIT $1 OFFSET $2"
+            )
+        };
+        let mut q = sqlx::query_as::<_, LeaderboardEntry>(&query);
+        if let Some(srv) = server {
+            q = q.bind(srv);
+        }
+        return q.bind(limit).bind(offset).fetch_all(pool).await;
+    };
+
+    // $1 = interval, [$2 = server,] then limit, offset
+    let (server_clause, limit_idx) = match server {
+        Some(_) => ("AND v.server = $2", 3),
+        None => ("", 2),
+    };
+    let offset_idx = limit_idx + 1;
+    let movement_filter = if movement_only {
+        "AND b.rank_global IS NOT NULL AND b.rank_global <> v.rank_global"
     } else {
-        sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard")
-            .fetch_one(pool)
-            .await
+        ""
+    };
+
+    let sql = format!(
+        r#"
+        WITH baseline AS (
+            SELECT DISTINCT ON (e.user_id)
+                e.user_id, e.rank_global
+            FROM leaderboard_snapshot_entries e
+            JOIN leaderboard_snapshots s ON s.id = e.snapshot_id
+            WHERE s.taken_at <= NOW() - $1::interval
+            ORDER BY e.user_id, s.taken_at DESC
+        )
+        SELECT v.*,
+               (b.rank_global - v.rank_global)::bigint AS rank_delta
+        FROM v_leaderboard v
+        LEFT JOIN baseline b ON b.user_id = v.id
+        WHERE v.rank_global IS NOT NULL
+          {server_clause}
+          {movement_filter}
+        ORDER BY v.{sort_col} DESC NULLS LAST
+        LIMIT ${limit_idx} OFFSET ${offset_idx}
+        "#
+    );
+
+    let mut q = sqlx::query_as::<_, LeaderboardEntry>(&sql).bind(interval);
+    if let Some(srv) = server {
+        q = q.bind(srv);
     }
+    q.bind(limit).bind(offset).fetch_all(pool).await
+}
+
+/// Count leaderboard entries. When `movement_interval` is provided and
+/// `movement_only` is true, the count is restricted to users with non-zero
+/// movement since the baseline — so it matches the paginated rows.
+pub async fn count_leaderboard(
+    pool: &PgPool,
+    server: Option<&str>,
+    movement_interval: Option<&str>,
+    movement_only: bool,
+) -> Result<i64, sqlx::Error> {
+    if !movement_only || movement_interval.is_none() {
+        return if let Some(srv) = server {
+            sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard WHERE server = $1")
+                .bind(srv)
+                .fetch_one(pool)
+                .await
+        } else {
+            sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard")
+                .fetch_one(pool)
+                .await
+        };
+    }
+
+    let interval = movement_interval.expect("checked above");
+    let server_clause = if server.is_some() {
+        "AND v.server = $2"
+    } else {
+        ""
+    };
+
+    let sql = format!(
+        r#"
+        WITH baseline AS (
+            SELECT DISTINCT ON (e.user_id)
+                e.user_id, e.rank_global
+            FROM leaderboard_snapshot_entries e
+            JOIN leaderboard_snapshots s ON s.id = e.snapshot_id
+            WHERE s.taken_at <= NOW() - $1::interval
+            ORDER BY e.user_id, s.taken_at DESC
+        )
+        SELECT COUNT(*)
+        FROM v_leaderboard v
+        JOIN baseline b ON b.user_id = v.id
+        WHERE v.rank_global IS NOT NULL
+          AND b.rank_global <> v.rank_global
+          {server_clause}
+        "#
+    );
+
+    let mut q = sqlx::query_scalar::<_, i64>(&sql).bind(interval);
+    if let Some(srv) = server {
+        q = q.bind(srv);
+    }
+    q.fetch_one(pool).await
 }
 
 /// Upsert a user's score

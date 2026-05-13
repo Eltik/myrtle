@@ -27,6 +27,11 @@ pub struct LeaderboardEntry {
     pub skin_score: Option<f64>,
     pub rank_global: Option<i64>, // RANK() returns i64
     pub rank_server: Option<i64>,
+    /// Rank change vs. the snapshot baseline for the requested movement interval.
+    /// Positive = climbed. `None` when the caller didn't request movement data
+    /// or no baseline snapshot exists for the user yet.
+    #[sqlx(default)]
+    pub rank_delta: Option<i64>,
 }
 
 /// user_scores table

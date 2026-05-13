@@ -15,7 +15,7 @@ import { MoversCard } from "./impl/components/MoversCard";
 // import { ServerSplitCard } from "./impl/components/ServerSplitCard"; // hidden: server share
 import { Toolbar } from "./impl/components/Toolbar";
 import { YouCard } from "./impl/components/YouCard";
-import { type LeaderboardScope, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
+import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
 import type { LeaderboardEntry } from "./impl/types";
 
 export function Leaderboard() {
@@ -27,6 +27,8 @@ export function Leaderboard() {
     const debouncedQuery = useDebounce(inputValue.trim(), 300).toLowerCase();
     const scope: LeaderboardScope = search.scope;
     const server: ServerCode | "All" = search.server;
+    const interval: LeaderboardInterval = search.interval;
+    const movementOnly = search.movement;
     const page = search.page;
 
     useEffect(() => {
@@ -38,25 +40,35 @@ export function Leaderboard() {
     const apiServer = server === "All" ? undefined : server;
     const offset = (page - 1) * PAGE_SIZE;
 
-    const pageQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: PAGE_SIZE, offset }));
+    const pageQuery = useQuery(
+        leaderboardQueryOptions({
+            server: apiServer,
+            movement_interval: interval,
+            movement_only: movementOnly,
+            limit: PAGE_SIZE,
+            offset,
+        }),
+    );
     const topQuery = useQuery(leaderboardQueryOptions({ server: apiServer, limit: 3, offset: 0 }));
-    const moversQuery = useQuery(leaderboardMoversQueryOptions({ direction: "up", interval: "1 day", limit: 3, server: apiServer }));
-    // const distributionQuery = useQuery(leaderboardDistributionQueryOptions({ top: 250 })); // hidden: server share
+    const moversQuery = useQuery(leaderboardMoversQueryOptions({ direction: "up", interval, limit: 3, server: apiServer }));
+    const intervalMeta = INTERVALS.find((i) => i.value === interval) ?? INTERVALS[0];
 
     const standingQuery = useQuery({
         ...playerStandingQueryOptions({ uid: user?.uid ?? "", server: user?.server ?? "" }),
         enabled: Boolean(user?.uid && user?.server),
     });
 
-    const isLoading = pageQuery.isLoading || pageQuery.isFetching;
+    const updatedAt = pageQuery.data?.updated_at ?? null;
     const totalEntries = pageQuery.data?.total ?? 0;
     const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
-    const updatedAt = pageQuery.data?.updated_at ?? null;
+    const isLoading = pageQuery.isLoading || pageQuery.isFetching;
 
     const visibleEntries = useMemo<LeaderboardEntry[]>(() => {
         const list = pageQuery.data?.entries ?? [];
-        const matchSelf = (entry: LeaderboardEntry) => Boolean(user && entry.uid === user.uid && entry.server === user.server);
-        const flagged = list.map((entry) => ({ ...entry, isSelf: matchSelf(entry) }));
+        const flagged = list.map((entry) => ({
+            ...entry,
+            isSelf: Boolean(user && entry.uid === user.uid && entry.server === user.server),
+        }));
         if (!debouncedQuery) return flagged;
         return flagged.filter((entry) => {
             const nick = (entry.nickname ?? "").toLowerCase();
@@ -67,7 +79,7 @@ export function Leaderboard() {
     const topThree: LeaderboardEntry[] = topQuery.data?.entries ?? [];
     const referenceScore = topThree[0]?.total_score ?? null;
     const start = totalEntries === 0 ? 0 : offset + 1;
-    const end = Math.min(offset + (pageQuery.data?.entries.length ?? 0), totalEntries);
+    const end = Math.min(offset + visibleEntries.length, totalEntries);
 
     const handlePageChange = (next: number) => {
         navigate({ search: { ...search, page: next }, replace: false, resetScroll: false });
@@ -84,6 +96,14 @@ export function Leaderboard() {
         navigate({ search: { ...search, server: next, page: 1 }, replace: true, resetScroll: false });
     };
 
+    const handleInterval = (next: LeaderboardInterval) => {
+        navigate({ search: { ...search, interval: next, page: 1 }, replace: true, resetScroll: false });
+    };
+
+    const handleMovementOnly = (next: boolean) => {
+        navigate({ search: { ...search, movement: next, page: 1 }, replace: true, resetScroll: false });
+    };
+
     return (
         <div className="relative z-1 mx-auto w-[min(1280px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-2.5">
@@ -98,10 +118,10 @@ export function Leaderboard() {
 
             <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-6">
                 <div className="flex min-w-0 flex-col gap-4">
-                    <Toolbar scope={scope} onScope={handleScope} server={server} onServer={handleServer} query={inputValue} onQuery={setInputValue} />
+                    <Toolbar scope={scope} onScope={handleScope} server={server} onServer={handleServer} interval={interval} onInterval={handleInterval} movementOnly={movementOnly} onMovementOnly={handleMovementOnly} query={inputValue} onQuery={setInputValue} />
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} referenceScore={referenceScore} isLoading={isLoading} />}
+                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} referenceScore={referenceScore} isLoading={isLoading} intervalLabel={intervalMeta.since} />}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
                             <span className="font-mono text-xs leading-none text-muted-foreground tabular-nums">
                                 Showing {start}-{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
@@ -113,7 +133,7 @@ export function Leaderboard() {
 
                 <div className="flex flex-col gap-4 lg:gap-5">
                     {user ? <YouCard standing={standingQuery.data ?? null} rankedDoctors={totalEntries || null} /> : null}
-                    <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} />
+                    <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} intervalLabel={intervalMeta.subtitle} />
                     {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
             </div>
