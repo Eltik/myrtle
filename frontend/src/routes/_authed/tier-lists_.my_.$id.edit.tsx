@@ -1,9 +1,18 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Suspense } from "react";
+import { TierListEditor } from "#/components/tier-lists/edit/TierListEditor";
+import { Spinner } from "#/components/ui/spinner";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
     beforeLoad: ({ context, location }) => {
         if (!context.user) throw redirect({ to: "/login", search: { redirect: location.href } });
+    },
+    loader: ({ context, params }) => {
+        void context.queryClient.prefetchQuery(tierListDetailQueryOptions(params.id));
+        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions());
     },
     component: RouteComponent,
     head: ({ params }) => {
@@ -20,5 +29,21 @@ export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
 });
 
 function RouteComponent() {
-    return <main className="min-h-dvh" />;
+    const { id } = Route.useParams();
+    return (
+        <Suspense fallback={<EditorLoading />}>
+            <TierListEditor slug={id} />
+        </Suspense>
+    );
+}
+
+function EditorLoading() {
+    return (
+        <main className="grid min-h-dvh place-items-center">
+            <div className="flex items-center gap-2 font-sans text-sm text-muted-foreground">
+                <Spinner />
+                <span>Loading editor…</span>
+            </div>
+        </main>
+    );
 }
