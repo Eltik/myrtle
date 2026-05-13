@@ -246,19 +246,16 @@ pub async fn take_leaderboard_snapshot(pool: &PgPool) -> Result<i64, sqlx::Error
 }
 
 /// Top movers since `interval` ago. `direction` is "up" or "down".
-/// `rank_floor` excludes baselines worse than this rank (cuts noise from
-/// players who jumped from "unranked-ish" to mid-pack).
 pub async fn get_top_movers(
     pool: &PgPool,
     interval: &str,  // e.g. "7 days", "1 day"
     direction: &str, // "up" or "down"
     server: Option<&str>,
-    rank_floor: i64,
     limit: i64,
 ) -> Result<Vec<LeaderboardMover>, sqlx::Error> {
     let order = if direction == "down" { "ASC" } else { "DESC" };
     let server_clause = if server.is_some() {
-        "AND v.server = $4"
+        "AND v.server = $3"
     } else {
         ""
     };
@@ -283,16 +280,15 @@ pub async fn get_top_movers(
         FROM v_leaderboard v
         JOIN baseline b ON b.user_id = v.id
         WHERE v.rank_global IS NOT NULL
-        AND b.rank_global <= $2
+        AND b.rank_global <> v.rank_global
         {server_clause}
         ORDER BY rank_delta {order}
-        LIMIT $3
+        LIMIT $2
         "#
     );
 
     let mut q = sqlx::query_as::<_, LeaderboardMover>(&sql)
         .bind(interval)
-        .bind(rank_floor)
         .bind(limit);
     if let Some(s) = server {
         q = q.bind(s);
@@ -350,7 +346,8 @@ pub async fn get_player_standing(
     pool: &PgPool,
     uid: &str,
     server: &str,
-    window: i64, // neighbors above + below
+    window: i64,    // neighbors above + below
+    interval: &str, // e.g. "1 day", "7 days", "30 days"
 ) -> Result<Option<PlayerStanding>, sqlx::Error> {
     let player = sqlx::query_as::<_, LeaderboardEntry>(
         "SELECT * FROM v_leaderboard WHERE uid = $1 AND server = $2",
@@ -388,12 +385,13 @@ pub async fn get_player_standing(
             SELECT e.rank_global
             FROM leaderboard_snapshot_entries e
             JOIN leaderboard_snapshots s ON s.id = e.snapshot_id
-            WHERE e.user_id = $1 AND s.taken_at <= NOW() - INTERVAL '7 days'
+            WHERE e.user_id = $1 AND s.taken_at <= NOW() - $2::interval
             ORDER BY s.taken_at DESC
             LIMIT 1
             "#,
         )
         .bind(player.id)
+        .bind(interval)
         .fetch_optional(pool),
     )?;
 
@@ -402,12 +400,12 @@ pub async fn get_player_standing(
     } else {
         0.0
     };
-    let rank_delta_7d = prev_rank.flatten().map(|p| p as i64 - rank);
+    let rank_delta = prev_rank.flatten().map(|p| p as i64 - rank);
 
     Ok(Some(PlayerStanding {
         player,
         neighbors,
         percentile,
-        rank_delta_7d,
+        rank_delta,
     }))
 }

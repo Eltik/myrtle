@@ -4,7 +4,7 @@ export const OG_CONFIG = {
     width: 1200,
     height: 630,
 
-    designVersion: 2,
+    designVersion: 3,
 
     siteName: "Myrtle",
     siteURL: env.VITE_SITE_URL ?? "http://localhost:3000",

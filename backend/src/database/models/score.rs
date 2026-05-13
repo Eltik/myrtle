@@ -74,6 +74,6 @@ pub struct ServerShare {
 pub struct PlayerStanding {
     pub player: LeaderboardEntry,
     pub neighbors: Vec<LeaderboardEntry>,
-    pub percentile: f64,            // 0.0 = top, 1.0 = bottom
-    pub rank_delta_7d: Option<i64>, // None if no baseline
+    pub percentile: f64,         // 0.0 = top, 1.0 = bottom
+    pub rank_delta: Option<i64>, // delta vs. the requested interval; None if no baseline
 }

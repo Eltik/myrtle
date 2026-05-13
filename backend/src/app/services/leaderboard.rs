@@ -78,7 +78,7 @@ pub async fn get_top_movers(
         return Ok(cached);
     }
     let movers =
-        score::get_top_movers(&state.db, interval, direction, server, 5000, limit as i64).await?;
+        score::get_top_movers(&state.db, interval, direction, server, limit as i64).await?;
     state.cache.set(&key, &movers).await;
     Ok(movers)
 }
@@ -98,8 +98,9 @@ pub async fn get_standing(
     uid: &str,
     server: &str,
     window: u32,
+    interval: &str,
 ) -> Result<PlayerStanding, ApiError> {
-    score::get_player_standing(&state.db, uid, server, window as i64)
+    score::get_player_standing(&state.db, uid, server, window as i64, interval)
         .await?
         .ok_or(ApiError::NotFound)
 }

@@ -112,6 +112,7 @@ pub struct StandingParams {
     pub uid: String,
     pub server: String,
     pub window: Option<u32>,
+    pub interval: Option<String>,
 }
 
 pub async fn standing(
@@ -119,7 +120,14 @@ pub async fn standing(
     Query(params): Query<StandingParams>,
 ) -> Result<Json<PlayerStanding>, ApiError> {
     let window = params.window.unwrap_or(5).min(50);
+    let interval = params.interval.as_deref().unwrap_or("7 days");
+    if !matches!(interval, "1 day" | "7 days" | "30 days") {
+        return Err(ApiError::BadRequest(
+            "interval must be '1 day', '7 days', or '30 days'".into(),
+        ));
+    }
     let standing =
-        services::leaderboard::get_standing(&state, &params.uid, &params.server, window).await?;
+        services::leaderboard::get_standing(&state, &params.uid, &params.server, window, interval)
+            .await?;
     Ok(Json(standing))
 }

@@ -54,7 +54,7 @@ export function Leaderboard() {
     const intervalMeta = INTERVALS.find((i) => i.value === interval) ?? INTERVALS[0];
 
     const standingQuery = useQuery({
-        ...playerStandingQueryOptions({ uid: user?.uid ?? "", server: user?.server ?? "" }),
+        ...playerStandingQueryOptions({ uid: user?.uid ?? "", server: user?.server ?? "", interval }),
         enabled: Boolean(user?.uid && user?.server),
     });
 

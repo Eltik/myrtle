@@ -22,7 +22,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     const rank = player.rank_global ?? null;
     const percentileFromRank = rank != null && rankedDoctors && rankedDoctors > 0 ? (1 - rank / rankedDoctors) * 100 : null;
     const percentile = percentileFromRank ?? (1 - standing.percentile) * 100;
-    const delta = standing.rank_delta_7d;
+    const delta = standing.rank_delta;
     const grade = player.grade ?? "-";
 
     const deltaColor = delta == null ? "text-muted-foreground" : delta > 0 ? "text-success-foreground" : delta < 0 ? "text-destructive-foreground" : "text-muted-foreground";
