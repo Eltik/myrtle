@@ -41,13 +41,13 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/my/tier-lists" className="flex flex-row gap-2 items-center">
+                        <Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} className="flex flex-row gap-2 items-center">
                             <LayoutList className="h-4 w-4 text-muted-foreground" />
                             My Tier Lists
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/my/settings" className="flex flex-row gap-2 items-center">
+                        <Link to="/settings" className="flex flex-row gap-2 items-center">
                             <Cog className="h-4 w-4 text-muted-foreground" />
                             Settings
                         </Link>

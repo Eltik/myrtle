@@ -26,6 +26,7 @@ import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
+import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
 
 const TierListsRoute = TierListsRouteImport.update({
@@ -112,6 +113,11 @@ const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
   path: '/api/og/default',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedTierListsMyRoute = AuthedTierListsMyRouteImport.update({
+  id: '/tier-lists_/my',
+  path: '/tier-lists/my',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   id: '/api/og/$kind/$id',
   path: '/api/og/$kind/$id',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
 }
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/tier-lists/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/tier-lists/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   id:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/_authed/tier-lists_/my'
     | '/api/og/default'
     | '/api/og/$kind/$id'
   fileRoutesById: FileRoutesById
@@ -379,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgDefaultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/tier-lists_/my': {
+      id: '/_authed/tier-lists_/my'
+      path: '/tier-lists/my'
+      fullPath: '/tier-lists/my'
+      preLoaderRoute: typeof AuthedTierListsMyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/api/og/$kind/$id': {
       id: '/api/og/$kind/$id'
       path: '/api/og/$kind/$id'
@@ -391,10 +410,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedTierListsMyRoute: typeof AuthedTierListsMyRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedTierListsMyRoute: AuthedTierListsMyRoute,
 }
 
 const AuthedRouteWithChildren =

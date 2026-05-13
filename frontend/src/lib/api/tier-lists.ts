@@ -833,6 +833,46 @@ export function myTierListsQueryOptions(authed: boolean) {
     });
 }
 
+export const getMyTierListsDetailedFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
+    const token = getCookie("site_token");
+    if (!token) return [];
+
+    const mineRes = await backendFetch("/tier-lists/mine", { bearerToken: token });
+    if (mineRes.status === 401) return [];
+    if (!mineRes.ok) throw await parseError(mineRes);
+    const mine = (await mineRes.json()) as IBackendTierList[];
+    if (mine.length === 0) return [];
+
+    const opsRes = await backendFetch("/operators/index");
+    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
+    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
+    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+
+    const settled = await Promise.allSettled(
+        mine.map(async (tl) => {
+            const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
+            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
+            return (await res.json()) as IBackendTierListDetail;
+        }),
+    );
+
+    const details: IBackendTierListDetail[] = [];
+    for (const r of settled) {
+        if (r.status === "fulfilled") details.push(r.value);
+    }
+    return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+});
+
+export function myTierListsDetailedQueryOptions(authed: boolean) {
+    return queryOptions({
+        queryKey: ["tier-lists", "mine", "detailed", authed ? "auth" : "anon"],
+        queryFn: () => (authed ? getMyTierListsDetailedFn() : Promise.resolve([] as ITierListBrowseItem[])),
+        enabled: authed,
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 export const createTierFn = createServerFn({ method: "POST" })
     .inputValidator((data: ICreateTierInput) => data)
     .handler(async ({ data }): Promise<ITierSummary> => {
