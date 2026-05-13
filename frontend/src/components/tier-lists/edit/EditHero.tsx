@@ -7,10 +7,8 @@ import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { Textarea } from "#/components/ui/textarea";
+import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
 import type { IPendingChange } from "./state";
-
-const TITLE_MAX = 80;
-const DESC_MAX = 240;
 
 interface IEditHeroProps {
     slug: string;

@@ -6,6 +6,7 @@ import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, type ITierOperator, TierListApiError, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { indexEntryToTierOperator } from "../shared";
 import { EditHero } from "./EditHero";
 import styles from "./Editor.module.css";
 import { EditTierRow } from "./EditTierRow";
@@ -59,19 +60,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         const merged = { ...state.operatorById };
         for (const op of operators) {
             if (merged[op.id]) continue;
-            merged[op.id] = {
-                id: op.id,
-                name: op.name,
-                appellation: op.appellation || null,
-                rarity: op.rarity,
-                profession: op.profession,
-                subProfessionId: op.subProfessionId,
-                position: op.position,
-                nationId: op.nationId || null,
-                subOrder: 0,
-                notes: null,
-                updatedAt: new Date().toISOString(),
-            };
+            merged[op.id] = indexEntryToTierOperator(op);
         }
         return merged;
     }, [state.operatorById, operators]);

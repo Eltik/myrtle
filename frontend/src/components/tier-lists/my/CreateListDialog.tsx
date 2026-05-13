@@ -4,9 +4,7 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
-
-const NAME_MAX = 80;
-const DESC_MAX = 240;
+import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as NAME_MAX } from "../shared";
 
 interface ICreateListDialogProps {
     open: boolean;

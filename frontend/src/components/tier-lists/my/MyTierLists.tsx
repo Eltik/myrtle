@@ -8,6 +8,7 @@ import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { createTierListFn, deleteTierListFn, type ITierListBrowseItem, myTierListsDetailedQueryOptions, TierListApiError, updateTierListFn } from "#/lib/api/tier-lists";
+import { matchesBrowseQuery, sortBrowseItems } from "../shared";
 import { CreateListDialog } from "./CreateListDialog";
 import { DeleteListDialog, type IDeleteListTarget } from "./DeleteListDialog";
 import { EditListDialog, type IEditListInitial } from "./EditListDialog";
@@ -17,33 +18,6 @@ import { MyListRow } from "./MyListRow";
 import { type MyListSort, type MyListTypeFilter, MyToolbar, type MyViewMode } from "./MyToolbar";
 
 const COMMUNITY_QUOTA = 10;
-
-function sortLists(lists: ITierListBrowseItem[], sort: MyListSort): ITierListBrowseItem[] {
-    const arr = [...lists];
-    switch (sort) {
-        case "recent":
-            return arr.sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-        case "newest":
-            return arr.sort((a, b) => b.createdAtMs - a.createdAtMs);
-        case "alpha":
-            return arr.sort((a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }));
-        case "views":
-            return arr.sort((a, b) => b.views - a.views);
-        case "favorites":
-            return arr.sort((a, b) => b.favorites - a.favorites);
-        default:
-            return arr;
-    }
-}
-
-function matchesQuery(list: ITierListBrowseItem, q: string): boolean {
-    if (!q) return true;
-    const needle = q.toLowerCase();
-    if (list.title.toLowerCase().includes(needle)) return true;
-    if (list.description.toLowerCase().includes(needle)) return true;
-    if (list.flairLabel?.toLowerCase().includes(needle)) return true;
-    return false;
-}
 
 function buildShareUrl(slug: string): string {
     if (typeof window === "undefined") return `/tier-lists/${slug}`;
@@ -92,13 +66,13 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
         () =>
             allLists.filter((list) => {
                 if (type !== "all" && list.listType !== type) return false;
-                if (!matchesQuery(list, debouncedQuery)) return false;
+                if (!matchesBrowseQuery(list, debouncedQuery)) return false;
                 return true;
             }),
         [allLists, type, debouncedQuery],
     );
 
-    const sorted = useMemo(() => sortLists(filtered, sort), [filtered, sort]);
+    const sorted = useMemo(() => sortBrowseItems(filtered, sort), [filtered, sort]);
 
     const invalidateQueries = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
