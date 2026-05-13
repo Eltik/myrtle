@@ -44,13 +44,13 @@ export const buttonVariants = cva(
     },
 );
 
-export interface ButtonProps extends useRender.ComponentProps<"button"> {
+export interface IButtonProps extends useRender.ComponentProps<"button"> {
     variant?: VariantProps<typeof buttonVariants>["variant"];
     size?: VariantProps<typeof buttonVariants>["size"];
     loading?: boolean;
 }
 
-export function Button({ className, variant, size, render, children, loading = false, disabled: disabledProp, ...props }: ButtonProps): React.ReactElement {
+export function Button({ className, variant, size, render, children, loading = false, disabled: disabledProp, ...props }: IButtonProps): React.ReactElement {
     const isDisabled: boolean = Boolean(loading || disabledProp);
     const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render ? undefined : "button";
 

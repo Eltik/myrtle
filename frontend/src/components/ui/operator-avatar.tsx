@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getAvatarById } from "#/lib/utils";
 
-interface OperatorAvatarProps {
+interface IOperatorAvatarProps {
     charId?: string | null;
     name: string;
     className?: string;
@@ -13,7 +13,7 @@ interface OperatorAvatarProps {
  * when no charId is supplied. Drop it inside any sized/styled wrapper
  * (e.g. .op-chip, .tl-chip-initials, .drawer-initials).
  */
-export function OperatorAvatar({ charId, name, className }: OperatorAvatarProps) {
+export function OperatorAvatar({ charId, name, className }: IOperatorAvatarProps) {
     const [failed, setFailed] = useState(false);
 
     if (!charId || failed) {

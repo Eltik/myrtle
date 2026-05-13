@@ -33,12 +33,12 @@ export const badgeVariants = cva(
     },
 );
 
-export interface BadgeProps extends useRender.ComponentProps<"span"> {
+export interface IBadgeProps extends useRender.ComponentProps<"span"> {
     variant?: VariantProps<typeof badgeVariants>["variant"];
     size?: VariantProps<typeof badgeVariants>["size"];
 }
 
-export function Badge({ className, variant, size, render, ...props }: BadgeProps): React.ReactElement {
+export function Badge({ className, variant, size, render, ...props }: IBadgeProps): React.ReactElement {
     const defaultProps = {
         className: cn(badgeVariants({ className, size, variant })),
         "data-slot": "badge",

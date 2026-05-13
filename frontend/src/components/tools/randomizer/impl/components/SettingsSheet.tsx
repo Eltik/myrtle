@@ -3,7 +3,7 @@ import type React from "react";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
-import type { ActivityLookup } from "../activity-lookup";
+import type { IActivityLookup } from "../activity-lookup";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
 import { OperatorFiltersPanel } from "./OperatorFiltersPanel";
 import { RosterPicker } from "./RosterPicker";
@@ -27,7 +27,7 @@ interface ISettingsSheetProps {
     hasProfile: boolean;
     stages: IStage[];
     zones: IZone[];
-    activityLookup: ActivityLookup;
+    activityLookup: IActivityLookup;
     stageClears: StageClearsMap | null;
 }
 

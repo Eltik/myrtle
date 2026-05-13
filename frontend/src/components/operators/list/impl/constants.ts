@@ -2,6 +2,8 @@ import { formatNationId, formatProfession, formatSubProfession, rarityToNumber }
 import type { OperatorRarityTier } from "#/types/operators";
 import type { ArrayFilterKey, HasNotesFilter, SortOption, ViewMode } from "./types";
 
+export { RARITY_HEX as RARITY_COLORS } from "#/lib/utils";
+
 export const RARITIES: readonly OperatorRarityTier[] = ["TIER_6", "TIER_5", "TIER_4", "TIER_3", "TIER_2", "TIER_1"] as const;
 export const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER", "SPECIAL", "PIONEER"] as const;
 export const GENDERS = ["Male", "Female", "Conviction"] as const;
@@ -67,15 +69,6 @@ export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: stri
     { key: "artists", prefix: "artist", label: (v) => v },
     { key: "voiceActors", prefix: "va", label: (v) => v },
 ];
-
-export const RARITY_COLORS: Record<number, string> = {
-    6: "#f7a452",
-    5: "#f7e79e",
-    4: "#bcabdb",
-    3: "#88c8e3",
-    2: "#7ef2a3",
-    1: "#ffffff",
-};
 
 export const RARITY_BLUR_COLORS: Record<number, string> = {
     6: "#cc9b6a",

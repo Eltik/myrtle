@@ -1,10 +1,13 @@
+use std::sync::LazyLock;
+use std::time::{Duration, Instant};
+
 use axum::http::HeaderMap;
 use axum::{
     Json,
     extract::{Path, State},
 };
+use dashmap::DashMap;
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
@@ -13,31 +16,56 @@ use crate::app::state::AppState;
 use crate::database::models::tier_list::{TierListFlair, TierListStats};
 use crate::database::queries::tier_lists as queries;
 
-fn session_hash(headers: &HeaderMap) -> Option<String> {
-    let ua = headers
-        .get("user-agent")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    let ip = headers
+const SESSION_COOKIE: &str = "mtl_sid";
+const SESSION_ID_LEN: usize = 64;
+const VIEW_RATE_WINDOW: Duration = Duration::from_secs(60);
+const VIEW_RATE_LIMIT: u32 = 10;
+
+fn valid_session_id(value: &str) -> bool {
+    value.len() == SESSION_ID_LEN && value.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+fn extract_session_id(headers: &HeaderMap) -> Option<String> {
+    if let Some(v) = headers.get("x-session-id").and_then(|v| v.to_str().ok())
+        && valid_session_id(v)
+    {
+        return Some(v.to_owned());
+    }
+    let cookies = headers.get("cookie").and_then(|v| v.to_str().ok())?;
+    for part in cookies.split(';') {
+        if let Some(value) = part.trim().strip_prefix(&format!("{SESSION_COOKIE}="))
+            && valid_session_id(value)
+        {
+            return Some(value.to_owned());
+        }
+    }
+    None
+}
+
+fn client_ip(headers: &HeaderMap) -> Option<String> {
+    let raw = headers
         .get("x-forwarded-for")
         .or_else(|| headers.get("x-real-ip"))
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-    if ip.is_empty() && ua.is_empty() {
-        return None;
+        .and_then(|v| v.to_str().ok())?;
+    let first = raw.split(',').next()?.trim();
+    (!first.is_empty()).then(|| first.to_owned())
+}
+
+static VIEW_RATE_BUCKETS: LazyLock<DashMap<String, (Instant, u32)>> = LazyLock::new(DashMap::new);
+
+fn check_view_rate(ip: &str) -> bool {
+    let now = Instant::now();
+    let mut entry = VIEW_RATE_BUCKETS.entry(ip.to_owned()).or_insert((now, 0));
+    let (window_start, count) = *entry;
+    if now.duration_since(window_start) >= VIEW_RATE_WINDOW {
+        *entry = (now, 1);
+        true
+    } else if count >= VIEW_RATE_LIMIT {
+        false
+    } else {
+        entry.1 = count + 1;
+        true
     }
-    let salt = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    let mut h = Sha256::new();
-    h.update(ip);
-    h.update(ua);
-    h.update(salt);
-    let digest = h.finalize();
-    let mut hex = String::with_capacity(digest.len() * 2);
-    for byte in digest.iter() {
-        use std::fmt::Write;
-        let _ = write!(hex, "{byte:02x}");
-    }
-    Some(hex)
 }
 
 pub async fn record_view(
@@ -53,12 +81,20 @@ pub async fn record_view(
         .0
         .as_ref()
         .and_then(|a| Uuid::parse_str(&a.user_id).ok());
-    let sh = if user_id.is_none() {
-        session_hash(&headers)
-    } else {
+
+    if let Some(ip) = client_ip(&headers)
+        && !check_view_rate(&ip)
+    {
+        return Err(ApiError::RateLimited);
+    }
+
+    let session_id = if user_id.is_some() {
         None
+    } else {
+        extract_session_id(&headers)
     };
-    let unique = queries::record_view(&state.db, list.id, user_id, sh.as_deref()).await?;
+
+    let unique = queries::record_view(&state.db, list.id, user_id, session_id.as_deref()).await?;
     Ok(Json(serde_json::json!({ "unique": unique })))
 }
 
@@ -91,6 +127,19 @@ pub async fn toggle_favorite(
         queries::add_favorite(&state.db, list.id, user_id).await?;
         true
     };
+    Ok(Json(serde_json::json!({ "favorited": favorited })))
+}
+
+pub async fn get_favorite(
+    State(state): State<AppState>,
+    auth: crate::app::extractors::auth::AuthUser,
+    Path(slug): Path<String>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let list = queries::find_by_slug(&state.db, &slug)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let favorited = queries::is_favorited(&state.db, list.id, user_id).await?;
     Ok(Json(serde_json::json!({ "favorited": favorited })))
 }
 

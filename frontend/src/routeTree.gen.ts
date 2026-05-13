@@ -20,6 +20,7 @@ import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
 import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
+import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
@@ -81,6 +82,11 @@ const ToolsDpsRoute = ToolsDpsRouteImport.update({
   path: '/tools/dps',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TierListsIdRoute = TierListsIdRouteImport.update({
+  id: '/tier-lists_/$id',
+  path: '/tier-lists/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OperatorsIdRoute = OperatorsIdRouteImport.update({
   id: '/operators_/$id',
   path: '/operators/$id',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
+  '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
+  '/tier-lists_/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
+    | '/tier-lists/$id'
     | '/tools/dps'
     | '/tools/randomizer'
     | '/tools/recruitment'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators/$id'
+    | '/tier-lists/$id'
     | '/tools/dps'
     | '/tools/randomizer'
     | '/tools/recruitment'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/gacha/community'
     | '/gacha/history'
     | '/operators_/$id'
+    | '/tier-lists_/$id'
     | '/tools/dps'
     | '/tools/randomizer'
     | '/tools/recruitment'
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
+  TierListsIdRoute: typeof TierListsIdRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToolsDpsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tier-lists_/$id': {
+      id: '/tier-lists_/$id'
+      path: '/tier-lists/$id'
+      fullPath: '/tier-lists/$id'
+      preLoaderRoute: typeof TierListsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/operators_/$id': {
       id: '/operators_/$id'
       path: '/operators/$id'
@@ -389,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
+  TierListsIdRoute: TierListsIdRoute,
   ToolsDpsRoute: ToolsDpsRoute,
   ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,

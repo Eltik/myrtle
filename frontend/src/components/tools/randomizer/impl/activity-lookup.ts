@@ -4,14 +4,14 @@ const ZONE_ACTIVITY_RE = /^([a-z0-9]+)_zone\d+$/i;
 const ZONE_PERMANENT_RE = /^(permanent_(?:sidestory|sub|main)_\d+)_zone\d+$/i;
 const RETRO_PREFIX_RE = /^(permanent_(?:sidestory|sub|main)_\d+)(?:_|$)/i;
 
-export interface PermanentEvent {
+export interface IPermanentEvent {
     retroId: string;
     name: string;
     type: "SIDESTORY" | "BRANCHLINE";
     index: number;
 }
 
-export interface ActivityLookup {
+export interface IActivityLookup {
     /** activityId -> IActivity */
     activityById: Map<string, IActivity>;
     /** "permanent_sidestory_1" -> retro act */
@@ -20,7 +20,7 @@ export interface ActivityLookup {
     retroByActivityId: Map<string, IRetroAct>;
 }
 
-export const EMPTY_ACTIVITY_LOOKUP: ActivityLookup = {
+export const EMPTY_ACTIVITY_LOOKUP: IActivityLookup = {
     activityById: new Map(),
     retroByZonePrefix: new Map(),
     retroByActivityId: new Map(),
@@ -30,7 +30,7 @@ function getRetroZonePrefix(retroId: string): string | null {
     return retroId.match(RETRO_PREFIX_RE)?.[1] ?? null;
 }
 
-export function buildActivityLookup(activities: IActivity[] | undefined, retroActs: IRetroAct[] | undefined): ActivityLookup {
+export function buildActivityLookup(activities: IActivity[] | undefined, retroActs: IRetroAct[] | undefined): IActivityLookup {
     const activityById = new Map<string, IActivity>();
     for (const act of activities ?? []) {
         if (act.id) activityById.set(act.id, act);
@@ -59,7 +59,7 @@ export function getPermanentZonePrefix(zoneId: string): string | null {
     return zoneId.match(ZONE_PERMANENT_RE)?.[1] ?? null;
 }
 
-export function getEventNameFromZoneId(zoneId: string, lookup: ActivityLookup): string {
+export function getEventNameFromZoneId(zoneId: string, lookup: IActivityLookup): string {
     const activityId = getActivityIdFromZoneId(zoneId);
     if (activityId) {
         const name = lookup.activityById.get(activityId)?.name;
@@ -68,39 +68,39 @@ export function getEventNameFromZoneId(zoneId: string, lookup: ActivityLookup): 
     return zoneId;
 }
 
-export function isRerunActivity(zoneId: string, lookup: ActivityLookup): boolean {
+export function isRerunActivity(zoneId: string, lookup: IActivityLookup): boolean {
     const activityId = getActivityIdFromZoneId(zoneId);
     if (!activityId) return false;
     return lookup.activityById.get(activityId)?.isReplicate ?? false;
 }
 
-export function getActivityStartTime(activityId: string, lookup: ActivityLookup): number {
+export function getActivityStartTime(activityId: string, lookup: IActivityLookup): number {
     return lookup.activityById.get(activityId)?.startTime ?? 0;
 }
 
-export function isActivityCurrentlyOpen(activityId: string, lookup: ActivityLookup, currentTime?: number): boolean {
+export function isActivityCurrentlyOpen(activityId: string, lookup: IActivityLookup, currentTime?: number): boolean {
     const act = lookup.activityById.get(activityId);
     if (!act) return false;
     const now = currentTime ?? Math.floor(Date.now() / 1000);
     return act.startTime <= now && now <= act.endTime;
 }
 
-export function getActivityEventTimes(activityId: string, lookup: ActivityLookup): { start: number; end: number } | null {
+export function getActivityEventTimes(activityId: string, lookup: IActivityLookup): { start: number; end: number } | null {
     const act = lookup.activityById.get(activityId);
     return act ? { start: act.startTime, end: act.endTime } : null;
 }
 
-export function getPermanentZoneName(zoneId: string, lookup: ActivityLookup): string | null {
+export function getPermanentZoneName(zoneId: string, lookup: IActivityLookup): string | null {
     const prefix = getPermanentZonePrefix(zoneId);
     return prefix ? (lookup.retroByZonePrefix.get(prefix)?.name ?? null) : null;
 }
 
-export function getPermanentZoneStartTime(zoneId: string, lookup: ActivityLookup): number {
+export function getPermanentZoneStartTime(zoneId: string, lookup: IActivityLookup): number {
     const prefix = getPermanentZonePrefix(zoneId);
     return prefix ? (lookup.retroByZonePrefix.get(prefix)?.startTime ?? 0) : 0;
 }
 
-export function getPermanentEventInfo(activityId: string, lookup: ActivityLookup): PermanentEvent | null {
+export function getPermanentEventInfo(activityId: string, lookup: IActivityLookup): IPermanentEvent | null {
     const retro = lookup.retroByActivityId.get(activityId);
     if (!retro) return null;
     if (retro.type !== "SIDESTORY" && retro.type !== "BRANCHLINE") return null;
@@ -112,7 +112,7 @@ export function getPermanentEventInfo(activityId: string, lookup: ActivityLookup
     };
 }
 
-export function isPermanentEvent(activityId: string, lookup: ActivityLookup): boolean {
+export function isPermanentEvent(activityId: string, lookup: IActivityLookup): boolean {
     return getPermanentEventInfo(activityId, lookup) !== null;
 }
 

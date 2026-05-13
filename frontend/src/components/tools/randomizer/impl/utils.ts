@@ -2,14 +2,14 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
-import { type ActivityLookup, getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen } from "./activity-lookup";
+import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, type IActivityLookup, isActivityCurrentlyOpen } from "./activity-lookup";
 import { CHALLENGES } from "./challenges";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 
 const HEART_OF_SURGING_FLAME_NAME = "Heart of Surging Flame";
 
-function isHeartOfSurgingFlameStage(zoneId: string, lookup: ActivityLookup): boolean {
+function isHeartOfSurgingFlameStage(zoneId: string, lookup: IActivityLookup): boolean {
     const permanentPrefix = getPermanentZonePrefix(zoneId);
     if (permanentPrefix) {
         const retro = lookup.retroByZonePrefix.get(permanentPrefix);
@@ -28,7 +28,7 @@ function isHeartOfSurgingFlameStage(zoneId: string, lookup: ActivityLookup): boo
     return false;
 }
 
-function shouldIncludeBySanityCost(stage: IStage, lookup: ActivityLookup): boolean {
+function shouldIncludeBySanityCost(stage: IStage, lookup: IActivityLookup): boolean {
     if (stage.apCost > 0) return true;
 
     if (isHeartOfSurgingFlameStage(stage.zoneId, lookup)) {
@@ -41,7 +41,7 @@ function shouldIncludeBySanityCost(stage: IStage, lookup: ActivityLookup): boole
 }
 
 /** Drops 0-AP tutorial/story-only stages (except Heart of Surging Flame playables). */
-export function filterPlayableStages(stages: IStage[], lookup: ActivityLookup): IStage[] {
+export function filterPlayableStages(stages: IStage[], lookup: IActivityLookup): IStage[] {
     return stages.filter((stage) => shouldIncludeBySanityCost(stage, lookup));
 }
 
@@ -83,7 +83,7 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
 /** Zone types whose stages are always available (mainline, retro, daily farming, annihilation). */
 const PERMANENT_ZONE_TYPES = new Set(["MAINLINE", "MAINLINE_ACTIVITY", "MAINLINE_RETRO", "WEEKLY", "CAMPAIGN"]);
 
-export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: ActivityLookup): IStage[] {
+export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: IActivityLookup): IStage[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const deselectedStages = new Set(settings.deselectedStageIds);
     const now = Math.floor(Date.now() / 1000);
@@ -261,7 +261,7 @@ function getActivityIdFromStageId(stageId: string): string | null {
  * Main Story (one per mainline episode), Events (full sidestories / permanent SS/BL),
  * and Other (mini events, sandbox, festivals, etc.).
  */
-export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: ActivityLookup): IStageGroup[] {
+export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActivityLookup): IStageGroup[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const now = Math.floor(Date.now() / 1000);
 

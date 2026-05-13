@@ -1,9 +1,10 @@
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { IRosterEntry } from "#/lib/api/user";
-import { getAvatarById } from "#/lib/utils";
-import type { IAttributeKeyFrame, IEnrichedSkill, IModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
+import { getAvatarById, lerpByLevel } from "#/lib/utils";
+import type { IAttributeKeyFrame, IModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
 import type { IOwnedEntry } from "./types";
 
+export { moduleIconURL, skillIconURL, specializedIcon } from "#/components/operators/detail/impl/assets";
 export { parseOperatorName } from "#/lib/utils";
 
 const MAX_FAVOR_POINT = 25570;
@@ -19,21 +20,6 @@ export function ownedHeroURL(entry: IOwnedEntry): string {
 
 export function rarityIcon(starCount: number): string {
     return asset(`/textures/arts/rarity_hub/rarity_yellow_${starCount - 1}.png`);
-}
-
-export function specializedIcon(level: number): string {
-    return asset(`/textures/arts/specialized_hub/specialized_${level}.png`);
-}
-
-export function skillIconURL(skill: IEnrichedSkill): string {
-    if (skill.static?.image) return asset(skill.static.image);
-    const id = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
-    return asset(`/textures/skill-icons/${id}.png`);
-}
-
-export function moduleIconURL(mod: IModule): string {
-    if (mod.image) return asset(mod.image);
-    return asset(`/textures/spritepack/ui_equip_big_img_hub_0/${mod.uniEquipIcon}.png`);
 }
 
 /**
@@ -104,11 +90,6 @@ export interface IDerivedStats {
     magicResistance: number;
     cost: number;
     blockCnt: number;
-}
-
-function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
-    if (maxLevel === 1) return base;
-    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
 }
 
 function statsAtTrust(frames: IAttributeKeyFrame[] | undefined, raw: number): { maxHp: number; atk: number; def: number } {

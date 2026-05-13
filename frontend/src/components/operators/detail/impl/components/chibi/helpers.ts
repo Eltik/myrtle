@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import type { Spine } from "pixi-spine";
 import { env } from "#/env";
 import type { IChibiCharacter, IChibiSkin, IChibiSpineFiles } from "#/lib/api/chibis";
+import { loadImage } from "#/lib/utils";
 import type { ViewType } from "./constants";
 
 let spineModulesPromise: Promise<{
@@ -49,16 +50,6 @@ export function encodeAssetPath(path: string): string {
 
 function chibiAssetURL(path: string): string {
     return `${env.VITE_BACKEND_URL}/api/assets${encodeAssetPath(path)}`;
-}
-
-function loadImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-        img.src = url;
-    });
 }
 
 /**
@@ -119,7 +110,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     const textureCache = new Map<string, PIXI.BaseTexture>();
     await Promise.all(
         Array.from(pageInfo, async ([pageName, { declaredW, declaredH }]) => {
-            const img = await loadImage(`${atlasBaseDir}${encodeURIComponent(pageName)}`);
+            const img = await loadImage(`${atlasBaseDir}${encodeURIComponent(pageName)}`, { crossOrigin: true });
             textureCache.set(pageName, buildPageTexture(img, declaredW, declaredH));
         }),
     );

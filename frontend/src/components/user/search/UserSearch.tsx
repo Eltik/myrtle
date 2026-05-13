@@ -6,6 +6,7 @@ import { Pagination } from "#/components/operators/list/impl/components/Paginati
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { useDebounce } from "#/hooks/use-debounce";
 import { searchUsersQueryOptions } from "#/lib/api/user";
 import { formatNumber } from "#/lib/utils";
 import { Route } from "#/routes/user.search";
@@ -14,7 +15,6 @@ import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
 import { PAGE_SIZE } from "./impl/constants";
 import { sortBySubstringMatch } from "./impl/sortBySubstringMatch";
 import type { DisplayUser } from "./impl/types";
-import { useDebounce } from "./impl/useDebounce";
 
 export function UserSearch() {
     const { q: initialQ, page: initialPage } = Route.useSearch();

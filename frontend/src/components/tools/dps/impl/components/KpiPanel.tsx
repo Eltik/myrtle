@@ -40,7 +40,7 @@ export function KpiPanel({ instances, snapshots, yMetric }: IKpiPanelProps): Rea
     );
 }
 
-interface KpiRowProps {
+interface IKpiRowProps {
     inst: IDpsInstance;
     snap: IInstanceSnapshot | undefined;
     index: number;
@@ -50,7 +50,7 @@ interface KpiRowProps {
     sameOpCount: number;
 }
 
-function KpiRow({ inst, snap, index, isLeader, leaderValue, yMetric, sameOpCount }: KpiRowProps): React.ReactElement {
+function KpiRow({ inst, snap, index, isLeader, leaderValue, yMetric, sameOpCount }: IKpiRowProps): React.ReactElement {
     const data: IDpsCalculateResponse | undefined = snap?.data;
     const dim = !inst.visible;
     const detail = useOperatorDetail(inst.op.id);

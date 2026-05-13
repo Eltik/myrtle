@@ -5,19 +5,12 @@
 
 import { OG_CONFIG } from "../config";
 
+export { RARITY_HEX as RARITY_COLOR } from "#/lib/utils";
+
 /** Strip protocol/trailing slash for the footer-style display label. */
 export function siteHost(): string {
     return OG_CONFIG.siteURL.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
-
-export const RARITY_COLOR: Record<number, string> = {
-    6: "#f7a452",
-    5: "#f7e79e",
-    4: "#bcabdb",
-    3: "#88c8e3",
-    2: "#7ef2a3",
-    1: "#ffffff",
-};
 
 export const FG = "#f7f9fb";
 export const FG_70 = "rgba(247,249,251,0.70)";

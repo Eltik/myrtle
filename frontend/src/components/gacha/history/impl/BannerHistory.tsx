@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ClientGachaGroup, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
-import { formatNumber } from "#/lib/utils";
+import { formatNumber, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
 interface IBannerHistoryProps {
@@ -19,36 +19,6 @@ const TABS: { key: ClientGachaGroup; label: string }[] = [
 ];
 
 const PAGE_SIZE = 50;
-
-function rarityGradient(star: number): string {
-    switch (star) {
-        case 6:
-            return "linear-gradient(155deg,#f7d166,#f59e0b)";
-        case 5:
-            return "linear-gradient(155deg,#f7e79e,#d4b94a)";
-        case 4:
-            return "linear-gradient(155deg,#bcabdb,#8a72ad)";
-        case 3:
-            return "linear-gradient(155deg,#88c8e3,#5a9bbf)";
-        default:
-            return "linear-gradient(155deg,#cfcfcf,#9a9a9a)";
-    }
-}
-
-function rarityStarColor(star: number): string {
-    switch (star) {
-        case 6:
-            return "#f7a452";
-        case 5:
-            return "#f7e79e";
-        case 4:
-            return "#bcabdb";
-        case 3:
-            return "#88c8e3";
-        default:
-            return "#b5b5b5";
-    }
-}
 
 function fmtDateTime(ts: number): string {
     if (!ts) return "-";

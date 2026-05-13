@@ -1,3 +1,5 @@
+import { downloadBlob, loadImage } from "#/lib/utils";
+
 /**
  * Render an in-DOM SVG element to a PNG and trigger a browser download.
  *
@@ -314,13 +316,13 @@ function buildLegendBlock(entries: ILegendEntry[], width: number, color: string,
     const measurements = measureLegendWidths(entries);
     const maxRowWidth = Math.max(50, width - 2 * LEGEND_PAD_X);
 
-    interface Row {
+    interface IRow {
         items: { entry: ILegendEntry; widths: { label: number; sub: number; total: number } }[];
         width: number;
     }
 
-    const rows: Row[] = [];
-    let current: Row = { items: [], width: 0 };
+    const rows: IRow[] = [];
+    let current: IRow = { items: [], width: 0 };
     rows.push(current);
     for (let i = 0; i < entries.length; i++) {
         const w = measurements[i].total;
@@ -409,25 +411,4 @@ function measureText(host: SVGSVGElement, text: string, fontFamily: string, font
     const w = t.getBBox().width;
     host.removeChild(t);
     return w;
-}
-
-function loadImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = (err) => reject(err instanceof Error ? err : new Error("Failed to load SVG image"));
-        img.src = url;
-    });
-}
-
-function downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
 }

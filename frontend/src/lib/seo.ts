@@ -1,6 +1,6 @@
 import { OG_CONFIG } from "#/lib/og/impl/config";
 
-export interface SeoInput {
+export interface ISeoInput {
     title: string;
     description?: string;
     image?: string;
@@ -12,18 +12,18 @@ export interface SeoInput {
     preloadImage?: boolean;
 }
 
-export interface SeoOutput {
+export interface ISeoOutput {
     meta: Array<{ title?: string; name?: string; property?: string; content?: string }>;
     links: Array<{ rel: string; href: string; as?: string }>;
 }
 
-export function seo(input: SeoInput): SeoOutput {
+export function seo(input: ISeoInput): ISeoOutput {
     const fullTitle = input.title.includes(OG_CONFIG.siteName) ? input.title : `${input.title} • ${OG_CONFIG.siteName}`;
     const image = absolute(input.image ?? OG_CONFIG.defaultImage);
     const url = absolute(input.path ?? "/");
     const description = input.description;
 
-    const meta: SeoOutput["meta"] = [
+    const meta: ISeoOutput["meta"] = [
         { title: fullTitle },
         { property: "og:title", content: fullTitle },
         { property: "og:url", content: url },
@@ -41,7 +41,7 @@ export function seo(input: SeoInput): SeoOutput {
 
     if (input.noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
-    const links: SeoOutput["links"] = [{ rel: "canonical", href: url }];
+    const links: ISeoOutput["links"] = [{ rel: "canonical", href: url }];
     if (input.preloadImage && input.image) links.push({ rel: "preload", as: "image", href: image });
 
     return { meta, links };

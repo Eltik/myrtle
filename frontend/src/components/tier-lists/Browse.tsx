@@ -7,7 +7,7 @@ import { useDebounce } from "#/hooks/use-debounce";
 import { browseTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn } from "#/lib/api/tier-lists";
 import { Route } from "#/routes/tier-lists";
 import BrowseCard from "./BrowseCard";
-import { FilterToolbar, type FlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
+import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
 import { Hero } from "./Hero";
 import { OfficialRail } from "./OfficialRail";
 import { TrendingStrip } from "./TrendingStrip";
@@ -85,8 +85,8 @@ export function Browse() {
         [recordView],
     );
 
-    const flairOptions = useMemo<FlairOption[]>(() => {
-        const seen = new Map<string, FlairOption>();
+    const flairOptions = useMemo<IFlairOption[]>(() => {
+        const seen = new Map<string, IFlairOption>();
         for (const list of allLists) {
             if (list.flairCode && !seen.has(list.flairCode)) {
                 seen.set(list.flairCode, { code: list.flairCode, label: list.flairLabel ?? list.flairCode, color: list.flairColor });

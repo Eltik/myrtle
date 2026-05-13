@@ -356,6 +356,10 @@ pub async fn record_view(
         (None, None) => false,
     };
 
+    if dedupe_exists {
+        return Ok(false);
+    }
+
     sqlx::query(
         "INSERT INTO tier_list_view_events (tier_list_id, user_id, session_hash) VALUES ($1,$2,$3)",
     )
@@ -365,30 +369,17 @@ pub async fn record_view(
     .execute(pool)
     .await?;
 
-    if dedupe_exists {
-        // Raw counter bumps still happen; unique counter does not
-        sqlx::query(
-            "UPDATE tier_list_stats SET view_count = view_count + 1,
+    sqlx::query(
+        "UPDATE tier_list_stats
+        SET view_count = view_count + 1,
+            unique_view_count = unique_view_count + 1,
             last_viewed_at = NOW()
-            WHERE tier_list_id = $1",
-        )
-        .bind(tier_list_id)
-        .execute(pool)
-        .await?;
-        Ok(false)
-    } else {
-        sqlx::query(
-            "UPDATE tier_list_stats
-            SET view_count = view_count + 1,
-                unique_view_count = unique_view_count + 1,
-                last_viewed_at = NOW()
-            WHERE tier_list_id = $1",
-        )
-        .bind(tier_list_id)
-        .execute(pool)
-        .await?;
-        Ok(true)
-    }
+        WHERE tier_list_id = $1",
+    )
+    .bind(tier_list_id)
+    .execute(pool)
+    .await?;
+    Ok(true)
 }
 
 pub async fn bump_share(pool: &PgPool, tier_list_id: Uuid) -> Result<(), sqlx::Error> {

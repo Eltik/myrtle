@@ -3,19 +3,19 @@ import { cn } from "#/lib/utils";
 import type { TabId } from "../types";
 import styles from "./ProfileTabs.module.css";
 
-interface Tab {
+interface ITab {
     id: string;
     label: string;
     count?: number;
 }
 
-interface ProfileTabsProps {
-    tabs: Tab[];
+interface IProfileTabsProps {
+    tabs: ITab[];
     active: string;
     onChange: Dispatch<SetStateAction<TabId>>;
 }
 
-export function ProfileTabs({ tabs, active, onChange }: ProfileTabsProps) {
+export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
     const wrapRef = useRef<HTMLDivElement>(null);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
