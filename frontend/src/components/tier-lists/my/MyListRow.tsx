@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon, ExternalLinkIcon, HeartIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
@@ -88,6 +88,10 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                     <MenuItem render={<Link to="/tier-lists/$id" params={{ id: tl.slug }} />}>
                         <ExternalLinkIcon />
                         Open
+                    </MenuItem>
+                    <MenuItem render={<Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} />}>
+                        <LayoutGridIcon />
+                        Edit Tierlist
                     </MenuItem>
                     <MenuItem onClick={() => onEdit(tl.slug)}>
                         <PencilIcon />

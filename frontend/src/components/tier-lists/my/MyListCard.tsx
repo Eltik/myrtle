@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon, ExternalLinkIcon, HeartIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import type { IOperator } from "#/components/home/impl/data";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -101,6 +101,10 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                             <MenuItem render={<Link to="/tier-lists/$id" params={{ id: tl.slug }} />}>
                                 <ExternalLinkIcon />
                                 Open
+                            </MenuItem>
+                            <MenuItem render={<Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} />}>
+                                <LayoutGridIcon />
+                                Edit Tierlist
                             </MenuItem>
                             <MenuItem onClick={() => onEdit(tl.slug)}>
                                 <PencilIcon />
