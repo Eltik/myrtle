@@ -17,6 +17,7 @@ import { formatProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
 import { indexEntryToTierOperator } from "../shared";
 import { hasOperatorDrag, readOperatorDrag } from "./dnd";
+import { useAnyDragLifted, usePoolIsOver } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
 
@@ -35,8 +36,11 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
     const [rarities, setRarities] = useState<number[]>([]);
     const [classes, setClasses] = useState<OperatorProfession[]>([]);
     const [hideUsed, setHideUsed] = useState(true);
-    const [isDragOver, setDragOver] = useState(false);
+    const [mouseDragOver, setMouseDragOver] = useState(false);
     const dropRef = useRef<HTMLElement | null>(null);
+    const touchIsOver = usePoolIsOver();
+    const anyDragLifted = useAnyDragLifted();
+    const isDragOver = touchIsOver || mouseDragOver;
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -62,18 +66,18 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
         if (!hasOperatorDrag(e)) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-        setDragOver(true);
+        setMouseDragOver(true);
     }, []);
 
     const handleLeave = useCallback((e: React.DragEvent) => {
         const related = e.relatedTarget as Node | null;
         if (related && dropRef.current?.contains(related)) return;
-        setDragOver(false);
+        setMouseDragOver(false);
     }, []);
 
     const handleDrop = useCallback(
         (e: React.DragEvent) => {
-            setDragOver(false);
+            setMouseDragOver(false);
             const payload = readOperatorDrag(e);
             if (!payload) return;
             e.preventDefault();
@@ -159,6 +163,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
 
                 <section
                     ref={dropRef}
+                    data-tl-drop-pool=""
                     className="relative isolate flex min-h-32 flex-1 flex-col overflow-hidden rounded-lg border border-dashed border-border/70 bg-muted/20 transition-colors"
                     data-drag-over={isDragOver || undefined}
                     style={isDragOver ? { borderStyle: "solid", borderColor: "var(--ring)", background: "color-mix(in srgb, var(--ring) 8%, transparent)" } : undefined}
@@ -212,7 +217,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                     )}
                 </section>
 
-                <p className="m-0 font-sans text-muted-foreground text-xs leading-snug">Drag a tile onto a tier, or click it to pick a tier.</p>
+                <p className="m-0 font-sans text-muted-foreground text-xs leading-snug">{anyDragLifted ? <span className="font-medium text-foreground">Drop on a tier to place, or release here to unplace.</span> : <>Drag a tile onto a tier, or tap to pick one.</>}</p>
             </div>
         </TooltipProvider>
     );

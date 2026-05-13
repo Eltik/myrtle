@@ -7,6 +7,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, type ITierOperator, TierListApiError, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { indexEntryToTierOperator } from "../shared";
+import { DragControllerProvider } from "./drag-controller";
 import { EditHero } from "./EditHero";
 import styles from "./Editor.module.css";
 import { EditTierRow } from "./EditTierRow";
@@ -165,61 +166,63 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     );
 
     return (
-        <main className="min-h-dvh pb-24">
-            <EditHero
-                slug={slug}
-                title={state.title}
-                description={state.description}
-                onTitleChange={(title) => dispatch({ type: "SET_META", title, description: state.description })}
-                onDescriptionChange={(description) => dispatch({ type: "SET_META", title: state.title, description })}
-                onSave={handleSave}
-                onReset={handleReset}
-                onAddTier={handleAddTier}
-                pendingChanges={pendingChanges}
-                saving={saveMutation.isPending}
-                saveError={saveError}
-                saveProgress={saveProgress}
-            />
+        <DragControllerProvider operatorById={operatorById} onPlace={handlePlace} onUnplace={handleUnplace}>
+            <main className="min-h-dvh pb-24">
+                <EditHero
+                    slug={slug}
+                    title={state.title}
+                    description={state.description}
+                    onTitleChange={(title) => dispatch({ type: "SET_META", title, description: state.description })}
+                    onDescriptionChange={(description) => dispatch({ type: "SET_META", title: state.title, description })}
+                    onSave={handleSave}
+                    onReset={handleReset}
+                    onAddTier={handleAddTier}
+                    pendingChanges={pendingChanges}
+                    saving={saveMutation.isPending}
+                    saveError={saveError}
+                    saveProgress={saveProgress}
+                />
 
-            <div className="mx-auto mt-4 grid w-[min(1280px,calc(100%-1.5rem))] gap-4 sm:mt-6 sm:w-[min(1280px,calc(100%-2rem))] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-                <div className="min-w-0">
-                    <section className={styles.board} aria-label={`Edit board for ${state.title}`}>
-                        {state.tiers.map((tier, idx) => (
-                            <EditTierRow
-                                key={tier.id}
-                                tier={tier}
-                                operators={tier.operatorIds.map((id) => operatorById[id])}
-                                canMoveUp={idx > 0}
-                                canMoveDown={idx < state.tiers.length - 1}
-                                onMoveUp={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "up" })}
-                                onMoveDown={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "down" })}
-                                onOpenSettings={() => setEditingTier(tier)}
-                                onPlace={handlePlace}
-                                onUnplace={handleUnplace}
-                                onActivateOperator={handleActivateOperator}
-                            />
-                        ))}
-                    </section>
-                    {state.tiers.length === 0 && (
-                        <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/20 px-5 py-10 text-center">
-                            <p className="m-0 font-sans text-sm font-medium text-foreground">No tiers yet.</p>
-                            <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Create your first tier to start ranking operators.</p>
-                            <Button onClick={handleAddTier} size="sm" className="mt-3">
-                                Add tier
-                            </Button>
-                        </div>
-                    )}
+                <div className="mx-auto mt-4 grid w-[min(1280px,calc(100%-1.5rem))] gap-4 sm:mt-6 sm:w-[min(1280px,calc(100%-2rem))] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+                    <div className="min-w-0">
+                        <section className={styles.board} aria-label={`Edit board for ${state.title}`}>
+                            {state.tiers.map((tier, idx) => (
+                                <EditTierRow
+                                    key={tier.id}
+                                    tier={tier}
+                                    operators={tier.operatorIds.map((id) => operatorById[id])}
+                                    canMoveUp={idx > 0}
+                                    canMoveDown={idx < state.tiers.length - 1}
+                                    onMoveUp={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "up" })}
+                                    onMoveDown={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "down" })}
+                                    onOpenSettings={() => setEditingTier(tier)}
+                                    onPlace={handlePlace}
+                                    onUnplace={handleUnplace}
+                                    onActivateOperator={handleActivateOperator}
+                                />
+                            ))}
+                        </section>
+                        {state.tiers.length === 0 && (
+                            <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/20 px-5 py-10 text-center">
+                                <p className="m-0 font-sans text-sm font-medium text-foreground">No tiers yet.</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Create your first tier to start ranking operators.</p>
+                                <Button onClick={handleAddTier} size="sm" className="mt-3">
+                                    Add tier
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    <aside className="lg:sticky lg:top-20 lg:h-[calc(100dvh-6rem)]">
+                        <OperatorPool operators={operators} placedIds={placedIds} onUnplace={handleUnplace} onPickerActivate={handleActivateOperator} />
+                    </aside>
                 </div>
 
-                <aside className="lg:sticky lg:top-20 lg:h-[calc(100dvh-6rem)]">
-                    <OperatorPool operators={operators} placedIds={placedIds} onUnplace={handleUnplace} onPickerActivate={handleActivateOperator} />
-                </aside>
-            </div>
+                <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} />
 
-            <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} />
-
-            <PickTierDialog operator={picker?.operator ?? null} currentTierId={picker?.currentTierId ?? null} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} />
-        </main>
+                <PickTierDialog operator={picker?.operator ?? null} currentTierId={picker?.currentTierId ?? null} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} />
+            </main>
+        </DragControllerProvider>
     );
 }
 
