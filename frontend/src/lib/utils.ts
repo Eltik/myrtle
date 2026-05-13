@@ -129,7 +129,7 @@ export const formatSubProfession = (subProfession: string): string => {
         case "guardian":
             return "Guardian Defender";
         case "unyield":
-            return "Juggernaught Defender";
+            return "Juggernaut Defender";
         case "primprotector":
             return "Primal Protector Defender";
         case "protector":

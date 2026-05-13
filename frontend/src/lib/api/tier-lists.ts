@@ -752,14 +752,44 @@ export class TierListApiError extends Error {
 }
 
 async function parseError(res: Response): Promise<TierListApiError> {
-    let message = `Request failed: ${res.status}`;
+    const fallback = `Request failed: ${res.status}`;
     try {
-        const data = (await res.json()) as { error?: string; message?: string };
-        message = data.error ?? data.message ?? message;
+        const data = (await res.json()) as unknown;
+        return new TierListApiError(res.status, extractErrorMessage(data) ?? fallback);
     } catch {
-        // Body wasn't JSON; keep the default message.
+        return new TierListApiError(res.status, fallback);
     }
-    return new TierListApiError(res.status, message);
+}
+
+/**
+ * Pull a human-readable message out of a typical backend error body. Handles
+ * `{ error: "..." }`, `{ message: "..." }`, `{ error: { message } }`, and
+ * arrays of validation errors. Falls back to a JSON dump rather than letting
+ * "[object Object]" reach the UI.
+ */
+function extractErrorMessage(data: unknown): string | null {
+    if (data == null) return null;
+    if (typeof data === "string") return data;
+    if (typeof data !== "object") return String(data);
+    const obj = data as Record<string, unknown>;
+    const directKeys = ["error", "message", "detail", "error_message"] as const;
+    for (const key of directKeys) {
+        const v = obj[key];
+        if (typeof v === "string" && v.trim()) return v;
+        if (v && typeof v === "object") {
+            const nested = extractErrorMessage(v);
+            if (nested) return nested;
+        }
+    }
+    if (Array.isArray(obj.errors)) {
+        const parts = obj.errors.map((e) => extractErrorMessage(e)).filter((m): m is string => Boolean(m));
+        if (parts.length > 0) return parts.join("; ");
+    }
+    try {
+        return JSON.stringify(data);
+    } catch {
+        return null;
+    }
 }
 
 function requireSiteToken(): string {
