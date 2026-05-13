@@ -1,5 +1,6 @@
 import type * as PIXI from "pixi.js";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { downloadBlob } from "#/lib/utils";
 import { ANIMATION_SPEED, type IExportSettings } from "./constants";
 import type { ExportFormat } from "./recorder";
 
@@ -15,20 +16,6 @@ interface IUseRecorderReturn {
     progress: number;
     startRecording: (format: ExportFormat, settings?: Partial<IExportSettings>) => Promise<void>;
     cancelRecording: () => void;
-}
-
-function downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    // Defer revocation: some browsers (notably older Safari) cancel the
-    // download if the URL is revoked synchronously after click().
-    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function useRecorder({ appRef, spineRef, selectedAnimation, recordingRef }: IUseRecorderOptions): IUseRecorderReturn {

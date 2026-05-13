@@ -1,8 +1,9 @@
+import { Link } from "@tanstack/react-router";
 import type { IOperator } from "#/components/home/impl/data";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
-import { formatNumberCompact, getAvatarById } from "#/lib/utils";
+import { FALLBACK_TIER_COLORS, formatNumberCompact, getAvatarById } from "#/lib/utils";
 import styles from "./BrowseCard.module.css";
 
 const MAX_THUMB_TIERS = 5;
@@ -11,26 +12,24 @@ const DEFAULT_OPS_PER_ROW = 9;
 
 type Size = "default" | "trending";
 
-interface Props {
+interface IBrowseCardProps {
     tl: ITierListBrowseItem;
     size?: Size;
     rank?: number;
     onOpen?: (slug: string) => void;
 }
 
-interface ThumbRow {
+interface IThumbRow {
     name: string;
     color: string;
     visible: IOperator[];
     overflow: number;
 }
 
-const FALLBACK_TIER_COLORS = ["oklch(0.62 0.21 24)", "oklch(0.70 0.17 50)", "oklch(0.78 0.15 92)", "oklch(0.66 0.17 150)", "oklch(0.60 0.15 230)", "oklch(0.55 0.18 290)", "oklch(0.50 0.04 285)"];
-
-function buildThumb(tl: ITierListBrowseItem): ThumbRow[] {
+function buildThumb(tl: ITierListBrowseItem): IThumbRow[] {
     const slice = tl.tiers.slice(0, MAX_THUMB_TIERS);
     const opsPerRow = OPS_PER_ROW_BY_COUNT[slice.length] ?? DEFAULT_OPS_PER_ROW;
-    return slice.map((t, idx): ThumbRow => {
+    return slice.map((t, idx): IThumbRow => {
         const color = t.color ?? FALLBACK_TIER_COLORS[idx % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
         const visible = t.operators.slice(0, opsPerRow);
         const overflow = Math.max(0, t.operators.length - visible.length);
@@ -38,7 +37,7 @@ function buildThumb(tl: ITierListBrowseItem): ThumbRow[] {
     });
 }
 
-export default function BrowseCard({ tl, size = "default", rank, onOpen }: Props) {
+export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrowseCardProps) {
     const rows = buildThumb(tl);
     const isOfficial = tl.listType === "official";
     const trending = size === "trending";
@@ -48,17 +47,7 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: Props
     const showFlair = !isOfficial && Boolean(tl.flairLabel);
 
     return (
-        <article
-            className={`${styles.card} group`}
-            aria-labelledby={`tl-${tl.id}-title`}
-            onClick={() => onOpen?.(tl.slug)}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onOpen?.(tl.slug);
-                }
-            }}
-        >
+        <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`} onClick={() => onOpen?.(tl.slug)}>
             <div className={styles.thumb} data-rows={hasOps ? rows.length : 0}>
                 {showCornerRibbon && (
                     <span className={styles.cornerRibbon}>
@@ -149,6 +138,6 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: Props
                     </span>
                 </div>
             </div>
-        </article>
+        </Link>
     );
 }

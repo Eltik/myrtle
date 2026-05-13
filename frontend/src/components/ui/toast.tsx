@@ -205,11 +205,11 @@ export const anchoredToastManager: ReturnType<typeof Toast.createToastManager> =
 
 export type ToastPosition = "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
 
-export interface ToastProviderProps extends Toast.Provider.Props {
+export interface IToastProviderProps extends Toast.Provider.Props {
     position?: ToastPosition;
 }
 
-export function ToastProvider({ children, position = "bottom-right", ...props }: ToastProviderProps): React.ReactElement {
+export function ToastProvider({ children, position = "bottom-right", ...props }: IToastProviderProps): React.ReactElement {
     return (
         <Toast.Provider toastManager={toastManager} {...props}>
             {children}

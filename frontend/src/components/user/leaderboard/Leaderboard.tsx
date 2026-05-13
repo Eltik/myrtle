@@ -4,11 +4,11 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { useAuth } from "#/hooks/use-auth";
+import { useDebounce } from "#/hooks/use-debounce";
 import { leaderboardMoversQueryOptions, leaderboardQueryOptions, playerStandingQueryOptions } from "#/lib/api/user";
 // import { leaderboardDistributionQueryOptions } from "#/lib/api/user"; // hidden: server share
 import { formatNumber } from "#/lib/utils";
 import { Route } from "#/routes/user.leaderboard";
-import { useDebounce } from "../search/impl/useDebounce";
 import { Hero } from "./impl/components/Hero";
 import { LeaderboardTable, LeaderboardTableSkeleton } from "./impl/components/LeaderboardTable";
 import { MoversCard } from "./impl/components/MoversCard";

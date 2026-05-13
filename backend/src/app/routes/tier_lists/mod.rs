@@ -47,6 +47,7 @@ pub fn router() -> Router<AppState> {
         // Stats & engagement
         .route("/tier-lists/{slug}/view", post(stats::record_view))
         .route("/tier-lists/{slug}/stats", get(stats::get_stats))
+        .route("/tier-lists/{slug}/favorite", get(stats::get_favorite))
         .route("/tier-lists/{slug}/favorite", post(stats::toggle_favorite))
         .route("/tier-lists/{slug}/flair", put(stats::set_flair))
         // Flair catalog (admin + public read)

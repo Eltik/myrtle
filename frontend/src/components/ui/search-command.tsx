@@ -21,7 +21,7 @@ import { formatNumber, getAvatarById } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 
-interface SearchCommandProps {
+interface ISearchCommandProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }
@@ -33,7 +33,7 @@ const MAX_PLAYERS = 6;
 const PLAYER_QUERY_MIN = 2;
 const PLAYER_DEBOUNCE_MS = 220;
 
-export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React.ReactElement {
+export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): React.ReactElement {
     const [query, setQuery] = React.useState("");
     const navigate = useNavigate();
     const debouncedQuery = useDebounce(query.trim(), PLAYER_DEBOUNCE_MS);

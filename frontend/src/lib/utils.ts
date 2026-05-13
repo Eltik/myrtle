@@ -449,3 +449,112 @@ export function capitalize(s: string): string {
     if (!s) return "";
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
+
+export const DEFAULT_AVATAR_ID = "char_002_amiya";
+
+export function formatRelative(iso: string | null | undefined): string {
+    if (!iso) return "—";
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return "—";
+    const diffMs = Date.now() - then;
+    if (diffMs < 60_000) return "just now";
+    const mins = Math.floor(diffMs / 60_000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return "yesterday";
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks === 1) return "last week";
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+}
+
+export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
+    if (maxLevel <= 1) return base;
+    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function loadImage(url: string, options?: { crossOrigin?: boolean }): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        if (options?.crossOrigin) img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+    });
+}
+
+export function rarityGradient(rarity: number): string {
+    switch (rarity) {
+        case 6:
+            return "linear-gradient(155deg,#f7d166,#f59e0b)";
+        case 5:
+            return "linear-gradient(155deg,#f7e79e,#d4b94a)";
+        case 4:
+            return "linear-gradient(155deg,#bcabdb,#8a72ad)";
+        case 3:
+            return "linear-gradient(155deg,#88c8e3,#5a9bbf)";
+        case 2:
+            return "linear-gradient(155deg,#7ef2a3,#4fc97a)";
+        default:
+            return "linear-gradient(155deg,#cfcfcf,#9a9a9a)";
+    }
+}
+
+export const RARITY_HEX: Record<number, string> = {
+    6: "#f7a452",
+    5: "#f7e79e",
+    4: "#bcabdb",
+    3: "#88c8e3",
+    2: "#7ef2a3",
+    1: "#ffffff",
+};
+
+export const RARITY_HEX_MUTED: Record<number, string> = {
+    ...RARITY_HEX,
+    1: "#b5b5b5",
+};
+
+export const RARITY_LABELS: Record<number, string> = {
+    6: "6★",
+    5: "5★",
+    4: "4★",
+    3: "3★",
+    2: "2★",
+    1: "1★",
+};
+
+export const FALLBACK_TIER_COLORS = ["oklch(0.62 0.21 24)", "oklch(0.70 0.17 50)", "oklch(0.78 0.15 92)", "oklch(0.66 0.17 150)", "oklch(0.60 0.15 230)", "oklch(0.55 0.18 290)", "oklch(0.50 0.04 285)"] as const;
+
+export function rarityStarColor(rarity: number): string {
+    switch (rarity) {
+        case 6:
+            return "#f7a452";
+        case 5:
+            return "#f7e79e";
+        case 4:
+            return "#bcabdb";
+        case 3:
+            return "#88c8e3";
+        case 2:
+            return "#7ef2a3";
+        default:
+            return "#b5b5b5";
+    }
+}

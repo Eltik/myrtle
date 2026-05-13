@@ -1,13 +1,13 @@
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import BrowseCard from "./BrowseCard";
 
-interface Props {
+interface ITrendingStripProps {
     lists: ITierListBrowseItem[];
     onOpen: (slug: string) => void;
     isTrendingMode: boolean;
 }
 
-export function TrendingStrip({ lists, onOpen, isTrendingMode }: Props) {
+export function TrendingStrip({ lists, onOpen, isTrendingMode }: ITrendingStripProps) {
     if (lists.length === 0) return null;
 
     return (

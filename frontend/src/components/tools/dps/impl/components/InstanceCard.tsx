@@ -348,14 +348,14 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
     );
 }
 
-interface IconChipProps {
+interface IIconChipProps {
     selected: boolean;
     label: string;
     iconURL: string;
     onClick: () => void;
 }
 
-function IconChip({ selected, label, iconURL, onClick }: IconChipProps): React.ReactElement {
+function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.ReactElement {
     return (
         <button
             type="button"
@@ -408,7 +408,7 @@ function mapConditionalKey(cond: IDpsConditionalInfo): keyof IDpsCalculateCondit
     }
 }
 
-interface NumFieldProps {
+interface INumFieldProps {
     label: string;
     value: number;
     min?: number;
@@ -417,7 +417,7 @@ interface NumFieldProps {
     onChange: (value: number) => void;
 }
 
-function NumField({ label, value, min, max, step = 1, onChange }: NumFieldProps): React.ReactElement {
+function NumField({ label, value, min, max, step = 1, onChange }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size="sm" className="gap-1">
             <Label className="block font-medium text-[11px] leading-none text-muted-foreground">{label}</Label>

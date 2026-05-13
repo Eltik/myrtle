@@ -101,13 +101,13 @@ export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading
     );
 }
 
-interface TooltipPayload {
+interface ITooltipPayload {
     active?: boolean;
     label?: number | string;
     payload?: { dataKey?: string; value?: number; color?: string }[];
 }
 
-function DpsTooltip({ instances, xAxis, yMetric, ...rest }: TooltipPayload & { instances: IDpsInstance[]; xAxis: XAxisKind; yMetric: YMetric }): React.ReactElement | null {
+function DpsTooltip({ instances, xAxis, yMetric, ...rest }: ITooltipPayload & { instances: IDpsInstance[]; xAxis: XAxisKind; yMetric: YMetric }): React.ReactElement | null {
     if (!rest.active || !rest.payload || rest.payload.length === 0) return null;
 
     const xValue = rest.label;

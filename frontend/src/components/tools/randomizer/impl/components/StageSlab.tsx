@@ -3,7 +3,7 @@ import type React from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import type { IStage, IZone } from "#/types/stages";
-import { type ActivityLookup, getActivityIdFromZoneId, getEventNameFromZoneId, getPermanentZoneName } from "../activity-lookup";
+import { getActivityIdFromZoneId, getEventNameFromZoneId, getPermanentZoneName, type IActivityLookup } from "../activity-lookup";
 import { getZoneDisplayName } from "../utils";
 import { SlabFrame } from "./SlabFrame";
 import { StagePreview } from "./StagePreview";
@@ -11,11 +11,11 @@ import { StagePreview } from "./StagePreview";
 interface IStageSlabProps {
     stage: IStage;
     zone: IZone | undefined;
-    lookup: ActivityLookup;
+    lookup: IActivityLookup;
     onReroll: () => void;
 }
 
-function resolveZoneLabel(stage: IStage, zone: IZone | undefined, lookup: ActivityLookup): { display: string; family: string | null } {
+function resolveZoneLabel(stage: IStage, zone: IZone | undefined, lookup: IActivityLookup): { display: string; family: string | null } {
     const display = getZoneDisplayName(zone, stage.zoneId);
     const permanent = getPermanentZoneName(stage.zoneId, lookup);
     if (permanent) return { display: permanent, family: display };

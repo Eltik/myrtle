@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
-import { formatNumber, formatProfession } from "#/lib/utils";
+import { formatNumber, formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { fmtPct } from "./format";
 
@@ -127,38 +127,4 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
             </table>
         </div>
     );
-}
-
-function rarityGradient(rarity: number): string {
-    switch (rarity) {
-        case 6:
-            return "linear-gradient(155deg,#f7d166,#f59e0b)";
-        case 5:
-            return "linear-gradient(155deg,#f7e79e,#d4b94a)";
-        case 4:
-            return "linear-gradient(155deg,#bcabdb,#8a72ad)";
-        case 3:
-            return "linear-gradient(155deg,#88c8e3,#5a9bbf)";
-        case 2:
-            return "linear-gradient(155deg,#7ef2a3,#4fc97a)";
-        default:
-            return "linear-gradient(155deg,#cfcfcf,#9a9a9a)";
-    }
-}
-
-function rarityStarColor(rarity: number): string {
-    switch (rarity) {
-        case 6:
-            return "#f7a452";
-        case 5:
-            return "#f7e79e";
-        case 4:
-            return "#bcabdb";
-        case 3:
-            return "#88c8e3";
-        case 2:
-            return "#7ef2a3";
-        default:
-            return "#b5b5b5";
-    }
 }

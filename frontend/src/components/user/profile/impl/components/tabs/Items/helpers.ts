@@ -1,14 +1,7 @@
 import type { IMaterialItem } from "#/lib/api/materials";
 import type { ItemCategory } from "./types";
 
-export const RARITY_COLORS: Record<number, string> = {
-    6: "#f7a452",
-    5: "#f7e79e",
-    4: "#bcabdb",
-    3: "#88c8e3",
-    2: "#7ef2a3",
-    1: "#b5b5b5",
-};
+export { RARITY_HEX_MUTED as RARITY_COLORS } from "#/lib/utils";
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
     all: "All",

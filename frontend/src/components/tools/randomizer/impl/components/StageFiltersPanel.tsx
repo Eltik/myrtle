@@ -6,7 +6,7 @@ import { Input } from "#/components/ui/input";
 import { Switch } from "#/components/ui/switch";
 import { cn } from "#/lib/utils";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
-import type { ActivityLookup } from "../activity-lookup";
+import type { IActivityLookup } from "../activity-lookup";
 import type { IRandomizerSettings } from "../types";
 import { buildStageGroups, type IStageGroup, isStageCleared, STAGE_SECTION_LABEL, type StageGroupSection } from "../utils";
 
@@ -16,7 +16,7 @@ interface IStageFiltersPanelProps {
     hasProfile: boolean;
     stages: IStage[];
     zones: IZone[];
-    activityLookup: ActivityLookup;
+    activityLookup: IActivityLookup;
     stageClears: StageClearsMap | null;
 }
 

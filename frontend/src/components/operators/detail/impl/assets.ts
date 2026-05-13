@@ -1,4 +1,5 @@
 import { env } from "#/env";
+import type { IEnrichedSkill, IModule } from "#/types/operators";
 
 export function asset(path: string | null | undefined, fallback?: string): string {
     if (!path && !fallback) return "";
@@ -43,4 +44,19 @@ export function itemIcon(id: string, iconId: string | null | undefined, image: s
 
 export function voiceAudio(voiceURL: string): string {
     return `${env.VITE_BACKEND_URL}/api/assets/audio${voiceURL}`;
+}
+
+export function skillIconURL(skill: IEnrichedSkill): string {
+    if (skill.static?.image) return asset(skill.static.image);
+    const id = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
+    return asset(`/textures/skill-icons/${id}.png`);
+}
+
+export function moduleIconURL(mod: IModule): string {
+    if (mod.image) return asset(mod.image);
+    return asset(`/textures/spritepack/ui_equip_big_img_hub_0/${mod.uniEquipIcon}.png`);
+}
+
+export function specializedIcon(level: number): string {
+    return asset(`/textures/arts/specialized_hub/specialized_${level}.png`);
 }

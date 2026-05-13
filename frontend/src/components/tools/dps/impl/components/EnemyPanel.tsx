@@ -102,7 +102,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeShred
     );
 }
 
-interface NumFieldProps {
+interface INumFieldProps {
     label: string;
     value: number;
     min?: number;
@@ -112,7 +112,7 @@ interface NumFieldProps {
     compact?: boolean;
 }
 
-function NumField({ label, value, min, max, step = 1, onChange, compact = false }: NumFieldProps): React.ReactElement {
+function NumField({ label, value, min, max, step = 1, onChange, compact = false }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size={compact ? "sm" : "default"}>
             <Label className="block font-medium text-[12px] leading-none text-muted-foreground">{label}</Label>

@@ -1,3 +1,4 @@
+import { lerpByLevel } from "#/lib/utils";
 import type { IAttributeData, IBlackboard, IDrone, IOperatorListItem, IOperatorModule, IOperatorPhase, ISkillLevel, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
 
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
@@ -15,11 +16,6 @@ export function combinedDescriptionBlackboard(operator: IOperatorListItem): { ke
         if (candidate?.blackboard) talentBlackboards.push(...candidate.blackboard);
     }
     return blackboardKeyMap(talentBlackboards);
-}
-
-function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
-    if (maxLevel <= 1) return base;
-    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
 }
 
 interface IStatsContext {

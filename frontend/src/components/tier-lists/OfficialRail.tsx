@@ -1,13 +1,13 @@
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import BrowseCard from "./BrowseCard";
 
-interface Props {
+interface IOfficialRailProps {
     lists: ITierListBrowseItem[];
     onOpen: (slug: string) => void;
     onViewAll: () => void;
 }
 
-export function OfficialRail({ lists, onOpen, onViewAll }: Props) {
+export function OfficialRail({ lists, onOpen, onViewAll }: IOfficialRailProps) {
     if (lists.length === 0) return null;
 
     return (

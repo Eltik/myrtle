@@ -4,11 +4,9 @@ import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
-import { getAvatarById } from "#/lib/utils";
+import { DEFAULT_AVATAR_ID, getAvatarById } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import shared from "./shared.module.css";
-
-const DEFAULT_AVATAR_ID = "char_002_amiya";
 
 interface IHeroProps {
     profile: IUserProfile;

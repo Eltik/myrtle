@@ -2,7 +2,7 @@ import { Check, ChevronDown, FilterX, Info, RotateCcw, Search, X } from "lucide-
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { cn, getAvatarById } from "#/lib/utils";
+import { cn, getAvatarById, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
@@ -23,7 +23,6 @@ interface IRosterPickerProps {
 }
 
 const RARITY_SORT: Record<OperatorRarity, number> = { 6: 0, 5: 1, 4: 2, 3: 3, 2: 4, 1: 5 };
-const RARITY_LABELS: Record<OperatorRarity, string> = { 6: "6★", 5: "5★", 4: "4★", 3: "3★", 2: "2★", 1: "1★" };
 
 export function RosterPicker({ allOperators, visibleOperators, selected, isExplicit, onChange, onReset, rosterIndex, hasProfile, settings }: IRosterPickerProps): React.ReactElement {
     const [query, setQuery] = React.useState("");

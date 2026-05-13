@@ -2,12 +2,12 @@ import { Link } from "@tanstack/react-router";
 import { Kicker } from "#/components/ui/kicker";
 import { formatNumber } from "#/lib/utils";
 
-interface Props {
+interface IHeroProps {
     total: number;
     canCreate: boolean;
 }
 
-export function Hero({ total, canCreate }: Props) {
+export function Hero({ total, canCreate }: IHeroProps) {
     return (
         <section className="mx-auto w-[min(1080px,calc(100%-2rem))] pt-10 pb-6 sm:pt-14 sm:pb-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
