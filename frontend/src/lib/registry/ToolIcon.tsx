@@ -45,6 +45,15 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M12 22V12" />
                 </svg>
             );
+        case "tiers":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <rect x="3" y="4" width="18" height="4" rx="1" />
+                    <rect x="3" y="10" width="18" height="4" rx="1" />
+                    <rect x="3" y="16" width="18" height="4" rx="1" />
+                    <path d="M8 6h0M8 12h0M8 18h0" />
+                </svg>
+            );
         case "search":
             return (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
