@@ -117,7 +117,12 @@ pub async fn parse_json<T: serde::de::DeserializeOwned>(
             error = %e,
             "failed to parse response body"
         );
-        FetchError::ParseError(format!("{context}: {e} (status={status}, body={text})"))
+        // Do not surface the upstream body or serde error to the client:
+        // the body can contain provider-internal data and the serde message
+        // leaks the upstream schema. Full details remain in the warn log above.
+        FetchError::ParseError(format!(
+            "{context}: invalid upstream response (status={status})"
+        ))
     })
 }
 

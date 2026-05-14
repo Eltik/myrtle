@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
 use crate::app::state::AppState;
+use crate::app::validation::validate_hex_color;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::Tier;
 use crate::database::queries::tier_lists as queries;
@@ -28,6 +29,7 @@ pub async fn create(
     if body.name.chars().count() > 20 {
         return Err(ApiError::BadRequest("tier name max 20 chars".into()));
     }
+    validate_hex_color(body.color.as_deref())?;
 
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = queries::find_by_slug(&state.db, &slug)
@@ -54,6 +56,8 @@ pub async fn update(
     Path((slug, tier_id)): Path<(String, Uuid)>,
     Json(body): Json<CreateTierRequest>,
 ) -> Result<Json<Tier>, ApiError> {
+    validate_hex_color(body.color.as_deref())?;
+
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?

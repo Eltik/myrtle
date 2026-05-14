@@ -1,6 +1,7 @@
 use axum::extract::FromRequestParts;
 use axum::http::HeaderMap;
 use axum::http::request::Parts;
+use subtle::ConstantTimeEq;
 
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
@@ -22,9 +23,13 @@ impl FromRequestParts<AppState> for AuthUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        // Try service key first (for internal SSR calls)
+        // Try service key first (for internal SSR calls).
+        // Constant-time compare to avoid leaking the key via timing.
         if let Some(key) = parts.headers.get("x-service-key")
-            && key.as_bytes() == state.config.service_key.as_bytes()
+            && key
+                .as_bytes()
+                .ct_eq(state.config.service_key.as_bytes())
+                .into()
         {
             return Ok(AuthUser {
                 user_id: "service".to_owned(),
