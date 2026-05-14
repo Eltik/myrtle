@@ -563,6 +563,67 @@ pub async fn get_enhanced_stats(
     Ok(result)
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BannerPullStat {
+    pub pool_id: String,
+    pub pull_count: i64,
+    pub six_star_count: i64,
+    pub five_star_count: i64,
+    pub user_count: i64,
+}
+
+/// Community pull totals grouped by `pool_id`. Only share_stats=true users are
+/// included, matching the rest of the community-stats pipeline. Cached for the
+/// same TTL as the enhanced stats so the two are coherent.
+pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat>, ApiError> {
+    let key = CacheKey::GachaPerBannerStats;
+    if let Some(cached) = state.cache.get::<Vec<BannerPullStat>>(&key).await {
+        return Ok(cached);
+    }
+
+    #[derive(sqlx::FromRow)]
+    struct Row {
+        pool_id: String,
+        pull_count: i64,
+        six_star_count: i64,
+        five_star_count: i64,
+        user_count: i64,
+    }
+
+    let rows = sqlx::query_as::<_, Row>(
+        r#"
+        SELECT
+            gr.pool_id,
+            COUNT(*) AS pull_count,
+            COUNT(*) FILTER (WHERE gr.rarity = 6) AS six_star_count,
+            COUNT(*) FILTER (WHERE gr.rarity = 5) AS five_star_count,
+            COUNT(DISTINCT gr.user_id) AS user_count
+        FROM gacha_records gr
+        JOIN user_settings us ON us.user_id = gr.user_id
+        WHERE us.share_stats = true
+        GROUP BY gr.pool_id
+        ORDER BY pull_count DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let result: Vec<BannerPullStat> = rows
+        .into_iter()
+        .map(|r| BannerPullStat {
+            pool_id: r.pool_id,
+            pull_count: r.pull_count,
+            six_star_count: r.six_star_count,
+            five_star_count: r.five_star_count,
+            user_count: r.user_count,
+        })
+        .collect();
+
+    state.cache.set(&key, &result).await;
+    Ok(result)
+}
+
 pub async fn get_history(
     state: &AppState,
     user_id: Uuid,

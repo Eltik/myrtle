@@ -3,10 +3,6 @@ use std::collections::HashMap;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaPoolClient {
@@ -48,6 +44,20 @@ pub struct GachaPoolClient {
     pub free_back_color: Option<String>,
     #[serde(alias = "GuaranteeName")]
     pub guarantee_name: Option<String>,
+
+    // Decoded from `LimitParam.Base64` / `DynMeta.Base64` during enrichment.
+    // Both fields are Yostar-emitted base64-wrapped standard MongoDB BSON
+    // documents whose shape varies by `gacha_rule_type` (LIMITED carries
+    // `limitedCharId`; CLASSIC_DOUBLE has main/sub 6★ + rare5CharList;
+    // FESCLASSIC / SPECIAL nest a `rarityPickCharDict` with TIER_5/TIER_6
+    // arrays; ATTAIN variants carry `attainRare6CharList`).
+    // Empty vec when the banner doesn't surface rate-ups this way (e.g.
+    // NORMAL / SINGLE pools which only have art assets, or LINKAGE pools
+    // whose featured chars come from a separate LinkageRuleId).
+    #[serde(default, skip_deserializing)]
+    pub featured6: Vec<String>,
+    #[serde(default, skip_deserializing)]
+    pub featured5: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -104,10 +114,6 @@ pub struct RecruitRarityEntry {
     pub rarity_end: i32,
 }
 
-// ============================================================================
-// Container Type
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GachaData {
@@ -140,10 +146,6 @@ pub struct FesGachaPoolRelateEntry {
     #[serde(alias = "RarityRank6ItemId")]
     pub rarity_rank6_item_id: String,
 }
-
-// ============================================================================
-// Table File Wrapper
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]

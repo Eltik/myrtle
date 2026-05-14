@@ -3,6 +3,59 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
 
+/**
+ * Banner metadata sourced from the static `gacha_table.json` → `GachaPoolClient`.
+ *
+ * Times are **unix seconds** (not ms)
+ * Pull records, by contrast, use unix ms.
+ */
+export interface IBanner {
+    gachaPoolId: string;
+    gachaIndex: number;
+    /** Unix seconds. Banner start. */
+    openTime: number;
+    /** Unix seconds. Banner end. */
+    endTime: number;
+    gachaPoolName: string;
+    gachaPoolSummary: string;
+    gachaPoolDetail: string | null;
+    guarantee5Avail: number;
+    guarantee5Count: number;
+    /** One of: ATTAIN, CLASSIC, CLASSIC_ATTAIN, CLASSIC_DOUBLE, DOUBLE, FESCLASSIC, LIMITED, LINKAGE, NORMAL, SINGLE, SPECIAL. */
+    /** Kept as string as YoStar or HG might add more types */
+    gachaRuleType: string;
+    lmtgsid?: string | null;
+    cdPrimColor?: string | null;
+    cdSecColor?: string | null;
+    linkageRuleId?: string | null;
+    freeBackColor?: string | null;
+    guaranteeName?: string | null;
+    /**
+     * Featured 6★ rate-up operators, decoded server-side from the base64-BSON
+     * blob in `LimitParam` / `DynMeta`. Empty for banners without a featured
+     * list (e.g. NORMAL/SINGLE/LINKAGE pools).
+     */
+    featured6: string[];
+    /** Featured 5★ operators. For FESCLASSIC/SPECIAL this is the whole selectable pool. */
+    featured5: string[];
+}
+
+export const getBannersFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/static/banners");
+    if (!res.ok) throw new Error(`Failed to load banners: ${res.status}`);
+    return (await res.json()) as IBanner[];
+});
+
+export function bannersQueryOptions() {
+    return queryOptions({
+        queryKey: ["banners"],
+        queryFn: () => getBannersFn(),
+        // Banners are static-data; refresh roughly once per session.
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
 /** Lightweight community summary. Rates are fractions in [0, 1]. */
 export interface IGachaGlobalStats {
     totalPulls: number;
@@ -61,6 +114,34 @@ export interface IPullTimingData {
     byHour: IHourlyPullData[];
     byDayOfWeek: IDayOfWeekPullData[];
     byDate?: IDatePullData[];
+}
+
+/**
+ * Community pull totals grouped by `pool_id`. Served by
+ * `GET /gacha/stats/per-banner`. Only `share_stats=true` users contribute.
+ * Sorted by `pullCount` desc; pools with zero community pulls are absent.
+ */
+export interface IBannerPullStat {
+    poolId: string;
+    pullCount: number;
+    sixStarCount: number;
+    fiveStarCount: number;
+    userCount: number;
+}
+
+export const getPerBannerStatsFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/gacha/stats/per-banner");
+    if (!res.ok) throw new Error(`Failed to load per-banner stats: ${res.status}`);
+    return (await res.json()) as IBannerPullStat[];
+});
+
+export function perBannerStatsQueryOptions() {
+    return queryOptions({
+        queryKey: ["gacha", "per-banner-stats"],
+        queryFn: () => getPerBannerStatsFn(),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
 }
 
 export interface IGachaEnhancedStats {
@@ -225,6 +306,39 @@ export function classifyClientGachaGroup(item: { poolId: string; typeName: strin
         default:
             // "single" (debut/rerun rate-up) and "normal" (standard headhunting) both belong here.
             return "regular";
+    }
+}
+
+/**
+ * Classify a banner-pool entry (from `/static/banners`) into the same 4-bucket
+ * UI grouping used for pull records. Mirrors {@link classifyClientGachaGroup}
+ * but keyed off the banner's `gachaRuleType` (and `gachaPoolId` prefix as a
+ * fallback) since static banner metadata doesn't carry a `typeName`.
+ */
+export function classifyBannerGroup(banner: { gachaRuleType: string; gachaPoolId: string }): ClientGachaGroup {
+    switch (banner.gachaRuleType) {
+        case "LIMITED":
+            return "limited";
+        case "LINKAGE":
+            return "linkage";
+        case "CLASSIC":
+        case "CLASSIC_ATTAIN":
+        case "CLASSIC_DOUBLE":
+        case "FESCLASSIC":
+            return "special";
+        case "SINGLE":
+        case "NORMAL":
+        case "ATTAIN":
+        case "DOUBLE":
+        case "SPECIAL":
+            return "regular";
+        default: {
+            const id = banner.gachaPoolId ?? "";
+            if (id.startsWith("LIMITED_")) return "limited";
+            if (id.startsWith("LINKAGE_")) return "linkage";
+            if (id.startsWith("FESCLASSIC_") || id.startsWith("CLASSIC_") || id.startsWith("BOOT_")) return "special";
+            return "regular";
+        }
     }
 }
 

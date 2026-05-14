@@ -26,6 +26,8 @@ path = "src/bin/regrade_users.rs"
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"
+base64 = "0.22"
+bson = "3.1.0"
 axum = { version = "0.8.8", features = ["macros"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 dashmap = "6"

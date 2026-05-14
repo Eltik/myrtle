@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "#/hooks/use-auth";
-import { gachaEnhancedStatsQueryOptions, myGachaStatsQueryOptions } from "#/lib/api/gacha";
+import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import { BannerRunsPanel } from "./impl/BannerRunsPanel";
 import styles from "./impl/CommunityPage.module.css";
 import { KpiStrip } from "./impl/KpiStrip";
 import { Leaderboard } from "./impl/Leaderboard";
@@ -14,6 +15,8 @@ import { TimingPanel } from "./impl/TimingPanel";
 export function CommunityPage() {
     const enhanced = useQuery(gachaEnhancedStatsQueryOptions({ topN: 20, includeTiming: true }));
     const operators = useQuery(operatorsIndexQueryOptions());
+    const banners = useQuery(bannersQueryOptions());
+    const perBannerStats = useQuery(perBannerStatsQueryOptions());
     const { isAuthenticated } = useAuth();
     const myStats = useQuery(myGachaStatsQueryOptions(isAuthenticated));
 
@@ -22,6 +25,20 @@ export function CommunityPage() {
         for (const entry of operators.data ?? []) map.set(entry.id, entry);
         return map;
     }, [operators.data]);
+
+    // Banners sorted oldest-first by openTime. Useful for the timing-chart
+    // overlay (chronological) and the banner-runs list (which sorts by status
+    // and recency itself but takes a stable input).
+    const bannersSorted = useMemo<IBanner[]>(() => {
+        const list = banners.data ?? [];
+        return [...list].sort((a, b) => a.openTime - b.openTime);
+    }, [banners.data]);
+
+    const perBannerById = useMemo(() => {
+        const map = new Map<string, IBannerPullStat>();
+        for (const s of perBannerStats.data ?? []) map.set(s.poolId, s);
+        return map;
+    }, [perBannerStats.data]);
 
     const personalRates = useMemo<IPersonalRarityRates | null>(() => {
         const s = myStats.data;
@@ -64,7 +81,9 @@ export function CommunityPage() {
                     <RarityPanel data={data} personal={personalRates} />
                 </div>
 
-                <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} />
+                <TimingPanel timing={data?.pullTiming} firstPullAt={data?.collectiveStats.firstPullAt} banners={bannersSorted} />
+
+                <BannerRunsPanel banners={bannersSorted} operatorsById={operatorsById} statsById={perBannerById} isLoading={banners.isLoading} />
             </section>
         </>
     );

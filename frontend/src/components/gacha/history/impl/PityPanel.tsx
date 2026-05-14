@@ -1,8 +1,9 @@
 import { Kicker } from "#/components/ui/kicker";
-import type { ClientGachaGroup, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
+import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 
 interface IPityPanelProps {
     records: IClientGachaRecords | null;
+    bannersById: Map<string, IBanner>;
     isLoading: boolean;
 }
 
@@ -13,6 +14,10 @@ interface IBannerPity {
     softPityAt: number;
     hardPityAt: number;
     color: string;
+    /** True if pity was reset to 0 because the user's last pull was on an ended Limited/Collab banner. */
+    reset?: boolean;
+    /** Display name of the now-ended banner, when `reset` is true. */
+    resetReason?: string;
 }
 
 function computePity(items: IGachaItem[]): number {
@@ -23,6 +28,27 @@ function computePity(items: IGachaItem[]): number {
         pity++;
     }
     return pity;
+}
+
+/**
+ * Limited and Collab pity does NOT carry between banners in-game — each
+ * pool has its own independent pity counter that vanishes when the banner
+ * closes. So if the user's most recent pull on a Limited/Collab bucket was
+ * on a banner that has now ended, treat the bucket's pity as 0.
+ * Standard (regular) and Kernel (special) pity does carry over and is
+ * computed normally.
+ */
+function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<string, IBanner>): { pity: number; reset: boolean; resetReason?: string } {
+    if (items.length === 0) return { pity: 0, reset: false };
+    const sorted = [...items].sort((a, b) => b.at - a.at);
+    const lastPullPoolId = sorted[0].poolId;
+    const banner = bannersById.get(lastPullPoolId);
+    // Static-data endTime is unix-seconds; pull `at` is unix-ms.
+    const nowSec = Date.now() / 1000;
+    if (banner && banner.endTime > 0 && nowSec > banner.endTime) {
+        return { pity: 0, reset: true, resetReason: banner.gachaPoolName };
+    }
+    return { pity: computePity(items), reset: false };
 }
 
 const BANNER_CONFIGS: { key: ClientGachaGroup; label: string; softPityAt: number; hardPityAt: number; color: string }[] = [
@@ -61,10 +87,10 @@ function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; soft
     );
 }
 
-function PityCard({ label, pity, softPityAt, hardPityAt, color, total }: { label: string; pity: number; softPityAt: number; hardPityAt: number; color: string; total: number }) {
+function PityCard({ label, pity, softPityAt, hardPityAt, color, total, reset, resetReason }: { label: string; pity: number; softPityAt: number; hardPityAt: number; color: string; total: number; reset?: boolean; resetReason?: string }) {
     const isSoftPity = pity >= softPityAt;
     const isNearHard = pity >= hardPityAt - 5;
-    const statusColor = isNearHard ? "text-[oklch(0.78_0.18_25)]" : isSoftPity ? "text-[oklch(0.78_0.18_80)]" : "text-foreground";
+    const statusColor = reset ? "text-muted-foreground" : isNearHard ? "text-[oklch(0.78_0.18_25)]" : isSoftPity ? "text-[oklch(0.78_0.18_80)]" : "text-foreground";
 
     return (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
@@ -77,27 +103,41 @@ function PityCard({ label, pity, softPityAt, hardPityAt, color, total }: { label
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 text-right">
-                    {isSoftPity ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-amber-600 dark:text-amber-400">
+                    {reset ? (
+                        <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            soft pity
+                            banner ended
                         </span>
-                    ) : null}
-                    {isNearHard ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-red-600 dark:text-red-400">
-                            <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            near guaranteed
-                        </span>
-                    ) : null}
+                    ) : (
+                        <>
+                            {isSoftPity ? (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-amber-600 dark:text-amber-400">
+                                    <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                                    soft pity
+                                </span>
+                            ) : null}
+                            {isNearHard ? (
+                                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-red-600 dark:text-red-400">
+                                    <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+                                    near guaranteed
+                                </span>
+                            ) : null}
+                        </>
+                    )}
                     <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{total} total</span>
                 </div>
             </div>
             <PityMeter pity={pity} softPityAt={softPityAt} hardPityAt={hardPityAt} color={color} />
+            {reset && resetReason ? (
+                <div className="font-mono text-[10px] text-muted-foreground leading-snug">
+                    Pity does not carry between {label} banners. Your last pull was on “{resetReason},” which has ended.
+                </div>
+            ) : null}
         </div>
     );
 }
 
-export function PityPanel({ records, isLoading }: IPityPanelProps) {
+export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) {
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
@@ -114,10 +154,14 @@ export function PityPanel({ records, isLoading }: IPityPanelProps) {
 
     if (!records) return null;
 
-    const pities: IBannerPity[] = BANNER_CONFIGS.map((cfg) => ({
-        ...cfg,
-        pity: computePity(records[cfg.key].records),
-    }));
+    const pities: IBannerPity[] = BANNER_CONFIGS.map((cfg) => {
+        const items = records[cfg.key].records;
+        if (cfg.key === "limited" || cfg.key === "linkage") {
+            const { pity, reset, resetReason } = pityWithLimitedReset(items, bannersById);
+            return { ...cfg, pity, reset, resetReason };
+        }
+        return { ...cfg, pity: computePity(items) };
+    });
 
     return (
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
@@ -127,7 +171,7 @@ export function PityPanel({ records, isLoading }: IPityPanelProps) {
             </header>
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {pities.map((p) => (
-                    <PityCard key={p.key} label={p.label} pity={p.pity} softPityAt={p.softPityAt} hardPityAt={p.hardPityAt} color={p.color} total={records[p.key].total} />
+                    <PityCard key={p.key} label={p.label} pity={p.pity} softPityAt={p.softPityAt} hardPityAt={p.hardPityAt} color={p.color} total={records[p.key].total} reset={p.reset} resetReason={p.resetReason} />
                 ))}
             </div>
         </section>

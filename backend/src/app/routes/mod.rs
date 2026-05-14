@@ -65,6 +65,7 @@ pub fn router() -> Router<AppState> {
         .route("/gacha/fetch", post(gacha::fetch))
         .route("/gacha/global-stats", get(gacha::global_stats))
         .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))
+        .route("/gacha/stats/per-banner", get(gacha::per_banner_stats))
         .route("/stats", get(stats::stats))
         .route("/admin/stats", get(stats::admin_stats))
         .route("/operators/index", get(operators::index))

@@ -35,6 +35,7 @@ pub enum CacheKey<'a> {
         top_n: u32,
         include_timing: bool,
     },
+    GachaPerBannerStats,
     LeaderboardMovers {
         direction: &'a str,
         interval: &'a str,
@@ -86,6 +87,7 @@ impl CacheKey<'_> {
                 top_n,
                 include_timing,
             } => format!("gacha:enhanced_stats:{top_n}:{include_timing}"),
+            CacheKey::GachaPerBannerStats => "gacha:per_banner_stats".to_owned(),
             CacheKey::LeaderboardMovers {
                 direction,
                 interval,
@@ -120,6 +122,7 @@ impl CacheKey<'_> {
             CacheKey::PortalSession { .. } => Duration::from_secs(604800), // 1 week
             CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
             CacheKey::GachaEnhancedStats { .. } => Duration::from_secs(600), // 10 min
+            CacheKey::GachaPerBannerStats => Duration::from_secs(600), // 10 min
             CacheKey::LeaderboardMovers { .. } => Duration::from_secs(900), // 15 min
             CacheKey::LeaderboardDistribution { .. } => Duration::from_secs(600), // 10 min
             CacheKey::LeaderboardStanding { .. } => Duration::from_secs(60), // 1 min
