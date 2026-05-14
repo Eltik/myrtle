@@ -348,7 +348,7 @@ async fn build_roguelike_improvements(
 
         let endings_unlocked = progress
             .and_then(|p| p.get("record"))
-            .and_then(|r| r.get("ending_cnt"))
+            .and_then(|r| r.get("endingCnt"))
             .and_then(|ec| ec.as_object())
             .map(|obj| {
                 let mut ids = HashSet::new();
@@ -365,7 +365,7 @@ async fn build_roguelike_improvements(
 
         let highest_difficulty = progress
             .and_then(|p| p.get("collect"))
-            .and_then(|c| c.get("mode_grade"))
+            .and_then(|c| c.get("modeGrade"))
             .and_then(|mg| mg.get("NORMAL"))
             .and_then(|n| n.as_object())
             .map(|obj| {
