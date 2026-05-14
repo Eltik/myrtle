@@ -3,6 +3,9 @@ use std::collections::HashSet;
 use crate::app::services::roster::is_medal_earned;
 use crate::core::gamedata::types::medal::{MedalData, MedalDefinition};
 
+/// A medal row as returned from `user_medals`: `(medal_id, val, first_ts, reach_ts)`.
+pub type UserMedalRow = (String, Option<serde_json::Value>, Option<i64>, Option<i64>);
+
 const PERMANENT_POOL_WEIGHT: f64 = 0.65;
 const EVENT_POOL_WEIGHT: f64 = 0.35;
 
@@ -17,10 +20,7 @@ const RARITY_T3D5: f64 = 40.0; // Not in data but defined in schema
 
 const HIDDEN_MULTIPLIER: f64 = 1.5;
 
-pub fn grade_medals(
-    user_medals: &[(String, Option<serde_json::Value>, Option<i64>, Option<i64>)], // (medal_id, val, first_ts, reach_ts)
-    medal_data: &MedalData,
-) -> f64 {
+pub fn grade_medals(user_medals: &[UserMedalRow], medal_data: &MedalData) -> f64 {
     if medal_data.medals.is_empty() {
         return 0.0;
     }
