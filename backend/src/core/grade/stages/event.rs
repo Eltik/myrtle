@@ -7,15 +7,26 @@ use super::types::StageClear;
 const DECAY_HORIZON_SECONDS: f64 = 5.0 * 365.25 * 86400.0;
 const DECAY_FLOOR: f64 = 0.30;
 
+/// Small grace window so an event that started moments before the user's sync
+/// (or has clock skew) doesn't get filtered out.
+pub const SYNC_GRACE_SECONDS: i64 = 12 * 60 * 60;
+
 pub fn score_event_pool(
     universe: &StageUniverse,
     clears: &HashMap<String, StageClear>,
     now: i64,
+    last_synced_ts: Option<i64>,
 ) -> f64 {
     let mut numerator = 0.0;
     let mut denominator = 0.0;
 
     for entry in &universe.event {
+        if let (Some(start), Some(sync)) = (entry.start_time, last_synced_ts)
+            && start > sync + SYNC_GRACE_SECONDS
+        {
+            continue;
+        }
+
         let decay = decay_factor(entry.end_time, now);
         denominator += entry.weight * decay;
 

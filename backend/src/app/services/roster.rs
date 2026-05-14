@@ -154,13 +154,6 @@ pub struct MedalStore {
 }
 
 #[derive(Deserialize)]
-pub struct MedalEntry {
-    pub val: Option<i64>,
-    pub fts: Option<i64>,
-    pub rts: Option<i64>,
-}
-
-#[derive(Deserialize)]
 pub struct CheckIn {
     pub history: Option<Vec<i16>>,
 }
@@ -499,22 +492,64 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
 
     let entries: Vec<serde_json::Value> = medals
         .iter()
-        .map(|(id, data)| {
-            let entry: MedalEntry = serde_json::from_value(data.clone()).unwrap_or(MedalEntry {
-                val: None,
-                fts: None,
-                rts: None,
-            });
-            serde_json::json!({
+        .filter_map(|(id, data)| {
+            // Field-by-field so a non-int `val` (multi-condition medals are
+            // arrays like [[achieved, required], ...]) doesn't blow up parsing.
+            let val = data.get("val").cloned().unwrap_or(serde_json::Value::Null);
+            let fts = data.get("fts").and_then(|v| v.as_i64()).unwrap_or(0);
+            let rts = data.get("rts").and_then(|v| v.as_i64()).unwrap_or(0);
+
+            if !is_medal_earned(&val, fts, rts) {
+                return None;
+            }
+
+            Some(serde_json::json!({
                 "medal_id": id,
-                "val": entry.val.unwrap_or(0),
-                "first_ts": entry.fts.unwrap_or(0),
-                "reach_ts": entry.rts.unwrap_or(0),
-            })
+                "val": val,
+                "first_ts": fts,
+                "reach_ts": rts,
+            }))
         })
         .collect();
 
     serde_json::to_value(entries).unwrap_or_default()
+}
+
+/// Returns true when a medal entry from Hypergryph's `user.medal.medals` map
+/// represents an actually earned medal, not in-progress tracking.
+///
+/// The map includes every medal the account has *seen* (so `fts` is set when
+/// the medal becomes tracked, well before completion). Two earn signals:
+///   1. `rts > 0` — medal was claimed/awarded; `rts` is the reach timestamp.
+///   2. `rts == -1` with `val` showing every `[achieved, required]` pair met —
+///      common for story-unlock and one-shot medals that report completion
+///      via `val` but never set an explicit reach timestamp.
+///
+/// Everything else (legacy `rts=0/fts=0` rows from the v2 import, in-progress
+/// tracking with partial val, no val at all) is treated as unearned.
+pub(crate) fn is_medal_earned(val: &serde_json::Value, fts: i64, rts: i64) -> bool {
+    if rts > 0 {
+        return true;
+    }
+    if rts == -1
+        && fts > 0
+        && let Some(arr) = val.as_array()
+        && !arr.is_empty()
+        && arr.iter().all(is_condition_met)
+    {
+        return true;
+    }
+    false
+}
+
+fn is_condition_met(cond: &serde_json::Value) -> bool {
+    cond.as_array()
+        .and_then(|pair| {
+            let a = pair.first()?.as_i64()?;
+            let r = pair.get(1)?.as_i64()?;
+            Some(a >= r)
+        })
+        .unwrap_or(false)
 }
 
 fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_json::Value {

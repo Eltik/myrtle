@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use crate::app::services::roster::is_medal_earned;
 use crate::core::gamedata::types::medal::{MedalData, MedalDefinition};
 
 const PERMANENT_POOL_WEIGHT: f64 = 0.65;
@@ -17,14 +18,21 @@ const RARITY_T3D5: f64 = 40.0; // Not in data but defined in schema
 const HIDDEN_MULTIPLIER: f64 = 1.5;
 
 pub fn grade_medals(
-    user_medals: &[(String, Option<i64>, Option<i64>)], // (medal_id, first_ts, reach_ts)
+    user_medals: &[(String, Option<serde_json::Value>, Option<i64>, Option<i64>)], // (medal_id, val, first_ts, reach_ts)
     medal_data: &MedalData,
 ) -> f64 {
     if medal_data.medals.is_empty() {
         return 0.0;
     }
 
-    let earned: HashSet<&str> = user_medals.iter().map(|(id, _, _)| id.as_str()).collect();
+    let earned: HashSet<&str> = user_medals
+        .iter()
+        .filter(|(_, val, fts, rts)| {
+            let v = val.as_ref().unwrap_or(&serde_json::Value::Null);
+            is_medal_earned(v, fts.unwrap_or(0), rts.unwrap_or(0))
+        })
+        .map(|(id, _, _, _)| id.as_str())
+        .collect();
 
     let permanent_score = score_permanent_pool(&earned, medal_data);
     let event_score = score_event_pool(&earned, medal_data);

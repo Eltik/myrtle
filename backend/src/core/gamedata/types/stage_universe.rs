@@ -2,8 +2,15 @@
 //!
 //! Built once at gamedata load from stages + zones + activities.
 //! Stages are split into two pools:
-//!     - permanent: Mainline, Sidestory, Branchline, MainlineRetro, Campaign, and any zone whose id starts with "permanent_sidestory"
-//!     - event: Activity and MainlineActivity zones (subject to recency decay)
+//!     - permanent: Mainline, MainlineActivity, MainlineRetro, Sidestory, Branchline, Campaign,
+//!       and any zone whose id starts with "permanent_sidestory".
+//!       MainlineActivity is treated as permanent because in the data it covers chapters that
+//!       are permanent campaign content (e.g. ch.15/16); the matching MainlineRetro zones are
+//!       currently empty, so the gameplay stages still live under the activity ID.
+//!     - event: Activity zones (subject to recency decay).
+//!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
+//!       Breakthrough, etc. - see `is_excluded_activity_type`) are dropped entirely because
+//!       they can't be cleared after they end and aren't rebroadcast.
 
 use serde::{Deserialize, Serialize};
 use std::{cmp::Reverse, collections::HashMap};
@@ -24,6 +31,9 @@ pub struct UniverseEntry {
 pub struct EventEntry {
     pub stage_id: String,
     pub weight: f64,
+    /// Activity start_time (unix seconds), if resolvable. Used to skip events that
+    /// launched after a user's last sync so stale data isn't penalized.
+    pub start_time: Option<i64>,
     pub end_time: Option<i64>,
 }
 
@@ -71,11 +81,33 @@ impl StageUniverse {
                     weight,
                 });
             } else {
-                // Activity / MainlineActivity - event pool
-                let end_time = resolve_end_time(&stage.zone_id, &sorted_activities);
+                // Activity zones - event pool
+                let activity = resolve_activity(&stage.zone_id, &sorted_activities);
+
+                // Drop one-time competitive event types (CC, Boss Rush, Vector
+                // Breakthrough, etc.). These can't be cleared after they end
+                // and aren't rebroadcast, so users who join after them - or who
+                // skip them for competitive reasons — would be permanently
+                // penalized.
+                if let Some(act) = activity
+                    && is_excluded_activity_type(&act.activity_type)
+                {
+                    continue;
+                }
+
+                let (start_time, end_time) = activity
+                    .map(|a| {
+                        (
+                            (a.start_time > 0).then_some(a.start_time),
+                            (a.end_time > 0).then_some(a.end_time),
+                        )
+                    })
+                    .unwrap_or((None, None));
+
                 event.push(EventEntry {
                     stage_id: stage.stage_id.clone(),
                     weight,
+                    start_time,
                     end_time,
                 });
             }
@@ -106,11 +138,14 @@ fn include_stage(stage: &Stage) -> bool {
         return false;
     }
     let id = &stage.stage_id;
-    if id.starts_with("tr_")
-        || id.starts_with("camp_")
-        || id.starts_with("wk_")
-        || id.starts_with("tower_")
-    {
+    if id.starts_with("tr_") || id.starts_with("wk_") || id.starts_with("tower_") {
+        return false;
+    }
+    // #f# stages are first-time cutscene replays unlocked after main_02-08; they share
+    // a level with their non-#f# counterpart and shouldn't double-count the chapter.
+    // Stage_table also flags them FOUR_STAR for UI purposes, so they were inflating
+    // their own weight by 1.25× on top of the duplication.
+    if id.contains("#f#") {
         return false;
     }
     true
@@ -123,9 +158,10 @@ fn is_permanent(zone_id: &str, zone_type: &ZoneType) -> bool {
     matches!(
         zone_type,
         ZoneType::Mainline
+            | ZoneType::MainlineActivity
+            | ZoneType::MainlineRetro
             | ZoneType::Sidestory
             | ZoneType::Branchline
-            | ZoneType::MainlineRetro
             | ZoneType::Campaign
     )
 }
@@ -149,11 +185,42 @@ fn difficulty_multiplier(difficulty: &StageDifficulty) -> f64 {
     }
 }
 
-fn resolve_end_time(zone_id: &str, sorted: &[&ActivityBasicInfo]) -> Option<i64> {
-    for act in sorted {
-        if !act.id.is_empty() && zone_id.starts_with(&act.id) && act.end_time > 0 {
-            return Some(act.end_time);
-        }
-    }
-    None
+fn resolve_activity<'a>(
+    zone_id: &str,
+    sorted: &[&'a ActivityBasicInfo],
+) -> Option<&'a ActivityBasicInfo> {
+    sorted
+        .iter()
+        .find(|act| !act.id.is_empty() && zone_id.starts_with(&act.id))
+        .copied()
+}
+
+/// Activity `Type_` values for one-time / competitive content that can't be
+/// cleared after the event ends and isn't rebroadcast. Including them in the
+/// universe permanently penalizes anyone who didn't grind them at launch.
+///
+/// Categories represented: Contingency Contract / Multiplayer, Vector
+/// Breakthrough, Boss Rush, Enemy Duel, Half-Idle, Auto-Chess, Arcade,
+/// Float Parade, Team Quest, Collection events, Interlock, and the
+/// Mainline Battle Pass standalone activity.
+fn is_excluded_activity_type(activity_type: &str) -> bool {
+    matches!(
+        activity_type,
+        "MULTIPLAY"
+            | "MULTIPLAY_V3"
+            | "MULTIPLAY_VERIFY2"
+            | "VEC_BREAK"
+            | "VEC_BREAK_V2"
+            | "BOSS_RUSH"
+            | "ENEMY_DUEL"
+            | "HALFIDLE_VERIFY1"
+            | "AUTOCHESS_VERIFY1"
+            | "ARCADE"
+            | "FLOAT_PARADE"
+            | "TEAM_QUEST"
+            | "COLLECTION"
+            | "INTERLOCK"
+            | "MAINLINE_BP"
+            | "FIREWORK"
+    )
 }

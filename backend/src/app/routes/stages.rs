@@ -58,8 +58,9 @@ pub async fn get_stage_clears(
     Query(params): Query<StageClearsParams>,
 ) -> Result<Json<std::collections::HashMap<String, StageClearDto>>, ApiError> {
     let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
-    let clears = stages::get_user_stage_clears(&state.db, user_id).await?;
-    let body = clears
+    let data = stages::get_user_stage_clears(&state.db, user_id).await?;
+    let body = data
+        .clears
         .into_iter()
         .map(|(id, c)| {
             (
