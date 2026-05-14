@@ -7,14 +7,30 @@ use axum::{
     extract::{Path, State},
 };
 use dashmap::DashMap;
+use hmac::{Hmac, Mac};
 use serde::Deserialize;
+use sha2::Sha256;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
+use crate::app::validation::validate_hex_color;
 use crate::database::models::tier_list::{TierListFlair, TierListStats};
 use crate::database::queries::tier_lists as queries;
+
+type HmacSha256 = Hmac<Sha256>;
+
+/// Derive the stored anonymous-dedupe key from a client-supplied session id.
+/// The DB column is `CHAR(64)`, matching the hex-encoded HMAC-SHA256 length.
+/// Keying with `jwt_secret` (treated here as a server-side pepper) ensures a
+/// DB dump alone can't be cross-referenced with a stolen `mtl_sid` cookie.
+fn hash_session_id(secret: &str, session_id: &str) -> String {
+    let mut mac =
+        HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts keys of any length");
+    mac.update(session_id.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
+}
 
 const SESSION_COOKIE: &str = "mtl_sid";
 const SESSION_ID_LEN: usize = 64;
@@ -88,13 +104,13 @@ pub async fn record_view(
         return Err(ApiError::RateLimited);
     }
 
-    let session_id = if user_id.is_some() {
+    let session_hash = if user_id.is_some() {
         None
     } else {
-        extract_session_id(&headers)
+        extract_session_id(&headers).map(|sid| hash_session_id(&state.config.jwt_secret, &sid))
     };
 
-    let unique = queries::record_view(&state.db, list.id, user_id, session_id.as_deref()).await?;
+    let unique = queries::record_view(&state.db, list.id, user_id, session_hash.as_deref()).await?;
     Ok(Json(serde_json::json!({ "unique": unique })))
 }
 
@@ -193,6 +209,7 @@ pub async fn create_flair(
     if !auth.role.is_tier_list_admin() {
         return Err(ApiError::Forbidden);
     }
+    validate_hex_color(body.color.as_deref())?;
     let flair = queries::create_flair(
         &state.db,
         &body.code,
