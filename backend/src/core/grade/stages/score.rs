@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::core::gamedata::types::GameData;
 use crate::database::queries::stages::get_user_stage_clears;
 
-use super::event::score_event_pool;
+use super::event::{SYNC_GRACE_SECONDS, score_event_pool};
 use super::permanent::score_permanent_pool;
 
 const PERMANENT_POOL_WEIGHT: f64 = 0.70;
@@ -38,12 +38,14 @@ pub async fn grade_stages_detail(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<StageGradeDetail, sqlx::Error> {
-    let clears = get_user_stage_clears(pool, user_id).await?;
+    let data = get_user_stage_clears(pool, user_id).await?;
+    let clears = &data.clears;
+    let last_synced_ts = data.last_synced_ts;
     let now = chrono::Utc::now().timestamp();
 
     let universe = &game_data.stage_universe;
-    let permanent_pool = score_permanent_pool(universe, &clears);
-    let event_pool = score_event_pool(universe, &clears, now);
+    let permanent_pool = score_permanent_pool(universe, clears);
+    let event_pool = score_event_pool(universe, clears, now, last_synced_ts);
 
     let total = ((PERMANENT_POOL_WEIGHT * permanent_pool) + (EVENT_POOL_WEIGHT * event_pool))
         .clamp(0.0, 1.0);
@@ -64,15 +66,24 @@ pub async fn grade_stages_detail(
         })
         .count();
 
-    let event_total = universe.event.len();
+    let event_in_window = |e: &crate::core::gamedata::types::stage_universe::EventEntry| -> bool {
+        match (e.start_time, last_synced_ts) {
+            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
+            _ => true,
+        }
+    };
+
+    let event_total = universe.event.iter().filter(|e| event_in_window(e)).count();
     let event_cleared = universe
         .event
         .iter()
+        .filter(|e| event_in_window(e))
         .filter(|e| clears.get(&e.stage_id).is_some_and(|c| c.is_cleared()))
         .count();
     let event_three_starred = universe
         .event
         .iter()
+        .filter(|e| event_in_window(e))
         .filter(|e| {
             clears
                 .get(&e.stage_id)
