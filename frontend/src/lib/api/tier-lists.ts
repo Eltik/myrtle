@@ -7,6 +7,8 @@ import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import { formatRelative } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import { type IBackendStatus, parseError } from "./_shared";
+import { requireSiteToken } from "./_shared.server";
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -524,9 +526,6 @@ export function tierListFlairsQueryOptions() {
     });
 }
 
-/** Permission level a collaborator may be granted on a tier list. */
-export type TierListPermissionLevel = "view" | "edit" | "publish" | "admin";
-
 /** Plain JSON value - used for tier list version snapshots. */
 export type TierListJsonValue = string | number | boolean | null | TierListJsonValue[] | { [key: string]: TierListJsonValue };
 
@@ -593,17 +592,6 @@ export interface IPublishTierListVersionInput {
     changelog?: string | null;
 }
 
-export interface IGrantTierListPermissionInput {
-    slug: string;
-    userId: string;
-    permission: TierListPermissionLevel;
-}
-
-export interface IRevokeTierListPermissionInput {
-    slug: string;
-    userId: string;
-}
-
 export interface ITierListSummary {
     id: string;
     name: string;
@@ -644,14 +632,6 @@ export interface ITierListVersion {
     publishedAt: string;
 }
 
-export interface ITierListPermissionEntry {
-    tierListId: string;
-    userId: string;
-    permission: TierListPermissionLevel;
-    grantedBy: string | null;
-    grantedAt: string;
-}
-
 interface IBackendTierRaw {
     id: string;
     tier_list_id: string;
@@ -669,18 +649,6 @@ interface IBackendTierListVersion {
     changelog: string | null;
     published_by: string | null;
     published_at: string;
-}
-
-interface IBackendTierListPermission {
-    tier_list_id: string;
-    user_id: string;
-    permission: TierListPermissionLevel;
-    granted_by: string | null;
-    granted_at: string;
-}
-
-interface IBackendStatus {
-    status: string;
 }
 
 function mapTierListSummary(raw: IBackendTierList): ITierListSummary {
@@ -729,73 +697,6 @@ function mapTierListVersion(raw: IBackendTierListVersion): ITierListVersion {
         publishedBy: raw.published_by,
         publishedAt: raw.published_at,
     };
-}
-
-function mapTierListPermission(raw: IBackendTierListPermission): ITierListPermissionEntry {
-    return {
-        tierListId: raw.tier_list_id,
-        userId: raw.user_id,
-        permission: raw.permission,
-        grantedBy: raw.granted_by,
-        grantedAt: raw.granted_at,
-    };
-}
-
-export class TierListApiError extends Error {
-    constructor(
-        public readonly status: number,
-        message: string,
-    ) {
-        super(message);
-        this.name = "TierListApiError";
-    }
-}
-
-async function parseError(res: Response): Promise<TierListApiError> {
-    const fallback = `Request failed: ${res.status}`;
-    try {
-        const data = (await res.json()) as unknown;
-        return new TierListApiError(res.status, extractErrorMessage(data) ?? fallback);
-    } catch {
-        return new TierListApiError(res.status, fallback);
-    }
-}
-
-/**
- * Pull a human-readable message out of a typical backend error body. Handles
- * `{ error: "..." }`, `{ message: "..." }`, `{ error: { message } }`, and
- * arrays of validation errors. Falls back to a JSON dump rather than letting
- * "[object Object]" reach the UI.
- */
-function extractErrorMessage(data: unknown): string | null {
-    if (data == null) return null;
-    if (typeof data === "string") return data;
-    if (typeof data !== "object") return String(data);
-    const obj = data as Record<string, unknown>;
-    const directKeys = ["error", "message", "detail", "error_message"] as const;
-    for (const key of directKeys) {
-        const v = obj[key];
-        if (typeof v === "string" && v.trim()) return v;
-        if (v && typeof v === "object") {
-            const nested = extractErrorMessage(v);
-            if (nested) return nested;
-        }
-    }
-    if (Array.isArray(obj.errors)) {
-        const parts = obj.errors.map((e) => extractErrorMessage(e)).filter((m): m is string => Boolean(m));
-        if (parts.length > 0) return parts.join("; ");
-    }
-    try {
-        return JSON.stringify(data);
-    } catch {
-        return null;
-    }
-}
-
-function requireSiteToken(): string {
-    const token = getCookie("site_token");
-    if (!token) throw new TierListApiError(401, "Not signed in");
-    return token;
 }
 
 export const createTierListFn = createServerFn({ method: "POST" })
@@ -1037,36 +938,6 @@ export function tierListVersionsQueryOptions(slug: string) {
     });
 }
 
-export const getTierListPermissionsFn = createServerFn({ method: "GET" })
-    .inputValidator((slug: string) => slug)
-    .handler(async ({ data: slug }): Promise<ITierListPermissionEntry[]> => {
-        const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}/permissions`, {
-            bearerToken: token,
-        });
-        if (!res.ok) throw await parseError(res);
-        const raw = (await res.json()) as IBackendTierListPermission[];
-        return raw.map(mapTierListPermission);
-    });
-
-export const grantTierListPermissionFn = createServerFn({ method: "POST" })
-    .inputValidator((data: IGrantTierListPermissionInput) => data)
-    .handler(async ({ data }): Promise<IBackendStatus> => {
-        const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions`, {
-            method: "POST",
-            bearerToken: token,
-            body: JSON.stringify({ user_id: data.userId, permission: data.permission }),
-        });
-        if (!res.ok) throw await parseError(res);
-        return (await res.json()) as IBackendStatus;
-    });
-
-export const revokeTierListPermissionFn = createServerFn({ method: "POST" })
-    .inputValidator((data: IRevokeTierListPermissionInput) => data)
-    .handler(async ({ data }): Promise<IBackendStatus> => {
-        const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions/${encodeURIComponent(data.userId)}`, { method: "DELETE", bearerToken: token });
-        if (!res.ok) throw await parseError(res);
-        return (await res.json()) as IBackendStatus;
-    });
+// Per-list tier-list permission management lives in `./admin/permissions`.
+// See `getTierListPermissionsFn`, `grantTierListPermissionFn`,
+// `revokeTierListPermissionFn` in `#/lib/api/admin`.
