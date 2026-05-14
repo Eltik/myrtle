@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::core::gamedata::types::stage_universe::StageUniverse;
 
@@ -16,11 +16,17 @@ pub fn score_event_pool(
     clears: &HashMap<String, StageClear>,
     now: i64,
     last_synced_ts: Option<i64>,
+    allowed: Option<&HashSet<String>>,
 ) -> f64 {
     let mut numerator = 0.0;
     let mut denominator = 0.0;
 
     for entry in &universe.event {
+        if let Some(set) = allowed
+            && !set.contains(&entry.stage_id)
+        {
+            continue;
+        }
         if let (Some(start), Some(sync)) = (entry.start_time, last_synced_ts)
             && start > sync + SYNC_GRACE_SECONDS
         {
