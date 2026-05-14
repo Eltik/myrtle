@@ -1,5 +1,6 @@
 import type { IImprovementsResponse, IRoguelikeThemeImprovement } from "#/lib/api/user";
-import { EmptyHint, PANEL_PADDING, ProgressLine, SectionHeader } from "./shared";
+import { cn } from "#/lib/utils";
+import { EmptyHint, PANEL_PADDING, ProgressLine, SectionHeader, TEXT_BADGE } from "./shared";
 
 interface IProps {
     improvements: IImprovementsResponse;
@@ -38,11 +39,11 @@ function ThemeBlock({ theme, accent }: { theme: IRoguelikeThemeImprovement; acce
                 {theme.challenges.max > 0 && <ProgressLine label="Challenges" current={theme.challenges.current} max={theme.challenges.max} accent={accent} />}
                 <ProgressLine label="Collectibles" current={collectibleCurrent} max={collectibleTotal} accent={accent} />
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
+            <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground", TEXT_BADGE)}>
                 {theme.collectibles.relics.max > 0 && (
                     <span>
                         Relics{" "}
-                        <span className="tabular-nums text-foreground/80">
+                        <span className="text-foreground/80">
                             {theme.collectibles.relics.current} / {theme.collectibles.relics.max}
                         </span>
                     </span>
@@ -50,7 +51,7 @@ function ThemeBlock({ theme, accent }: { theme: IRoguelikeThemeImprovement; acce
                 {theme.collectibles.capsules.max > 0 && (
                     <span>
                         Capsules{" "}
-                        <span className="tabular-nums text-foreground/80">
+                        <span className="text-foreground/80">
                             {theme.collectibles.capsules.current} / {theme.collectibles.capsules.max}
                         </span>
                     </span>
@@ -58,7 +59,7 @@ function ThemeBlock({ theme, accent }: { theme: IRoguelikeThemeImprovement; acce
                 {theme.collectibles.bands.max > 0 && (
                     <span>
                         Bands{" "}
-                        <span className="tabular-nums text-foreground/80">
+                        <span className="text-foreground/80">
                             {theme.collectibles.bands.current} / {theme.collectibles.bands.max}
                         </span>
                     </span>
