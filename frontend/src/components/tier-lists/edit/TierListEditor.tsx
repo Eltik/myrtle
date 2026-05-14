@@ -4,8 +4,9 @@ import { useCallback, useMemo, useReducer, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
+import { ApiError } from "#/lib/api/_shared";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { type ITierListDetail, type ITierOperator, TierListApiError, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { type ITierListDetail, type ITierOperator, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { indexEntryToTierOperator } from "../shared";
 import { DragControllerProvider } from "./drag-controller";
 import { EditHero } from "./EditHero";
@@ -119,7 +120,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         },
         onError: (err: unknown) => {
             setSaveProgress(null);
-            const message = err instanceof TierListApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
             setSaveError(message);
             toastManager.add({
                 id: `tl-edit-save-err-${Date.now()}`,

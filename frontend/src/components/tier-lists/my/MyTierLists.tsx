@@ -7,7 +7,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
-import { createTierListFn, deleteTierListFn, type ITierListBrowseItem, myTierListsDetailedQueryOptions, TierListApiError, updateTierListFn } from "#/lib/api/tier-lists";
+import { ApiError } from "#/lib/api/_shared";
+import { createTierListFn, deleteTierListFn, type ITierListBrowseItem, myTierListsDetailedQueryOptions, updateTierListFn } from "#/lib/api/tier-lists";
 import { matchesBrowseQuery, sortBrowseItems } from "../shared";
 import { CreateListDialog } from "./CreateListDialog";
 import { DeleteListDialog, type IDeleteListTarget } from "./DeleteListDialog";
@@ -93,7 +94,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             navigate({ to: "/tier-lists/$id", params: { id: created.slug } });
         },
         onError: (err: unknown) => {
-            const message = err instanceof TierListApiError ? err.message : err instanceof Error ? err.message : "Couldn't create list.";
+            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't create list.";
             setMutationError(message);
         },
     });
@@ -112,7 +113,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof TierListApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
             setMutationError(message);
         },
     });
@@ -133,7 +134,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof TierListApiError ? err.message : err instanceof Error ? err.message : "Couldn't delete list.";
+            const message = err instanceof ApiError ? err.message : err instanceof Error ? err.message : "Couldn't delete list.";
             setMutationError(message);
         },
     });
