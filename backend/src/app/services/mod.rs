@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod dps;
 pub mod gacha;
+pub mod improvements;
 pub mod leaderboard;
 pub mod operator_notes;
 pub mod operators;
