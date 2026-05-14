@@ -3,7 +3,7 @@ import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
-import { userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
+import { userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { Hero } from "./impl/components/Hero";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
@@ -34,6 +34,12 @@ export function UserProfile() {
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
     const { data: score, isLoading: isScoreLoading } = useQuery(userScoreQueryOptions(id));
+    // Improvements only fire while the Score tab is mounted — it's a heavier
+    // payload than the headline score, so don't pay for it on every profile view.
+    const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
+        ...userImprovementsQueryOptions(id),
+        enabled: activeTab === "score",
+    });
     const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
     const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
 
@@ -134,7 +140,7 @@ export function UserProfile() {
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
             {activeTab === "stats" && <StatsTab roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
-            {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} />}
+            {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
         </main>
     );
 }

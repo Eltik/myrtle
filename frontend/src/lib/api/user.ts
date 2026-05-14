@@ -152,6 +152,164 @@ export function userScoreQueryOptions(uid: string) {
     });
 }
 
+// ─── User improvements ──────────────────────────────────────────────────────
+
+export interface IStageGap {
+    stage_id: string;
+    code: string;
+    name: string | null;
+    zone_id: string;
+    weight: number;
+    state: number;
+}
+
+export interface IStagePoolImprovements {
+    total: number;
+    cleared: number;
+    three_starred: number;
+    missing: IStageGap[];
+    not_three_starred: IStageGap[];
+}
+
+export interface IStageImprovements {
+    permanent: IStagePoolImprovements;
+    event: IStagePoolImprovements;
+}
+
+export interface IProgressPair {
+    current: number;
+    max: number;
+}
+
+export interface IRoguelikeDifficulty {
+    highest_cleared: number;
+    max: number;
+}
+
+export interface IRoguelikeCollectibles {
+    relics: IProgressPair;
+    capsules: IProgressPair;
+    bands: IProgressPair;
+}
+
+export interface IRoguelikeThemeImprovement {
+    theme_id: string;
+    theme_name: string;
+    endings: IProgressPair;
+    difficulty: IRoguelikeDifficulty;
+    collectibles: IRoguelikeCollectibles;
+    bp: IProgressPair;
+    challenges: IProgressPair;
+}
+
+export interface ISandboxImprovements {
+    achievements: IProgressPair;
+    nodes: IProgressPair;
+    tech: IProgressPair;
+    quests: IProgressPair;
+}
+
+export interface IMedalGap {
+    medal_id: string;
+    name: string;
+    rarity: string;
+    get_method: string;
+    description: string;
+    is_hidden: boolean;
+    end_time: number | null;
+}
+
+export interface IMedalImprovements {
+    permanent_missing: IMedalGap[];
+    event_in_window_missing: IMedalGap[];
+}
+
+export interface IOperatorGap {
+    operator_id: string;
+    name: string;
+    rarity: number;
+    current_elite: number;
+    current_level: number;
+    current_skill_level: number;
+    max_mastery: number;
+    max_module_level: number;
+    /** Tags like "ELITE", "MAX_LEVEL", "M3", "MOD3", "SL7", "POT6". */
+    missing: string[];
+}
+
+export interface IOperatorImprovements {
+    below_milestone: IOperatorGap[];
+}
+
+export interface IAssignedOperator {
+    operator_id: string;
+    name: string;
+}
+
+export interface IRoomAssignment {
+    slot_id: string;
+    room_type: string;
+    level: number;
+    formula_type: string | null;
+    total_efficiency: number;
+    operators: IAssignedOperator[];
+}
+
+export interface IBaseAssignment {
+    rooms: IRoomAssignment[];
+    total_production_efficiency: number;
+}
+
+export interface IRotation {
+    shift_a: IBaseAssignment;
+    shift_b: IBaseAssignment;
+    sustained_efficiency: number;
+}
+
+export interface IRoomLayoutEntry {
+    room_type: string;
+    count: number;
+    levels: number[];
+}
+
+export interface IBaseImprovements {
+    optimal: IBaseAssignment | null;
+    rotation: IRotation | null;
+    layout: IRoomLayoutEntry[];
+}
+
+export interface IImprovementsResponse {
+    uid: string;
+    stages: IStageImprovements;
+    roguelike: IRoguelikeThemeImprovement[];
+    sandbox: ISandboxImprovements;
+    medals: IMedalImprovements;
+    operators: IOperatorImprovements;
+    base: IBaseImprovements;
+}
+
+export const getUserImprovementsFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const res = await backendFetch(`/user/improvements?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            if (res.status === 403) return null;
+            throw new Error(`Failed to load improvements: ${res.status}`);
+        }
+        return (await res.json()) as IImprovementsResponse;
+    });
+
+export function userImprovementsQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "improvements", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserImprovementsFn({ data: { uid, bearerToken } }),
+        // Improvements depend on roster + score state; refresh sparingly.
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 export interface ISearchUsersInput {
     q?: string;
     limit?: number;
