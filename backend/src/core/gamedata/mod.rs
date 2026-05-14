@@ -4,6 +4,7 @@ use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
         chibi::init_chibi_data,
+        gacha::enrich_banners,
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
@@ -81,7 +82,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let battle_equip = battle_equip_file.into_battle_equip();
     let handbook = handbook_file.into_handbook();
     let skins = skin_file.into_skin_data();
-    let gacha = gacha_file.into_gacha_data();
+    let mut gacha = gacha_file.into_gacha_data();
+    enrich_banners(&mut gacha.gacha_pool_client);
     let zones = zone_file.zones;
     let stages = stage_file.stages;
     let medals = MedalData::from_table(medal_file);

@@ -2,6 +2,7 @@ use crate::core::gamedata::{assets::AssetIndex, types::material::Materials};
 
 pub mod chibi;
 pub mod enemies;
+pub mod gacha;
 pub mod handbook;
 pub mod modules;
 pub mod operators;

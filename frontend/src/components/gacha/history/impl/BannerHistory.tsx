@@ -1,14 +1,19 @@
 import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { ClientGachaGroup, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
+import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { formatNumber, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
 interface IBannerHistoryProps {
     records: IClientGachaRecords | null;
     operatorsById: Map<string, IOperatorIndexEntry>;
+    bannersById: Map<string, IBanner>;
     isLoading: boolean;
+}
+
+function resolveBannerName(item: IGachaItem, bannersById: Map<string, IBanner>): string {
+    return bannersById.get(item.poolId)?.gachaPoolName || item.poolName || item.poolId;
 }
 
 const TABS: { key: ClientGachaGroup; label: string }[] = [
@@ -31,7 +36,7 @@ function fmtDateTime(ts: number): string {
     });
 }
 
-function PullTable({ items, operatorsById, total }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; total: number }) {
+function PullTable({ items, operatorsById, bannersById, total }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number }) {
     const [page, setPage] = useState(0);
     const sorted = useMemo(() => [...items].sort((a, b) => b.at - a.at), [items]);
     const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
@@ -82,7 +87,7 @@ function PullTable({ items, operatorsById, total }: { items: IGachaItem[]; opera
                                         </div>
                                     </td>
                                     <td className="hidden px-2 py-2 align-middle sm:table-cell">
-                                        <span className="font-sans text-[12px] text-muted-foreground truncate max-w-45 block">{item.poolName || item.poolId}</span>
+                                        <span className="font-sans text-[12px] text-muted-foreground truncate max-w-45 block">{resolveBannerName(item, bannersById)}</span>
                                     </td>
                                     <td className="hidden px-2 py-2 text-right align-middle font-mono text-[11px] text-muted-foreground tabular-nums whitespace-nowrap md:table-cell">{fmtDateTime(item.at)}</td>
                                 </tr>
@@ -124,7 +129,7 @@ function PullTable({ items, operatorsById, total }: { items: IGachaItem[]; opera
     );
 }
 
-export function BannerHistory({ records, operatorsById, isLoading }: IBannerHistoryProps) {
+export function BannerHistory({ records, operatorsById, bannersById, isLoading }: IBannerHistoryProps) {
     const [activeTab, setActiveTab] = useState<ClientGachaGroup>("limited");
 
     if (isLoading) {
@@ -182,7 +187,7 @@ export function BannerHistory({ records, operatorsById, isLoading }: IBannerHist
                 })}
             </div>
 
-            <PullTable key={activeTab} items={records[activeTab].records} operatorsById={operatorsById} total={records[activeTab].total} />
+            <PullTable key={activeTab} items={records[activeTab].records} operatorsById={operatorsById} bannersById={bannersById} total={records[activeTab].total} />
         </section>
     );
 }

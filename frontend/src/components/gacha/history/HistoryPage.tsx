@@ -4,7 +4,7 @@ import { Lock, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { deriveClientGachaRecords, fetchMyGachaRecordsFn, myGachaStoredRecordsQueryOptions } from "#/lib/api/gacha";
+import { bannersQueryOptions, deriveClientGachaRecords, fetchMyGachaRecordsFn, type IBanner, myGachaStoredRecordsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { BannerBreakdown } from "./impl/BannerBreakdown";
@@ -53,6 +53,7 @@ export function HistoryPage() {
 
     const recordsQuery = useQuery(myGachaStoredRecordsQueryOptions(isAuthenticated));
     const operatorsQuery = useQuery(operatorsIndexQueryOptions());
+    const bannersQuery = useQuery(bannersQueryOptions());
 
     const refreshMutation = useMutation({
         mutationFn: () => fetchMyGachaRecordsFn(),
@@ -80,6 +81,12 @@ export function HistoryPage() {
         for (const entry of operatorsQuery.data ?? []) map.set(entry.id, entry);
         return map;
     }, [operatorsQuery.data]);
+
+    const bannersById = useMemo(() => {
+        const map = new Map<string, IBanner>();
+        for (const b of bannersQuery.data ?? []) map.set(b.gachaPoolId, b);
+        return map;
+    }, [bannersQuery.data]);
 
     const isLoading = recordsQuery.isLoading;
     const rawRecords = recordsQuery.data ?? null;
@@ -120,14 +127,14 @@ export function HistoryPage() {
                     <>
                         <HistoryKpiStrip records={records} isLoading={isLoading} />
 
-                        <PityPanel records={records} isLoading={isLoading} />
+                        <PityPanel records={records} bannersById={bannersById} isLoading={isLoading} />
 
                         <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
                             <TopOperators records={records} operatorsById={operatorsById} isLoading={isLoading} />
-                            <BannerBreakdown records={records} isLoading={isLoading} />
+                            <BannerBreakdown records={records} bannersById={bannersById} operatorsById={operatorsById} isLoading={isLoading} />
                         </div>
 
-                        <BannerHistory records={records} operatorsById={operatorsById} isLoading={isLoading} />
+                        <BannerHistory records={records} operatorsById={operatorsById} bannersById={bannersById} isLoading={isLoading} />
                     </>
                 )}
             </section>
