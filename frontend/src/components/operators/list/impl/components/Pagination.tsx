@@ -1,7 +1,9 @@
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, CornerDownLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
 import { PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, Pagination as PaginationRoot } from "#/components/ui/pagination";
+import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { cn } from "#/lib/utils";
 
 interface IPaginationProps {
@@ -15,7 +17,10 @@ const SLOT_WIDTH_PX = 36;
 const FIXED_SLOTS = 5;
 const PREV_NEXT_RESERVE_PX = 200;
 
-function generatePaginationRange(currentPage: number, totalPages: number, siblingCount: number): (number | "ellipsis-start" | "ellipsis-end")[] {
+type EllipsisItem = { kind: "ellipsis-start" | "ellipsis-end"; from: number; to: number };
+type PaginationItemModel = number | EllipsisItem;
+
+function generatePaginationRange(currentPage: number, totalPages: number, siblingCount: number): PaginationItemModel[] {
     const siblings = Math.max(1, siblingCount);
 
     const leftSiblingIndex = Math.max(currentPage - siblings, 1);
@@ -24,14 +29,14 @@ function generatePaginationRange(currentPage: number, totalPages: number, siblin
     const showLeftEllipsis = leftSiblingIndex > 2;
     const showRightEllipsis = rightSiblingIndex < totalPages - 1;
 
-    const items: (number | "ellipsis-start" | "ellipsis-end")[] = [];
+    const items: PaginationItemModel[] = [];
 
     if (totalPages >= 1) {
         items.push(1);
     }
 
     if (showLeftEllipsis) {
-        items.push("ellipsis-start");
+        items.push({ kind: "ellipsis-start", from: 2, to: leftSiblingIndex - 1 });
     } else if (leftSiblingIndex > 1) {
         for (let i = 2; i < leftSiblingIndex; i++) {
             items.push(i);
@@ -45,7 +50,7 @@ function generatePaginationRange(currentPage: number, totalPages: number, siblin
     }
 
     if (showRightEllipsis) {
-        items.push("ellipsis-end");
+        items.push({ kind: "ellipsis-end", from: rightSiblingIndex + 1, to: totalPages - 1 });
     } else if (rightSiblingIndex < totalPages) {
         for (let i = rightSiblingIndex + 1; i < totalPages; i++) {
             items.push(i);
@@ -142,10 +147,11 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                 </PaginationItem>
 
                 {paginationRange.map((item) => {
-                    if (item === "ellipsis-start" || item === "ellipsis-end") {
+                    if (typeof item === "object") {
+                        const suggested = Math.floor((item.from + item.to) / 2);
                         return (
-                            <PaginationItem key={item} className="hidden sm:flex">
-                                <PaginationEllipsis />
+                            <PaginationItem key={item.kind} className="hidden sm:flex">
+                                <JumpToPagePopover totalPages={totalPages} hiddenFrom={item.from} hiddenTo={item.to} suggestedPage={suggested} onJump={handlePageClick} />
                             </PaginationItem>
                         );
                     }
@@ -179,5 +185,90 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                 </PaginationItem>
             </PaginationContent>
         </PaginationRoot>
+    );
+}
+
+interface IJumpToPagePopoverProps {
+    totalPages: number;
+    hiddenFrom: number;
+    hiddenTo: number;
+    suggestedPage: number;
+    onJump: (page: number) => void;
+}
+
+function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, onJump }: IJumpToPagePopoverProps) {
+    const [open, setOpen] = useState(false);
+    const [value, setValue] = useState(String(suggestedPage));
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (open) {
+            setValue(String(suggestedPage));
+            const id = window.setTimeout(() => {
+                inputRef.current?.focus();
+                inputRef.current?.select();
+            }, 0);
+            return () => window.clearTimeout(id);
+        }
+        return;
+    }, [open, suggestedPage]);
+
+    const parsed = Number.parseInt(value, 10);
+    const isValid = Number.isFinite(parsed) && parsed >= 1 && parsed <= totalPages;
+
+    const commit = () => {
+        if (!isValid) return;
+        onJump(parsed);
+        setOpen(false);
+    };
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+                render={
+                    <button
+                        type="button"
+                        aria-label={`Jump to a page between ${hiddenFrom} and ${hiddenTo}`}
+                        className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-accent data-popup-open:text-foreground"
+                    >
+                        <PaginationEllipsis className="min-w-0" />
+                    </button>
+                }
+            />
+            <PopoverContent align="center" sideOffset={6} className="w-60">
+                <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="font-sans text-sm font-semibold leading-none text-foreground">Jump to page</span>
+                        <span className="font-sans text-xs leading-none text-muted-foreground tabular-nums">
+                            Hidden range: {hiddenFrom}–{hiddenTo} · Total {totalPages}
+                        </span>
+                    </div>
+                    <form
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            commit();
+                        }}
+                        className="flex items-center gap-1.5"
+                    >
+                        <Input
+                            ref={inputRef}
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={totalPages}
+                            value={value}
+                            onChange={(event) => setValue(event.currentTarget.value)}
+                            aria-label="Page number"
+                            aria-invalid={value.length > 0 && !isValid}
+                            className="flex-1 tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none `[[type=number]]:[appearance:textfield]"
+                        />
+                        <Button type="submit" size="icon" variant="default" disabled={!isValid} aria-label="Go to page" className="size-8 shrink-0">
+                            <CornerDownLeft className="size-4" />
+                        </Button>
+                    </form>
+                    <span className="font-sans text-[11px] leading-none text-muted-foreground">Enter a number from 1 to {totalPages}.</span>
+                </div>
+            </PopoverContent>
+        </Popover>
     );
 }
