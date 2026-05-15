@@ -33,7 +33,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
     const titleValid = trimmedTitle.length > 0;
 
     return (
-        <header className="border-b border-border/60 bg-linear-to-b from-card/40 to-transparent">
+        <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
             <div className="mx-auto w-[min(1280px,calc(100%-1.5rem))] pt-5 pb-6 sm:w-[min(1280px,calc(100%-2rem))] sm:pt-8 sm:pb-7">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
@@ -67,7 +67,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                     placeholder="Untitled tier list"
                                     size="lg"
                                     aria-invalid={!titleValid || undefined}
-                                    className="text-2xl font-bold sm:text-3xl [&_input]:font-sans [&_input]:tracking-tight"
+                                    className="font-bold text-2xl sm:text-3xl [&_input]:font-sans [&_input]:tracking-tight"
                                 />
                             </Field>
 
@@ -78,7 +78,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                 <Textarea id={descId} value={description} onChange={(e) => onDescriptionChange(e.target.value.slice(0, DESC_MAX))} placeholder="Add a short description so viewers know what this list is about." rows={2} className="[&_textarea]:font-sans [&_textarea]:text-sm" />
                             </Field>
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
                                 <span className="tabular-nums">
                                     <span className="text-foreground">{title.length}</span> / {TITLE_MAX} title
                                 </span>
@@ -93,7 +93,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
                         <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{isDirty ? "Unsaved changes" : "All saved"}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? "Unsaved changes" : "All saved"}</span>
                                 {!isDirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
                             </div>
                             {isDirty ? (
@@ -112,7 +112,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
 
                             {saveProgress && (
                                 <div className="mt-2 rounded-md border border-border bg-muted/50 px-2 py-1.5">
-                                    <div className="flex items-center justify-between font-mono text-[10px] tabular-nums text-muted-foreground">
+                                    <div className="flex items-center justify-between font-mono text-[10px] text-muted-foreground tabular-nums">
                                         <span>{saveProgress.label}</span>
                                         <span>
                                             {saveProgress.step}/{saveProgress.total}

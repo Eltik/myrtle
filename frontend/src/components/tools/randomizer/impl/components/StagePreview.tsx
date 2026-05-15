@@ -83,7 +83,7 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
             {failed && <PreviewFallback code={stage.code} />}
             <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/40 to-transparent dark:from-black/60" />
             {canExpand && (
-                <span aria-hidden="true" className="pointer-events-none absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                <span aria-hidden="true" className="pointer-events-none absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <Maximize2 className="size-3.5" />
                 </span>
             )}
@@ -237,7 +237,7 @@ const StageViewerDialog = memo(function StageViewerDialog({ imageSrc, stageName,
             <DialogContent className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[95vw] flex-col overflow-hidden p-0 sm:max-w-[95vw]" showCloseButton bottomStickOnMobile={false}>
                 <DialogTitle className="sr-only">{stageName}</DialogTitle>
 
-                <div className="absolute left-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
                     <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>

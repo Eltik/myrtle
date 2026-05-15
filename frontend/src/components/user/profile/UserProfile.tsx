@@ -34,7 +34,7 @@ export function UserProfile() {
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const { data: inventory } = useQuery(userInventoryQueryOptions(id));
     const { data: score, isLoading: isScoreLoading } = useQuery(userScoreQueryOptions(id));
-    // Improvements only fire while the Score tab is mounted — it's a heavier
+    // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
         ...userImprovementsQueryOptions(id),
@@ -55,12 +55,12 @@ export function UserProfile() {
 
     if (isLoading) {
         return (
-            <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
-                <div className="relative h-48 w-full rounded-3xl border border-border/50 bg-card/40 overflow-hidden">
+            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
+                <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
                     <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
-                    <div className="relative flex items-center gap-6 p-6 h-full">
-                        <Skeleton className="h-28 w-28 rounded-2xl shrink-0" />
-                        <div className="flex-1 flex flex-col gap-3 min-w-0">
+                    <div className="relative flex h-full items-center gap-6 p-6">
+                        <Skeleton className="h-28 w-28 shrink-0 rounded-2xl" />
+                        <div className="flex min-w-0 flex-1 flex-col gap-3">
                             <div className="flex items-center gap-2">
                                 <Skeleton className="h-4 w-16 rounded-md" />
                                 <Skeleton className="h-5 w-20 rounded-full" />
@@ -68,24 +68,24 @@ export function UserProfile() {
                             </div>
                             <Skeleton className="h-8 w-48 rounded-lg" />
                             <Skeleton className="h-4 w-40 rounded-md" />
-                            <Skeleton className="h-4 w-36 rounded-md mt-1" />
+                            <Skeleton className="mt-1 h-4 w-36 rounded-md" />
                         </div>
-                        <div className="hidden sm:flex items-center gap-2 self-start">
+                        <div className="hidden items-center gap-2 self-start sm:flex">
                             <Skeleton className="h-9 w-24 rounded-lg" />
                             <Skeleton className="h-9 w-9 rounded-lg" />
                         </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
                     {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="h-28 w-full rounded-2xl border border-border/50 bg-card/40 p-5 flex flex-col gap-3">
+                        <div key={i} className="flex h-28 w-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/40 p-5">
                             <Skeleton className="h-3 w-16 rounded-md" />
                             <Skeleton className="h-8 w-28 rounded-lg" />
-                            <Skeleton className="h-3 w-24 rounded-md mt-auto" />
+                            <Skeleton className="mt-auto h-3 w-24 rounded-md" />
                         </div>
                     ))}
                 </div>
-                <div className="flex items-center gap-6 border-b border-border/50 pt-2">
+                <div className="flex items-center gap-6 border-border/50 border-b pt-2">
                     {[0, 1, 2, 3].map((i) => (
                         <div key={i} className="flex items-center gap-2 pb-3">
                             <Skeleton className="h-4 w-16 rounded-md" />
@@ -110,7 +110,7 @@ export function UserProfile() {
                         ))}
                     </div>
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2.5">
+                <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
                     {SKELETON_GRID_IDS.map((id) => (
                         <Skeleton className="aspect-3/4 w-full rounded-xl" key={id} />
                     ))}
@@ -120,11 +120,11 @@ export function UserProfile() {
     }
     if (!data) {
         return (
-            <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
+            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
                 <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                    <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Doctor</span>
-                    <h1 className="text-2xl font-bold tracking-tight">Profile not found</h1>
-                    <p className="max-w-sm text-sm text-muted-foreground">
+                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">Doctor</span>
+                    <h1 className="font-bold text-2xl tracking-tight">Profile not found</h1>
+                    <p className="max-w-sm text-muted-foreground text-sm">
                         No Doctor with ID <code className="font-mono">{id}</code> exists, or their profile is private.
                     </p>
                 </div>
@@ -133,7 +133,7 @@ export function UserProfile() {
     }
 
     return (
-        <main className="flex-1 w-[min(1440px,calc(100%-2rem))] m-[0_auto] p-[24px_0_64px] flex flex-col gap-7">
+        <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
             <Hero profile={data} />
             <StatStrip profile={data} rosterCount={roster?.length} />
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />

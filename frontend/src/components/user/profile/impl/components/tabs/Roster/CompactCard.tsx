@@ -45,9 +45,9 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         }}
                     >
                         <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                            {subtitle && <span className="text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose z-10">{subtitle}</span>}
+                            {subtitle && <span className="z-10 text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
                             <span
-                                className="text-foreground z-10"
+                                className="z-10 text-foreground"
                                 style={{
                                     fontSize: nameIsLong ? "9px" : "12px",
                                     lineHeight: nameIsLong ? "9px" : "17px",
@@ -74,7 +74,7 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         </div>
 
                         {!maxed && (
-                            <div className="-left-3 -bottom-2 absolute z-10 flex flex-col gap-0.5">
+                            <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
                                 {entry.potential > 0 && (
                                     <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
                                         <img alt={`Potential ${entry.potential + 1}`} className="h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={20} />
@@ -128,7 +128,7 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         )}
 
                         {!maxed && unlockedModules.length > 0 && (
-                            <div className="-right-2 -bottom-3 absolute z-10 flex flex-row-reverse gap-1">
+                            <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
                                 {unlockedModules.map((module) => {
                                     const rosterMod = entry.modules.find((m) => m.id === module.uniEquipId);
                                     const moduleLevel = rosterMod?.level ?? 0;

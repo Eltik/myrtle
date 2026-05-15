@@ -20,6 +20,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v010_leaderboard_snapshots",
         include_str!("v010_leaderboard_snapshots.sql"),
     ),
+    (
+        "v011_tier_list_visibility",
+        include_str!("v011_tier_list_visibility.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -17,7 +17,7 @@ function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string
     const u = profile.data;
     return (
         <span className="flex items-center gap-2">
-            <span className="relative inline-block size-[22px] overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
+            <span className="relative inline-block size-5.5 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
                 {u ? <img src={getSecretaryAvatarURL({ secretary: u.secretary, secretary_skin_id: u.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             </span>
             <Link to="/user/$id" params={{ id: uid }} className="font-medium hover:underline">
@@ -66,7 +66,7 @@ export function Dashboard(): React.ReactElement {
                 title="Dashboard"
                 sub={
                     <>
-                        Service-level signals from the Rust backend — surfaced verbatim from <HCode>GET /admin/stats</HCode> and <HCode>/health</HCode>.
+                        Service-level signals from the Rust backend - surfaced verbatim from <HCode>GET /admin/stats</HCode> and <HCode>/health</HCode>.
                     </>
                 }
                 action={
@@ -99,10 +99,10 @@ export function Dashboard(): React.ReactElement {
             <section className="mb-4 grid grid-cols-4 gap-3.5">
                 {statsQuery.isPending ? (
                     <>
-                        <Skeleton className="h-[124px] rounded-2xl" />
-                        <Skeleton className="h-[124px] rounded-2xl" />
-                        <Skeleton className="h-[124px] rounded-2xl" />
-                        <Skeleton className="h-[124px] rounded-2xl" />
+                        <Skeleton className="h-31 rounded-2xl" />
+                        <Skeleton className="h-31 rounded-2xl" />
+                        <Skeleton className="h-31 rounded-2xl" />
+                        <Skeleton className="h-31 rounded-2xl" />
                     </>
                 ) : (
                     <>
@@ -120,7 +120,7 @@ export function Dashboard(): React.ReactElement {
                         <CardHeader>
                             <CardTitle className="text-sm">Roles breakdown</CardTitle>
                             <CardDescription className="text-xs">
-                                From the <span className="font-mono">users.role</span> column — global access rungs.
+                                From the <span className="font-mono">users.role</span> column - global access rungs.
                             </CardDescription>
                             <CardAction>
                                 <Button variant="ghost" size="sm" render={<Link to="/admin/users" />}>
@@ -157,21 +157,21 @@ export function Dashboard(): React.ReactElement {
                             ) : stats && stats.recentUsers.length > 0 ? (
                                 <table className="w-full border-collapse text-[13px]">
                                     <thead>
-                                        <tr className="border-b border-border">
-                                            <th className="px-2 py-2 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Doctor</th>
-                                            <th className="px-2 py-2 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Server</th>
-                                            <th className="px-2 py-2 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Level</th>
-                                            <th className="px-2 py-2 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Joined</th>
+                                        <tr className="border-border border-b">
+                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Doctor</th>
+                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Server</th>
+                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Level</th>
+                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Joined</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {stats.recentUsers.slice(0, 6).map((u) => (
-                                            <tr key={u.uid} className="border-b border-border last:border-0">
+                                            <tr key={u.uid} className="border-border border-b last:border-0">
                                                 <td className="px-2 py-2">
-                                                    <DashUserCell uid={u.uid} fallbackName={u.nickname ?? "—"} />
+                                                    <DashUserCell uid={u.uid} fallbackName={u.nickname ?? "-"} />
                                                 </td>
                                                 <td className="px-2 py-2 font-mono">{serverIdToCode(u.serverId)}</td>
-                                                <td className="px-2 py-2 tabular-nums">{u.level ?? "—"}</td>
+                                                <td className="px-2 py-2 tabular-nums">{u.level ?? "-"}</td>
                                                 <td className="px-2 py-2 text-muted-foreground">{formatRelative(u.createdAt)}</td>
                                             </tr>
                                         ))}
@@ -202,21 +202,21 @@ export function Dashboard(): React.ReactElement {
                                             <span className="font-mono">{health.database.responseTimeMs} ms</span>
                                         </StatusDot>
                                     </div>
-                                    <div className="border-t border-border" />
+                                    <div className="border-border border-t" />
                                     <div className="flex items-center justify-between py-2">
                                         <span className="text-muted-foreground">Cache · {health.cache.backend}</span>
                                         <StatusDot state={health.cache.status === "connected" ? "green" : "red"}>
                                             <span className="font-mono">{health.cache.responseTimeMs} ms</span>
                                         </StatusDot>
                                     </div>
-                                    <div className="border-t border-border" />
+                                    <div className="border-border border-t" />
                                     <div className="flex items-center justify-between py-2">
                                         <span className="text-muted-foreground">Game data</span>
                                         <StatusDot state="green">
                                             <span className="font-mono">{totalOperators} operators</span>
                                         </StatusDot>
                                     </div>
-                                    <div className="border-t border-border" />
+                                    <div className="border-border border-t" />
                                     <div className="flex items-center justify-between pt-2">
                                         <span className="text-muted-foreground">Round-trip</span>
                                         <span className="font-mono text-[12px]">{health.responseTimeMs} ms</span>
@@ -234,11 +234,11 @@ export function Dashboard(): React.ReactElement {
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2.5">
-                                <span className="block size-[34px] rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
+                                <span className="block size-8.5 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
                                 <div className="flex min-w-0 flex-1 flex-col">
-                                    <span className="truncate font-medium text-[13px]">{user?.nickname ?? "—"}</span>
+                                    <span className="truncate font-medium text-[13px]">{user?.nickname ?? "-"}</span>
                                     <span className="font-mono text-[11.5px] text-muted-foreground">
-                                        UID {user?.uid ?? "—"} · {user?.role ?? "—"}
+                                        UID {user?.uid ?? "-"} · {user?.role ?? "-"}
                                     </span>
                                 </div>
                             </div>
@@ -323,7 +323,7 @@ function RoleBreakdownBars({ rows }: { rows: { label: string; count: number; col
                 <div key={r.label}>
                     <div className="mb-1 flex items-center justify-between">
                         <span className="font-mono text-[12px]">{r.label}</span>
-                        <span className="font-mono text-[11.5px] tabular-nums text-muted-foreground">{r.count.toLocaleString()}</span>
+                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{r.count.toLocaleString()}</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-[3px] bg-muted">
                         <div className="h-full" style={{ width: `${Math.max(2, (r.count / max) * 100)}%`, background: r.color }} />

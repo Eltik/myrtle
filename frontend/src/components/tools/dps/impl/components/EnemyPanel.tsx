@@ -44,7 +44,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeShred
             </CardHeader>
             <CardPanel className="space-y-3 pt-0">
                 <div>
-                    <Label className="mb-1.5 block font-medium text-[11px] leading-none text-muted-foreground">Quick presets</Label>
+                    <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">Quick presets</Label>
                     <div className="flex flex-wrap gap-1">
                         {ENEMY_PRESETS.map((preset) => {
                             const selected = activePreset?.id === preset.id;
@@ -58,7 +58,7 @@ export function EnemyPanel({ enemy, hydrationToken, onChangeEnemy, onChangeShred
                                                 onClick={() => onApplyPreset(preset)}
                                                 aria-pressed={selected}
                                                 className={cn(
-                                                    "flex h-7 cursor-pointer items-center justify-center rounded-md border bg-card px-2 text-[11px] font-medium transition-colors",
+                                                    "flex h-7 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium text-[11px] transition-colors",
                                                     selected ? "border-primary bg-primary/10 text-foreground ring-1 ring-primary/30" : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
                                                 )}
                                             >
@@ -115,7 +115,7 @@ interface INumFieldProps {
 function NumField({ label, value, min, max, step = 1, onChange, compact = false }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size={compact ? "sm" : "default"}>
-            <Label className="block font-medium text-[12px] leading-none text-muted-foreground">{label}</Label>
+            <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{label}</Label>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput />

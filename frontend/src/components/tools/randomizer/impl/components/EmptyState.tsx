@@ -2,13 +2,13 @@ import type React from "react";
 
 export function EmptyState(): React.ReactElement {
     return (
-        <section className="relative overflow-hidden rounded-2xl border border-dashed border-border/70 bg-card/60 px-6 py-10 shadow-xs/5 sm:py-14">
+        <section className="relative overflow-hidden rounded-2xl border border-border/70 border-dashed bg-card/60 px-6 py-10 shadow-xs/5 sm:py-14">
             <div className="mx-auto flex max-w-md flex-col items-center text-center">
                 <DiceStack />
-                <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">No squads rolled</p>
+                <p className="mt-5 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.22em]">No squads rolled</p>
                 <h2 className="mt-2 font-(--font-display) text-2xl text-foreground sm:text-3xl">Awaiting randomizer.</h2>
-                <p className="mt-3 max-w-prose text-pretty text-sm leading-relaxed text-muted-foreground">
-                    Hit <kbd className="mx-0.5 inline-flex -translate-y-px items-center rounded-sm border border-border/70 bg-foreground/5 px-1.5 py-px font-mono text-[11px] font-medium tracking-tight text-foreground shadow-xs/5">Roll Squad</kbd> above to draw a random stage, a squad of operators, and a challenge
+                <p className="mt-3 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
+                    Hit <kbd className="mx-0.5 inline-flex -translate-y-px items-center rounded-sm border border-border/70 bg-foreground/5 px-1.5 py-px font-medium font-mono text-[11px] text-foreground tracking-tight shadow-xs/5">Roll Squad</kbd> above to draw a random stage, a squad of operators, and a challenge
                     modifier.
                 </p>
             </div>

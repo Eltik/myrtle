@@ -38,7 +38,7 @@ export function ItemIcon({ item, size = 64, className = "" }: IItemIconProps) {
             {!errored ? (
                 <img alt={item.name} src={url} className="h-full w-full object-contain" decoding="async" loading="lazy" onError={() => setErrored(true)} />
             ) : (
-                <div className="flex h-full w-full items-center justify-center font-mono font-bold tabular-nums" style={{ color, fontSize: size * 0.32, letterSpacing: "-0.02em" }}>
+                <div className="flex h-full w-full items-center justify-center font-bold font-mono tabular-nums" style={{ color, fontSize: size * 0.32, letterSpacing: "-0.02em" }}>
                     <span className="drop-shadow-[0_1px_0_rgb(0_0_0/0.4)]">{initials}</span>
                 </div>
             )}

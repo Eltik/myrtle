@@ -49,7 +49,7 @@ export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, e
                         <Field>
                             <FieldLabel htmlFor={nameId}>
                                 Name
-                                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                                <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
@@ -60,7 +60,7 @@ export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, e
                         <Field>
                             <FieldLabel htmlFor={descId}>
                                 Description
-                                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                                <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
@@ -69,7 +69,7 @@ export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, e
                         </Field>
 
                         {errorMessage && (
-                            <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-xs text-destructive-foreground">
+                            <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-destructive-foreground text-xs">
                                 {errorMessage}
                             </div>
                         )}

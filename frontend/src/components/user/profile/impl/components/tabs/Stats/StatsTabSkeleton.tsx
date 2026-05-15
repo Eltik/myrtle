@@ -144,7 +144,7 @@ function ModulesSkinsSkeleton() {
                     <MetricRowSkeleton />
                 </div>
 
-                <div className="border-t border-border/60" />
+                <div className="border-border/60 border-t" />
 
                 <div className="space-y-4">
                     <KickerSkeleton />
@@ -159,7 +159,7 @@ function ModulesSkinsSkeleton() {
 function TopOperatorTileSkeleton({ rank }: { rank: number }) {
     return (
         <div className="relative flex flex-col gap-2.5 bg-card p-3 sm:p-4">
-            <div className="absolute top-2.5 right-2.5 font-mono text-[10px] font-bold tabular-nums text-muted-foreground/35">#{rank}</div>
+            <div className="absolute top-2.5 right-2.5 font-bold font-mono text-[10px] text-muted-foreground/35 tabular-nums">#{rank}</div>
             <div className="flex items-center gap-2.5 pt-0.5">
                 <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
                 <div className="min-w-0 flex-1 space-y-1.5">

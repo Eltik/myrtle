@@ -34,6 +34,7 @@ interface IBackendTierList {
     list_type: string;
     created_by: string | null;
     is_active: boolean;
+    is_listed: boolean;
     flair_id: number | null;
     created_at: string;
     updated_at: string;
@@ -357,6 +358,7 @@ export interface ITierListDetail {
     description: string;
     listType: TierListType;
     createdBy: string | null;
+    isListed: boolean;
     flair: ITierListFlair | null;
     author: ITierListAuthor | null;
     stats: ITierListStats | null;
@@ -406,6 +408,7 @@ function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, I
         description: detail.description ?? "",
         listType: detail.list_type === "official" ? "official" : "community",
         createdBy: detail.created_by,
+        isListed: detail.is_listed ?? true,
         flair: detail.flair
             ? {
                   id: detail.flair.id,
@@ -587,6 +590,11 @@ export interface ISetTierListFlairInput {
     flairId: number | null;
 }
 
+export interface ISetTierListVisibilityInput {
+    slug: string;
+    isListed: boolean;
+}
+
 export interface IPublishTierListVersionInput {
     slug: string;
     changelog?: string | null;
@@ -600,6 +608,7 @@ export interface ITierListSummary {
     listType: TierListType;
     createdBy: string | null;
     isActive: boolean;
+    isListed: boolean;
     flairId: number | null;
     createdAt: string;
     updatedAt: string;
@@ -660,6 +669,7 @@ function mapTierListSummary(raw: IBackendTierList): ITierListSummary {
         listType: raw.list_type === "official" ? "official" : "community",
         createdBy: raw.created_by,
         isActive: raw.is_active,
+        isListed: raw.is_listed ?? true,
         flairId: raw.flair_id,
         createdAt: raw.created_at,
         updatedAt: raw.updated_at,
@@ -905,6 +915,19 @@ export const setTierListFlairFn = createServerFn({ method: "POST" })
         return (await res.json()) as IBackendStatus;
     });
 
+export const setTierListVisibilityFn = createServerFn({ method: "POST" })
+    .inputValidator((data: ISetTierListVisibilityInput) => data)
+    .handler(async ({ data }): Promise<{ is_listed: boolean }> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/visibility`, {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify({ is_listed: data.isListed }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as { is_listed: boolean };
+    });
+
 // --- Versions (publish snapshots) -------------------------------------------
 
 export const publishTierListVersionFn = createServerFn({ method: "POST" })
@@ -919,6 +942,55 @@ export const publishTierListVersionFn = createServerFn({ method: "POST" })
         if (!res.ok) throw await parseError(res);
         return mapTierListVersion((await res.json()) as IBackendTierListVersion);
     });
+
+/**
+ * Convert a published-version snapshot (raw backend JSON) into the same
+ * shape the live detail view uses, resolving operator metadata from the
+ * operator index. Returns [] for malformed snapshots.
+ */
+export function snapshotToTiers(snapshot: TierListJsonValue, opIndex: Record<string, IOperatorIndexEntry>): ITierEntryFull[] {
+    if (!Array.isArray(snapshot)) return [];
+    const tiers: ITierEntryFull[] = [];
+    for (const raw of snapshot) {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+        const t = raw as Record<string, TierListJsonValue>;
+        const id = typeof t.id === "string" ? t.id : "";
+        const name = typeof t.name === "string" ? t.name : "";
+        if (!id || !name) continue;
+        const displayOrder = typeof t.display_order === "number" ? t.display_order : 0;
+        const color = typeof t.color === "string" ? t.color : null;
+        const description = typeof t.description === "string" ? t.description : null;
+        const placementsRaw = Array.isArray(t.placements) ? t.placements : [];
+
+        const operators: ITierOperator[] = [];
+        for (const pRaw of placementsRaw) {
+            if (!pRaw || typeof pRaw !== "object" || Array.isArray(pRaw)) continue;
+            const p = pRaw as Record<string, TierListJsonValue>;
+            const operatorId = typeof p.operator_id === "string" ? p.operator_id : "";
+            if (!operatorId) continue;
+            const op = opIndex[operatorId];
+            if (!op) continue;
+            operators.push({
+                id: op.id,
+                name: op.name,
+                appellation: op.appellation || null,
+                rarity: op.rarity,
+                profession: op.profession,
+                subProfessionId: op.subProfessionId,
+                position: op.position,
+                nationId: op.nationId || null,
+                subOrder: typeof p.sub_order === "number" ? p.sub_order : 0,
+                notes: typeof p.notes === "string" ? p.notes : null,
+                updatedAt: typeof p.updated_at === "string" ? p.updated_at : new Date(0).toISOString(),
+            });
+        }
+        operators.sort((a, b) => a.subOrder - b.subOrder);
+
+        tiers.push({ id, name, displayOrder, color, description, operators });
+    }
+    tiers.sort((a, b) => a.displayOrder - b.displayOrder);
+    return tiers;
+}
 
 export const getTierListVersionsFn = createServerFn({ method: "GET" })
     .inputValidator((slug: string) => slug)

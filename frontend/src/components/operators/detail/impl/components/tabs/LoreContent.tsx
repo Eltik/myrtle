@@ -124,7 +124,7 @@ function renderParagraph(paragraph: string, idx: number) {
         if (trimmed.startsWith(">")) q = trimmed.substring(1).trim();
         else if (trimmed.startsWith('"') && trimmed.endsWith('"')) q = trimmed.substring(1, trimmed.length - 1).trim();
         return (
-            <blockquote className="my-3 rounded-r-lg border-l-4 border-primary/40 bg-secondary/30 py-3 pl-4 pr-4" key={`q-${idx}`}>
+            <blockquote className="my-3 rounded-r-lg border-primary/40 border-l-4 bg-secondary/30 py-3 pr-4 pl-4" key={`q-${idx}`}>
                 <p className="text-muted-foreground text-sm italic leading-relaxed">{q}</p>
             </blockquote>
         );

@@ -49,14 +49,14 @@ export function AdminSettings(): React.ReactElement {
                         <CardDescription className="text-xs">Your current JWT session.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
-                        <CardKV k="Nickname" v={user?.nickname ?? "—"} />
-                        <CardKV k="UID" v={user?.uid ?? "—"} />
-                        <CardKV k="Server" v={user?.server ?? "—"} />
+                        <CardKV k="Nickname" v={user?.nickname ?? "-"} />
+                        <CardKV k="UID" v={user?.uid ?? "-"} />
+                        <CardKV k="Server" v={user?.server ?? "-"} />
                         <CardKV
                             k="Role"
                             v={
                                 <>
-                                    {user?.role ?? "—"}
+                                    {user?.role ?? "-"}
                                     {user?.role === "super_admin" ? (
                                         <Badge variant="success" className="ml-2">
                                             super
@@ -65,7 +65,7 @@ export function AdminSettings(): React.ReactElement {
                                 </>
                             }
                         />
-                        <CardKV k="Total score" v={user?.total_score?.toLocaleString() ?? "—"} />
+                        <CardKV k="Total score" v={user?.total_score?.toLocaleString() ?? "-"} />
                         <div className="mt-3 flex items-center gap-2">
                             <Button variant="outline" size="sm" render={<Link to="/settings" />}>
                                 Account settings

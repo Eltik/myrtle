@@ -32,9 +32,9 @@ export function MobileNav({ items }: IMobileNavProps) {
                             <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-panel-open:rotate-180" />
                         </DrawerMenuItem>
                     </CollapsibleTrigger>
-                    <CollapsiblePanel className="flex flex-col border-l border-border ml-4 mt-1 gap-1">
+                    <CollapsiblePanel className="mt-1 ml-4 flex flex-col gap-1 border-border border-l">
                         {item.items.map((subItem) => (
-                            <DrawerMenuItem key={subItem.href} className="h-9 text-sm text-muted-foreground hover:text-foreground" render={<DrawerClose render={<Link to={subItem.href} />}></DrawerClose>}>
+                            <DrawerMenuItem key={subItem.href} className="h-9 text-muted-foreground text-sm hover:text-foreground" render={<DrawerClose render={<Link to={subItem.href} />}></DrawerClose>}>
                                 {subItem.label}
                             </DrawerMenuItem>
                         ))}
@@ -95,14 +95,14 @@ export function MobileNav({ items }: IMobileNavProps) {
                                 </div>
                             ) : user ? (
                                 <>
-                                    <div className="flex items-center gap-3 px-2 py-2 mb-2">
+                                    <div className="mb-2 flex items-center gap-3 px-2 py-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
                                             <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{user.nickname ?? "Doctor"}</span>
-                                            <span className="text-xs text-muted-foreground">Level {user.level}</span>
+                                            <span className="font-medium text-sm">{user.nickname ?? "Doctor"}</span>
+                                            <span className="text-muted-foreground text-xs">Level {user.level}</span>
                                         </div>
                                     </div>
                                     <DrawerMenuItem render={<DrawerClose render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} />}>

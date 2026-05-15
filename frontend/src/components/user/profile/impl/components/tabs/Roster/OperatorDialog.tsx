@@ -137,27 +137,27 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-linear-to-l from-background to-transparent" />
                     <div ref={titleRef} className="absolute inset-x-0 bottom-0 px-6 pb-6" style={{ transform: "translate3d(0, 0, 0)", opacity: 1 }}>
                         <img alt={`${star} Star`} className="mb-2 h-5 w-auto object-contain drop-shadow" decoding="async" src={rarityIcon(star)} />
-                        <h2 className="text-3xl font-bold tracking-tight text-foreground">{entry.name}</h2>
-                        {op && <p className="mt-1 text-sm text-muted-foreground">{formatProfession(op.profession)}</p>}
+                        <h2 className="font-bold text-3xl text-foreground tracking-tight">{entry.name}</h2>
+                        {op && <p className="mt-1 text-muted-foreground text-sm">{formatProfession(op.profession)}</p>}
                     </div>
                 </div>
-                <div ref={pillsRef} className="relative z-5 -mt-6 px-6 truncate" style={{ transform: "translate3d(0, 0, 0)" }}>
+                <div ref={pillsRef} className="relative z-5 -mt-6 truncate px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-card/80 p-2 shadow-lg backdrop-blur">
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain icon-theme-aware" decoding="async" src={eliteIcon(entry.elite)} />
-                            <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">Elite</span>
+                            <img alt={`Elite ${entry.elite}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={eliteIcon(entry.elite)} />
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Elite</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <span className="text-base font-semibold tabular-nums text-foreground">{entry.level}</span>
-                            <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">Level</span>
+                            <span className="font-semibold text-base text-foreground tabular-nums">{entry.level}</span>
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Level</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <img alt={`Potential ${entry.potential + 1}`} className="h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
-                            <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">Potential</span>
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Potential</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <span className="text-base font-semibold tabular-nums text-foreground">{`${trustPct}%`}</span>
-                            <span className="text-[0.625rem] uppercase tracking-wide text-muted-foreground">Trust</span>
+                            <span className="font-semibold text-base text-foreground tabular-nums">{`${trustPct}%`}</span>
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Trust</span>
                         </div>
                     </div>
                 </div>
@@ -167,7 +167,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                         <section>
                             <header className="mb-3 flex items-center gap-3">
                                 <span className="h-4 w-1 rounded-full bg-primary" />
-                                <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">Combat Stats</h3>
+                                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Combat Stats</h3>
                                 <Separator className="flex-1" />
                             </header>
                             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
@@ -182,8 +182,8 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                     ] as const
                                 ).map(([label, value]) => (
                                     <div key={label} className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
-                                        <span className="text-xs text-muted-foreground">{label}</span>
-                                        <span className="text-sm font-semibold tabular-nums">{value}</span>
+                                        <span className="text-muted-foreground text-xs">{label}</span>
+                                        <span className="font-semibold text-sm tabular-nums">{value}</span>
                                     </div>
                                 ))}
                             </div>
@@ -192,8 +192,8 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">Skills</h3>
-                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] uppercase tracking-wide text-muted-foreground">Lv. {entry.skill_level}</span>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Skills</h3>
+                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] text-muted-foreground uppercase tracking-wide">Lv. {entry.skill_level}</span>
                             <Separator className="flex-1" />
                         </header>
                         {skills.length > 0 ? (
@@ -205,12 +205,12 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                         <div key={skill.skillId} className={`grid items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors ${isDefault ? "border border-primary/40 bg-primary/10" : "bg-muted/30 hover:bg-muted/50"}`} style={{ gridTemplateColumns: "32px minmax(0, 1fr) auto" }}>
                                             <img alt="Skill" className="h-8 w-8 rounded-sm" decoding="async" src={skillIconURL(skill)} />
                                             <div className="min-w-0">
-                                                <p className="truncate text-sm font-medium" title={name}>
+                                                <p className="truncate font-medium text-sm" title={name}>
                                                     {name}
                                                 </p>
-                                                {isDefault && <span className="text-[0.625rem] uppercase tracking-wide text-primary">Default</span>}
+                                                {isDefault && <span className="text-[0.625rem] text-primary uppercase tracking-wide">Default</span>}
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                                                 <span className="tabular-nums">Lv.{entry.skill_level}</span>
                                                 {mastery > 0 && <img alt={`M${mastery}`} className="h-4 w-4" decoding="async" src={specializedIcon(mastery)} />}
                                             </div>
@@ -219,13 +219,13 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                 })}
                             </div>
                         ) : (
-                            <p className="rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{op ? "No skills found." : "Loading…"}</p>
+                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? "No skills found." : "Loading…"}</p>
                         )}
                     </section>
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">Modules</h3>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Modules</h3>
                             <Separator className="flex-1" />
                         </header>
                         {modules.length > 0 ? (
@@ -234,12 +234,12 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                     <div key={module.uniEquipId} className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors ${isEquipped ? "border border-primary/40 bg-primary/10" : "bg-muted/30 hover:bg-muted/50"}`}>
                                         <img alt="Module" className="h-8 w-8 shrink-0 object-contain" decoding="async" src={moduleIconURL(module)} />
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium" title={module.uniEquipName}>
+                                            <p className="truncate font-medium text-sm" title={module.uniEquipName}>
                                                 {module.uniEquipName}
                                             </p>
-                                            {isEquipped && <span className="text-[0.625rem] uppercase tracking-wide text-primary">Equipped</span>}
+                                            {isEquipped && <span className="text-[0.625rem] text-primary uppercase tracking-wide">Equipped</span>}
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                                        <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
                                             <span className="rounded bg-background/60 px-1.5 py-0.5">{module.typeName1}</span>
                                             <span className="tabular-nums">Lv.{level}</span>
                                         </div>
@@ -247,13 +247,13 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                 ))}
                             </div>
                         ) : (
-                            <p className="rounded-md bg-muted/30 px-3 py-2 text-xs text-muted-foreground">{op ? "No modules unlocked." : "Loading…"}</p>
+                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? "No modules unlocked." : "Loading…"}</p>
                         )}
                     </section>
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">Info</h3>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Info</h3>
                             <Separator className="flex-1" />
                         </header>
                         <div className="grid grid-cols-2 gap-1.5">
@@ -264,8 +264,8 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                 ] as const
                             ).map(([label, value]) => (
                                 <div key={label} className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
-                                    <span className="text-xs text-muted-foreground">{label}</span>
-                                    <span className="text-sm font-medium">{value}</span>
+                                    <span className="text-muted-foreground text-xs">{label}</span>
+                                    <span className="font-medium text-sm">{value}</span>
                                 </div>
                             ))}
                         </div>

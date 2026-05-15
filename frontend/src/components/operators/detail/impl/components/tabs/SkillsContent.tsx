@@ -120,7 +120,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
 
             <div className="mb-6 rounded-md border border-border bg-secondary/20 p-5">
                 {levelsCount > 7 && (
-                    <div className="mb-5 flex items-center justify-between gap-4 border-b border-border pb-5">
+                    <div className="mb-5 flex items-center justify-between gap-4 border-border border-b pb-5">
                         <span className="flex items-center gap-2.5">
                             {comparisonMode ? <Columns className="h-4 w-4 text-primary" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
                             <span className="font-medium text-foreground text-sm">Compare Skill Levels</span>
@@ -252,11 +252,11 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             {showRangeDiff && baseRange ? (
                                 <div className="flex flex-wrap items-start gap-6">
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Original</span>
+                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Original</span>
                                         <OperatorRange range={baseRange} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">On Skill</span>
+                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">On Skill</span>
                                         <OperatorRange range={skillRange} />
                                     </div>
                                 </div>
@@ -395,7 +395,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                 {range && (
                     <div className="mt-4 rounded-sm border border-border/50 bg-secondary/10 p-3">
                         <div className="mb-2 flex items-center justify-between">
-                            <span className="font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Range</span>
+                            <span className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Range</span>
                             {baseRange && onToggleRangeDiff && (
                                 <button
                                     type="button"
@@ -410,11 +410,11 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                         {showRangeDiff && baseRange ? (
                             <div className="flex flex-wrap items-start gap-4">
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">Original</span>
+                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Original</span>
                                     <OperatorRange range={baseRange} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-muted-foreground text-[0.625rem] uppercase tracking-wide">On Skill</span>
+                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">On Skill</span>
                                     <OperatorRange range={range} />
                                 </div>
                             </div>

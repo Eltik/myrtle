@@ -97,10 +97,10 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
 
     return (
         <button type="button" onClick={onOpen} className="group flex w-full cursor-pointer flex-col bg-popover text-left no-underline transition-colors" aria-label={`Open tier ${tier.name} details`}>
-            <div className="relative flex items-center gap-3.5 border-b border-border px-4 pt-4 pb-3.5" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 14%, transparent), transparent 70%)` }}>
+            <div className="relative flex items-center gap-3.5 border-border border-b px-4 pt-4 pb-3.5" style={{ background: `linear-gradient(135deg, color-mix(in srgb, ${color} 14%, transparent), transparent 70%)` }}>
                 <span className="absolute inset-x-0 top-0 h-0.75" style={{ background: color }} aria-hidden="true" />
                 <span
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg font-sans text-[22px] font-extrabold leading-none tracking-tight font-features-['ss01','cv11']"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg font-extrabold font-features-['ss01','cv11'] font-sans text-[22px] leading-none tracking-tight"
                     style={{
                         background: color,
                         color: textColor,
@@ -111,44 +111,44 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1">
-                    <p className="m-0 font-mono text-[10px] font-bold uppercase leading-none tracking-[0.18em] text-muted-foreground/80">Tier</p>
-                    <h3 className="m-0 mt-1.5 wrap-break-word font-sans text-[16.5px] font-bold leading-[1.15] tracking-[-0.01em] text-foreground font-features-['ss01','cv11']">{tier.name}</h3>
+                    <p className="m-0 font-bold font-mono text-[10px] text-muted-foreground/80 uppercase leading-none tracking-[0.18em]">Tier</p>
+                    <h3 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[16.5px] text-foreground leading-[1.15] tracking-[-0.01em]">{tier.name}</h3>
                 </div>
-                <span className="shrink-0 self-start rounded-full border border-border bg-card px-2 py-1 font-mono text-[10.5px] font-semibold uppercase leading-none tracking-[0.06em] text-muted-foreground tabular-nums">
+                <span className="shrink-0 self-start rounded-full border border-border bg-card px-2 py-1 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tabular-nums leading-none tracking-[0.06em]">
                     <span className="text-foreground">{totalOps}</span>
                 </span>
             </div>
 
             <div className="flex flex-col gap-3.5 px-4 py-3.5">
-                {hasDescription ? <p className="m-0 line-clamp-3 font-sans text-[13.5px] leading-[1.55] tracking-[-0.005em] text-foreground">{tier.description}</p> : <p className="m-0 font-sans text-[12.5px] italic leading-[1.55] text-muted-foreground">No description provided for this tier.</p>}
+                {hasDescription ? <p className="m-0 line-clamp-3 font-sans text-[13.5px] text-foreground leading-[1.55] tracking-[-0.005em]">{tier.description}</p> : <p className="m-0 font-sans text-[12.5px] text-muted-foreground italic leading-[1.55]">No description provided for this tier.</p>}
 
                 {totalOps > 0 && (
                     <>
                         <div className="flex items-center -space-x-1.5">
                             {previewOps.map((op) => (
-                                <span key={op.id} className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted text-[10px] font-semibold text-foreground" title={op.name}>
+                                <span key={op.id} className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted font-semibold text-[10px] text-foreground" title={op.name}>
                                     <OperatorAvatar charId={op.id} name={op.name} />
                                 </span>
                             ))}
-                            {remaining > 0 && <span className="flex h-7 shrink-0 items-center justify-center rounded-full border-2 border-popover bg-muted px-2 font-mono text-[10.5px] font-bold text-muted-foreground tabular-nums">+{remaining}</span>}
+                            {remaining > 0 && <span className="flex h-7 shrink-0 items-center justify-center rounded-full border-2 border-popover bg-muted px-2 font-bold font-mono text-[10.5px] text-muted-foreground tabular-nums">+{remaining}</span>}
                         </div>
 
                         {stats.profession.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {stats.profession.slice(0, 4).map(({ profession, count }) => (
-                                    <span key={profession} className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans text-[11.5px] font-semibold leading-none text-foreground" title={`${count} ${formatProfession(profession)}${count === 1 ? "" : "s"}`}>
+                                    <span key={profession} className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans font-semibold text-[11.5px] text-foreground leading-none" title={`${count} ${formatProfession(profession)}${count === 1 ? "" : "s"}`}>
                                         <ClassIcon profession={profession} size={12} />
-                                        <span className="font-mono font-bold tabular-nums text-muted-foreground">{count}</span>
+                                        <span className="font-bold font-mono text-muted-foreground tabular-nums">{count}</span>
                                     </span>
                                 ))}
-                                {stats.profession.length > 4 && <span className="font-mono text-[10.5px] font-semibold text-muted-foreground">+{stats.profession.length - 4}</span>}
+                                {stats.profession.length > 4 && <span className="font-mono font-semibold text-[10.5px] text-muted-foreground">+{stats.profession.length - 4}</span>}
                             </div>
                         )}
                     </>
                 )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/60 px-4 py-2.5 font-sans text-[10.5px] font-bold uppercase leading-none tracking-[0.14em] text-muted-foreground transition-colors group-hover:bg-[color-mix(in_srgb,var(--ring)_10%,transparent)] group-hover:text-foreground">
+            <div className="flex items-center justify-between gap-2 border-border border-t bg-muted/60 px-4 py-2.5 font-bold font-sans text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em] transition-colors group-hover:bg-[color-mix(in_srgb,var(--ring)_10%,transparent)] group-hover:text-foreground">
                 <span>View tier details</span>
                 <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
             </div>

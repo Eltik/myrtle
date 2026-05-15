@@ -14,8 +14,7 @@ import { type IOperatorNote, operatorNoteQueryOptions, operatorNotesListQueryOpt
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
-import { RARITY_BG } from "../data";
-import { MonoSection } from "../Primitives";
+import { MonoSection, RARITY_BG } from "../Primitives";
 
 interface INoteCombined {
     operatorId: string;
@@ -61,8 +60,8 @@ export function OperatorNotes(): React.ReactElement {
                 <NoteEditor operatorId={editingId} onClose={() => setEditingId(null)} />
             ) : (
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-                    <div className="flex items-center gap-2.5 border-b border-border p-3.5">
-                        <div className="min-w-[280px] max-w-[380px] flex-1">
+                    <div className="flex items-center gap-2.5 border-border border-b p-3.5">
+                        <div className="min-w-70 max-w-95 flex-1">
                             <InputGroup>
                                 <InputGroupAddon>
                                     <SearchIcon />
@@ -88,7 +87,7 @@ export function OperatorNotes(): React.ReactElement {
                             <thead>
                                 <tr>
                                     {["Operator", "Branch", "Status", "Updated", "Tags", ""].map((h) => (
-                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                             {h}
                                         </th>
                                     ))}
@@ -96,10 +95,10 @@ export function OperatorNotes(): React.ReactElement {
                             </thead>
                             <tbody>
                                 {filtered.map(({ operatorId, op, note }) => (
-                                    <tr key={operatorId} onClick={() => setEditingId(operatorId)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setEditingId(operatorId)} className="cursor-pointer border-b border-border last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
+                                    <tr key={operatorId} onClick={() => setEditingId(operatorId)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setEditingId(operatorId)} className="cursor-pointer border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
                                         <td className="px-3.5 py-2.5">
                                             <span
-                                                className="mr-2 inline-flex size-7 items-center justify-center overflow-hidden rounded-md align-[-8px] text-[10px] font-semibold"
+                                                className="mr-2 inline-flex size-7 items-center justify-center overflow-hidden rounded-md align-[-8px] font-semibold text-[10px]"
                                                 style={{
                                                     background: RARITY_BG[op.rarity] ?? RARITY_BG[6],
                                                     boxShadow: "inset 0 1px 0 oklch(1 0 0 / 0.25), inset 0 -1px 0 oklch(0 0 0 / 0.25)",
@@ -112,8 +111,8 @@ export function OperatorNotes(): React.ReactElement {
                                         </td>
                                         <td className="px-3.5 py-2.5 text-muted-foreground">{op.subProfessionId}</td>
                                         <td className="px-3.5 py-2.5">{note?.summary || note?.notes ? <Badge variant="success">has content</Badge> : <Badge variant="outline">empty</Badge>}</td>
-                                        <td className="px-3.5 py-2.5 text-muted-foreground">{note?.updated_at ? formatRelative(note.updated_at) : "—"}</td>
-                                        <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{(note?.tags ?? []).slice(0, 3).join(", ") || "—"}</td>
+                                        <td className="px-3.5 py-2.5 text-muted-foreground">{note?.updated_at ? formatRelative(note.updated_at) : "-"}</td>
+                                        <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{(note?.tags ?? []).slice(0, 3).join(", ") || "-"}</td>
                                         <td className="px-3.5 py-2.5">
                                             <Button variant="ghost" size="xs">
                                                 <EditIcon />
@@ -185,7 +184,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
     });
 
     if (noteQuery.isPending || opsQuery.isPending) {
-        return <Skeleton className="h-[600px] w-full rounded-2xl" />;
+        return <Skeleton className="h-150 w-full rounded-2xl" />;
     }
 
     return (
@@ -194,7 +193,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2.5 text-sm">
                         <span
-                            className="inline-flex size-8 items-center justify-center overflow-hidden rounded-md text-[12px] font-semibold"
+                            className="inline-flex size-8 items-center justify-center overflow-hidden rounded-md font-semibold text-[12px]"
                             style={{
                                 background: RARITY_BG[op?.rarity ?? 6] ?? RARITY_BG[6],
                                 boxShadow: "inset 0 1px 0 oklch(1 0 0 / 0.25), inset 0 -1px 0 oklch(0 0 0 / 0.25)",
@@ -210,7 +209,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                 Last updated {formatRelative(note.updated_at)} · {auditQuery.data?.length ?? 0} revision{(auditQuery.data?.length ?? 0) === 1 ? "" : "s"}
                             </>
                         ) : (
-                            "New note — nothing saved yet."
+                            "New note - nothing saved yet."
                         )}
                     </CardDescription>
                     <CardAction>
@@ -243,8 +242,8 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         </div>
                     </CardAction>
                 </CardHeader>
-                <div className="grid grid-cols-2 border-t border-border">
-                    <div className="border-r border-border p-4">
+                <div className="grid grid-cols-2 border-border border-t">
+                    <div className="border-border border-r p-4">
                         <Field label="Summary" hint="One-line synopsis for the operator card.">
                             <Input size="sm" value={summary} onChange={(e) => setSummary(e.target.value)} />
                         </Field>
@@ -265,11 +264,11 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         </Field>
                     </div>
                     <div>
-                        <div className="flex items-center justify-between border-b border-border px-3.5 py-2">
+                        <div className="flex items-center justify-between border-border border-b px-3.5 py-2">
                             <MonoSection>Preview</MonoSection>
                             {dirty ? <Badge variant="warning">unsaved changes</Badge> : <Badge variant="outline">saved</Badge>}
                         </div>
-                        <div className="h-[640px] overflow-auto p-4 font-sans text-[13px] leading-[1.6]">
+                        <div className="h-160 overflow-auto p-4 font-sans text-[13px] leading-[1.6]">
                             {summary ? <p className="mb-3 font-medium">{summary}</p> : null}
                             {pros ? (
                                 <>
@@ -311,7 +310,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                     <p className="whitespace-pre-wrap">{trivia}</p>
                                 </>
                             ) : null}
-                            {!summary && !pros && !cons && !notes && !trivia ? <p className="text-muted-foreground">Nothing yet — start writing on the left.</p> : null}
+                            {!summary && !pros && !cons && !notes && !trivia ? <p className="text-muted-foreground">Nothing yet - start writing on the left.</p> : null}
                         </div>
                     </div>
                 </div>
@@ -321,7 +320,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-sm">
                         <ActivityIcon className="size-4" />
                         Revision history
                     </CardTitle>
@@ -339,15 +338,15 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                             <div className="absolute top-1 bottom-1 left-1 w-0.5 rounded bg-border" />
                             {(auditQuery.data ?? []).slice(0, 20).map((rev, i) => (
                                 <div key={rev.id} className="relative pb-3.5 last:pb-0">
-                                    <span className={`absolute top-1 left-[-18px] size-2.5 rounded-full border-2 bg-card shadow-[0_0_0_3px_var(--background)] ${i === 0 ? "border-primary" : "border-border"}`} />
-                                    <div className="font-mono font-medium text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+                                    <span className={`absolute top-1 -left-4.5 size-2.5 rounded-full border-2 bg-card shadow-[0_0_0_3px_var(--background)] ${i === 0 ? "border-primary" : "border-border"}`} />
+                                    <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">
                                         {formatRelative(rev.changed_at)} · {rev.field_name}
                                     </div>
-                                    <div className="mt-1 text-[12.5px] leading-[1.5]">
+                                    <div className="mt-1 text-[12.5px] leading-normal">
                                         <span className="font-mono text-muted-foreground">UID&nbsp;{rev.changed_by}</span> updated <span className="font-mono">{rev.field_name}</span>
                                     </div>
                                     {rev.old_value !== null || rev.new_value !== null ? (
-                                        <div className="mt-1.5 rounded-[8px] border border-border bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)] p-2 font-mono text-[11.5px] leading-[1.5]">
+                                        <div className="mt-1.5 rounded-lg border border-border bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)] p-2 font-mono text-[11.5px] leading-normal">
                                             {rev.old_value ? <div className="rounded-[3px] bg-destructive/8 px-1 text-destructive-foreground line-through decoration-destructive/40">{rev.old_value.slice(0, 240)}</div> : null}
                                             {rev.new_value ? <div className="rounded-[3px] bg-emerald-500/8 px-1 text-emerald-700 dark:text-emerald-300">{rev.new_value.slice(0, 240)}</div> : null}
                                         </div>

@@ -15,7 +15,7 @@ interface IResultCardProps {
 export function ResultCard({ result }: IResultCardProps): React.ReactElement {
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 py-3 grid-rows-1">
+            <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-3 px-4 py-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
                     {result.tagNames.map((name) => (
                         <Badge key={name} variant="outline" size="default">
@@ -43,12 +43,12 @@ function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.Re
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <li className={cn("flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors cursor-pointer", colors?.border, colors?.bg, colors?.hoverBg, colors?.hoverBorder)}>
-                        <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[11px] font-semibold">
+                    <li className={cn("flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors", colors?.border, colors?.bg, colors?.hoverBg, colors?.hoverBorder)}>
+                        <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px]">
                             <OperatorAvatar charId={operator.id} name={operator.name} />
                         </span>
                         <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium text-[13px] leading-tight text-foreground">{operator.name}</div>
+                            <div className="truncate font-medium text-[13px] text-foreground leading-tight">{operator.name}</div>
                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                                 <span className={cn("font-mono", colors?.text)}>{getStarsDisplay(operator.rarity)}</span>
                                 <span>·</span>

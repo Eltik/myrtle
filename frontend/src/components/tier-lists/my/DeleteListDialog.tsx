@@ -40,7 +40,7 @@ export function DeleteListDialog({ target, onOpenChange, onConfirm, isSubmitting
                 </AlertDialogHeader>
 
                 {errorMessage && (
-                    <div role="alert" className="mx-6 mb-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-xs text-destructive-foreground">
+                    <div role="alert" className="mx-6 mb-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-destructive-foreground text-xs">
                         {errorMessage}
                     </div>
                 )}

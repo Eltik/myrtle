@@ -64,7 +64,7 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
 
     return (
         <div className="space-y-2">
-            <label htmlFor={id} className="block text-[12px] font-medium leading-none text-muted-foreground">
+            <label htmlFor={id} className="block font-medium text-[12px] text-muted-foreground leading-none">
                 {label}
             </label>
             <Combobox<string, true> multiple items={items} value={selected} onValueChange={onChange} itemToStringLabel={format}>
@@ -123,7 +123,7 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
 
 function FilterTag({ label, onRemove }: { label: string; onRemove: () => void }) {
     return (
-        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-xs text-foreground">
+        <span className="inline-flex items-center gap-1 rounded-md bg-primary/20 px-2 py-0.5 text-foreground text-xs">
             {label}
             <button type="button" className="hover:text-destructive" onClick={onRemove}>
                 <X className="h-3 w-3" />

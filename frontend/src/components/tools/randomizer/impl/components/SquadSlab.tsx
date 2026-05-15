@@ -17,11 +17,11 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
     return (
         <SlabFrame index="02" kicker="SQUAD" accent="lagoon">
             <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-muted-foreground uppercase tracking-[0.18em]">
                     <Users aria-hidden="true" className="h-3.5 w-3.5" />
                     <span>
                         Deployment ·{" "}
-                        <span className="font-mono normal-case tracking-normal text-foreground/80">
+                        <span className="font-mono text-foreground/80 normal-case tracking-normal">
                             {filled}/{squadSize}
                         </span>
                     </span>
@@ -37,7 +37,7 @@ export function SquadSlab({ operators, squadSize, onReroll }: ISquadSlabProps): 
                     // biome-ignore lint/suspicious/noArrayIndexKey: squad allows duplicate operators, so index is part of the slot identity
                     <OperatorTile key={`${op.id}-${idx}`} op={op} index={idx} />
                 ))}
-                {filled === 0 && <p className="col-span-full font-mono text-sm text-muted-foreground">No matching operators - relax your filters.</p>}
+                {filled === 0 && <p className="col-span-full font-mono text-muted-foreground text-sm">No matching operators - relax your filters.</p>}
             </div>
         </SlabFrame>
     );
@@ -60,7 +60,7 @@ function OperatorTile({ op, index }: { op: IRandomizerOperator; index: number })
             />
             <div className="absolute inset-x-0 bottom-0 h-1 bg-(--rarity-tint) mix-blend-multiply dark:mix-blend-screen" />
             <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/72 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <p className="truncate px-1.5 pb-1 text-[10.5px] font-medium text-white">{op.name}</p>
+                <p className="truncate px-1.5 pb-1 font-medium text-[10.5px] text-white">{op.name}</p>
             </div>
         </div>
     );

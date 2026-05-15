@@ -70,9 +70,9 @@ export default function FeatureStrip() {
                         <FeatIcon name={f.icon} />
                     </div>
                     <Kicker className="mb-0">{f.k}</Kicker>
-                    <div className="font-sans text-[17px] font-semibold leading-snug tracking-tight text-foreground">{f.t}</div>
-                    <p className="my-1 mb-3 font-sans text-[13.5px] leading-[1.55] text-muted-foreground">{f.d}</p>
-                    <Link to={f.href} className="group mt-auto inline-flex cursor-pointer items-center font-sans text-[12.5px] font-medium leading-none text-primary no-underline [&>svg]:h-3 [&>svg]:w-3">
+                    <div className="font-sans font-semibold text-[17px] text-foreground leading-snug tracking-tight">{f.t}</div>
+                    <p className="my-1 mb-3 font-sans text-[13.5px] text-muted-foreground leading-[1.55]">{f.d}</p>
+                    <Link to={f.href} className="group mt-auto inline-flex cursor-pointer items-center font-medium font-sans text-[12.5px] text-primary leading-none no-underline [&>svg]:h-3 [&>svg]:w-3">
                         Explore{" "}
                         <svg className="ml-1.5 transition-[margin-left] duration-200 group-hover:ml-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
                             <path d="M5 12h14" />

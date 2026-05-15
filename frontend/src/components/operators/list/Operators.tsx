@@ -87,13 +87,13 @@ export function OperatorsList() {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-sans text-[12px] font-medium leading-none text-muted-foreground" aria-label="Breadcrumb">
+                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
                     <span>Collection</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
                     <span className="text-foreground">Operators</span>
                 </nav>
-                <h1 className="m-0 font-sans text-[30px] font-bold leading-[1.1] tracking-[-0.025em] text-foreground">Operators</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] leading-normal text-muted-foreground">
+                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">Operators</h1>
+                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">
                     View all <strong className="text-foreground">{operators.length}</strong> operators.
                 </p>
             </div>
@@ -145,7 +145,7 @@ export function OperatorsList() {
                             >
                                 {filtersVisible ? <ChevronLeft className="block h-3.5 w-3.5" aria-hidden="true" /> : <ChevronRight className="block h-3.5 w-3.5" aria-hidden="true" />}
                                 {!filtersVisible && activeFilterCount > 0 && (
-                                    <span className="absolute -right-1.25 -top-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono text-[9px] font-semibold leading-none text-primary-foreground shadow-[0_0_0_2px_var(--background)]">{activeFilterCount}</span>
+                                    <span className="absolute -top-1.25 -right-1.25 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-0.75 font-mono font-semibold text-[9px] text-primary-foreground leading-none shadow-[0_0_0_2px_var(--background)]">{activeFilterCount}</span>
                                 )}
                             </TooltipTrigger>
                             <TooltipPopup side="top" sideOffset={8}>
@@ -153,7 +153,7 @@ export function OperatorsList() {
                             </TooltipPopup>
                         </Tooltip>
 
-                        <div className="flex h-10 max-w-115 min-w-60 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+                        <div className="flex h-10 min-w-60 max-w-115 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
                             <Search className="h-3.75 w-3.75" aria-hidden="true" />
                             <input
                                 type="text"
@@ -161,13 +161,13 @@ export function OperatorsList() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search operators..."
                                 aria-label="Search operators"
-                                className="flex-1 min-w-0 appearance-none border-0 bg-transparent p-0 font-sans text-sm leading-none text-foreground outline-none placeholder:text-muted-foreground"
+                                className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
                             />
                         </div>
 
                         {/* biome-ignore lint/a11y/useSemanticElements: role="group" is appropriate for this toggle button group */}
                         <div
-                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground"
+                            className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150"
                             role="group"
                             aria-label="View mode"
                         >
@@ -211,8 +211,8 @@ export function OperatorsList() {
 
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
                             <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label="Sort operators">
-                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-sans text-[13px] font-medium text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-r border-border pr-1 font-mono text-[10px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground">Sort</span>
+                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Sort</span>
                                     <SelectValue>{(value) => SORT_OPTIONS.find((o) => o.value === value)?.label ?? value}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
@@ -243,8 +243,8 @@ export function OperatorsList() {
                                 }}
                                 aria-label="Items per page"
                             >
-                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-sans text-[13px] font-medium text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-r border-border pr-1 font-mono text-[10px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground">Show</span>
+                                <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Show</span>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -259,11 +259,11 @@ export function OperatorsList() {
                     </div>
 
                     {activeChips.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1.5 font-sans text-[12px] font-medium leading-none text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                             <span className="mr-0.5">Active:</span>
                             {activeChips.map((chip) => (
                                 <span
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklch,var(--primary)_10%,transparent)] py-1 pr-1 pl-2.25 font-sans text-[11.5px] font-medium leading-none text-primary [&>button]:inline-flex [&>button]:h-3.75 [&>button]:w-3.75 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:border-0 [&>button]:bg-[color-mix(in_oklch,var(--primary)_22%,transparent)] [&>button]:p-0 [&>button:hover]:bg-[color-mix(in_oklch,var(--primary)_32%,transparent)]"
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_oklch,var(--primary)_10%,transparent)] py-1 pr-1 pl-2.25 font-medium font-sans text-[11.5px] text-primary leading-none [&>button:hover]:bg-[color-mix(in_oklch,var(--primary)_32%,transparent)] [&>button]:inline-flex [&>button]:h-3.75 [&>button]:w-3.75 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:border-0 [&>button]:bg-[color-mix(in_oklch,var(--primary)_22%,transparent)] [&>button]:p-0"
                                     key={chip.key}
                                 >
                                     {chip.label}
@@ -272,41 +272,41 @@ export function OperatorsList() {
                                     </button>
                                 </span>
                             ))}
-                            <button type="button" className="cursor-pointer appearance-none border-0 bg-transparent p-0 font-sans text-[12px] font-medium leading-none text-muted-foreground underline underline-offset-[3px] hover:text-foreground" onClick={clearFilters}>
+                            <button type="button" className="cursor-pointer appearance-none border-0 bg-transparent p-0 font-medium font-sans text-[12px] text-muted-foreground leading-none underline underline-offset-[3px] hover:text-foreground" onClick={clearFilters}>
                                 Clear all
                             </button>
                         </div>
                     )}
 
-                    <div className="flex flex-wrap items-center justify-between gap-3 font-sans text-[12.5px] font-medium leading-none text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                         <span>
                             Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{filteredOperators.length}</strong> operators
                         </span>
-                        <span className="hidden font-mono text-[11px] uppercase leading-none tracking-[0.08em] text-muted-foreground md:inline">Hover for preview · Click to open</span>
+                        <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
                     </div>
 
                     {filteredOperators.length === 0 ? (
-                        <div className="rounded-xl border border-dashed border-border bg-card/50 py-16 text-center">
-                            <p className="font-sans text-sm text-muted-foreground">No operators match your filters.</p>
-                            <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-primary hover:underline">
+                        <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
+                            <p className="font-sans text-muted-foreground text-sm">No operators match your filters.</p>
+                            <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
                                 Clear all filters
                             </button>
                         </div>
                     ) : viewMode === "grid" ? (
-                        <div className="grid grid-cols-3 gap-2.5 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[780px]:gap-3 min-[1080px]:grid-cols-6 min-[1280px]:gap-4">
+                        <div className="grid grid-cols-3 gap-2.5 min-[1080px]:grid-cols-6 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1280px]:gap-4 min-[780px]:gap-3">
                             {paginated.map((op) => (
                                 <OperatorCardGrid key={op.id} operator={op} />
                             ))}
                         </div>
                     ) : viewMode === "compact" ? (
-                        <div className="grid grid-cols-3 gap-1 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5 min-[1080px]:grid-cols-6 min-[1280px]:grid-cols-7 min-[1536px]:grid-cols-8">
+                        <div className="grid grid-cols-3 gap-1 min-[1080px]:grid-cols-6 min-[1280px]:grid-cols-7 min-[1536px]:grid-cols-8 min-[520px]:grid-cols-4 min-[780px]:grid-cols-5">
                             {paginated.map((op) => (
                                 <OperatorCardCompact key={op.id} operator={op} />
                             ))}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1 pt-1">
-                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.12em] text-muted-foreground max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
+                            <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                                 <span />
                                 <span>Name</span>
                                 <span className="text-center">Rarity</span>

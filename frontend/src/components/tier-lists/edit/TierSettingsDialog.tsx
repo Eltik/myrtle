@@ -60,7 +60,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete 
                         <Field>
                             <FieldLabel htmlFor={nameId}>
                                 Label
-                                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                                <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
@@ -76,7 +76,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete 
                         <Field>
                             <FieldLabel htmlFor={descId}>
                                 Description
-                                <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                                <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>

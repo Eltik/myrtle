@@ -18,7 +18,7 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                 if (tagsForGroup.length === 0) return null;
                 return (
                     <section key={type}>
-                        <h3 className="mb-2 font-medium font-sans text-[11px] uppercase tracking-wide text-muted-foreground">{TAG_GROUP_LABELS[type]}</h3>
+                        <h3 className="mb-2 font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">{TAG_GROUP_LABELS[type]}</h3>
                         <div className="flex flex-wrap gap-1.5">
                             {tagsForGroup.map((tag) => {
                                 const selected = selectedTagIds.has(tag.id);

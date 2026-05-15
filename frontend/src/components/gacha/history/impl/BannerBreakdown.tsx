@@ -65,7 +65,7 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
             if (item.star === "5") existing.fiveStars++;
             if (item.at > existing.lastPullAt) existing.lastPullAt = item.at;
         } else {
-            // Prefer static-data banner name — the Yostar API often echoes a
+            // Prefer static-data banner name - the Yostar API often echoes a
             // blank `pool_name`, and old rows persisted before the lookup
             // existed had to fall back to the raw pool_id (the IDs aren't
             // user-friendly).
@@ -117,12 +117,12 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
                             <span className="relative inline-flex h-8 w-8 shrink-0 overflow-hidden rounded-md ring-1" style={{ background: "var(--muted)", boxShadow: `inset 0 0 0 1px color-mix(in oklch, ${ringColor} 60%, transparent)` }}>
                                 <OperatorAvatar charId={charId} name={opName} className="block h-full w-full object-cover" />
                             </span>
-                            <span className="font-mono text-[9px] text-muted-foreground leading-none truncate max-w-12 text-center">{opName.split(" ")[0]}</span>
+                            <span className="max-w-12 truncate text-center font-mono text-[9px] text-muted-foreground leading-none">{opName.split(" ")[0]}</span>
                         </span>
                     );
                 })}
                 {extra > 0 ? (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] tabular-nums text-muted-foreground" title={`${extra} more`}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" title={`${extra} more`}>
                         +{extra}
                     </span>
                 ) : null}
@@ -133,8 +133,8 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
 
 function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStars, total, operatorsById }: { banner: IBanner | undefined; name: string; typeColor: string; typeLabel: string; sixStars: number; fiveStars: number; total: number; operatorsById: Map<string, IOperatorIndexEntry> }) {
     const trigger = (
-        <button type="button" className="flex flex-col items-start gap-0.5 text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm">
-            <span className="font-sans text-[13px] font-medium text-foreground leading-snug">{name}</span>
+        <button type="button" className="flex cursor-pointer flex-col items-start gap-0.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+            <span className="font-medium font-sans text-[13px] text-foreground leading-snug">{name}</span>
             <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
                 {typeLabel}
             </span>
@@ -142,7 +142,7 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
     );
 
     if (!banner) {
-        // Banner not present in static data — happens for older retired pools
+        // Banner not present in static data - happens for older retired pools
         // outside the current gamedata snapshot. Show the name without hover.
         return trigger;
     }
@@ -161,15 +161,15 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
                         <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
                             {typeLabel} · {ruleLabel}
                         </span>
-                        <span className="font-sans text-[14px] font-semibold text-foreground leading-snug">{banner.gachaPoolName}</span>
+                        <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
                         {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <span className="font-sans text-[12px] leading-none text-foreground tabular-nums">
+                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">
                             {fmtDateFromSeconds(banner.openTime)} → {fmtDateFromSeconds(banner.endTime)}
                         </span>
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] leading-none uppercase tracking-[0.14em]" style={{ color: isActive ? "oklch(0.78 0.18 145)" : isUpcoming ? "oklch(0.78 0.16 220)" : "var(--muted-foreground)" }}>
+                        <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: isActive ? "oklch(0.78 0.18 145)" : isUpcoming ? "oklch(0.78 0.16 220)" : "var(--muted-foreground)" }}>
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
                             {isActive ? "Active" : isUpcoming ? "Upcoming" : "Ended"}
                         </span>
@@ -177,18 +177,18 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
 
                     <div className="grid grid-cols-3 gap-2">
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">Pulls</span>
-                            <span className="font-sans text-[14px] font-semibold tabular-nums text-foreground">{formatNumber(total)}</span>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">Pulls</span>
+                            <span className="font-sans font-semibold text-[14px] text-foreground tabular-nums">{formatNumber(total)}</span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">6★</span>
-                            <span className="font-sans text-[14px] font-semibold tabular-nums" style={{ color: "#f7a452" }}>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">6★</span>
+                            <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#f7a452" }}>
                                 {formatNumber(sixStars)}
                             </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">5★</span>
-                            <span className="font-sans text-[14px] font-semibold tabular-nums" style={{ color: "#e9d28a" }}>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">5★</span>
+                            <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#e9d28a" }}>
                                 {formatNumber(fiveStars)}
                             </span>
                         </div>
@@ -201,13 +201,13 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
                     ) : null}
 
                     {banner.featured6.length > 0 || banner.featured5.length > 0 ? (
-                        <div className="flex flex-col gap-2.5 border-t border-border/60 pt-3">
+                        <div className="flex flex-col gap-2.5 border-border/60 border-t pt-3">
                             <FeaturedRow ids={banner.featured6} star={6} operatorsById={operatorsById} />
                             <FeaturedRow ids={banner.featured5} star={5} operatorsById={operatorsById} />
                         </div>
                     ) : null}
 
-                    <div className="font-mono text-[10px] text-muted-foreground/70 tabular-nums break-all">{banner.gachaPoolId}</div>
+                    <div className="break-all font-mono text-[10px] text-muted-foreground/70 tabular-nums">{banner.gachaPoolId}</div>
                 </div>
             </HoverCardContent>
         </HoverCard>
@@ -223,14 +223,14 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
                 <div className="flex flex-col gap-2">
                     {Array.from({ length: 5 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="flex items-center gap-4 py-2 not-last:border-b not-last:border-border/60">
-                            <div className="h-3 flex-1 rounded bg-muted animate-pulse" />
-                            <div className="h-3 w-14 rounded bg-muted animate-pulse" />
-                            <div className="h-3 w-10 rounded bg-muted animate-pulse" />
+                        <div key={i} className="flex items-center gap-4 not-last:border-border/60 not-last:border-b py-2">
+                            <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+                            <div className="h-3 w-14 animate-pulse rounded bg-muted" />
+                            <div className="h-3 w-10 animate-pulse rounded bg-muted" />
                         </div>
                     ))}
                 </div>
@@ -244,7 +244,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
                 <Kicker>Banner breakdown</Kicker>
-                <div className="py-6 text-center font-sans text-sm text-muted-foreground">No banner data yet.</div>
+                <div className="py-6 text-center font-sans text-muted-foreground text-sm">No banner data yet.</div>
             </section>
         );
     }
@@ -255,18 +255,18 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
                 <Kicker className="mb-1.5">Banner breakdown</Kicker>
-                <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground sm:text-[22px]">Where your pulls went.</h2>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Where your pulls went.</h2>
             </header>
 
             <div className="-mx-1 max-h-120 overflow-y-auto px-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr>
-                            <th className="border-b border-border bg-card px-2 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foregroun whitespace-nowrapd">Banner</th>
-                            <th className="hidden border-b border-border bg-card px-2 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:table-cell whitespace-nowrap">Last pull</th>
-                            <th className="border-b border-border bg-card px-2 py-2 text-right font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground whitespace-nowrap">Pulls</th>
-                            <th className="hidden border-b border-border bg-card px-2 py-2 text-right font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:table-cell whitespace-nowrap">6★</th>
-                            <th className="hidden border-b border-border bg-card px-2 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground lg:table-cell w-36 whitespace-nowrap">Distribution</th>
+                            <th className="whitespace-nowrapd border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foregroun uppercase tracking-[0.14em]">Banner</th>
+                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Last pull</th>
+                            <th className="whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">Pulls</th>
+                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">6★</th>
+                            <th className="hidden w-36 whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] lg:table-cell">Distribution</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -275,16 +275,16 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                             const typeColor = TYPE_COLORS[banner.gachaType];
                             const meta = bannersById.get(banner.poolId);
                             return (
-                                <tr key={`${banner.gachaType}-${banner.poolId}`} className="not-last:border-b not-last:border-border/50">
+                                <tr key={`${banner.gachaType}-${banner.poolId}`} className="not-last:border-border/50 not-last:border-b">
                                     <td className="px-2 py-2.5 align-middle">
                                         <BannerNameCell banner={meta} name={banner.poolName} typeColor={typeColor} typeLabel={banner.typeLabel} sixStars={banner.sixStars} fiveStars={banner.fiveStars} total={banner.total} operatorsById={operatorsById} />
                                     </td>
-                                    <td className="hidden px-2 py-2.5 align-middle font-mono text-[11px] text-muted-foreground tabular-nums sm:table-cell whitespace-nowrap">{fmtDate(banner.lastPullAt)}</td>
-                                    <td className="px-2 py-2.5 text-right align-middle font-mono text-[12px] font-semibold tabular-nums text-foreground whitespace-nowrap">{formatNumber(banner.total)}</td>
+                                    <td className="hidden whitespace-nowrap px-2 py-2.5 align-middle font-mono text-[11px] text-muted-foreground tabular-nums sm:table-cell">{fmtDate(banner.lastPullAt)}</td>
+                                    <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono font-semibold text-[12px] text-foreground tabular-nums">{formatNumber(banner.total)}</td>
                                     <td className="hidden px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums sm:table-cell">
                                         <span style={{ color: "#f7a452" }}>{banner.sixStars > 0 ? `${banner.sixStars}×6★` : "-"}</span>
                                     </td>
-                                    <td className="hidden px-2 py-2.5 align-middle lg:table-cell w-36">
+                                    <td className="hidden w-36 px-2 py-2.5 align-middle lg:table-cell">
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                                             <div className="h-full rounded-full" style={{ width: `${barPct}%`, background: typeColor }} />
                                         </div>

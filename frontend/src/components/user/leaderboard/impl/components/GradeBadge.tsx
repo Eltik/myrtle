@@ -12,5 +12,5 @@ const GRADE_STYLES: Record<string, string> = {
 export function GradeBadge({ grade, className }: { grade: string | null; className?: string }) {
     const label = grade ?? "-";
     const style = GRADE_STYLES[label] ?? "bg-muted text-muted-foreground border-border";
-    return <span className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-md border font-sans text-[13px] font-bold leading-none tracking-tight tabular-nums", style, className)}>{label}</span>;
+    return <span className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-md border font-bold font-sans text-[13px] tabular-nums leading-none tracking-tight", style, className)}>{label}</span>;
 }

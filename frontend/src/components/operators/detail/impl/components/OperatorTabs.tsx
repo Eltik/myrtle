@@ -37,7 +37,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
         <TooltipProvider>
             <div className="flex min-w-0 flex-col lg:flex-row lg:gap-8">
                 <nav aria-label="Operator sections" className="min-w-0 shrink-0 lg:w-56">
-                    <Tabs className="sticky top-14 z-30 -mx-3 mb-4 border-b border-border/50 bg-background/80 backdrop-blur-xl sm:top-16 sm:-mx-4 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
+                    <Tabs className="sticky top-14 z-30 -mx-3 mb-4 border-border/50 border-b bg-background/80 backdrop-blur-xl sm:top-16 sm:-mx-4 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
                         <ScrollArea className="w-full" scrollFade>
                             <TabsList className={cn("w-max gap-1 rounded-none bg-transparent px-3 py-2.5 sm:px-4", "**:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-primary! **:data-[slot=tab-indicator]:shadow-sm")}>
                                 {TABS.map((tab) => {
@@ -57,7 +57,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                         <TabsList
                             className={cn(
                                 "w-full gap-0.5 rounded-xl border border-border/60 bg-card/40 p-2 backdrop-blur-sm",
-                                "**:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-primary/10 **:data-[slot=tab-indicator]:ring-1 **:data-[slot=tab-indicator]:ring-primary/30 `**:data-[slot=tab-indicator]:shadow-none",
+                                "`**:data-[slot=tab-indicator]:shadow-none **:data-[slot=tab-indicator]:rounded-lg **:data-[slot=tab-indicator]:bg-primary/10 **:data-[slot=tab-indicator]:ring-1 **:data-[slot=tab-indicator]:ring-primary/30",
                             )}
                         >
                             {TABS.map((tab) => {
@@ -81,7 +81,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                 </nav>
 
                 <Card aria-labelledby={`panel-${activeTab}`} className="min-w-0 flex-1 overflow-hidden border-border/60 bg-card/60 backdrop-blur-md" id={`panel-${activeTab}`} render={<section />} role="tabpanel">
-                    <CardPanel className="animate-in fade-in-50 slide-in-from-bottom-1 p-0 duration-300" key={activeTab}>
+                    <CardPanel className="fade-in-50 slide-in-from-bottom-1 animate-in p-0 duration-300" key={activeTab}>
                         <ActiveContent key={operator.id ?? operator.name} operator={operator} />
                     </CardPanel>
                 </Card>

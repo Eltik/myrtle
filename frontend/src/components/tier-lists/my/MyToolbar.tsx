@@ -40,7 +40,7 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
     const isFiltered = query.length > 0 || type !== "all";
 
     return (
-        <div className="sticky top-14 z-30 -mx-3 border-y border-border bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
+        <div className="sticky top-14 z-30 -mx-3 border-border border-y bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
             <div className="mx-auto w-[min(1080px,100%)] py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                     {hasOfficial && (
@@ -55,7 +55,7 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
                                         aria-selected={active}
                                         onClick={() => onTypeChange(tab.value)}
                                         className={cn(
-                                            "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-sans text-xs font-medium leading-none transition-colors",
+                                            "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
                                             active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                                         )}
                                     >
@@ -68,11 +68,11 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
 
                     <Menu>
                         <MenuTrigger
-                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
+                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
                             aria-label={`Sort: ${activeSort?.label}`}
                         >
                             <SlidersHorizontalIcon aria-hidden="true" />
-                            <span className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">Sort</span>
+                            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">Sort</span>
                             <span>{activeSort?.label}</span>
                             <ChevronDownIcon aria-hidden="true" />
                         </MenuTrigger>
@@ -123,8 +123,8 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
                 </div>
 
                 {isFiltered && (
-                    <p aria-live="polite" className="mt-2 font-mono text-[10.5px] leading-none tracking-wide text-muted-foreground">
-                        <span className="tabular-nums text-foreground">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
+                    <p aria-live="polite" className="mt-2 font-mono text-[10.5px] text-muted-foreground leading-none tracking-wide">
+                        <span className="text-foreground tabular-nums">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
                         {query.length > 0 && (
                             <>
                                 {" "}

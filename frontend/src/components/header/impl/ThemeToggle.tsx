@@ -33,7 +33,7 @@ export default function ThemeToggle() {
             />
             <PopoverContent align="end" sideOffset={8} className="w-64">
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
+                    <div className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
                         <SunIcon className="h-3.5 w-3.5" />
                         <span>Appearance</span>
                     </div>
@@ -45,13 +45,13 @@ export default function ThemeToggle() {
 
                     <div className="-mx-1 h-px bg-border" />
 
-                    <div className="flex items-center justify-between text-muted-foreground text-xs font-medium">
+                    <div className="flex items-center justify-between font-medium text-muted-foreground text-xs">
                         <span className="flex items-center gap-1.5">
                             <PaletteIcon className="h-3.5 w-3.5" />
                             Accent
                         </span>
                         {!isDefaultAccent && (
-                            <button type="button" onClick={resetAccent} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors" aria-label="Reset accent color to default">
+                            <button type="button" onClick={resetAccent} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Reset accent color to default">
                                 <RotateCcwIcon className="h-3 w-3" />
                                 Reset
                             </button>
@@ -83,7 +83,7 @@ export default function ThemeToggle() {
                             </span>
                             Custom color
                         </span>
-                        <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">{customLabel}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label="Choose custom accent color" />
                     </label>
                 </div>
@@ -98,7 +98,7 @@ function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: R
             type="button"
             onClick={onClick}
             aria-pressed={active}
-            className={cn("inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 text-xs font-medium text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "border-border bg-accent" : "hover:bg-accent/60")}
+            className={cn("inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "border-border bg-accent" : "hover:bg-accent/60")}
         >
             {icon}
             {label}

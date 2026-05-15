@@ -25,7 +25,7 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
         <article className="group relative flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow] hover:border-[color-mix(in_srgb,var(--foreground)_22%,var(--border))] hover:shadow-[0_6px_16px_oklch(0_0_0/0.06)]">
             <div className="flex shrink-0 items-center gap-0.5">
                 {previewOps.length === 0 ? (
-                    <div className="flex h-9 w-24 items-center justify-center rounded-md border border-dashed border-border bg-muted/30 font-sans text-[10.5px] italic text-muted-foreground">empty</div>
+                    <div className="flex h-9 w-24 items-center justify-center rounded-md border border-border border-dashed bg-muted/30 font-sans text-[10.5px] text-muted-foreground italic">empty</div>
                 ) : (
                     <>
                         {previewOps.map((op) => (
@@ -33,25 +33,25 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                                 <OperatorAvatar charId={op.id} name={op.name} />
                             </span>
                         ))}
-                        {overflow > 0 && <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-border bg-muted/60 px-1 font-mono text-[11px] font-bold tabular-nums text-muted-foreground">+{overflow}</span>}
+                        {overflow > 0 && <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-border bg-muted/60 px-1 font-bold font-mono text-[11px] text-muted-foreground tabular-nums">+{overflow}</span>}
                     </>
                 )}
             </div>
 
             <Link to="/tier-lists/$id" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
                 <div className="flex min-w-0 items-center gap-2">
-                    <h3 className="m-0 truncate font-sans text-[14px] font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary" title={tl.title}>
+                    <h3 className="m-0 truncate font-sans font-semibold text-[14px] text-foreground leading-tight tracking-tight transition-colors group-hover:text-primary" title={tl.title}>
                         {tl.title || "Untitled list"}
                     </h3>
                     {isOfficial && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[oklch(0.92_0.13_85)] px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase leading-none tracking-wider text-[oklch(0.32_0.12_75)] shadow-[0_1px_4px_oklch(0.6_0.16_75/0.4)]">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[oklch(0.92_0.13_85)] px-1.5 py-0.5 font-bold font-mono text-[9px] text-[oklch(0.32_0.12_75)] uppercase leading-none tracking-wider shadow-[0_1px_4px_oklch(0.6_0.16_75/0.4)]">
                             <ShieldCheckIcon className="h-2 w-2" aria-hidden="true" />
                             Official
                         </span>
                     )}
                     {!isOfficial && tl.flairLabel && (
                         <span
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase leading-none tracking-wider"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-bold font-mono text-[9px] uppercase leading-none tracking-wider"
                             style={
                                 tl.flairColor ? { background: `color-mix(in srgb, ${tl.flairColor} 25%, transparent)`, color: tl.flairColor, border: `1px solid color-mix(in srgb, ${tl.flairColor} 50%, transparent)` } : { background: "var(--muted)", color: "var(--muted-foreground)", border: "1px solid var(--border)" }
                             }
@@ -60,12 +60,12 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                             {tl.flairLabel}
                         </span>
                     )}
-                    {isEmpty && <span className="inline-flex shrink-0 items-center rounded-full border border-dashed border-border bg-transparent px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase leading-none tracking-wider text-muted-foreground">Draft</span>}
+                    {isEmpty && <span className="inline-flex shrink-0 items-center rounded-full border border-border border-dashed bg-transparent px-1.5 py-0.5 font-medium font-mono text-[9px] text-muted-foreground uppercase leading-none tracking-wider">Draft</span>}
                 </div>
-                {tl.description && <p className="m-0 mt-0.5 truncate font-sans text-[11.5px] leading-snug text-muted-foreground">{tl.description}</p>}
+                {tl.description && <p className="m-0 mt-0.5 truncate font-sans text-[11.5px] text-muted-foreground leading-snug">{tl.description}</p>}
             </Link>
 
-            <div className="hidden shrink-0 items-center gap-4 font-mono text-[11px] leading-none tabular-nums text-muted-foreground sm:flex">
+            <div className="hidden shrink-0 items-center gap-4 font-mono text-[11px] text-muted-foreground tabular-nums leading-none sm:flex">
                 <span className="inline-flex items-center gap-1" title={`${tl.views.toLocaleString()} views`}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />

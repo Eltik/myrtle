@@ -57,7 +57,7 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
 
     return (
         <div className="space-y-2">
-            <label className="block font-medium text-[12px] leading-none text-muted-foreground" htmlFor="dps-operator-picker">
+            <label className="block font-medium text-[12px] text-muted-foreground leading-none" htmlFor="dps-operator-picker">
                 {existingCount === 0 ? "Add an operator" : "Add another operator"}
             </label>
             <Combobox<IPickerEntry, false> items={items} value={null} onValueChange={handleChange} filter={filter} itemToStringLabel={(e) => e.op.name} itemToStringValue={(e) => e.op.id}>
@@ -72,7 +72,7 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
                             return (
                                 <ComboboxItem key={op.id} value={entry}>
                                     <span className="flex items-center gap-2">
-                                        <span aria-hidden="true" className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[10px] font-semibold text-muted-foreground">
+                                        <span aria-hidden="true" className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[10px] text-muted-foreground">
                                             <OperatorAvatar charId={op.id} name={op.name} />
                                         </span>
                                         <span className="flex min-w-0 flex-1 flex-col">
@@ -92,11 +92,11 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
                 </ComboboxPopup>
             </Combobox>
             {isError ? (
-                <p className="rounded border border-destructive/30 bg-destructive/8 px-2 py-1.5 text-[11px] leading-snug text-foreground/90">Couldn't load operator list. {(error as Error)?.message ?? ""}</p>
+                <p className="rounded border border-destructive/30 bg-destructive/8 px-2 py-1.5 text-[11px] text-foreground/90 leading-snug">Couldn't load operator list. {(error as Error)?.message ?? ""}</p>
             ) : existingCount === 0 ? (
-                <p className="text-[11px] leading-snug text-muted-foreground">Pick any operator to start. You can add the same one multiple times to compare different builds.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">Pick any operator to start. You can add the same one multiple times to compare different builds.</p>
             ) : existingCount === 1 ? (
-                <p className="text-[11px] leading-snug text-muted-foreground">Tip: add the same operator again with the picker, then tweak skill/mastery/module to compare two setups.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">Tip: add the same operator again with the picker, then tweak skill/mastery/module to compare two setups.</p>
             ) : null}
         </div>
     );

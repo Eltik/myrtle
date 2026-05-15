@@ -12,14 +12,14 @@ import { searchUsersQueryOptions } from "#/lib/api/user";
 import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { HCode, PageHead } from "../AdminShell";
-import { SERVER_TINT } from "../data";
+import { SERVER_TINT } from "../Primitives";
 
 const SERVERS = ["all", "EN", "JP", "KR", "CN"] as const;
 type Server = (typeof SERVERS)[number];
 
 function SegTabs<T extends string>({ value, items, onChange }: { value: T; items: { value: T; label: string }[]; onChange: (v: T) => void }): React.ReactElement {
     return (
-        <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-[3px]">
+        <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-0.75">
             {items.map((it) => (
                 <button
                     key={it.value}
@@ -79,8 +79,8 @@ export function Users(): React.ReactElement {
             />
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-                <div className="flex flex-wrap items-center gap-2.5 border-b border-border p-3.5">
-                    <div className="min-w-[280px] max-w-[360px] flex-1">
+                <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
+                    <div className="min-w-70 max-w-90 flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -117,7 +117,7 @@ export function Users(): React.ReactElement {
                         <thead>
                             <tr>
                                 {["Doctor", "Server", "Level", "Score", "Grade", "Role", ""].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                         {h}
                                     </th>
                                 ))}
@@ -125,18 +125,18 @@ export function Users(): React.ReactElement {
                         </thead>
                         <tbody>
                             {filtered.map((u) => (
-                                <tr key={u.uid} onClick={() => setOpened(u)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setOpened(u)} className="cursor-pointer border-b border-border last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
+                                <tr key={u.uid} onClick={() => setOpened(u)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setOpened(u)} className="cursor-pointer border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
                                     <td className="px-3.5 py-2.5">
                                         <span className="mr-2 inline-block align-[-6px]">
                                             <UserAvatar user={u} />
                                         </span>
-                                        <span className="font-medium">{u.nickname ?? "—"}</span>
-                                        <span className="font-mono font-medium text-[11.5px] text-muted-foreground"> · UID&nbsp;{u.uid}</span>
+                                        <span className="font-medium">{u.nickname ?? "-"}</span>
+                                        <span className="font-medium font-mono text-[11.5px] text-muted-foreground"> · UID&nbsp;{u.uid}</span>
                                     </td>
                                     <td className="px-3.5 py-2.5 font-mono">{u.server.toUpperCase()}</td>
-                                    <td className="px-3.5 py-2.5 tabular-nums">{u.level ?? "—"}</td>
-                                    <td className="px-3.5 py-2.5 tabular-nums">{u.total_score?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "—"}</td>
-                                    <td className="px-3.5 py-2.5">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">—</span>}</td>
+                                    <td className="px-3.5 py-2.5 tabular-nums">{u.level ?? "-"}</td>
+                                    <td className="px-3.5 py-2.5 tabular-nums">{u.total_score?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "-"}</td>
+                                    <td className="px-3.5 py-2.5">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">-</span>}</td>
                                     <td className="px-3.5 py-2.5">
                                         <span className="font-mono text-[12px] text-muted-foreground">{u.role}</span>
                                     </td>
@@ -162,12 +162,12 @@ function UserDetailDrawer({ user, onClose }: { user: IUserProfile; onClose: () =
     return (
         <>
             <button type="button" className="fixed inset-0 z-50 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close drawer" />
-            <aside className="fixed top-0 right-0 bottom-0 z-[51] flex w-[440px] max-w-[92vw] flex-col border-l border-border bg-background shadow-[-20px_0_60px_oklch(0_0_0/0.18)]">
-                <div className="flex items-center justify-between gap-2 border-b border-border px-4.5 py-3.5">
+            <aside className="fixed top-0 right-0 bottom-0 z-51 flex w-110 max-w-[92vw] flex-col border-border border-l bg-background shadow-[-20px_0_60px_oklch(0_0_0/0.18)]">
+                <div className="flex items-center justify-between gap-2 border-border border-b px-4.5 py-3.5">
                     <div className="flex items-center gap-2.5">
                         <UserAvatar user={user} size={34} />
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-[15px] leading-tight">{user.nickname ?? "—"}</span>
+                            <span className="font-semibold text-[15px] leading-tight">{user.nickname ?? "-"}</span>
                             <span className="font-mono text-[11.5px] text-muted-foreground">
                                 UID&nbsp;{user.uid} · {user.server.toUpperCase()}
                                 {user.level ? ` · Level ${user.level}` : ""}
@@ -199,7 +199,7 @@ function UserDetailDrawer({ user, onClose }: { user: IUserProfile; onClose: () =
                             <ScoreLine label="Skins" value={user.skin_count} />
                             <ScoreLine label="LMD" value={user.lmd} />
                             <ScoreLine label="Orundum" value={user.orundum} />
-                            <ScoreLine label="Sanity" value={user.sanity != null && user.max_sanity != null ? `${user.sanity} / ${user.max_sanity}` : "—"} last />
+                            <ScoreLine label="Sanity" value={user.sanity != null && user.max_sanity != null ? `${user.sanity} / ${user.max_sanity}` : "-"} last />
                         </CardContent>
                     </Card>
 
@@ -215,7 +215,7 @@ function UserDetailDrawer({ user, onClose }: { user: IUserProfile; onClose: () =
                                 Open public profile
                             </Button>
                             <div className="mt-3 text-[11.5px] text-muted-foreground">
-                                Role assignment, force-resync, and session-revoke require direct DB / <span className="font-mono">/auth/update-settings</span> access — not yet exposed as REST endpoints.
+                                Role assignment, force-resync, and session-revoke require direct DB / <span className="font-mono">/auth/update-settings</span> access - not yet exposed as REST endpoints.
                             </div>
                         </CardContent>
                     </Card>
@@ -227,9 +227,9 @@ function UserDetailDrawer({ user, onClose }: { user: IUserProfile; onClose: () =
 
 function ScoreLine({ label, value, last }: { label: string; value: number | string | null | undefined; last?: boolean }): React.ReactElement {
     return (
-        <div className={cn("flex items-center justify-between py-1.5", !last && "border-b border-border")}>
+        <div className={cn("flex items-center justify-between py-1.5", !last && "border-border border-b")}>
             <span className="text-[12.5px] text-muted-foreground">{label}</span>
-            <span className="font-mono text-[12.5px] tabular-nums">{typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : (value ?? "—")}</span>
+            <span className="font-mono text-[12.5px] tabular-nums">{typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : (value ?? "-")}</span>
         </div>
     );
 }

@@ -90,7 +90,7 @@ export function Hero({ profile }: IHeroProps) {
                 <div className="flex items-center justify-end gap-2 self-start sm:order-3 sm:pt-1">
                     <Button variant="outline" size="sm" onClick={handleShare} className="gap-1.5">
                         <Share2 className="size-3.5" />
-                        <span className="hidden xs:inline sm:inline">Share</span>
+                        <span className="xs:inline hidden sm:inline">Share</span>
                     </Button>
                     <Tooltip>
                         <TooltipTrigger
@@ -105,27 +105,27 @@ export function Hero({ profile }: IHeroProps) {
                 </div>
 
                 {/* Main info: spans full width on mobile, normal column on sm+ */}
-                <div className="col-span-2 flex min-w-0 flex-col sm:col-span-1 sm:order-2">
+                <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{profile.uid}</span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-mono text-[11px] font-medium leading-none text-muted-foreground">{profile.server} server</span>
+                        <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">{profile.uid}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{profile.server} server</span>
                     </div>
-                    <h1 className="mb-1 flex flex-wrap items-baseline gap-x-1.5 wrap-break-word font-sans text-2xl font-bold leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
+                    <h1 className="wrap-break-word mb-1 flex flex-wrap items-baseline gap-x-1.5 font-bold font-sans text-2xl leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
                         <Tooltip>
                             <TooltipTrigger
                                 render={(triggerProps) => (
                                     <button {...triggerProps} type="button" onClick={handleCopyUsername} aria-label="Copy username" className="cursor-pointer rounded-sm text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                         {displayNickname}
-                                        {profile.nick_number && <span className="ml-1 font-mono font-medium text-muted-foreground text-base sm:text-lg lg:text-xl">#{profile.nick_number}</span>}
+                                        {profile.nick_number && <span className="ml-1 font-medium font-mono text-base text-muted-foreground sm:text-lg lg:text-xl">#{profile.nick_number}</span>}
                                     </button>
                                 )}
                             />
                             <TooltipPopup>Copy username</TooltipPopup>
                         </Tooltip>
                     </h1>
-                    {profile.resume && <p className="mb-3.5 max-w-prose font-sans text-sm font-normal leading-normal text-muted-foreground sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
+                    {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
                     {levelProgress && <LevelProgressBar progress={levelProgress} />}
-                    <div className="mt-1.5 inline-flex items-center gap-2 font-sans text-xs font-medium leading-none text-muted-foreground">
+                    <div className="mt-1.5 inline-flex items-center gap-2 font-medium font-sans text-muted-foreground text-xs leading-none">
                         <span className={shared.dotPulse} aria-hidden="true" />
                         <span>
                             Registered ·{" "}
@@ -151,13 +151,13 @@ function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
 
     return (
         <div className="mb-3.5 w-full max-w-prose lg:max-w-135">
-            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-mono text-[11px] font-medium uppercase leading-none tracking-widest text-muted-foreground">
+            <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">
                 <span>
-                    Lv <span className="tabular-nums text-foreground">{level}</span>
+                    Lv <span className="text-foreground tabular-nums">{level}</span>
                     {!isMax && (
                         <>
                             {"/"}
-                            <span className="tabular-nums text-foreground">120</span>
+                            <span className="text-foreground tabular-nums">120</span>
                         </>
                     )}
                 </span>

@@ -43,7 +43,7 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
     const pageItems = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
     if (sorted.length === 0) {
-        return <div className="py-10 text-center font-sans text-sm text-muted-foreground">No pulls recorded for this banner type.</div>;
+        return <div className="py-10 text-center font-sans text-muted-foreground text-sm">No pulls recorded for this banner type.</div>;
     }
 
     return (
@@ -52,10 +52,10 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr>
-                            <th className="border-b border-border bg-card px-1.5 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground w-10 sm:px-2">#</th>
-                            <th className="border-b border-border bg-card px-1.5 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:px-2">Operator</th>
-                            <th className="hidden border-b border-border bg-card px-2 py-2 text-left font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:table-cell">Banner</th>
-                            <th className="hidden border-b border-border bg-card px-2 py-2 text-right font-mono text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:table-cell">Date</th>
+                            <th className="w-10 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">#</th>
+                            <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">Operator</th>
+                            <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Banner</th>
+                            <th className="hidden border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] md:table-cell">Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -66,8 +66,8 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
                             const isSixStar = star === 6;
                             return (
                                 // biome-ignore lint/suspicious/noArrayIndexKey: order is stable
-                                <tr key={`${item.charId}-${item.at}-${i}`} className={`not-last:border-b not-last:border-border/50 ${isSixStar ? "bg-amber-500/5" : ""}`}>
-                                    <td className="px-1.5 py-2 font-mono text-[11px] font-medium text-muted-foreground align-middle tabular-nums sm:px-2">{total - (page * PAGE_SIZE + i)}</td>
+                                <tr key={`${item.charId}-${item.at}-${i}`} className={`not-last:border-border/50 not-last:border-b ${isSixStar ? "bg-amber-500/5" : ""}`}>
+                                    <td className="px-1.5 py-2 align-middle font-medium font-mono text-[11px] text-muted-foreground tabular-nums sm:px-2">{total - (page * PAGE_SIZE + i)}</td>
                                     <td className="px-1.5 py-2 align-middle sm:px-2">
                                         <div className="flex items-center gap-2 sm:gap-3">
                                             <span
@@ -77,8 +77,8 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
                                                 <OperatorAvatar charId={item.charId} name={name} className="block h-full w-full object-cover" />
                                             </span>
                                             <div className="min-w-0">
-                                                <div className={`font-sans text-[12.5px] font-semibold leading-snug truncate sm:text-sm ${isSixStar ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{name}</div>
-                                                <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground mt-0.5">
+                                                <div className={`truncate font-sans font-semibold text-[12.5px] leading-snug sm:text-sm ${isSixStar ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>{name}</div>
+                                                <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                                                     <span style={{ color: rarityStarColor(star) }} className="tracking-wider">
                                                         {"★".repeat(star)}
                                                     </span>
@@ -87,9 +87,9 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
                                         </div>
                                     </td>
                                     <td className="hidden px-2 py-2 align-middle sm:table-cell">
-                                        <span className="font-sans text-[12px] text-muted-foreground truncate max-w-45 block">{resolveBannerName(item, bannersById)}</span>
+                                        <span className="block max-w-45 truncate font-sans text-[12px] text-muted-foreground">{resolveBannerName(item, bannersById)}</span>
                                     </td>
-                                    <td className="hidden px-2 py-2 text-right align-middle font-mono text-[11px] text-muted-foreground tabular-nums whitespace-nowrap md:table-cell">{fmtDateTime(item.at)}</td>
+                                    <td className="hidden whitespace-nowrap px-2 py-2 text-right align-middle font-mono text-[11px] text-muted-foreground tabular-nums md:table-cell">{fmtDateTime(item.at)}</td>
                                 </tr>
                             );
                         })}
@@ -98,7 +98,7 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
             </div>
 
             {pageCount > 1 ? (
-                <div className="flex items-center justify-between border-t border-border pt-3">
+                <div className="flex items-center justify-between border-border border-t pt-3">
                     <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
                         {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {formatNumber(sorted.length)} pulls
                     </span>
@@ -111,7 +111,7 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
                         >
                             Prev
                         </button>
-                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums px-1">
+                        <span className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums">
                             {page + 1} / {pageCount}
                         </span>
                         <button
@@ -135,23 +135,23 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <div className="h-4 w-28 rounded bg-muted animate-pulse" />
-                <div className="flex gap-2 border-b border-border pb-0">
+                <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+                <div className="flex gap-2 border-border border-b pb-0">
                     {Array.from({ length: 3 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-8 w-20 rounded-t-md bg-muted animate-pulse" />
+                        <div key={i} className="h-8 w-20 animate-pulse rounded-t-md bg-muted" />
                     ))}
                 </div>
                 <div className="flex flex-col gap-2.5">
                     {Array.from({ length: 8 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="flex items-center gap-3 py-1 not-last:border-b not-last:border-border/50">
-                            <div className="h-7 w-7 rounded-md bg-muted animate-pulse" />
+                        <div key={i} className="flex items-center gap-3 not-last:border-border/50 not-last:border-b py-1">
+                            <div className="h-7 w-7 animate-pulse rounded-md bg-muted" />
                             <div className="flex flex-1 flex-col gap-1.5">
-                                <div className="h-3 w-28 rounded bg-muted animate-pulse" />
-                                <div className="h-2 w-16 rounded bg-muted animate-pulse" />
+                                <div className="h-3 w-28 animate-pulse rounded bg-muted" />
+                                <div className="h-2 w-16 animate-pulse rounded bg-muted" />
                             </div>
-                            <div className="h-3 w-24 rounded bg-muted animate-pulse hidden sm:block" />
+                            <div className="hidden h-3 w-24 animate-pulse rounded bg-muted sm:block" />
                         </div>
                     ))}
                 </div>
@@ -165,10 +165,10 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
                 <Kicker className="mb-1.5">Pull history</Kicker>
-                <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground sm:text-[22px]">Every pull, sorted newest first.</h2>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Every pull, sorted newest first.</h2>
             </header>
 
-            <div className="-mx-1 flex gap-0.5 overflow-x-auto border-b border-border px-1 sm:gap-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overflow-y-hidden">
+            <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
                 {TABS.map((tab) => {
                     const count = records[tab.key].total;
                     const isActive = activeTab === tab.key;
@@ -177,11 +177,11 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                             key={tab.key}
                             type="button"
                             onClick={() => setActiveTab(tab.key)}
-                            className={`relative flex shrink-0 items-center gap-1 cursor-pointer border-none bg-none px-2 py-2 font-sans text-[12px] font-medium whitespace-nowrap transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                            className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
                             {tab.label}
                             <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{formatNumber(count)}</span>
-                            {isActive ? <span className="absolute -bottom-px left-2 right-2 h-0.5 rounded-full bg-primary sm:left-3 sm:right-3" /> : null}
+                            {isActive ? <span className="absolute right-2 -bottom-px left-2 h-0.5 rounded-full bg-primary sm:right-3 sm:left-3" /> : null}
                         </button>
                     );
                 })}

@@ -171,7 +171,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                 })}
 
                 <PaginationItem className="flex flex-1 justify-center sm:hidden">
-                    <span className="inline-flex h-9 items-center justify-center px-3 font-sans text-sm font-medium text-muted-foreground">
+                    <span className="inline-flex h-9 items-center justify-center px-3 font-medium font-sans text-muted-foreground text-sm">
                         Page <strong className="mx-1 text-foreground">{currentPage}</strong> of <strong className="ml-1 text-foreground">{totalPages}</strong>
                     </span>
                 </PaginationItem>
@@ -238,8 +238,8 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
             <PopoverContent align="center" sideOffset={6} className="w-60">
                 <div className="flex flex-col gap-2.5">
                     <div className="flex flex-col gap-0.5">
-                        <span className="font-sans text-sm font-semibold leading-none text-foreground">Jump to page</span>
-                        <span className="font-sans text-xs leading-none text-muted-foreground tabular-nums">
+                        <span className="font-sans font-semibold text-foreground text-sm leading-none">Jump to page</span>
+                        <span className="font-sans text-muted-foreground text-xs tabular-nums leading-none">
                             Hidden range: {hiddenFrom}–{hiddenTo} · Total {totalPages}
                         </span>
                     </div>
@@ -260,13 +260,13 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
                             onChange={(event) => setValue(event.currentTarget.value)}
                             aria-label="Page number"
                             aria-invalid={value.length > 0 && !isValid}
-                            className="flex-1 tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none `[[type=number]]:[appearance:textfield]"
+                            className="flex-1 tabular-nums `[[type=number]]:[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
                         <Button type="submit" size="icon" variant="default" disabled={!isValid} aria-label="Go to page" className="size-8 shrink-0">
                             <CornerDownLeft className="size-4" />
                         </Button>
                     </form>
-                    <span className="font-sans text-[11px] leading-none text-muted-foreground">Enter a number from 1 to {totalPages}.</span>
+                    <span className="font-sans text-[11px] text-muted-foreground leading-none">Enter a number from 1 to {totalPages}.</span>
                 </div>
             </PopoverContent>
         </Popover>

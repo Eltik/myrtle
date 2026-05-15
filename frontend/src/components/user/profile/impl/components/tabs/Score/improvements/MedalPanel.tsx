@@ -27,7 +27,7 @@ export function MedalPanel({ improvements, accent }: IProps) {
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
-            {event.length > 0 && <MedalList title="Event medals — limited time" subtitle="Sorted by earliest ending. Hidden medals are still listed but their hint is suppressed." medals={event} accent={accent} mode="event" />}
+            {event.length > 0 && <MedalList title="Event medals - limited time" subtitle="Sorted by earliest ending. Hidden medals are still listed but their hint is suppressed." medals={event} accent={accent} mode="event" />}
             {permanent.length > 0 && <MedalList title="Permanent medals" subtitle="Sorted by rarity desc. Highest-rarity gaps first." medals={permanent} accent={accent} mode="permanent" />}
         </div>
     );
@@ -66,7 +66,7 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "even
                         <Tooltip>
                             <TooltipTrigger render={<span className={cn(TEXT_KICKER, "rounded border border-border/40 px-1 py-0.5 text-muted-foreground")}>Hidden</span>} />
                             <TooltipContent sideOffset={4}>
-                                <p>Hidden medal — unlock condition isn't shown in-game.</p>
+                                <p>Hidden medal - unlock condition isn't shown in-game.</p>
                             </TooltipContent>
                         </Tooltip>
                     )}

@@ -24,7 +24,7 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     special: "#88c8e3",
 };
 
-// Track render order — top row down. Same order as the rest of the UI.
+// Track render order - top row down. Same order as the rest of the UI.
 const TRACK_ORDER: ClientGachaGroup[] = ["limited", "linkage", "special", "regular"];
 
 export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps) {
@@ -38,9 +38,9 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">Pull timing</Kicker>
-                    <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance sm:text-[22px]">When the community pulls.</h2>
+                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">When the community pulls.</h2>
                 </div>
-                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+                <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
                     <span className="inline-flex items-center">
                         <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-primary align-middle" />
                         Total pulls
@@ -54,21 +54,21 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
                 </div>
             </header>
 
-            <div className="grid gap-y-4 gap-x-6 grid-cols-1 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {byDate.length > 0 ? (
                     <div className="md:col-span-2">
-                        <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By date · last {dayCount} days</div>
+                        <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By date · last {dayCount} days</div>
                         <TimingByDate rows={byDate} banners={banners} />
                     </div>
                 ) : null}
 
                 <div className="flex flex-col">
-                    <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By hour of day · UTC</div>
+                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By hour of day · UTC</div>
                     <TimingByHour rows={timing.byHour} />
                 </div>
 
                 <div>
-                    <div className="mb-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground">By day of week</div>
+                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By day of week</div>
                     <TimingByDow rows={timing.byDayOfWeek} />
                 </div>
             </div>
@@ -90,7 +90,7 @@ interface IBannerBand {
  *
  * The line chart uses uniform row-index spacing (one column per date that has
  * pulls). We approximate banner bands by snapping each banner's open/close
- * timestamps to the nearest row indices — slightly inaccurate when the
+ * timestamps to the nearest row indices - slightly inaccurate when the
  * underlying series has multi-day gaps, but the community corpus is dense
  * enough day-to-day that this is invisible in practice.
  *
@@ -328,7 +328,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                                 width: `${widthPct}%`,
                                                 background: TYPE_COLORS[b.group],
                                             }}
-                                            title={`${b.name} — ${TYPE_LABELS[b.group]}`}
+                                            title={`${b.name} - ${TYPE_LABELS[b.group]}`}
                                         />
                                     );
                                 })}

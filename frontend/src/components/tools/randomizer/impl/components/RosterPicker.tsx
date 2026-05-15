@@ -112,22 +112,22 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
 
             <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
-                    <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder="Search operators…" size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute right-1.5 top-1/2 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
+                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
                             <X className="size-3" />
                         </button>
                     )}
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
                 <div className="flex flex-col gap-0.5">
                     <span>
                         <span className="text-foreground">{visibleSelectedCount}</span> / {visibleOperators.length} {hasActiveFilters ? "in view" : "selected"}
                     </span>
-                    {hasActiveFilters && <span className="text-[10.5px] normal-case tracking-normal text-muted-foreground/70">{selected.size} total in roster</span>}
+                    {hasActiveFilters && <span className="text-[10.5px] text-muted-foreground/70 normal-case tracking-normal">{selected.size} total in roster</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     <Button onClick={onSelectAllVisible} size="xs" variant="ghost" disabled={allVisibleSelected || visibleOperators.length === 0}>
@@ -180,7 +180,7 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                                         <span className="font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: `var(--rarity-${rarity})` }}>
                                             {RARITY_LABELS[rarity]}
                                         </span>
-                                        <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground/70">
+                                        <span className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.16em]">
                                             {groupSelected} / {ops.length}
                                         </span>
                                     </button>
@@ -215,7 +215,7 @@ function ActiveFiltersHint({ settings, hiddenCount }: { settings: IRandomizerSet
     else if (settings.onlyOwnedOperators) parts.push("Owned only");
 
     return (
-        <div className="flex items-start gap-2 rounded-md border border-border/60 bg-accent/30 px-3 py-2 text-[11.5px] leading-snug text-muted-foreground">
+        <div className="flex items-start gap-2 rounded-md border border-border/60 bg-accent/30 px-3 py-2 text-[11.5px] text-muted-foreground leading-snug">
             <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/80" />
             <p className="min-w-0">
                 Showing operators that match your Operators filters. <span className="text-foreground">{hiddenCount}</span> hidden by {parts.length > 0 ? <span className="text-foreground">{parts.join(" · ")}</span> : <span>active filters</span>}.
@@ -228,7 +228,7 @@ function EmptyRoster({ query, hasActiveFilters, onReset, isExplicit }: { query: 
     return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
             <FilterX aria-hidden="true" className="size-6 text-muted-foreground/70" />
-            <p className="text-sm text-foreground">No operators to show</p>
+            <p className="text-foreground text-sm">No operators to show</p>
             <p className="max-w-xs text-[12px] text-muted-foreground">{query ? "No operators match your search." : hasActiveFilters ? "All operators are filtered out by your Operators tab settings." : "There are no operators available."}</p>
             {!query && hasActiveFilters && isExplicit && (
                 <Button onClick={onReset} size="xs" variant="outline" className="mt-1">
@@ -246,7 +246,7 @@ function RosterChip({ op, selected, onToggle }: { op: IRandomizerOperator; selec
             type="button"
             onClick={onToggle}
             aria-pressed={selected}
-            className={cn("group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150", "focus-visible:ring-2 focus-visible:ring-ring", selected ? "border-primary/80 shadow-sm shadow-primary/20" : "border-border/50 opacity-60 hover:opacity-95")}
+            className={cn("group relative aspect-square overflow-hidden rounded-md border bg-secondary/40 outline-none transition-all duration-150", "focus-visible:ring-2 focus-visible:ring-ring", selected ? "border-primary/80 shadow-primary/20 shadow-sm" : "border-border/50 opacity-60 hover:opacity-95")}
             title={op.name}
         >
             <img
@@ -262,7 +262,7 @@ function RosterChip({ op, selected, onToggle }: { op: IRandomizerOperator; selec
             />
             <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: `var(--rarity-${op.rarity})` }} />
             {selected && (
-                <div className="absolute right-0.5 top-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <div className="absolute top-0.5 right-0.5 inline-flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Check className="size-2.5" />
                 </div>
             )}

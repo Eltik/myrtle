@@ -20,8 +20,8 @@ function NavRow({ item, active }: { item: INavItem; active: boolean }): React.Re
             to={item.to}
             className={
                 active
-                    ? "flex w-full items-center gap-2.5 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1.5 text-left text-[13px] font-medium text-primary transition-colors"
-                    : "flex w-full items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-1.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+                    ? "flex w-full items-center gap-2.5 rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1.5 text-left font-medium text-[13px] text-primary transition-colors"
+                    : "flex w-full items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-1.5 text-left font-medium text-[13px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
             }
         >
             <Icon className="size-4 shrink-0 opacity-85" strokeWidth={1.9} />
@@ -61,31 +61,31 @@ export function AdminSidebar(): React.ReactElement {
     ];
 
     return (
-        <aside className="sticky top-0 flex h-screen flex-col border-r border-sidebar-border bg-sidebar">
+        <aside className="sticky top-0 flex h-screen flex-col border-sidebar-border border-r bg-sidebar">
             <div className="flex items-center gap-2.5 px-4.5 py-4">
                 <img src="/logo/bust_transparent.png" alt="myrtle" className="size-7 shrink-0 object-contain" />
                 <span className="font-semibold text-[15px] leading-none tracking-[-0.01em]">myrtle.moe</span>
-                <span className="inline-flex h-4 items-center rounded-[5px] border border-border bg-muted px-1.5 font-mono font-medium text-[10px] leading-none text-muted-foreground">v3</span>
-                <span className="font-mono font-medium text-[10px] leading-none tracking-wide text-primary">[admin]</span>
+                <span className="inline-flex h-4 items-center rounded-[5px] border border-border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground leading-none">v3</span>
+                <span className="font-medium font-mono text-[10px] text-primary leading-none tracking-wide">[admin]</span>
             </div>
 
             <nav className="flex flex-1 flex-col gap-px overflow-auto p-2">
-                <div className="px-3 pt-3.5 pb-1.5 font-mono font-medium text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Manage</div>
+                <div className="px-3 pt-3.5 pb-1.5 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">Manage</div>
                 {manage.map((it) => (
                     <NavRow key={it.to} item={it} active={isActive(it.to)} />
                 ))}
-                <div className="px-3 pt-3.5 pb-1.5 font-mono font-medium text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Operate</div>
+                <div className="px-3 pt-3.5 pb-1.5 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">Operate</div>
                 {operate.map((it) => (
                     <NavRow key={it.to} item={it} active={isActive(it.to)} />
                 ))}
             </nav>
 
-            <div className="border-t border-sidebar-border p-2.5">
+            <div className="border-sidebar-border border-t p-2.5">
                 <div className="flex items-center gap-2.5 rounded-[10px] border border-sidebar-border bg-card px-2.5 py-2">
-                    <span className="block size-[26px] shrink-0 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
+                    <span className="block size-6.5 shrink-0 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
                     <div className="flex min-w-0 flex-1 flex-col gap-px">
                         <span className="truncate font-semibold text-[12px] leading-tight">{user?.nickname ?? "Eltik"}</span>
-                        <span className="font-mono font-medium text-[10px] uppercase leading-none tracking-[0.06em] text-muted-foreground">{user?.role ?? "super_admin"}</span>
+                        <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.06em]">{user?.role ?? "super_admin"}</span>
                     </div>
                     <ChevronDownIcon className="size-3.5 opacity-60" strokeWidth={1.9} />
                 </div>

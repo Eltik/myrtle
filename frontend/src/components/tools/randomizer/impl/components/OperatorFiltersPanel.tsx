@@ -31,7 +31,7 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
             <FieldGroup label="Rarity">
                 <ToggleGroup aria-label="Allowed rarities" multiple value={settings.allowedRarities.map(String)} onValueChange={(next) => onChange({ allowedRarities: (next as string[]).map((n) => Number(n) as OperatorRarity) })} variant="outline">
                     {ALL_RARITIES.map((r) => (
-                        <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`} className="[&:not([data-pressed])]:bg-input/64 [&:not([data-pressed])]:before:shadow-none! dark:[&:not([data-pressed])]:bg-input [&:not([data-pressed])>span]:opacity-35">
+                        <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`} className="[&:not([data-pressed])>span]:opacity-35 [&:not([data-pressed])]:bg-input/64 [&:not([data-pressed])]:before:shadow-none! dark:[&:not([data-pressed])]:bg-input">
                             <span className="font-mono text-[12px]">{r}★</span>
                         </ToggleGroupItem>
                     ))}
@@ -67,7 +67,7 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/90">{label}</p>
+            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
             {children}
         </div>
     );
@@ -78,11 +78,11 @@ function SwitchRow({ label, description, checked, onChange, locked = false }: { 
         // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
         <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
             <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-foreground">
+                <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
                     {label}
                     {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
                 </p>
-                <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{description}</p>
+                <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
             </div>
             <Switch checked={locked ? false : checked} disabled={locked} onCheckedChange={onChange} />
         </label>

@@ -93,7 +93,7 @@ function ProfessionRow({ prof, expanded, maxSubNameLen, onToggle }: IProfessionR
                                 {hasSubs && <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/40 transition-transform duration-200", expanded && "rotate-180")} />}
                             </div>
                             <div className="flex items-baseline gap-1">
-                                <span className="font-bold tabular-nums text-sm">{prof.owned}</span>
+                                <span className="font-bold text-sm tabular-nums">{prof.owned}</span>
                                 <span className="font-mono text-[10.5px] text-muted-foreground/50">/ {prof.total}</span>
                             </div>
                         </div>
@@ -141,7 +141,7 @@ function SubProfessionRow({ sub, color, isLast }: ISubProfessionRowProps) {
                 {shortSubName(sub.displayName)}
             </span>
             <Bar color={color} dim pct={sub.percentage} thin />
-            <span className="w-10 shrink-0 text-right font-mono text-[10.5px] tabular-nums text-muted-foreground/70">
+            <span className="w-10 shrink-0 text-right font-mono text-[10.5px] text-muted-foreground/70 tabular-nums">
                 {sub.owned}/{sub.total}
             </span>
         </div>

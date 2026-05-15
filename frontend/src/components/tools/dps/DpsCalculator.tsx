@@ -104,8 +104,8 @@ export function DpsCalculator(): React.ReactElement {
     }, [latestOps, state.instances, dispatch]);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20 py-5">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] leading-none text-muted-foreground">
+        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] py-5 pb-20">
+            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                 <span>Tools</span>
                 <ChevronRight className="size-2.5" />
                 <span className="text-foreground">DPS Calculator</span>
@@ -113,7 +113,7 @@ export function DpsCalculator(): React.ReactElement {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <h1 className="m-0 font-bold font-sans text-[24px] leading-[1.1] tracking-tight text-foreground sm:text-[30px]">DPS Calculator</h1>
+                        <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">DPS Calculator</h1>
                         <Popover>
                             <PopoverTrigger
                                 render={(p) => (
@@ -124,7 +124,7 @@ export function DpsCalculator(): React.ReactElement {
                             />
                             <PopoverPopup className="w-[min(380px,calc(100vw-2rem))]">
                                 <h2 className="mb-2 font-semibold text-[14px] text-foreground">How this works</h2>
-                                <ul className="space-y-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                                <ul className="space-y-1.5 text-[12.5px] text-muted-foreground leading-relaxed">
                                     <li>
                                         <span className="font-medium text-foreground">Skill DPS</span> is damage per second while the skill is active.
                                     </li>
@@ -139,8 +139,8 @@ export function DpsCalculator(): React.ReactElement {
                             </PopoverPopup>
                         </Popover>
                     </div>
-                    <p className="mt-1.5 font-sans text-[13.5px] leading-normal text-muted-foreground">Compare operator output across enemy DEF or RES sweeps. Add multiple instances of the same operator to compare masteries, modules, and conditional setups side-by-side.</p>
-                    <p className="max-w-xl font-sans text-[13.5px] leading-normal text-muted-foreground">
+                    <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">Compare operator output across enemy DEF or RES sweeps. Add multiple instances of the same operator to compare masteries, modules, and conditional setups side-by-side.</p>
+                    <p className="max-w-xl font-sans text-[13.5px] text-muted-foreground leading-normal">
                         <b>Note:</b> All calculations go to the credit of{" "}
                         <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
                             WhoAteMyCQQkie's
@@ -177,10 +177,10 @@ export function DpsCalculator(): React.ReactElement {
             <div className="mt-6 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between gap-2 grid-rows-1">
+                        <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-2">
                             <CardTitle className="min-w-0 flex-1 truncate text-[15px]">
                                 Operators
-                                {hasInstances && <span className="ml-1.5 font-mono text-[11px] font-medium text-muted-foreground">{visibleCount === state.instances.length ? `(${state.instances.length})` : `(${visibleCount}/${state.instances.length} visible)`}</span>}
+                                {hasInstances && <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">{visibleCount === state.instances.length ? `(${state.instances.length})` : `(${visibleCount}/${state.instances.length} visible)`}</span>}
                             </CardTitle>
                             {state.instances.length > 1 && (
                                 <Tooltip>
@@ -203,7 +203,7 @@ export function DpsCalculator(): React.ReactElement {
                     <EnemyPanel hydrationToken={hydrationToken} enemy={state.enemy} onChangeEnemy={(patch) => dispatch({ type: "SET_ENEMY", patch })} onChangeShred={(patch) => dispatch({ type: "SET_SHRED", patch })} />
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
+                <main className="flex min-w-0 flex-col gap-4 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto xl:pr-1">
                     <Card>
                         <CardHeader className="pb-3">
                             <AxisControls

@@ -55,7 +55,7 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                <InputGroup className="w-full sm:w-64 sm:max-w-80 sm:min-w-48 sm:flex-1">
+                <InputGroup className="w-full sm:w-64 sm:min-w-48 sm:max-w-80 sm:flex-1">
                     <InputGroupAddon>
                         <Search />
                     </InputGroupAddon>
@@ -105,7 +105,7 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                         <Grid3x3 />
                     </ToggleGroupItem>
                 </ToggleGroup>
-                <div className="hidden items-center gap-3 font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground sm:ml-auto md:flex">
+                <div className="hidden items-center gap-3 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em] sm:ml-auto md:flex">
                     <span>
                         <span className="text-foreground tabular-nums">{sorted.length}</span> items
                     </span>
@@ -164,7 +164,7 @@ function CategoryChip({ category, active, count, onSelect }: ICategoryChipProps)
 function EmptyItems({ hasInventory }: { hasInventory: boolean }) {
     return (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
-            <span className="font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">Inventory</span>
+            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Inventory</span>
             <h3 className="font-semibold text-lg tracking-tight">{hasInventory ? "No items match" : "No items yet"}</h3>
             <p className="max-w-sm text-muted-foreground text-sm">{hasInventory ? "Try clearing filters or a different category." : "This Doctor's inventory is empty."}</p>
         </div>

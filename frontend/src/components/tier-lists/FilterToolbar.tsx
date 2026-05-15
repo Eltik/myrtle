@@ -49,7 +49,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
     const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "trending";
 
     return (
-        <div className="sticky top-14 z-30 -mx-3 border-y border-border bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
+        <div className="sticky top-14 z-30 -mx-3 border-border border-y bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
             <div className="mx-auto w-[min(1080px,100%)] py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <div role="tablist" aria-label="Tier list type" className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
@@ -63,7 +63,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                     aria-selected={active}
                                     onClick={() => onTypeChange(tab.value)}
                                     className={cn(
-                                        "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-sans text-xs font-medium leading-none transition-colors",
+                                        "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
                                         active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                                     )}
                                 >
@@ -75,7 +75,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
 
                     <Menu>
                         <MenuTrigger
-                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
+                            className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
                             aria-label={`Sort: ${activeSort?.label}`}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -83,7 +83,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                 <path d="M7 12h10" />
                                 <path d="M11 18h2" />
                             </svg>
-                            <span className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">Sort</span>
+                            <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">Sort</span>
                             <span>{activeSort?.label}</span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
@@ -119,8 +119,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                 </div>
 
                 {flairOptions.length > 0 && (
-                    <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                        <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">Flairs</span>
+                    <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">Flairs</span>
                         {flairOptions.map((flair) => {
                             const active = selectedFlairs.includes(flair.code);
                             const color = flair.color ?? "var(--primary)";
@@ -134,7 +134,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                     aria-pressed={active}
                                     aria-label={`Flair ${flair.label}${hasMatches ? `, ${count} list${count === 1 ? "" : "s"}` : ", no lists"}`}
                                     disabled={!hasMatches && !active}
-                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs font-medium leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
+                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
                                     style={
                                         active
                                             ? {
@@ -153,12 +153,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                     <span>{flair.label}</span>
                                     {flair.count !== undefined && (
                                         <span
-                                            className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono text-[9.5px] font-semibold tabular-nums leading-[1.4]"
-                                            style={
-                                                active
-                                                    ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color }
-                                                    : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }
-                                            }
+                                            className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono font-semibold text-[9.5px] tabular-nums leading-[1.4]"
+                                            style={active ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color } : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }}
                                             aria-hidden="true"
                                         >
                                             {count}
@@ -171,7 +167,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             <button
                                 type="button"
                                 onClick={onClearFlairs}
-                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-dashed border-border bg-transparent px-2.5 py-1 font-sans text-xs font-medium leading-none text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-border border-dashed bg-transparent px-2.5 py-1 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:border-foreground/40 hover:text-foreground"
                             >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
                                     <path d="M18 6 6 18" />
@@ -184,8 +180,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                 )}
 
                 {hasActiveFilters && (
-                    <p aria-live="polite" className="mt-2 font-mono text-[10.5px] leading-none tracking-wide text-muted-foreground">
-                        <span className="tabular-nums text-foreground">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
+                    <p aria-live="polite" className="mt-2 font-mono text-[10.5px] text-muted-foreground leading-none tracking-wide">
+                        <span className="text-foreground tabular-nums">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
                         {query.length > 0 && (
                             <>
                                 {" "}

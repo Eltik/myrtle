@@ -30,7 +30,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                             <span className={KICKER_TEXT}>Total Mastery Levels</span>
-                            <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                            <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                 <span className="font-semibold text-foreground">{totalMasteryLevels}</span>
                                 <span className="text-muted-foreground/50"> / {maxPossibleMasteryLevels}</span>
                             </span>

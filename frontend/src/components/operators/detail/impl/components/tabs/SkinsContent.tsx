@@ -71,25 +71,25 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                 <p className="text-muted-foreground text-sm">Alternate skins, E2 art variants, and collaboration outfits</p>
             </div>
             <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr,280px]">
-                <div className="flex flex-col gap-4 min-w-0">
+                <div className="flex min-w-0 flex-col gap-4">
                     {selected && (
-                        <div className="relative overflow-hidden rounded-xl border border-border bg-linear-to-b from-secondary/30 via-secondary/10 to-secondary/40 aspect-4/3 md:aspect-16/11">
+                        <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border bg-linear-to-b from-secondary/30 via-secondary/10 to-secondary/40 md:aspect-16/11">
                             <img alt={selected.name} className="absolute inset-0 h-full w-full object-contain" decoding="async" loading="eager" src={selected.image} />
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
                             <SkinViewerDialog imageSrc={selected.image} skinName={selected.name}>
-                                <button type="button" aria-label="Fullscreen" className="absolute right-3 top-3 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1.5 text-white/80 backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
+                                <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1.5 text-white/80 backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
                             </SkinViewerDialog>
                             <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
-                                <div className="font-mono text-[10px] uppercase tracking-wider text-white/70">{selected.kicker}</div>
+                                <div className="font-mono text-[10px] text-white/70 uppercase tracking-wider">{selected.kicker}</div>
                                 <div className="mt-0.5 font-semibold text-2xl text-white drop-shadow-md">{selected.name}</div>
                                 {(selected.displaySkin?.drawerList?.join(", ") ?? null) && <div className="mt-0.5 text-white/70 text-xs">Artist · {selected.displaySkin?.drawerList?.join(", ")}</div>}
                             </div>
                         </div>
                     )}
                 </div>
-                <div className="flex w-full gap-2.5 overflow-x-auto pb-2 lg:max-h-[calc(100vh-30rem)] lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-0 lg:pr-1">
+                <div className="flex w-full gap-2.5 overflow-x-auto pb-2 lg:max-h-[calc(100vh-30rem)] lg:flex-col lg:overflow-y-auto lg:overflow-x-visible lg:pr-1 lg:pb-0">
                     {skins.map((skin) => (
                         <button
                             key={skin.id}
@@ -101,7 +101,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 <img alt={skin.name} className="h-full w-full object-cover" decoding="async" loading="lazy" src={skin.thumbnail} />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <div className="font-medium font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{skin.kicker}</div>
+                                <div className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{skin.kicker}</div>
                                 <div className="mt-0.5 truncate font-semibold text-foreground text-sm">{skin.name}</div>
                                 <div className="mt-0.5 truncate text-muted-foreground text-xs">{skin.sub}</div>
                             </div>
@@ -120,7 +120,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                     return (
                         <div className="mt-5 overflow-hidden rounded-xl border border-border bg-card/60">
                             {description && (
-                                <div className="border-b border-border/60 bg-linear-to-br from-secondary/20 via-transparent to-transparent px-5 py-4 md:px-6 md:py-5">
+                                <div className="border-border/60 border-b bg-linear-to-br from-secondary/20 via-transparent to-transparent px-5 py-4 md:px-6 md:py-5">
                                     <div className="flex items-center gap-2">
                                         <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                                         <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Description</span>
@@ -306,7 +306,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             <DialogContent className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[95vw] flex-col overflow-hidden p-0 sm:max-w-[95vw]" showCloseButton bottomStickOnMobile={false}>
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
-                <div className="absolute left-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
                     <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { AuthDialog } from "#/components/header/impl/AuthDialog";
 import { Button } from "#/components/ui/button";
 import { Kbd } from "#/components/ui/kbd";
@@ -33,18 +32,18 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                 <div className="flex flex-col">
                     <div className="mb-5 inline-flex w-max items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 pl-2.5">
                         <span className={styles.dotPulse} aria-hidden="true" />
-                        <span className="font-mono text-[11.5px] font-medium leading-none text-muted-foreground">v3</span>
+                        <span className="font-medium font-mono text-[11.5px] text-muted-foreground leading-none">v3</span>
                         <Separator orientation="vertical" className="h-3.5 bg-white/10" />
-                        <Link to="/changelog" className="cursor-pointer font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]" rel="noreferrer">
+                        <a href="/changelog" className="cursor-pointer font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[oklch(0.85_0.12_25)]" rel="noreferrer">
                             changelog →
-                        </Link>
+                        </a>
                     </div>
 
-                    <h1 className="m-0 mb-4.5 max-w-[14ch] font-sans text-[42px] font-bold leading-[1.04] tracking-[-0.03em] text-foreground md:text-[62px]">
+                    <h1 className="m-0 mb-4.5 max-w-[14ch] font-bold font-sans text-[42px] text-foreground leading-[1.04] tracking-[-0.03em] md:text-[62px]">
                         The <span className="text-primary [text-shadow:0_0_30px_oklch(0.75_0.15_25/0.35)]">Arknights</span> companion.
                     </h1>
 
-                    <p className="m-0 mb-7 flex max-w-[48ch] flex-wrap items-center gap-1 font-sans text-[17px] leading-[1.55] text-muted-foreground">
+                    <p className="m-0 mb-7 flex max-w-[48ch] flex-wrap items-center gap-1 font-sans text-[17px] text-muted-foreground leading-[1.55]">
                         400+ operators, complete stats, community tier lists, and live roster sync. <br />
                         <span className="flex flex-row items-center gap-2">
                             Hit{" "}
@@ -76,11 +75,11 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                         />
                     </div>
 
-                    <div className="flex gap-7 border-t border-border pt-5">
+                    <div className="flex gap-7 border-border border-t pt-5">
                         {heroStats.map((s) => (
                             <div key={s.l} className="flex flex-col gap-1">
-                                <b className="font-sans text-2xl font-bold leading-none tracking-tight text-foreground">{s.v}</b>
-                                <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-wider text-muted-foreground">{s.l}</span>
+                                <b className="font-bold font-sans text-2xl text-foreground leading-none tracking-tight">{s.v}</b>
+                                <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-wider">{s.l}</span>
                             </div>
                         ))}
                     </div>

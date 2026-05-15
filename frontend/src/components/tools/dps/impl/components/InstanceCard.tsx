@@ -47,8 +47,8 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center gap-2.5 px-4 py-3 grid-rows-1">
-                <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-[10px] font-semibold" style={{ boxShadow: `inset 0 0 0 2px ${color}` }}>
+            <CardHeader className="flex grid-rows-1 flex-row items-center gap-2.5 px-4 py-3">
+                <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[10px]" style={{ boxShadow: `inset 0 0 0 2px ${color}` }}>
                     <OperatorAvatar charId={op.id} name={op.name} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -115,7 +115,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] leading-none text-muted-foreground">Level</Label>
+                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">Level</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">
                                 {level}
                                 <span className="text-muted-foreground"> / {maxLevel}</span>
@@ -136,7 +136,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                 onClick={() => onUpdate({ potential: p })}
                                                 aria-label={`Potential ${p}`}
                                                 className={cn(
-                                                    "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                    "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                     config.potential === p ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                 )}
                                             >
@@ -166,7 +166,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                         onClick={() => onUpdate({ skillIndex: s })}
                                                         aria-label={`Use ${skillName}`}
                                                         className={cn(
-                                                            "flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                            "flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                             config.skillIndex === s ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                         )}
                                                     >
@@ -175,7 +175,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                         ) : (
                                                             <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">S{s}</span>
                                                         )}
-                                                        <span className="line-clamp-1 break-all text-center text-[10.5px] font-medium leading-tight">{skillName}</span>
+                                                        <span className="line-clamp-1 break-all text-center font-medium text-[10.5px] leading-tight">{skillName}</span>
                                                     </button>
                                                 )}
                                             />
@@ -201,11 +201,11 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                 onClick={() => onUpdate({ masteryLevel: m })}
                                                 aria-label={m === 0 ? "No mastery (Lv 7)" : `Mastery ${m}`}
                                                 className={cn(
-                                                    "flex h-8 cursor-pointer items-center justify-center gap-1 rounded-md border bg-card px-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                    "flex h-8 cursor-pointer items-center justify-center gap-1 rounded-md border bg-card px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                     config.masteryLevel === m ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                 )}
                                             >
-                                                {m === 0 ? <span className="font-mono text-[11px] font-medium">L7</span> : <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(m)} />}
+                                                {m === 0 ? <span className="font-medium font-mono text-[11px]">L7</span> : <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(m)} />}
                                             </button>
                                         )}
                                     />
@@ -222,7 +222,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                     type="button"
                                     onClick={() => onUpdate({ moduleIndex: 0 })}
                                     className={cn(
-                                        "flex min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 text-[11px] font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                        "flex min-w-16 cursor-pointer items-center justify-center rounded-md border bg-card px-2 py-1.5 font-medium text-[11px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                         config.moduleIndex === 0 ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                     )}
                                 >
@@ -240,7 +240,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                         type="button"
                                                         onClick={() => onUpdate({ moduleIndex: m })}
                                                         className={cn(
-                                                            "flex cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                                                            "flex cursor-pointer items-center gap-1.5 rounded-md border bg-card px-1.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                             config.moduleIndex === m ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                         )}
                                                     >
@@ -249,7 +249,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                                         ) : (
                                                             <span className="flex size-7 shrink-0 items-center justify-center rounded bg-muted font-mono text-[10px] text-muted-foreground">M{m}</span>
                                                         )}
-                                                        <span className="font-mono text-[10.5px] font-medium">{typeLabel}</span>
+                                                        <span className="font-medium font-mono text-[10.5px]">{typeLabel}</span>
                                                     </button>
                                                 )}
                                             />
@@ -270,7 +270,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                         type="button"
                                         onClick={() => onUpdate({ moduleLevel: l })}
                                         className={cn(
-                                            "flex h-8 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-mono text-[11px] font-medium transition-colors",
+                                            "flex h-8 min-w-10 cursor-pointer items-center justify-center rounded-md border bg-card px-2 font-medium font-mono text-[11px] transition-colors",
                                             config.moduleLevel === l ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                         )}
                                     >
@@ -283,7 +283,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] leading-none text-muted-foreground">Trust</Label>
+                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">Trust</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">{config.trust}%</span>
                         </div>
                         <Slider min={0} max={100} step={5} value={[config.trust]} onValueChange={(v) => onUpdate({ trust: Array.isArray(v) ? (v[0] ?? 0) : v })} />
@@ -291,7 +291,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 
                     {op.conditionals.length > 0 && (
                         <div>
-                            <Label className="mb-1.5 block font-medium text-[11px] leading-none text-muted-foreground">Conditionals</Label>
+                            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">Conditionals</Label>
                             <div className="space-y-1">
                                 {op.conditionals.map((cond) => {
                                     const key = mapConditionalKey(cond);
@@ -342,7 +342,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div>
-            <Label className="mb-1.5 block font-medium text-[11px] leading-none text-muted-foreground">{label}</Label>
+            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{label}</Label>
             {children}
         </div>
     );
@@ -367,7 +367,7 @@ function IconChip({ selected, label, iconURL, onClick }: IIconChipProps): React.
                 selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
             )}
         >
-            <img alt="" aria-hidden="true" className="size-6 object-contain icon-theme-aware" decoding="async" loading="lazy" src={iconURL} />
+            <img alt="" aria-hidden="true" className="icon-theme-aware size-6 object-contain" decoding="async" loading="lazy" src={iconURL} />
         </button>
     );
 }
@@ -420,7 +420,7 @@ interface INumFieldProps {
 function NumField({ label, value, min, max, step = 1, onChange }: INumFieldProps): React.ReactElement {
     return (
         <NumberField defaultValue={value} min={min} max={max} step={step} onValueChange={(v) => onChange(v ?? 0)} size="sm" className="gap-1">
-            <Label className="block font-medium text-[11px] leading-none text-muted-foreground">{label}</Label>
+            <Label className="block font-medium text-[11px] text-muted-foreground leading-none">{label}</Label>
             <NumberFieldGroup>
                 <NumberFieldDecrement />
                 <NumberFieldInput />

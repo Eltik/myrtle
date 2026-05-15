@@ -40,7 +40,7 @@ export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
                         <Filter aria-hidden="true" className="size-4 text-muted-foreground" />
                         Settings
                     </SheetTitle>
-                    <p className="text-sm text-muted-foreground">Constrain the randomizer - by class, rarity, owned operators, or stage availability.</p>
+                    <p className="text-muted-foreground text-sm">Constrain the randomizer - by class, rarity, owned operators, or stage availability.</p>
                 </SheetHeader>
                 <SheetPanel className="px-5 pb-6">
                     <Tabs defaultValue="operators" className="gap-4">

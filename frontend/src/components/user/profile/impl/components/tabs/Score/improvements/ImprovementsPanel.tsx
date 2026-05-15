@@ -25,7 +25,7 @@ export function ImprovementsPanel({ sub, improvements, isLoading }: IProps) {
     if (!improvements) {
         return (
             <div className={PANEL_PADDING}>
-                <p className="rounded-md border border-dashed border-border/40 bg-muted/15 px-3 py-2 text-center text-[11px] text-muted-foreground">Improvements unavailable. Profile may be private or not yet synced.</p>
+                <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-center text-[11px] text-muted-foreground">Improvements unavailable. Profile may be private or not yet synced.</p>
             </div>
         );
     }

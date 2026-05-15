@@ -73,8 +73,8 @@ export function OfficialTierLists(): React.ReactElement {
             />
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-                <div className="flex flex-wrap items-center gap-2.5 border-b border-border p-3.5">
-                    <div className="min-w-[280px] max-w-[360px] flex-1">
+                <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
+                    <div className="min-w-70 max-w-90 flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -82,7 +82,7 @@ export function OfficialTierLists(): React.ReactElement {
                             <Input placeholder="Search by title or slug…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-[3px]">
+                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-0.75">
                         {(["all", "active", "draft"] as const).map((s) => (
                             <button
                                 key={s}
@@ -103,13 +103,13 @@ export function OfficialTierLists(): React.ReactElement {
                         <Skeleton className="h-12" />
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No official tier lists yet — create one.</div>
+                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No official tier lists yet - create one.</div>
                 ) : (
                     <table className="w-full border-collapse text-[13px]">
                         <thead>
                             <tr>
                                 {["Title", "Flair", "Trending", "Tiers", "Placements", "Updated", "Views (24h)", ""].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                         {h}
                                     </th>
                                 ))}
@@ -137,23 +137,23 @@ function OfficialRow({ list, onSetFlair, onDelete, onPublish }: { list: ITierLis
     const color = list.flairColor ?? "var(--primary)";
     const navigate = useNavigate();
     return (
-        <tr className="border-b border-border last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
+        <tr className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
             <td className="px-3.5 py-2.5">
-                <span className="mr-2.5 inline-block h-[22px] w-1 rounded-[2px] align-[-6px]" style={{ background: color }} />
+                <span className="mr-2.5 inline-block h-5.5 w-1 rounded-xs align-[-6px]" style={{ background: color }} />
                 <span className="font-medium">{list.title}</span>
                 <span className="font-mono text-[11.5px] text-muted-foreground"> · /{list.slug}</span>
             </td>
             <td className="px-3.5 py-2.5">
                 {list.flairLabel ? (
                     <span className="inline-flex items-center gap-1.5 font-medium text-[11.5px]" style={{ color }}>
-                        <span className="size-2 rounded-[2px]" style={{ background: color }} />
+                        <span className="size-2 rounded-xs" style={{ background: color }} />
                         {list.flairLabel}
                     </span>
                 ) : (
-                    <span className="text-[12px] text-muted-foreground">—</span>
+                    <span className="text-[12px] text-muted-foreground">-</span>
                 )}
             </td>
-            <td className="px-3.5 py-2.5">{list.hot ? <Badge variant="success">trending</Badge> : <Badge variant="outline">—</Badge>}</td>
+            <td className="px-3.5 py-2.5">{list.hot ? <Badge variant="success">trending</Badge> : <Badge variant="outline">-</Badge>}</td>
             <td className="px-3.5 py-2.5 tabular-nums">{list.tiers.length}</td>
             <td className="px-3.5 py-2.5 tabular-nums">{placementCount}</td>
             <td className="px-3.5 py-2.5 text-muted-foreground">{list.updated}</td>
@@ -212,28 +212,28 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[420px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-primary">Manage · flair</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · flair</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Change flair on /{list.slug}</div>
                     </div>
                     <div className="p-5">
                         <div className="flex flex-wrap items-center gap-2">
                             <button type="button" onClick={() => setSelected(null)} className={cn("inline-flex h-7 items-center rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === null && "ring-2 ring-ring")}>
-                                <span className="mr-1.5 inline-block size-2.5 rounded-[2px] bg-muted-foreground/40" />
+                                <span className="mr-1.5 inline-block size-2.5 rounded-xs bg-muted-foreground/40" />
                                 None
                             </button>
                             {flairs.map((f) => (
                                 <button key={f.code} type="button" onClick={() => setSelected(f.id)} className={cn("inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === f.id && "ring-2 ring-ring")} style={{ color: f.color ?? undefined }}>
-                                    <span className="size-2.5 rounded-[2px]" style={{ background: f.color ?? "var(--muted-foreground)" }} />
+                                    <span className="size-2.5 rounded-xs" style={{ background: f.color ?? "var(--muted-foreground)" }} />
                                     {f.label}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border p-3.5">
+                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -260,11 +260,11 @@ function DeleteDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: (
     });
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[420px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-destructive-foreground">Manage · delete</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-destructive-foreground uppercase tracking-[0.22em]">Manage · delete</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Delete /{list.slug}?</div>
                         <div className="mt-1 text-[12.5px] text-muted-foreground">
                             This is permanent. All tiers, placements, and version history for <strong>{list.title}</strong> are destroyed.
@@ -298,11 +298,11 @@ function PublishDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: 
     });
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[480px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-primary">Manage · publish</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-120 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · publish</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Publish a new version of /{list.slug}</div>
                         <div className="mt-1 text-[12.5px] text-muted-foreground">Snapshots the current tier layout. Visible in version history.</div>
                     </div>
@@ -312,7 +312,7 @@ function PublishDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: 
                             <textarea value={changelog} onChange={(e) => setChangelog(e.target.value)} placeholder="What changed?" className="h-24 w-full resize-none rounded-lg border border-input bg-background p-2 text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border p-3.5">
+                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -345,11 +345,11 @@ function NewListDialog({ onClose }: { onClose: () => void }): React.ReactElement
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[520px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-primary">Manage · official tier lists</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-130 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · official tier lists</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">New official tier list</div>
                         <div className="mt-1 text-[12.5px] text-muted-foreground">
                             Creates a draft via <span className="font-mono">POST /tier-lists</span> with <span className="font-mono">list_type=official</span>. Add tiers + flair in the editor.
@@ -371,7 +371,7 @@ function NewListDialog({ onClose }: { onClose: () => void }): React.ReactElement
                                 <div className="flex flex-wrap items-center gap-2">
                                     {flairsQuery.data.map((f) => (
                                         <span key={f.code} className="inline-flex h-6.5 items-center gap-1.5 rounded-md border border-border bg-card px-2 font-medium text-[12px]" style={{ color: f.color ?? undefined }}>
-                                            <span className="size-2.5 rounded-[2px]" style={{ background: f.color ?? "var(--muted-foreground)" }} />
+                                            <span className="size-2.5 rounded-xs" style={{ background: f.color ?? "var(--muted-foreground)" }} />
                                             {f.label}
                                         </span>
                                     ))}
@@ -380,7 +380,7 @@ function NewListDialog({ onClose }: { onClose: () => void }): React.ReactElement
                             </div>
                         ) : null}
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border p-3.5">
+                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>

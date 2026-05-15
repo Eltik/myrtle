@@ -17,7 +17,7 @@ interface IAdminTopBarProps {
 
 export function AdminTopBar({ crumbs }: IAdminTopBarProps): React.ReactElement {
     return (
-        <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
+        <div className="sticky top-0 z-40 border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
             <div className="flex h-14 items-center gap-3.5 px-6">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5 font-medium text-[13px] text-muted-foreground">
                     {crumbs.map((c, i) => (
@@ -28,17 +28,17 @@ export function AdminTopBar({ crumbs }: IAdminTopBarProps): React.ReactElement {
                         </Fragment>
                     ))}
                 </div>
-                <button type="button" className="inline-flex h-[30px] min-w-[280px] cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-normal text-[13px] text-muted-foreground hover:bg-accent">
+                <button type="button" className="inline-flex h-7.5 min-w-70 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-normal text-[13px] text-muted-foreground hover:bg-accent">
                     <SearchIcon className="size-3.5" strokeWidth={1.9} />
                     <span className="flex-1 text-left">Search users, tier lists, operators…</span>
-                    <span className="inline-flex h-[17px] items-center rounded border border-b-[1.5px] border-border bg-card px-1 font-mono font-medium text-[10px] text-muted-foreground">⌘</span>
-                    <span className="inline-flex h-[17px] items-center rounded border border-b-[1.5px] border-border bg-card px-1 font-mono font-medium text-[10px] text-muted-foreground">K</span>
+                    <span className="inline-flex h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground">⌘</span>
+                    <span className="inline-flex h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground">K</span>
                 </button>
                 <div className="flex items-center gap-2">
-                    <button type="button" className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-lg border border-transparent text-foreground hover:bg-accent" aria-label="Notifications">
+                    <button type="button" className="inline-flex size-7.5 cursor-pointer items-center justify-center rounded-lg border border-transparent text-foreground hover:bg-accent" aria-label="Notifications">
                         <BellIcon className="size-4 opacity-85" strokeWidth={1.9} />
                     </button>
-                    <a href="https://github.com/Eltik/myrtle" target="_blank" rel="noreferrer" className="inline-flex size-[30px] items-center justify-center rounded-lg border border-transparent text-foreground opacity-85 hover:bg-accent" aria-label="GitHub">
+                    <a href="https://github.com/Eltik/myrtle" target="_blank" rel="noreferrer" className="inline-flex size-7.5 items-center justify-center rounded-lg border border-transparent text-foreground opacity-85 hover:bg-accent" aria-label="GitHub">
                         <GithubMark />
                     </a>
                 </div>

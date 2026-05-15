@@ -36,12 +36,12 @@ export function Hero({ rankedDoctors, topScore, updatedAt, isLoading }: IHeroPro
 
             <div className="relative grid gap-x-7 gap-y-4 px-5 py-5 sm:grid-cols-[1fr_auto] sm:gap-y-5 sm:px-6 sm:py-6">
                 <div className="flex min-w-0 flex-col gap-1.5">
-                    <span className="font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground">Players · Leaderboard</span>
-                    <h1 className="m-0 flex flex-wrap items-center gap-2.5 font-sans text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-[28px]">
+                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">Players · Leaderboard</span>
+                    <h1 className="m-0 flex flex-wrap items-center gap-2.5 font-bold font-sans text-2xl text-foreground leading-[1.1] tracking-tight sm:text-[28px]">
                         Top Doctors
-                        <span className="inline-flex h-5.5 items-center rounded-full border border-primary/30 bg-primary/10 px-2 font-mono text-[10.5px] font-semibold uppercase leading-none tracking-[0.18em] text-primary">All-time</span>
+                        <span className="inline-flex h-5.5 items-center rounded-full border border-primary/30 bg-primary/10 px-2 font-mono font-semibold text-[10.5px] text-primary uppercase leading-none tracking-[0.18em]">All-time</span>
                     </h1>
-                    <p className="m-0 max-w-[60ch] font-sans text-[13.5px] leading-snug text-muted-foreground">A composite ranking across roster depth, base efficiency, and combat scoring. Pulled from public profiles only.</p>
+                    <p className="m-0 max-w-[60ch] font-sans text-[13.5px] text-muted-foreground leading-snug">A composite ranking across roster depth, base efficiency, and combat scoring. Pulled from public profiles only.</p>
                 </div>
 
                 <div className="flex items-center gap-4 self-center sm:gap-5">
@@ -52,7 +52,7 @@ export function Hero({ rankedDoctors, topScore, updatedAt, isLoading }: IHeroPro
                     <HeroStat label="Updated" value={formatRelative(updatedAt)} small loading={isLoading} />
                 </div>
 
-                <div role="note" className="col-span-full flex items-start gap-2 rounded-lg border border-info/25 bg-info/8 px-3 py-2.5 font-sans text-[12px] font-medium leading-snug text-foreground/90">
+                <div role="note" className="col-span-full flex items-start gap-2 rounded-lg border border-info/25 bg-info/8 px-3 py-2.5 font-medium font-sans text-[12px] text-foreground/90 leading-snug">
                     <Info className="mt-px size-3.5 shrink-0 text-info" aria-hidden />
                     <span>
                         <b className="font-semibold text-foreground">Heads up</b> - the leaderboard is in active development and the ranking formula is subject to change.
@@ -66,8 +66,8 @@ export function Hero({ rankedDoctors, topScore, updatedAt, isLoading }: IHeroPro
 function HeroStat({ label, value, small, loading }: { label: string; value: string; small?: boolean; loading?: boolean }) {
     return (
         <div className="flex min-w-0 flex-col gap-1">
-            <span className={`font-sans font-bold tracking-tight tabular-nums text-foreground ${small ? "text-sm font-semibold" : "text-[22px] leading-none"}`}>{loading ? "…" : value}</span>
-            <span className="font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground">{label}</span>
+            <span className={`font-bold font-sans text-foreground tabular-nums tracking-tight ${small ? "font-semibold text-sm" : "text-[22px] leading-none"}`}>{loading ? "…" : value}</span>
+            <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{label}</span>
         </div>
     );
 }

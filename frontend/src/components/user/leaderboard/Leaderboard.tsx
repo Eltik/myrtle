@@ -107,7 +107,7 @@ export function Leaderboard() {
     return (
         <div className="relative z-1 mx-auto w-[min(1280px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-2.5">
-                <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-sans text-[12px] font-medium leading-none text-muted-foreground">
+                <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                     <span>Doctors</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden />
                     <span className="text-foreground">Leaderboard</span>
@@ -122,8 +122,8 @@ export function Leaderboard() {
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
                         {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} referenceScore={referenceScore} isLoading={isLoading} intervalLabel={intervalMeta.since} />}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
-                            <span className="font-mono text-xs leading-none text-muted-foreground tabular-nums">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
+                            <span className="font-mono text-muted-foreground text-xs tabular-nums leading-none">
                                 Showing {start}-{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
                             </span>
                             <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} className="mt-0" />

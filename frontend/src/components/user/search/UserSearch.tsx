@@ -78,13 +78,13 @@ export function UserSearch() {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-sans text-[12px] font-medium leading-none text-muted-foreground" aria-label="Breadcrumb">
+                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
                     <span>Doctors</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
                     <span className="text-foreground">Search</span>
                 </nav>
-                <h1 className="m-0 font-sans text-[30px] font-bold leading-[1.1] tracking-tight text-foreground">Search Doctors</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] leading-normal text-muted-foreground">Find Doctor profiles by nickname or browse public profiles ranked by score.</p>
+                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">Search Doctors</h1>
+                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">Find Doctor profiles by nickname or browse public profiles ranked by score.</p>
             </div>
 
             <div className="flex flex-col gap-4 pt-5">
@@ -102,7 +102,7 @@ export function UserSearch() {
                     </InputGroupAddon>
                 </InputGroup>
 
-                <div className="flex items-center justify-between gap-3 font-sans text-[12.5px] leading-none text-muted-foreground">
+                <div className="flex items-center justify-between gap-3 font-sans text-[12.5px] text-muted-foreground leading-none">
                     <span className="inline-flex items-center gap-1.5">
                         {isSearching ? (
                             <>

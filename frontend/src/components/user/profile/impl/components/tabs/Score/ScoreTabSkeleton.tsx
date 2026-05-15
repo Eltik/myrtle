@@ -28,7 +28,7 @@ function OverallSkeleton() {
                     </div>
                     <Skeleton className="h-2.5 w-44 rounded-sm" />
                 </div>
-                <div className="flex flex-col justify-center gap-3 sm:border-l sm:border-border/50 sm:pl-8">
+                <div className="flex flex-col justify-center gap-3 sm:border-border/50 sm:border-l sm:pl-8">
                     <Skeleton className="h-2.5 w-32 rounded-sm" />
                     {[0, 1, 2].map((i) => (
                         <div className="space-y-1.5" key={i}>

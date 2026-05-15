@@ -137,14 +137,14 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                     <ChevronDown className={cn(styles.chev, open && "opacity-90")} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" alignOffset={-8} sideOffset={10} className={cn("p-2", hasIcons ? "min-w-95" : "min-w-52")} onMouseEnter={openNow} onMouseLeave={closeSoon}>
-                    <div className="px-3 pt-2 pb-1.5 font-mono text-[10.5px] font-medium uppercase leading-none tracking-widest text-muted-foreground">{item.label}</div>
+                    <div className="px-3 pt-2 pb-1.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-widest">{item.label}</div>
                     <div className="flex flex-col gap-px">
                         {item.items?.map((t) => (
                             <Link key={t.href} to={t.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 no-underline transition-colors hover:bg-accent" onClick={() => setOpen(false)}>
                                 {hasIcons && <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/5 bg-muted/70 text-primary">{t.icon && <ToolsIcon name={t.icon} />}</span>}
                                 <span className="flex min-w-0 flex-1 flex-col gap-0.75">
-                                    <span className="font-sans text-[13px] font-medium leading-none tracking-tight text-foreground">{t.label}</span>
-                                    {t.desc && <span className="font-sans text-[11.5px] leading-snug text-muted-foreground">{t.desc}</span>}
+                                    <span className="font-medium font-sans text-[13px] text-foreground leading-none tracking-tight">{t.label}</span>
+                                    {t.desc && <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t.desc}</span>}
                                 </span>
                                 {t.kb && (
                                     <span className="inline-flex shrink-0 gap-0.5">
@@ -157,14 +157,14 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                         ))}
                     </div>
                     {hasIcons && (
-                        <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-white/5 px-3 pt-2.5 pb-2 font-sans text-[11.5px] leading-none text-muted-foreground">
-                            <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-medium">
+                        <div className="mt-1.5 flex items-center justify-between gap-2 border-white/5 border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
+                            <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
                                 Press <Kbd>{modKey(isMac)}</Kbd>
                                 <Kbd>K</Kbd> for all commands
                             </span>
                             <button
                                 type="button"
-                                className="cursor-pointer border-none bg-transparent p-0 font-sans text-[11.5px] font-medium leading-none text-primary transition-colors hover:text-[oklch(0.85_0.12_25)]"
+                                className="cursor-pointer border-none bg-transparent p-0 font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[oklch(0.85_0.12_25)]"
                                 onClick={() => {
                                     setOpen(false);
                                     onOpenCommand?.();

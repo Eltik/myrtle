@@ -28,7 +28,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="flex flex-wrap items-end gap-3">
                 <div className="space-y-1.5">
-                    <Label className="block font-medium text-[12px] leading-none text-muted-foreground">X axis</Label>
+                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">X axis</Label>
                     <Tabs value={xAxis} onValueChange={(v) => onChangeAxis(v as XAxisKind)}>
                         <TabsList>
                             <TabsTrigger value="defense">{X_AXIS_LABELS.defense}</TabsTrigger>
@@ -37,7 +37,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
                     </Tabs>
                 </div>
                 <div className="min-w-32 flex-1 space-y-1.5 sm:flex-none">
-                    <Label className="block font-medium text-[12px] leading-none text-muted-foreground">Y metric</Label>
+                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">Y metric</Label>
                     <Select value={yMetric} onValueChange={(v) => onChangeMetric(v as YMetric)}>
                         <SelectTrigger size="sm">
                             <SelectValue placeholder="Metric">{(v: string) => Y_METRIC_LABELS[v as YMetric]}</SelectValue>
@@ -55,7 +55,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
             <div className="flex w-full flex-col items-stretch gap-1 sm:ml-auto sm:w-auto">
                 <div className={cn("grid items-end gap-2 sm:flex sm:items-end sm:gap-2", rangeAction ? "grid-cols-[1fr_1fr_auto_auto]" : "grid-cols-[1fr_1fr_auto]")}>
                     <NumberField key={`${xAxis}-min-${hydrationToken}`} defaultValue={sweep.min} min={0} max={sweep.max - 1} step={sweepStep} onValueChange={(v) => onChangeSweep({ min: v ?? 0 })} size="sm" className="sm:w-24">
-                        <Label className="block text-[10.5px] leading-none text-muted-foreground/80">From</Label>
+                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">From</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -63,7 +63,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
                         </NumberFieldGroup>
                     </NumberField>
                     <NumberField key={`${xAxis}-max-${hydrationToken}`} defaultValue={sweep.max} min={sweep.min + 1} max={sweepMaxBound} step={sweepStep} onValueChange={(v) => onChangeSweep({ max: v ?? 0 })} size="sm" className="sm:w-24">
-                        <Label className="block text-[10.5px] leading-none text-muted-foreground/80">To</Label>
+                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">To</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -71,7 +71,7 @@ export function AxisControls({ xAxis, yMetric, sweep, hydrationToken, onChangeAx
                         </NumberFieldGroup>
                     </NumberField>
                     <div className="space-y-1">
-                        <Label className="block text-[10.5px] leading-none text-muted-foreground/80">Points</Label>
+                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">Points</Label>
                         <Select value={String(sweep.steps)} onValueChange={(v) => onChangeSweep({ steps: Number(v) })}>
                             <SelectTrigger size="sm" className="min-w-16">
                                 <SelectValue placeholder="Points">{(v: string) => v}</SelectValue>

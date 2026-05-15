@@ -65,18 +65,18 @@ export function CommunityPage() {
     return (
         <>
             <div className={styles.pageAmbient} aria-hidden />
-            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pb-15 pt-7 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
                 <PageHeader data={data} isLoading={isLoading} />
 
                 {enhanced.isError ? (
-                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-sm text-foreground/90">
+                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
                         <strong className="font-semibold text-foreground">Couldn&rsquo;t load community stats.</strong> {(enhanced.error as Error)?.message ?? "Unknown error."}
                     </div>
                 ) : null}
 
                 <KpiStrip data={data} />
 
-                <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
                     <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
                     <RarityPanel data={data} personal={personalRates} />
                 </div>

@@ -1,6 +1,7 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, stripSearchParams } from "@tanstack/react-router";
 import { TierListDetail } from "#/components/tier-lists/detail/TierListDetail";
-import { type ITierListDetail, myTierListFavoriteQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { type ITierListDetail, myTierListFavoriteQueryOptions, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import type { ITierListOgData } from "#/lib/og/impl/templates/TierList";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
@@ -57,14 +58,32 @@ function buildOgData(detail: ITierListDetail): ITierListOgData {
     };
 }
 
+interface ITierListDetailSearch {
+    v?: number;
+}
+
+const DETAIL_SEARCH_DEFAULTS = { v: undefined };
+
 export const Route = createFileRoute("/tier-lists_/$id")({
     component: RouteComponent,
+    validateSearch: (search: Record<string, unknown>): ITierListDetailSearch => {
+        const raw = search.v;
+        if (typeof raw === "number" && Number.isFinite(raw) && raw >= 1) return { v: Math.floor(raw) };
+        if (typeof raw === "string" && raw.length > 0) {
+            const parsed = Number.parseInt(raw, 10);
+            if (Number.isFinite(parsed) && parsed >= 1) return { v: parsed };
+        }
+        return {};
+    },
+    search: { middlewares: [stripSearchParams(DETAIL_SEARCH_DEFAULTS)] },
     loader: async ({ context, params }) => {
         const detail = await context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id));
         if (!detail) throw notFound();
         if (context.user) {
             void context.queryClient.prefetchQuery(myTierListFavoriteQueryOptions(params.id, true));
         }
+        void context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id));
+        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions());
         warmOg("tier-list", detail.slug, buildOgData(detail));
         return detail;
     },
