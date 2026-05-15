@@ -48,7 +48,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
         <section className="flex flex-col gap-4" aria-label="Operator roster">
             <div className="flex flex-col gap-3">
                 <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                    <Input className="w-full sm:w-64 sm:flex-1 sm:min-w-48 sm:max-w-80" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
+                    <Input className="w-full sm:w-64 sm:min-w-48 sm:max-w-80 sm:flex-1" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
                     <Select onValueChange={(value) => value && set("ownership", value as OwnershipFilter)} value={ownership}>
                         <SelectTrigger className="w-full sm:w-40">
                             <SelectValue placeholder="Ownership">{(value) => OWNERSHIP_LABELS[value as OwnershipFilter] ?? value}</SelectValue>
@@ -118,7 +118,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                     </ToggleGroup>
                 </div>
                 {filters.viewMode === "detailed" ? (
-                    <div className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))]">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6">
                         {visible.map((entry, i) => {
                             const isLast = i === visible.length - 1;
                             const ref = isLast ? lastRef : null;
@@ -138,7 +138,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
                     </div>
                 )}
                 {displayCount < totalCount && (
-                    <p className="py-4 text-center text-sm text-muted-foreground">
+                    <p className="py-4 text-center text-muted-foreground text-sm">
                         Showing {displayCount} of {totalCount} operators. Scroll to load more.
                     </p>
                 )}

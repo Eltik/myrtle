@@ -55,7 +55,7 @@ export function BasePanel({ improvements, accent }: IProps) {
             {base.rotation && (
                 <div className="flex flex-col gap-3">
                     <SectionHeader title="Optimal 2-shift rotation" count={`+${base.rotation.sustained_efficiency.toFixed(1)}% sustained`} accent={accent} />
-                    <p className={cn(TEXT_META, "text-muted-foreground")}>Average of shift A and shift B. This is what your base score is computed against — run operators on these rotations to hit it.</p>
+                    <p className={cn(TEXT_META, "text-muted-foreground")}>Average of shift A and shift B. This is what your base score is computed against - run operators on these rotations to hit it.</p>
                     <div className="grid gap-3 lg:grid-cols-2">
                         <ShiftBlock title="Shift A" assignment={base.rotation.shift_a} accent={accent} />
                         <ShiftBlock title="Shift B" assignment={base.rotation.shift_b} accent={accent} />
@@ -66,7 +66,7 @@ export function BasePanel({ improvements, accent }: IProps) {
             {base.optimal && (
                 <div className="flex flex-col gap-3">
                     <SectionHeader title="Peak single-shift" count={`+${base.optimal.total_production_efficiency.toFixed(1)}%`} accent={accent} />
-                    <p className={cn(TEXT_META, "text-muted-foreground")}>Best possible arrangement at one snapshot in time — useful for set-and-forget AFK runs.</p>
+                    <p className={cn(TEXT_META, "text-muted-foreground")}>Best possible arrangement at one snapshot in time - useful for set-and-forget AFK runs.</p>
                     <div className="flex flex-col gap-2">
                         {base.optimal.rooms.map((room) => (
                             <RoomRow key={`${room.slot_id}-${room.room_type}`} room={room} accent={accent} />

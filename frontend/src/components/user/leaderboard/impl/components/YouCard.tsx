@@ -50,7 +50,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     return (
         <aside className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)" }} />
-            <div className="relative mb-3 flex items-center justify-between font-mono text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-muted-foreground">
+            <div className="relative mb-3 flex items-center justify-between font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
                 <span>Your standing</span>
                 <span className="rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "-"}</span>
             </div>
@@ -60,8 +60,8 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
                     <AvatarFallback className="rounded-2xl text-sm">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
-                    <div className="truncate font-sans text-base font-bold leading-tight tracking-tight text-foreground">{nickname}</div>
-                    <div className="mt-1 font-mono text-[11px] leading-none text-muted-foreground">
+                    <div className="truncate font-bold font-sans text-base text-foreground leading-tight tracking-tight">{nickname}</div>
+                    <div className="mt-1 font-mono text-[11px] text-muted-foreground leading-none">
                         Rank <b className="font-bold text-foreground">#{rank ?? "-"}</b>
                         {percentile != null && (
                             <>
@@ -77,10 +77,10 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
                     <GradeBadge grade={grade} className="size-7" />
                 </Metric>
                 <Metric k="Score">
-                    <span className="font-sans text-base font-bold leading-none tracking-tight tabular-nums">{player.total_score == null ? "-" : formatNumber(player.total_score)}</span>
+                    <span className="font-bold font-sans text-base tabular-nums leading-none tracking-tight">{player.total_score == null ? "-" : formatNumber(player.total_score)}</span>
                 </Metric>
                 <Metric k="Δ Rank">
-                    <span className={`font-sans text-base font-bold leading-none tracking-tight tabular-nums ${deltaColor}`}>{deltaText}</span>
+                    <span className={`font-bold font-sans text-base tabular-nums leading-none tracking-tight ${deltaColor}`}>{deltaText}</span>
                 </Metric>
             </div>
             <div className="relative mt-3.5 flex items-center gap-2">
@@ -105,8 +105,8 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
 function Metric({ k, children }: { k: string; children: React.ReactNode }) {
     return (
         <div className="flex flex-col gap-1.5 rounded-[10px] border border-border bg-muted/60 p-2.5">
-            <span className="font-mono text-[9.5px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">{k}</span>
-            <span className="flex items-center font-sans text-base font-bold leading-none tracking-tight tabular-nums text-foreground">{children}</span>
+            <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{k}</span>
+            <span className="flex items-center font-bold font-sans text-base text-foreground tabular-nums leading-none tracking-tight">{children}</span>
         </div>
     );
 }

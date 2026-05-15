@@ -41,7 +41,7 @@ export function PickTierDialog({ operator, currentTierId, tiers, onClose, onPick
                         return (
                             <button key={t.id} type="button" className="flex items-center gap-3 rounded-lg border border-border px-2.5 py-2 text-left font-sans text-sm transition-colors hover:bg-accent/50 data-[selected=true]:border-ring" data-selected={isCurrent || undefined} onClick={() => onPick(t.id)}>
                                 <span
-                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md font-sans text-[15px] font-extrabold leading-none tracking-tight"
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md font-extrabold font-sans text-[15px] leading-none tracking-tight"
                                     style={{
                                         background: t.color,
                                         color: fg,
@@ -52,8 +52,8 @@ export function PickTierDialog({ operator, currentTierId, tiers, onClose, onPick
                                     {t.name.length <= 2 ? t.name : t.name.charAt(0)}
                                 </span>
                                 <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                                <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">{t.operatorIds.length}</span>
-                                {isCurrent && <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary">Current</span>}
+                                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{t.operatorIds.length}</span>
+                                {isCurrent && <span className="font-bold font-mono text-[10px] text-primary uppercase tracking-wider">Current</span>}
                             </button>
                         );
                     })}

@@ -14,7 +14,7 @@ export function SelectedTagsBar({ selectedTags, onRemove, onReset }: ISelectedTa
 
     return (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <span className="font-medium font-sans text-[11px] uppercase tracking-wide text-muted-foreground">Selected</span>
+            <span className="font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">Selected</span>
             <div className="flex flex-1 flex-wrap items-center gap-1.5">
                 {selectedTags.map((tag) => (
                     <Button key={tag.id} size="xs" variant="secondary" onClick={() => onRemove(tag.id)} aria-label={`Remove ${tag.name}`}>

@@ -65,10 +65,10 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
                 <div className="flex min-w-0 items-start gap-2">
                     <Link to="/tier-lists/$id" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
-                        <h3 id={`my-tl-${tl.id}-title`} className="m-0 line-clamp-1 font-sans text-[15px] font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary" title={tl.title}>
+                        <h3 id={`my-tl-${tl.id}-title`} className="m-0 line-clamp-1 font-sans font-semibold text-[15px] text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary" title={tl.title}>
                             {tl.title || "Untitled list"}
                         </h3>
-                        {tl.description && <p className="m-0 mt-0.5 line-clamp-1 font-sans text-[12px] leading-snug text-muted-foreground">{tl.description}</p>}
+                        {tl.description && <p className="m-0 mt-0.5 line-clamp-1 font-sans text-[12px] text-muted-foreground leading-snug">{tl.description}</p>}
                     </Link>
 
                     <Menu>
@@ -100,7 +100,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     </Menu>
                 </div>
 
-                <div className="mt-auto flex items-center gap-3 font-mono text-[11px] leading-none tabular-nums text-muted-foreground">
+                <div className="mt-auto flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums leading-none">
                     <span className="inline-flex items-center gap-1" title={`${tl.views.toLocaleString()} views`}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />

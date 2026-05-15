@@ -19,11 +19,11 @@ function ActorCell({ uid }: { uid: string }): React.ReactElement {
     const u = profile.data;
     return (
         <Link to="/user/$id" params={{ id: uid }} target="_blank" className="inline-flex items-center gap-2 hover:underline">
-            <span className="relative inline-block size-[22px] overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
+            <span className="relative inline-block size-5.5 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
                 {u ? <img src={getSecretaryAvatarURL({ secretary: u.secretary, secretary_skin_id: u.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             </span>
             <span>
-                <span className="font-medium">{u?.nickname ?? "—"}</span>
+                <span className="font-medium">{u?.nickname ?? "-"}</span>
                 <span className="ml-1 font-mono text-[11.5px] text-muted-foreground">UID {uid}</span>
             </span>
         </Link>
@@ -35,7 +35,7 @@ function OperatorTargetCell({ operatorId }: { operatorId: string }): React.React
     const op = opsQuery.data?.find((o) => o.id === operatorId);
     return (
         <Link to="/operators/$id" params={{ id: operatorId }} target="_blank" className="inline-flex items-center gap-2 hover:underline">
-            <span className="inline-flex size-6 items-center justify-center overflow-hidden rounded-md bg-muted text-[10px] font-semibold">
+            <span className="inline-flex size-6 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[10px]">
                 <OperatorAvatar charId={operatorId} name={op?.name ?? "?"} />
             </span>
             <span>
@@ -133,8 +133,8 @@ export function Audit(): React.ReactElement {
             />
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-                <div className="flex flex-wrap items-center gap-2.5 border-b border-border p-3.5">
-                    <div className="min-w-[280px] max-w-[360px] flex-1">
+                <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
+                    <div className="min-w-70 max-w-90 flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -142,7 +142,7 @@ export function Audit(): React.ReactElement {
                             <Input placeholder="Filter by actor UID, action, target, detail…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-[3px]">
+                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-0.75">
                         {(["all", "operator-notes", "info", "warning"] as const).map((f) => (
                             <button key={f} type="button" onClick={() => setFilter(f)} className={cn("inline-flex h-6.5 cursor-pointer items-center rounded-md px-3 font-medium text-[12.5px] transition-colors", filter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}>
                                 {f === "all" ? "All" : f === "operator-notes" ? "Operator notes" : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -165,7 +165,7 @@ export function Audit(): React.ReactElement {
                         <thead>
                             <tr>
                                 {["When", "Actor", "Action", "Target", "Detail", "Severity"].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                         {h}
                                     </th>
                                 ))}
@@ -176,7 +176,7 @@ export function Audit(): React.ReactElement {
                                 <tr
                                     // biome-ignore lint/suspicious/noArrayIndexKey: audit rows are positional within the merged stream
                                     key={i}
-                                    className="border-b border-border last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]"
+                                    className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]"
                                 >
                                     <td className="px-3.5 py-2.5 text-muted-foreground">{formatRelative(r.when)}</td>
                                     <td className="px-3.5 py-2.5">

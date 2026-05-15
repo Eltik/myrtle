@@ -19,18 +19,31 @@ pub async fn find_all_active(
 ) -> Result<Vec<TierList>, sqlx::Error> {
     if let Some(lt) = list_type {
         sqlx::query_as::<_, TierList>(
-            "SELECT * FROM tier_lists WHERE is_active = true AND list_type = $1 ORDER BY updated_at DESC"
+            "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true AND list_type = $1 ORDER BY updated_at DESC"
         )
         .bind(lt)
         .fetch_all(pool)
         .await
     } else {
         sqlx::query_as::<_, TierList>(
-            "SELECT * FROM tier_lists WHERE is_active = true ORDER BY updated_at DESC",
+            "SELECT * FROM tier_lists WHERE is_active = true AND is_listed = true ORDER BY updated_at DESC",
         )
         .fetch_all(pool)
         .await
     }
+}
+
+pub async fn set_visibility(
+    pool: &PgPool,
+    tier_list_id: Uuid,
+    is_listed: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE tier_lists SET is_listed = $2, updated_at = NOW() WHERE id = $1")
+        .bind(tier_list_id)
+        .bind(is_listed)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 pub async fn create(

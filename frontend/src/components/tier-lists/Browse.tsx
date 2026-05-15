@@ -183,22 +183,22 @@ export function Browse() {
                             ))}
                         </div>
                     ) : isError ? (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-5 py-10 text-center">
-                            <p className="m-0 font-sans text-sm text-muted-foreground">Failed to load tier lists.</p>
+                        <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
+                            <p className="m-0 font-sans text-muted-foreground text-sm">Failed to load tier lists.</p>
                             <button
                                 type="button"
                                 onClick={() => refetch()}
                                 disabled={isFetching}
-                                className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:bg-accent disabled:opacity-60"
+                                className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent disabled:opacity-60"
                             >
                                 {isFetching ? "Retrying…" : "Retry"}
                             </button>
                         </div>
                     ) : sorted.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-5 py-12 text-center">
-                            <p className="m-0 font-sans text-sm font-medium text-foreground">No lists match these filters.</p>
+                        <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
+                            <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
                             <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing flairs or switching the type filter.</p>
-                            <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:bg-accent">
+                            <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
                                 Clear filters
                             </button>
                         </div>
@@ -215,7 +215,7 @@ export function Browse() {
                                     <button
                                         type="button"
                                         onClick={() => setVisibleCount((n) => n + PAGE_INCREMENT)}
-                                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-transparent px-4 py-2.5 font-sans text-[12.5px] font-medium leading-none text-muted-foreground transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
+                                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border border-dashed bg-transparent px-4 py-2.5 font-medium font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
                                     >
                                         <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
                                         <span>Load {Math.min(PAGE_INCREMENT, sorted.length - visibleCount)} more</span>

@@ -24,7 +24,7 @@ export function ModulesSkinsCard({ modules, skins }: IModulesSkinsCardProps) {
                             value={
                                 <span>
                                     {modules.unlocked}
-                                    <span className="ml-1 text-sm font-medium text-muted-foreground/50">/ {modules.totalAvailable}</span>
+                                    <span className="ml-1 font-medium text-muted-foreground/50 text-sm">/ {modules.totalAvailable}</span>
                                 </span>
                             }
                         />
@@ -33,7 +33,7 @@ export function ModulesSkinsCard({ modules, skins }: IModulesSkinsCardProps) {
                     <MetricRow color={PALETTE.modules.accent} label="Unlock Rate" pct={moduleUnlockPct} value={`${moduleUnlockPct.toFixed(1)}%`} />
                 </div>
 
-                <div className="border-t border-border/60" />
+                <div className="border-border/60 border-t" />
 
                 <div className="space-y-4">
                     <Kicker icon={Palette} label="Skins" />
@@ -44,7 +44,7 @@ export function ModulesSkinsCard({ modules, skins }: IModulesSkinsCardProps) {
                         value={
                             <span>
                                 {skins.totalOwned}
-                                <span className="ml-1 text-sm font-medium text-muted-foreground/50">/ {skins.totalAvailable}</span>
+                                <span className="ml-1 font-medium text-muted-foreground/50 text-sm">/ {skins.totalAvailable}</span>
                             </span>
                         }
                     />

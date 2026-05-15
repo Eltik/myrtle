@@ -50,6 +50,7 @@ pub fn router() -> Router<AppState> {
         .route("/tier-lists/{slug}/favorite", get(stats::get_favorite))
         .route("/tier-lists/{slug}/favorite", post(stats::toggle_favorite))
         .route("/tier-lists/{slug}/flair", put(stats::set_flair))
+        .route("/tier-lists/{slug}/visibility", put(stats::set_visibility))
         // Flair catalog (admin + public read)
         .route("/tier-list-flairs", get(stats::list_flairs))
         .route("/tier-list-flairs", post(stats::create_flair))

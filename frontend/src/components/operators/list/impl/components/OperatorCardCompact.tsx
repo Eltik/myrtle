@@ -20,7 +20,7 @@ export function OperatorCardCompact({ operator }: IOperatorCardCompactProps) {
     return (
         <HoverCard>
             <HoverCardTrigger>
-                <Link to={`/operators/${operator.id}`} className="group relative flex flex-col rounded bg-card pt-1 pr-2 pb-1 pl-1.5 transition-transform hover:scale-102">
+                <Link to="/operators/$id" params={{ id: operator.id ?? "" }} className="group relative flex flex-col rounded bg-card pt-1 pr-2 pb-1 pl-1.5 transition-transform hover:scale-102">
                     <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
                         {subtitle && <span className="text-[0.625rem] text-foreground leading-normal sm:text-xs sm:leading-loose">{subtitle}</span>}
                         <span className="truncate text-[0.625rem] text-foreground leading-tight sm:text-xs sm:leading-4.25">{displayName}</span>

@@ -7,7 +7,7 @@ export function ScoreTabEmpty() {
                 <Trophy className="h-5 w-5 text-muted-foreground/60" />
             </div>
             <h2 className="font-semibold text-lg tracking-tight">No score yet</h2>
-            <p className="max-w-sm text-sm text-muted-foreground">This Doctor's grade hasn't been calculated. Scores are computed periodically once enough data is on file.</p>
+            <p className="max-w-sm text-muted-foreground text-sm">This Doctor's grade hasn't been calculated. Scores are computed periodically once enough data is on file.</p>
         </div>
     );
 }

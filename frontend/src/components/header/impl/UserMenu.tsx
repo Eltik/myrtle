@@ -18,7 +18,7 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
         return (
             <DropdownMenu>
                 <div className="flex h-8 items-center rounded-md border border-border bg-transparent text-foreground text-sm">
-                    <Link to={`/user/${user.uid}`} className="flex h-full items-center gap-2 rounded-l-md px-2 transition-colors hover:bg-secondary">
+                    <Link to="/user/$id" params={{ id: user.uid }} className="flex h-full items-center gap-2 rounded-l-md px-2 transition-colors hover:bg-secondary">
                         <Avatar className="h-5 w-5">
                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
                             <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
@@ -35,33 +35,33 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
                 </div>
                 <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 pb-1.5">
-                        <Link className="font-medium text-sm hover:underline" to={`/user/${user.uid}`}>
+                        <Link className="font-medium text-sm hover:underline" to="/user/$id" params={{ id: user.uid }}>
                             {user.nickname ?? "Doctor"}
                         </Link>
                         <p className="text-muted-foreground text-xs">Level {user.level}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} className="flex flex-row gap-2 items-center">
+                        <Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} className="flex flex-row items-center gap-2">
                             <LayoutList className="h-4 w-4 text-muted-foreground" />
                             My Tier Lists
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/settings" className="flex flex-row gap-2 items-center">
+                        <Link to="/settings" className="flex flex-row items-center gap-2">
                             <Cog className="h-4 w-4 text-muted-foreground" />
                             Settings
                         </Link>
                     </DropdownMenuItem>
                     {isAnyAdminRole(user.role) ? (
                         <DropdownMenuItem className="cursor-pointer">
-                            <Link to="/admin" className="flex flex-row gap-2 items-center">
+                            <Link to="/admin" className="flex flex-row items-center gap-2">
                                 <ShieldIcon className="h-4 w-4 text-primary" />
                                 Admin panel
                             </Link>
                         </DropdownMenuItem>
                     ) : null}
-                    <DropdownMenuItem className="text-primary transition-colors focus:text-primary/80 pl-3 cursor-pointer" onClick={logout}>
+                    <DropdownMenuItem className="cursor-pointer pl-3 text-primary transition-colors focus:text-primary/80" onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
                     </DropdownMenuItem>

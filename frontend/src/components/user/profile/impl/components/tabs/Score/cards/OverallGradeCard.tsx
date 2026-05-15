@@ -23,7 +23,7 @@ export function OverallGradeCard({ score }: IOverallGradeCardProps) {
                     <Kicker icon={Trophy} label="Overall Grade" />
                     <div className="flex items-baseline gap-3">
                         <span
-                            className="font-bold leading-none tabular-nums"
+                            className="font-bold tabular-nums leading-none"
                             style={{
                                 fontSize: "clamp(4.5rem, 8vw + 1rem, 7rem)",
                                 letterSpacing: "-0.06em",
@@ -39,10 +39,10 @@ export function OverallGradeCard({ score }: IOverallGradeCardProps) {
                             <span className={KICKER_TEXT}>composite</span>
                         </div>
                     </div>
-                    {calcAt && <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground/60">Calculated · {calcAt}</span>}
+                    {calcAt && <span className="font-mono text-[10.5px] text-muted-foreground/60 tabular-nums">Calculated · {calcAt}</span>}
                 </div>
 
-                <div className="flex flex-col justify-center gap-3 sm:border-l sm:border-border/50 sm:pl-8">
+                <div className="flex flex-col justify-center gap-3 sm:border-border/50 sm:border-l sm:pl-8">
                     <span className={KICKER_TEXT}>Strongest categories</span>
                     <div className="flex flex-col gap-3">
                         {topThree.map((sub) => {
@@ -50,11 +50,11 @@ export function OverallGradeCard({ score }: IOverallGradeCardProps) {
                             return (
                                 <div className="space-y-1.5" key={sub.key}>
                                     <div className="flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2 min-w-0">
+                                        <div className="flex min-w-0 items-center gap-2">
                                             <sub.icon className="h-3.5 w-3.5 shrink-0" style={{ color: sub.color }} />
                                             <span className="truncate font-semibold text-sm">{sub.label}</span>
                                         </div>
-                                        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{formatPct(score[sub.key])}</span>
+                                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{formatPct(score[sub.key])}</span>
                                     </div>
                                     <Bar color={sub.color} pct={pct} thin />
                                 </div>

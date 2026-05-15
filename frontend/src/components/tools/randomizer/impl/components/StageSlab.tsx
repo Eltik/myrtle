@@ -34,7 +34,7 @@ export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): R
     return (
         <SlabFrame index="01" kicker="STAGE" accent="primary">
             <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground sm:gap-2 sm:text-[11px]">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[10.5px] text-muted-foreground uppercase tracking-[0.18em] sm:gap-2 sm:text-[11px]">
                     <MapPinned aria-hidden="true" className="size-3.5 shrink-0" />
                     <span className="truncate">Target</span>
                 </div>
@@ -47,15 +47,15 @@ export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): R
             <div className="mt-3 grid gap-3 sm:gap-4 md:grid-cols-[1fr_minmax(220px,320px)] md:items-end md:gap-6">
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2">
-                        <h2 className="m-0 wrap-break-word font-bold text-[32px] leading-none tracking-tight text-foreground sm:text-[44px] md:text-[56px]">{stage.code}</h2>
+                        <h2 className="wrap-break-word m-0 font-bold text-[32px] text-foreground leading-none tracking-tight sm:text-[44px] md:text-[56px]">{stage.code}</h2>
                         {codeIsCM && (
                             <Badge variant="outline" className="font-mono uppercase tracking-[0.18em]">
                                 CM
                             </Badge>
                         )}
                     </div>
-                    {stage.name && <p className="mt-1.5 wrap-break-word text-[13px] text-muted-foreground sm:mt-2 sm:text-sm md:text-base">{stage.name}</p>}
-                    <p className="mt-1 wrap-break-word font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/80 sm:mt-1.5 sm:text-[12px] sm:tracking-[0.14em]">
+                    {stage.name && <p className="wrap-break-word mt-1.5 text-[13px] text-muted-foreground sm:mt-2 sm:text-sm md:text-base">{stage.name}</p>}
+                    <p className="wrap-break-word mt-1 font-mono text-[11px] text-muted-foreground/80 uppercase tracking-[0.12em] sm:mt-1.5 sm:text-[12px] sm:tracking-[0.14em]">
                         {display}
                         {family && <span className="text-muted-foreground/50"> · {family}</span>}
                     </p>

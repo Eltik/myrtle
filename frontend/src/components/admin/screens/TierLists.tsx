@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ActivityIcon, EditIcon, ExternalLinkIcon, MoreHorizontalIcon, PlusIcon, SearchIcon, TagIcon, Trash2Icon } from "lucide-react";
+import { EditIcon, ExternalLinkIcon, MoreHorizontalIcon, PlusIcon, SearchIcon, TagIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -71,12 +71,12 @@ function PermUserCell({ userId, lookup }: { userId: string; lookup: Map<string, 
     const fallback = "linear-gradient(135deg, oklch(0.7 0.16 84), oklch(0.85 0.10 100))";
     return (
         <span className="flex items-center gap-2">
-            <span className="relative inline-block size-[22px] overflow-hidden rounded-full align-[-6px] shrink-0" style={{ background: fallback }}>
+            <span className="relative inline-block size-5.5 shrink-0 overflow-hidden rounded-full align-[-6px]" style={{ background: fallback }}>
                 {u ? <img src={getSecretaryAvatarURL({ secretary: u.secretary, secretary_skin_id: u.secretary_skin_id })} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             </span>
             <span>
-                <span className="font-medium">{u?.nickname ?? "—"}</span>
-                {u?.uid ? <span className="ml-1.5 font-mono font-medium text-[11.5px] text-muted-foreground">UID {u.uid}</span> : <span className="ml-1.5 font-mono font-medium text-[10.5px] text-muted-foreground">id {userId.slice(0, 8)}…</span>}
+                <span className="font-medium">{u?.nickname ?? "-"}</span>
+                {u?.uid ? <span className="ml-1.5 font-medium font-mono text-[11.5px] text-muted-foreground">UID {u.uid}</span> : <span className="ml-1.5 font-medium font-mono text-[10.5px] text-muted-foreground">id {userId.slice(0, 8)}…</span>}
             </span>
         </span>
     );
@@ -134,7 +134,7 @@ export function Permissions(): React.ReactElement {
                             <Input placeholder="Search slug or owner…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="max-h-[680px] overflow-auto border-t border-border">
+                    <div className="max-h-170 overflow-auto overflow-x-hidden border-border border-t">
                         {browseQuery.isPending ? (
                             <div className="space-y-2 p-3.5">
                                 <Skeleton className="h-14" />
@@ -177,21 +177,27 @@ export function Permissions(): React.ReactElement {
 function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITierListBrowseItem; active: boolean; onSelect: () => void; onSetFlair: () => void; onDelete: () => void }): React.ReactElement {
     const navigate = useNavigate();
     return (
-        <div className={cn("group flex w-full items-center gap-2 border-0 border-border border-b p-3.5 last:border-0", active && "bg-[color-mix(in_srgb,var(--primary)_6%,var(--card))]")}>
-            <button type="button" onClick={onSelect} className="flex flex-1 cursor-pointer items-center gap-2.5 text-left text-foreground">
-                <span className="h-8 w-1.5 rounded-[3px]" style={{ background: active ? "var(--primary)" : "var(--border)" }} />
-                <div className="min-w-0 flex-1">
-                    <div className={cn("truncate font-mono font-semibold text-[13px]", active ? "text-primary" : "text-foreground")}>/{tl.slug}</div>
+        <div className={cn("group flex w-full min-w-0 items-center gap-2 border-0 border-border border-b p-3.5 last:border-0", active && "bg-[color-mix(in_srgb,var(--primary)_6%,var(--card))]")}>
+            <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left text-foreground">
+                <span className="h-8 w-1.5 shrink-0 rounded-[3px]" style={{ background: active ? "var(--primary)" : "var(--border)" }} />
+                <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className={cn("truncate font-mono font-semibold text-[13px]", active ? "text-primary" : "text-foreground")} title={`/${tl.slug}`}>
+                        /{tl.slug}
+                    </div>
                     <div className="mt-1 truncate text-[11.5px] text-muted-foreground">
-                        {tl.author.name ?? "—"} · {tl.tiers.length} tier{tl.tiers.length === 1 ? "" : "s"}
+                        {tl.author.name ?? "-"} · {tl.tiers.length} tier{tl.tiers.length === 1 ? "" : "s"}
                     </div>
                 </div>
             </button>
-            {tl.listType === "official" ? <Badge variant="success">official</Badge> : null}
+            {tl.listType === "official" ? (
+                <Badge variant="success" className="shrink-0">
+                    official
+                </Badge>
+            ) : null}
             <DropdownMenu>
                 <DropdownMenuTrigger
                     render={(triggerProps) => (
-                        <button {...triggerProps} type="button" aria-label="Row actions" className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-accent">
+                        <button {...triggerProps} type="button" aria-label="Row actions" className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-accent">
                             <MoreHorizontalIcon className="size-4 opacity-80" strokeWidth={1.9} />
                         </button>
                     )}
@@ -208,10 +214,6 @@ function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITier
                     <DropdownMenuItem className="cursor-pointer" onClick={onSetFlair}>
                         <TagIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                         Change flair
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer" onClick={onSelect}>
-                        <ActivityIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        Manage permissions
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer text-destructive-foreground focus:text-destructive-foreground" onClick={onDelete}>
@@ -255,7 +257,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                     <span className="font-mono">/{list.slug}</span>
                 </CardTitle>
                 <CardDescription className="text-xs">
-                    {list.title} · owner {list.author.name ?? "—"} · {perms.length} grant{perms.length === 1 ? "" : "s"}
+                    {list.title} · owner {list.author.name ?? "-"} · {perms.length} grant{perms.length === 1 ? "" : "s"}
                 </CardDescription>
                 <CardAction>
                     <Button size="sm" onClick={onGrant}>
@@ -265,21 +267,21 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                 </CardAction>
             </CardHeader>
             {permsQuery.isError ? (
-                <CardContent className="border-t border-border text-[13px] text-muted-foreground">
+                <CardContent className="border-border border-t text-[13px] text-muted-foreground">
                     Couldn't load permissions for <span className="font-mono">/{list.slug}</span>.
                 </CardContent>
             ) : permsQuery.isPending ? (
-                <CardContent className="border-t border-border">
+                <CardContent className="border-border border-t">
                     <Skeleton className="h-32 w-full" />
                 </CardContent>
             ) : perms.length === 0 ? (
-                <CardContent className="border-t border-border py-12 text-center text-[13px] text-muted-foreground">No grants yet — only the owner has access.</CardContent>
+                <CardContent className="border-border border-t py-12 text-center text-[13px] text-muted-foreground">No grants yet - only the owner has access.</CardContent>
             ) : (
-                <table className="w-full border-collapse border-t border-border text-[13px]">
+                <table className="w-full border-collapse border-border border-t text-[13px]">
                     <thead>
                         <tr>
                             {["Doctor", "Level", "Granted", "Granted by", ""].map((h) => (
-                                <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-mono font-medium text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                                <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                     {h}
                                 </th>
                             ))}
@@ -287,7 +289,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                     </thead>
                     <tbody>
                         {perms.map((p) => (
-                            <tr key={`${p.userId}-${p.permission}`} className="border-b border-border last:border-0">
+                            <tr key={`${p.userId}-${p.permission}`} className="border-border border-b last:border-0">
                                 <td className="px-3.5 py-2.5">
                                     <PermUserCell userId={p.userId} lookup={lookup} />
                                 </td>
@@ -295,7 +297,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                                     <LevelDots level={p.permission} onChange={(level) => updatePermission.mutate({ slug: list.slug, userId: p.userId, permission: level })} />
                                 </td>
                                 <td className="px-3.5 py-2.5 text-muted-foreground">{new Date(p.grantedAt).toLocaleDateString()}</td>
-                                <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "—"}</td>
+                                <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "-"}</td>
                                 <td className="px-3.5 py-2.5">
                                     <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId })} disabled={revoke.isPending}>
                                         <Trash2Icon />
@@ -307,7 +309,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                     </tbody>
                 </table>
             )}
-            <div className="flex items-center justify-between border-t border-border px-3.5 py-3">
+            <div className="flex items-center justify-between border-border border-t px-3.5 py-3">
                 <span className="text-[12px] text-muted-foreground">Owner has implicit Admin and cannot be revoked.</span>
             </div>
         </Card>
@@ -335,11 +337,11 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[480px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-primary">Manage · permissions</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-120 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · permissions</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Grant access on /{slug}</div>
                     </div>
                     <div className="flex flex-col gap-4 p-5">
@@ -378,7 +380,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
                                                             <img src={getSecretaryAvatarURL({ secretary: r.secretary, secretary_skin_id: r.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
                                                         </span>
                                                         <span>
-                                                            <span className="font-medium">{r.nickname ?? "—"}</span>
+                                                            <span className="font-medium">{r.nickname ?? "-"}</span>
                                                             <span className="ml-1.5 font-mono text-[11.5px] text-muted-foreground">UID {r.uid}</span>
                                                         </span>
                                                     </span>
@@ -395,7 +397,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
                             <LevelDots level={permission} onChange={setPermission} />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border p-3.5">
+                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -425,28 +427,28 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[420px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-primary">Manage · flair</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · flair</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Change flair on /{list.slug}</div>
                     </div>
                     <div className="p-5">
                         <div className="flex flex-wrap items-center gap-2">
                             <button type="button" onClick={() => setSelected(null)} className={cn("inline-flex h-7 items-center rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === null && "ring-2 ring-ring")}>
-                                <span className="mr-1.5 inline-block size-2.5 rounded-[2px] bg-muted-foreground/40" />
+                                <span className="mr-1.5 inline-block size-2.5 rounded-xs bg-muted-foreground/40" />
                                 None
                             </button>
                             {flairs.map((f) => (
                                 <button key={f.code} type="button" onClick={() => setSelected(f.id)} className={cn("inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === f.id && "ring-2 ring-ring")} style={{ color: f.color ?? undefined }}>
-                                    <span className="size-2.5 rounded-[2px]" style={{ background: f.color ?? "var(--muted-foreground)" }} />
+                                    <span className="size-2.5 rounded-xs" style={{ background: f.color ?? "var(--muted-foreground)" }} />
                                     {f.label}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border p-3.5">
+                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -473,11 +475,11 @@ function DeleteDialog({ list, onClose, onDeleted }: { list: ITierListBrowseItem;
     });
     return (
         <>
-            <button type="button" className="fixed inset-0 z-[55] cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center">
-                <div className="pointer-events-auto w-[420px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-b border-border px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] uppercase tracking-[0.22em] text-destructive-foreground">Manage · delete</span>
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
+                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
+                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+                        <span className="font-bold text-[10px] text-destructive-foreground uppercase tracking-[0.22em]">Manage · delete</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Delete /{list.slug}?</div>
                         <div className="mt-1 text-[12.5px] text-muted-foreground">
                             This is permanent. All tiers, placements, and version history for <strong>{list.title}</strong> are destroyed.

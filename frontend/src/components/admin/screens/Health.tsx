@@ -24,7 +24,7 @@ export function Health(): React.ReactElement {
                 title="Health & cache"
                 sub={
                     <>
-                        Live probe of the Rust backend — <HCode>GET /health</HCode> and the public <HCode>/stats</HCode> snapshot.
+                        Live probe of the Rust backend - <HCode>GET /health</HCode> and the public <HCode>/stats</HCode> snapshot.
                     </>
                 }
                 action={
@@ -41,10 +41,10 @@ export function Health(): React.ReactElement {
                 <div className="mb-4 grid grid-cols-3 gap-3.5">
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-mono font-medium text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">Postgres</div>
-                            <div className="mt-2.5 font-bold text-[26px] leading-none tracking-[-0.02em] tabular-nums">
-                                {h?.database.responseTimeMs ?? "—"}
-                                <span className="ml-1 font-mono font-medium text-[12px] text-muted-foreground">ms</span>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Postgres</div>
+                            <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
+                                {h?.database.responseTimeMs ?? "-"}
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                                 <StatusDot state={h?.database.status === "connected" ? "green" : "red"} pulse>
@@ -55,10 +55,10 @@ export function Health(): React.ReactElement {
                     </Card>
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-mono font-medium text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">Cache · {h?.cache.backend ?? "—"}</div>
-                            <div className="mt-2.5 font-bold text-[26px] leading-none tracking-[-0.02em] tabular-nums">
-                                {h?.cache.responseTimeMs ?? "—"}
-                                <span className="ml-1 font-mono font-medium text-[12px] text-muted-foreground">ms</span>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Cache · {h?.cache.backend ?? "-"}</div>
+                            <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
+                                {h?.cache.responseTimeMs ?? "-"}
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                                 <StatusDot state={h?.cache.status === "connected" ? "green" : "red"} pulse>
@@ -69,10 +69,10 @@ export function Health(): React.ReactElement {
                     </Card>
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-mono font-medium text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground">Round-trip</div>
-                            <div className="mt-2.5 font-bold text-[26px] leading-none tracking-[-0.02em] tabular-nums">
-                                {h?.responseTimeMs ?? "—"}
-                                <span className="ml-1 font-mono font-medium text-[12px] text-muted-foreground">ms</span>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Round-trip</div>
+                            <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
+                                {h?.responseTimeMs ?? "-"}
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">{h?.status === "ok" ? <Badge variant="success">healthy</Badge> : h ? <Badge variant="warning">degraded</Badge> : null}</div>
                         </CardContent>
@@ -110,7 +110,7 @@ export function Health(): React.ReactElement {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm">Stats snapshot</CardTitle>
-                        <CardDescription className="text-xs">Computed at {s ? new Date(s.computedAt).toLocaleString() : "—"}.</CardDescription>
+                        <CardDescription className="text-xs">Computed at {s ? new Date(s.computedAt).toLocaleString() : "-"}.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                         {statsQuery.isPending ? (
@@ -138,7 +138,7 @@ export function Health(): React.ReactElement {
                     <CardDescription className="text-xs">Auto-refreshes every 30s.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <div className="font-mono text-[12.5px] text-muted-foreground">{h?.timestamp ?? "—"}</div>
+                    <div className="font-mono text-[12.5px] text-muted-foreground">{h?.timestamp ?? "-"}</div>
                 </CardContent>
             </Card>
         </>
@@ -147,7 +147,7 @@ export function Health(): React.ReactElement {
 
 function KV({ k, v, last }: { k: string; v: string; last?: boolean }): React.ReactElement {
     return (
-        <div className={`flex items-center justify-between py-1.5 ${last ? "" : "border-b border-border"}`}>
+        <div className={`flex items-center justify-between py-1.5 ${last ? "" : "border-border border-b"}`}>
             <span className="text-[12.5px] text-muted-foreground">{k}</span>
             <span className="font-mono text-[12.5px] tabular-nums">{v}</span>
         </div>

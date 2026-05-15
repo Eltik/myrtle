@@ -9,8 +9,8 @@ export function MoversCard({ movers, isLoading, intervalLabel = "today" }: { mov
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground">Top movers · {intervalLabel}</span>
-                <span className="font-mono text-[10px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">Δ Rank</span>
+                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">Top movers · {intervalLabel}</span>
+                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">Δ Rank</span>
             </div>
             <div className="flex flex-col gap-2.5">
                 {isLoading && movers.length === 0 ? (
@@ -37,12 +37,12 @@ function MoverRow({ mover }: { mover: ILeaderboardMover }) {
                 <AvatarFallback className="rounded-lg text-[10px]">{initials}</AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="truncate font-sans text-[12.5px] font-semibold leading-tight text-foreground">{nickname}</span>
-                <span className="font-mono text-[11px] leading-none text-muted-foreground tabular-nums">
+                <span className="truncate font-sans font-semibold text-[12.5px] text-foreground leading-tight">{nickname}</span>
+                <span className="font-mono text-[11px] text-muted-foreground tabular-nums leading-none">
                     #{mover.current_rank} · {mover.server.toUpperCase()}
                 </span>
             </div>
-            <span className="inline-flex items-center gap-0.5 font-sans text-[13px] font-bold leading-none tracking-tight text-success-foreground tabular-nums">
+            <span className="inline-flex items-center gap-0.5 font-bold font-sans text-[13px] text-success-foreground tabular-nums leading-none tracking-tight">
                 <ChevronUp className="size-3" /> {mover.rank_delta}
             </span>
         </Link>

@@ -34,7 +34,7 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
     return (
         <div className="flex flex-col gap-3.5">
             <div>
-                <p className="m-0 mb-2 font-mono text-[10.5px] font-bold uppercase leading-none tracking-[0.14em] text-muted-foreground">Presets</p>
+                <p className="m-0 mb-2 font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">Presets</p>
                 <div className="grid grid-cols-6 gap-1.5">
                     {PRESET_SWATCHES.map((c) => (
                         <button key={c} type="button" className={styles.swatch} style={{ background: c }} data-selected={c.toLowerCase() === value.toLowerCase() || undefined} aria-label={`Use color ${c}`} onClick={() => onChange(c)} />
@@ -45,7 +45,7 @@ export function ColorPicker({ value, onChange }: IColorPickerProps) {
             <Field>
                 <FieldLabel htmlFor={hexId} className="text-xs">
                     Custom
-                    <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10.5px] font-medium text-muted-foreground">
+                    <span className="ml-auto inline-flex items-center gap-1.5 font-medium font-mono text-[10.5px] text-muted-foreground">
                         <span className="inline-block h-3.5 w-3.5 rounded border border-border" style={{ background: HEX_RE.test(hex) ? hex : value }} aria-hidden="true" />
                         {value.toUpperCase()}
                     </span>

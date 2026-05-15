@@ -6,7 +6,7 @@ export function UserCardSkeleton() {
         <Card>
             <div className="flex items-center gap-3.5 px-4 py-3.5">
                 <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
-                <div className="min-w-0 flex-1 flex flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex items-center gap-1.5">
                         <Skeleton className="h-3.5 w-28 rounded-md" />
                         <Skeleton className="h-4 w-8 rounded-full" />

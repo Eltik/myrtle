@@ -34,7 +34,7 @@ function formatCompact(value: string | number | null) {
 function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
     const interactive = typeof onClick === "function";
     const className = cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card sm:rounded-2xl text-left",
+        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-left sm:rounded-2xl",
         "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-all duration-200",
         "hover:border-foreground/15 hover:shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]",
         interactive && "cursor-pointer select-none",
@@ -54,7 +54,7 @@ function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatt
                     </span>
                 )}
                 <span
-                    className="truncate font-mono font-medium uppercase tracking-wider text-muted-foreground sm:tracking-widest"
+                    className="truncate font-medium font-mono text-muted-foreground uppercase tracking-wider sm:tracking-widest"
                     style={{
                         fontSize: "clamp(0.625rem, 0.25vw + 0.55rem, 0.6875rem)",
                         lineHeight: 1.2,
@@ -64,7 +64,7 @@ function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatt
                 </span>
             </div>
             <div
-                className={cn("font-sans font-bold tracking-tight tabular-nums whitespace-nowrap", accent ? "text-primary" : "text-foreground")}
+                className={cn("whitespace-nowrap font-bold font-sans tabular-nums tracking-tight", accent ? "text-primary" : "text-foreground")}
                 style={{
                     fontSize: "clamp(1.125rem, 1.6vw + 0.75rem, 1.875rem)",
                     lineHeight: 1.05,

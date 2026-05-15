@@ -37,7 +37,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
     const ops = improvements.operators.below_milestone;
     const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
 
-    // Counts per upgrade type — drives the breakdown summary and the filter chips.
+    // Counts per upgrade type - drives the breakdown summary and the filter chips.
     const tagCounts = useMemo(() => {
         const counts: Record<Tag, number> = { ELITE: 0, MAX_LEVEL: 0, M3: 0, SL7: 0, MOD3: 0, POT6: 0 };
         for (const op of ops) {
@@ -63,7 +63,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
     if (ops.length === 0) {
         return (
             <div className={PANEL_PADDING}>
-                <EmptyHint>Every owned operator is at their last milestone — nothing to upgrade here.</EmptyHint>
+                <EmptyHint>Every owned operator is at their last milestone - nothing to upgrade here.</EmptyHint>
             </div>
         );
     }
@@ -74,7 +74,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
             <SectionHeader title="Operators below milestone" count={`${ops.length} total`} accent={accent} />
 
-            {/* By upgrade type — also acts as a filter for the rarity buckets below. */}
+            {/* By upgrade type - also acts as a filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
                 <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>By upgrade type</span>
                 <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
@@ -124,8 +124,8 @@ function RarityBucket({ rarity, ops, defaultOpen }: IBucketProps) {
             </button>
 
             {open && (
-                <div className="border-t border-border/30 bg-background/40 p-2 sm:p-2.5">
-                    {/* 1 col by default, 2 at sm+. We don't push to 3 cols — each card
+                <div className="border-border/30 border-t bg-background/40 p-2 sm:p-2.5">
+                    {/* 1 col by default, 2 at sm+. We don't push to 3 cols - each card
                        holds avatar + name + meta + a wrapping tag row, and at 3 cols
                        there isn't enough width to keep the meta line on one line. */}
                     <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -166,7 +166,7 @@ const OperatorRow = memo(function OperatorRow({ op, color }: { op: IOperatorGap;
     const sortedTags = TAG_ORDER.filter((t) => op.missing.includes(t));
     return (
         <div className="flex items-start gap-2.5 rounded-md border border-border/30 bg-card/60 px-2.5 py-2">
-            {/* Avatar — slightly larger (size-9) to balance with the multi-line content beside it. */}
+            {/* Avatar - slightly larger (size-9) to balance with the multi-line content beside it. */}
             <span className="relative size-9 shrink-0 overflow-hidden rounded-md border border-border/40" style={{ background: `color-mix(in oklch, ${color} 12%, transparent)` }}>
                 <OperatorAvatar charId={op.operator_id} name={op.name} />
             </span>

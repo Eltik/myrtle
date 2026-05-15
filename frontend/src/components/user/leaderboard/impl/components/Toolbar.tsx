@@ -33,8 +33,8 @@ export function Toolbar({ scope, onScope, server, onServer, interval, onInterval
                     ]}
                 />
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:border-foreground/20" aria-label="Change server filter">
-                        <span className="font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">Server</span>
+                    <DropdownMenuTrigger className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20" aria-label="Change server filter">
+                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">Server</span>
                         <span className="font-semibold text-foreground">{server === "All" ? "All" : server}</span>
                         <ChevronDown className="size-3 opacity-70" />
                     </DropdownMenuTrigger>
@@ -50,8 +50,8 @@ export function Toolbar({ scope, onScope, server, onServer, interval, onInterval
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-sans text-xs font-medium leading-none text-foreground transition-colors hover:border-foreground/20" aria-label="Change movement interval">
-                        <span className="font-mono text-[10.5px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">Interval</span>
+                    <DropdownMenuTrigger className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:border-foreground/20" aria-label="Change movement interval">
+                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">Interval</span>
                         <span className="font-semibold text-foreground tabular-nums">{intervalShort}</span>
                         <ChevronDown className="size-3 opacity-70" />
                     </DropdownMenuTrigger>
@@ -70,7 +70,7 @@ export function Toolbar({ scope, onScope, server, onServer, interval, onInterval
                     onClick={() => onMovementOnly(!movementOnly)}
                     title={movementOnly ? "Showing only Doctors with movement" : "Show only Doctors with movement"}
                     className={cn(
-                        "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-sans text-xs font-medium leading-none transition-colors",
+                        "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 font-medium font-sans text-xs leading-none transition-colors",
                         movementOnly ? "border-primary/40 bg-[color-mix(in_srgb,var(--primary)_10%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_14%,transparent)]" : "border-input bg-card text-foreground hover:border-foreground/20",
                     )}
                 >
@@ -117,11 +117,7 @@ function Segmented<T extends string>({ value, onChange, options }: { value: T; o
                         disabled={opt.disabled}
                         title={opt.hint}
                         onClick={() => !opt.disabled && onChange(opt.value)}
-                        className={cn(
-                            "inline-flex h-6.5 items-center rounded-[6px] px-3 font-sans text-xs font-medium leading-none transition-colors",
-                            isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground",
-                            opt.disabled && "cursor-not-allowed opacity-60",
-                        )}
+                        className={cn("inline-flex h-6.5 items-center rounded-md px-3 font-medium font-sans text-xs leading-none transition-colors", isActive ? "bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.06)]" : "text-muted-foreground hover:text-foreground", opt.disabled && "cursor-not-allowed opacity-60")}
                     >
                         {opt.label}
                     </button>

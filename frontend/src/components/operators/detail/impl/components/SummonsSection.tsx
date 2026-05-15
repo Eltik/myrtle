@@ -124,7 +124,7 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) 
                     </div>
                     {description && (
                         <p
-                            className="mt-1 text-muted-foreground text-sm wrap-break-word"
+                            className="wrap-break-word mt-1 text-muted-foreground text-sm"
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                             dangerouslySetInnerHTML={{ __html: description }}
                         />
@@ -139,10 +139,10 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel }: ISummonCardProps) 
                         {column.map(({ iconURL, label, value }) => (
                             <div key={label} className="flex items-center justify-between py-1.5">
                                 <span className="flex items-center gap-2 text-muted-foreground">
-                                    <img alt={label} className="h-4 w-4 object-contain icon-theme-aware" decoding="async" loading="lazy" src={iconURL} />
+                                    <img alt={label} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" src={iconURL} />
                                     <span className="text-xs">{label}</span>
                                 </span>
-                                <span className="font-semibold tabular-nums text-foreground text-sm">{value}</span>
+                                <span className="font-semibold text-foreground text-sm tabular-nums">{value}</span>
                             </div>
                         ))}
                     </div>

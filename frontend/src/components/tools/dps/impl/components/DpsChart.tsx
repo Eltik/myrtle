@@ -59,7 +59,7 @@ export function DpsChart({ instances, rows, xAxis, yMetric, snapshotX, isLoading
     return (
         <div ref={containerRef} className="relative h-85 w-full sm:h-100 xl:h-110" role="img" aria-label={`${Y_METRIC_LABELS[yMetric]} by ${X_AXIS_LABELS[xAxis]} for ${visible.length} operator${visible.length === 1 ? "" : "s"}`}>
             {isLoading && (
-                <span aria-live="polite" className="absolute left-1/2 top-2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-background/72 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
+                <span aria-live="polite" className="absolute top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-background/72 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
                     <Spinner className="size-3" />
                     Calculating
                 </span>
@@ -131,7 +131,7 @@ function DpsTooltip({ instances, xAxis, yMetric, ...rest }: ITooltipPayload & { 
                     );
                 })}
             </div>
-            <div className="mt-1 border-t border-border pt-1 text-[10px] text-muted-foreground">{Y_METRIC_LABELS[yMetric]}</div>
+            <div className="mt-1 border-border border-t pt-1 text-[10px] text-muted-foreground">{Y_METRIC_LABELS[yMetric]}</div>
         </div>
     );
 }

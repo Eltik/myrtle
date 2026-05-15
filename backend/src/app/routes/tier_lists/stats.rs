@@ -194,6 +194,34 @@ pub async fn list_flairs(
 }
 
 #[derive(Deserialize)]
+pub struct SetVisibilityRequest {
+    pub is_listed: bool,
+}
+
+pub async fn set_visibility(
+    State(state): State<AppState>,
+    auth: crate::app::extractors::auth::AuthUser,
+    Path(slug): Path<String>,
+    Json(body): Json<SetVisibilityRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    use crate::core::auth::permissions::Permission;
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let list = queries::find_by_slug(&state.db, &slug)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    crate::app::services::tier_list::check_permission(
+        &state,
+        &list,
+        user_id,
+        auth.role,
+        Permission::Edit,
+    )
+    .await?;
+    queries::set_visibility(&state.db, list.id, body.is_listed).await?;
+    Ok(Json(serde_json::json!({ "is_listed": body.is_listed })))
+}
+
+#[derive(Deserialize)]
 pub struct CreateFlairRequest {
     pub code: String,
     pub label: String,

@@ -13,6 +13,7 @@ pub struct TierList {
     pub list_type: String,
     pub created_by: Option<Uuid>,
     pub is_active: bool,
+    pub is_listed: bool,
     pub flair_id: Option<i16>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -28,10 +28,10 @@ export function ElitePromotionCard({ eliteBreakdown }: IElitePromotionCardProps)
                                 <div className="flex items-center justify-between">
                                     <span className={KICKER_TEXT}>{label}</span>
                                     <div className="flex items-baseline gap-1.5">
-                                        <span className="font-bold tabular-nums text-sm" style={isPrimary ? { color: PALETTE.elite } : undefined}>
+                                        <span className="font-bold text-sm tabular-nums" style={isPrimary ? { color: PALETTE.elite } : undefined}>
                                             {count}
                                         </span>
-                                        <span className="font-mono text-[10px] tabular-nums text-muted-foreground/50">{pct.toFixed(0)}%</span>
+                                        <span className="font-mono text-[10px] text-muted-foreground/50 tabular-nums">{pct.toFixed(0)}%</span>
                                     </div>
                                 </div>
                                 <Bar color={PALETTE.elite} dim={!isPrimary} pct={pct} />

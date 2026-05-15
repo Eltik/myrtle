@@ -193,14 +193,14 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
 
                 <div className="mt-5">
                     {isError ? (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-5 py-10 text-center">
-                            <p className="m-0 font-sans text-sm text-muted-foreground">Couldn't load your tier lists.</p>
+                        <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
+                            <p className="m-0 font-sans text-muted-foreground text-sm">Couldn't load your tier lists.</p>
                             <Button variant="outline" size="sm" className="mt-3" loading={isFetching} onClick={() => refetch()}>
                                 Retry
                             </Button>
                         </div>
                     ) : allLists.length === 0 ? (
-                        <Empty className="rounded-lg border border-dashed border-border bg-muted/10">
+                        <Empty className="rounded-lg border border-border border-dashed bg-muted/10">
                             <EmptyHeader>
                                 <EmptyMedia variant="icon">
                                     <SparklesIcon />
@@ -216,8 +216,8 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
                             </EmptyContent>
                         </Empty>
                     ) : sorted.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-5 py-12 text-center">
-                            <p className="m-0 font-sans text-sm font-medium text-foreground">No lists match these filters.</p>
+                        <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
+                            <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
                             <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing the search or switching the type filter.</p>
                             <Button
                                 variant="outline"

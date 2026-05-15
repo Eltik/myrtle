@@ -51,7 +51,7 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
                 <div className={styles.cmdGroup} role="menu">
                     <div className={styles.cmdGroupLabel}>Operators</div>
                     {PREVIEW_OPERATORS.map((op) => (
-                        <Link key={op.id} to={`/operators/${op.id}`} className={styles.cmdItem} role="menuitem" onClick={stop}>
+                        <Link key={op.id} to="/operators/$id" params={{ id: op.id }} className={styles.cmdItem} role="menuitem" onClick={stop}>
                             <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT[op.role] }}>
                                 <OperatorAvatar charId={op.id} name={op.name} />
                             </span>

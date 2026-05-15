@@ -22,11 +22,11 @@ function UnauthenticatedState() {
                     <Lock />
                 </div>
                 <div>
-                    <h2 className="font-sans text-[20px] font-semibold tracking-[-0.02em] text-foreground">Sign in to view your history</h2>
-                    <p className="mt-1.5 max-w-[42ch] font-sans text-sm text-muted-foreground">Your pull history, pity counters, and operator statistics are only available after linking your Yostar account.</p>
+                    <h2 className="font-sans font-semibold text-[20px] text-foreground tracking-[-0.02em]">Sign in to view your history</h2>
+                    <p className="mt-1.5 max-w-[42ch] font-sans text-muted-foreground text-sm">Your pull history, pity counters, and operator statistics are only available after linking your Yostar account.</p>
                 </div>
             </div>
-            <Link to="/login" className="inline-flex h-9 items-center rounded-lg bg-primary px-5 font-sans text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+            <Link to="/login" search={{ redirect: "/gacha" }} className="inline-flex h-9 items-center rounded-lg bg-primary px-5 font-medium font-sans text-primary-foreground text-sm transition-opacity hover:opacity-90">
                 Sign in
             </Link>
         </div>
@@ -37,10 +37,10 @@ function NoDataState() {
     return (
         <div className="flex flex-col items-center justify-center gap-4 rounded-[14px] border border-border bg-card px-8 py-14 text-center">
             <div>
-                <h2 className="font-sans text-[18px] font-semibold tracking-[-0.02em] text-foreground">No pull records found</h2>
-                <p className="mt-1.5 max-w-[48ch] font-sans text-sm text-muted-foreground">Sync your gacha records from the settings page to see your history, pity, and statistics here.</p>
+                <h2 className="font-sans font-semibold text-[18px] text-foreground tracking-[-0.02em]">No pull records found</h2>
+                <p className="mt-1.5 max-w-[48ch] font-sans text-muted-foreground text-sm">Sync your gacha records from the settings page to see your history, pity, and statistics here.</p>
             </div>
-            <Link to="/_authed/settings" className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-4 font-sans text-sm font-medium text-foreground transition-colors hover:bg-muted">
+            <Link to="/settings" className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-4 font-medium font-sans text-foreground text-sm transition-colors hover:bg-muted">
                 Go to settings
             </Link>
         </div>
@@ -98,14 +98,14 @@ export function HistoryPage() {
     return (
         <>
             <div className={styles.pageAmbient} aria-hidden />
-            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pb-15 pt-7 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
                 <PageHeader>
                     {isAuthenticated ? (
                         <button
                             type="button"
                             onClick={() => refreshMutation.mutate()}
                             disabled={refreshMutation.isPending}
-                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-sans text-sm font-medium text-primary-foreground shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 font-medium font-sans text-primary-foreground text-sm shadow-[0_1px_2px_oklch(0_0_0/0.25)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <RefreshCw className={`h-4 w-4 ${refreshMutation.isPending ? "animate-spin" : ""}`} aria-hidden />
                             {refreshMutation.isPending ? "Refreshing…" : "Refresh records"}
@@ -114,7 +114,7 @@ export function HistoryPage() {
                 </PageHeader>
 
                 {recordsQuery.isError ? (
-                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-sm text-foreground/90">
+                    <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
                         <strong className="font-semibold text-foreground">Couldn&rsquo;t load pull records.</strong> {(recordsQuery.error as Error)?.message ?? "Unknown error."}
                     </div>
                 ) : null}
@@ -129,7 +129,7 @@ export function HistoryPage() {
 
                         <PityPanel records={records} bannersById={bannersById} isLoading={isLoading} />
 
-                        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
                             <TopOperators records={records} operatorsById={operatorsById} isLoading={isLoading} />
                             <BannerBreakdown records={records} bannersById={bannersById} operatorsById={operatorsById} isLoading={isLoading} />
                         </div>
@@ -147,9 +147,9 @@ function PageHeader({ children }: { children?: React.ReactNode }) {
         <div className="flex flex-col gap-3.5 pt-1.5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                 <div className="flex max-w-180 flex-col items-start">
-                    <span className="inline-block text-[0.69rem] font-bold tracking-[0.22em] uppercase text-primary mb-2.5">Personal · pull history</span>
-                    <h1 className="m-0 mb-3 font-sans text-[32px] font-bold leading-[1.05] tracking-[-0.03em] text-foreground text-balance sm:text-[38px] sm:leading-[1.03] sm:tracking-[-0.035em] lg:text-[44px] lg:leading-[1.02]">
-                        Your <em className="not-italic text-primary">gacha</em> history.
+                    <span className="mb-2.5 inline-block font-bold text-[0.69rem] text-primary uppercase tracking-[0.22em]">Personal · pull history</span>
+                    <h1 className="m-0 mb-3 text-balance font-bold font-sans text-[32px] text-foreground leading-[1.05] tracking-[-0.03em] sm:text-[38px] sm:leading-[1.03] sm:tracking-[-0.035em] lg:text-[44px] lg:leading-[1.02]">
+                        Your <em className="text-primary not-italic">gacha</em> history.
                     </h1>
                     <p className="m-0 max-w-[60ch] font-sans text-muted-foreground">Pull counts, current pity, your most-pulled operators, and a full history across every banner type.</p>
                 </div>

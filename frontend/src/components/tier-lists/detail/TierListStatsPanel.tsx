@@ -36,9 +36,9 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
     return (
         <aside aria-label="Tier list stats" className="lg:sticky lg:top-20">
             <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm">
-                <header className="flex items-baseline justify-between gap-3 border-b border-border/60 px-4 py-3">
-                    <h2 className="m-0 font-sans text-sm font-semibold tracking-tight text-foreground">Stats</h2>
-                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-mono text-[10.5px] font-bold uppercase tracking-wider text-primary">Trending now</span>}
+                <header className="flex items-baseline justify-between gap-3 border-border/60 border-b px-4 py-3">
+                    <h2 className="m-0 font-sans font-semibold text-foreground text-sm tracking-tight">Stats</h2>
+                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-bold font-mono text-[10.5px] text-primary uppercase tracking-wider">Trending now</span>}
                 </header>
 
                 {stats ? (
@@ -51,7 +51,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
                                         <Icon className="h-3.5 w-3.5 opacity-70" aria-hidden="true" />
                                         {row.label}
                                     </dt>
-                                    <dd className={`m-0 font-mono text-[13.5px] font-semibold tabular-nums ${row.accent ? "text-primary" : "text-foreground"}`}>{row.value}</dd>
+                                    <dd className={`m-0 font-mono font-semibold text-[13.5px] tabular-nums ${row.accent ? "text-primary" : "text-foreground"}`}>{row.value}</dd>
                                 </div>
                             );
                         })}
@@ -60,7 +60,7 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
                     <p className="px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground">No stats yet.</p>
                 )}
 
-                <footer className="space-y-1 border-t border-border/60 px-4 py-3 font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
+                <footer className="space-y-1 border-border/60 border-t px-4 py-3 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">
                     <div className="flex items-center justify-between gap-2">
                         <span>Created</span>
                         <span className="text-foreground/80">{formatTimeline(detail.createdAt)}</span>

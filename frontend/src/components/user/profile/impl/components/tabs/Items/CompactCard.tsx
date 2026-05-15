@@ -40,7 +40,7 @@ export function CompactCard({ item }: ICompactCardProps) {
                 <div className="relative box-content aspect-square w-full overflow-hidden" style={{ borderBottom: `3px solid ${color}` }}>
                     <ItemIcon item={item} className="h-full! w-full! rounded-none!" />
                 </div>
-                <span className="-bottom-1.5 -right-1.5 absolute z-10 rounded-md bg-background/95 px-1.5 py-0.5 font-mono font-bold text-[11px] text-foreground leading-none tabular-nums backdrop-blur-sm" style={{ boxShadow: `inset 0 0 0 1px ${color}80, 0 2px 6px rgba(0,0,0,0.5)` }}>
+                <span className="absolute -right-1.5 -bottom-1.5 z-10 rounded-md bg-background/95 px-1.5 py-0.5 font-bold font-mono text-[11px] text-foreground tabular-nums leading-none backdrop-blur-sm" style={{ boxShadow: `inset 0 0 0 1px ${color}80, 0 2px 6px rgba(0,0,0,0.5)` }}>
                     {formatCompactQty(item.quantity)}
                 </span>
             </DialogTrigger>

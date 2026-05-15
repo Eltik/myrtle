@@ -7,15 +7,15 @@ export const PANEL_PADDING = "px-4 pb-4 sm:px-5 sm:pb-5";
 
 // ─── Typography ─────────────────────────────────────────────────────────────
 // One scale across every improvement panel. Keep these in sync; new sizes
-// don't go inline — extend the scale here.
+// don't go inline - extend the scale here.
 
-/** XS mono — tiny chips, level/state indicators, badges. */
+/** XS mono - tiny chips, level/state indicators, badges. */
 export const TEXT_BADGE = "font-mono text-[10px] tabular-nums";
-/** XS uppercase kicker — section headers, button labels, tag captions. */
+/** XS uppercase kicker - section headers, button labels, tag captions. */
 export const TEXT_KICKER = "font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em]";
-/** SM — secondary descriptive text, subtitles. */
+/** SM - secondary descriptive text, subtitles. */
 export const TEXT_META = "text-[10.5px] leading-snug";
-/** Body — list rows, descriptions, default content size. */
+/** Body - list rows, descriptions, default content size. */
 export const TEXT_BODY = "text-[11.5px] leading-tight";
 
 // ─── Color palette ──────────────────────────────────────────────────────────
@@ -24,7 +24,7 @@ export const TEXT_BODY = "text-[11.5px] leading-tight";
 // (gold → purple → blue → gray).
 
 const RARITY_HUE = {
-    /** Highest tier — gold. */
+    /** Highest tier - gold. */
     apex: "oklch(0.78 0.16 80)",
     /** Gold (5★ / T2.5 / T3). */
     gold: "oklch(0.74 0.16 80)",
@@ -72,7 +72,7 @@ export const URGENT_COLOR = "oklch(0.65 0.22 30)";
  */
 export function SectionHeader({ title, count, accent }: { title: string; count?: ReactNode; accent: string }) {
     return (
-        <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
+        <div className="flex items-center justify-between border-border/40 border-b pb-1.5">
             <span className={cn(TEXT_KICKER)} style={{ color: `color-mix(in oklch, ${accent} 60%, var(--foreground))` }}>
                 {title}
             </span>
@@ -108,7 +108,7 @@ export function ProgressLine({ label, current, max, accent }: { label: string; c
 }
 
 export function EmptyHint({ children }: { children: ReactNode }) {
-    return <p className="rounded-md border border-dashed border-border/40 bg-muted/15 px-3 py-2 text-center text-[11px] text-muted-foreground">{children}</p>;
+    return <p className="rounded-md border border-border/40 border-dashed bg-muted/15 px-3 py-2 text-center text-[11px] text-muted-foreground">{children}</p>;
 }
 
 interface IPillProps {
@@ -152,11 +152,7 @@ export function StatTile({ value, label, sub, accent, active, onClick }: { value
             type={interactive ? "button" : undefined}
             onClick={onClick}
             aria-pressed={interactive ? active : undefined}
-            className={cn(
-                "flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-md border px-2 py-2.5 text-center transition-colors",
-                active ? "border-foreground/30 bg-muted/40" : "border-border/40 bg-muted/15",
-                interactive ? "cursor-pointer hover:border-foreground/25 hover:bg-muted/30" : "opacity-55",
-            )}
+            className={cn("flex min-h-22 flex-col items-center justify-center gap-1 rounded-md border px-2 py-2.5 text-center transition-colors", active ? "border-foreground/30 bg-muted/40" : "border-border/40 bg-muted/15", interactive ? "cursor-pointer hover:border-foreground/25 hover:bg-muted/30" : "opacity-55")}
         >
             <span
                 className="font-bold tabular-nums leading-none"
@@ -169,7 +165,7 @@ export function StatTile({ value, label, sub, accent, active, onClick }: { value
                 {value}
             </span>
             <span className={cn(TEXT_KICKER, "text-foreground/75")}>{label}</span>
-            {sub !== undefined && <span className={cn(TEXT_BADGE, "leading-tight text-muted-foreground/70")}>{sub}</span>}
+            {sub !== undefined && <span className={cn(TEXT_BADGE, "text-muted-foreground/70 leading-tight")}>{sub}</span>}
         </Wrapper>
     );
 }

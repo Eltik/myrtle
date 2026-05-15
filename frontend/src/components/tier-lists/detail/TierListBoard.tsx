@@ -9,8 +9,8 @@ interface ITierListBoardProps {
 export function TierListBoard({ detail }: ITierListBoardProps) {
     if (detail.tiers.length === 0) {
         return (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/20 px-5 py-12 text-center">
-                <p className="m-0 font-sans text-sm font-medium text-foreground">This list has no tiers yet.</p>
+            <div className="rounded-2xl border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
+                <p className="m-0 font-medium font-sans text-foreground text-sm">This list has no tiers yet.</p>
                 <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">The author hasn't published any tiers for this list.</p>
             </div>
         );
@@ -25,8 +25,8 @@ export function TierListBoard({ detail }: ITierListBoardProps) {
                     <TierRow key={tier.id} tier={tier} index={i} />
                 ))}
             </ul>
-            <p className="px-1 font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
-                <span className="tabular-nums text-foreground">{detail.tiers.length}</span> tier{detail.tiers.length === 1 ? "" : "s"} · <span className="tabular-nums text-foreground">{totalOps}</span> operator{totalOps === 1 ? "" : "s"} placed
+            <p className="px-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">
+                <span className="text-foreground tabular-nums">{detail.tiers.length}</span> tier{detail.tiers.length === 1 ? "" : "s"} · <span className="text-foreground tabular-nums">{totalOps}</span> operator{totalOps === 1 ? "" : "s"} placed
             </p>
         </div>
     );

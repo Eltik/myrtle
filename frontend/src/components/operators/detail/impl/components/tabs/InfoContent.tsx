@@ -72,7 +72,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             <div className="mb-6">
                 <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
                 <p
-                    className="text-muted-foreground text-sm wrap-break-word"
+                    className="wrap-break-word text-muted-foreground text-sm"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
                     dangerouslySetInnerHTML={{ __html: description }}
                 />
@@ -162,7 +162,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     }}
                                     type="button"
                                 >
-                                    <img alt={`Elite ${idx}`} className="h-6 w-6 object-contain icon-theme-aware" decoding="async" loading="lazy" src={eliteIcon(idx)} />
+                                    <img alt={`Elite ${idx}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx)} />
                                 </button>
                             ))}
                         </div>
@@ -293,10 +293,10 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             {column.map(({ iconURL, label, value }) => (
                                 <div key={label} className="flex items-center justify-between py-2">
                                     <span className="flex items-center gap-2 text-muted-foreground">
-                                        <img alt={label} src={iconURL} className="h-4 w-4 object-contain icon-theme-aware" decoding="async" loading="lazy" />
+                                        <img alt={label} src={iconURL} className="icon-theme-aware h-4 w-4 object-contain" decoding="async" loading="lazy" />
                                         <span className="text-sm">{label}</span>
                                     </span>
-                                    <span className="font-semibold tabular-nums text-foreground">{value}</span>
+                                    <span className="font-semibold text-foreground tabular-nums">{value}</span>
                                 </div>
                             ))}
                         </div>

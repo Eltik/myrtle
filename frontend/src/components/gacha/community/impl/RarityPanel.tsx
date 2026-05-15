@@ -45,10 +45,10 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
             <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">{cs ? `Outcome mix · ${formatNumberCompact(total)} pulls` : "Outcome mix"}</Kicker>
-                    <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground text-balance sm:text-[22px]">Where every pull lands.</h2>
+                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Where every pull lands.</h2>
                 </div>
                 {showPersonal ? (
-                    <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/80 sm:self-auto">
+                    <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[10px] text-foreground/80 uppercase tracking-[0.14em] sm:self-auto">
                         <span className="block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
                         you · {formatNumberCompact(personalTotal)} pulls
                     </div>
@@ -99,10 +99,10 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
                     <span style={{ color: row.starColor }} className="text-base tracking-wider">
                         {"★".repeat(row.rarity)}
                     </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{row.pityHint}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{row.pityHint}</span>
                 </div>
-                <div className="flex items-baseline gap-3 font-mono text-[11px] tabular-nums text-muted-foreground">
-                    <span className="font-sans text-base font-semibold text-foreground">{hasData ? fmtPct(observed, 2) : "-"}</span>
+                <div className="flex items-baseline gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
+                    <span className="font-sans font-semibold text-base text-foreground">{hasData ? fmtPct(observed, 2) : "-"}</span>
                 </div>
             </div>
 
@@ -145,7 +145,7 @@ function ComparisonChip({ label, baseline, comparison, highlight }: { label: str
         <span className={`inline-flex items-center gap-1.5 ${baseClass}`}>
             <span className="uppercase tracking-[0.12em] opacity-70">{label}</span>
             <span className={`font-semibold tabular-nums ${colorClass}`}>{comparison.ratioLabel}</span>
-            <span className="opacity-60 tabular-nums">({fmtPct(baseline, baseline >= 0.1 ? 0 : 2)})</span>
+            <span className="tabular-nums opacity-60">({fmtPct(baseline, baseline >= 0.1 ? 0 : 2)})</span>
         </span>
     );
 }
@@ -170,7 +170,7 @@ function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData 
 
 function Legend({ showPersonal }: { showPersonal: boolean }) {
     return (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">
             <span className="inline-flex items-center gap-1.5">
                 <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> advertised
             </span>

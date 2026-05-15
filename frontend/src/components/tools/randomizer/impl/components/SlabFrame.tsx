@@ -19,10 +19,10 @@ export function SlabFrame({ index, kicker, children, className, accent = "primar
     return (
         <section className={cn("relative overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground shadow-xs/5", `before:absolute before:inset-y-0 before:left-0 before:w-0.75 ${ACCENT_LINE[accent]} before:content-['']`, className)} data-slot="slab-frame">
             <div className="flex min-w-0">
-                <aside className="relative flex w-12 shrink-0 flex-col items-center justify-between border-r border-border/60 bg-muted/30 py-4 sm:w-14 sm:py-5">
-                    <span className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground/80 sm:text-[12px]">{index}</span>
-                    <span className="font-mono [writing-mode:vertical-rl] rotate-180 text-[10px] uppercase tracking-[0.22em] text-foreground/70 sm:text-[11px]">{kicker}</span>
-                    <span className="font-mono text-[11px] tracking-[0.18em] text-muted-foreground/40 sm:text-[12px]">- -</span>
+                <aside className="relative flex w-12 shrink-0 flex-col items-center justify-between border-border/60 border-r bg-muted/30 py-4 sm:w-14 sm:py-5">
+                    <span className="font-mono text-[11px] text-muted-foreground/80 tracking-[0.18em] sm:text-[12px]">{index}</span>
+                    <span className="rotate-180 font-mono text-[10px] text-foreground/70 uppercase tracking-[0.22em] [writing-mode:vertical-rl] sm:text-[11px]">{kicker}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground/40 tracking-[0.18em] sm:text-[12px]">- -</span>
                 </aside>
                 <div className="min-w-0 flex-1 p-4 sm:p-6">{children}</div>
             </div>

@@ -61,7 +61,7 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, yMetric, sameOpCount
     return (
         <div className={`flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2.5 transition-opacity sm:flex-row sm:items-center sm:gap-3 ${dim ? "opacity-50" : ""}`}>
             <div className="flex min-w-0 items-center gap-3">
-                <span aria-hidden="true" className="relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-[10px] font-semibold" style={{ boxShadow: `inset 0 0 0 2px ${inst.color}` }}>
+                <span aria-hidden="true" className="relative inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted font-semibold text-[10px]" style={{ boxShadow: `inset 0 0 0 2px ${inst.color}` }}>
                     <OperatorAvatar charId={inst.op.id} name={inst.op.name} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -76,7 +76,7 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, yMetric, sameOpCount
                                 <TooltipPopup className="max-w-64">{snap.error.message || "Calculation failed"}</TooltipPopup>
                             </Tooltip>
                         ) : isLeader ? (
-                            <span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 text-[10px] font-medium text-primary" title="Leader">
+                            <span className="inline-flex items-center gap-0.5 rounded bg-primary/12 px-1.5 py-0.5 font-medium text-[10px] text-primary" title="Leader">
                                 <Crown className="size-3" />
                                 top
                             </span>
@@ -106,7 +106,7 @@ function KpiRow({ inst, snap, index, isLeader, leaderValue, yMetric, sameOpCount
 function Stat({ label, value, highlight, loading }: { label: string; value: number | undefined; highlight: boolean; loading: boolean }): React.ReactElement {
     return (
         <div className="min-w-14">
-            <div className="font-medium text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+            <div className="font-medium text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
             <div className={`flex items-center gap-1 font-mono text-[14px] tabular-nums sm:justify-end ${highlight ? "text-primary" : "text-foreground"}`}>{loading && value === undefined ? <Spinner className="size-3 text-muted-foreground" /> : formatLargeNumber(value)}</div>
         </div>
     );

@@ -28,7 +28,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                     <ItemIcon item={item} size={96} />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
                         <span>{CATEGORY_ITEM_LABELS[item.category]}</span>
                         <span aria-hidden className="opacity-40">
                             ·
@@ -37,12 +37,12 @@ export function ItemDialog({ item }: IItemDialogProps) {
                         <span aria-hidden className="opacity-40">
                             ·
                         </span>
-                        <span className="font-mono normal-case tracking-normal text-muted-foreground/80">{item.item_id}</span>
+                        <span className="font-mono text-muted-foreground/80 normal-case tracking-normal">{item.item_id}</span>
                     </div>
                     <DialogTitle className="mt-1.5 text-2xl">{item.name}</DialogTitle>
                     {meta?.description && <DialogDescription className="mt-2 text-[13.5px] leading-relaxed">{meta.description}</DialogDescription>}
                     {meta?.usage && (
-                        <p className="mt-1 text-[13.5px] leading-relaxed text-muted-foreground">
+                        <p className="mt-1 text-[13.5px] text-muted-foreground leading-relaxed">
                             <span className="text-foreground">Usage. </span>
                             {meta.usage}
                         </p>
@@ -60,11 +60,11 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {recipes.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">Crafted in</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Crafted in</span>
                         <div className="flex flex-wrap gap-1.5">
                             {recipes.map((r) => (
                                 <Badge key={`${r.roomType}-${r.formulaId}`} variant="outline" size="lg" className="gap-1.5 font-normal">
-                                    <span className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">{r.roomType}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">{r.roomType}</span>
                                     <span className="font-mono tabular-nums">#{r.formulaId}</span>
                                 </Badge>
                             ))}
@@ -74,7 +74,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {vouchers.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">Voucher exchange</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Voucher exchange</span>
                         <div className="flex flex-wrap gap-1.5">
                             {vouchers.map((v) => (
                                 <Badge key={v.voucherId} variant="outline" className="font-normal">
@@ -87,7 +87,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {obtain.length > 0 && (
                     <section className="flex items-center justify-between gap-3">
-                        <span className="font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">Obtain channels</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Obtain channels</span>
                         <div className="flex flex-wrap justify-end gap-1.5">
                             {obtain.map((s) => (
                                 <Badge key={s} variant="secondary" className="font-normal">
@@ -105,7 +105,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 function DialogStat({ kicker, value, valueColor, subtle }: { kicker: string; value: string; valueColor?: string; subtle?: boolean }) {
     return (
         <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/50 p-3">
-            <span className="font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground">{kicker}</span>
+            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{kicker}</span>
             <div className="font-bold tabular-nums leading-none" style={{ fontSize: subtle ? "14px" : "18px", color: valueColor ?? "var(--foreground)" }}>
                 {value}
             </div>

@@ -134,16 +134,16 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
 
             <FieldGroup label="Stage pool">
                 <div className="relative">
-                    <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder="Search events or stages…" size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute right-1.5 top-1/2 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
+                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
                             <X className="size-3" />
                         </button>
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
                     <span>
                         <span className="text-foreground">{selectedCount}</span> / {totalStages} stages
                     </span>
@@ -167,10 +167,10 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                         const selectedSectionStages = sectionGroups.reduce((acc, g) => acc + g.stages.reduce((a2, s) => a2 + (deselected.has(s.stageId) ? 0 : 1), 0), 0);
                         return (
                             <section key={section} className="flex flex-col gap-1.5">
-                                <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" aria-expanded={isExpanded}>
+                                <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
                                     <ChevronDown aria-hidden="true" className={cn("size-3 text-muted-foreground/70 transition-transform duration-150", !isExpanded && "-rotate-90")} />
-                                    <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">{STAGE_SECTION_LABEL[section]}</h3>
-                                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/50">
+                                    <h3 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.2em]">{STAGE_SECTION_LABEL[section]}</h3>
+                                    <span className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.16em]">
                                         {selectedSectionStages}/{totalSectionStages}
                                     </span>
                                 </button>
@@ -218,14 +218,14 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
         <div className="overflow-hidden rounded-md border border-border/50 bg-card/60">
             <div className="flex items-center gap-2 px-2.5 py-2">
                 <Checkbox checked={checkboxState === "checked"} indeterminate={checkboxState === "indeterminate"} onCheckedChange={onToggleGroup} aria-label={`Toggle ${group.label}`} />
-                <button type="button" onClick={onToggleExpand} className="flex min-w-0 flex-1 items-center gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" aria-expanded={isOpen}>
+                <button type="button" onClick={onToggleExpand} className="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isOpen}>
                     <ChevronDown aria-hidden="true" className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform duration-150", isOpen && "rotate-180")} />
                     <div className="min-w-0 flex-1">
-                        <p className="flex items-center gap-1.5 text-[12.5px] font-medium leading-tight text-foreground truncate">
+                        <p className="flex items-center gap-1.5 truncate font-medium text-[12.5px] text-foreground leading-tight">
                             {group.label}
                             {group.section !== "MAIN" && !group.isOpen && <Lock aria-hidden="true" className="size-3 shrink-0 text-muted-foreground/60" />}
                         </p>
-                        <p className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                        <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground/80 uppercase tracking-[0.14em]">
                             {group.section === "MAIN" ? "Mainline" : (group.sublabel ?? (group.section === "OTHER" ? "Mini" : "Event"))}
                             <span className="mx-1.5 opacity-50">·</span>
                             {selectedCount}/{group.stages.length}
@@ -234,18 +234,18 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
                 </button>
             </div>
             {isOpen && (
-                <ul className="flex flex-col gap-px border-t border-border/40 bg-background/40 px-2 py-1.5">
+                <ul className="flex flex-col gap-px border-border/40 border-t bg-background/40 px-2 py-1.5">
                     {group.stages.map((stage) => {
                         const isDeselected = deselected.has(stage.stageId);
                         return (
                             <li key={stage.stageId}>
                                 {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox is a Base UI primitive with its own aria-label; wrapping label provides the click target */}
-                                <label className={cn("flex items-center gap-2.5 rounded-sm px-1.5 py-1.5 cursor-pointer transition-colors hover:bg-accent/40", isDeselected && "opacity-60")}>
+                                <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-sm px-1.5 py-1.5 transition-colors hover:bg-accent/40", isDeselected && "opacity-60")}>
                                     <Checkbox checked={!isDeselected} onCheckedChange={() => onToggleStage(stage.stageId)} aria-label={`Toggle ${stage.code}${stage.name ? ` - ${stage.name}` : ""}`} />
                                     <StageModeBadge stage={stage} />
-                                    <span className="inline-flex min-w-13 shrink-0 justify-start font-mono text-[11.5px] font-medium text-foreground">{stage.code}</span>
+                                    <span className="inline-flex min-w-13 shrink-0 justify-start font-medium font-mono text-[11.5px] text-foreground">{stage.code}</span>
                                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">{stage.name ?? ""}</span>
-                                    {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] uppercase tracking-[0.14em] text-amber-500/90">CM</span>}
+                                    {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] text-amber-500/90 uppercase tracking-[0.14em]">CM</span>}
                                 </label>
                             </li>
                         );
@@ -274,15 +274,15 @@ function isChallengeModeStage(stage: IStage): boolean {
 
 function StageModeBadge({ stage }: { stage: IStage }): React.ReactElement | null {
     const mode = getStageMode(stage);
-    if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] uppercase tracking-[0.14em] text-rose-500/90">ADV</span>;
-    if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">STR</span>;
+    if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] text-rose-500/90 uppercase tracking-[0.14em]">ADV</span>;
+    if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">STR</span>;
     return null;
 }
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground/90">{label}</p>
+            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
             {children}
         </div>
     );
@@ -293,11 +293,11 @@ function SwitchRow({ label, description, checked, onChange, locked = false }: { 
         // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
         <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
             <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-[12.5px] font-medium text-foreground">
+                <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
                     {label}
                     {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
                 </p>
-                <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{description}</p>
+                <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
             </div>
             <Switch checked={locked ? false : checked} disabled={locked} onCheckedChange={onChange} />
         </label>

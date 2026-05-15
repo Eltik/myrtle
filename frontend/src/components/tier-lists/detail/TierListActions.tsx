@@ -98,7 +98,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
                 aria-pressed={favorited}
                 aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
                 className={cn(
-                    "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 font-sans text-sm font-medium leading-none transition-colors disabled:opacity-60 sm:h-9 sm:min-w-0",
+                    "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 font-medium font-sans text-sm leading-none transition-colors disabled:opacity-60 sm:h-9 sm:min-w-0",
                     favorited ? "border-[color-mix(in_srgb,var(--primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_18%,transparent)]" : "border-border bg-popover text-foreground hover:bg-accent",
                 )}
             >
@@ -110,7 +110,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
                 type="button"
                 onClick={handleShare}
                 aria-label="Share this tier list"
-                className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-sans text-sm font-medium leading-none text-foreground transition-colors hover:bg-accent sm:h-9 sm:min-w-0"
+                className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent sm:h-9 sm:min-w-0"
             >
                 <Share2 className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Share</span>

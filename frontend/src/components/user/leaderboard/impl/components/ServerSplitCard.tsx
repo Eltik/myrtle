@@ -17,7 +17,7 @@ export function ServerSplitCard({ shares }: { shares: IServerShare[] }) {
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans text-[13.5px] font-semibold leading-tight tracking-tight text-foreground">Server share · top 250</span>
+                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">Server share · top 250</span>
             </div>
             <div className="flex h-2 overflow-hidden rounded-full bg-muted">
                 {total === 0 ? (
@@ -37,7 +37,7 @@ export function ServerSplitCard({ shares }: { shares: IServerShare[] }) {
                     return (
                         <div key={code} className="flex flex-col items-center gap-1">
                             <ServerTag server={code} />
-                            <span className="font-mono text-[11px] leading-none text-muted-foreground tabular-nums">{pct}%</span>
+                            <span className="font-mono text-[11px] text-muted-foreground tabular-nums leading-none">{pct}%</span>
                         </div>
                     );
                 })}

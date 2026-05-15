@@ -31,7 +31,7 @@ function computePity(items: IGachaItem[]): number {
 }
 
 /**
- * Limited and Collab pity does NOT carry between banners in-game — each
+ * Limited and Collab pity does NOT carry between banners in-game - each
  * pool has its own independent pity counter that vanishes when the banner
  * closes. So if the user's most recent pull on a Limited/Collab bucket was
  * on a banner that has now ended, treat the bucket's pity as 0.
@@ -67,7 +67,7 @@ function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; soft
 
     return (
         <div className="flex flex-col gap-1.5">
-            <div className="relative h-3 w-full rounded-full bg-muted overflow-visible">
+            <div className="relative h-3 w-full overflow-visible rounded-full bg-muted">
                 <div className="h-full overflow-hidden rounded-full">
                     <div
                         className="h-full rounded-full transition-all duration-500"
@@ -96,28 +96,28 @@ function PityCard({ label, pity, softPityAt, hardPityAt, color, total, reset, re
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-1">{label} banner</div>
-                    <div className={`font-sans text-[32px] font-bold leading-none tracking-[-0.04em] tabular-nums ${statusColor}`}>
+                    <div className="mb-1 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.16em]">{label} banner</div>
+                    <div className={`font-bold font-sans text-[32px] tabular-nums leading-none tracking-[-0.04em] ${statusColor}`}>
                         {pity}
-                        <span className="ml-1 font-mono text-[13px] font-medium text-muted-foreground">pulls</span>
+                        <span className="ml-1 font-medium font-mono text-[13px] text-muted-foreground">pulls</span>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 text-right">
                     {reset ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
                             banner ended
                         </span>
                     ) : (
                         <>
                             {isSoftPity ? (
-                                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-amber-600 dark:text-amber-400">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] text-amber-600 uppercase tracking-[0.14em] dark:text-amber-400">
                                     <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
                                     soft pity
                                 </span>
                             ) : null}
                             {isNearHard ? (
-                                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.14em] text-red-600 dark:text-red-400">
+                                <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] text-red-600 uppercase tracking-[0.14em] dark:text-red-400">
                                     <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
                                     near guaranteed
                                 </span>
@@ -141,11 +141,11 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <div className="h-4 w-28 rounded bg-muted animate-pulse" />
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
-                        <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
+                        <div key={i} className="h-32 animate-pulse rounded-xl bg-muted" />
                     ))}
                 </div>
             </section>
@@ -167,9 +167,9 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
                 <Kicker className="mb-1.5">Current pity</Kicker>
-                <h2 className="m-0 font-sans text-[20px] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground sm:text-[22px]">Pulls since last 6★.</h2>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Pulls since last 6★.</h2>
             </header>
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {pities.map((p) => (
                     <PityCard key={p.key} label={p.label} pity={p.pity} softPityAt={p.softPityAt} hardPityAt={p.hardPityAt} color={p.color} total={records[p.key].total} reset={p.reset} resetReason={p.resetReason} />
                 ))}

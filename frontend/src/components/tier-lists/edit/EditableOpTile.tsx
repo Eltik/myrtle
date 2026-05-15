@@ -1,12 +1,15 @@
+import type { ComponentPropsWithoutRef, Ref } from "react";
 import { useRef, useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierOperator } from "#/lib/api/tier-lists";
-import { RARITY_HEX_MUTED } from "#/lib/utils";
+import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
 import { setOperatorDrag } from "./dnd";
 import { useIsDragSource, useStartOperatorDrag } from "./drag-controller";
 import styles from "./Editor.module.css";
 
-interface IEditableOpTileProps {
+type ButtonExtras = Omit<ComponentPropsWithoutRef<"button">, "title" | "onDragStart" | "onDragEnd" | "onClick" | "onPointerDown" | "onPointerMove" | "onDragOver" | "ref" | "className" | "style">;
+
+interface IEditableOpTileProps extends ButtonExtras {
     operator: ITierOperator;
     disabled?: boolean;
     placed?: boolean;
@@ -15,9 +18,11 @@ interface IEditableOpTileProps {
     onDragEnd?: () => void;
     onDragOverChip?: (operatorId: string, side: "before" | "after") => void;
     title?: string;
+    ref?: Ref<HTMLButtonElement>;
+    className?: string;
 }
 
-export function EditableOpTile({ operator, disabled, placed, onActivate, onDragStart, onDragEnd, onDragOverChip, title }: IEditableOpTileProps) {
+export function EditableOpTile({ operator, disabled, placed, onActivate, onDragStart, onDragEnd, onDragOverChip, title, ref, className, ...rest }: IEditableOpTileProps) {
     const color = RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1];
     const isTouchDragging = useIsDragSource(operator.id);
     const startPress = useStartOperatorDrag();
@@ -28,9 +33,11 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
 
     return (
         <button
+            {...rest}
+            ref={ref}
             type="button"
             data-tl-chip-id={operator.id}
-            className={styles.opTile}
+            className={cn(styles.opTile, className)}
             style={{ ["--rarity-color" as string]: color }}
             draggable={!disabled}
             data-dragging={isDragging || undefined}

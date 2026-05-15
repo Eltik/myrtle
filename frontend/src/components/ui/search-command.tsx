@@ -159,9 +159,9 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                                     {playersLoading && playerResults.length === 0 ? (
                                         <PlayerSkeletons />
                                     ) : playersQuery.isError ? (
-                                        <div className="px-2 py-3 text-xs text-muted-foreground">Failed to load players.</div>
+                                        <div className="px-2 py-3 text-muted-foreground text-xs">Failed to load players.</div>
                                     ) : playerResults.length === 0 ? (
-                                        <div className="px-2 py-3 text-xs text-muted-foreground">No doctors match "{debouncedQuery}".</div>
+                                        <div className="px-2 py-3 text-muted-foreground text-xs">No doctors match "{debouncedQuery}".</div>
                                     ) : (
                                         playerResults.map((player) => <PlayerRow key={`${player.uid}-${player.server}`} player={player} onClick={() => closeAndGo(`/user/${player.uid}`)} />)
                                     )}
@@ -175,10 +175,10 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                                 {operatorsQuery.isLoading ? (
                                     <OperatorSkeletons />
                                 ) : operatorsQuery.isError ? (
-                                    <div className="px-2 py-3 text-xs text-muted-foreground">Failed to load operators. Try reopening the palette.</div>
+                                    <div className="px-2 py-3 text-muted-foreground text-xs">Failed to load operators. Try reopening the palette.</div>
                                 ) : operatorResults.length === 0 ? (
                                     query.trim().length > 0 ? (
-                                        <div className="px-2 py-3 text-xs text-muted-foreground">No operators match "{query}".</div>
+                                        <div className="px-2 py-3 text-muted-foreground text-xs">No operators match "{query}".</div>
                                     ) : null
                                 ) : (
                                     operatorResults.map(({ item: op }) => <OperatorRow key={op.id} op={op} onClick={() => closeAndGo(`/operators/${op.id}`)} />)
@@ -195,7 +195,7 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                         <span className="flex items-center gap-1">
                             <Kbd>↵</Kbd> to select
                         </span>
-                        <span className="ml-auto font-mono text-[10.5px] tracking-[0.04em] text-muted-foreground/60">powered by COSS UI</span>
+                        <span className="ml-auto font-mono text-[10.5px] text-muted-foreground/60 tracking-[0.04em]">powered by COSS UI</span>
                     </CommandFooter>
                 </Command>
             </CommandDialogPopup>
@@ -208,7 +208,7 @@ function PageRow({ page, onClick }: { page: IPage; onClick: () => void }): React
         <CommandItem value={`page:${page.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <ToolIcon name={page.icon} className="size-4 text-muted-foreground" />
             <span className="flex-1">{page.label}</span>
-            <span className="hidden text-xs text-muted-foreground sm:inline">{page.desc}</span>
+            <span className="hidden text-muted-foreground text-xs sm:inline">{page.desc}</span>
         </CommandItem>
     );
 }
@@ -233,7 +233,7 @@ function OperatorRow({ op, onClick }: { op: IOperatorIndexEntry; onClick: () => 
                 <OperatorAvatar charId={op.id} name={op.name} />
             </span>
             <span className="flex-1 font-medium">{op.name}</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
                 {op.rarity}★ · {professionLabel(op.profession)}
             </span>
         </CommandItem>
@@ -251,7 +251,7 @@ function PlayerRow({ player, onClick }: { player: IUserProfile; onClick: () => v
                 <AvatarFallback className="rounded-md text-[10px]">{initials}</AvatarFallback>
             </Avatar>
             <span className="flex-1 truncate font-medium">{nickname}</span>
-            <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
                 <span className="font-mono uppercase">{player.server}</span>
                 {player.level != null && <span>Lv {player.level}</span>}
                 {player.total_score != null && <span className="tabular-nums">{formatNumber(player.total_score)}</span>}
@@ -267,7 +267,7 @@ function OperatorSkeletons(): React.ReactElement {
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
                 <div key={i} className="flex items-center gap-2 px-2 py-1.5">
                     <Skeleton className="size-6 rounded-md" />
-                    <Skeleton className="h-3.5 flex-1 max-w-35" />
+                    <Skeleton className="h-3.5 max-w-35 flex-1" />
                     <Skeleton className="h-3 w-16" />
                 </div>
             ))}
@@ -282,7 +282,7 @@ function PlayerSkeletons(): React.ReactElement {
                 // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder list
                 <div key={i} className="flex items-center gap-2 px-2 py-1.5">
                     <Skeleton className="size-6 rounded-md" />
-                    <Skeleton className="h-3.5 flex-1 max-w-40" />
+                    <Skeleton className="h-3.5 max-w-40 flex-1" />
                     <Skeleton className="h-3 w-20" />
                 </div>
             ))}

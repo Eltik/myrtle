@@ -27,7 +27,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
         <div className={cn("relative w-full overflow-hidden contain-layout", styles["parallax-hero"])} ref={ref}>
             <div className="md:hidden">
                 <div className="relative h-90 w-full overflow-hidden sm:h-100">
-                    <div aria-hidden className={cn("absolute inset-x-0 top-0 backface-hidden contain-paint will-change-transform", styles["parallax-image"])}>
+                    <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-center pt-0">
                             <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">
                                 <img alt={operator.name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
@@ -35,7 +35,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         </div>
                     </div>
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-background via-background/80 to-transparent" />
-                    <div className={cn("relative z-10 flex h-full flex-col justify-end px-3 pb-4 backface-hidden will-change-[transform,opacity] sm:px-4 sm:pb-5", styles["parallax-content"])}>
+                    <div className={cn("backface-hidden relative z-10 flex h-full flex-col justify-end px-3 pb-4 will-change-[transform,opacity] sm:px-4 sm:pb-5", styles["parallax-content"])}>
                         <Breadcrumb className="mb-2">
                             <BreadcrumbList className="text-xs">
                                 <BreadcrumbItem>
@@ -75,8 +75,8 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
             </div>
 
             <div className="hidden md:block">
-                <div className="relative h-95 w-full overflow-hidden lg:h105">
-                    <div aria-hidden className={cn("absolute inset-x-0 top-0 backface-hidden contain-paint will-change-transform", styles["parallax-image"])}>
+                <div className="lg:h105 relative h-95 w-full overflow-hidden">
+                    <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-end pr-[5%] lg:pr-[10%]">
                             <div className="relative h-155 w-130 lg:h-180 lg:w-150">
                                 <img alt={operator.name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
@@ -84,7 +84,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         </div>
                     </div>
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background via-background/80 to-transparent" />
-                    <div className={cn("relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-8 pb-6 backface-hidden will-change-[transform,opacity] lg:pb-8", styles["parallax-content"])}>
+                    <div className={cn("backface-hidden relative z-10 mx-auto flex h-full max-w-6xl flex-col justify-end px-8 pb-6 will-change-[transform,opacity] lg:pb-8", styles["parallax-content"])}>
                         <Breadcrumb className="mb-3">
                             <BreadcrumbList>
                                 <BreadcrumbItem>

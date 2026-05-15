@@ -22,7 +22,7 @@ export function UserCard({ user }: { user: DisplayUser }) {
 
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 truncate">
-                        <span className="truncate font-sans text-[14px] font-semibold leading-snug text-foreground transition-colors duration-150 group-hover:text-primary">{nickname}</span>
+                        <span className="truncate font-sans font-semibold text-[14px] text-foreground leading-snug transition-colors duration-150 group-hover:text-primary">{nickname}</span>
                         {user.grade && (
                             <Badge variant="outline" size="sm" className="font-mono">
                                 {user.grade}
@@ -31,13 +31,13 @@ export function UserCard({ user }: { user: DisplayUser }) {
                     </div>
 
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="font-mono text-[11px] leading-none text-muted-foreground tabular-nums">{user.uid}</span>
+                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums leading-none">{user.uid}</span>
                         <Badge variant="secondary" size="sm" className="font-mono uppercase">
                             {user.server}
                         </Badge>
                     </div>
 
-                    <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] leading-none text-muted-foreground">
+                    <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] text-muted-foreground leading-none">
                         {user.level != null && (
                             <span>
                                 <span className="font-medium text-foreground">Lv {user.level}</span>

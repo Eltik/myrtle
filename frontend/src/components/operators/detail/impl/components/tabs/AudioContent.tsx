@@ -254,7 +254,7 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                         </button>
                         <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} />
                     </div>
-                    <div className="flex h-9 max-w-115 min-w-60 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+                    <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
                         <Search className="h-3.75 w-3.75" aria-hidden="true" />
                         <input
                             type="text"
@@ -409,7 +409,7 @@ function VoiceLineRow({ voice, isPlaying, progress, canPlay, canDownload, isDown
                             type="button"
                             onClick={() => setIsExpanded((v) => !v)}
                             aria-expanded={isExpanded}
-                            className="mt-1 inline-flex items-center gap-1 rounded text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="mt-1 inline-flex items-center gap-1 rounded font-medium text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         >
                             {isExpanded ? (
                                 <>

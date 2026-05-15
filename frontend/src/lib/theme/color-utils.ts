@@ -133,7 +133,7 @@ export function previewHex(accent: Accent): string {
 
 /**
  * Render the accent as the literal hex it produces on screen for a given
- * theme — used to pre-fill the native color input so it tracks the live state.
+ * theme - used to pre-fill the native color input so it tracks the live state.
  */
 export function accentToRenderedHex(accent: Accent | null, isDark: boolean): string {
     if (accent === null) {

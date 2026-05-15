@@ -102,7 +102,7 @@ export function MetricRow({ label, value, pct, color }: IMetricRowProps) {
         <div className="space-y-2">
             <div className="flex items-center justify-between">
                 <span className={KICKER_TEXT}>{label}</span>
-                <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">{value}</span>
+                <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{value}</span>
             </div>
             <Bar color={color} pct={pct} />
         </div>

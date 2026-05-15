@@ -29,7 +29,7 @@ export function CollectionCard({ totalOwned, totalAvailable, collectionPercentag
                             >
                                 {totalOwned}
                             </span>
-                            <span className="font-mono text-lg font-medium tabular-nums text-muted-foreground/50">/ {totalAvailable}</span>
+                            <span className="font-medium font-mono text-lg text-muted-foreground/50 tabular-nums">/ {totalAvailable}</span>
                         </div>
                         <span className={KICKER_TEXT}>operators collected</span>
                     </div>

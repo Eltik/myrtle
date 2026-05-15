@@ -173,7 +173,7 @@ export function Randomizer(): React.ReactElement {
 
     return (
         <div className="relative z-1 mx-auto w-[min(1320px,calc(100%-2rem))] py-5 pb-20">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] leading-none text-muted-foreground">
+            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                 <span>Tools</span>
                 <ChevronRight className="size-2.5" />
                 <span className="text-foreground">Randomizer</span>
