@@ -74,7 +74,7 @@ export function OfficialTierLists(): React.ReactElement {
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
                 <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
-                    <div className="min-w-70 max-w-90 flex-1">
+                    <div className="w-full min-w-0 max-w-90 sm:min-w-70 sm:flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -82,7 +82,7 @@ export function OfficialTierLists(): React.ReactElement {
                             <Input placeholder="Search by title or slug…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-0.75">
+                    <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
                         {(["all", "active", "draft"] as const).map((s) => (
                             <button
                                 key={s}
@@ -105,22 +105,24 @@ export function OfficialTierLists(): React.ReactElement {
                 ) : filtered.length === 0 ? (
                     <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No official tier lists yet - create one.</div>
                 ) : (
-                    <table className="w-full border-collapse text-[13px]">
-                        <thead>
-                            <tr>
-                                {["Title", "Flair", "Trending", "Tiers", "Placements", "Updated", "Views (24h)", ""].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
-                                        {h}
-                                    </th>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-205 border-collapse text-[13px]">
+                            <thead>
+                                <tr>
+                                    {["Title", "Flair", "Trending", "Tiers", "Placements", "Updated", "Views (24h)", ""].map((h) => (
+                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
+                                            {h}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filtered.map((l) => (
+                                    <OfficialRow key={l.slug} list={l} onSetFlair={() => setShowFlair(l)} onDelete={() => setShowDelete(l)} onPublish={() => setShowPublish(l)} />
                                 ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((l) => (
-                                <OfficialRow key={l.slug} list={l} onSetFlair={() => setShowFlair(l)} onDelete={() => setShowDelete(l)} onPublish={() => setShowPublish(l)} />
-                            ))}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 

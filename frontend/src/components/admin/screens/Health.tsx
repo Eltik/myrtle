@@ -28,7 +28,16 @@ export function Health(): React.ReactElement {
                     </>
                 }
                 action={
-                    <Button variant="outline" size="sm" loading={healthQuery.isFetching} onClick={() => healthQuery.refetch()}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        loading={healthQuery.isFetching || statsQuery.isFetching}
+                        disabled={healthQuery.isFetching || statsQuery.isFetching}
+                        onClick={() => {
+                            void healthQuery.refetch();
+                            void statsQuery.refetch();
+                        }}
+                    >
                         <RefreshCwIcon />
                         Re-probe
                     </Button>
@@ -38,7 +47,7 @@ export function Health(): React.ReactElement {
             {healthQuery.isPending ? (
                 <Skeleton className="mb-4 h-32" />
             ) : (
-                <div className="mb-4 grid grid-cols-3 gap-3.5">
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5">
                     <Card>
                         <CardContent className="p-4.5">
                             <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Postgres</div>

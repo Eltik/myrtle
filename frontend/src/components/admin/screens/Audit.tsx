@@ -134,7 +134,7 @@ export function Audit(): React.ReactElement {
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
                 <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
-                    <div className="min-w-70 max-w-90 flex-1">
+                    <div className="w-full min-w-0 max-w-90 sm:min-w-70 sm:flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -142,7 +142,7 @@ export function Audit(): React.ReactElement {
                             <Input placeholder="Filter by actor UID, action, target, detail…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="inline-flex gap-px rounded-[9px] border border-border bg-card p-0.75">
+                    <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
                         {(["all", "operator-notes", "info", "warning"] as const).map((f) => (
                             <button key={f} type="button" onClick={() => setFilter(f)} className={cn("inline-flex h-6.5 cursor-pointer items-center rounded-md px-3 font-medium text-[12.5px] transition-colors", filter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}>
                                 {f === "all" ? "All" : f === "operator-notes" ? "Operator notes" : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -161,39 +161,41 @@ export function Audit(): React.ReactElement {
                 ) : filtered.length === 0 ? (
                     <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No audit rows yet.</div>
                 ) : (
-                    <table className="w-full border-collapse text-[13px]">
-                        <thead>
-                            <tr>
-                                {["When", "Actor", "Action", "Target", "Detail", "Severity"].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.slice(0, 200).map((r, i) => (
-                                <tr
-                                    // biome-ignore lint/suspicious/noArrayIndexKey: audit rows are positional within the merged stream
-                                    key={i}
-                                    className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]"
-                                >
-                                    <td className="px-3.5 py-2.5 text-muted-foreground">{formatRelative(r.when)}</td>
-                                    <td className="px-3.5 py-2.5">
-                                        <ActorCell uid={r.actor} />
-                                    </td>
-                                    <td className="px-3.5 py-2.5">
-                                        <span className="font-mono text-[12.5px]">{r.action}</span>
-                                    </td>
-                                    <td className="px-3.5 py-2.5">
-                                        <OperatorTargetCell operatorId={r.target} />
-                                    </td>
-                                    <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{r.detail}</td>
-                                    <td className="px-3.5 py-2.5">{severityBadge(r.severity)}</td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-190 border-collapse text-[13px]">
+                            <thead>
+                                <tr>
+                                    {["When", "Actor", "Action", "Target", "Detail", "Severity"].map((h) => (
+                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
+                                            {h}
+                                        </th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filtered.slice(0, 200).map((r, i) => (
+                                    <tr
+                                        // biome-ignore lint/suspicious/noArrayIndexKey: audit rows are positional within the merged stream
+                                        key={i}
+                                        className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]"
+                                    >
+                                        <td className="px-3.5 py-2.5 text-muted-foreground">{formatRelative(r.when)}</td>
+                                        <td className="px-3.5 py-2.5">
+                                            <ActorCell uid={r.actor} />
+                                        </td>
+                                        <td className="px-3.5 py-2.5">
+                                            <span className="font-mono text-[12.5px]">{r.action}</span>
+                                        </td>
+                                        <td className="px-3.5 py-2.5">
+                                            <OperatorTargetCell operatorId={r.target} />
+                                        </td>
+                                        <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{r.detail}</td>
+                                        <td className="px-3.5 py-2.5">{severityBadge(r.severity)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </>

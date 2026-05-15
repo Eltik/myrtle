@@ -80,7 +80,7 @@ export function Users(): React.ReactElement {
 
             <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
                 <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
-                    <div className="min-w-70 max-w-90 flex-1">
+                    <div className="w-full min-w-0 max-w-90 sm:min-w-70 sm:flex-1">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
@@ -113,43 +113,45 @@ export function Users(): React.ReactElement {
                 ) : filtered.length === 0 ? (
                     <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">{server !== "all" ? <>No public profiles on the {server} server yet.</> : "No users match."}</div>
                 ) : (
-                    <table className="w-full border-collapse text-[13px]">
-                        <thead>
-                            <tr>
-                                {["Doctor", "Server", "Level", "Score", "Grade", "Role", ""].map((h) => (
-                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
-                                        {h}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((u) => (
-                                <tr key={u.uid} onClick={() => setOpened(u)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setOpened(u)} className="cursor-pointer border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
-                                    <td className="px-3.5 py-2.5">
-                                        <span className="mr-2 inline-block align-[-6px]">
-                                            <UserAvatar user={u} />
-                                        </span>
-                                        <span className="font-medium">{u.nickname ?? "-"}</span>
-                                        <span className="font-medium font-mono text-[11.5px] text-muted-foreground"> · UID&nbsp;{u.uid}</span>
-                                    </td>
-                                    <td className="px-3.5 py-2.5 font-mono">{u.server.toUpperCase()}</td>
-                                    <td className="px-3.5 py-2.5 tabular-nums">{u.level ?? "-"}</td>
-                                    <td className="px-3.5 py-2.5 tabular-nums">{u.total_score?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "-"}</td>
-                                    <td className="px-3.5 py-2.5">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">-</span>}</td>
-                                    <td className="px-3.5 py-2.5">
-                                        <span className="font-mono text-[12px] text-muted-foreground">{u.role}</span>
-                                    </td>
-                                    <td className="px-3.5 py-2.5">
-                                        <Button variant="ghost" size="xs" render={<Link to="/user/$id" params={{ id: u.uid }} target="_blank" onClick={(e) => e.stopPropagation()} />}>
-                                            <ExternalLinkIcon />
-                                            Open
-                                        </Button>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-160 border-collapse text-[13px]">
+                            <thead>
+                                <tr>
+                                    {["Doctor", "Server", "Level", "Score", "Grade", "Role", ""].map((h) => (
+                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
+                                            {h}
+                                        </th>
+                                    ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filtered.map((u) => (
+                                    <tr key={u.uid} onClick={() => setOpened(u)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setOpened(u)} className="cursor-pointer border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
+                                        <td className="px-3.5 py-2.5">
+                                            <span className="mr-2 inline-block align-[-6px]">
+                                                <UserAvatar user={u} />
+                                            </span>
+                                            <span className="font-medium">{u.nickname ?? "-"}</span>
+                                            <span className="font-medium font-mono text-[11.5px] text-muted-foreground"> · UID&nbsp;{u.uid}</span>
+                                        </td>
+                                        <td className="px-3.5 py-2.5 font-mono">{u.server.toUpperCase()}</td>
+                                        <td className="px-3.5 py-2.5 tabular-nums">{u.level ?? "-"}</td>
+                                        <td className="px-3.5 py-2.5 tabular-nums">{u.total_score?.toLocaleString(undefined, { maximumFractionDigits: 2 }) ?? "-"}</td>
+                                        <td className="px-3.5 py-2.5">{u.grade ? <Badge variant="outline">{u.grade}</Badge> : <span className="text-muted-foreground">-</span>}</td>
+                                        <td className="px-3.5 py-2.5">
+                                            <span className="font-mono text-[12px] text-muted-foreground">{u.role}</span>
+                                        </td>
+                                        <td className="px-3.5 py-2.5">
+                                            <Button variant="ghost" size="xs" render={<Link to="/user/$id" params={{ id: u.uid }} target="_blank" onClick={(e) => e.stopPropagation()} />}>
+                                                <ExternalLinkIcon />
+                                                Open
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 

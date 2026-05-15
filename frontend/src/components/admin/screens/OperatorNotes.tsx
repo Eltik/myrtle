@@ -1,17 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ActivityIcon, CheckIcon, EditIcon, SearchIcon } from "lucide-react";
+import { ActivityIcon, ArrowUpDownIcon, CheckIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { toastManager } from "#/components/ui/toast";
 import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, updateOperatorNoteFn } from "#/lib/api/admin";
-import { type IOperatorNote, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
+import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { cn } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
 import { MonoSection, RARITY_BG } from "../Primitives";
@@ -22,11 +24,22 @@ interface INoteCombined {
     note: IOperatorNote | null;
 }
 
+type StatusFilter = "all" | "has-content" | "empty";
+type SortMode = "recent" | "name" | "rarity";
+
+const SORT_LABELS: Record<SortMode, string> = {
+    recent: "Recently updated",
+    name: "Name (A→Z)",
+    rarity: "Rarity (high→low)",
+};
+
 export function OperatorNotes(): React.ReactElement {
     const opsQuery = useQuery(operatorsIndexQueryOptions());
     const notesQuery = useQuery(operatorNotesListQueryOptions());
     const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [sortMode, setSortMode] = useState<SortMode>("recent");
 
     const combined: INoteCombined[] = useMemo(() => {
         const notes = notesQuery.data ?? [];
@@ -38,11 +51,29 @@ export function OperatorNotes(): React.ReactElement {
                 const op = opMap.get(n.operator_id);
                 if (!op) throw new Error("unreachable");
                 return { operatorId: n.operator_id, op, note: n };
-            })
-            .sort((a, b) => Date.parse(b.note?.updated_at ?? "0") - Date.parse(a.note?.updated_at ?? "0"));
+            });
     }, [notesQuery.data, opsQuery.data]);
 
-    const filtered = useMemo(() => combined.filter((c) => !search || c.op.name.toLowerCase().includes(search.toLowerCase()) || c.operatorId.toLowerCase().includes(search.toLowerCase())), [combined, search]);
+    const counts = useMemo(() => {
+        let withContent = 0;
+        for (const c of combined) if (c.note && noteHasContent(c.note)) withContent++;
+        return { all: combined.length, withContent, empty: combined.length - withContent };
+    }, [combined]);
+
+    const filtered = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        const rows = combined.filter((c) => {
+            if (statusFilter === "has-content" && !(c.note && noteHasContent(c.note))) return false;
+            if (statusFilter === "empty" && c.note && noteHasContent(c.note)) return false;
+            if (!q) return true;
+            return c.op.name.toLowerCase().includes(q) || c.operatorId.toLowerCase().includes(q) || (c.note?.summary ?? "").toLowerCase().includes(q) || (c.note?.tags ?? []).some((t) => t.toLowerCase().includes(q));
+        });
+        const sorted = [...rows];
+        if (sortMode === "recent") sorted.sort((a, b) => Date.parse(b.note?.updated_at ?? "0") - Date.parse(a.note?.updated_at ?? "0"));
+        else if (sortMode === "name") sorted.sort((a, b) => a.op.name.localeCompare(b.op.name));
+        else if (sortMode === "rarity") sorted.sort((a, b) => b.op.rarity - a.op.rarity || a.op.name.localeCompare(b.op.name));
+        return sorted;
+    }, [combined, search, statusFilter, sortMode]);
 
     return (
         <>
@@ -60,73 +91,141 @@ export function OperatorNotes(): React.ReactElement {
                 <NoteEditor operatorId={editingId} onClose={() => setEditingId(null)} />
             ) : (
                 <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-                    <div className="flex items-center gap-2.5 border-border border-b p-3.5">
-                        <div className="min-w-70 max-w-95 flex-1">
+                    <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
+                        <div className="w-full min-w-0 max-w-95 sm:min-w-70 sm:flex-1">
                             <InputGroup>
                                 <InputGroupAddon>
                                     <SearchIcon />
                                 </InputGroupAddon>
-                                <Input placeholder="Search by operator name or char_id…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+                                <Input placeholder="Search name, char_id, summary, or tag…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                             </InputGroup>
                         </div>
+                        <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
+                            {(
+                                [
+                                    { value: "all", label: `All · ${counts.all}` },
+                                    { value: "has-content", label: `Has content · ${counts.withContent}` },
+                                    { value: "empty", label: `Empty · ${counts.empty}` },
+                                ] as { value: StatusFilter; label: string }[]
+                            ).map((it) => (
+                                <button
+                                    key={it.value}
+                                    type="button"
+                                    onClick={() => setStatusFilter(it.value)}
+                                    className={cn("inline-flex h-6.5 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-md px-3 font-medium text-[12.5px] transition-colors", statusFilter === it.value ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
+                                >
+                                    {it.label}
+                                </button>
+                            ))}
+                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={(triggerProps) => (
+                                    <button {...triggerProps} type="button" className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[12.5px] text-foreground hover:bg-accent">
+                                        <ArrowUpDownIcon className="size-3.5 opacity-70" strokeWidth={1.9} />
+                                        <span>{SORT_LABELS[sortMode]}</span>
+                                    </button>
+                                )}
+                            />
+                            <DropdownMenuContent align="end" className="w-48">
+                                {(Object.keys(SORT_LABELS) as SortMode[]).map((m) => (
+                                    <DropdownMenuItem key={m} className="cursor-pointer" onClick={() => setSortMode(m)}>
+                                        {sortMode === m ? <CheckIcon className="mr-2 h-4 w-4 text-primary" /> : <span className="mr-2 inline-block h-4 w-4" />}
+                                        {SORT_LABELS[m]}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <div className="flex-1" />
-                        <span className="text-[12px] text-muted-foreground">
-                            {filtered.length} note{filtered.length === 1 ? "" : "s"}
+                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
+                            {filtered.length} of {counts.all}
                         </span>
                     </div>
                     {notesQuery.isPending || opsQuery.isPending ? (
                         <div className="space-y-2 p-4">
-                            <Skeleton className="h-12" />
-                            <Skeleton className="h-12" />
-                            <Skeleton className="h-12" />
+                            <Skeleton className="h-14" />
+                            <Skeleton className="h-14" />
+                            <Skeleton className="h-14" />
                         </div>
                     ) : filtered.length === 0 ? (
-                        <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No operator notes yet.</div>
+                        <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">
+                            {search || statusFilter !== "all" ? (
+                                <>
+                                    No notes match these filters.{" "}
+                                    <button
+                                        type="button"
+                                        className="cursor-pointer text-foreground underline underline-offset-2 hover:text-primary"
+                                        onClick={() => {
+                                            setSearch("");
+                                            setStatusFilter("all");
+                                        }}
+                                    >
+                                        Reset
+                                    </button>
+                                </>
+                            ) : (
+                                "No operator notes yet."
+                            )}
+                        </div>
                     ) : (
-                        <table className="w-full border-collapse text-[13px]">
-                            <thead>
-                                <tr>
-                                    {["Operator", "Branch", "Status", "Updated", "Tags", ""].map((h) => (
-                                        <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
-                                            {h}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filtered.map(({ operatorId, op, note }) => (
-                                    <tr key={operatorId} onClick={() => setEditingId(operatorId)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setEditingId(operatorId)} className="cursor-pointer border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
-                                        <td className="px-3.5 py-2.5">
-                                            <span
-                                                className="mr-2 inline-flex size-7 items-center justify-center overflow-hidden rounded-md align-[-8px] font-semibold text-[10px]"
-                                                style={{
-                                                    background: RARITY_BG[op.rarity] ?? RARITY_BG[6],
-                                                    boxShadow: "inset 0 1px 0 oklch(1 0 0 / 0.25), inset 0 -1px 0 oklch(0 0 0 / 0.25)",
-                                                }}
-                                            >
-                                                <OperatorAvatar charId={operatorId} name={op.name} />
-                                            </span>
-                                            <span className="font-medium">{op.name}</span>
-                                            <span className="font-mono text-[11.5px] text-muted-foreground"> · {operatorId}</span>
-                                        </td>
-                                        <td className="px-3.5 py-2.5 text-muted-foreground">{op.subProfessionId}</td>
-                                        <td className="px-3.5 py-2.5">{note?.summary || note?.notes ? <Badge variant="success">has content</Badge> : <Badge variant="outline">empty</Badge>}</td>
-                                        <td className="px-3.5 py-2.5 text-muted-foreground">{note?.updated_at ? formatRelative(note.updated_at) : "-"}</td>
-                                        <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{(note?.tags ?? []).slice(0, 3).join(", ") || "-"}</td>
-                                        <td className="px-3.5 py-2.5">
-                                            <Button variant="ghost" size="xs">
-                                                <EditIcon />
-                                                Edit
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <ul className="divide-y divide-border">
+                            {filtered.map(({ operatorId, op, note }) => (
+                                <li key={operatorId}>
+                                    <NoteRow op={op} note={note} onOpen={() => setEditingId(operatorId)} />
+                                </li>
+                            ))}
+                        </ul>
                     )}
                 </div>
             )}
         </>
+    );
+}
+
+function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperatorNote | null; onOpen: () => void }): React.ReactElement {
+    const hasContent = note ? noteHasContent(note) : false;
+    const tags = note?.tags ?? [];
+    const summary = note?.summary?.trim() || note?.notes?.trim().split("\n")[0] || null;
+    return (
+        <button type="button" onClick={onOpen} className="group flex w-full min-w-0 cursor-pointer items-start gap-3 px-3.5 py-3 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)] sm:px-4 sm:py-3.5">
+            <span
+                className="relative mt-0.5 inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md font-semibold text-[10px] sm:size-10"
+                style={{
+                    background: RARITY_BG[op.rarity] ?? RARITY_BG[6],
+                    boxShadow: "inset 0 1px 0 oklch(1 0 0 / 0.25), inset 0 -1px 0 oklch(0 0 0 / 0.25)",
+                }}
+            >
+                <OperatorAvatar charId={op.id} name={op.name} />
+                <span aria-hidden className={cn("absolute right-0 bottom-0 left-0 h-0.5", hasContent ? "bg-success" : "bg-transparent")} />
+            </span>
+
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="truncate font-medium text-[14px] text-foreground">{op.name}</span>
+                    <span className="truncate font-mono text-[11px] text-muted-foreground">{op.id}</span>
+                    <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {op.subProfessionId}</span>
+                </div>
+
+                {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">No summary yet — click to add one.</p>}
+
+                {tags.length > 0 ? (
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                        {tags.slice(0, 4).map((t) => (
+                            <span key={t} className="inline-flex h-4.5 items-center rounded-sm border border-border bg-muted px-1.5 font-mono text-[10.5px] text-muted-foreground leading-none">
+                                {t}
+                            </span>
+                        ))}
+                        {tags.length > 4 ? <span className="font-mono text-[10.5px] text-muted-foreground">+{tags.length - 4}</span> : null}
+                    </div>
+                ) : null}
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-1.5 self-stretch">
+                {hasContent ? <Badge variant="success">filled</Badge> : <Badge variant="outline">empty</Badge>}
+                {note?.updated_at ? <span className="whitespace-nowrap font-mono text-[10.5px] text-muted-foreground">{formatRelative(note.updated_at)}</span> : null}
+                <ChevronRightIcon className="mt-auto hidden size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 sm:block" strokeWidth={1.9} />
+            </div>
+        </button>
     );
 }
 
@@ -242,8 +341,8 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         </div>
                     </CardAction>
                 </CardHeader>
-                <div className="grid grid-cols-2 border-border border-t">
-                    <div className="border-border border-r p-4">
+                <div className="grid grid-cols-1 border-border border-t lg:grid-cols-2">
+                    <div className="border-border border-b p-4 lg:border-r lg:border-b-0">
                         <Field label="Summary" hint="One-line synopsis for the operator card.">
                             <Input size="sm" value={summary} onChange={(e) => setSummary(e.target.value)} />
                         </Field>
@@ -268,7 +367,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                             <MonoSection>Preview</MonoSection>
                             {dirty ? <Badge variant="warning">unsaved changes</Badge> : <Badge variant="outline">saved</Badge>}
                         </div>
-                        <div className="h-160 overflow-auto p-4 font-sans text-[13px] leading-[1.6]">
+                        <div className="max-h-[60vh] overflow-auto p-4 font-sans text-[13px] leading-[1.6] lg:h-160 lg:max-h-none">
                             {summary ? <p className="mb-3 font-medium">{summary}</p> : null}
                             {pros ? (
                                 <>
