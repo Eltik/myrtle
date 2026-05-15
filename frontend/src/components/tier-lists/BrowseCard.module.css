@@ -235,10 +235,6 @@
     fill: currentColor;
     flex-shrink: 0;
 }
-.cornerBadgeFlair {
-    box-shadow: 0 1px 4px oklch(0 0 0 / 0.25);
-}
-
 @media (prefers-reduced-motion: reduce) {
     .card {
         transition: none;

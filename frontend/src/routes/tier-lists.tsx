@@ -1,7 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { Browse } from "#/components/tier-lists/Browse";
 import { SORT_OPTIONS, type TierListSort, type TierListType } from "#/components/tier-lists/FilterToolbar";
-import { browseTierListsQueryOptions } from "#/lib/api/tier-lists";
+import { browseTierListsQueryOptions, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -32,7 +32,9 @@ function parseFlair(input: unknown): string[] {
 
 export const Route = createFileRoute("/tier-lists")({
     component: RouteComponent,
-    loader: ({ context }) => context.queryClient.ensureQueryData(browseTierListsQueryOptions()),
+    loader: async ({ context }) => {
+        await Promise.all([context.queryClient.ensureQueryData(browseTierListsQueryOptions()), context.queryClient.ensureQueryData(tierListFlairsQueryOptions())]);
+    },
     validateSearch: (search: Record<string, unknown>): ITierListsSearch => {
         const typeRaw = typeof search.type === "string" ? (search.type as TierListType) : "all";
         const type: TierListType = VALID_TYPES.has(typeRaw) ? typeRaw : "all";

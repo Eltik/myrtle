@@ -1,6 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { useEffect } from "react";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
@@ -54,6 +54,29 @@ function RootComponent() {
     return <Outlet />;
 }
 
+function SiteChrome({ children }: { children: React.ReactNode }) {
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const isAdmin = pathname.startsWith("/admin");
+
+    if (isAdmin) {
+        return (
+            <ToastProvider>
+                <AnchoredToastProvider>{children}</AnchoredToastProvider>
+            </ToastProvider>
+        );
+    }
+
+    return (
+        <>
+            <Header />
+            <ToastProvider>
+                <AnchoredToastProvider>{children}</AnchoredToastProvider>
+            </ToastProvider>
+            <Footer />
+        </>
+    );
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
@@ -65,11 +88,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <body className="font-sans antialiased wrap-anywhere selection:bg-primary">
                 <RouterProgress />
                 <CommandProvider>
-                    <Header />
-                    <ToastProvider>
-                        <AnchoredToastProvider>{children}</AnchoredToastProvider>
-                    </ToastProvider>
-                    <Footer />
+                    <SiteChrome>{children}</SiteChrome>
                 </CommandProvider>
                 <TanStackDevtools
                     config={{
