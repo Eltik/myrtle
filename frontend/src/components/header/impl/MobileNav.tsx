@@ -59,12 +59,7 @@ export function MobileNav({ items }: IMobileNavProps) {
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">
                 <DrawerHeader>
                     <DrawerTitle className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-linear-to-br from-primary to-(--lagoon)">
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-white" fill="currentColor">
-                                <title>myrtle.moe logo icon</title>
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
-                        </span>
+                        <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         myrtle.moe
                     </DrawerTitle>
                 </DrawerHeader>
