@@ -16,14 +16,16 @@ function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string
     const profile = useQuery({ ...userQueryOptions(uid), retry: 0 });
     const u = profile.data;
     return (
-        <span className="flex items-center gap-2">
-            <span className="relative inline-block size-5.5 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
+        <span className="flex min-w-0 items-center gap-2">
+            <span className="relative inline-block size-6 shrink-0 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
                 {u ? <img src={getSecretaryAvatarURL({ secretary: u.secretary, secretary_skin_id: u.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             </span>
-            <Link to="/user/$id" params={{ id: uid }} className="font-medium hover:underline">
-                {u?.nickname ?? fallbackName}
-            </Link>
-            <span className="font-mono text-[11.5px] text-muted-foreground">UID {uid}</span>
+            <span className="flex min-w-0 flex-col leading-tight">
+                <Link to="/user/$id" params={{ id: uid }} className="truncate font-medium hover:underline">
+                    {u?.nickname ?? fallbackName}
+                </Link>
+                <span className="truncate font-mono text-[11px] text-muted-foreground">UID {uid}</span>
+            </span>
         </span>
     );
 }
@@ -71,7 +73,16 @@ export function Dashboard(): React.ReactElement {
                 }
                 action={
                     <>
-                        <Button variant="outline" size="sm" onClick={() => statsQuery.refetch()} disabled={statsQuery.isFetching} loading={statsQuery.isFetching}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                void statsQuery.refetch();
+                                void healthQuery.refetch();
+                            }}
+                            disabled={statsQuery.isFetching || healthQuery.isFetching}
+                            loading={statsQuery.isFetching || healthQuery.isFetching}
+                        >
                             <RefreshCwIcon />
                             Refresh
                         </Button>
@@ -96,7 +107,7 @@ export function Dashboard(): React.ReactElement {
                 </div>
             ) : null}
 
-            <section className="mb-4 grid grid-cols-4 gap-3.5">
+            <section className="mb-4 grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-4">
                 {statsQuery.isPending ? (
                     <>
                         <Skeleton className="h-31 rounded-2xl" />
@@ -114,8 +125,8 @@ export function Dashboard(): React.ReactElement {
                 )}
             </section>
 
-            <div className="grid grid-cols-1 gap-4.5 lg:grid-cols-[1fr_320px]">
-                <div className="grid gap-4">
+            <div className="grid min-w-0 grid-cols-1 gap-4.5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="grid min-w-0 gap-4">
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm">Roles breakdown</CardTitle>
@@ -155,28 +166,30 @@ export function Dashboard(): React.ReactElement {
                             {statsQuery.isPending ? (
                                 <Skeleton className="h-40 w-full" />
                             ) : stats && stats.recentUsers.length > 0 ? (
-                                <table className="w-full border-collapse text-[13px]">
-                                    <thead>
-                                        <tr className="border-border border-b">
-                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Doctor</th>
-                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Server</th>
-                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Level</th>
-                                            <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Joined</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {stats.recentUsers.slice(0, 6).map((u) => (
-                                            <tr key={u.uid} className="border-border border-b last:border-0">
-                                                <td className="px-2 py-2">
-                                                    <DashUserCell uid={u.uid} fallbackName={u.nickname ?? "-"} />
-                                                </td>
-                                                <td className="px-2 py-2 font-mono">{serverIdToCode(u.serverId)}</td>
-                                                <td className="px-2 py-2 tabular-nums">{u.level ?? "-"}</td>
-                                                <td className="px-2 py-2 text-muted-foreground">{formatRelative(u.createdAt)}</td>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border-collapse text-[13px]">
+                                        <thead>
+                                            <tr className="border-border border-b">
+                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Doctor</th>
+                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Server</th>
+                                                <th className="hidden px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em] sm:table-cell">Level</th>
+                                                <th className="px-2 py-2 text-right font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Joined</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {stats.recentUsers.slice(0, 6).map((u) => (
+                                                <tr key={u.uid} className="border-border border-b last:border-0">
+                                                    <td className="min-w-0 max-w-0 px-2 py-2">
+                                                        <DashUserCell uid={u.uid} fallbackName={u.nickname ?? "-"} />
+                                                    </td>
+                                                    <td className="px-2 py-2 font-mono text-muted-foreground">{serverIdToCode(u.serverId)}</td>
+                                                    <td className="hidden px-2 py-2 tabular-nums sm:table-cell">{u.level ?? "-"}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2 text-right text-muted-foreground tabular-nums">{formatRelative(u.createdAt)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             ) : (
                                 <div className="px-1 py-6 text-center text-[13px] text-muted-foreground">No recent signups.</div>
                             )}
@@ -196,30 +209,32 @@ export function Dashboard(): React.ReactElement {
                                 <Skeleton className="h-24 w-full" />
                             ) : health ? (
                                 <>
-                                    <div className="flex items-center justify-between pb-2">
-                                        <span className="text-muted-foreground">Postgres</span>
+                                    <div className="flex items-center justify-between gap-3 pb-2 text-[12.5px]">
+                                        <span className="truncate text-muted-foreground">Postgres</span>
                                         <StatusDot state={health.database.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono">{health.database.responseTimeMs} ms</span>
+                                            <span className="font-mono tabular-nums">{health.database.responseTimeMs} ms</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
-                                    <div className="flex items-center justify-between py-2">
-                                        <span className="text-muted-foreground">Cache · {health.cache.backend}</span>
+                                    <div className="flex items-center justify-between gap-3 py-2 text-[12.5px]">
+                                        <span className="min-w-0 truncate text-muted-foreground">
+                                            Cache · <span className="text-foreground/70">{health.cache.backend}</span>
+                                        </span>
                                         <StatusDot state={health.cache.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono">{health.cache.responseTimeMs} ms</span>
+                                            <span className="font-mono tabular-nums">{health.cache.responseTimeMs} ms</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
-                                    <div className="flex items-center justify-between py-2">
-                                        <span className="text-muted-foreground">Game data</span>
+                                    <div className="flex items-center justify-between gap-3 py-2 text-[12.5px]">
+                                        <span className="truncate text-muted-foreground">Game data</span>
                                         <StatusDot state="green">
-                                            <span className="font-mono">{totalOperators} operators</span>
+                                            <span className="font-mono tabular-nums">{totalOperators.toLocaleString()} ops</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
-                                    <div className="flex items-center justify-between pt-2">
-                                        <span className="text-muted-foreground">Round-trip</span>
-                                        <span className="font-mono text-[12px]">{health.responseTimeMs} ms</span>
+                                    <div className="flex items-center justify-between gap-3 pt-2 text-[12.5px]">
+                                        <span className="truncate text-muted-foreground">Round-trip</span>
+                                        <span className="font-mono text-[12px] tabular-nums">{health.responseTimeMs} ms</span>
                                     </div>
                                 </>
                             ) : (
@@ -234,12 +249,11 @@ export function Dashboard(): React.ReactElement {
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2.5">
-                                <span className="block size-8.5 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
-                                <div className="flex min-w-0 flex-1 flex-col">
+                                <span className="block size-8.5 shrink-0 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                     <span className="truncate font-medium text-[13px]">{user?.nickname ?? "-"}</span>
-                                    <span className="font-mono text-[11.5px] text-muted-foreground">
-                                        UID {user?.uid ?? "-"} · {user?.role ?? "-"}
-                                    </span>
+                                    <span className="truncate font-mono text-[11.5px] text-muted-foreground">UID {user?.uid ?? "-"}</span>
+                                    <span className="truncate font-mono text-[11px] text-muted-foreground/80">{user?.role ?? "-"}</span>
                                 </div>
                             </div>
                         </CardContent>

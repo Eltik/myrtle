@@ -1,5 +1,7 @@
-import { BellIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
+import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon } from "lucide-react";
 import { Fragment } from "react";
+import { useIsMac } from "#/hooks/use-is-mac";
+import { useCommand } from "#/lib/command-context";
 
 function GithubMark(): React.ReactElement {
     return (
@@ -13,32 +15,46 @@ function GithubMark(): React.ReactElement {
 
 interface IAdminTopBarProps {
     crumbs: string[];
+    onOpenSidebar: () => void;
 }
 
-export function AdminTopBar({ crumbs }: IAdminTopBarProps): React.ReactElement {
+export function AdminTopBar({ crumbs, onOpenSidebar }: IAdminTopBarProps): React.ReactElement {
+    const { open: openCmd } = useCommand();
+    const isMac = useIsMac();
+    const modKey = isMac ? "⌘" : "Ctrl";
+
     return (
-        <div className="sticky top-0 z-40 border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
-            <div className="flex h-14 items-center gap-3.5 px-6">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-medium text-[13px] text-muted-foreground">
+        <div className="sticky top-0 z-30 border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">
+            <div className="flex h-14 items-center gap-2 px-3 sm:gap-3.5 sm:px-4 lg:px-6">
+                <button type="button" aria-label="Open menu" onClick={onOpenSidebar} className="-ml-1 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-transparent text-foreground hover:bg-accent lg:hidden">
+                    <MenuIcon className="size-4.5 opacity-85" strokeWidth={1.9} />
+                </button>
+
+                <div className="hidden min-w-0 flex-1 items-center gap-1.5 font-medium text-[13px] text-muted-foreground sm:flex">
                     {crumbs.map((c, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: breadcrumb segments are positional
                         <Fragment key={i}>
-                            <span className={i === crumbs.length - 1 ? "text-foreground" : ""}>{c}</span>
-                            {i < crumbs.length - 1 ? <ChevronRightIcon className="size-3 opacity-50" strokeWidth={1.9} /> : null}
+                            <span className={i === crumbs.length - 1 ? "truncate text-foreground" : "hidden truncate md:inline"}>{c}</span>
+                            {i < crumbs.length - 1 ? <ChevronRightIcon className="hidden size-3 shrink-0 opacity-50 md:inline" strokeWidth={1.9} /> : null}
                         </Fragment>
                     ))}
                 </div>
-                <button type="button" className="inline-flex h-7.5 min-w-70 cursor-pointer items-center gap-2 rounded-lg border border-input bg-card px-2.5 font-normal text-[13px] text-muted-foreground hover:bg-accent">
+
+                {/* Mobile breadcrumb: show only current page */}
+                <span className="min-w-0 flex-1 truncate font-medium text-[13.5px] text-foreground sm:hidden">{crumbs[crumbs.length - 1] ?? ""}</span>
+
+                <button type="button" onClick={openCmd} aria-label="Open search" className="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-input bg-card px-2 font-normal text-[13px] text-muted-foreground hover:bg-accent sm:h-7.5 sm:gap-2 sm:px-2.5 md:min-w-60 lg:min-w-70">
                     <SearchIcon className="size-3.5" strokeWidth={1.9} />
-                    <span className="flex-1 text-left">Search users, tier lists, operators…</span>
-                    <span className="inline-flex h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground">⌘</span>
-                    <span className="inline-flex h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground">K</span>
+                    <span className="hidden flex-1 text-left sm:inline">Search users, tier lists, operators…</span>
+                    <span className="hidden h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground sm:inline-flex">{modKey}</span>
+                    <span className="hidden h-4.25 items-center rounded border border-border border-b-[1.5px] bg-card px-1 font-medium font-mono text-[10px] text-muted-foreground sm:inline-flex">K</span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <button type="button" className="inline-flex size-7.5 cursor-pointer items-center justify-center rounded-lg border border-transparent text-foreground hover:bg-accent" aria-label="Notifications">
+
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <button type="button" className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-transparent text-foreground hover:bg-accent sm:size-7.5" aria-label="Notifications">
                         <BellIcon className="size-4 opacity-85" strokeWidth={1.9} />
                     </button>
-                    <a href="https://github.com/Eltik/myrtle" target="_blank" rel="noreferrer" className="inline-flex size-7.5 items-center justify-center rounded-lg border border-transparent text-foreground opacity-85 hover:bg-accent" aria-label="GitHub">
+                    <a href="https://github.com/Eltik/myrtle" target="_blank" rel="noreferrer" className="inline-flex size-8 items-center justify-center rounded-lg border border-transparent text-foreground opacity-85 hover:bg-accent sm:size-7.5" aria-label="GitHub">
                         <GithubMark />
                     </a>
                 </div>

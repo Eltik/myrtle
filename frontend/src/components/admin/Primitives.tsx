@@ -31,11 +31,11 @@ interface IStatTileProps {
 
 export function StatTile({ label, value, unit, delta, deltaDir = "up", color = "var(--primary)", spark }: IStatTileProps): React.ReactElement {
     return (
-        <div className="relative rounded-2xl border border-border bg-card p-4.5 shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
-            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{label}</div>
-            <div className="mt-2.5 font-bold font-sans text-[26px] tabular-nums leading-none tracking-[-0.02em]">
-                {value}
-                {unit ? <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">{unit}</span> : null}
+        <div className="relative min-w-0 rounded-2xl border border-border bg-card p-3.5 shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] sm:p-4.5 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
+            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-tight tracking-[0.08em]">{label}</div>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-1 font-bold font-sans text-[22px] tabular-nums leading-none tracking-[-0.02em] sm:mt-2.5 sm:text-[26px]">
+                <span className="break-all">{value}</span>
+                {unit ? <span className="font-medium font-mono text-[11px] text-muted-foreground sm:text-[12px]">{unit}</span> : null}
             </div>
             {delta != null ? (
                 <div className={cn("mt-2 inline-flex items-center gap-1 font-medium font-mono text-[11px]", deltaDir === "up" ? "text-emerald-500" : "text-destructive-foreground")}>

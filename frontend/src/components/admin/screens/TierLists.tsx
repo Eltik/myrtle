@@ -118,7 +118,7 @@ export function Permissions(): React.ReactElement {
                 }
             />
 
-            <div className="grid grid-cols-1 gap-4.5 lg:grid-cols-[420px_1fr]">
+            <div className="grid grid-cols-1 gap-4.5 xl:grid-cols-[420px_1fr]">
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-sm">Tier lists</CardTitle>
@@ -277,37 +277,39 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
             ) : perms.length === 0 ? (
                 <CardContent className="border-border border-t py-12 text-center text-[13px] text-muted-foreground">No grants yet - only the owner has access.</CardContent>
             ) : (
-                <table className="w-full border-collapse border-border border-t text-[13px]">
-                    <thead>
-                        <tr>
-                            {["Doctor", "Level", "Granted", "Granted by", ""].map((h) => (
-                                <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
-                                    {h}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {perms.map((p) => (
-                            <tr key={`${p.userId}-${p.permission}`} className="border-border border-b last:border-0">
-                                <td className="px-3.5 py-2.5">
-                                    <PermUserCell userId={p.userId} lookup={lookup} />
-                                </td>
-                                <td className="px-3.5 py-2.5">
-                                    <LevelDots level={p.permission} onChange={(level) => updatePermission.mutate({ slug: list.slug, userId: p.userId, permission: level })} />
-                                </td>
-                                <td className="px-3.5 py-2.5 text-muted-foreground">{new Date(p.grantedAt).toLocaleDateString()}</td>
-                                <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "-"}</td>
-                                <td className="px-3.5 py-2.5">
-                                    <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId })} disabled={revoke.isPending}>
-                                        <Trash2Icon />
-                                        Revoke
-                                    </Button>
-                                </td>
+                <div className="overflow-x-auto border-border border-t">
+                    <table className="w-full min-w-180 border-collapse text-[13px]">
+                        <thead>
+                            <tr>
+                                {["Doctor", "Level", "Granted", "Granted by", ""].map((h) => (
+                                    <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
+                                        {h}
+                                    </th>
+                                ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {perms.map((p) => (
+                                <tr key={`${p.userId}-${p.permission}`} className="border-border border-b last:border-0">
+                                    <td className="px-3.5 py-2.5">
+                                        <PermUserCell userId={p.userId} lookup={lookup} />
+                                    </td>
+                                    <td className="px-3.5 py-2.5">
+                                        <LevelDots level={p.permission} onChange={(level) => updatePermission.mutate({ slug: list.slug, userId: p.userId, permission: level })} />
+                                    </td>
+                                    <td className="px-3.5 py-2.5 text-muted-foreground">{new Date(p.grantedAt).toLocaleDateString()}</td>
+                                    <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "-"}</td>
+                                    <td className="px-3.5 py-2.5">
+                                        <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId })} disabled={revoke.isPending}>
+                                            <Trash2Icon />
+                                            Revoke
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
             <div className="flex items-center justify-between border-border border-t px-3.5 py-3">
                 <span className="text-[12px] text-muted-foreground">Owner has implicit Admin and cannot be revoked.</span>
