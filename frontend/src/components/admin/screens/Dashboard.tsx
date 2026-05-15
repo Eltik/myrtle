@@ -6,7 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
-import { adminStatsQueryOptions, healthQueryOptions } from "#/lib/api/admin";
+import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
 import { userQueryOptions } from "#/lib/api/user";
 import { getSecretaryAvatarURL } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
@@ -212,7 +212,7 @@ export function Dashboard(): React.ReactElement {
                                     <div className="flex items-center justify-between gap-3 pb-2 text-[12.5px]">
                                         <span className="truncate text-muted-foreground">Postgres</span>
                                         <StatusDot state={health.database.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono tabular-nums">{health.database.responseTimeMs} ms</span>
+                                            <span className="font-mono tabular-nums">{formatResponseTimeMs(health.database.responseTimeMs)} ms</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
@@ -221,7 +221,7 @@ export function Dashboard(): React.ReactElement {
                                             Cache · <span className="text-foreground/70">{health.cache.backend}</span>
                                         </span>
                                         <StatusDot state={health.cache.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono tabular-nums">{health.cache.responseTimeMs} ms</span>
+                                            <span className="font-mono tabular-nums">{formatResponseTimeMs(health.cache.responseTimeMs)} ms</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
@@ -234,7 +234,7 @@ export function Dashboard(): React.ReactElement {
                                     <div className="border-border border-t" />
                                     <div className="flex items-center justify-between gap-3 pt-2 text-[12.5px]">
                                         <span className="truncate text-muted-foreground">Round-trip</span>
-                                        <span className="font-mono text-[12px] tabular-nums">{health.responseTimeMs} ms</span>
+                                        <span className="font-mono text-[12px] tabular-nums">{formatResponseTimeMs(health.responseTimeMs)} ms</span>
                                     </div>
                                 </>
                             ) : (

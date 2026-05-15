@@ -41,7 +41,7 @@ pub fn router() -> Router<AppState> {
         .route("/tier-lists/{slug}/permissions", get(permissions::list))
         .route("/tier-lists/{slug}/permissions", post(permissions::grant))
         .route(
-            "/tier-lists/{slug}/permissions/{user_id}",
+            "/tier-lists/{slug}/permissions/{user_id}/{permission}",
             delete(permissions::revoke),
         )
         // Stats & engagement

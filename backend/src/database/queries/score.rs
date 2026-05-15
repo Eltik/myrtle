@@ -54,40 +54,78 @@ fn sort_column(sort_by: &str) -> &'static str {
 /// When `movement_only` is also true, rows whose rank hasn't changed (or which
 /// have no baseline yet) are excluded — count and pagination both reflect the
 /// filtered population, so the caller can paginate normally.
+#[allow(clippy::too_many_arguments)]
 pub async fn get_leaderboard(
     pool: &PgPool,
     server: Option<&str>,
     sort_by: &str,
     movement_interval: Option<&str>,
     movement_only: bool,
+    q: Option<&str>,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<LeaderboardEntry>, sqlx::Error> {
     let sort_col = sort_column(sort_by);
+    let pattern = q.map(|s| format!("%{s}%"));
 
     let Some(interval) = movement_interval else {
-        let query = if server.is_some() {
-            format!(
-                "SELECT * FROM v_leaderboard WHERE server = $1 ORDER BY {sort_col} DESC NULLS LAST LIMIT $2 OFFSET $3"
-            )
+        // Param order: [server], [pattern], limit, offset
+        let mut clauses: Vec<String> = Vec::new();
+        let mut next_idx: usize = 1;
+        let server_idx = if server.is_some() {
+            let i = next_idx;
+            next_idx += 1;
+            clauses.push(format!("server = ${i}"));
+            Some(i)
         } else {
-            format!(
-                "SELECT * FROM v_leaderboard ORDER BY {sort_col} DESC NULLS LAST LIMIT $1 OFFSET $2"
-            )
+            None
         };
-        let mut q = sqlx::query_as::<_, LeaderboardEntry>(&query);
+        let q_idx = if pattern.is_some() {
+            let i = next_idx;
+            next_idx += 1;
+            clauses.push(format!("(nickname ILIKE ${i} OR uid ILIKE ${i})"));
+            Some(i)
+        } else {
+            None
+        };
+        let where_sql = if clauses.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", clauses.join(" AND "))
+        };
+        let limit_idx = next_idx;
+        let offset_idx = next_idx + 1;
+        let query = format!(
+            "SELECT * FROM v_leaderboard {where_sql} ORDER BY {sort_col} DESC NULLS LAST LIMIT ${limit_idx} OFFSET ${offset_idx}"
+        );
+        let mut qry = sqlx::query_as::<_, LeaderboardEntry>(&query);
         if let Some(srv) = server {
-            q = q.bind(srv);
+            let _ = server_idx; // index baked into SQL above
+            qry = qry.bind(srv);
         }
-        return q.bind(limit).bind(offset).fetch_all(pool).await;
+        if let Some(ref p) = pattern {
+            let _ = q_idx;
+            qry = qry.bind(p);
+        }
+        return qry.bind(limit).bind(offset).fetch_all(pool).await;
     };
 
-    // $1 = interval, [$2 = server,] then limit, offset
-    let (server_clause, limit_idx) = match server {
-        Some(_) => ("AND v.server = $2", 3),
-        None => ("", 2),
-    };
-    let offset_idx = limit_idx + 1;
+    // Param order: $1 = interval, [server], [pattern], then limit, offset
+    let mut extra_clauses: Vec<String> = Vec::new();
+    let mut next_idx: usize = 2;
+    if server.is_some() {
+        extra_clauses.push(format!("AND v.server = ${next_idx}"));
+        next_idx += 1;
+    }
+    if pattern.is_some() {
+        extra_clauses.push(format!(
+            "AND (v.nickname ILIKE ${next_idx} OR v.uid ILIKE ${next_idx})"
+        ));
+        next_idx += 1;
+    }
+    let extra_sql = extra_clauses.join("\n          ");
+    let limit_idx = next_idx;
+    let offset_idx = next_idx + 1;
     let movement_filter = if movement_only {
         "AND b.rank_global IS NOT NULL AND b.rank_global <> v.rank_global"
     } else {
@@ -109,18 +147,21 @@ pub async fn get_leaderboard(
         FROM v_leaderboard v
         LEFT JOIN baseline b ON b.user_id = v.id
         WHERE v.rank_global IS NOT NULL
-          {server_clause}
+          {extra_sql}
           {movement_filter}
         ORDER BY v.{sort_col} DESC NULLS LAST
         LIMIT ${limit_idx} OFFSET ${offset_idx}
         "#
     );
 
-    let mut q = sqlx::query_as::<_, LeaderboardEntry>(&sql).bind(interval);
+    let mut qry = sqlx::query_as::<_, LeaderboardEntry>(&sql).bind(interval);
     if let Some(srv) = server {
-        q = q.bind(srv);
+        qry = qry.bind(srv);
     }
-    q.bind(limit).bind(offset).fetch_all(pool).await
+    if let Some(ref p) = pattern {
+        qry = qry.bind(p);
+    }
+    qry.bind(limit).bind(offset).fetch_all(pool).await
 }
 
 /// Count leaderboard entries. When `movement_interval` is provided and
@@ -131,26 +172,51 @@ pub async fn count_leaderboard(
     server: Option<&str>,
     movement_interval: Option<&str>,
     movement_only: bool,
+    q: Option<&str>,
 ) -> Result<i64, sqlx::Error> {
+    let pattern = q.map(|s| format!("%{s}%"));
+
     if !movement_only || movement_interval.is_none() {
-        return if let Some(srv) = server {
-            sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard WHERE server = $1")
-                .bind(srv)
-                .fetch_one(pool)
-                .await
+        let mut clauses: Vec<String> = Vec::new();
+        let mut next_idx: usize = 1;
+        if server.is_some() {
+            clauses.push(format!("server = ${next_idx}"));
+            next_idx += 1;
+        }
+        if pattern.is_some() {
+            clauses.push(format!(
+                "(nickname ILIKE ${next_idx} OR uid ILIKE ${next_idx})"
+            ));
+        }
+        let where_sql = if clauses.is_empty() {
+            String::new()
         } else {
-            sqlx::query_scalar("SELECT COUNT(*) FROM v_leaderboard")
-                .fetch_one(pool)
-                .await
+            format!("WHERE {}", clauses.join(" AND "))
         };
+        let sql = format!("SELECT COUNT(*) FROM v_leaderboard {where_sql}");
+        let mut qry = sqlx::query_scalar::<_, i64>(&sql);
+        if let Some(srv) = server {
+            qry = qry.bind(srv);
+        }
+        if let Some(ref p) = pattern {
+            qry = qry.bind(p);
+        }
+        return qry.fetch_one(pool).await;
     }
 
     let interval = movement_interval.expect("checked above");
-    let server_clause = if server.is_some() {
-        "AND v.server = $2"
-    } else {
-        ""
-    };
+    let mut extra_clauses: Vec<String> = Vec::new();
+    let mut next_idx: usize = 2;
+    if server.is_some() {
+        extra_clauses.push(format!("AND v.server = ${next_idx}"));
+        next_idx += 1;
+    }
+    if pattern.is_some() {
+        extra_clauses.push(format!(
+            "AND (v.nickname ILIKE ${next_idx} OR v.uid ILIKE ${next_idx})"
+        ));
+    }
+    let extra_sql = extra_clauses.join("\n          ");
 
     let sql = format!(
         r#"
@@ -167,15 +233,18 @@ pub async fn count_leaderboard(
         JOIN baseline b ON b.user_id = v.id
         WHERE v.rank_global IS NOT NULL
           AND b.rank_global <> v.rank_global
-          {server_clause}
+          {extra_sql}
         "#
     );
 
-    let mut q = sqlx::query_scalar::<_, i64>(&sql).bind(interval);
+    let mut qry = sqlx::query_scalar::<_, i64>(&sql).bind(interval);
     if let Some(srv) = server {
-        q = q.bind(srv);
+        qry = qry.bind(srv);
     }
-    q.fetch_one(pool).await
+    if let Some(ref p) = pattern {
+        qry = qry.bind(p);
+    }
+    qry.fetch_one(pool).await
 }
 
 /// Upsert a user's score

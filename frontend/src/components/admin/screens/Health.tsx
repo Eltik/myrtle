@@ -5,7 +5,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
-import { adminStatsQueryOptions, healthQueryOptions } from "#/lib/api/admin";
+import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
 import { HCode, PageHead } from "../AdminShell";
 import { StatusDot } from "../Primitives";
 
@@ -52,7 +52,7 @@ export function Health(): React.ReactElement {
                         <CardContent className="p-4.5">
                             <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Postgres</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
-                                {h?.database.responseTimeMs ?? "-"}
+                                {formatResponseTimeMs(h?.database.responseTimeMs)}
                                 <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
@@ -66,7 +66,7 @@ export function Health(): React.ReactElement {
                         <CardContent className="p-4.5">
                             <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Cache · {h?.cache.backend ?? "-"}</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
-                                {h?.cache.responseTimeMs ?? "-"}
+                                {formatResponseTimeMs(h?.cache.responseTimeMs)}
                                 <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
@@ -80,7 +80,7 @@ export function Health(): React.ReactElement {
                         <CardContent className="p-4.5">
                             <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Round-trip</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
-                                {h?.responseTimeMs ?? "-"}
+                                {formatResponseTimeMs(h?.responseTimeMs)}
                                 <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">{h?.status === "ok" ? <Badge variant="success">healthy</Badge> : h ? <Badge variant="warning">degraded</Badge> : null}</div>

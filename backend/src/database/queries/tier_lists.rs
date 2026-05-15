@@ -297,12 +297,16 @@ pub async fn revoke_permission(
     pool: &PgPool,
     tier_list_id: Uuid,
     user_id: Uuid,
+    permission: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM tier_list_permissions WHERE tier_list_id = $1 AND user_id = $2")
-        .bind(tier_list_id)
-        .bind(user_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "DELETE FROM tier_list_permissions WHERE tier_list_id = $1 AND user_id = $2 AND permission = $3",
+    )
+    .bind(tier_list_id)
+    .bind(user_id)
+    .bind(permission)
+    .execute(pool)
+    .await?;
     Ok(())
 }
 

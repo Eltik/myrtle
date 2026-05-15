@@ -240,7 +240,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
     });
 
     const revoke = useMutation({
-        mutationFn: (input: { slug: string; userId: string }) => revokeTierListPermissionFn({ data: input }),
+        mutationFn: (input: { slug: string; userId: string; permission: TierListPermissionLevel }) => revokeTierListPermissionFn({ data: input }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", list.slug] });
             toastManager.add({ id: `perm-revoke-${Date.now()}`, title: "Permission revoked", description: `Removed grant on /${list.slug}.`, type: "success" });
@@ -300,7 +300,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                                     <td className="px-3.5 py-2.5 text-muted-foreground">{new Date(p.grantedAt).toLocaleDateString()}</td>
                                     <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "-"}</td>
                                     <td className="px-3.5 py-2.5">
-                                        <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId })} disabled={revoke.isPending}>
+                                        <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId, permission: p.permission })} disabled={revoke.isPending}>
                                             <Trash2Icon />
                                             Revoke
                                         </Button>

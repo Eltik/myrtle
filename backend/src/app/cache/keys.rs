@@ -15,6 +15,7 @@ pub enum CacheKey<'a> {
         server: Option<&'a str>,
         movement_interval: Option<&'a str>,
         movement_only: bool,
+        q: Option<&'a str>,
         limit: u32,
         offset: u32,
     },
@@ -68,6 +69,7 @@ impl CacheKey<'_> {
                 server,
                 movement_interval,
                 movement_only,
+                q,
                 limit,
                 offset,
             } => {
@@ -76,7 +78,8 @@ impl CacheKey<'_> {
                     .map(|s| s.replace(' ', "_"))
                     .unwrap_or_else(|| "none".to_owned());
                 let mo = if *movement_only { "only" } else { "all" };
-                format!("leaderboard:{sort}:{srv}:{mv}:{mo}:{limit}:{offset}")
+                let qk = q.unwrap_or("");
+                format!("leaderboard:{sort}:{srv}:{mv}:{mo}:{qk}:{limit}:{offset}")
             }
             CacheKey::Search { query_hash } => format!("search:{query_hash}"),
             CacheKey::TierList { slug } => format!("tierlist:{slug}"),
