@@ -24,7 +24,7 @@ export function Leaderboard() {
     const { user } = useAuth();
 
     const [inputValue, setInputValue] = useState(search.q);
-    const debouncedQuery = useDebounce(inputValue.trim(), 300).toLowerCase();
+    const debouncedQuery = useDebounce(inputValue.trim(), 300);
     const scope: LeaderboardScope = search.scope;
     const server: ServerCode | "All" = search.server;
     const interval: LeaderboardInterval = search.interval;
@@ -38,6 +38,7 @@ export function Leaderboard() {
     }, [inputValue, navigate, search]);
 
     const apiServer = server === "All" ? undefined : server;
+    const apiQuery = debouncedQuery || undefined;
     const offset = (page - 1) * PAGE_SIZE;
 
     const pageQuery = useQuery(
@@ -45,6 +46,7 @@ export function Leaderboard() {
             server: apiServer,
             movement_interval: interval,
             movement_only: movementOnly,
+            q: apiQuery,
             limit: PAGE_SIZE,
             offset,
         }),
@@ -65,16 +67,11 @@ export function Leaderboard() {
 
     const visibleEntries = useMemo<LeaderboardEntry[]>(() => {
         const list = pageQuery.data?.entries ?? [];
-        const flagged = list.map((entry) => ({
+        return list.map((entry) => ({
             ...entry,
             isSelf: Boolean(user && entry.uid === user.uid && entry.server === user.server),
         }));
-        if (!debouncedQuery) return flagged;
-        return flagged.filter((entry) => {
-            const nick = (entry.nickname ?? "").toLowerCase();
-            return nick.includes(debouncedQuery) || entry.uid.includes(debouncedQuery);
-        });
-    }, [pageQuery.data?.entries, debouncedQuery, user]);
+    }, [pageQuery.data?.entries, user]);
 
     const topThree: LeaderboardEntry[] = topQuery.data?.entries ?? [];
     const referenceScore = topThree[0]?.total_score ?? null;

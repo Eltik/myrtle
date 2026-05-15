@@ -36,7 +36,7 @@ interface IUserStats {
     collectionPercentage: number;
 }
 
-export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], skins: Record<string, ISkin> | undefined): IUserStats {
+export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], skins: Record<string, ISkin> | undefined, nonDefaultSkinCount: number | null): IUserStats {
     const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
     const EXCLUDED_MODULE_KEYS = ["uniequip_000", "uniequip_001"];
     const pct = (owned: number, total: number) => (total > 0 ? (owned / total) * 100 : 0);
@@ -62,7 +62,6 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
 
     const ownedByProfession: Record<string, number> = {};
     const ownedBySubProfession: Record<string, Record<string, number>> = {};
-    const userSkinIds = new Set<string>();
 
     let totalOwned = 0;
     let e0 = 0,
@@ -116,10 +115,6 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
                 if (mod.level === 3) modulesAtMax++;
             }
         }
-
-        if (entry.skin_id?.includes("@")) {
-            userSkinIds.add(entry.skin_id);
-        }
     }
 
     const professions: IProfessionStats[] = ([...CLASSES] as string[])
@@ -161,7 +156,7 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
             if (skin.skinId?.includes("@")) totalSkinsAvailable++;
         }
     }
-    const userSkinsOwned = userSkinIds.size;
+    const userSkinsOwned = nonDefaultSkinCount ?? 0;
 
     return {
         professions,

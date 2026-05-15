@@ -25,6 +25,8 @@ pub struct LeaderboardParams {
     /// users whose rank has changed since the baseline.
     #[serde(default)]
     pub movement_only: bool,
+    /// Free-text filter applied to nickname / uid via ILIKE.
+    pub q: Option<String>,
     #[serde(flatten)]
     pub pagination: Pagination,
 }
@@ -46,12 +48,14 @@ pub async fn leaderboard(
             "movement_only requires movement_interval".into(),
         ));
     }
+    let q = params.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
     let page = services::leaderboard::get_leaderboard(
         &state,
         sort,
         params.server.as_deref(),
         movement_interval,
         params.movement_only,
+        q,
         params.pagination.limit(),
         params.pagination.offset(),
     )

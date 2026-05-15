@@ -22,6 +22,7 @@ export interface IGrantTierListPermissionInput {
 export interface IRevokeTierListPermissionInput {
     slug: string;
     userId: string;
+    permission: TierListPermissionLevel;
 }
 
 interface IBackendTierListPermission {
@@ -79,7 +80,7 @@ export const revokeTierListPermissionFn = createServerFn({ method: "POST" })
     .inputValidator((data: IRevokeTierListPermissionInput) => data)
     .handler(async ({ data }): Promise<IBackendStatus> => {
         const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions/${encodeURIComponent(data.userId)}`, {
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/permissions/${encodeURIComponent(data.userId)}/${encodeURIComponent(data.permission)}`, {
             method: "DELETE",
             bearerToken: token,
         });

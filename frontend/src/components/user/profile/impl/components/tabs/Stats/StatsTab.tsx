@@ -15,13 +15,14 @@ import { StatsTabSkeleton } from "./StatsTabSkeleton";
 interface IStatsTabProps {
     roster: IRosterEntry[];
     operatorsStatic: IOperatorListItem[];
+    nonDefaultSkinCount: number | null;
 }
 
-export function StatsTab({ roster, operatorsStatic }: IStatsTabProps) {
+export function StatsTab({ roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: skinData } = useQuery(skinsQueryOptions());
     const charSkins = skinData?.charSkins;
 
-    const stats = useMemo(() => computeUserStats(roster, operatorsStatic, charSkins), [roster, operatorsStatic, charSkins]);
+    const stats = useMemo(() => computeUserStats(roster, operatorsStatic, charSkins, nonDefaultSkinCount), [roster, operatorsStatic, charSkins, nonDefaultSkinCount]);
 
     if (!charSkins) return <StatsTabSkeleton />;
 

@@ -17,6 +17,13 @@ export interface IHealthResponse {
     responseTimeMs: number;
 }
 
+export function formatResponseTimeMs(ms: number | null | undefined): string {
+    if (ms == null || !Number.isFinite(ms)) return "-";
+    if (ms >= 10) return ms.toFixed(0);
+    if (ms >= 1) return ms.toFixed(1);
+    return ms.toFixed(2);
+}
+
 export const getHealthFn = createServerFn({ method: "GET" }).handler(async (): Promise<IHealthResponse> => {
     const res = await backendFetch("/health");
     if (!res.ok) throw new Error(`Failed to load health: ${res.status}`);

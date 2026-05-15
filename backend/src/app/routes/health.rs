@@ -1,7 +1,7 @@
 use axum::Json;
 use axum::extract::State;
 use serde::Serialize;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::app::state::AppState;
 
@@ -12,7 +12,7 @@ pub struct HealthResponse {
     cache: CacheHealth,
     database: DatabaseHealth,
     timestamp: String,
-    response_time_ms: u128,
+    response_time_ms: f64,
 }
 
 #[derive(Serialize)]
@@ -20,14 +20,18 @@ pub struct HealthResponse {
 struct CacheHealth {
     backend: &'static str,
     status: &'static str,
-    response_time_ms: u128,
+    response_time_ms: f64,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct DatabaseHealth {
     status: &'static str,
-    response_time_ms: u128,
+    response_time_ms: f64,
+}
+
+fn elapsed_ms(d: Duration) -> f64 {
+    d.as_secs_f64() * 1000.0
 }
 
 pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
@@ -36,7 +40,7 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
     // Ping cache
     let cache_start = Instant::now();
     let cache_ok = state.cache.ping().await;
-    let cache_ms = cache_start.elapsed().as_millis();
+    let cache_ms = elapsed_ms(cache_start.elapsed());
 
     let backend = if state.cache.is_redis() {
         "redis"
@@ -47,7 +51,7 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
     // Ping Database
     let db_start = Instant::now();
     let db_ok = sqlx::query("SELECT 1").execute(&state.db).await.is_ok();
-    let db_ms = db_start.elapsed().as_millis();
+    let db_ms = elapsed_ms(db_start.elapsed());
 
     let all_ok = cache_ok && db_ok;
 
@@ -67,6 +71,6 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
             response_time_ms: db_ms,
         },
         timestamp: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-        response_time_ms: start.elapsed().as_millis(),
+        response_time_ms: elapsed_ms(start.elapsed()),
     })
 }

@@ -16,12 +16,14 @@ pub struct LeaderboardPage {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn get_leaderboard(
     state: &AppState,
     sort_by: &str,
     server: Option<&str>,
     movement_interval: Option<&str>,
     movement_only: bool,
+    q: Option<&str>,
     limit: u32,
     offset: u32,
 ) -> Result<LeaderboardPage, ApiError> {
@@ -31,6 +33,7 @@ pub async fn get_leaderboard(
         server,
         movement_interval,
         movement_only,
+        q,
         limit,
         offset,
     };
@@ -46,10 +49,11 @@ pub async fn get_leaderboard(
             sort_by,
             movement_interval,
             movement_only,
+            q,
             limit as i64,
             offset as i64
         ),
-        score::count_leaderboard(&state.db, server, movement_interval, movement_only),
+        score::count_leaderboard(&state.db, server, movement_interval, movement_only, q),
         score::get_last_updated(&state.db, server),
     )?;
 

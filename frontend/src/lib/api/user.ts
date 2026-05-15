@@ -382,18 +382,21 @@ export interface ILeaderboardInput {
     movement_interval?: string;
     /** When true (requires `movement_interval`), only users with non-zero movement are returned. */
     movement_only?: boolean;
+    /** Free-text filter on nickname / uid (ILIKE). */
+    q?: string;
     limit?: number;
     offset?: number;
 }
 
 export const getLeaderboardFn = createServerFn({ method: "GET" })
     .inputValidator((data: ILeaderboardInput) => data)
-    .handler(async ({ data: { sort, server, movement_interval, movement_only, limit, offset } }) => {
+    .handler(async ({ data: { sort, server, movement_interval, movement_only, q, limit, offset } }) => {
         const params = new URLSearchParams();
         if (sort) params.set("sort", sort);
         if (server) params.set("server", server);
         if (movement_interval) params.set("movement_interval", movement_interval);
         if (movement_only) params.set("movement_only", "true");
+        if (q) params.set("q", q);
         if (limit !== undefined) params.set("limit", String(limit));
         if (offset !== undefined) params.set("offset", String(offset));
 
@@ -404,7 +407,7 @@ export const getLeaderboardFn = createServerFn({ method: "GET" })
 
 export function leaderboardQueryOptions(input: ILeaderboardInput = {}) {
     return queryOptions({
-        queryKey: ["user", "leaderboard", input.sort ?? null, input.server ?? null, input.movement_interval ?? null, input.movement_only ?? false, input.limit ?? null, input.offset ?? null],
+        queryKey: ["user", "leaderboard", input.sort ?? null, input.server ?? null, input.movement_interval ?? null, input.movement_only ?? false, input.q ?? null, input.limit ?? null, input.offset ?? null],
         queryFn: () => getLeaderboardFn({ data: input }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
