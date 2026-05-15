@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
-import { browseTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn } from "#/lib/api/tier-lists";
+import { browseTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { Route } from "#/routes/tier-lists";
 import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
@@ -25,6 +25,7 @@ export function Browse() {
     const { user } = useAuth();
 
     const { data, isLoading, isError, refetch, isFetching } = useQuery(browseTierListsQueryOptions());
+    const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const allLists = useMemo<ITierListBrowseItem[]>(() => data ?? [], [data]);
 
     const [inputQuery, setInputQuery] = useState(search.q);
@@ -53,14 +54,32 @@ export function Browse() {
     );
 
     const flairOptions = useMemo<IFlairOption[]>(() => {
+        const counts = new Map<string, number>();
+        for (const list of allLists) {
+            if (list.flairCode) counts.set(list.flairCode, (counts.get(list.flairCode) ?? 0) + 1);
+        }
+
+        if (flairCatalog && flairCatalog.length > 0) {
+            return flairCatalog
+                .filter((f) => f.isActive)
+                .map<IFlairOption>((f) => ({
+                    code: f.code,
+                    label: f.label,
+                    color: f.color,
+                    count: counts.get(f.code) ?? 0,
+                    displayOrder: f.displayOrder,
+                }))
+                .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0) || a.label.localeCompare(b.label));
+        }
+
         const seen = new Map<string, IFlairOption>();
         for (const list of allLists) {
             if (list.flairCode && !seen.has(list.flairCode)) {
-                seen.set(list.flairCode, { code: list.flairCode, label: list.flairLabel ?? list.flairCode, color: list.flairColor });
+                seen.set(list.flairCode, { code: list.flairCode, label: list.flairLabel ?? list.flairCode, color: list.flairColor, count: counts.get(list.flairCode) ?? 0 });
             }
         }
         return Array.from(seen.values()).sort((a, b) => a.label.localeCompare(b.label));
-    }, [allLists]);
+    }, [allLists, flairCatalog]);
 
     const officialFeatured = useMemo(
         () =>

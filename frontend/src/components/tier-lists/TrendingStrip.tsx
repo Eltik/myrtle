@@ -7,8 +7,10 @@ interface ITrendingStripProps {
     isTrendingMode: boolean;
 }
 
+const TRENDING_MIN = 3;
+
 export function TrendingStrip({ lists, onOpen, isTrendingMode }: ITrendingStripProps) {
-    if (lists.length === 0) return null;
+    if (lists.length < TRENDING_MIN) return null;
 
     return (
         <section className="mx-auto mt-6 w-[min(1080px,calc(100%-2rem))]">

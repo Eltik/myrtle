@@ -19,6 +19,8 @@ export interface IFlairOption {
     code: string;
     label: string;
     color: string | null;
+    count?: number;
+    displayOrder?: number;
 }
 
 interface IFilterToolbarProps {
@@ -122,13 +124,17 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         {flairOptions.map((flair) => {
                             const active = selectedFlairs.includes(flair.code);
                             const color = flair.color ?? "var(--primary)";
+                            const count = flair.count ?? 0;
+                            const hasMatches = count > 0;
                             return (
                                 <button
                                     key={flair.code}
                                     type="button"
                                     onClick={() => onFlairToggle(flair.code)}
                                     aria-pressed={active}
-                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs font-medium leading-none transition-colors")}
+                                    aria-label={`Flair ${flair.label}${hasMatches ? `, ${count} list${count === 1 ? "" : "s"}` : ", no lists"}`}
+                                    disabled={!hasMatches && !active}
+                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs font-medium leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
                                     style={
                                         active
                                             ? {
@@ -144,7 +150,20 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                     }
                                 >
                                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden="true" />
-                                    {flair.label}
+                                    <span>{flair.label}</span>
+                                    {flair.count !== undefined && (
+                                        <span
+                                            className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono text-[9.5px] font-semibold tabular-nums leading-[1.4]"
+                                            style={
+                                                active
+                                                    ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color }
+                                                    : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }
+                                            }
+                                            aria-hidden="true"
+                                        >
+                                            {count}
+                                        </span>
+                                    )}
                                 </button>
                             );
                         })}

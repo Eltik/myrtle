@@ -25,8 +25,17 @@ import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
+import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/index'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
+import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
+import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
+import { Route as AuthedAdminPermissionsRouteImport } from './routes/_authed/admin/permissions'
+import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/admin/operator-notes'
+import { Route as AuthedAdminOfficialTierListsRouteImport } from './routes/_authed/admin/official-tier-lists'
+import { Route as AuthedAdminHealthRouteImport } from './routes/_authed/admin/health'
+import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
 import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/tier-lists_.my_.$id.edit'
 
@@ -109,6 +118,16 @@ const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAdminRoute = AuthedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdminIndexRoute = AuthedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
   id: '/api/og/default',
   path: '/api/og/default',
@@ -118,6 +137,43 @@ const AuthedTierListsMyRoute = AuthedTierListsMyRouteImport.update({
   id: '/tier-lists_/my',
   path: '/tier-lists/my',
   getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminSettingsRoute = AuthedAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminPermissionsRoute = AuthedAdminPermissionsRouteImport.update({
+  id: '/permissions',
+  path: '/permissions',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminOperatorNotesRoute =
+  AuthedAdminOperatorNotesRouteImport.update({
+    id: '/operator-notes',
+    path: '/operator-notes',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminOfficialTierListsRoute =
+  AuthedAdminOfficialTierListsRouteImport.update({
+    id: '/official-tier-lists',
+    path: '/official-tier-lists',
+    getParentRoute: () => AuthedAdminRoute,
+  } as any)
+const AuthedAdminHealthRoute = AuthedAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
+const AuthedAdminAuditRoute = AuthedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthedAdminRoute,
 } as any)
 const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   id: '/api/og/$kind/$id',
@@ -135,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/tier-lists': typeof TierListsRoute
+  '/admin': typeof AuthedAdminRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -146,8 +203,16 @@ export interface FileRoutesByFullPath {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/admin/audit': typeof AuthedAdminAuditRoute
+  '/admin/health': typeof AuthedAdminHealthRoute
+  '/admin/official-tier-lists': typeof AuthedAdminOfficialTierListsRoute
+  '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
+  '/admin/permissions': typeof AuthedAdminPermissionsRoute
+  '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
@@ -167,8 +232,16 @@ export interface FileRoutesByTo {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/admin/audit': typeof AuthedAdminAuditRoute
+  '/admin/health': typeof AuthedAdminHealthRoute
+  '/admin/official-tier-lists': typeof AuthedAdminOfficialTierListsRoute
+  '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
+  '/admin/permissions': typeof AuthedAdminPermissionsRoute
+  '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/admin': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
@@ -179,6 +252,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/tier-lists': typeof TierListsRoute
+  '/_authed/admin': typeof AuthedAdminRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
@@ -190,8 +264,16 @@ export interface FileRoutesById {
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
+  '/_authed/admin/audit': typeof AuthedAdminAuditRoute
+  '/_authed/admin/health': typeof AuthedAdminHealthRoute
+  '/_authed/admin/official-tier-lists': typeof AuthedAdminOfficialTierListsRoute
+  '/_authed/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
+  '/_authed/admin/permissions': typeof AuthedAdminPermissionsRoute
+  '/_authed/admin/settings': typeof AuthedAdminSettingsRoute
+  '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/_authed/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/_authed/tier-lists_/my_/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
@@ -202,6 +284,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/operators'
     | '/tier-lists'
+    | '/admin'
     | '/settings'
     | '/gacha/community'
     | '/gacha/history'
@@ -213,8 +296,16 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/admin/audit'
+    | '/admin/health'
+    | '/admin/official-tier-lists'
+    | '/admin/operator-notes'
+    | '/admin/permissions'
+    | '/admin/settings'
+    | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
+    | '/admin/'
     | '/api/og/$kind/$id'
     | '/tier-lists/my/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -234,8 +325,16 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/admin/audit'
+    | '/admin/health'
+    | '/admin/official-tier-lists'
+    | '/admin/operator-notes'
+    | '/admin/permissions'
+    | '/admin/settings'
+    | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
+    | '/admin'
     | '/api/og/$kind/$id'
     | '/tier-lists/my/$id/edit'
   id:
@@ -245,6 +344,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/operators'
     | '/tier-lists'
+    | '/_authed/admin'
     | '/_authed/settings'
     | '/gacha/community'
     | '/gacha/history'
@@ -256,8 +356,16 @@ export interface FileRouteTypes {
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
+    | '/_authed/admin/audit'
+    | '/_authed/admin/health'
+    | '/_authed/admin/official-tier-lists'
+    | '/_authed/admin/operator-notes'
+    | '/_authed/admin/permissions'
+    | '/_authed/admin/settings'
+    | '/_authed/admin/users'
     | '/_authed/tier-lists_/my'
     | '/api/og/default'
+    | '/_authed/admin/'
     | '/api/og/$kind/$id'
     | '/_authed/tier-lists_/my_/$id/edit'
   fileRoutesById: FileRoutesById
@@ -396,6 +504,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSettingsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/admin': {
+      id: '/_authed/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthedAdminRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/admin/': {
+      id: '/_authed/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthedAdminIndexRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/api/og/default': {
       id: '/api/og/default'
       path: '/api/og/default'
@@ -409,6 +531,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/tier-lists/my'
       preLoaderRoute: typeof AuthedTierListsMyRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/_authed/admin/users': {
+      id: '/_authed/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthedAdminUsersRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/settings': {
+      id: '/_authed/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthedAdminSettingsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/permissions': {
+      id: '/_authed/admin/permissions'
+      path: '/permissions'
+      fullPath: '/admin/permissions'
+      preLoaderRoute: typeof AuthedAdminPermissionsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/operator-notes': {
+      id: '/_authed/admin/operator-notes'
+      path: '/operator-notes'
+      fullPath: '/admin/operator-notes'
+      preLoaderRoute: typeof AuthedAdminOperatorNotesRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/official-tier-lists': {
+      id: '/_authed/admin/official-tier-lists'
+      path: '/official-tier-lists'
+      fullPath: '/admin/official-tier-lists'
+      preLoaderRoute: typeof AuthedAdminOfficialTierListsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/health': {
+      id: '/_authed/admin/health'
+      path: '/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AuthedAdminHealthRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
+    '/_authed/admin/audit': {
+      id: '/_authed/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthedAdminAuditRouteImport
+      parentRoute: typeof AuthedAdminRoute
     }
     '/api/og/$kind/$id': {
       id: '/api/og/$kind/$id'
@@ -427,13 +598,41 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthedAdminRouteChildren {
+  AuthedAdminAuditRoute: typeof AuthedAdminAuditRoute
+  AuthedAdminHealthRoute: typeof AuthedAdminHealthRoute
+  AuthedAdminOfficialTierListsRoute: typeof AuthedAdminOfficialTierListsRoute
+  AuthedAdminOperatorNotesRoute: typeof AuthedAdminOperatorNotesRoute
+  AuthedAdminPermissionsRoute: typeof AuthedAdminPermissionsRoute
+  AuthedAdminSettingsRoute: typeof AuthedAdminSettingsRoute
+  AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
+  AuthedAdminIndexRoute: typeof AuthedAdminIndexRoute
+}
+
+const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
+  AuthedAdminAuditRoute: AuthedAdminAuditRoute,
+  AuthedAdminHealthRoute: AuthedAdminHealthRoute,
+  AuthedAdminOfficialTierListsRoute: AuthedAdminOfficialTierListsRoute,
+  AuthedAdminOperatorNotesRoute: AuthedAdminOperatorNotesRoute,
+  AuthedAdminPermissionsRoute: AuthedAdminPermissionsRoute,
+  AuthedAdminSettingsRoute: AuthedAdminSettingsRoute,
+  AuthedAdminUsersRoute: AuthedAdminUsersRoute,
+  AuthedAdminIndexRoute: AuthedAdminIndexRoute,
+}
+
+const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
+  AuthedAdminRouteChildren,
+)
+
 interface AuthedRouteChildren {
+  AuthedAdminRoute: typeof AuthedAdminRouteWithChildren
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedTierListsMyRoute: typeof AuthedTierListsMyRoute
   AuthedTierListsMyIdEditRoute: typeof AuthedTierListsMyIdEditRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAdminRoute: AuthedAdminRouteWithChildren,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedTierListsMyRoute: AuthedTierListsMyRoute,
   AuthedTierListsMyIdEditRoute: AuthedTierListsMyIdEditRoute,

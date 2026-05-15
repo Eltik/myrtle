@@ -22,7 +22,8 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
     const hasOps = rows.some((r) => r.visible.length > 0);
     const showCornerRibbon = trending || typeof rank === "number";
     const showOfficial = isOfficial;
-    const showFlair = !isOfficial && Boolean(tl.flairLabel);
+    const showFlair = Boolean(tl.flairLabel);
+    const flairColor = tl.flairColor ?? null;
 
     return (
         <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`} onClick={() => onOpen?.(tl.slug)}>
@@ -42,12 +43,6 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
                             <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
                         </svg>
                         Official
-                    </span>
-                )}
-
-                {showFlair && (
-                    <span className={`${styles.cornerBadge} ${styles.cornerBadgeFlair}`} style={tl.flairColor ? { background: `color-mix(in srgb, ${tl.flairColor} 90%, oklch(0 0 0 / 0.2))`, color: "white" } : { background: "oklch(0 0 0 / 0.6)", color: "white" }}>
-                        {tl.flairLabel}
                     </span>
                 )}
 
@@ -76,6 +71,29 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
             </div>
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
+                {showFlair && (
+                    <span
+                        className="inline-flex w-fit max-w-full items-center gap-1.5 self-start rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase leading-none tracking-wider"
+                        style={
+                            flairColor
+                                ? {
+                                      background: `color-mix(in srgb, ${flairColor} 12%, transparent)`,
+                                      borderColor: `color-mix(in srgb, ${flairColor} 38%, transparent)`,
+                                      color: `color-mix(in srgb, ${flairColor} 80%, var(--foreground))`,
+                                  }
+                                : {
+                                      background: "var(--muted)",
+                                      borderColor: "var(--border)",
+                                      color: "var(--muted-foreground)",
+                                  }
+                        }
+                        title={`Flair: ${tl.flairLabel}`}
+                    >
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: flairColor ?? "currentColor" }} aria-hidden="true" />
+                        <span className="truncate">{tl.flairLabel}</span>
+                    </span>
+                )}
+
                 <h3 id={`tl-${tl.id}-title`} className={`m-0 font-sans font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary ${trending ? "line-clamp-2 text-[16px]" : "line-clamp-1 text-[15px]"}`} title={tl.title}>
                     {tl.title}
                 </h3>

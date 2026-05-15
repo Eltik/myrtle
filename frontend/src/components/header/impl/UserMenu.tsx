@@ -1,9 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, Cog, LayoutList, LogOut } from "lucide-react";
+import { ChevronDown, Cog, LayoutList, LogOut, ShieldIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Spinner } from "#/components/ui/spinner";
+import { isAnyAdminRole } from "#/lib/api/admin";
 import { getAvatarSkinId } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { AuthDialog } from "./AuthDialog";
@@ -52,6 +53,14 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
                             Settings
                         </Link>
                     </DropdownMenuItem>
+                    {isAnyAdminRole(user.role) ? (
+                        <DropdownMenuItem className="cursor-pointer">
+                            <Link to="/admin" className="flex flex-row gap-2 items-center">
+                                <ShieldIcon className="h-4 w-4 text-primary" />
+                                Admin panel
+                            </Link>
+                        </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem className="text-primary transition-colors focus:text-primary/80 pl-3 cursor-pointer" onClick={logout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Logout
