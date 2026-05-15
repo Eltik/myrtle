@@ -1,7 +1,7 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { recordTierListViewFn, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { type ITierListDetail, recordTierListViewFn, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { TierListBoard } from "./TierListBoard";
 import { TierListHero } from "./TierListHero";
 import { TierListStatsPanel } from "./TierListStatsPanel";
@@ -9,6 +9,7 @@ import { TierListStatsPanel } from "./TierListStatsPanel";
 export function TierListDetail() {
     const { id } = useParams({ from: "/tier-lists_/$id" });
     const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id));
+    const queryClient = useQueryClient();
 
     const recordedRef = useRef<string | null>(null);
     const slug = detail?.slug;
@@ -17,8 +18,23 @@ export function TierListDetail() {
         if (!slug) return;
         if (recordedRef.current === slug) return;
         recordedRef.current = slug;
-        recordTierListViewFn({ data: slug }).catch(() => {});
-    }, [slug]);
+        recordTierListViewFn({ data: slug })
+            .then(({ unique }) => {
+                if (!unique) return;
+                queryClient.setQueryData<ITierListDetail>(tierListDetailQueryOptions(id).queryKey, (prev) => {
+                    if (!prev?.stats) return prev;
+                    return {
+                        ...prev,
+                        stats: {
+                            ...prev.stats,
+                            viewCount: prev.stats.viewCount + 1,
+                            uniqueViewCount: prev.stats.uniqueViewCount + 1,
+                        },
+                    };
+                });
+            })
+            .catch(() => {});
+    }, [slug, id, queryClient]);
 
     if (!detail) {
         return (
