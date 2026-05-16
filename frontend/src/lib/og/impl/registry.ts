@@ -3,14 +3,16 @@ import { env } from "#/env";
 import { deepCamelize } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
-import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import { formatGroupId, formatNationId, formatNumber, formatRelative, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
 import { DEFAULT_OG_PRESETS } from "./presets";
+import type { IRenderDimensions } from "./render";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
 import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
+import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TIER_LIST_BOARD_IMAGE_LAYOUT, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
 
 export interface IOgHandler<TData> {
@@ -18,6 +20,7 @@ export interface IOgHandler<TData> {
     hash: (data: TData) => string;
     template: (data: TData) => ReactNode;
     listIds?: () => Promise<string[]>;
+    dimensions?: (data: TData) => IRenderDimensions;
 }
 
 function backendBaseURL(): string {
@@ -458,10 +461,92 @@ const defaultHandler: IOgHandler<IDefaultOgData> = {
     listIds: async () => Object.keys(DEFAULT_OG_PRESETS),
 };
 
+const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v5";
+
+const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
+    fetch: async (slug) => {
+        const enc = encodeURIComponent(slug);
+        const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
+        if (!detailRes.ok) return null;
+        const detail = (await detailRes.json()) as IBackendTierListResponse;
+        const opIndex = opsRes.ok ? ((await opsRes.json()) as IOperatorIndexEntry[]) : [];
+        const opById = new Map<string, IOperatorIndexEntry>(opIndex.map((op) => [op.id, op]));
+
+        const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
+
+        const tiers: ITierListBoardImageTier[] = sortedTiers.map((t, i) => {
+            const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
+            const placements = [...t.placements].sort((a, b) => a.sub_order - b.sub_order);
+            const operators: ITierListBoardImageOperator[] = placements
+                .map((p): ITierListBoardImageOperator | null => {
+                    const op = opById.get(p.operator_id);
+                    if (!op) return null;
+                    return {
+                        id: op.id,
+                        name: op.name,
+                        rarity: op.rarity,
+                        avatarURL: avatarURL(op.id),
+                    };
+                })
+                .filter((x): x is ITierListBoardImageOperator => x !== null);
+            return {
+                name: t.name,
+                color: toHex(t.color, fallback),
+                operators,
+            };
+        });
+
+        const totalOperators = tiers.reduce((sum, t) => sum + t.operators.length, 0);
+        const listType = detail.list_type === "official" ? "official" : "community";
+        const updatedRelative = formatRelative(detail.updated_at);
+        const flairColor = toHex(detail.flair?.color, "");
+
+        return {
+            title: detail.name,
+            slug: detail.slug,
+            description: detail.description ?? undefined,
+            listType,
+            flairLabel: detail.flair?.label,
+            flairColor: flairColor || undefined,
+            authorName: detail.author?.nickname?.trim() || (listType === "official" ? "Myrtle" : "Community"),
+            authorAvatarURL: detail.author?.avatar_id ? avatarURL(detail.author.avatar_id) : undefined,
+            updatedRelative,
+            views: detail.stats?.view_count ?? 0,
+            favorites: detail.stats?.favorite_count ?? 0,
+            totalOperators,
+            tierCount: tiers.length,
+            tiers,
+        };
+    },
+    hash: (data) =>
+        ogHash([
+            "tier-list-image",
+            TIER_LIST_BOARD_IMAGE_HASH_VERSION,
+            TIER_LIST_BOARD_IMAGE_LAYOUT.width,
+            data.title,
+            data.slug,
+            data.description ?? "",
+            data.listType,
+            data.flairLabel ?? "",
+            data.flairColor ?? "",
+            data.authorName ?? "",
+            data.authorAvatarURL ?? "",
+            data.updatedRelative ?? "",
+            data.views ?? 0,
+            data.favorites ?? 0,
+            data.totalOperators,
+            data.tierCount,
+            data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|"),
+        ]),
+    template: (data) => TierListBoardImageTemplate(data),
+    dimensions: (data) => tierListBoardImageDimensions(data),
+};
+
 export const ogRegistry = {
     operator: operatorHandler,
     user: userHandler,
     "tier-list": tierListHandler,
+    "tier-list-image": tierListBoardImageHandler,
     default: defaultHandler,
 };
 

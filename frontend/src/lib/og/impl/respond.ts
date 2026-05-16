@@ -16,9 +16,12 @@ interface IOgResponseArgs {
     // Identifier used as the cache filename. Defaults to `fetchId`. Use this
     // when the public id (e.g. a title) is not a stable cache key.
     cacheId?: string;
+    // When set, the response includes Content-Disposition: attachment with
+    // this filename so the browser saves the image instead of inlining it.
+    attachmentFilename?: string;
 }
 
-export async function ogResponse({ kind, fetchId, cacheId = fetchId }: IOgResponseArgs): Promise<Response> {
+export async function ogResponse({ kind, fetchId, cacheId = fetchId, attachmentFilename }: IOgResponseArgs): Promise<Response> {
     const handler = getHandler(kind);
 
     const data = await handler.fetch(fetchId);
@@ -29,7 +32,8 @@ export async function ogResponse({ kind, fetchId, cacheId = fetchId }: IOgRespon
     let png = await readCache(kind, cacheId, hash);
     if (!png) {
         try {
-            png = await renderOgPng(handler.template(data));
+            const dimensions = handler.dimensions?.(data);
+            png = await renderOgPng(handler.template(data), dimensions);
             await writeCache(kind, cacheId, hash, png);
         } catch (err) {
             console.error(`[og] render failed for ${kind}/${cacheId}:`, err);
@@ -37,8 +41,17 @@ export async function ogResponse({ kind, fetchId, cacheId = fetchId }: IOgRespon
         }
     }
 
+    const headers: Record<string, string> = { ...PNG_HEADERS, ETag: `"${hash}"` };
+    if (attachmentFilename) {
+        const safe = attachmentFilename.replace(/[\\/"\r\n]/g, "_");
+        headers["Content-Disposition"] = `attachment; filename="${safe}"`;
+        headers["Cache-Control"] = "private, max-age=0, must-revalidate";
+        delete headers["CDN-Cache-Control"];
+        delete headers["Vercel-CDN-Cache-Control"];
+    }
+
     return new Response(new Uint8Array(png), {
         status: 200,
-        headers: { ...PNG_HEADERS, ETag: `"${hash}"` },
+        headers,
     });
 }
