@@ -14,7 +14,7 @@ interface ITierListsSearch {
 
 const DEFAULTS: ITierListsSearch = { type: "all", sort: "trending", q: "", flair: [] };
 
-const VALID_TYPES = new Set<TierListType>(["all", "official", "community"]);
+const VALID_TYPES = new Set<TierListType>(["all", "official", "community", "favorites"]);
 const VALID_SORTS = new Set<TierListSort>(SORT_OPTIONS.map((s) => s.value));
 
 function parseFlair(input: unknown): string[] {

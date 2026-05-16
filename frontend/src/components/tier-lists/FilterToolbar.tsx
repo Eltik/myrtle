@@ -2,7 +2,7 @@ import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
 
-export type TierListType = "all" | "official" | "community";
+export type TierListType = "all" | "official" | "community" | "favorites";
 
 export type TierListSort = "trending" | "recent" | "newest" | "views" | "favorites" | "shares";
 
@@ -31,6 +31,7 @@ interface IFilterToolbarProps {
     flairOptions: IFlairOption[];
     resultCount: number;
     totalCount: number;
+    showFavoritesTab: boolean;
     onTypeChange: (next: TierListType) => void;
     onSortChange: (next: TierListSort) => void;
     onQueryChange: (next: string) => void;
@@ -38,13 +39,14 @@ interface IFilterToolbarProps {
     onClearFlairs: () => void;
 }
 
-const TYPE_TABS: Array<{ value: TierListType; label: string }> = [
+const BASE_TYPE_TABS: Array<{ value: TierListType; label: string }> = [
     { value: "all", label: "All" },
     { value: "official", label: "Official" },
     { value: "community", label: "Community" },
 ];
 
-export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
+export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
+    const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, label: "Favorites" }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
     const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "trending";
 
@@ -53,8 +55,9 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
             <div className="mx-auto w-[min(1080px,100%)] py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <div role="tablist" aria-label="Tier list type" className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
-                        {TYPE_TABS.map((tab) => {
+                        {typeTabs.map((tab) => {
                             const active = type === tab.value;
+                            const isFavorites = tab.value === "favorites";
                             return (
                                 <button
                                     key={tab.value}
@@ -63,10 +66,15 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                     aria-selected={active}
                                     onClick={() => onTypeChange(tab.value)}
                                     className={cn(
-                                        "h-7 cursor-pointer rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
+                                        "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[7px] border-0 px-3 font-medium font-sans text-xs leading-none transition-colors",
                                         active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                                     )}
                                 >
+                                    {isFavorites && (
+                                        <svg viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                        </svg>
+                                    )}
                                     {tab.label}
                                 </button>
                             );

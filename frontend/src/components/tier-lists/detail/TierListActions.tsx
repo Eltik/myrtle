@@ -41,6 +41,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
             queryClient.invalidateQueries({ queryKey: ["tier-lists", "detail", detail.slug] });
             queryClient.invalidateQueries({ queryKey: ["tier-lists", "browse"] });
             queryClient.invalidateQueries({ queryKey: ["tier-lists", "home"] });
+            queryClient.invalidateQueries({ queryKey: ["tier-lists", "favorites"] });
         },
     });
 

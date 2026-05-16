@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
-import { browseTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
+import { browseTierListsQueryOptions, favoritedTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { Route } from "#/routes/tier-lists";
 import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
@@ -23,8 +23,19 @@ export function Browse() {
     const navigate = useNavigate({ from: "/tier-lists" });
     const search = Route.useSearch();
     const { user } = useAuth();
+    const authed = Boolean(user);
 
-    const { data, isLoading, isError, refetch, isFetching } = useQuery(browseTierListsQueryOptions());
+    useEffect(() => {
+        if (!authed && search.type === "favorites") {
+            navigate({ search: { ...search, type: "all" }, replace: true, resetScroll: false });
+        }
+    }, [authed, search, navigate]);
+
+    const browseQuery = useQuery(browseTierListsQueryOptions());
+    const favoritesQuery = useQuery(favoritedTierListsQueryOptions(authed));
+    const viewingFavorites = authed && search.type === "favorites";
+
+    const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : browseQuery;
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const allLists = useMemo<ITierListBrowseItem[]>(() => data ?? [], [data]);
 
@@ -104,12 +115,12 @@ export function Browse() {
 
     const filtered = useMemo(() => {
         return allLists.filter((list) => {
-            if (search.type !== "all" && list.listType !== search.type) return false;
+            if (!viewingFavorites && search.type !== "all" && list.listType !== search.type) return false;
             if (search.flair.length > 0 && (!list.flairCode || !search.flair.includes(list.flairCode))) return false;
             if (!matchesBrowseQuery(list, debouncedQuery)) return false;
             return true;
         });
-    }, [allLists, search.type, search.flair, debouncedQuery]);
+    }, [allLists, search.type, search.flair, debouncedQuery, viewingFavorites]);
 
     const sorted = useMemo(() => sortBrowseItems(filtered, search.sort), [filtered, search.sort]);
     const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
@@ -142,7 +153,7 @@ export function Browse() {
         <main className="min-h-dvh pb-24">
             <Hero total={allLists.length} canCreate={Boolean(user)} />
 
-            {!isLoading && !isError && (
+            {!isLoading && !isError && !viewingFavorites && (
                 <>
                     <OfficialRail
                         lists={officialFeatured}
@@ -165,6 +176,7 @@ export function Browse() {
                     flairOptions={flairOptions}
                     resultCount={sorted.length}
                     totalCount={allLists.length}
+                    showFavoritesTab={authed}
                     onTypeChange={setType}
                     onSortChange={(next) => {
                         setSort(next);
@@ -195,13 +207,26 @@ export function Browse() {
                             </button>
                         </div>
                     ) : sorted.length === 0 ? (
-                        <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
-                            <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
-                            <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing flairs or switching the type filter.</p>
-                            <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
-                                Clear filters
-                            </button>
-                        </div>
+                        viewingFavorites && allLists.length === 0 ? (
+                            <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-7 w-7 text-muted-foreground/70" aria-hidden="true">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                                <p className="mt-3 mb-0 font-medium font-sans text-foreground text-sm">No favorites yet</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Tap the heart on any tier list to save it here for quick access.</p>
+                                <button type="button" onClick={() => setType("all")} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                    Browse tier lists
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
+                                <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing flairs or switching the type filter.</p>
+                                <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
+                                    Clear filters
+                                </button>
+                            </div>
+                        )
                     ) : (
                         <>
                             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
