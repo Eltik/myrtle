@@ -87,6 +87,7 @@ async fn main() {
     // Spawn cron jobs
     backend::core::trending_job::spawn(state.clone());
     backend::core::leaderboard_snapshot_job::spawn(state.clone());
+    backend::core::regrade_job::spawn(state.clone());
 
     backend::app::server::run(state)
         .await
