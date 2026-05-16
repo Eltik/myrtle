@@ -14,7 +14,8 @@ export function ownedHeroURL(entry: IOwnedEntry): string {
         const file = entry.skin_id.replaceAll("@", "_").replaceAll("#", "%23");
         return asset(`/textures/skinpack/${entry.operator_id}/${file}.png`);
     }
-    const suffix = entry.elite >= 2 ? "_2" : "_1";
+    const tmplMatch = entry.skin_id?.match(/#(\d+)$/);
+    const suffix = tmplMatch ? `_${tmplMatch[1]}` : entry.elite >= 2 ? "_2" : "_1";
     return asset(`/textures/chararts/${entry.operator_id}/${entry.operator_id}${suffix}.png`);
 }
 

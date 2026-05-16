@@ -62,6 +62,7 @@ export function Leaderboard() {
 
     const updatedAt = pageQuery.data?.updated_at ?? null;
     const totalEntries = pageQuery.data?.total ?? 0;
+    const totalRankedDoctors = topQuery.data?.total ?? null;
     const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
     const isLoading = pageQuery.isLoading || pageQuery.isFetching;
 
@@ -129,7 +130,7 @@ export function Leaderboard() {
                 </div>
 
                 <div className="flex flex-col gap-4 lg:gap-5">
-                    {user ? <YouCard standing={standingQuery.data ?? null} rankedDoctors={totalEntries || null} /> : null}
+                    {user ? <YouCard standing={standingQuery.data ?? null} rankedDoctors={totalRankedDoctors} /> : null}
                     <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} intervalLabel={intervalMeta.subtitle} />
                     {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
