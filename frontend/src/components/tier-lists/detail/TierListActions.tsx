@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart, Share2 } from "lucide-react";
+import { Download, Heart, Share2 } from "lucide-react";
+import { useState } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { type ITierListDetail, myTierListFavoriteQueryOptions, toggleTierListFavoriteFn } from "#/lib/api/tier-lists";
-import { cn } from "#/lib/utils";
+import { cn, downloadBlob } from "#/lib/utils";
 
 interface ITierListActionsProps {
     detail: ITierListDetail;
@@ -13,6 +14,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const authed = Boolean(user);
+    const [downloading, setDownloading] = useState(false);
 
     const favoriteKey = ["tier-lists", "favorite", detail.slug, authed ? "auth" : "anon"] as const;
 
@@ -56,6 +58,28 @@ export function TierListActions({ detail }: ITierListActionsProps) {
             return;
         }
         favoriteMut.mutate();
+    };
+
+    const handleDownload = async () => {
+        if (downloading) return;
+        setDownloading(true);
+        try {
+            const res = await fetch(`/api/tier-lists/${encodeURIComponent(detail.slug)}/image`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const blob = await res.blob();
+            const baseSlug = detail.slug.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
+            const filename = /tier[-_]?list$/i.test(baseSlug) ? `${baseSlug || "tier-list"}.png` : `${baseSlug || "tier-list"}-tier-list.png`;
+            downloadBlob(blob, filename);
+        } catch {
+            toastManager.add({
+                id: `tl-download-error-${Date.now()}`,
+                title: "Couldn't download image",
+                description: "Something went wrong while preparing the image. Try again in a moment.",
+                type: "error",
+            });
+        } finally {
+            setDownloading(false);
+        }
     };
 
     const handleShare = async () => {
@@ -105,6 +129,17 @@ export function TierListActions({ detail }: ITierListActionsProps) {
             >
                 <Heart className={cn("h-4 w-4", favorited ? "fill-current" : "fill-none")} aria-hidden="true" />
                 <span className="hidden sm:inline">{favorited ? "Favorited" : "Favorite"}</span>
+            </button>
+
+            <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloading}
+                aria-label="Download tier list as image"
+                className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60 sm:h-9 sm:min-w-0"
+            >
+                <Download className={cn("h-4 w-4", downloading && "animate-pulse")} aria-hidden="true" />
+                <span className="hidden sm:inline">{downloading ? "Preparing…" : "Download"}</span>
             </button>
 
             <button

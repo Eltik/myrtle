@@ -36,6 +36,7 @@ import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/a
 import { Route as AuthedAdminOfficialTierListsRouteImport } from './routes/_authed/admin/official-tier-lists'
 import { Route as AuthedAdminHealthRouteImport } from './routes/_authed/admin/health'
 import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
+import { Route as ApiTierListsSlugImageRouteImport } from './routes/api/tier-lists/$slug/image'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
 import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/tier-lists_.my_.$id.edit'
 
@@ -175,6 +176,11 @@ const AuthedAdminAuditRoute = AuthedAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const ApiTierListsSlugImageRoute = ApiTierListsSlugImageRouteImport.update({
+  id: '/api/tier-lists/$slug/image',
+  path: '/api/tier-lists/$slug/image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   id: '/api/og/$kind/$id',
   path: '/api/og/$kind/$id',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/api/og/default': typeof ApiOgDefaultRoute
   '/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/api/og/default': typeof ApiOgDefaultRoute
   '/admin': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRoutesById {
@@ -275,6 +283,7 @@ export interface FileRoutesById {
   '/api/og/default': typeof ApiOgDefaultRoute
   '/_authed/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
+  '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/_authed/tier-lists_/my_/$id/edit': typeof AuthedTierListsMyIdEditRoute
 }
 export interface FileRouteTypes {
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/api/og/default'
     | '/admin/'
     | '/api/og/$kind/$id'
+    | '/api/tier-lists/$slug/image'
     | '/tier-lists/my/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/api/og/default'
     | '/admin'
     | '/api/og/$kind/$id'
+    | '/api/tier-lists/$slug/image'
     | '/tier-lists/my/$id/edit'
   id:
     | '__root__'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/api/og/default'
     | '/_authed/admin/'
     | '/api/og/$kind/$id'
+    | '/api/tier-lists/$slug/image'
     | '/_authed/tier-lists_/my_/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -388,6 +400,7 @@ export interface RootRouteChildren {
   UserSearchRoute: typeof UserSearchRoute
   ApiOgDefaultRoute: typeof ApiOgDefaultRoute
   ApiOgKindIdRoute: typeof ApiOgKindIdRoute
+  ApiTierListsSlugImageRoute: typeof ApiTierListsSlugImageRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -581,6 +594,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminAuditRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/api/tier-lists/$slug/image': {
+      id: '/api/tier-lists/$slug/image'
+      path: '/api/tier-lists/$slug/image'
+      fullPath: '/api/tier-lists/$slug/image'
+      preLoaderRoute: typeof ApiTierListsSlugImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/og/$kind/$id': {
       id: '/api/og/$kind/$id'
       path: '/api/og/$kind/$id'
@@ -659,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   UserSearchRoute: UserSearchRoute,
   ApiOgDefaultRoute: ApiOgDefaultRoute,
   ApiOgKindIdRoute: ApiOgKindIdRoute,
+  ApiTierListsSlugImageRoute: ApiTierListsSlugImageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
