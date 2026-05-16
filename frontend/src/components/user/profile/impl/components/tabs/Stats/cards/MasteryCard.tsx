@@ -1,7 +1,8 @@
 import { Sparkles } from "lucide-react";
 import { cn } from "#/lib/utils";
+import type { IMasteryGapDetails } from "../helpers";
 import { PALETTE } from "../palette";
-import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard, Tile } from "../primitives";
+import { Bar, CARD_PADDING, GapList, type IGapItem, KICKER_TEXT, Kicker, StatCard, Tile } from "../primitives";
 
 interface IMasteryCardProps {
     masteries: {
@@ -10,12 +11,48 @@ interface IMasteryCardProps {
         m9Count: number;
         totalMasteryLevels: number;
         maxPossibleMasteryLevels: number;
+        e2Count: number;
+        details: IMasteryGapDetails;
     };
 }
 
 export function MasteryCard({ masteries }: IMasteryCardProps) {
-    const { totalMasteryLevels, maxPossibleMasteryLevels } = masteries;
+    const { totalMasteryLevels, maxPossibleMasteryLevels, e2Count, m3Count, m6Count, m9Count, details } = masteries;
     const masteryPct = maxPossibleMasteryLevels > 0 ? (totalMasteryLevels / maxPossibleMasteryLevels) * 100 : 0;
+
+    const gaps: IGapItem[] = [
+        {
+            key: "levels",
+            label: "levels",
+            value: Math.max(0, maxPossibleMasteryLevels - totalMasteryLevels),
+            color: PALETTE.mastery.accent,
+            tooltip: "Skill levels remaining to reach Mastery 3 across all E2 operators",
+        },
+        {
+            key: "pendingM3",
+            label: "pending M3",
+            value: Math.max(0, e2Count - m3Count),
+            color: PALETTE.mastery.m3,
+            tooltip: "Click to view E2 operators without any skill at Mastery 3 yet",
+            details: details.pendingM3,
+        },
+        {
+            key: "pendingM6",
+            label: "pending M6",
+            value: Math.max(0, m3Count - m6Count),
+            color: PALETTE.mastery.m6,
+            tooltip: "Click to view operators with 1 skill at M3 still needing a second",
+            details: details.pendingM6,
+        },
+        {
+            key: "pendingM9",
+            label: "pending M9",
+            value: Math.max(0, m6Count - m9Count),
+            color: PALETTE.mastery.m9,
+            tooltip: "Click to view operators with 2 skills at M3 still needing a third",
+            details: details.pendingM9,
+        },
+    ];
 
     return (
         <StatCard color={PALETTE.mastery.accent}>
@@ -37,6 +74,9 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
                         </div>
                         <Bar color={PALETTE.mastery.accent} pct={masteryPct} />
                         <p className="text-center font-mono text-[10px] text-muted-foreground/50">{masteryPct.toFixed(1)}% of max possible (E2 only)</p>
+                    </div>
+                    <div className="border-border/60 border-t pt-3">
+                        <GapList items={gaps} />
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { skinsQueryOptions } from "#/lib/api/skins";
+import { skinsQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
@@ -13,16 +13,22 @@ import { computeUserStats } from "./helpers";
 import { StatsTabSkeleton } from "./StatsTabSkeleton";
 
 interface IStatsTabProps {
+    uid: string;
     roster: IRosterEntry[];
     operatorsStatic: IOperatorListItem[];
     nonDefaultSkinCount: number | null;
 }
 
-export function StatsTab({ roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
+const EMPTY_OWNED_SKINS = new Set<string>();
+
+export function StatsTab({ uid, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: skinData } = useQuery(skinsQueryOptions());
+    const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
     const charSkins = skinData?.charSkins;
 
     const stats = useMemo(() => computeUserStats(roster, operatorsStatic, charSkins, nonDefaultSkinCount), [roster, operatorsStatic, charSkins, nonDefaultSkinCount]);
+
+    const ownedSkinIds = useMemo(() => (ownedSkins ? new Set(ownedSkins.map((s) => s.skin_id)) : EMPTY_OWNED_SKINS), [ownedSkins]);
 
     if (!charSkins) return <StatsTabSkeleton />;
 
@@ -32,7 +38,7 @@ export function StatsTab({ roster, operatorsStatic, nonDefaultSkinCount }: IStat
             <ElitePromotionCard eliteBreakdown={stats.eliteBreakdown} />
             <ClassBreakdownCard professions={stats.professions} />
             <MasteryCard masteries={stats.masteries} />
-            <ModulesSkinsCard modules={stats.modules} skins={stats.skins} />
+            <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsStatic={operatorsStatic} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
             <TopOperatorsCard operatorsStatic={operatorsStatic} roster={roster} />
         </div>
     );

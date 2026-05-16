@@ -139,7 +139,7 @@ export function UserProfile() {
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
-            {activeTab === "stats" && <StatsTab roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} nonDefaultSkinCount={data.non_default_skin_count} />}
+            {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} uid={id} />}
             {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
         </main>
     );

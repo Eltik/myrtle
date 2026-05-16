@@ -26,5 +26,5 @@ export const PALETTE = {
         unlocked: "oklch(0.66 0.14 200)",
         max: "oklch(0.72 0.15 175)",
     },
-    skins: "oklch(0.65 0.22 340)",
+    skins: "var(--primary)",
 } as const;
