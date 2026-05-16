@@ -1,6 +1,5 @@
-import { formatNumberCompact } from "#/lib/utils";
 import type { IRenderDimensions } from "../render";
-import { BG, FG, FG_06, FG_08, FG_45, FG_55, FG_70 } from "./Frame";
+import { BG, FG, FG_08, FG_55 } from "./Frame";
 
 export interface ITierListBoardImageOperator {
     id: string;
@@ -18,34 +17,21 @@ export interface ITierListBoardImageTier {
 export interface ITierListBoardImageData {
     title: string;
     slug: string;
-    description?: string;
-    listType: "official" | "community";
-    flairLabel?: string;
-    flairColor?: string;
-    authorName?: string;
-    authorAvatarURL?: string;
-    updatedRelative?: string;
-    views?: number;
-    favorites?: number;
-    totalOperators: number;
-    tierCount: number;
     tiers: ITierListBoardImageTier[];
 }
 
 export const TIER_LIST_BOARD_IMAGE_LAYOUT = {
     width: 1400,
     sidePadding: 36,
-    headerBaseHeight: 168,
-    headerDescriptionLineHeight: 24,
-    headerBottomGap: 36,
-    footerHeight: 88,
+    titleHeight: 88,
+    titleGapBelow: 20,
+    bottomPadding: 32,
     tierLabelWidth: 168,
     rowPaddingX: 14,
     rowPaddingY: 10,
     rowMinHeight: 92,
     opSize: 84,
     opGap: 6,
-    tierGap: 0,
 } as const;
 
 const L = TIER_LIST_BOARD_IMAGE_LAYOUT;
@@ -62,18 +48,9 @@ function tierRowHeight(operatorCount: number): number {
     return Math.max(L.rowMinHeight, opsBlockHeight + L.rowPaddingY * 2);
 }
 
-// Description sits in a ~880px-wide column at 16px font. Estimate wrap lines
-// generously (≈70 chars per line) and cap at 3 since we truncate to 140 chars.
-function headerHeight(description?: string): number {
-    if (!description) return L.headerBaseHeight + L.headerBottomGap;
-    const lines = Math.min(3, Math.max(1, Math.ceil(description.length / 70)));
-    return L.headerBaseHeight + lines * L.headerDescriptionLineHeight + L.headerBottomGap;
-}
-
 export function tierListBoardImageDimensions(data: ITierListBoardImageData): IRenderDimensions {
     const board = data.tiers.reduce((sum, t) => sum + tierRowHeight(t.operators.length), 0);
-    const gaps = Math.max(0, data.tiers.length - 1) * L.tierGap;
-    const height = headerHeight(data.description) + board + gaps + L.footerHeight + L.sidePadding * 2;
+    const height = L.sidePadding + L.titleHeight + L.titleGapBelow + board + L.bottomPadding;
     return { width: L.width, height };
 }
 
@@ -97,10 +74,10 @@ function readableOn(hex: string): "white" | "black" {
 
 function titleFontSize(name: string): number {
     const len = name.length;
-    if (len <= 22) return 56;
-    if (len <= 36) return 46;
-    if (len <= 52) return 38;
-    return 32;
+    if (len <= 22) return 52;
+    if (len <= 36) return 42;
+    if (len <= 52) return 34;
+    return 28;
 }
 
 function tierLabelFontSize(name: string): number {
@@ -143,206 +120,33 @@ export function TierListBoardImageTemplate(data: ITierListBoardImageData) {
                 background: BG,
                 color: FG,
                 fontFamily: "Inter",
-                padding: L.sidePadding,
+                padding: `${L.sidePadding}px ${L.sidePadding}px ${L.bottomPadding}px`,
             }}
         >
-            <Header data={data} />
+            <Title title={data.title} />
             <Board tiers={data.tiers} />
-            <Footer slug={data.slug} />
         </div>
     );
 }
 
-function Header({ data }: { data: ITierListBoardImageData }) {
-    const { title, description, listType, flairLabel, flairColor, authorName, authorAvatarURL, updatedRelative, views = 0, favorites = 0, totalOperators, tierCount } = data;
+function Title({ title }: { title: string }) {
     return (
         <div
             style={{
                 display: "flex",
-                flexDirection: "row",
-                alignItems: "flex-start",
-                gap: 24,
-                paddingBottom: 18,
-                borderBottom: `1px solid ${FG_08}`,
-                marginBottom: 18,
+                alignItems: "center",
+                justifyContent: "center",
+                height: L.titleHeight,
+                marginBottom: L.titleGapBelow,
+                fontFamily: "Inter",
+                fontWeight: 700,
+                fontSize: titleFontSize(title),
+                letterSpacing: "-0.02em",
+                color: FG,
+                textAlign: "center",
             }}
         >
-            <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 12, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>TIER LIST</div>
-                    <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
-                    {listType === "official" ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                padding: "3px 9px",
-                                borderRadius: 999,
-                                background: "#f1c84a",
-                                color: "#3a2a06",
-                                fontFamily: "Inter",
-                                fontWeight: 700,
-                                fontSize: 11,
-                                letterSpacing: "0.14em",
-                                textTransform: "uppercase",
-                                lineHeight: 1,
-                            }}
-                        >
-                            Official
-                        </div>
-                    ) : (
-                        <div
-                            style={{
-                                display: "flex",
-                                padding: "3px 9px",
-                                borderRadius: 999,
-                                background: FG_06,
-                                border: `1px solid ${FG_08}`,
-                                color: FG_70,
-                                fontFamily: "Geist Mono",
-                                fontWeight: 600,
-                                fontSize: 10,
-                                letterSpacing: "0.18em",
-                                textTransform: "uppercase",
-                                lineHeight: 1,
-                            }}
-                        >
-                            Community
-                        </div>
-                    )}
-                    {flairLabel ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "3px 10px 3px 8px",
-                                borderRadius: 999,
-                                background: `${flairColor ?? "#ec6f5d"}1c`,
-                                border: `1px solid ${flairColor ?? "#ec6f5d"}66`,
-                                color: flairColor ?? "#ff8a78",
-                                fontFamily: "Geist Mono",
-                                fontWeight: 700,
-                                fontSize: 10,
-                                letterSpacing: "0.18em",
-                                textTransform: "uppercase",
-                                lineHeight: 1,
-                            }}
-                        >
-                            <div style={{ display: "flex", width: 6, height: 6, borderRadius: 999, background: flairColor ?? "#ec6f5d" }} />
-                            {flairLabel}
-                        </div>
-                    ) : null}
-                </div>
-
-                <div
-                    style={{
-                        display: "flex",
-                        fontSize: titleFontSize(title),
-                        fontWeight: 700,
-                        lineHeight: 1.05,
-                        letterSpacing: "-0.025em",
-                        color: FG,
-                        marginTop: 14,
-                    }}
-                >
-                    {truncate(title, 96)}
-                </div>
-
-                {description ? (
-                    <div
-                        style={{
-                            display: "flex",
-                            fontSize: 16,
-                            lineHeight: 1.4,
-                            color: "rgba(247,249,251,0.78)",
-                            marginTop: 10,
-                            maxWidth: 880,
-                        }}
-                    >
-                        {truncate(description, 140)}
-                    </div>
-                ) : null}
-
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginTop: 16,
-                        fontFamily: "Geist Mono",
-                        fontSize: 13,
-                        color: FG_70,
-                    }}
-                >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div
-                            style={{
-                                display: "flex",
-                                width: 26,
-                                height: 26,
-                                borderRadius: 999,
-                                overflow: "hidden",
-                                background: "rgba(255,255,255,0.10)",
-                                border: "1px solid rgba(255,255,255,0.18)",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            {authorAvatarURL ? (
-                                <img alt="" src={authorAvatarURL} width={26} height={26} style={{ width: 26, height: 26, objectFit: "cover" }} />
-                            ) : (
-                                <div style={{ display: "flex", fontFamily: "Inter", fontSize: 12, fontWeight: 700, color: FG, lineHeight: 1 }}>{(authorName?.charAt(0) || "?").toUpperCase()}</div>
-                            )}
-                        </div>
-                        <div style={{ display: "flex", color: FG, fontFamily: "Inter", fontWeight: 600, fontSize: 15, letterSpacing: "-0.005em" }}>{authorName ?? "Community"}</div>
-                    </div>
-                    {updatedRelative ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <div style={{ display: "flex", fontSize: 18, lineHeight: 1, color: FG_45, fontFamily: "Inter" }}>·</div>
-                            <div style={{ display: "flex" }}>{updatedRelative}</div>
-                        </div>
-                    ) : null}
-                </div>
-            </div>
-
-            <div style={{ display: "flex", flexShrink: 0, gap: 10, marginTop: 4 }}>
-                <StatPill label="Tiers" value={String(tierCount)} />
-                <StatPill label="Operators" value={String(totalOperators)} accent />
-                <StatPill label="Views" value={formatNumberCompact(views)} />
-                <StatPill label="Favs" value={formatNumberCompact(favorites)} />
-            </div>
-        </div>
-    );
-}
-
-function StatPill({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                padding: "8px 14px",
-                background: FG_06,
-                border: `1px solid ${FG_08}`,
-                borderRadius: 10,
-                minWidth: 76,
-            }}
-        >
-            <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 9.5, letterSpacing: "0.22em", textTransform: "uppercase", color: FG_55 }}>{label}</div>
-            <div
-                style={{
-                    display: "flex",
-                    fontFamily: "Inter",
-                    fontSize: 20,
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    letterSpacing: "-0.02em",
-                    color: accent ? "#ff8a78" : FG,
-                }}
-            >
-                {value}
-            </div>
+            {truncate(title, 96)}
         </div>
     );
 }
@@ -373,7 +177,6 @@ function Board({ tiers }: { tiers: ITierListBoardImageTier[] }) {
             style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: L.tierGap,
                 borderRadius: 14,
                 overflow: "hidden",
                 border: `1px solid ${FG_08}`,
@@ -515,45 +318,6 @@ function OperatorTile({ op }: { op: ITierListBoardImageOperator }) {
                     background: rarityColor,
                 }}
             />
-        </div>
-    );
-}
-
-function Footer({ slug }: { slug: string }) {
-    return (
-        <div
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                height: L.footerHeight,
-                marginTop: 18,
-                paddingTop: 16,
-                borderTop: `1px solid ${FG_08}`,
-                fontFamily: "Geist Mono",
-                fontSize: 14,
-                letterSpacing: "0.12em",
-                color: FG_55,
-                textTransform: "uppercase",
-            }}
-        >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ display: "flex", fontFamily: "Inter", fontSize: 18, fontWeight: 700, color: FG, letterSpacing: "-0.01em", textTransform: "none" }}>myrtle.moe</div>
-                <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
-                <div style={{ display: "flex" }}>tier-lists / {truncate(slug, 64)}</div>
-            </div>
-            <div
-                style={{
-                    display: "flex",
-                    padding: "5px 10px",
-                    border: `1px solid ${FG_08}`,
-                    borderRadius: 6,
-                    fontSize: 11,
-                    color: FG_70,
-                }}
-            >
-                v3
-            </div>
         </div>
     );
 }

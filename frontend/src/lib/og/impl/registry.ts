@@ -3,7 +3,7 @@ import { env } from "#/env";
 import { deepCamelize } from "#/lib/api/operators";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
-import { formatGroupId, formatNationId, formatNumber, formatRelative, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
@@ -461,7 +461,34 @@ const defaultHandler: IOgHandler<IDefaultOgData> = {
     listIds: async () => Object.keys(DEFAULT_OG_PRESETS),
 };
 
-const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v5";
+const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v7";
+
+async function fetchToDataURI(url: string): Promise<string | undefined> {
+    if (!url) return undefined;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return undefined;
+        const contentType = res.headers.get("content-type") ?? "image/png";
+        const buf = Buffer.from(await res.arrayBuffer());
+        return `data:${contentType};base64,${buf.toString("base64")}`;
+    } catch {
+        return undefined;
+    }
+}
+
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+    const results: R[] = new Array(items.length);
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(Math.max(1, limit), items.length) }, async () => {
+        while (true) {
+            const idx = cursor++;
+            if (idx >= items.length) return;
+            results[idx] = await fn(items[idx] as T);
+        }
+    });
+    await Promise.all(workers);
+    return results;
+}
 
 const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
     fetch: async (slug) => {
@@ -474,6 +501,13 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
 
         const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
 
+        const placedOperatorIds: string[] = [];
+        for (const t of sortedTiers) for (const p of t.placements) if (opById.has(p.operator_id)) placedOperatorIds.push(p.operator_id);
+        const uniqueIds = Array.from(new Set(placedOperatorIds));
+        const dataUriById = new Map<string, string | undefined>();
+        const fetched = await mapWithConcurrency(uniqueIds, 8, (id) => fetchToDataURI(avatarURL(id)));
+        for (let i = 0; i < uniqueIds.length; i++) dataUriById.set(uniqueIds[i] as string, fetched[i]);
+
         const tiers: ITierListBoardImageTier[] = sortedTiers.map((t, i) => {
             const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
             const placements = [...t.placements].sort((a, b) => a.sub_order - b.sub_order);
@@ -485,7 +519,7 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
                         id: op.id,
                         name: op.name,
                         rarity: op.rarity,
-                        avatarURL: avatarURL(op.id),
+                        avatarURL: dataUriById.get(op.id),
                     };
                 })
                 .filter((x): x is ITierListBoardImageOperator => x !== null);
@@ -496,48 +530,13 @@ const tierListBoardImageHandler: IOgHandler<ITierListBoardImageData> = {
             };
         });
 
-        const totalOperators = tiers.reduce((sum, t) => sum + t.operators.length, 0);
-        const listType = detail.list_type === "official" ? "official" : "community";
-        const updatedRelative = formatRelative(detail.updated_at);
-        const flairColor = toHex(detail.flair?.color, "");
-
         return {
             title: detail.name,
             slug: detail.slug,
-            description: detail.description ?? undefined,
-            listType,
-            flairLabel: detail.flair?.label,
-            flairColor: flairColor || undefined,
-            authorName: detail.author?.nickname?.trim() || (listType === "official" ? "Myrtle" : "Community"),
-            authorAvatarURL: detail.author?.avatar_id ? avatarURL(detail.author.avatar_id) : undefined,
-            updatedRelative,
-            views: detail.stats?.view_count ?? 0,
-            favorites: detail.stats?.favorite_count ?? 0,
-            totalOperators,
-            tierCount: tiers.length,
             tiers,
         };
     },
-    hash: (data) =>
-        ogHash([
-            "tier-list-image",
-            TIER_LIST_BOARD_IMAGE_HASH_VERSION,
-            TIER_LIST_BOARD_IMAGE_LAYOUT.width,
-            data.title,
-            data.slug,
-            data.description ?? "",
-            data.listType,
-            data.flairLabel ?? "",
-            data.flairColor ?? "",
-            data.authorName ?? "",
-            data.authorAvatarURL ?? "",
-            data.updatedRelative ?? "",
-            data.views ?? 0,
-            data.favorites ?? 0,
-            data.totalOperators,
-            data.tierCount,
-            data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|"),
-        ]),
+    hash: (data) => ogHash(["tier-list-image", TIER_LIST_BOARD_IMAGE_HASH_VERSION, TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")]),
     template: (data) => TierListBoardImageTemplate(data),
     dimensions: (data) => tierListBoardImageDimensions(data),
 };
