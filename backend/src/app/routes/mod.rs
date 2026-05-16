@@ -17,6 +17,7 @@ pub mod operator_notes;
 pub mod operators;
 pub mod roster;
 pub mod search;
+pub mod skins;
 pub mod social;
 pub mod stages;
 pub mod static_data;
@@ -67,6 +68,7 @@ pub fn router() -> Router<AppState> {
         )
         .route("/get-user-supports", get(roster::get_supports))
         .route("/inventory", get(inventory::get_inventory))
+        .route("/user-skins", get(skins::get_owned_skins))
         .route("/gacha/fetch", post(gacha::fetch))
         .route("/gacha/global-stats", get(gacha::global_stats))
         .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))

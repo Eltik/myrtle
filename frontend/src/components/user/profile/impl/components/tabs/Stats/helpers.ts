@@ -19,6 +19,26 @@ interface IProfessionStats {
     }[];
 }
 
+export interface IOperatorGapItem {
+    id: string;
+    operatorId: string;
+    name: string;
+    charId: string;
+    rarity: number;
+    sub?: string;
+}
+
+export interface IMasteryGapDetails {
+    pendingM3: IOperatorGapItem[];
+    pendingM6: IOperatorGapItem[];
+    pendingM9: IOperatorGapItem[];
+}
+
+export interface IModuleGapDetails {
+    locked: IOperatorGapItem[];
+    belowMax: IOperatorGapItem[];
+}
+
 interface IUserStats {
     professions: IProfessionStats[];
     eliteBreakdown: { e0: number; e1: number; e2: number; total: number };
@@ -28,8 +48,15 @@ interface IUserStats {
         m9Count: number;
         totalMasteryLevels: number;
         maxPossibleMasteryLevels: number;
+        e2Count: number;
+        details: IMasteryGapDetails;
     };
-    modules: { unlocked: number; atMax: number; totalAvailable: number };
+    modules: {
+        unlocked: number;
+        atMax: number;
+        totalAvailable: number;
+        details: IModuleGapDetails;
+    };
     skins: { totalOwned: number; totalAvailable: number; percentage: number };
     totalOwned: number;
     totalAvailable: number;
@@ -76,6 +103,12 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
     let modulesAtMax = 0;
     let totalModulesAvailable = 0;
 
+    const pendingM3: IOperatorGapItem[] = [];
+    const pendingM6: IOperatorGapItem[] = [];
+    const pendingM9: IOperatorGapItem[] = [];
+    const lockedModules: IOperatorGapItem[] = [];
+    const belowMaxModules: IOperatorGapItem[] = [];
+
     for (const entry of roster) {
         const staticOp = operators.get(entry.operator_id);
         if (!staticOp) continue;
@@ -93,8 +126,9 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         else if (entry.elite === 1) e1++;
         else e0++;
 
+        const masteries = entry.masteries ?? [];
         let skillsAtM3 = 0;
-        for (const mastery of entry.masteries ?? []) {
+        for (const mastery of masteries) {
             totalMasteryLevels += mastery.mastery;
             if (mastery.mastery === 3) skillsAtM3++;
         }
@@ -103,19 +137,60 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         if (skillsAtM3 >= 3) m9Count++;
 
         if (entry.elite === 2) {
-            maxPossibleMasteryLevels += (entry.masteries?.length ?? 0) * 3;
+            maxPossibleMasteryLevels += masteries.length * 3;
+
+            if (masteries.length > 0) {
+                const rarityNum = parseRarity(staticOp.rarity);
+                const masterySub = formatMasterySummary(masteries);
+                const baseGap: IOperatorGapItem = {
+                    id: entry.operator_id,
+                    operatorId: entry.operator_id,
+                    name: staticOp.name,
+                    charId: entry.operator_id,
+                    rarity: rarityNum,
+                    sub: masterySub,
+                };
+                if (skillsAtM3 === 0) pendingM3.push(baseGap);
+                else if (skillsAtM3 === 1) pendingM6.push(baseGap);
+                else if (skillsAtM3 === 2) pendingM9.push(baseGap);
+            }
         }
 
         for (const mod of entry.modules ?? []) {
             if (EXCLUDED_MODULE_KEYS.some((key) => mod.id.startsWith(key))) continue;
 
             totalModulesAvailable++;
+            const isLocked = mod.locked;
+            const isBelowMax = !mod.locked && mod.level < 3;
+
             if (!mod.locked) {
                 modulesUnlocked++;
                 if (mod.level === 3) modulesAtMax++;
             }
+
+            if (isLocked || isBelowMax) {
+                const staticMod = staticOp.modules?.find((m) => m.uniEquipId === mod.id);
+                const moduleLabel = staticMod ? `${staticMod.typeName1}${staticMod.typeName2 ? `-${staticMod.typeName2}` : ""}` : "Module";
+                const item: IOperatorGapItem = {
+                    id: `${entry.operator_id}:${mod.id}`,
+                    operatorId: entry.operator_id,
+                    name: staticOp.name,
+                    charId: entry.operator_id,
+                    rarity: parseRarity(staticOp.rarity),
+                    sub: isLocked ? `${moduleLabel} • Locked` : `${moduleLabel} • Lv ${mod.level}/3`,
+                };
+                if (isLocked) lockedModules.push(item);
+                else belowMaxModules.push(item);
+            }
         }
     }
+
+    const byRarityDesc = (a: IOperatorGapItem, b: IOperatorGapItem) => b.rarity - a.rarity || a.name.localeCompare(b.name);
+    pendingM3.sort(byRarityDesc);
+    pendingM6.sort(byRarityDesc);
+    pendingM9.sort(byRarityDesc);
+    lockedModules.sort(byRarityDesc);
+    belowMaxModules.sort(byRarityDesc);
 
     const professions: IProfessionStats[] = ([...CLASSES] as string[])
         .map((prof) => {
@@ -161,8 +236,21 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
     return {
         professions,
         eliteBreakdown: { e0, e1, e2, total: totalOwned },
-        masteries: { m3Count, m6Count, m9Count, totalMasteryLevels, maxPossibleMasteryLevels },
-        modules: { unlocked: modulesUnlocked, atMax: modulesAtMax, totalAvailable: totalModulesAvailable },
+        masteries: {
+            m3Count,
+            m6Count,
+            m9Count,
+            totalMasteryLevels,
+            maxPossibleMasteryLevels,
+            e2Count: e2,
+            details: { pendingM3, pendingM6, pendingM9 },
+        },
+        modules: {
+            unlocked: modulesUnlocked,
+            atMax: modulesAtMax,
+            totalAvailable: totalModulesAvailable,
+            details: { locked: lockedModules, belowMax: belowMaxModules },
+        },
         skins: {
             totalOwned: userSkinsOwned,
             totalAvailable: totalSkinsAvailable,
@@ -172,4 +260,23 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         totalAvailable,
         collectionPercentage: pct(totalOwned, totalAvailable),
     };
+}
+
+const RARITY_TIER_MAP: Record<string, number> = {
+    TIER_1: 1,
+    TIER_2: 2,
+    TIER_3: 3,
+    TIER_4: 4,
+    TIER_5: 5,
+    TIER_6: 6,
+};
+
+function parseRarity(rarity: string): number {
+    return RARITY_TIER_MAP[rarity] ?? 0;
+}
+
+function formatMasterySummary(masteries: IRosterEntry["masteries"]): string {
+    if (!masteries || masteries.length === 0) return "";
+    const sorted = [...masteries].sort((a, b) => a.index - b.index);
+    return sorted.map((m) => `M${m.mastery}`).join(" · ");
 }

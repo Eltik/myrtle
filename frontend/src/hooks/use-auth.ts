@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
 import type { LoginInput } from "#/lib/auth/login";
@@ -6,6 +7,7 @@ import { authActions, authStore } from "#/lib/auth/store";
 
 export function useAuth() {
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     const user = useStore(authStore, (s) => s.user);
     const loading = useStore(authStore, (s) => s.status === "loading");
@@ -16,6 +18,9 @@ export function useAuth() {
         try {
             const u = await loginFn({ data });
             authActions.setUser(u);
+            // Drop any cached anon views — server fns now auto-attach the session
+            // token, so the next fetch should return owner-scoped data.
+            queryClient.removeQueries({ queryKey: ["user"] });
             await router.invalidate();
             return u;
         } catch (err) {
@@ -27,6 +32,9 @@ export function useAuth() {
     const logout = async () => {
         await logoutFn();
         authActions.clear();
+        // Evict any private data fetched while authenticated so it can't leak
+        // to subsequent anon views on the same browser.
+        queryClient.removeQueries({ queryKey: ["user"] });
         await router.invalidate();
     };
 

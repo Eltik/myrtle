@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
+import { optionalSiteToken } from "./_shared.server";
 
 const PREVIEW_BASE = "/api/assets/textures/arts/ui";
 const PREVIEW_SUFFIX_RE = /#[a-z]#?$/i;
@@ -160,7 +161,8 @@ export function retroActsQueryOptions() {
 export const getUserStageClearsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
     .handler(async ({ data: { uid, bearerToken } }) => {
-        const res = await backendFetch(`/stage-clears?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/stage-clears?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return {} as StageClearsMap;
             if (res.status === 403) return {} as StageClearsMap;

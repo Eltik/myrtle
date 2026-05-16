@@ -104,6 +104,16 @@ function ClassBreakdownSkeleton() {
     );
 }
 
+function GapListSkeleton() {
+    return (
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <Skeleton className="h-2.5 w-10 rounded-sm" />
+            <Skeleton className="h-2.5 w-16 rounded-sm" />
+            <Skeleton className="h-2.5 w-20 rounded-sm" />
+        </div>
+    );
+}
+
 function MasterySkeleton() {
     return (
         <StatCard color={PALETTE.mastery.accent}>
@@ -125,6 +135,9 @@ function MasterySkeleton() {
                             <Skeleton className="h-2 w-40 rounded-sm" />
                         </div>
                     </div>
+                    <div className="border-border/60 border-t pt-3">
+                        <GapListSkeleton />
+                    </div>
                 </div>
             </div>
         </StatCard>
@@ -142,6 +155,7 @@ function ModulesSkinsSkeleton() {
                         <TileSkeleton />
                     </div>
                     <MetricRowSkeleton />
+                    <GapListSkeleton />
                 </div>
 
                 <div className="border-border/60 border-t" />
@@ -150,6 +164,7 @@ function ModulesSkinsSkeleton() {
                     <KickerSkeleton />
                     <TileSkeleton />
                     <MetricRowSkeleton />
+                    <GapListSkeleton />
                 </div>
             </div>
         </StatCard>

@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import type { IUserProfile } from "#/types/user";
+import { optionalSiteToken } from "./_shared.server";
 
 export interface IRosterMastery {
     index: number;
@@ -70,7 +71,8 @@ export function userQueryOptions(uid: string) {
 export const getUserRosterFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
     .handler(async ({ data: { uid, bearerToken } }) => {
-        const res = await backendFetch(`/roster?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/roster?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load roster: ${res.status}`);
@@ -90,7 +92,7 @@ export function userRosterQueryOptions(uid: string, bearerToken?: string) {
 export const getUserRosterOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; operatorId: string }) => data)
     .handler(async ({ data: { uid, operatorId } }) => {
-        const res = await backendFetch(`/roster/${encodeURIComponent(operatorId)}?uid=${encodeURIComponent(uid)}`);
+        const res = await backendFetch(`/roster/${encodeURIComponent(operatorId)}?uid=${encodeURIComponent(uid)}`, { bearerToken: optionalSiteToken() });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load roster operator: ${res.status}`);
@@ -115,7 +117,8 @@ export interface IInventoryItem {
 export const getUserInventoryFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
     .handler(async ({ data: { uid, bearerToken } }) => {
-        const res = await backendFetch(`/inventory?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/inventory?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load inventory: ${res.status}`);
@@ -291,7 +294,8 @@ export interface IImprovementsResponse {
 export const getUserImprovementsFn = createServerFn({ method: "GET" })
     .inputValidator((data: { uid: string; bearerToken?: string }) => data)
     .handler(async ({ data: { uid, bearerToken } }) => {
-        const res = await backendFetch(`/user/improvements?uid=${encodeURIComponent(uid)}`, { bearerToken });
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/user/improvements?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             if (res.status === 403) return null;

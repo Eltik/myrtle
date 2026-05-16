@@ -8,3 +8,7 @@ export function requireSiteToken(): string {
     if (!token) throw new ApiError(401, "Not signed in");
     return token;
 }
+
+export function optionalSiteToken(): string | undefined {
+    return getCookie("site_token") || undefined;
+}
