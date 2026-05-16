@@ -72,6 +72,11 @@ function readableOn(hex: string): "white" | "black" {
     return lum > 0.62 ? "black" : "white";
 }
 
+function rgba(hex: string, alpha: number): string {
+    const c = parseHex(hex) ?? { r: 255, g: 255, b: 255 };
+    return `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha})`;
+}
+
 function titleFontSize(name: string): number {
     const len = name.length;
     if (len <= 22) return 52;
@@ -180,7 +185,6 @@ function Board({ tiers }: { tiers: ITierListBoardImageTier[] }) {
                 borderRadius: 14,
                 overflow: "hidden",
                 border: `1px solid ${FG_08}`,
-                background: "rgba(255,255,255,0.025)",
             }}
         >
             {tiers.map((tier, i) => (
@@ -200,7 +204,7 @@ function TierRow({ tier }: { tier: ITierListBoardImageTier }) {
                 display: "flex",
                 minHeight: height,
                 borderBottom: `1px solid ${FG_08}`,
-                background: `linear-gradient(to right, ${tier.color}1f, transparent 60%)`,
+                background: `linear-gradient(to right, ${rgba(tier.color, 0.3)} 0%, ${rgba(tier.color, 0.18)} 12%, ${rgba(tier.color, 0.06)} 35%, transparent 60%)`,
             }}
         >
             <TierLabel name={tier.name} color={tier.color} textColor={textColor} height={height} />
@@ -282,10 +286,8 @@ function OperatorTile({ op }: { op: ITierListBoardImageOperator }) {
                 width: L.opSize,
                 height: L.opSize,
                 borderRadius: 10,
-                background: "#1d242b",
                 overflow: "hidden",
                 position: "relative",
-                border: `1px solid ${FG_08}`,
             }}
         >
             {op.avatarURL ? (

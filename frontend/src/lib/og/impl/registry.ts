@@ -461,7 +461,7 @@ const defaultHandler: IOgHandler<IDefaultOgData> = {
     listIds: async () => Object.keys(DEFAULT_OG_PRESETS),
 };
 
-const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v7";
+const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v12";
 
 async function fetchToDataURI(url: string): Promise<string | undefined> {
     if (!url) return undefined;
