@@ -33,7 +33,7 @@ function ExpandableText({ text }: { text: string }) {
                 <p ref={ref} className={cn("whitespace-pre-line text-muted-foreground text-sm transition-[max-height] duration-200", !expanded && overflows && "overflow-hidden")} style={!expanded && overflows ? { maxHeight: COLLAPSED_MAX_HEIGHT } : undefined}>
                     {text}
                 </p>
-                {!expanded && overflows && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-secondary/40 to-transparent" />}
+                {!expanded && overflows && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-secondary/40 to-transparent" />}
             </div>
             {overflows && (
                 <button className="mt-2 inline-flex items-center gap-1 font-medium text-primary text-xs hover:underline" onClick={() => setExpanded((v) => !v)} type="button">

@@ -18,8 +18,14 @@ Handled rewrites:
                          rounded-t-[8px]     -> rounded-t-lg
   * Z-index unwrap:      z-[55]              -> z-55
   * Named line-height:   leading-[1.5]       -> leading-normal
+  * Literal renames:     break-words         -> wrap-break-word
+  * Prefix renames:      bg-gradient-to-t    -> bg-linear-to-t
+                         bg-gradient-to-br   -> bg-linear-to-br
 
 Pass --write to apply changes; default is dry-run.
+
+To extend: add an entry to LITERAL_RENAMES (full class swap) or
+PREFIX_RENAMES (preserve suffix). No new regex required.
 """
 
 from __future__ import annotations
@@ -262,6 +268,78 @@ def rewrite_leading(text: str, edits: list[tuple[str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Literal class renames (Tailwind v3 → v4) — exact class swaps
+# ---------------------------------------------------------------------------
+LITERAL_RENAMES: dict[str, str] = {
+    "break-words": "wrap-break-word",
+}
+
+# Prefix-only renames — preserve whatever suffix follows the prefix.
+# Example: "bg-gradient-to-" -> "bg-linear-to-" rewrites bg-gradient-to-{t,b,l,r,tl,tr,bl,br}.
+PREFIX_RENAMES: dict[str, str] = {
+    "bg-gradient-to-": "bg-linear-to-",
+}
+
+CLASS_BOUNDARY_PREFIX = r"(?P<boundary>(?:^|[\s\"'`{(]))"
+CLASS_BOUNDARY_SUFFIX = r"(?=$|[\s\"'`})\]])"
+
+
+def _build_literal_re(mapping: dict[str, str]) -> re.Pattern[str] | None:
+    if not mapping:
+        return None
+    names = sorted(mapping.keys(), key=len, reverse=True)
+    return re.compile(
+        CLASS_BOUNDARY_PREFIX
+        + r"(?P<name>" + "|".join(re.escape(n) for n in names) + r")"
+        + CLASS_BOUNDARY_SUFFIX
+    )
+
+
+def _build_prefix_re(mapping: dict[str, str]) -> re.Pattern[str] | None:
+    if not mapping:
+        return None
+    prefixes = sorted(mapping.keys(), key=len, reverse=True)
+    return re.compile(
+        CLASS_BOUNDARY_PREFIX
+        + r"(?P<prefix>" + "|".join(re.escape(p) for p in prefixes) + r")"
+        + r"(?P<suffix>[a-z0-9]+(?:-[a-z0-9]+)*)"
+        + CLASS_BOUNDARY_SUFFIX
+    )
+
+
+LITERAL_RE = _build_literal_re(LITERAL_RENAMES)
+PREFIX_RE = _build_prefix_re(PREFIX_RENAMES)
+
+
+def rewrite_literals(text: str, edits: list[tuple[str, str]]) -> str:
+    if LITERAL_RE is None:
+        return text
+
+    def sub(m: re.Match[str]) -> str:
+        name = m.group("name")
+        canonical = LITERAL_RENAMES[name]
+        edits.append((name, canonical))
+        return m.group("boundary") + canonical
+
+    return LITERAL_RE.sub(sub, text)
+
+
+def rewrite_prefixes(text: str, edits: list[tuple[str, str]]) -> str:
+    if PREFIX_RE is None:
+        return text
+
+    def sub(m: re.Match[str]) -> str:
+        prefix = m.group("prefix")
+        suffix = m.group("suffix")
+        original = prefix + suffix
+        canonical = PREFIX_RENAMES[prefix] + suffix
+        edits.append((original, canonical))
+        return m.group("boundary") + canonical
+
+    return PREFIX_RE.sub(sub, text)
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
@@ -271,6 +349,8 @@ def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     text = rewrite_rounded(text, edits)
     text = rewrite_z(text, edits)
     text = rewrite_leading(text, edits)
+    text = rewrite_literals(text, edits)
+    text = rewrite_prefixes(text, edits)
     return text, edits
 
 
