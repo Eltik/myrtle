@@ -57,6 +57,15 @@ pub async fn mine(
     Ok(Json(lists))
 }
 
+pub async fn favorites(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<Vec<TierList>>, ApiError> {
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let lists = queries::find_favorited_by_user(&state.db, user_id).await?;
+    Ok(Json(lists))
+}
+
 pub async fn delete(
     State(state): State<AppState>,
     auth: AuthUser,

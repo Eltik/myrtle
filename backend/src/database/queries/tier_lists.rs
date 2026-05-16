@@ -458,6 +458,24 @@ pub async fn is_favorited(
     .await
 }
 
+/// Tier lists favorited by a user (active only; ignores is_listed so users can
+/// still find lists they've favorited even if the owner unlists them).
+/// Ordered by most recently favorited first.
+pub async fn find_favorited_by_user(
+    pool: &PgPool,
+    user_id: Uuid,
+) -> Result<Vec<TierList>, sqlx::Error> {
+    sqlx::query_as::<_, TierList>(
+        "SELECT tl.* FROM tier_lists tl
+         JOIN tier_list_favorites f ON f.tier_list_id = tl.id
+         WHERE f.user_id = $1 AND tl.is_active = true
+         ORDER BY f.favorited_at DESC",
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+}
+
 pub async fn list_flairs(
     pool: &PgPool,
     only_active: bool,
