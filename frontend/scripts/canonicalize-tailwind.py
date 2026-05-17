@@ -58,7 +58,7 @@ SPACING_PREFIXES.sort(key=len, reverse=True)
 SPACING_GROUP = "|".join(re.escape(p) for p in SPACING_PREFIXES)
 
 SPACING_RE = re.compile(
-    r"(?P<boundary>(?:^|[\s\"'`{(]))"
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
     r"(?P<neg>-?)"
     r"(?P<prefix>" + SPACING_GROUP + r")"
     r"-\[(?P<value>-?[\d.]+(?:px|rem))\]"
@@ -132,7 +132,7 @@ TRACKING_NAMED = {
     0.1: "widest",
 }
 TRACKING_RE = re.compile(
-    r"(?P<boundary>(?:^|[\s\"'`{(]))"
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
     r"tracking-\[(?P<value>-?[\d.]+em)\]"
 )
 
@@ -180,7 +180,7 @@ ROUNDED_NAMED_REM = {
 }
 ROUNDED_CORNERS = ["tl", "tr", "br", "bl", "ss", "se", "ee", "es", "t", "r", "b", "l", "s", "e"]
 ROUNDED_RE = re.compile(
-    r"(?P<boundary>(?:^|[\s\"'`{(]))"
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
     r"rounded"
     r"(?P<corner>-(?:" + "|".join(ROUNDED_CORNERS) + r"))?"
     r"-\[(?P<value>[\d.]+(?:px|rem))\]"
@@ -219,7 +219,7 @@ def rewrite_rounded(text: str, edits: list[tuple[str, str]]) -> str:
 # z-index unwrap
 # ---------------------------------------------------------------------------
 Z_RE = re.compile(
-    r"(?P<boundary>(?:^|[\s\"'`{(]))"
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
     r"(?P<neg>-?)z-\[(?P<value>\d+)\]"
 )
 
@@ -246,7 +246,7 @@ LEADING_NAMED = {
     2.0: "loose",
 }
 LEADING_RE = re.compile(
-    r"(?P<boundary>(?:^|[\s\"'`{(]))"
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
     r"leading-\[(?P<value>[\d.]+)\]"
 )
 
@@ -280,7 +280,7 @@ PREFIX_RENAMES: dict[str, str] = {
     "bg-gradient-to-": "bg-linear-to-",
 }
 
-CLASS_BOUNDARY_PREFIX = r"(?P<boundary>(?:^|[\s\"'`{(]))"
+CLASS_BOUNDARY_PREFIX = r"(?P<boundary>(?:^|[\s\"'`{(:]))"
 CLASS_BOUNDARY_SUFFIX = r"(?=$|[\s\"'`})\]])"
 
 
