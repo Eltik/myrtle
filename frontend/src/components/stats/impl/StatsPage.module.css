@@ -1,0 +1,28 @@
+.pageAmbient {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 50% at 0% 0%, oklch(0.58 0.22 25 / 0.06), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.04), transparent 70%);
+}
+:global(.dark) .pageAmbient {
+    background: radial-gradient(60% 50% at 0% 0%, oklch(0.75 0.15 25 / 0.1), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.08), transparent 70%);
+}
+
+.dotPulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: oklch(0.78 0.18 152);
+    box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.5);
+    animation: pulseDot 1.6s ease-out infinite;
+}
+@keyframes pulseDot {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 oklch(0.78 0.18 152 / 0.6);
+    }
+    50% {
+        box-shadow: 0 0 0 5px oklch(0.78 0.18 152 / 0);
+    }
+}

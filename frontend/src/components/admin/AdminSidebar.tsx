@@ -149,7 +149,7 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
                         <UserBadgeAvatar user={user} size={26} />
                         <div className="flex min-w-0 flex-1 flex-col gap-px">
                             <span className="truncate font-semibold text-[12px] leading-tight">{user?.nickname ?? "Guest"}</span>
-                            <span className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.06em]">{user?.role ?? "—"}</span>
+                            <span className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.06em]">{user?.role ?? "-"}</span>
                         </div>
                         <ChevronRightIcon className="size-3.5 opacity-60 transition-transform group-hover:translate-x-0.5" strokeWidth={1.9} />
                     </Link>

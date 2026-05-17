@@ -340,6 +340,50 @@ def rewrite_prefixes(text: str, edits: list[tuple[str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Important modifier position: `!utility` -> `utility!` (Tailwind 3 -> 4)
+# Generic: find any `!` that is at a class-context boundary (start, whitespace,
+# string-quote, or `:` variant separator) and shift it to the end of the
+# following utility. Doesn't care what variant chain (if any) precedes it.
+# ---------------------------------------------------------------------------
+BANG_RE = re.compile(
+    r"(?P<lead>(?:^|[\s\"'`{(:]))"
+    r"!"
+    r"(?P<utility>[a-z][a-z0-9-]*(?:\[[^\]]*\])?(?:/[\d.]+)?)"
+    r"(?=$|[\s\"'`})\]])"
+)
+
+
+def rewrite_bang(text: str, edits: list[tuple[str, str]]) -> str:
+    def sub(m: re.Match[str]) -> str:
+        utility = m.group("utility")
+        # Skip TS-ish false positives — real Tailwind utilities almost always
+        # contain a hyphen or a bracketed arbitrary value.
+        if "-" not in utility and "[" not in utility:
+            return m.group(0)
+        edits.append(("!" + utility, utility + "!"))
+        return m.group("lead") + utility + "!"
+
+    return BANG_RE.sub(sub, text)
+
+
+# ---------------------------------------------------------------------------
+# Em-dash (U+2014 and &mdash; entity) -> hyphen
+# ---------------------------------------------------------------------------
+EMDASH_FORMS = ("—", "&mdash;")
+
+
+def rewrite_emdashes(text: str, edits: list[tuple[str, str]]) -> str:
+    for form in EMDASH_FORMS:
+        count = text.count(form)
+        if count == 0:
+            continue
+        for _ in range(count):
+            edits.append((form, "-"))
+        text = text.replace(form, "-")
+    return text
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
@@ -351,6 +395,8 @@ def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     text = rewrite_leading(text, edits)
     text = rewrite_literals(text, edits)
     text = rewrite_prefixes(text, edits)
+    text = rewrite_bang(text, edits)
+    text = rewrite_emdashes(text, edits)
     return text, edits
 
 

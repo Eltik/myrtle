@@ -35,6 +35,6 @@ export interface IUserProfile {
     operator_count: number | null;
     item_count: number | null;
     skin_count: number | null;
-    /** Owned skins excluding defaults — skin IDs containing `@`. */
+    /** Owned skins excluding defaults - skin IDs containing `@`. */
     non_default_skin_count: number | null;
 }

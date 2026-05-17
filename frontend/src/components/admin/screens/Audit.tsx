@@ -18,7 +18,7 @@ function ActorCell({ actor }: { actor: IAuditLogActor }): React.ReactElement {
     if (!actor.uid) {
         const shortUuid = `${actor.user_id.slice(0, 8)}…`;
         return (
-            <span className="inline-flex items-center gap-2" title={`Internal user_id ${actor.user_id} — referenced user no longer exists.`}>
+            <span className="inline-flex items-center gap-2" title={`Internal user_id ${actor.user_id} - referenced user no longer exists.`}>
                 <span className="inline-block size-5.5 shrink-0 rounded-full bg-muted" />
                 <span>
                     <span className="font-medium text-muted-foreground">Deleted user</span>
