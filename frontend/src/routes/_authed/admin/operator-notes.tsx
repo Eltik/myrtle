@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/admin/operator-notes")({
 
 function AdminNotesRoute(): React.ReactElement {
     return (
-        <AdminShell crumbs={["myrtle.moe", "admin", "Operator notes"]}>
+        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Operator notes" }]}>
             <OperatorNotes />
         </AdminShell>
     );
