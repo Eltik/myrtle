@@ -271,7 +271,7 @@ function SkinDetailDialog({ skin, op, owned, color }: ISkinDetailDialogProps) {
 
     return (
         <DialogContent className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" bottomStickOnMobile={false} showCloseButton>
-            <DialogTitle className="sr-only">{`${opName} — ${skinName}`}</DialogTitle>
+            <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[5fr_4fr]">
                 <div className="relative flex items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:border-border/60 md:border-r">
                     <img alt={`${opName} ${skinName}`} className="h-full w-full object-contain object-bottom" decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = fallbackUrl)} src={heroUrl} />
@@ -296,7 +296,7 @@ function SkinDetailDialog({ skin, op, owned, color }: ISkinDetailDialogProps) {
                             {price.label && (
                                 <DetailRow label="Price">
                                     <span className={cn("font-semibold", price.kind === "free" && "text-emerald-600 dark:text-emerald-400")}>{price.label}</span>
-                                    {price.tooltip && <span className="ml-2 text-muted-foreground text-xs">— {price.tooltip}</span>}
+                                    {price.tooltip && <span className="ml-2 text-muted-foreground text-xs">- {price.tooltip}</span>}
                                 </DetailRow>
                             )}
                             {obtain && <DetailRow label="Obtain">{obtain}</DetailRow>}
@@ -362,7 +362,7 @@ const CHANNEL_PRIORITY: Record<SectionChannel, number> = {
 
 const CHANNEL_LABEL: Record<SectionChannel, string | null> = {
     collab: "Collab",
-    store: null, // implicit — main paid brands are the baseline, no chip needed
+    store: null, // implicit - main paid brands are the baseline, no chip needed
     seasonal: "Seasonal",
     "special-pack": "Special Pack",
     is: "IS Reward",
@@ -449,16 +449,16 @@ interface ISkinPrice {
     kind: "paid" | "free" | "bundle" | "store";
     /** Short display label for chips, e.g. "18 OP" or "Free". `null` = don't render a chip. */
     label: string | null;
-    /** Longer hover / secondary text — e.g. acquisition method. */
+    /** Longer hover / secondary text - e.g. acquisition method. */
     tooltip: string | null;
 }
 
-/** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific —
- *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch` — applies
+/** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific -
+ *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch` - applies
  *  to every skin in that iteration of a brand).
  *
  *  We need this because the AK client gamedata we ship (skin_table.json,
- *  shop_client_table.json) does NOT include per-skin OP prices — those are
+ *  shop_client_table.json) does NOT include per-skin OP prices - those are
  *  served by the live store API only. So there's no programmatic way to derive
  *  them from the data. Until we have a reliable source, populate this table
  *  with verified values per skin or per group.
@@ -487,7 +487,7 @@ function getSkinPrice(skin: ISkin): ISkinPrice {
     if (op != null) {
         return { kind: "paid", label: `${op} OP`, tooltip: "Outfit Store" };
     }
-    // Unknown store price — render no chip (label: null) rather than a noisy "Store" tag.
+    // Unknown store price - render no chip (label: null) rather than a noisy "Store" tag.
     return { kind: "store", label: null, tooltip: null };
 }
 

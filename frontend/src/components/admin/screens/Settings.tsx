@@ -117,7 +117,7 @@ export function AdminSettings(): React.ReactElement {
                 <CardHeader>
                     <CardTitle className="text-sm">Loaded game data</CardTitle>
                     <CardDescription className="text-xs">
-                        Snapshot of what the backend currently has resident from <HCode>GAME_DATA_DIR</HCode>. Counts come from <HCode>GET /admin/stats</HCode> — they reflect the live in-memory dataset, so any drift here means the asset import is out of date and a redeploy or asset refresh is needed.
+                        Snapshot of what the backend currently has resident from <HCode>GAME_DATA_DIR</HCode>. Counts come from <HCode>GET /admin/stats</HCode> - they reflect the live in-memory dataset, so any drift here means the asset import is out of date and a redeploy or asset refresh is needed.
                     </CardDescription>
                     <CardAction>
                         <Button variant="outline" size="sm" onClick={() => statsQuery.refetch()} disabled={statsQuery.isFetching}>

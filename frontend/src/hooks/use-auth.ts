@@ -18,7 +18,7 @@ export function useAuth() {
         try {
             const u = await loginFn({ data });
             authActions.setUser(u);
-            // Drop any cached anon views — server fns now auto-attach the session
+            // Drop any cached anon views - server fns now auto-attach the session
             // token, so the next fetch should return owner-scoped data.
             queryClient.removeQueries({ queryKey: ["user"] });
             await router.invalidate();

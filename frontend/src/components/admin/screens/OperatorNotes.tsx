@@ -206,7 +206,7 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
                     <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {formatSubProfession(op.subProfessionId)}</span>
                 </div>
 
-                {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">No summary yet — click to add one.</p>}
+                {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">No summary yet - click to add one.</p>}
 
                 {tags.length > 0 ? (
                     <div className="mt-0.5 flex flex-wrap gap-1">

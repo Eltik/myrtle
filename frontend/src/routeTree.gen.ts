@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierListsRouteImport } from './routes/tier-lists'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -42,6 +43,11 @@ import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/ti
 const TierListsRoute = TierListsRouteImport.update({
   id: '/tier-lists',
   path: '/tier-lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperatorsRoute = OperatorsRouteImport.update({
@@ -189,6 +195,7 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/operators': typeof OperatorsRoute
+  '/stats': typeof StatsRoute
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/operators': typeof OperatorsRoute
+  '/stats': typeof StatsRoute
   '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/operators': typeof OperatorsRoute
+  '/stats': typeof StatsRoute
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/operators'
+    | '/stats'
     | '/tier-lists'
     | '/admin'
     | '/settings'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/operators'
+    | '/stats'
     | '/tier-lists'
     | '/settings'
     | '/gacha/community'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/operators'
+    | '/stats'
     | '/tier-lists'
     | '/_authed/admin'
     | '/_authed/settings'
@@ -374,6 +386,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   OperatorsRoute: typeof OperatorsRoute
+  StatsRoute: typeof StatsRoute
   TierListsRoute: typeof TierListsRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       path: '/tier-lists'
       fullPath: '/tier-lists'
       preLoaderRoute: typeof TierListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operators': {
@@ -645,6 +665,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   OperatorsRoute: OperatorsRoute,
+  StatsRoute: StatsRoute,
   TierListsRoute: TierListsRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
