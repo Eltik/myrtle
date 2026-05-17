@@ -4,7 +4,7 @@ import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/settings")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/login", search: { redirect: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
     },
     component: RouteComponent,
     head: () => {

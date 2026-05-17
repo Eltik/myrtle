@@ -21,7 +21,7 @@ const VALID_VIEWS = new Set<MyViewMode>(["grid", "list"]);
 
 export const Route = createFileRoute("/_authed/tier-lists_/my")({
     beforeLoad: ({ context, location }) => {
-        if (!context.user) throw redirect({ to: "/login", search: { redirect: location.href } });
+        if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
     },
     component: RouteComponent,
     loader: ({ context }) => context.queryClient.ensureQueryData(myTierListsDetailedQueryOptions(Boolean(context.user))),

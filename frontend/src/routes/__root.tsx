@@ -1,11 +1,13 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { useEffect } from "react";
+import { useSelector } from "@tanstack/react-store";
+import { useEffect, useRef } from "react";
+import { AuthDialog } from "#/components/header/impl/AuthDialog";
 import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 import { getSessionFn } from "#/lib/auth/server";
-import { authActions } from "#/lib/auth/store";
+import { authActions, authStore } from "#/lib/auth/store";
 import { CommandProvider } from "#/lib/command-context";
 import { seo } from "#/lib/seo";
 import Footer from "../components/Footer";
@@ -51,7 +53,61 @@ function RootComponent() {
         authActions.setUser(user ?? null);
     }, [user]);
 
-    return <Outlet />;
+    return (
+        <>
+            <Outlet />
+            <GlobalAuthDialog />
+        </>
+    );
+}
+
+function GlobalAuthDialog() {
+    const dialogOpen = useSelector(authStore, (s) => s.dialogOpen);
+    const user = useSelector(authStore, (s) => s.user);
+    const navigate = useNavigate();
+    const router = useRouter();
+    const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+    const promptedRef = useRef<string | null>(null);
+    const lastUserRef = useRef(user);
+
+    useEffect(() => {
+        const authParam = search.auth;
+        if (authParam !== "1") {
+            promptedRef.current = null;
+            return;
+        }
+        const key = `${pathname}?auth=1`;
+        if (promptedRef.current === key) return;
+        promptedRef.current = key;
+
+        const nextParam = typeof search.next === "string" ? search.next : null;
+        if (!user) {
+            authActions.openLoginDialog(nextParam);
+        }
+
+        const cleaned: Record<string, unknown> = { ...search };
+        delete cleaned.auth;
+        delete cleaned.next;
+        navigate({ to: pathname, search: cleaned, replace: true });
+    }, [search, pathname, user, navigate]);
+
+    useEffect(() => {
+        const previous = lastUserRef.current;
+        lastUserRef.current = user;
+        if (previous || !user) return;
+        const target = authActions.consumePostLoginRedirect();
+        if (target) {
+            try {
+                const url = new URL(target, window.location.origin);
+                router.history.push(`${url.pathname}${url.search}${url.hash}`);
+            } catch {
+                router.history.push(target);
+            }
+        }
+    }, [user, router]);
+
+    return <AuthDialog open={dialogOpen} onOpenChange={authActions.setDialogOpen} />;
 }
 
 function SiteChrome({ children }: { children: React.ReactNode }) {

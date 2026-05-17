@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Kicker } from "#/components/ui/kicker";
+import { authActions } from "#/lib/auth/store";
 import { formatNumber } from "#/lib/utils";
 
 interface IHeroProps {
@@ -38,9 +39,9 @@ export function Hero({ total, canCreate }: IHeroProps) {
                         Create list
                     </Link>
                 ) : (
-                    <Link to="/login" search={{ redirect: "/tier-lists" }} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
+                    <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-muted px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent">
                         Sign in to publish
-                    </Link>
+                    </button>
                 )}
             </div>
         </section>
