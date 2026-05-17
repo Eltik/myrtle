@@ -69,6 +69,16 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Browse official and community tier lists.",
         activeTag: "Home",
     },
+    terms: {
+        title: "Terms of Service",
+        subtitle: "Legal agreement governing your use of Myrtle.",
+        activeTag: "Home",
+    },
+    privacy: {
+        title: "Privacy Policy",
+        subtitle: "How we protect and handle your personal information.",
+        activeTag: "Home",
+    },
 } as const satisfies Record<string, IDefaultOgData>;
 
 export type DefaultOgPresetSlug = keyof typeof DEFAULT_OG_PRESETS;

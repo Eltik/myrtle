@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierListsRouteImport } from './routes/tier-lists'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -45,9 +47,19 @@ const TierListsRoute = TierListsRouteImport.update({
   path: '/tier-lists',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OperatorsRoute = OperatorsRouteImport.update({
@@ -195,7 +207,9 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/operators': typeof OperatorsRoute
+  '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
   '/settings': typeof AuthedSettingsRoute
@@ -226,7 +240,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/operators': typeof OperatorsRoute
+  '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
   '/gacha/community': typeof GachaCommunityRoute
@@ -258,7 +274,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/operators': typeof OperatorsRoute
+  '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
   '/_authed/settings': typeof AuthedSettingsRoute
@@ -291,7 +309,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/operators'
+    | '/privacy'
     | '/stats'
+    | '/terms'
     | '/tier-lists'
     | '/admin'
     | '/settings'
@@ -322,7 +342,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/operators'
+    | '/privacy'
     | '/stats'
+    | '/terms'
     | '/tier-lists'
     | '/settings'
     | '/gacha/community'
@@ -353,7 +375,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/operators'
+    | '/privacy'
     | '/stats'
+    | '/terms'
     | '/tier-lists'
     | '/_authed/admin'
     | '/_authed/settings'
@@ -386,7 +410,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   OperatorsRoute: typeof OperatorsRoute
+  PrivacyRoute: typeof PrivacyRoute
   StatsRoute: typeof StatsRoute
+  TermsRoute: typeof TermsRoute
   TierListsRoute: typeof TierListsRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
@@ -412,11 +438,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TierListsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/operators': {
@@ -665,7 +705,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   OperatorsRoute: OperatorsRoute,
+  PrivacyRoute: PrivacyRoute,
   StatsRoute: StatsRoute,
+  TermsRoute: TermsRoute,
   TierListsRoute: TierListsRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,

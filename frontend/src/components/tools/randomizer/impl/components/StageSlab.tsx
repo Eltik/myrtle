@@ -78,7 +78,7 @@ export function StageSlab({ stage, zone, lookup, onReroll }: IStageSlabProps): R
                     </div>
                 </div>
 
-                <StagePreview stage={stage} className="mx-auto w-full max-w-md md:max-w-[320px]" />
+                <StagePreview stage={stage} className="mx-auto w-full max-w-md md:max-w-80" />
             </div>
         </SlabFrame>
     );
