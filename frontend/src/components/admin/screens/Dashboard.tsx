@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon, ExternalLinkIcon, RefreshCwIcon } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -9,8 +10,23 @@ import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
 import { userQueryOptions } from "#/lib/api/user";
 import { getSecretaryAvatarURL } from "#/lib/utils";
+import type { IUserProfile } from "#/types/user";
 import { HCode, PageHead } from "../AdminShell";
 import { StatTile, StatusDot, Timeline } from "../Primitives";
+
+function SignedInAvatar({ user }: { user: IUserProfile | null }): React.ReactElement {
+    const [failed, setFailed] = useState(false);
+    const url = user ? getSecretaryAvatarURL({ secretary: user.secretary, secretary_skin_id: user.secretary_skin_id }) : null;
+    return (
+        <span className="relative inline-block size-8.5 shrink-0 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
+            {url && !failed ? (
+                <img src={url} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" onError={() => setFailed(true)} />
+            ) : (
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-[12px] text-white/90">{user?.nickname?.[0]?.toUpperCase() ?? "?"}</span>
+            )}
+        </span>
+    );
+}
 
 function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string }): React.ReactElement {
     const profile = useQuery({ ...userQueryOptions(uid), retry: 0 });
@@ -246,10 +262,17 @@ export function Dashboard(): React.ReactElement {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-sm">Signed in as</CardTitle>
+                            {user?.uid ? (
+                                <CardAction>
+                                    <Button variant="ghost" size="sm" render={<Link to="/user/$id" params={{ id: user.uid }} target="_blank" />}>
+                                        Profile <ExternalLinkIcon />
+                                    </Button>
+                                </CardAction>
+                            ) : null}
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2.5">
-                                <span className="block size-8.5 shrink-0 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
+                                <SignedInAvatar user={user} />
                                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                     <span className="truncate font-medium text-[13px]">{user?.nickname ?? "-"}</span>
                                     <span className="truncate font-mono text-[11.5px] text-muted-foreground">UID {user?.uid ?? "-"}</span>

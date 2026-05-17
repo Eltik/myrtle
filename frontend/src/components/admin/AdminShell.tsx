@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { AdminSidebar } from "./AdminSidebar";
-import { AdminTopBar } from "./AdminTopBar";
+import { AdminTopBar, type IAdminCrumb } from "./AdminTopBar";
 
 interface IAdminShellProps {
-    crumbs: string[];
+    crumbs: IAdminCrumb[];
     children: React.ReactNode;
 }
 

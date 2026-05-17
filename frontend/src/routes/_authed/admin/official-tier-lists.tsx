@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/admin/official-tier-lists")({
 
 function AdminOfficialRoute(): React.ReactElement {
     return (
-        <AdminShell crumbs={["myrtle.moe", "admin", "Official tier lists"]}>
+        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Official tier lists" }]}>
             <OfficialTierLists />
         </AdminShell>
     );

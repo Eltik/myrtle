@@ -1,18 +1,38 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ActivityIcon, ChevronDownIcon, FileTextIcon, LayoutDashboardIcon, ListOrderedIcon, type LucideIcon, SettingsIcon, ShieldIcon, UsersIcon, XIcon, ZapIcon } from "lucide-react";
-import { useEffect } from "react";
+import { ActivityIcon, ChevronRightIcon, FileTextIcon, LayoutDashboardIcon, ListOrderedIcon, type LucideIcon, SettingsIcon, ShieldIcon, UsersIcon, XIcon, ZapIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions } from "#/lib/api/admin";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { browseTierListsQueryOptions } from "#/lib/api/tier-lists";
-import { cn } from "#/lib/utils";
+import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 
 interface INavItem {
     to: string;
     label: string;
     icon: LucideIcon;
     count?: number;
+}
+
+interface IAvatarUser {
+    nickname: string | null;
+    secretary: string | null;
+    secretary_skin_id: string | null;
+}
+
+function UserBadgeAvatar({ user, size = 26 }: { user: IAvatarUser | null | undefined; size?: number }): React.ReactElement {
+    const [failed, setFailed] = useState(false);
+    const url = user ? getSecretaryAvatarURL({ secretary: user.secretary, secretary_skin_id: user.secretary_skin_id }) : null;
+    return (
+        <span className="relative inline-block shrink-0 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" style={{ width: size, height: size }}>
+            {url && !failed ? (
+                <img src={url} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" onError={() => setFailed(true)} />
+            ) : (
+                <span className="absolute inset-0 flex items-center justify-center font-bold text-[11px] text-white/90">{user?.nickname?.[0]?.toUpperCase() ?? "?"}</span>
+            )}
+        </span>
+    );
 }
 
 function NavRow({ item, active, onNavigate }: { item: INavItem; active: boolean; onNavigate?: () => void }): React.ReactElement {
@@ -97,15 +117,17 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
                 )}
             >
                 <div className="flex items-center gap-2.5 px-4 py-4">
-                    <img src="/logo/bust_transparent.png" alt="myrtle" className="size-7 shrink-0 object-contain" />
-                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="truncate font-semibold text-[15px] leading-none tracking-[-0.01em]">myrtle.moe</span>
-                        <span className="inline-flex items-center gap-1 font-medium font-mono text-[10px] text-muted-foreground leading-none tracking-[0.06em]">
-                            <span className="text-primary uppercase">admin</span>
-                            <span className="opacity-40">·</span>
-                            <span className="uppercase">v3</span>
-                        </span>
-                    </div>
+                    <Link to="/admin" onClick={onClose} aria-label="myrtle.moe admin home" className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 transition-colors hover:bg-sidebar-accent">
+                        <img src="/logo/bust_transparent.png" alt="" className="size-7 shrink-0 object-contain" />
+                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <span className="truncate font-semibold text-[15px] leading-none tracking-[-0.01em]">myrtle.moe</span>
+                            <span className="inline-flex items-center gap-1 font-medium font-mono text-[10px] text-muted-foreground leading-none tracking-[0.06em]">
+                                <span className="text-primary uppercase">admin</span>
+                                <span className="opacity-40">·</span>
+                                <span className="uppercase">v3</span>
+                            </span>
+                        </div>
+                    </Link>
                     <button type="button" aria-label="Close menu" onClick={onClose} className="-mr-1 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-sidebar-accent lg:hidden">
                         <XIcon className="size-4" strokeWidth={1.9} />
                     </button>
@@ -123,16 +145,16 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
                 </nav>
 
                 <div className="border-sidebar-border border-t p-2.5">
-                    <div className="flex items-center gap-2.5 rounded-[10px] border border-sidebar-border bg-card px-2.5 py-2">
-                        <span className="block size-6.5 shrink-0 rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]" />
+                    <Link to={user?.uid ? "/user/$id" : "/settings"} params={user?.uid ? { id: user.uid } : undefined} onClick={onClose} aria-label="View your profile" className="group flex items-center gap-2.5 rounded-[10px] border border-sidebar-border bg-card px-2.5 py-2 transition-colors hover:bg-sidebar-accent">
+                        <UserBadgeAvatar user={user} size={26} />
                         <div className="flex min-w-0 flex-1 flex-col gap-px">
-                            <span className="truncate font-semibold text-[12px] leading-tight">{user?.nickname ?? "Eltik"}</span>
-                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.06em]">{user?.role ?? "super_admin"}</span>
+                            <span className="truncate font-semibold text-[12px] leading-tight">{user?.nickname ?? "Guest"}</span>
+                            <span className="truncate font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.06em]">{user?.role ?? "—"}</span>
                         </div>
-                        <ChevronDownIcon className="size-3.5 opacity-60" strokeWidth={1.9} />
-                    </div>
+                        <ChevronRightIcon className="size-3.5 opacity-60 transition-transform group-hover:translate-x-0.5" strokeWidth={1.9} />
+                    </Link>
                     <div className="flex items-center justify-end pt-1.5">
-                        <Link to="/" className="text-[11px] text-muted-foreground hover:text-foreground">
+                        <Link to="/" className="text-[11px] text-muted-foreground hover:text-foreground" onClick={onClose}>
                             ← back to site
                         </Link>
                     </div>

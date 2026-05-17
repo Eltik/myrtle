@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/admin/permissions")({
 
 function AdminPermissionsRoute(): React.ReactElement {
     return (
-        <AdminShell crumbs={["myrtle.moe", "admin", "Tier Lists"]}>
+        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Tier Lists" }]}>
             <Permissions />
         </AdminShell>
     );

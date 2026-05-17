@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_authed/admin/")({
 
 function AdminDashboardRoute(): React.ReactElement {
     return (
-        <AdminShell crumbs={["myrtle.moe", "admin", "Dashboard"]}>
+        <AdminShell crumbs={[{ label: "myrtle.moe", to: "/" }, { label: "admin", to: "/admin" }, { label: "Dashboard" }]}>
             <Dashboard />
         </AdminShell>
     );

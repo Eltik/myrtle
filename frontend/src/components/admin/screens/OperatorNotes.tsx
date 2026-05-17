@@ -352,7 +352,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         <Field label="Cons" hint="Newline-separated.">
                             <textarea value={cons} onChange={(e) => setCons(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
-                        <Field label="Notes" hint="Long-form guidance. Markdown supported in the public view.">
+                        <Field label="Notes" hint="Long-form guidance.">
                             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="h-32 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
                         <Field label="Trivia" hint="Optional lore / community notes.">
