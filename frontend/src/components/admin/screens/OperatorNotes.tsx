@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ActivityIcon, ArrowUpDownIcon, CheckIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ActivityIcon, ArrowUpDownIcon, CheckIcon, ChevronRightIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -13,7 +13,7 @@ import { toastManager } from "#/components/ui/toast";
 import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, updateOperatorNoteFn } from "#/lib/api/admin";
 import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { cn } from "#/lib/utils";
+import { cn, formatSubProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
 import { MonoSection, RARITY_BG } from "../Primitives";
@@ -203,7 +203,7 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span className="truncate font-medium text-[14px] text-foreground">{op.name}</span>
                     <span className="truncate font-mono text-[11px] text-muted-foreground">{op.id}</span>
-                    <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {op.subProfessionId}</span>
+                    <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {formatSubProfession(op.subProfessionId)}</span>
                 </div>
 
                 {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">No summary yet — click to add one.</p>}
@@ -254,7 +254,8 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
     const [pros, setPros] = useState<string>("");
     const [cons, setCons] = useState<string>("");
     const [trivia, setTrivia] = useState<string>("");
-    const [tagsRaw, setTagsRaw] = useState<string>("");
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState<string>("");
     const [dirtyBaseline, setDirtyBaseline] = useState<string>("");
 
     useEffect(() => {
@@ -264,19 +265,30 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
         setPros(note.pros ?? "");
         setCons(note.cons ?? "");
         setTrivia(note.trivia ?? "");
-        setTagsRaw((note.tags ?? []).join(", "));
-        setDirtyBaseline(JSON.stringify({ summary: note.summary ?? "", notes: note.notes ?? "", pros: note.pros ?? "", cons: note.cons ?? "", trivia: note.trivia ?? "", tags: (note.tags ?? []).join(", ") }));
+        setTags(note.tags ?? []);
+        setDirtyBaseline(JSON.stringify({ summary: note.summary ?? "", notes: note.notes ?? "", pros: note.pros ?? "", cons: note.cons ?? "", trivia: note.trivia ?? "", tags: note.tags ?? [] }));
     }, [note]);
 
-    const currentSnapshot = JSON.stringify({ summary, notes, pros, cons, trivia, tags: tagsRaw });
+    const currentSnapshot = JSON.stringify({ summary, notes, pros, cons, trivia, tags });
     const dirty = currentSnapshot !== dirtyBaseline && dirtyBaseline !== "";
+
+    const addTag = useCallback(() => {
+        const trimmed = tagInput.trim();
+        if (!trimmed) return;
+        setTags((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+        setTagInput("");
+    }, [tagInput]);
+
+    const removeTag = useCallback((tag: string) => {
+        setTags((prev) => prev.filter((t) => t !== tag));
+    }, []);
 
     const save = useMutation({
         mutationFn: (input: IUpdateOperatorNoteInput) => updateOperatorNoteFn({ data: input }),
         onSuccess: (data) => {
             void queryClient.invalidateQueries({ queryKey: ["operator-notes"] });
             void queryClient.invalidateQueries({ queryKey: ["admin", "operator-notes", "audit", operatorId] });
-            setDirtyBaseline(JSON.stringify({ summary: data.summary ?? "", notes: data.notes ?? "", pros: data.pros ?? "", cons: data.cons ?? "", trivia: data.trivia ?? "", tags: (data.tags ?? []).join(", ") }));
+            setDirtyBaseline(JSON.stringify({ summary: data.summary ?? "", notes: data.notes ?? "", pros: data.pros ?? "", cons: data.cons ?? "", trivia: data.trivia ?? "", tags: data.tags ?? [] }));
             toastManager.add({ id: `note-save-${Date.now()}`, title: "Note saved", description: `Updated operator notes for ${op?.name ?? operatorId}.`, type: "success" });
         },
         onError: (err: unknown) => toastManager.add({ id: `note-save-err-${Date.now()}`, title: "Failed to save", description: err instanceof Error ? err.message : String(err), type: "error" }),
@@ -328,10 +340,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                         pros: pros || null,
                                         cons: cons || null,
                                         trivia: trivia || null,
-                                        tags: tagsRaw
-                                            .split(",")
-                                            .map((t) => t.trim())
-                                            .filter((t) => t.length > 0),
+                                        tags,
                                     })
                                 }
                             >
@@ -346,20 +355,49 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         <Field label="Summary" hint="One-line synopsis for the operator card.">
                             <Input size="sm" value={summary} onChange={(e) => setSummary(e.target.value)} />
                         </Field>
-                        <Field label="Pros" hint="Newline-separated.">
+                        <Field label="Pros">
                             <textarea value={pros} onChange={(e) => setPros(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
-                        <Field label="Cons" hint="Newline-separated.">
+                        <Field label="Cons">
                             <textarea value={cons} onChange={(e) => setCons(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
-                        <Field label="Notes" hint="Long-form guidance.">
+                        <Field label="Notes">
                             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="h-32 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
-                        <Field label="Trivia" hint="Optional lore / community notes.">
+                        <Field label="Trivia">
                             <textarea value={trivia} onChange={(e) => setTrivia(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
                         </Field>
-                        <Field label="Tags" hint="Comma-separated.">
-                            <Input size="sm" value={tagsRaw} onChange={(e) => setTagsRaw(e.target.value)} placeholder="dps, e2-priority, sp-on-attack" />
+                        <Field label="Tags">
+                            <div className="flex gap-2">
+                                <Input
+                                    size="sm"
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            addTag();
+                                        }
+                                    }}
+                                    placeholder="Add a tag…"
+                                />
+                                <Button type="button" variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>
+                                    <PlusIcon />
+                                    Add
+                                </Button>
+                            </div>
+                            {tags.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 pt-1.5">
+                                    {tags.map((tag) => (
+                                        <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                                            <span>{tag}</span>
+                                            <button type="button" onClick={() => removeTag(tag)} className="-mr-0.5 inline-flex size-3.5 cursor-pointer items-center justify-center rounded-sm hover:bg-foreground/10" aria-label={`Remove ${tag}`}>
+                                                <XIcon className="size-3" strokeWidth={2.2} />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : null}
                         </Field>
                     </div>
                     <div>
@@ -368,48 +406,41 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                             {dirty ? <Badge variant="warning">unsaved changes</Badge> : <Badge variant="outline">saved</Badge>}
                         </div>
                         <div className="max-h-[60vh] overflow-auto p-4 font-sans text-[13px] leading-[1.6] lg:h-160 lg:max-h-none">
-                            {summary ? <p className="mb-3 font-medium">{summary}</p> : null}
+                            {summary ? <p className="mb-3 whitespace-pre-line font-medium">{summary}</p> : null}
                             {pros ? (
                                 <>
                                     <h3 className="mt-2 mb-1.5 font-semibold text-[14px]">Pros</h3>
-                                    <ul className="m-0 list-disc pl-4">
-                                        {pros
-                                            .split("\n")
-                                            .filter(Boolean)
-                                            .map((p, i) => (
-                                                // biome-ignore lint/suspicious/noArrayIndexKey: pros lines are positional within the textarea
-                                                <li key={i}>{p}</li>
-                                            ))}
-                                    </ul>
+                                    <p className="whitespace-pre-line text-muted-foreground">{pros}</p>
                                 </>
                             ) : null}
                             {cons ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Cons</h3>
-                                    <ul className="m-0 list-disc pl-4">
-                                        {cons
-                                            .split("\n")
-                                            .filter(Boolean)
-                                            .map((p, i) => (
-                                                // biome-ignore lint/suspicious/noArrayIndexKey: cons lines are positional within the textarea
-                                                <li key={i}>{p}</li>
-                                            ))}
-                                    </ul>
+                                    <p className="whitespace-pre-line text-muted-foreground">{cons}</p>
                                 </>
                             ) : null}
                             {notes ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Notes</h3>
-                                    <p className="whitespace-pre-wrap">{notes}</p>
+                                    <p className="whitespace-pre-line text-muted-foreground">{notes}</p>
                                 </>
                             ) : null}
                             {trivia ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Trivia</h3>
-                                    <p className="whitespace-pre-wrap">{trivia}</p>
+                                    <p className="whitespace-pre-line text-muted-foreground">{trivia}</p>
                                 </>
                             ) : null}
-                            {!summary && !pros && !cons && !notes && !trivia ? <p className="text-muted-foreground">Nothing yet - start writing on the left.</p> : null}
+                            {tags.length > 0 ? (
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {tags.map((tag) => (
+                                        <Badge key={tag} variant="secondary">
+                                            {tag}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            ) : null}
+                            {!summary && !pros && !cons && !notes && !trivia && tags.length === 0 ? <p className="text-muted-foreground">Nothing yet - start writing on the left.</p> : null}
                         </div>
                     </div>
                 </div>

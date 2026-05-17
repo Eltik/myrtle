@@ -45,8 +45,8 @@ export function AdminSettings(): React.ReactElement {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Signed-in operator</CardTitle>
-                        <CardDescription className="text-xs">Your current JWT session.</CardDescription>
+                        <CardTitle className="text-sm">Signed-in User</CardTitle>
+                        <CardDescription className="text-xs">Your current session.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                         <CardKV k="Nickname" v={user?.nickname ?? "-"} />
@@ -85,7 +85,7 @@ export function AdminSettings(): React.ReactElement {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-sm">Environment (reference)</CardTitle>
+                    <CardTitle className="text-sm">Environment</CardTitle>
                     <CardDescription className="text-xs">
                         These values live in <HCode>.env</HCode> on the backend and require a redeploy to change.
                     </CardDescription>
