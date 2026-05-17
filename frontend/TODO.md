@@ -105,8 +105,8 @@
 
 ## `/gacha/history`
 
-- [ ] **Banner name layout.** Keep the banner name on a single line, and/or fetch the actual banner name rather than a truncated/generic label.
-- [ ] **Limited & collab pity reset handling.** Pity does not carry over between limited/collab banners. Verify whether a new limited banner pull is treated as the same banner as before, and **add a notification on collab and limited banners explaining that pity does not carry over**.
+- [X] **Banner name layout.** Keep the banner name on a single line, and/or fetch the actual banner name rather than a truncated/generic label.
+- [X] **Limited & collab pity reset handling.** Pity does not carry over between limited/collab banners. Verify whether a new limited banner pull is treated as the same banner as before, and **add a notification on collab and limited banners explaining that pity does not carry over**.
 
 ---
 
