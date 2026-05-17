@@ -1,30 +1,41 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ExternalLinkIcon, SearchIcon } from "lucide-react";
+import { ExternalLinkIcon, RefreshCwIcon, SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
+import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
-import { operatorNoteAuditLogQueryOptions } from "#/lib/api/admin";
-import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
+import { globalAuditLogQueryOptions, type IAuditLogActor, type IAuditLogEntry } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { userQueryOptions } from "#/lib/api/user";
 import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
 
-function ActorCell({ uid }: { uid: string }): React.ReactElement {
-    const profile = useQuery({ ...userQueryOptions(uid), retry: 0 });
-    const u = profile.data;
+function ActorCell({ actor }: { actor: IAuditLogActor }): React.ReactElement {
+    // actor.uid is null only when the FK target user has been hard-deleted.
+    if (!actor.uid) {
+        const shortUuid = `${actor.user_id.slice(0, 8)}…`;
+        return (
+            <span className="inline-flex items-center gap-2" title={`Internal user_id ${actor.user_id} — referenced user no longer exists.`}>
+                <span className="inline-block size-5.5 shrink-0 rounded-full bg-muted" />
+                <span>
+                    <span className="font-medium text-muted-foreground">Deleted user</span>
+                    <span className="ml-1 font-mono text-[11.5px] text-muted-foreground/70">{shortUuid}</span>
+                </span>
+            </span>
+        );
+    }
+
     return (
-        <Link to="/user/$id" params={{ id: uid }} target="_blank" className="inline-flex items-center gap-2 hover:underline">
+        <Link to="/user/$id" params={{ id: actor.uid }} target="_blank" className="inline-flex items-center gap-2 hover:underline">
             <span className="relative inline-block size-5.5 overflow-hidden rounded-full bg-[linear-gradient(135deg,oklch(0.58_0.22_25),oklch(0.85_0.12_25))]">
-                {u ? <img src={getSecretaryAvatarURL({ secretary: u.secretary, secretary_skin_id: u.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
+                <img src={getSecretaryAvatarURL({ secretary: actor.secretary, secretary_skin_id: actor.secretary_skin_id })} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
             </span>
             <span>
-                <span className="font-medium">{u?.nickname ?? "-"}</span>
-                <span className="ml-1 font-mono text-[11.5px] text-muted-foreground">UID {uid}</span>
+                <span className="font-medium">{actor.nickname ?? "-"}</span>
+                <span className="ml-1 font-mono text-[11.5px] text-muted-foreground">UID {actor.uid}</span>
             </span>
         </Link>
     );
@@ -47,22 +58,6 @@ function OperatorTargetCell({ operatorId }: { operatorId: string }): React.React
     );
 }
 
-interface IFlatAuditRow {
-    when: string;
-    actor: string;
-    action: string;
-    target: string;
-    detail: string;
-    severity: "info" | "success" | "warning" | "muted";
-}
-
-function severityBadge(s: IFlatAuditRow["severity"]): React.ReactElement {
-    if (s === "info") return <Badge variant="info">info</Badge>;
-    if (s === "success") return <Badge variant="success">success</Badge>;
-    if (s === "warning") return <Badge variant="warning">warning</Badge>;
-    return <Badge variant="outline">system</Badge>;
-}
-
 function formatRelative(iso: string): string {
     const t = Date.parse(iso);
     if (!Number.isFinite(t)) return iso;
@@ -74,51 +69,73 @@ function formatRelative(iso: string): string {
     return new Date(t).toLocaleDateString();
 }
 
+type FieldFilter = "all" | "pros" | "cons" | "notes" | "trivia" | "summary";
+
+function diffPreview(entry: IAuditLogEntry): React.ReactNode {
+    const oldVal = entry.old_value?.trim() ?? "";
+    const newVal = entry.new_value?.trim() ?? "";
+    const truncate = (s: string, n = 80): string => (s.length > n ? `${s.slice(0, n)}…` : s);
+    if (!oldVal && newVal) {
+        return (
+            <span className="text-[12.5px]">
+                <Badge variant="success" className="mr-1.5 align-middle">
+                    added
+                </Badge>
+                <span className="text-muted-foreground">{truncate(newVal)}</span>
+            </span>
+        );
+    }
+    if (oldVal && !newVal) {
+        return (
+            <span className="text-[12.5px]">
+                <Badge variant="warning" className="mr-1.5 align-middle">
+                    cleared
+                </Badge>
+                <span className="text-muted-foreground line-through">{truncate(oldVal)}</span>
+            </span>
+        );
+    }
+    return (
+        <span className="text-[12.5px] text-muted-foreground">
+            <span className="text-red-500 line-through">{truncate(oldVal, 40)}</span>
+            <span className="mx-1 opacity-50">→</span>
+            <span className="text-emerald-600 dark:text-emerald-400">{truncate(newVal, 40)}</span>
+        </span>
+    );
+}
+
+const PAGE_SIZE = 100;
+
 export function Audit(): React.ReactElement {
-    const [filter, setFilter] = useState<"all" | "operator-notes" | "info" | "warning">("all");
+    const [fieldFilter, setFieldFilter] = useState<FieldFilter>("all");
     const [search, setSearch] = useState("");
 
-    const notesQuery = useQuery(operatorNotesListQueryOptions());
-
-    // Fetch the audit log for each operator that has a note. Limited to top 12 to avoid hammering the backend.
-    const operatorIds = (notesQuery.data ?? []).slice(0, 12).map((n) => n.operator_id);
-    const auditQueries = useQueries({
-        queries: operatorIds.map((id) => ({ ...operatorNoteAuditLogQueryOptions(id), enabled: true })),
-    });
-
-    const rows: IFlatAuditRow[] = useMemo(() => {
-        const out: IFlatAuditRow[] = [];
-        auditQueries.forEach((q, idx) => {
-            const id = operatorIds[idx];
-            if (!q.data || !id) return;
-            for (const entry of q.data) {
-                out.push({
-                    when: entry.changed_at,
-                    actor: entry.changed_by,
-                    action: "operator-notes.update",
-                    target: id,
-                    detail: `${entry.field_name}: ${entry.old_value ? `-${entry.old_value.slice(0, 40)}` : ""} ${entry.new_value ? `+${entry.new_value.slice(0, 40)}` : ""}`.trim(),
-                    severity: "info",
-                });
-            }
-        });
-        return out.sort((a, b) => Date.parse(b.when) - Date.parse(a.when));
-    }, [auditQueries, operatorIds]);
+    const auditQuery = useQuery(globalAuditLogQueryOptions({ limit: PAGE_SIZE }));
 
     const filtered = useMemo(() => {
-        return rows.filter((r) => {
-            if (filter === "info" && r.severity !== "info") return false;
-            if (filter === "warning" && r.severity !== "warning") return false;
-            if (filter === "operator-notes" && r.action !== "operator-notes.update") return false;
+        const entries = auditQuery.data?.entries ?? [];
+        return entries.filter((r) => {
+            if (fieldFilter !== "all" && r.field_name !== fieldFilter) return false;
             if (search) {
                 const q = search.toLowerCase();
-                if (!r.actor.toLowerCase().includes(q) && !r.action.toLowerCase().includes(q) && !r.target.toLowerCase().includes(q) && !r.detail.toLowerCase().includes(q)) return false;
+                if (
+                    !(r.actor.nickname ?? "").toLowerCase().includes(q) &&
+                    !(r.actor.uid ?? "").toLowerCase().includes(q) &&
+                    !r.actor.user_id.toLowerCase().includes(q) &&
+                    !r.field_name.toLowerCase().includes(q) &&
+                    !r.operator_id.toLowerCase().includes(q) &&
+                    !(r.old_value ?? "").toLowerCase().includes(q) &&
+                    !(r.new_value ?? "").toLowerCase().includes(q)
+                )
+                    return false;
             }
             return true;
         });
-    }, [rows, filter, search]);
+    }, [auditQuery.data, fieldFilter, search]);
 
-    const loading = notesQuery.isPending || auditQueries.some((q) => q.isPending);
+    const loading = auditQuery.isPending;
+    const total = auditQuery.data?.total ?? 0;
+    const shown = auditQuery.data?.entries.length ?? 0;
 
     return (
         <>
@@ -127,8 +144,14 @@ export function Audit(): React.ReactElement {
                 title="Audit log"
                 sub={
                     <>
-                        Append-only edit trail from <HCode>operator_notes_audit</HCode>. Each row was written when an admin saved an operator note. Permission grants and tier-list publishes don't yet emit audit rows in v3.
+                        Append-only edit trail from <HCode>operator_notes_audit_log</HCode>. Each row was written when an admin saved an operator note. Permission grants and tier-list publishes don't yet emit audit rows in v3.
                     </>
+                }
+                action={
+                    <Button variant="outline" size="sm" onClick={() => auditQuery.refetch()} disabled={auditQuery.isFetching}>
+                        <RefreshCwIcon className={cn(auditQuery.isFetching && "animate-spin")} />
+                        Refresh
+                    </Button>
                 }
             />
 
@@ -139,18 +162,26 @@ export function Audit(): React.ReactElement {
                             <InputGroupAddon>
                                 <SearchIcon />
                             </InputGroupAddon>
-                            <Input placeholder="Filter by actor UID, action, target, detail…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+                            <Input placeholder="Filter by actor, operator, field, content…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
                     <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
-                        {(["all", "operator-notes", "info", "warning"] as const).map((f) => (
-                            <button key={f} type="button" onClick={() => setFilter(f)} className={cn("inline-flex h-6.5 cursor-pointer items-center rounded-md px-3 font-medium text-[12.5px] transition-colors", filter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}>
-                                {f === "all" ? "All" : f === "operator-notes" ? "Operator notes" : f.charAt(0).toUpperCase() + f.slice(1)}
+                        {(["all", "pros", "cons", "notes", "trivia", "summary"] as const).map((f) => (
+                            <button
+                                key={f}
+                                type="button"
+                                onClick={() => setFieldFilter(f)}
+                                className={cn("inline-flex h-6.5 cursor-pointer items-center rounded-md px-3 font-medium text-[12.5px] transition-colors", fieldFilter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
+                            >
+                                {f === "all" ? "All fields" : f.charAt(0).toUpperCase() + f.slice(1)}
                             </button>
                         ))}
                     </div>
                     <div className="flex-1" />
-                    <span className="text-[12px] text-muted-foreground">{filtered.length} events</span>
+                    <span className="text-[12px] text-muted-foreground">
+                        {filtered.length} of {shown.toLocaleString()} shown
+                        {total > shown ? <span className="ml-1 opacity-70">/ {total.toLocaleString()} total</span> : null}
+                    </span>
                 </div>
                 {loading ? (
                     <div className="space-y-2 p-4">
@@ -158,14 +189,16 @@ export function Audit(): React.ReactElement {
                         <Skeleton className="h-10" />
                         <Skeleton className="h-10" />
                     </div>
+                ) : auditQuery.isError ? (
+                    <div className="px-3.5 py-16 text-center text-[13px] text-destructive">Failed to load audit log: {(auditQuery.error as Error)?.message ?? "unknown error"}</div>
                 ) : filtered.length === 0 ? (
-                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">No audit rows yet.</div>
+                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">{shown === 0 ? "No audit rows yet." : "No rows match your filter."}</div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-190 border-collapse text-[13px]">
+                        <table className="w-full min-w-220 border-collapse text-[13px]">
                             <thead>
                                 <tr>
-                                    {["When", "Actor", "Action", "Target", "Detail", "Severity"].map((h) => (
+                                    {["When", "Actor", "Operator", "Field", "Change"].map((h) => (
                                         <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                             {h}
                                         </th>
@@ -173,24 +206,23 @@ export function Audit(): React.ReactElement {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filtered.slice(0, 200).map((r, i) => (
-                                    <tr
-                                        // biome-ignore lint/suspicious/noArrayIndexKey: audit rows are positional within the merged stream
-                                        key={i}
-                                        className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]"
-                                    >
-                                        <td className="px-3.5 py-2.5 text-muted-foreground">{formatRelative(r.when)}</td>
-                                        <td className="px-3.5 py-2.5">
-                                            <ActorCell uid={r.actor} />
+                                {filtered.map((r) => (
+                                    <tr key={r.id} className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
+                                        <td className="whitespace-nowrap px-3.5 py-2.5 text-muted-foreground" title={r.changed_at}>
+                                            {formatRelative(r.changed_at)}
                                         </td>
                                         <td className="px-3.5 py-2.5">
-                                            <span className="font-mono text-[12.5px]">{r.action}</span>
+                                            <ActorCell actor={r.actor} />
                                         </td>
                                         <td className="px-3.5 py-2.5">
-                                            <OperatorTargetCell operatorId={r.target} />
+                                            <OperatorTargetCell operatorId={r.operator_id} />
                                         </td>
-                                        <td className="px-3.5 py-2.5 text-[12.5px] text-muted-foreground">{r.detail}</td>
-                                        <td className="px-3.5 py-2.5">{severityBadge(r.severity)}</td>
+                                        <td className="px-3.5 py-2.5">
+                                            <Badge variant="outline" className="font-mono">
+                                                {r.field_name}
+                                            </Badge>
+                                        </td>
+                                        <td className="max-w-105 px-3.5 py-2.5">{diffPreview(r)}</td>
                                     </tr>
                                 ))}
                             </tbody>

@@ -85,6 +85,10 @@ pub fn router() -> Router<AppState> {
             "/operator-notes/{operator_id}/audit",
             get(operator_notes::audit_log),
         )
+        .route(
+            "/admin/operator-notes/audit",
+            get(operator_notes::global_audit_log),
+        )
         .route("/friends", get(social::get_friends))
         .route("/players/search", get(social::search_players))
         .merge(tier_lists::router())

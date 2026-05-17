@@ -1,7 +1,9 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::operator_notes::{OperatorNote, OperatorNoteAuditEntry};
+use crate::database::models::operator_notes::{
+    OperatorNote, OperatorNoteAuditEntry, OperatorNoteAuditEntryWithContext,
+};
 
 pub async fn get_all(pool: &PgPool) -> Result<Vec<OperatorNote>, sqlx::Error> {
     sqlx::query_as::<_, OperatorNote>("SELECT * FROM operator_notes ORDER BY operator_id")
@@ -92,4 +94,56 @@ pub async fn get_audit_log(
     .bind(operator_id)
     .fetch_all(pool)
     .await
+}
+
+pub async fn get_audit_log_global(
+    pool: &PgPool,
+    limit: i64,
+    before: Option<chrono::DateTime<chrono::Utc>>,
+) -> Result<Vec<OperatorNoteAuditEntryWithContext>, sqlx::Error> {
+    // Single query: join operator_notes (for operator_id) and users (for
+    // display info). LEFT JOIN on users so audit rows survive even if the
+    // referenced user is hard-deleted some day.
+    const SELECT: &str = r#"
+        SELECT
+            a.id,
+            a.note_id,
+            a.field_name,
+            a.old_value,
+            a.new_value,
+            a.changed_at,
+            n.operator_id,
+            a.changed_by         AS actor_user_id,
+            u.uid                AS actor_uid,
+            u.nickname           AS actor_nickname,
+            u.secretary          AS actor_secretary,
+            u.secretary_skin_id  AS actor_secretary_skin_id
+        FROM operator_notes_audit_log a
+        JOIN operator_notes n ON n.id = a.note_id
+        LEFT JOIN users u ON u.id = a.changed_by
+    "#;
+
+    if let Some(before) = before {
+        sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(&format!(
+            "{SELECT} WHERE a.changed_at < $1 ORDER BY a.changed_at DESC LIMIT $2"
+        ))
+        .bind(before)
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    } else {
+        sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(&format!(
+            "{SELECT} ORDER BY a.changed_at DESC LIMIT $1"
+        ))
+        .bind(limit)
+        .fetch_all(pool)
+        .await
+    }
+}
+
+pub async fn count_audit_log(pool: &PgPool) -> Result<i64, sqlx::Error> {
+    let (count,): (i64,) = sqlx::query_as("SELECT COUNT(*) FROM operator_notes_audit_log")
+        .fetch_one(pool)
+        .await?;
+    Ok(count)
 }

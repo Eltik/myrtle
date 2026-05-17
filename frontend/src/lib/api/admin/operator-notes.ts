@@ -55,3 +55,54 @@ export function operatorNoteAuditLogQueryOptions(operatorId: string) {
         gcTime: 5 * 60 * 1000,
     });
 }
+
+export interface IAuditLogActor {
+    user_id: string;
+    uid: string | null;
+    nickname: string | null;
+    secretary: string | null;
+    secretary_skin_id: string | null;
+}
+
+export interface IAuditLogEntry {
+    id: number;
+    note_id: string;
+    operator_id: string;
+    field_name: string;
+    old_value: string | null;
+    new_value: string | null;
+    changed_at: string;
+    actor: IAuditLogActor;
+}
+
+export interface IGlobalAuditLogResponse {
+    entries: IAuditLogEntry[];
+    total: number;
+}
+
+export interface IGlobalAuditLogInput {
+    limit?: number;
+    before?: string;
+}
+
+export const getGlobalAuditLogFn = createServerFn({ method: "GET" })
+    .inputValidator((data: IGlobalAuditLogInput) => data)
+    .handler(async ({ data }): Promise<IGlobalAuditLogResponse> => {
+        const token = requireSiteToken();
+        const params = new URLSearchParams();
+        if (data.limit !== undefined) params.set("limit", String(data.limit));
+        if (data.before) params.set("before", data.before);
+        const query = params.toString();
+        const res = await backendFetch(`/admin/operator-notes/audit${query ? `?${query}` : ""}`, { bearerToken: token });
+        if (!res.ok) throw await parseError(res);
+        return (await res.json()) as IGlobalAuditLogResponse;
+    });
+
+export function globalAuditLogQueryOptions(input: IGlobalAuditLogInput = {}) {
+    return queryOptions({
+        queryKey: ["admin", "operator-notes", "audit", "global", input],
+        queryFn: () => getGlobalAuditLogFn({ data: input }),
+        staleTime: 30 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
