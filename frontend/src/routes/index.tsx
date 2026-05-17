@@ -5,8 +5,18 @@ import { homeTierListsQueryOptions } from "#/lib/api/tier-lists";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
+interface IHomeSearch {
+    auth?: "1";
+    next?: string;
+}
+
 export const Route = createFileRoute("/")({
     component: Home,
+    validateSearch: (search: Record<string, unknown>): IHomeSearch => {
+        const auth = search.auth === "1" ? "1" : undefined;
+        const next = typeof search.next === "string" ? search.next : undefined;
+        return { auth, next };
+    },
     loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(statsQueryOptions()), context.queryClient.ensureQueryData(homeTierListsQueryOptions())]),
     head: () => {
         const { meta, links } = seo({

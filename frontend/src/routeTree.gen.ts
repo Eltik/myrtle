@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as OperatorsRouteImport } from './routes/operators'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
@@ -48,11 +47,6 @@ const TierListsRoute = TierListsRouteImport.update({
 const OperatorsRoute = OperatorsRouteImport.update({
   id: '/operators',
   path: '/operators',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -194,7 +188,6 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
@@ -225,7 +218,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/tier-lists': typeof TierListsRoute
   '/settings': typeof AuthedSettingsRoute
@@ -257,7 +249,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/login': typeof LoginRoute
   '/operators': typeof OperatorsRoute
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
@@ -290,7 +281,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/operators'
     | '/tier-lists'
     | '/admin'
@@ -321,7 +311,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
     | '/operators'
     | '/tier-lists'
     | '/settings'
@@ -352,7 +341,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
-    | '/login'
     | '/operators'
     | '/tier-lists'
     | '/_authed/admin'
@@ -385,7 +373,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  LoginRoute: typeof LoginRoute
   OperatorsRoute: typeof OperatorsRoute
   TierListsRoute: typeof TierListsRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
@@ -417,13 +404,6 @@ declare module '@tanstack/react-router' {
       path: '/operators'
       fullPath: '/operators'
       preLoaderRoute: typeof OperatorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -664,7 +644,6 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  LoginRoute: LoginRoute,
   OperatorsRoute: OperatorsRoute,
   TierListsRoute: TierListsRoute,
   GachaCommunityRoute: GachaCommunityRoute,

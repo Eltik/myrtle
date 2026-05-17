@@ -6,6 +6,7 @@ import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { bannersQueryOptions, deriveClientGachaRecords, fetchMyGachaRecordsFn, type IBanner, myGachaStoredRecordsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { authActions } from "#/lib/auth/store";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { BannerBreakdown } from "./impl/BannerBreakdown";
 import { BannerHistory } from "./impl/BannerHistory";
@@ -26,9 +27,9 @@ function UnauthenticatedState() {
                     <p className="mt-1.5 max-w-[42ch] font-sans text-muted-foreground text-sm">Your pull history, pity counters, and operator statistics are only available after linking your Yostar account.</p>
                 </div>
             </div>
-            <Link to="/login" search={{ redirect: "/gacha" }} className="inline-flex h-9 items-center rounded-lg bg-primary px-5 font-medium font-sans text-primary-foreground text-sm transition-opacity hover:opacity-90">
+            <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-primary px-5 font-medium font-sans text-primary-foreground text-sm transition-opacity hover:opacity-90">
                 Sign in
-            </Link>
+            </button>
         </div>
     );
 }
