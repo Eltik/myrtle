@@ -443,7 +443,7 @@ const tierListHandler: IOgHandler<ITierListOgData> = {
     template: (data) => TierListTemplate(data),
 };
 
-const DEFAULT_HASH_VERSION = "v5";
+const DEFAULT_HASH_VERSION = "v6";
 
 // Canonical id for the site-wide fallback OG image. Slugs registered in
 // DEFAULT_OG_PRESETS resolve to their preset; anything else is treated as a
