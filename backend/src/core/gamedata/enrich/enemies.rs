@@ -146,12 +146,29 @@ pub fn enrich_enemies(
         })
         .collect();
 
+    let tags_map: HashMap<String, Vec<String>> = enemy_database
+        .enemies
+        .iter()
+        .filter_map(|entry| {
+            entry
+                .value
+                .iter()
+                .find_map(|lvl| lvl.enemy_data.enemy_tags.get().cloned())
+                .map(|tags| (entry.key.clone(), tags))
+        })
+        .collect();
+
     let enemy_data = handbook
         .enemy_data
         .into_iter()
         .map(|(id, mut enemy)| {
             if let Some(stats) = stats_map.get(&enemy.enemy_id) {
                 enemy.stats = Some(stats.clone());
+            }
+            if enemy.enemy_tags.is_none()
+                && let Some(tags) = tags_map.get(&enemy.enemy_id)
+            {
+                enemy.enemy_tags = Some(tags.clone());
             }
             enemy.portrait = assets
                 .path(AssetKind::EnemyIcon, &enemy.enemy_id)

@@ -64,14 +64,21 @@ function toggleArray<T>(list: T[], v: T): T[] {
     return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
 }
 
+export interface IRaceOption {
+    id: string;
+    label: string;
+}
+
 interface IEnemyFilterChipsProps {
     filters: IFilterState;
     setLevels: (v: IEnemyLevel[]) => void;
     setDamageTypes: (v: IEnemyDamageType[]) => void;
     setAttackTypes: (v: ApplyWay[]) => void;
+    setRaces: (v: string[]) => void;
+    races: IRaceOption[];
 }
 
-export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttackTypes }: IEnemyFilterChipsProps) {
+export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttackTypes, setRaces, races }: IEnemyFilterChipsProps) {
     return (
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
             <ChipGroup label="Threat">
@@ -102,6 +109,19 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
                     </Chip>
                 ))}
             </ChipGroup>
+
+            {races.length > 0 && (
+                <>
+                    <ChipDivider />
+                    <ChipGroup label="Race">
+                        {races.map((r) => (
+                            <Chip key={r.id} on={filters.races.includes(r.id)} onClick={() => setRaces(toggleArray(filters.races, r.id))}>
+                                {r.label}
+                            </Chip>
+                        ))}
+                    </ChipGroup>
+                </>
+            )}
         </div>
     );
 }

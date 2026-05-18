@@ -46,6 +46,7 @@ export interface IFilterState {
     levels: IEnemyLevel[];
     damageTypes: IEnemyDamageType[];
     attackTypes: ApplyWay[];
+    races: string[];
     sortBy: SortOption;
     sortOrder: SortOrder;
 }
@@ -57,6 +58,7 @@ export interface IUseEnemyFiltersReturn {
     setLevels: (v: IEnemyLevel[]) => void;
     setDamageTypes: (v: IEnemyDamageType[]) => void;
     setAttackTypes: (v: ApplyWay[]) => void;
+    setRaces: (v: string[]) => void;
     setSortBy: (v: SortOption) => void;
     setSortOrder: (v: SortOrder) => void;
     clearFilters: () => void;

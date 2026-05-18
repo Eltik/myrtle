@@ -195,6 +195,7 @@ pub struct RawEnemyData {
     pub level_type: MaybeValue<String>,
     pub range_radius: MaybeValue<f64>,
     pub life_point_reduce: MaybeValue<i32>,
+    pub enemy_tags: MaybeValue<Vec<String>>,
     #[serde(default)]
     pub skills: Vec<RawEnemySkill>,
 }
