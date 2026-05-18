@@ -8,12 +8,22 @@ const initialState: IFilterState = {
     levels: [],
     damageTypes: [],
     attackTypes: [],
+    races: [],
     sortBy: "index",
     sortOrder: "asc",
 };
 
 export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
-    const [filters, setFilters] = useLocalStorageState<IFilterState>(FILTERS_KEY, initialState);
+    const [filters, setFilters] = useLocalStorageState<IFilterState>(FILTERS_KEY, initialState, {
+        parse: (raw) => {
+            try {
+                const parsed = JSON.parse(raw) as Partial<IFilterState>;
+                return { ...initialState, ...parsed };
+            } catch {
+                return undefined;
+            }
+        },
+    });
 
     const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), [setFilters]);
 
@@ -22,6 +32,7 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
         const levels = new Set(filters.levels);
         const damageTypes = new Set(filters.damageTypes);
         const attackTypes = new Set(filters.attackTypes);
+        const races = new Set(filters.races);
 
         return data.filter((e) => {
             if (e.hideInHandbook) return false;
@@ -30,13 +41,17 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
             if (attackTypes.size) {
                 if (!e.applyWay || !attackTypes.has(e.applyWay)) return false;
             }
+            if (races.size) {
+                const tags = e.enemyTags;
+                if (!tags || !tags.some((t) => races.has(t))) return false;
+            }
             if (query) {
                 const haystack = `${e.name} ${e.enemyIndex} ${e.race ?? ""} ${e.description ?? ""}`.toLowerCase();
                 if (!haystack.includes(query)) return false;
             }
             return true;
         });
-    }, [data, filters.q, filters.levels, filters.damageTypes, filters.attackTypes]);
+    }, [data, filters.q, filters.levels, filters.damageTypes, filters.attackTypes, filters.races]);
 
     const { sortBy, sortOrder } = filters;
     const filteredEnemies = useMemo(() => {
@@ -64,9 +79,9 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
         return [...filtered].sort((a, b) => cmp(a, b) * dir);
     }, [filtered, sortBy, sortOrder]);
 
-    const clearFilters = useCallback(() => setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], q: "" })), [setFilters]);
+    const clearFilters = useCallback(() => setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], q: "" })), [setFilters]);
 
-    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + (filters.q ? 1 : 0);
+    const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + (filters.q ? 1 : 0);
 
     const setters = useMemo(
         () => ({
@@ -74,6 +89,7 @@ export function useEnemyFilters(data: IEnemyView[]): IUseEnemyFiltersReturn {
             setLevels: (v: IFilterState["levels"]) => set("levels", v),
             setDamageTypes: (v: IFilterState["damageTypes"]) => set("damageTypes", v),
             setAttackTypes: (v: IFilterState["attackTypes"]) => set("attackTypes", v),
+            setRaces: (v: IFilterState["races"]) => set("races", v),
             setSortBy: (v: IFilterState["sortBy"]) => set("sortBy", v),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),

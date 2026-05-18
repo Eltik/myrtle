@@ -27,7 +27,20 @@ export function EnemiesList() {
     const visibleCount = useMemo(() => enriched.filter((e) => !e.hideInHandbook).length, [enriched]);
     const statMax = useMemo(() => computeStatMaxByLevel(enriched), [enriched]);
 
-    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched);
+    const availableRaces = useMemo(() => {
+        if (!handbook) return [];
+        const present = new Set<string>();
+        for (const e of enriched) {
+            if (e.hideInHandbook) continue;
+            for (const tag of e.enemyTags ?? []) present.add(tag);
+        }
+        return Object.values(handbook.raceData)
+            .filter((r) => present.has(r.id))
+            .sort((a, b) => a.sortId - b.sortId)
+            .map((r) => ({ id: r.id, label: r.raceName }));
+    }, [handbook, enriched]);
+
+    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -47,7 +60,7 @@ export function EnemiesList() {
         setCurrentPage(1);
     }, []);
 
-    const filtersKey = `${filters.q}|${filters.levels.join(",")}|${filters.damageTypes.join(",")}|${filters.attackTypes.join(",")}`;
+    const filtersKey = `${filters.q}|${filters.levels.join(",")}|${filters.damageTypes.join(",")}|${filters.attackTypes.join(",")}|${filters.races.join(",")}`;
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally watch the joined key as a stable signal
     useEffect(() => {
         setCurrentPage(1);
@@ -82,7 +95,7 @@ export function EnemiesList() {
             </div>
 
             <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label="Enemy results">
-                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} />
+                <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} races={availableRaces} />
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="relative flex h-9.5 min-w-55 max-w-100 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] px-3.5 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
