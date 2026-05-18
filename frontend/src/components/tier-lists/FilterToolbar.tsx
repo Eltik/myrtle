@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { cn } from "#/lib/utils";
@@ -49,6 +50,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
     const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, label: "Favorites" }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
     const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "trending";
+    const [mobileFlairsOpen, setMobileFlairsOpen] = useState(false);
 
     return (
         <div className="sticky top-14 z-30 -mx-3 border-border border-y bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
@@ -107,7 +109,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </MenuPopup>
                     </Menu>
 
-                    <div className="relative w-full sm:ml-auto sm:w-72 sm:max-w-72">
+                    <div className="relative min-w-0 flex-1 sm:ml-auto sm:w-72 sm:max-w-72 sm:flex-none">
                         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-muted-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
@@ -127,64 +129,81 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                 </div>
 
                 {flairOptions.length > 0 && (
-                    <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">Flairs</span>
-                        {flairOptions.map((flair) => {
-                            const active = selectedFlairs.includes(flair.code);
-                            const color = flair.color ?? "var(--primary)";
-                            const count = flair.count ?? 0;
-                            const hasMatches = count > 0;
-                            return (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setMobileFlairsOpen((v) => !v)}
+                            aria-expanded={mobileFlairsOpen}
+                            aria-controls="tier-list-flairs"
+                            className="mt-2.5 inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+                        >
+                            <span className="inline-flex items-center gap-1.5">
+                                <span>Flairs</span>
+                                {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
+                            </span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 transition-transform duration-200", mobileFlairsOpen && "rotate-180")} aria-hidden="true">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div id="tier-list-flairs" className={cn("mt-2.5 items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", "hidden sm:flex", mobileFlairsOpen && "flex")}>
+                            <span className="hidden shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider sm:inline">Flairs</span>
+                            {flairOptions.map((flair) => {
+                                const active = selectedFlairs.includes(flair.code);
+                                const color = flair.color ?? "var(--primary)";
+                                const count = flair.count ?? 0;
+                                const hasMatches = count > 0;
+                                return (
+                                    <button
+                                        key={flair.code}
+                                        type="button"
+                                        onClick={() => onFlairToggle(flair.code)}
+                                        aria-pressed={active}
+                                        aria-label={`Flair ${flair.label}${hasMatches ? `, ${count} list${count === 1 ? "" : "s"}` : ", no lists"}`}
+                                        disabled={!hasMatches && !active}
+                                        className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
+                                        style={
+                                            active
+                                                ? {
+                                                      background: `color-mix(in srgb, ${color} 18%, transparent)`,
+                                                      borderColor: `color-mix(in srgb, ${color} 50%, transparent)`,
+                                                      color,
+                                                  }
+                                                : {
+                                                      background: "var(--muted)",
+                                                      borderColor: "var(--border)",
+                                                      color: "var(--muted-foreground)",
+                                                  }
+                                        }
+                                    >
+                                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden="true" />
+                                        <span>{flair.label}</span>
+                                        {flair.count !== undefined && (
+                                            <span
+                                                className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono font-semibold text-[9.5px] tabular-nums leading-[1.4]"
+                                                style={active ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color } : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }}
+                                                aria-hidden="true"
+                                            >
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                            {selectedFlairs.length > 0 && (
                                 <button
-                                    key={flair.code}
                                     type="button"
-                                    onClick={() => onFlairToggle(flair.code)}
-                                    aria-pressed={active}
-                                    aria-label={`Flair ${flair.label}${hasMatches ? `, ${count} list${count === 1 ? "" : "s"}` : ", no lists"}`}
-                                    disabled={!hasMatches && !active}
-                                    className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
-                                    style={
-                                        active
-                                            ? {
-                                                  background: `color-mix(in srgb, ${color} 18%, transparent)`,
-                                                  borderColor: `color-mix(in srgb, ${color} 50%, transparent)`,
-                                                  color,
-                                              }
-                                            : {
-                                                  background: "var(--muted)",
-                                                  borderColor: "var(--border)",
-                                                  color: "var(--muted-foreground)",
-                                              }
-                                    }
+                                    onClick={onClearFlairs}
+                                    className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-border border-dashed bg-transparent px-2.5 py-1 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:border-foreground/40 hover:text-foreground"
                                 >
-                                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} aria-hidden="true" />
-                                    <span>{flair.label}</span>
-                                    {flair.count !== undefined && (
-                                        <span
-                                            className="ml-0.5 inline-flex items-center justify-center rounded-full px-1.5 font-mono font-semibold text-[9.5px] tabular-nums leading-[1.4]"
-                                            style={active ? { background: `color-mix(in srgb, ${color} 26%, transparent)`, color } : { background: "color-mix(in srgb, var(--foreground) 6%, transparent)", color: "var(--muted-foreground)" }}
-                                            aria-hidden="true"
-                                        >
-                                            {count}
-                                        </span>
-                                    )}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                                        <path d="M18 6 6 18" />
+                                        <path d="m6 6 12 12" />
+                                    </svg>
+                                    Clear
                                 </button>
-                            );
-                        })}
-                        {selectedFlairs.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={onClearFlairs}
-                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full border border-border border-dashed bg-transparent px-2.5 py-1 font-medium font-sans text-muted-foreground text-xs leading-none transition-colors hover:border-foreground/40 hover:text-foreground"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
-                                    <path d="M18 6 6 18" />
-                                    <path d="m6 6 12 12" />
-                                </svg>
-                                Clear
-                            </button>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    </>
                 )}
 
                 {hasActiveFilters && (
