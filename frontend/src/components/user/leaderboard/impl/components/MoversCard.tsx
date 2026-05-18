@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import type { ILeaderboardMover } from "#/lib/api/user";
-import { getAvatarById } from "#/lib/utils";
+import { cn, getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
 
 export function MoversCard({ movers, isLoading, intervalLabel = "today" }: { movers: ILeaderboardMover[]; isLoading?: boolean; intervalLabel?: string }) {
@@ -29,6 +29,11 @@ function MoverRow({ mover }: { mover: ILeaderboardMover }) {
     const nickname = mover.nickname ?? `Doctor ${mover.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(mover.avatar_id ?? DEFAULT_AVATAR_ID);
+    const delta = mover.rank_delta;
+    const isUp = delta > 0;
+    const isFlat = delta === 0;
+    const DeltaIcon = isFlat ? Minus : isUp ? ChevronUp : ChevronDown;
+    const deltaColor = isFlat ? "text-muted-foreground" : isUp ? "text-success-foreground" : "text-destructive-foreground";
 
     return (
         <Link to="/user/$id" params={{ id: mover.uid }} className="flex items-center gap-2.5 no-underline">
@@ -42,8 +47,8 @@ function MoverRow({ mover }: { mover: ILeaderboardMover }) {
                     #{mover.current_rank} · {mover.server.toUpperCase()}
                 </span>
             </div>
-            <span className="inline-flex items-center gap-0.5 font-bold font-sans text-[13px] text-success-foreground tabular-nums leading-none tracking-tight">
-                <ChevronUp className="size-3" /> {mover.rank_delta}
+            <span className={cn("inline-flex items-center gap-0.5 font-bold font-sans text-[13px] tabular-nums leading-none tracking-tight", deltaColor)}>
+                <DeltaIcon className="size-3" /> {Math.abs(delta)}
             </span>
         </Link>
     );

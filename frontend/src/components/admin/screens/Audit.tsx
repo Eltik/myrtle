@@ -165,13 +165,13 @@ export function Audit(): React.ReactElement {
                             <Input placeholder="Filter by actor, operator, field, content…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
-                    <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
+                    <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {(["all", "pros", "cons", "notes", "trivia", "summary"] as const).map((f) => (
                             <button
                                 key={f}
                                 type="button"
                                 onClick={() => setFieldFilter(f)}
-                                className={cn("inline-flex h-6.5 cursor-pointer items-center rounded-md px-3 font-medium text-[12.5px] transition-colors", fieldFilter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
+                                className={cn("inline-flex h-6.5 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-md px-3 font-medium text-[12.5px] transition-colors", fieldFilter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
                             >
                                 {f === "all" ? "All fields" : f.charAt(0).toUpperCase() + f.slice(1)}
                             </button>
