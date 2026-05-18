@@ -21,6 +21,7 @@ Handled rewrites:
                          rounded-t-[8px]     -> rounded-t-lg
   * Z-index unwrap:      z-[55]              -> z-55
   * Named line-height:   leading-[1.5]       -> leading-normal
+  * Named easing:        ease-[cubic-bezier(0.4,0,0.2,1)] -> ease-in-out
   * Literal renames:     break-words         -> wrap-break-word
   * Prefix renames:      bg-gradient-to-t    -> bg-linear-to-t
                          bg-gradient-to-br   -> bg-linear-to-br
@@ -300,6 +301,48 @@ def rewrite_leading(text: str, edits: list[tuple[str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Easing (ease) — named cubic-bezier values
+# ---------------------------------------------------------------------------
+EASE_NAMED: dict[tuple[float, float, float, float], str] = {
+    (0.4, 0.0, 1.0, 1.0): "in",
+    (0.0, 0.0, 0.2, 1.0): "out",
+    (0.4, 0.0, 0.2, 1.0): "in-out",
+}
+EASE_RE = re.compile(
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
+    r"ease-\[cubic-bezier\("
+    r"\s*(?P<a>-?[\d.]+)\s*,"
+    r"\s*(?P<b>-?[\d.]+)\s*,"
+    r"\s*(?P<c>-?[\d.]+)\s*,"
+    r"\s*(?P<d>-?[\d.]+)\s*"
+    r"\)\]"
+)
+
+
+def rewrite_ease(text: str, edits: list[tuple[str, str]]) -> str:
+    def sub(m: re.Match[str]) -> str:
+        try:
+            values = (
+                float(m.group("a")),
+                float(m.group("b")),
+                float(m.group("c")),
+                float(m.group("d")),
+            )
+        except ValueError:
+            return m.group(0)
+        for key, name in EASE_NAMED.items():
+            if all(abs(v - k) < 1e-9 for v, k in zip(values, key)):
+                a, b, c, d = m.group("a"), m.group("b"), m.group("c"), m.group("d")
+                original = f"ease-[cubic-bezier({a},{b},{c},{d})]"
+                canonical = f"ease-{name}"
+                edits.append((original, canonical))
+                return m.group("boundary") + canonical
+        return m.group(0)
+
+    return EASE_RE.sub(sub, text)
+
+
+# ---------------------------------------------------------------------------
 # Literal class renames (Tailwind v3 → v4) — exact class swaps
 # ---------------------------------------------------------------------------
 LITERAL_RENAMES: dict[str, str] = {
@@ -426,6 +469,7 @@ def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     text = rewrite_rounded(text, edits)
     text = rewrite_z(text, edits)
     text = rewrite_leading(text, edits)
+    text = rewrite_ease(text, edits)
     text = rewrite_literals(text, edits)
     text = rewrite_prefixes(text, edits)
     text = rewrite_bang(text, edits)

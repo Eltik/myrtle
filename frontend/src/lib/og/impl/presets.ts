@@ -24,6 +24,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Every operator released in Arknights.",
         activeTag: "Operators",
     },
+    enemies: {
+        title: "Enemy Database",
+        subtitle: "Every enemy catalogued in Arknights.",
+        activeTag: "Enemies",
+    },
     stats: {
         title: "Stats",
         subtitle: "A live count of every operator, tier list, and roster indexed on myrtle.moe.",

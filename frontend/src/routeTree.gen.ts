@@ -14,6 +14,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
+import { Route as EnemiesRouteImport } from './routes/enemies'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
@@ -65,6 +66,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const OperatorsRoute = OperatorsRouteImport.update({
   id: '/operators',
   path: '/operators',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnemiesRoute = EnemiesRouteImport.update({
+  id: '/enemies',
+  path: '/enemies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -206,6 +212,7 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/enemies'
     | '/operators'
     | '/privacy'
     | '/stats'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/enemies'
     | '/operators'
     | '/privacy'
     | '/stats'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/enemies'
     | '/operators'
     | '/privacy'
     | '/stats'
@@ -409,6 +421,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  EnemiesRoute: typeof EnemiesRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
   StatsRoute: typeof StatsRoute
@@ -464,6 +477,13 @@ declare module '@tanstack/react-router' {
       path: '/operators'
       fullPath: '/operators'
       preLoaderRoute: typeof OperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enemies': {
+      id: '/enemies'
+      path: '/enemies'
+      fullPath: '/enemies'
+      preLoaderRoute: typeof EnemiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -704,6 +724,7 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  EnemiesRoute: EnemiesRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
   StatsRoute: StatsRoute,

@@ -107,6 +107,19 @@ function ToolsIcon({ name }: { name: string }) {
                     <rect x="3" y="15.5" width="8" height="5" rx="1.2" />
                 </svg>
             );
+        case "shield":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <path d="M12 3 4 6v6c0 4.5 3.4 8.5 8 9 4.6-.5 8-4.5 8-9V6l-8-3z" />
+                </svg>
+            );
+        case "crosshair":
+            return (
+                <svg viewBox="0 0 24 24" {...p} aria-hidden="true">
+                    <circle cx="12" cy="12" r="8" />
+                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                </svg>
+            );
         default:
             return null;
     }
@@ -187,7 +200,9 @@ export function MainNav({ items, className, onOpenCommand, ...props }: IMainNavP
     return (
         <nav className={cn("hidden items-center gap-1 lg:flex", className)} {...props}>
             {items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                const selfActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                const childActive = item.items?.some((c) => pathname === c.href || (c.href !== "/" && pathname.startsWith(c.href))) ?? false;
+                const isActive = selfActive || childActive;
 
                 if (item.items) {
                     return <HoverDropdown key={item.href} item={item} isActive={isActive} onOpenCommand={onOpenCommand} />;
