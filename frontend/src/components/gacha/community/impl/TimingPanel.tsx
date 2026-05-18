@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IDatePullData, type IDayOfWeekPullData, type IHourlyPullData, type IPullTimingData } from "#/lib/api/gacha";
 import styles from "./CommunityPage.module.css";
 import { fmtPct } from "./format";
@@ -194,6 +195,7 @@ function TimingByDow({ rows }: { rows: IDayOfWeekPullData[] }) {
 }
 
 function ActivityChart({ data, days, color, height, bands }: { data: number[]; days: string[]; color: string; height: number; bands: ReturnType<typeof buildBannerBands> }) {
+    const isNarrow = useMediaQuery("(max-width: 520px)");
     const PAD_T = 8;
     const X_AXIS_H = 24;
     const TRACK_H = 8;
@@ -214,7 +216,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
         return pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`).join(" ");
     };
 
-    const xTickCount = Math.min(6, days.length);
+    const xTickCount = Math.min(isNarrow ? 3 : 6, days.length);
     const xTickIdx = xTickCount > 1 ? Array.from({ length: xTickCount }, (_, i) => Math.round((i * (days.length - 1)) / (xTickCount - 1))) : [0];
 
     const fillId = "ac-fill-gacha-community";

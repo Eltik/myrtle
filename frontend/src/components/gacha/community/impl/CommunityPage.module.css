@@ -163,6 +163,12 @@
     gap: 12px;
     width: 100%;
 }
+@media (max-width: 520px) {
+    .activityChart {
+        grid-template-columns: 30px 1fr;
+        gap: 8px;
+    }
+}
 .acYaxis {
     display: flex;
     flex-direction: column;
@@ -173,6 +179,12 @@
     text-align: right;
     font-variant-numeric: tabular-nums;
     line-height: 1;
+}
+@media (max-width: 520px) {
+    .acYaxis {
+        font-size: 9px;
+        text-align: left;
+    }
 }
 .acYtick {
     transform: translateY(-50%);
@@ -203,6 +215,12 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
+}
+@media (max-width: 520px) {
+    .acXaxis {
+        font-size: 9px;
+        letter-spacing: 0.04em;
+    }
 }
 .acXtick {
     position: absolute;
