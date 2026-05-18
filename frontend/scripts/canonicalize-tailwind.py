@@ -13,6 +13,9 @@ Handled rewrites:
       p-[3px]       -> p-0.75
       -mt-[8px]     -> -mt-2
       size-[1rem]   -> size-4
+  * Negative CSS-var calc shorthand:
+      right-[calc(var(--sidebar-width)*-1)] -> -right-(--sidebar-width)
+      left-[calc(var(--sidebar-width)*-1)]  -> -left-(--sidebar-width)
   * Named letter-spacing: tracking-[0.1em]   -> tracking-widest
   * Named border-radius: rounded-[2px]       -> rounded-xs
                          rounded-t-[8px]     -> rounded-t-lg
@@ -118,6 +121,35 @@ def rewrite_spacing(text: str, edits: list[tuple[str, str]]) -> str:
         return m.group("boundary") + canonical
 
     return SPACING_RE.sub(sub, text)
+
+
+# ---------------------------------------------------------------------------
+# Negative CSS-var calc shorthand:
+#   prop-[calc(var(--name)*-1)] -> -prop-(--name)
+# Restricted to spacing-like utilities where a leading `-` is meaningful.
+# ---------------------------------------------------------------------------
+CALC_NEG_VAR_RE = re.compile(
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
+    r"(?P<neg>-?)"
+    r"(?P<prefix>" + SPACING_GROUP + r")"
+    r"-\[calc\(\s*var\(\s*--(?P<var>[a-zA-Z][a-zA-Z0-9_-]*)\s*\)\s*\*\s*-1\s*\)\]"
+)
+
+
+def rewrite_calc_neg_var(text: str, edits: list[tuple[str, str]]) -> str:
+    def sub(m: re.Match[str]) -> str:
+        prefix_neg = m.group("neg") == "-"
+        # `*-1` inside the bracket flips sign; XOR with any existing prefix `-`.
+        final_neg = not prefix_neg
+        sign = "-" if final_neg else ""
+        var = m.group("var")
+        prefix = m.group("prefix")
+        original = m.group("neg") + prefix + f"-[calc(var(--{var})*-1)]"
+        canonical = sign + prefix + f"-(--{var})"
+        edits.append((original, canonical))
+        return m.group("boundary") + canonical
+
+    return CALC_NEG_VAR_RE.sub(sub, text)
 
 
 # ---------------------------------------------------------------------------
@@ -389,6 +421,7 @@ def rewrite_emdashes(text: str, edits: list[tuple[str, str]]) -> str:
 def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     edits: list[tuple[str, str]] = []
     text = rewrite_spacing(text, edits)
+    text = rewrite_calc_neg_var(text, edits)
     text = rewrite_tracking(text, edits)
     text = rewrite_rounded(text, edits)
     text = rewrite_z(text, edits)
