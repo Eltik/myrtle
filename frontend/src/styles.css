@@ -85,6 +85,15 @@
   --rarity-3: #88c8e3;
   --rarity-2: #7ef2a3;
   --rarity-1: #b5b5b5;
+
+  --enemy-normal: oklch(0.65 0.01 285);
+  --enemy-elite: oklch(0.72 0.14 75);
+  --enemy-boss: oklch(0.58 0.22 25);
+
+  --dmg-physic: #d39e6a;
+  --dmg-magic: #b78fe6;
+  --dmg-heal: #7ed3a2;
+  --dmg-none: #8a8a8a;
 }
 
 :root[data-theme="dark"] {
@@ -368,6 +377,15 @@ pre code {
   --rarity-3: #88c8e3;
   --rarity-2: #7ef2a3;
   --rarity-1: #ffffff;
+
+  --enemy-normal: oklch(0.75 0.01 285);
+  --enemy-elite: oklch(0.72 0.14 75);
+  --enemy-boss: oklch(0.75 0.15 25);
+
+  --dmg-physic: #d39e6a;
+  --dmg-magic: #b78fe6;
+  --dmg-heal: #7ed3a2;
+  --dmg-none: #8a8a8a;
 }
 
 @layer base {

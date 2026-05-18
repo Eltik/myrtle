@@ -28,7 +28,14 @@ export default function Header() {
         }));
         return [
             { href: "/", label: "Home" },
-            { href: "/operators", label: "Operators" },
+            {
+                href: "/operators",
+                label: "Collection",
+                items: [
+                    { href: "/operators", label: "Operators", desc: "Every operator released in Arknights.", icon: "shield" },
+                    { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" },
+                ],
+            },
             { href: "/tier-lists", label: "Tier Lists" },
             {
                 href: "/user",
