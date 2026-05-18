@@ -6,7 +6,7 @@ export interface IDefaultOgData {
     activeTag?: string;
 }
 
-const DEFAULT_TAGS = ["Home", "Operators", "Players", "Gacha", "Tools"] as const;
+const DEFAULT_TAGS = ["Home", "Collection", "Players", "Gacha", "Tools"] as const;
 
 export function DefaultTemplate(data: IDefaultOgData) {
     const { title, subtitle, activeTag = "Home" } = data;

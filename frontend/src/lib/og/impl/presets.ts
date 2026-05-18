@@ -22,12 +22,12 @@ export const DEFAULT_OG_PRESETS = {
     operators: {
         title: "Operators",
         subtitle: "Every operator released in Arknights.",
-        activeTag: "Operators",
+        activeTag: "Collection",
     },
     enemies: {
         title: "Enemy Database",
         subtitle: "Every enemy catalogued in Arknights.",
-        activeTag: "Enemies",
+        activeTag: "Collection",
     },
     stats: {
         title: "Stats",
