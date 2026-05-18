@@ -1,11 +1,11 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { isTierListAdmin } from "#/lib/api/admin";
+import { isAnyAdminRole } from "#/lib/api/admin";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/admin")({
     beforeLoad: ({ context, location }) => {
         if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
-        if (!isTierListAdmin(context.user.role)) throw redirect({ to: "/" });
+        if (!isAnyAdminRole(context.user.role)) throw redirect({ to: "/" });
     },
     component: AdminLayout,
     head: () => {

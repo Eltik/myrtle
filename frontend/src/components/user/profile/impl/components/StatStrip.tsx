@@ -113,14 +113,13 @@ interface IStatStripProps {
 }
 
 export function StatStrip({ profile, rosterCount }: IStatStripProps) {
-    const [lmdRaw, setLmdRaw] = useState(false);
+    const [orundumRaw, setOrundumRaw] = useState(false);
     return (
         <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
             <StatCard kicker="Operators" value={rosterCount ?? profile.operator_count} sub="Unique units in roster" live />
             <StatCard kicker="Skins" value={profile.non_default_skin_count} sub="Outfits collected" />
             <StatCard kicker="Items" value={profile.item_count} sub="Inventory entries" />
-            {/* troll you can click on it */}
-            <StatCard kicker="LMD" value={profile.lmd} sub="LMD Available" compactOnMobile={!lmdRaw} unformatted={lmdRaw} onClick={() => setLmdRaw((v) => !v)} />
+            <StatCard kicker="Orundum" value={profile.orundum} sub="Orundum Available" compactOnMobile={!orundumRaw} unformatted={orundumRaw} onClick={() => setOrundumRaw((v) => !v)} />
         </div>
     );
 }

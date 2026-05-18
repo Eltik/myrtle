@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Download, LayoutGrid, LayoutList, Rows3, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { voicesQueryOptions } from "#/lib/api/voices";
+import { operatorsExportSchema } from "#/lib/export";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../../ui/tooltip";
 import { OperatorCardCompact } from "./impl/components/OperatorCardCompact";
@@ -52,6 +54,8 @@ export function OperatorsList() {
     useEffect(() => {
         setCurrentPage(1);
     }, []);
+
+    const [exportOpen, setExportOpen] = useState(false);
 
     const totalPages = Math.max(1, Math.ceil(filteredOperators.length / itemsPerPage));
     const page = Math.min(currentPage, totalPages);
@@ -256,6 +260,25 @@ export function OperatorsList() {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 font-medium font-sans text-[13px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
+                                        onClick={() => setExportOpen(true)}
+                                        aria-label="Export operators"
+                                    >
+                                        <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="hidden sm:inline">Export</span>
+                                    </button>
+                                }
+                            />
+                            <TooltipPopup side="top" sideOffset={8}>
+                                Export operators
+                            </TooltipPopup>
+                        </Tooltip>
                     </div>
 
                     {activeChips.length > 0 && (
@@ -325,6 +348,7 @@ export function OperatorsList() {
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </main>
             </div>
+            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={enriched} filteredRows={filteredOperators} pageRows={paginated} title="Operators" />
         </div>
     );
 }

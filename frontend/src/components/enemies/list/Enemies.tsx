@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ChevronRight, LayoutGrid, LayoutList, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { ExportDialog } from "#/components/export/ExportDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { enemiesQueryOptions } from "#/lib/api/enemies";
+import { enemiesExportSchema } from "#/lib/export";
 import { Pagination } from "../../operators/list/impl/components/Pagination";
 import { EnemyCardGrid } from "./impl/components/EnemyCardGrid";
 import { EnemyCardList } from "./impl/components/EnemyCardList";
@@ -79,6 +81,7 @@ export function EnemiesList() {
     }, [filteredEnemies, page, itemsPerPage]);
 
     const [openEnemy, setOpenEnemy] = useState<IEnemyView | null>(null);
+    const [exportOpen, setExportOpen] = useState(false);
 
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
@@ -190,6 +193,25 @@ export function EnemiesList() {
                                 </SelectContent>
                             </Select>
                         </div>
+
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className="inline-flex h-9.5 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] px-3 font-medium font-sans text-[12.5px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
+                                        onClick={() => setExportOpen(true)}
+                                        aria-label="Export enemies"
+                                    >
+                                        <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="hidden sm:inline">Export</span>
+                                    </button>
+                                }
+                            />
+                            <TooltipPopup side="top" sideOffset={8}>
+                                Export enemies
+                            </TooltipPopup>
+                        </Tooltip>
                     </div>
                 </div>
 
@@ -235,6 +257,8 @@ export function EnemiesList() {
             </main>
 
             <EnemyDialog enemy={openEnemy} onClose={() => setOpenEnemy(null)} />
+
+            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title="Enemies" />
         </div>
     );
 }
