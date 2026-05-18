@@ -123,8 +123,7 @@ pub async fn create(
         }
     }
 
-    // Official lists: admin only
-    if list_type == "official" && !role.is_tier_list_admin() {
+    if list_type == "official" && !role.is_any_admin_role() {
         return Err(ApiError::Forbidden);
     }
 
