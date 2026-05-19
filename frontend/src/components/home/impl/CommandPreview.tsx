@@ -15,8 +15,8 @@ interface IPreviewOperator {
 }
 
 const PREVIEW_OPERATORS: IPreviewOperator[] = [
-    { id: "char_151_myrtle", name: "Myrtle", meta: "4★ · Vanguard · Tactician", role: "Vanguard" },
-    { id: "char_002_amiya", name: "Amiya", meta: "6★ · Caster · Core", role: "Caster" },
+    { id: "char_151_myrtle", name: "Myrtle", meta: "4★ · Vanguard · Flagbearer", role: "Vanguard" },
+    { id: "char_002_amiya", name: "Amiya", meta: "5★ · Caster · Core", role: "Caster" },
     { id: "char_117_myrrh", name: "Myrrh", meta: "4★ · Medic · Medic", role: "Medic" },
 ];
 
