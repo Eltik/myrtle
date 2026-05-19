@@ -247,6 +247,12 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         setEditingTier(null);
     }, [editingTier]);
 
+    const handleClearTier = useCallback(() => {
+        if (!editingTier) return;
+        dispatch({ type: "CLEAR_TIER", tierId: editingTier.id });
+        setEditingTier(null);
+    }, [editingTier]);
+
     const handlePickTier = useCallback(
         (tierId: string | null) => {
             if (!picker) return;
@@ -321,7 +327,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                     </aside>
                 </div>
 
-                <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} />
+                <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} onClear={handleClearTier} />
 
                 <PickTierDialog operator={picker?.operator ?? null} currentTierId={picker?.currentTierId ?? null} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} />
 

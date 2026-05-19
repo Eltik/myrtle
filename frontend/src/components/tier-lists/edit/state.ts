@@ -32,6 +32,7 @@ export type EditAction =
     | { type: "ADD_TIER"; name: string; color: string; description: string }
     | { type: "UPDATE_TIER"; tierId: string; name?: string; color?: string; description?: string }
     | { type: "DELETE_TIER"; tierId: string }
+    | { type: "CLEAR_TIER"; tierId: string }
     | { type: "MOVE_TIER"; tierId: string; direction: "up" | "down" }
     | { type: "PLACE_OPERATOR"; operatorId: string; tierId: string | null; index?: number }
     | { type: "RESET"; state: IEditState };
@@ -111,6 +112,11 @@ export function editReducer(state: IEditState, action: EditAction): IEditState {
             };
         case "DELETE_TIER":
             return { ...state, tiers: state.tiers.filter((t) => t.id !== action.tierId) };
+        case "CLEAR_TIER":
+            return {
+                ...state,
+                tiers: state.tiers.map((t) => (t.id === action.tierId ? { ...t, operatorIds: [] } : t)),
+            };
         case "MOVE_TIER": {
             const idx = state.tiers.findIndex((t) => t.id === action.tierId);
             if (idx < 0) return state;
