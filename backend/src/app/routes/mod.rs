@@ -69,6 +69,7 @@ pub fn router() -> Router<AppState> {
         .route("/get-user-supports", get(roster::get_supports))
         .route("/inventory", get(inventory::get_inventory))
         .route("/user-skins", get(skins::get_owned_skins))
+        .route("/skins/popularity", get(skins::get_skin_popularity))
         .route("/gacha/fetch", post(gacha::fetch))
         .route("/gacha/global-stats", get(gacha::global_stats))
         .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))

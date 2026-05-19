@@ -20,3 +20,31 @@ pub async fn get_owned_skins(pool: &PgPool, user_id: Uuid) -> Result<Vec<OwnedSk
     .fetch_all(pool)
     .await
 }
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct SkinPopularityRow {
+    pub skin_id: String,
+    pub owners: i64,
+}
+
+/// Aggregate ownership counts for every non-default skin and the population of
+/// users that have at least one skin record (i.e. have imported their data).
+/// Used to compute "what % of users own this skin".
+pub async fn get_skin_popularity(
+    pool: &PgPool,
+) -> Result<(i64, Vec<SkinPopularityRow>), sqlx::Error> {
+    let total_users: i64 = sqlx::query_scalar("SELECT COUNT(DISTINCT user_id) FROM user_skins")
+        .fetch_one(pool)
+        .await?;
+
+    let rows = sqlx::query_as::<_, SkinPopularityRow>(
+        "SELECT skin_id, COUNT(*)::BIGINT AS owners \
+         FROM user_skins \
+         WHERE skin_id LIKE '%@%' \
+         GROUP BY skin_id",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok((total_users, rows))
+}

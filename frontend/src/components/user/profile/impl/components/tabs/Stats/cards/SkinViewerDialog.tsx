@@ -1,15 +1,22 @@
+import { useQuery } from "@tanstack/react-query";
 import { Check, Search, X } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { skinTexture } from "#/components/operators/detail/impl/assets";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
-import type { ISkin } from "#/lib/api/skins";
+import { type ISkin, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { cn, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 
 type OwnershipFilter = "all" | "missing" | "owned";
-type SortMode = "brand" | "date";
+type SortMode = "brand" | "date" | "popularity";
+
+interface ISkinPopularityInfo {
+    /** Fraction in [0, 1] of users that own this skin, or null if unknown. */
+    pct: number | null;
+    owners: number;
+}
 
 interface ISkinViewerDialogProps {
     skins: ISkin[];
@@ -30,6 +37,7 @@ const FILTER_TABS: { id: OwnershipFilter; label: string }[] = [
 const SORT_TABS: { id: SortMode; label: string }[] = [
     { id: "brand", label: "Brand" },
     { id: "date", label: "Date" },
+    { id: "popularity", label: "Popularity" },
 ];
 
 export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operatorsMap, color }: ISkinViewerDialogProps) {
@@ -37,6 +45,18 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
     const deferredQuery = useDeferredValue(query);
     const [filter, setFilter] = useState<OwnershipFilter>("missing");
     const [sort, setSort] = useState<SortMode>("brand");
+
+    const { data: popularity } = useQuery(skinPopularityQueryOptions());
+
+    const popularityMap = useMemo(() => {
+        if (!popularity || popularity.totalUsers <= 0) return null;
+        const total = popularity.totalUsers;
+        const map = new Map<string, ISkinPopularityInfo>();
+        for (const [skinId, owners] of Object.entries(popularity.counts)) {
+            map.set(skinId, { owners, pct: owners / total });
+        }
+        return map;
+    }, [popularity]);
 
     const allNonDefault = useMemo(() => skins.filter((s) => s.skinId?.includes("@")), [skins]);
 
@@ -67,7 +87,7 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
         });
     }, [allNonDefault, operatorsMap, deferredQuery, filter, ownedIds]);
 
-    const sections = useMemo(() => buildSections(filtered, operatorsMap, sort), [filtered, operatorsMap, sort]);
+    const sections = useMemo(() => buildSections(filtered, operatorsMap, sort, popularityMap), [filtered, operatorsMap, sort, popularityMap]);
     const totalFiltered = filtered.length;
 
     return (
@@ -117,10 +137,10 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
                     <div className="flex flex-col gap-5 px-3 pt-3 pb-4 sm:gap-6 sm:px-4 sm:pb-5">
                         {sections.map((section) => (
                             <section className="flex flex-col gap-2" key={section.key}>
-                                {sort !== "date" && <SectionHeader color={color} count={section.skins.length} tag={section.tag} title={section.title} />}
+                                {sort === "brand" && <SectionHeader color={color} count={section.skins.length} tag={section.tag} title={section.title} />}
                                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12">
                                     {section.skins.map((skin) => (
-                                        <SkinCard color={color} key={skin.skinId} op={operatorsMap.get(skin.charId)} owned={ownedIds.has(skin.skinId)} skin={skin} />
+                                        <SkinCard color={color} key={skin.skinId} op={operatorsMap.get(skin.charId)} owned={ownedIds.has(skin.skinId)} popularity={popularityMap?.get(skin.skinId) ?? null} skin={skin} />
                                     ))}
                                 </div>
                             </section>
@@ -194,9 +214,10 @@ interface ISkinCardProps {
     op: IOperatorListItem | undefined;
     owned: boolean;
     color: string;
+    popularity: ISkinPopularityInfo | null;
 }
 
-function SkinCard({ skin, op, owned, color }: ISkinCardProps) {
+function SkinCard({ skin, op, owned, color, popularity }: ISkinCardProps) {
     const opName = op?.name ?? skin.charId;
     const skinName = skin.displaySkin?.skinName ?? skin.displaySkin?.skinGroupName ?? "Skin";
     const price = getSkinPrice(skin);
@@ -215,15 +236,38 @@ function SkinCard({ skin, op, owned, color }: ISkinCardProps) {
                     <span className="absolute top-1 right-1">
                         <OwnershipBadge color={color} owned={owned} />
                     </span>
+                    {popularity && popularity.pct !== null && (
+                        <span className="absolute right-1 bottom-1">
+                            <PopularityChip color={color} info={popularity} />
+                        </span>
+                    )}
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5 px-1.5 py-1.5">
                     <span className="truncate font-medium text-[11px] leading-tight">{skinName}</span>
                     <span className="truncate text-[10px] text-muted-foreground leading-tight">{opName}</span>
                 </div>
             </DialogTrigger>
-            <SkinDetailDialog color={color} op={op} owned={owned} skin={skin} />
+            <SkinDetailDialog color={color} op={op} owned={owned} popularity={popularity} skin={skin} />
         </Dialog>
     );
+}
+
+function PopularityChip({ info, color }: { info: ISkinPopularityInfo; color: string }) {
+    const pct = info.pct ?? 0;
+    const label = formatPopularityPct(pct);
+    return (
+        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm backdrop-blur-sm" style={{ color }} title={`${info.owners.toLocaleString()} owners (${(pct * 100).toFixed(2)}% of imported users)`}>
+            {label}
+        </span>
+    );
+}
+
+function formatPopularityPct(pct: number): string {
+    const p = pct * 100;
+    if (p >= 10) return `${p.toFixed(0)}%`;
+    if (p >= 1) return `${p.toFixed(1)}%`;
+    if (p > 0) return `${p.toFixed(2)}%`;
+    return "0%";
 }
 
 function PriceChip({ price }: { price: ISkinPrice }) {
@@ -251,9 +295,10 @@ interface ISkinDetailDialogProps {
     op: IOperatorListItem | undefined;
     owned: boolean;
     color: string;
+    popularity: ISkinPopularityInfo | null;
 }
 
-function SkinDetailDialog({ skin, op, owned, color }: ISkinDetailDialogProps) {
+function SkinDetailDialog({ skin, op, owned, color, popularity }: ISkinDetailDialogProps) {
     const opName = op?.name ?? skin.charId;
     const ds = skin.displaySkin;
     const skinName = ds?.skinName ?? ds?.skinGroupName ?? "Skin";
@@ -315,6 +360,14 @@ function SkinDetailDialog({ skin, op, owned, color }: ISkinDetailDialogProps) {
                                 </DetailRow>
                             )}
                             {releaseTs && <DetailRow label="Released">{new Date(releaseTs).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</DetailRow>}
+                            {popularity && popularity.pct !== null && (
+                                <DetailRow label="Popularity">
+                                    <span className="font-semibold" style={{ color }}>
+                                        {formatPopularityPct(popularity.pct)}
+                                    </span>
+                                    <span className="ml-2 text-muted-foreground text-xs">of users own this · {popularity.owners.toLocaleString()} owners</span>
+                                </DetailRow>
+                            )}
                         </dl>
 
                         <DialogClose className="mt-auto cursor-pointer rounded-md border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">Back to collection</DialogClose>
@@ -387,7 +440,7 @@ function classifyChannel(tagId: string | null | undefined): SectionChannel {
 // characters" is left untouched (it has no iteration roman numeral).
 const ITERATION_SUFFIX_RE = /\/[IVXLCDM]+$/i;
 
-function buildSections(filtered: ISkin[], operatorsMap: Map<string, IOperatorListItem>, mode: SortMode): ISkinSection[] {
+function buildSections(filtered: ISkin[], operatorsMap: Map<string, IOperatorListItem>, mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null): ISkinSection[] {
     const sortByDate = (a: ISkin, b: ISkin) => {
         const aTime = a.displaySkin?.getTime ?? 0;
         const bTime = b.displaySkin?.getTime ?? 0;
@@ -404,6 +457,18 @@ function buildSections(filtered: ISkin[], operatorsMap: Map<string, IOperatorLis
         const all = [...filtered].sort(sortByDate);
         if (all.length === 0) return [];
         return [{ key: "all-by-date", title: "All Skins", channel: "store", tag: null, sortIndex: 0, skins: all }];
+    }
+
+    if (mode === "popularity") {
+        // Skins with no popularity entry have zero recorded owners - push to the end.
+        const ownerOf = (s: ISkin) => popularity?.get(s.skinId)?.owners ?? 0;
+        const all = [...filtered].sort((a, b) => {
+            const diff = ownerOf(b) - ownerOf(a);
+            if (diff !== 0) return diff;
+            return sortByDate(a, b);
+        });
+        if (all.length === 0) return [];
+        return [{ key: "all-by-popularity", title: "All Skins", channel: "store", tag: null, sortIndex: 0, skins: all }];
     }
 
     // mode === "brand"
