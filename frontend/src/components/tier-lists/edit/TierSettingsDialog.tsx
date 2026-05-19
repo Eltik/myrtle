@@ -1,4 +1,4 @@
-import { Trash2Icon } from "lucide-react";
+import { EraserIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
@@ -18,15 +18,17 @@ interface ITierSettingsDialogProps {
     onClose: () => void;
     onSave: (next: { name: string; color: string; description: string }) => void;
     onDelete: () => void;
+    onClear: () => void;
 }
 
-export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete }: ITierSettingsDialogProps) {
+export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete, onClear }: ITierSettingsDialogProps) {
     const nameId = useId();
     const descId = useId();
     const [name, setName] = useState("");
     const [color, setColor] = useState("#dc4d56");
     const [description, setDescription] = useState("");
     const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [confirmingClear, setConfirmingClear] = useState(false);
 
     useEffect(() => {
         if (tier) {
@@ -34,8 +36,11 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete 
             setColor(tier.color);
             setDescription(tier.description);
             setConfirmingDelete(false);
+            setConfirmingClear(false);
         }
     }, [tier]);
+
+    const operatorCount = tier?.operatorIds.length ?? 0;
 
     const trimmedName = name.trim();
     const validColor = HEX_RE.test(color);
@@ -84,6 +89,30 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete 
                             <FieldDescription>Optional. Shown to viewers in the tier hover/detail.</FieldDescription>
                         </Field>
                     </div>
+
+                    {operatorCount > 0 && (
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-border border-t px-6 py-3">
+                            <p className="m-0 font-sans text-[12.5px] text-muted-foreground">
+                                <span className="font-medium text-foreground tabular-nums">{operatorCount}</span> operator{operatorCount === 1 ? "" : "s"} in this tier
+                            </p>
+                            {confirmingClear ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="font-sans text-[12.5px] text-muted-foreground">Remove all?</span>
+                                    <Button type="button" size="sm" variant="destructive" onClick={onClear}>
+                                        Confirm
+                                    </Button>
+                                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmingClear(false)}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button type="button" size="sm" variant="destructive-outline" onClick={() => setConfirmingClear(true)}>
+                                    <EraserIcon />
+                                    Clear operators
+                                </Button>
+                            )}
+                        </div>
+                    )}
 
                     <DialogFooter className="justify-between sm:justify-between">
                         {canDelete ? (
