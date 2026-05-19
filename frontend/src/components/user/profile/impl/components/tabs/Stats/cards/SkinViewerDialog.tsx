@@ -164,7 +164,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
 
     useEffect(() => {
         setRenderBudget(INITIAL_RENDER_CHUNK);
-    }, [filteredCards, deferredSort]);
+    }, []);
 
     useEffect(() => {
         if (deferredSort !== "brand") return;
@@ -503,7 +503,7 @@ function VirtualizedSkinGrid({ cards, color, ownedIds, popularityMap, onSelect }
 
     useEffect(() => {
         virtualizer.measure();
-    }, [virtualizer, rowHeight]);
+    }, [virtualizer]);
 
     const virtualItems = virtualizer.getVirtualItems();
     const totalSize = virtualizer.getTotalSize();

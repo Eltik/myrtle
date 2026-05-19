@@ -28,6 +28,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v012_skin_count_split",
         include_str!("v012_skin_count_split.sql"),
     ),
+    (
+        "v013_widen_tier_text",
+        include_str!("v013_widen_tier_text.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

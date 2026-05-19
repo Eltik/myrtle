@@ -75,7 +75,14 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                 <FieldLabel htmlFor={descId} className="sr-only">
                                     Description
                                 </FieldLabel>
-                                <Textarea id={descId} value={description} onChange={(e) => onDescriptionChange(e.target.value.slice(0, DESC_MAX))} placeholder="Add a short description so viewers know what this list is about." rows={2} className="[&_textarea]:font-sans [&_textarea]:text-sm" />
+                                <Textarea
+                                    id={descId}
+                                    value={description}
+                                    onChange={(e) => onDescriptionChange(e.target.value.slice(0, DESC_MAX))}
+                                    placeholder="Add a short description so viewers know what this list is about."
+                                    rows={4}
+                                    className="[&_textarea]:max-h-80 [&_textarea]:min-h-24 [&_textarea]:font-sans [&_textarea]:text-sm"
+                                />
                             </Field>
 
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
