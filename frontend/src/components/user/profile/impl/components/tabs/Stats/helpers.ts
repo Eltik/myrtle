@@ -151,8 +151,8 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
                     sub: masterySub,
                 };
                 if (skillsAtM3 === 0) pendingM3.push(baseGap);
-                else if (skillsAtM3 === 1) pendingM6.push(baseGap);
-                else if (skillsAtM3 === 2) pendingM9.push(baseGap);
+                else if (skillsAtM3 === 1 && masteries.length >= 2) pendingM6.push(baseGap);
+                else if (skillsAtM3 === 2 && masteries.length >= 3) pendingM9.push(baseGap);
             }
         }
 
