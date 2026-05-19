@@ -77,7 +77,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             <img alt={selected.name} className="absolute inset-0 h-full w-full object-contain" decoding="async" loading="eager" src={selected.image} />
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
                             <SkinViewerDialog imageSrc={selected.image} skinName={selected.name}>
-                                <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1.5 text-white/80 backdrop-blur-md transition-colors hover:bg-white/10 hover:text-white">
+                                <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
                             </SkinViewerDialog>
