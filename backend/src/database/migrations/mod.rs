@@ -32,6 +32,14 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v013_widen_tier_text",
         include_str!("v013_widen_tier_text.sql"),
     ),
+    (
+        "v014_propagate_tier_list_updated_at",
+        include_str!("v014_propagate_tier_list_updated_at.sql"),
+    ),
+    (
+        "v015_repair_tier_list_updated_at",
+        include_str!("v015_repair_tier_list_updated_at.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
