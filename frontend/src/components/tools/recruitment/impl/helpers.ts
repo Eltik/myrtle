@@ -27,6 +27,9 @@ export function groupTagsByType(tags: IRecruitmentTag[]): Record<TagType, IRecru
         groups[tag.type].push(tag);
     }
 
+    groups.class.sort((a, b) => a.name.localeCompare(b.name));
+    groups.affix.sort((a, b) => a.name.localeCompare(b.name));
+
     return groups;
 }
 

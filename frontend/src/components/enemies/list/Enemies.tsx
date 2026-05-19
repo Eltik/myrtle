@@ -38,7 +38,7 @@ export function EnemiesList() {
         }
         return Object.values(handbook.raceData)
             .filter((r) => present.has(r.id))
-            .sort((a, b) => a.sortId - b.sortId)
+            .sort((a, b) => a.raceName.localeCompare(b.raceName))
             .map((r) => ({ id: r.id, label: r.raceName }));
     }, [handbook, enriched]);
 

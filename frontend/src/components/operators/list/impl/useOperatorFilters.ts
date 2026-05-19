@@ -112,30 +112,31 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const filteredOperators = useMemo(() => {
         const { sortBy, sortOrder } = filters;
         const dir = sortOrder === "asc" ? 1 : -1;
-        // Comparators return ascending natural order; direction is applied once below.
+        // Primary sort honors `dir`; name tiebreaker is always A→Z so listings stay readable in either direction.
+        const nameTiebreak = (a: IOperatorView, b: IOperatorView) => a.name.localeCompare(b.name);
         const cmp = (a: IOperatorView, b: IOperatorView): number => {
             switch (sortBy) {
                 case "name":
-                    return a.name.localeCompare(b.name);
+                    return a.name.localeCompare(b.name) * dir;
                 case "class":
-                    return (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99) || a.name.localeCompare(b.name);
+                    return ((CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99)) * dir || nameTiebreak(a, b);
                 case "hp":
-                    return (a.stats?.hp ?? 0) - (b.stats?.hp ?? 0);
+                    return ((a.stats?.hp ?? 0) - (b.stats?.hp ?? 0)) * dir || nameTiebreak(a, b);
                 case "atk":
-                    return (a.stats?.atk ?? 0) - (b.stats?.atk ?? 0);
+                    return ((a.stats?.atk ?? 0) - (b.stats?.atk ?? 0)) * dir || nameTiebreak(a, b);
                 case "def":
-                    return (a.stats?.def ?? 0) - (b.stats?.def ?? 0);
+                    return ((a.stats?.def ?? 0) - (b.stats?.def ?? 0)) * dir || nameTiebreak(a, b);
                 case "res":
-                    return (a.stats?.res ?? 0) - (b.stats?.res ?? 0);
+                    return ((a.stats?.res ?? 0) - (b.stats?.res ?? 0)) * dir || nameTiebreak(a, b);
                 case "cost":
-                    return (a.stats?.cost ?? 0) - (b.stats?.cost ?? 0);
+                    return ((a.stats?.cost ?? 0) - (b.stats?.cost ?? 0)) * dir || nameTiebreak(a, b);
                 case "block":
-                    return (a.stats?.block ?? 0) - (b.stats?.block ?? 0);
+                    return ((a.stats?.block ?? 0) - (b.stats?.block ?? 0)) * dir || nameTiebreak(a, b);
                 default:
-                    return rarityToNumber(a.rarity) - rarityToNumber(b.rarity) || (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99) || a.name.localeCompare(b.name);
+                    return (rarityToNumber(a.rarity) - rarityToNumber(b.rarity)) * dir || (CLASS_SORT_ORDER[a.profession] ?? 99) - (CLASS_SORT_ORDER[b.profession] ?? 99) || nameTiebreak(a, b);
             }
         };
-        return [...filtered].sort((a, b) => cmp(a, b) * dir);
+        return [...filtered].sort(cmp);
     }, [filtered, filters.sortBy, filters.sortOrder, filters]);
 
     const clearFilters = useCallback(() => setFilters(initialState), [setFilters]);
@@ -168,10 +169,10 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
             setArtists: (v: string[]) => set("artists", v),
             setVoiceActors: (v: string[]) => set("voiceActors", v),
             setHasNotes: (v: IFilterState["hasNotes"]) => set("hasNotes", v),
-            setSortBy: (v: IFilterState["sortBy"]) => set("sortBy", v),
+            setSortBy: (v: IFilterState["sortBy"]) => setFilters((prev) => ({ ...prev, sortBy: v, sortOrder: v === "name" || v === "class" ? "asc" : "desc" })),
             setSortOrder: (v: IFilterState["sortOrder"]) => set("sortOrder", v),
         }),
-        [set],
+        [set, setFilters],
     );
 
     return {
