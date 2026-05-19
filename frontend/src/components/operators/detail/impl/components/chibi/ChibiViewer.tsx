@@ -137,7 +137,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
             const app = new PIXI.Application({
                 width: containerWidth,
                 height: containerHeight,
-                backgroundColor: 0x111014,
+                backgroundAlpha: 0,
                 antialias: true,
                 resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
                 autoDensity: true,
@@ -219,7 +219,7 @@ export function ChibiViewer({ chibi, skin }: IChibiViewerProps) {
 
                 <DownloadButton disabled={isLoading || !!error || availableAnimations.length === 0} isRecording={isRecording} onCancel={cancelRecording} onDownload={startRecording} progress={progress} />
             </div>
-            <div className="relative h-45 w-full overflow-hidden rounded-md bg-[#111014]">
+            <div className="relative h-45 w-full overflow-hidden rounded-md bg-muted">
                 <div className="h-full w-full" ref={canvasContainerRef} />
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center">

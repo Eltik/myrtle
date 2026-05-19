@@ -18,7 +18,7 @@
     position: absolute;
     inset: 0 0 auto 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--feat-strip, oklch(0.75 0.15 25 / 0.5)), transparent);
+    background: linear-gradient(90deg, transparent, var(--feat-strip, color-mix(in oklab, var(--primary) 50%, transparent)), transparent);
     opacity: 0.7;
 }
 .featCard:hover {

@@ -13,12 +13,12 @@ export const TABS: { type: TabType; label: string; icon: React.ElementType }[] =
 ];
 
 export const RARITY_COLORS: Record<OperatorRarityTier, string> = {
-    TIER_6: "text-[#f7a452] border-[#f7a452]/50",
-    TIER_5: "text-[#f7e79e] border-[#f7e79e]/50",
-    TIER_4: "text-[#bcabdb] border-[#bcabdb]/50",
-    TIER_3: "text-[#88c8e3] border-[#88c8e3]/50",
-    TIER_2: "text-[#7ef2a3] border-[#7ef2a3]/50",
-    TIER_1: "text-white border-white/50",
+    TIER_6: "text-[var(--rarity-6)] border-[var(--rarity-6)]/50",
+    TIER_5: "text-[var(--rarity-5)] border-[var(--rarity-5)]/50",
+    TIER_4: "text-[var(--rarity-4)] border-[var(--rarity-4)]/50",
+    TIER_3: "text-[var(--rarity-3)] border-[var(--rarity-3)]/50",
+    TIER_2: "text-[var(--rarity-2)] border-[var(--rarity-2)]/50",
+    TIER_1: "text-[var(--rarity-1)] border-[var(--rarity-1)]/50",
 };
 
 export const RARITY_GLOW: Record<OperatorRarityTier, string> = {

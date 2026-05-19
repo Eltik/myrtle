@@ -18,6 +18,9 @@ export default function Footer() {
                         <Link to="/privacy" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
                             Privacy
                         </Link>
+                        <Link to="/discord" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
+                            Discord
+                        </Link>
                     </nav>
                 </div>
                 <span className="max-w-130 font-sans text-muted-foreground text-xs leading-normal">Not affiliated with Hypergryph or Yostar. Game data and assets are property of their respective owners.</span>
