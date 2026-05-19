@@ -17,7 +17,7 @@ interface IMasteryCardProps {
 }
 
 export function MasteryCard({ masteries }: IMasteryCardProps) {
-    const { totalMasteryLevels, maxPossibleMasteryLevels, e2Count, m3Count, m6Count, m9Count, details } = masteries;
+    const { totalMasteryLevels, maxPossibleMasteryLevels, e2Count, m3Count, details } = masteries;
     const masteryPct = maxPossibleMasteryLevels > 0 ? (totalMasteryLevels / maxPossibleMasteryLevels) * 100 : 0;
 
     const gaps: IGapItem[] = [
@@ -39,7 +39,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
         {
             key: "pendingM6",
             label: "pending M6",
-            value: Math.max(0, m3Count - m6Count),
+            value: details.pendingM6.length,
             color: PALETTE.mastery.m6,
             tooltip: "Click to view operators with 1 skill at M3 still needing a second",
             details: details.pendingM6,
@@ -47,7 +47,7 @@ export function MasteryCard({ masteries }: IMasteryCardProps) {
         {
             key: "pendingM9",
             label: "pending M9",
-            value: Math.max(0, m6Count - m9Count),
+            value: details.pendingM9.length,
             color: PALETTE.mastery.m9,
             tooltip: "Click to view operators with 2 skills at M3 still needing a third",
             details: details.pendingM9,
