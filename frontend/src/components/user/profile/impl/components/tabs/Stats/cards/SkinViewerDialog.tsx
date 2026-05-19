@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Search, X } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { skinTexture } from "#/components/operators/detail/impl/assets";
-import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { type ISkin, skinPopularityQueryOptions } from "#/lib/api/skins";
@@ -40,11 +41,67 @@ const SORT_TABS: { id: SortMode; label: string }[] = [
     { id: "popularity", label: "Popularity" },
 ];
 
-export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operatorsMap, color }: ISkinViewerDialogProps) {
+const SECTION_STYLE: React.CSSProperties = {
+    contentVisibility: "auto",
+    containIntrinsicSize: "600px",
+};
+
+const CARD_STYLE: React.CSSProperties = { contain: "content" };
+
+const INITIAL_RENDER_CHUNK = 150;
+const RENDER_CHUNK_STEP = 150;
+
+const COL_BREAKPOINTS: readonly { minWidth: number; cols: number }[] = [
+    { minWidth: 1536, cols: 12 },
+    { minWidth: 1280, cols: 10 },
+    { minWidth: 1024, cols: 8 },
+    { minWidth: 768, cols: 6 },
+    { minWidth: 640, cols: 4 },
+    { minWidth: 0, cols: 3 },
+];
+
+const VIRTUAL_SCROLL_MARGIN = 12;
+const VIRTUAL_ROW_ESTIMATE_PX = 160;
+
+interface ICardData {
+    skin: ISkin;
+    op: IOperatorListItem | undefined;
+    opName: string;
+    skinName: string;
+    searchable: string;
+    avatarUrl: string;
+    price: ISkinPrice;
+}
+
+export function SkinViewerDialog(props: ISkinViewerDialogProps) {
     const [query, setQuery] = useState("");
-    const deferredQuery = useDeferredValue(query);
     const [filter, setFilter] = useState<OwnershipFilter>("missing");
     const [sort, setSort] = useState<SortMode>("brand");
+
+    return (
+        <DialogContent bottomStickOnMobile={false} className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[95vw] flex-col overflow-hidden p-0 sm:max-w-[95vw]" showCloseButton>
+            <DialogTitle className="sr-only">Skin Collection</DialogTitle>
+            <SkinViewerBody {...props} filter={filter} query={query} setFilter={setFilter} setQuery={setQuery} setSort={setSort} sort={sort} />
+        </DialogContent>
+    );
+}
+
+interface ISkinViewerBodyProps extends ISkinViewerDialogProps {
+    query: string;
+    setQuery: (q: string) => void;
+    filter: OwnershipFilter;
+    setFilter: (f: OwnershipFilter) => void;
+    sort: SortMode;
+    setSort: (s: SortMode) => void;
+}
+
+function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, color, query, setQuery, filter, setFilter, sort, setSort }: ISkinViewerBodyProps) {
+    const deferredQuery = useDeferredValue(query);
+    const deferredFilter = useDeferredValue(filter);
+    const deferredSort = useDeferredValue(sort);
+    const [selectedSkinId, setSelectedSkinId] = useState<string | null>(null);
+    const [renderBudget, setRenderBudget] = useState(INITIAL_RENDER_CHUNK);
+    const [, startRenderTransition] = useTransition();
 
     const { data: popularity } = useQuery(skinPopularityQueryOptions());
 
@@ -58,42 +115,100 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
         return map;
     }, [popularity]);
 
-    const allNonDefault = useMemo(() => skins.filter((s) => s.skinId?.includes("@")), [skins]);
+    const cards = useMemo<ICardData[]>(() => {
+        const out: ICardData[] = [];
+        for (const s of skins) {
+            if (!s.skinId?.includes("@")) continue;
+            const op = operatorsMap.get(s.charId);
+            const opName = op?.name ?? "";
+            const rawSkinName = s.displaySkin?.skinName ?? s.displaySkin?.skinGroupName ?? "Skin";
+            const groupName = s.displaySkin?.skinGroupName ?? "";
+            const skinNameForSearch = (s.displaySkin?.skinName ?? "").toLowerCase();
+            out.push({
+                skin: s,
+                op,
+                opName,
+                skinName: rawSkinName,
+                searchable: `${opName.toLowerCase()} ${skinNameForSearch} ${groupName.toLowerCase()}`,
+                avatarUrl: getAvatarById(s.skinId),
+                price: getSkinPrice(s),
+            });
+        }
+        return out;
+    }, [skins, operatorsMap]);
 
-    // Per-skin enumeration may still be loading; trust the profile count for the
-    // header total. Fall back to the intersection only if the profile count is
-    // missing (legacy data).
     const enumeratedOwnedCount = useMemo(() => {
+        if (profileOwnedCount > 0) return 0;
         let n = 0;
-        for (const s of allNonDefault) if (ownedIds.has(s.skinId)) n++;
+        for (const c of cards) if (ownedIds.has(c.skin.skinId)) n++;
         return n;
-    }, [allNonDefault, ownedIds]);
+    }, [cards, ownedIds, profileOwnedCount]);
     const ownedCount = profileOwnedCount > 0 ? profileOwnedCount : enumeratedOwnedCount;
 
-    const totalCount = allNonDefault.length;
+    const totalCount = cards.length;
     const missingCount = Math.max(0, totalCount - ownedCount);
 
-    const filtered = useMemo(() => {
+    const filteredCards = useMemo(() => {
         const q = deferredQuery.trim().toLowerCase();
-        return allNonDefault.filter((s) => {
-            const owned = ownedIds.has(s.skinId);
-            if (filter === "owned" && !owned) return false;
-            if (filter === "missing" && owned) return false;
+        return cards.filter((c) => {
+            const owned = ownedIds.has(c.skin.skinId);
+            if (deferredFilter === "owned" && !owned) return false;
+            if (deferredFilter === "missing" && owned) return false;
             if (!q) return true;
-            const opName = operatorsMap.get(s.charId)?.name?.toLowerCase() ?? "";
-            const skinName = s.displaySkin?.skinName?.toLowerCase() ?? "";
-            const groupName = s.displaySkin?.skinGroupName?.toLowerCase() ?? "";
-            return opName.includes(q) || skinName.includes(q) || groupName.includes(q);
+            return c.searchable.includes(q);
         });
-    }, [allNonDefault, operatorsMap, deferredQuery, filter, ownedIds]);
+    }, [cards, deferredQuery, deferredFilter, ownedIds]);
 
-    const sections = useMemo(() => buildSections(filtered, operatorsMap, sort, popularityMap), [filtered, operatorsMap, sort, popularityMap]);
-    const totalFiltered = filtered.length;
+    const sections = useMemo(() => buildSections(filteredCards, deferredSort, popularityMap), [filteredCards, deferredSort, popularityMap]);
+    const totalFiltered = filteredCards.length;
+
+    useEffect(() => {
+        setRenderBudget(INITIAL_RENDER_CHUNK);
+    }, [filteredCards, deferredSort]);
+
+    useEffect(() => {
+        if (deferredSort !== "brand") return;
+        if (renderBudget >= filteredCards.length) return;
+        const id = requestAnimationFrame(() => {
+            startRenderTransition(() => {
+                setRenderBudget((c) => Math.min(c + RENDER_CHUNK_STEP, filteredCards.length));
+            });
+        });
+        return () => cancelAnimationFrame(id);
+    }, [renderBudget, filteredCards.length, deferredSort]);
+
+    const renderedSections = useMemo(() => {
+        if (renderBudget >= filteredCards.length) return sections;
+        const out: ISkinSection[] = [];
+        let remaining = renderBudget;
+        for (const section of sections) {
+            if (remaining <= 0) break;
+            if (section.cards.length <= remaining) {
+                out.push(section);
+                remaining -= section.cards.length;
+            } else {
+                out.push({ ...section, cards: section.cards.slice(0, remaining) });
+                remaining = 0;
+            }
+        }
+        return out;
+    }, [sections, renderBudget, filteredCards.length]);
+
+    const handleSelect = useCallback((skinId: string) => setSelectedSkinId(skinId), []);
+    const handleDetailOpenChange = useCallback((open: boolean) => {
+        if (!open) setSelectedSkinId(null);
+    }, []);
+    const clearSearch = useCallback(() => setQuery(""), [setQuery]);
+    const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value), [setQuery]);
+
+    const selectedCard = useMemo(() => {
+        if (!selectedSkinId) return null;
+        for (const c of cards) if (c.skin.skinId === selectedSkinId) return c;
+        return null;
+    }, [selectedSkinId, cards]);
 
     return (
-        <DialogContent className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[95vw] flex-col overflow-hidden p-0 sm:max-w-[95vw]" bottomStickOnMobile={false} showCloseButton>
-            <DialogTitle className="sr-only">Skin Collection</DialogTitle>
-
+        <>
             <header className="flex shrink-0 flex-col gap-3 border-border/60 border-b bg-card/60 p-4 backdrop-blur sm:p-5">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                     <h2 className="font-heading font-semibold text-lg leading-none sm:text-xl">Skin Collection</h2>
@@ -113,13 +228,13 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
                         <input
                             aria-label="Search skins"
                             className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground/30 sm:w-64"
-                            onChange={(e) => setQuery(e.target.value)}
+                            onChange={handleQueryChange}
                             placeholder="Search by operator or skin…"
                             type="search"
                             value={query}
                         />
                         {query && (
-                            <button aria-label="Clear search" className="absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setQuery("")} type="button">
+                            <button aria-label="Clear search" className="absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" onClick={clearSearch} type="button">
                                 <X className="h-3 w-3" />
                             </button>
                         )}
@@ -134,21 +249,31 @@ export function SkinViewerDialog({ skins, ownedIds, profileOwnedCount, operators
                 </div>
             ) : (
                 <ScrollArea className="min-h-0 flex-1">
-                    <div className="flex flex-col gap-5 px-3 pt-3 pb-4 sm:gap-6 sm:px-4 sm:pb-5">
-                        {sections.map((section) => (
-                            <section className="flex flex-col gap-2" key={section.key}>
-                                {sort === "brand" && <SectionHeader color={color} count={section.skins.length} tag={section.tag} title={section.title} />}
-                                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12">
-                                    {section.skins.map((skin) => (
-                                        <SkinCard color={color} key={skin.skinId} op={operatorsMap.get(skin.charId)} owned={ownedIds.has(skin.skinId)} popularity={popularityMap?.get(skin.skinId) ?? null} skin={skin} />
-                                    ))}
-                                </div>
-                            </section>
-                        ))}
-                    </div>
+                    {deferredSort === "brand" ? (
+                        <div className="flex flex-col gap-5 px-3 pt-3 pb-4 sm:gap-6 sm:px-4 sm:pb-5">
+                            {renderedSections.map((section) => (
+                                <section className="flex flex-col gap-2" key={section.key} style={SECTION_STYLE}>
+                                    <SectionHeader color={color} count={section.cards.length} tag={section.tag} title={section.title} />
+                                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12">
+                                        {section.cards.map((c) => (
+                                            <SkinCard card={c} color={color} key={c.skin.skinId} onSelect={handleSelect} owned={ownedIds.has(c.skin.skinId)} popularity={popularityMap?.get(c.skin.skinId) ?? null} />
+                                        ))}
+                                    </div>
+                                </section>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="px-3 pt-3 pb-4 sm:px-4 sm:pb-5">
+                            <VirtualizedSkinGrid cards={sections[0]?.cards ?? []} color={color} onSelect={handleSelect} ownedIds={ownedIds} popularityMap={popularityMap} />
+                        </div>
+                    )}
                 </ScrollArea>
             )}
-        </DialogContent>
+
+            <Dialog onOpenChange={handleDetailOpenChange} open={selectedCard !== null}>
+                {selectedCard && <SkinDetailDialog card={selectedCard} color={color} owned={ownedIds.has(selectedCard.skin.skinId)} popularity={popularityMap?.get(selectedCard.skin.skinId) ?? null} />}
+            </Dialog>
+        </>
     );
 }
 
@@ -210,57 +335,60 @@ function SortTabs({ value, onChange }: ISortTabsProps) {
 }
 
 interface ISkinCardProps {
-    skin: ISkin;
-    op: IOperatorListItem | undefined;
+    card: ICardData;
     owned: boolean;
     color: string;
     popularity: ISkinPopularityInfo | null;
+    onSelect: (skinId: string) => void;
 }
 
-function SkinCard({ skin, op, owned, color, popularity }: ISkinCardProps) {
-    const opName = op?.name ?? skin.charId;
-    const skinName = skin.displaySkin?.skinName ?? skin.displaySkin?.skinGroupName ?? "Skin";
-    const price = getSkinPrice(skin);
+const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSelect }: ISkinCardProps) {
+    const { skin, opName, skinName, price, avatarUrl } = card;
+    const displayOpName = opName || skin.charId;
+    const handleClick = () => onSelect(skin.skinId);
 
     return (
-        <Dialog>
-            <DialogTrigger aria-label={`View ${opName} · ${skinName}`} className={cn("group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-all", "hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md", owned ? "border-border/60" : "border-border")}>
-                <div className="relative aspect-square w-full overflow-hidden bg-muted/30">
-                    <img alt="" aria-hidden className={cn("h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.04]", !owned && "opacity-60 saturate-50 group-hover:opacity-85 group-hover:saturate-75")} decoding="async" loading="lazy" src={getAvatarById(skin.skinId)} />
-                    {!owned && <span aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/40 to-transparent" />}
-                    {price.label && (
-                        <span className="absolute top-1 left-1">
-                            <PriceChip price={price} />
-                        </span>
-                    )}
-                    <span className="absolute top-1 right-1">
-                        <OwnershipBadge color={color} owned={owned} />
+        <button
+            aria-label={`View ${displayOpName} · ${skinName}`}
+            className={cn("group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-all", "hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md", owned ? "border-border/60" : "border-border")}
+            onClick={handleClick}
+            style={CARD_STYLE}
+            type="button"
+        >
+            <div className="relative aspect-square w-full overflow-hidden bg-muted/30">
+                <img alt="" aria-hidden className={cn("h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.04]", !owned && "opacity-60 saturate-50 group-hover:opacity-85 group-hover:saturate-75")} decoding="async" loading="lazy" src={avatarUrl} />
+                {!owned && <span aria-hidden className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/40 to-transparent" />}
+                {price.label && (
+                    <span className="absolute top-1 left-1">
+                        <PriceChip price={price} />
                     </span>
-                    {popularity && popularity.pct !== null && (
-                        <span className="absolute right-1 bottom-1">
-                            <PopularityChip color={color} info={popularity} />
-                        </span>
-                    )}
-                </div>
-                <div className="flex min-w-0 flex-col gap-0.5 px-1.5 py-1.5">
-                    <span className="truncate font-medium text-[11px] leading-tight">{skinName}</span>
-                    <span className="truncate text-[10px] text-muted-foreground leading-tight">{opName}</span>
-                </div>
-            </DialogTrigger>
-            <SkinDetailDialog color={color} op={op} owned={owned} popularity={popularity} skin={skin} />
-        </Dialog>
+                )}
+                <span className="absolute top-1 right-1">
+                    <OwnershipBadge color={color} owned={owned} />
+                </span>
+                {popularity && popularity.pct !== null && (
+                    <span className="absolute right-1 bottom-1">
+                        <PopularityChip color={color} info={popularity} />
+                    </span>
+                )}
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5 px-1.5 py-1.5">
+                <span className="truncate font-medium text-[11px] leading-tight">{skinName}</span>
+                <span className="truncate text-[10px] text-muted-foreground leading-tight">{displayOpName}</span>
+            </div>
+        </button>
     );
-}
+});
 
-function PopularityChip({ info, color }: { info: ISkinPopularityInfo; color: string }) {
+const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISkinPopularityInfo; color: string }) {
     const pct = info.pct ?? 0;
     const label = formatPopularityPct(pct);
     return (
-        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm backdrop-blur-sm" style={{ color }} title={`${info.owners.toLocaleString()} owners (${(pct * 100).toFixed(2)}% of imported users)`}>
+        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={`${info.owners.toLocaleString()} owners (${(pct * 100).toFixed(2)}% of imported users)`}>
             {label}
         </span>
     );
-}
+});
 
 function formatPopularityPct(pct: number): string {
     const p = pct * 100;
@@ -270,16 +398,16 @@ function formatPopularityPct(pct: number): string {
     return "0%";
 }
 
-function PriceChip({ price }: { price: ISkinPrice }) {
+const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
     const isFree = price.kind === "free";
     return (
-        <span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm backdrop-blur-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} title={price.tooltip ?? undefined}>
+        <span className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-px font-mono font-semibold text-[9px] uppercase tracking-wider shadow-sm", isFree ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-background/85 text-foreground")} title={price.tooltip ?? undefined}>
             {price.label}
         </span>
     );
-}
+});
 
-function OwnershipBadge({ owned, color }: { owned: boolean; color: string }) {
+const OwnershipBadge = memo(function OwnershipBadge({ owned, color }: { owned: boolean; color: string }) {
     if (owned) {
         return (
             <span aria-label="Owned" className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/95 text-white shadow-sm" role="img">
@@ -287,21 +415,141 @@ function OwnershipBadge({ owned, color }: { owned: boolean; color: string }) {
             </span>
         );
     }
-    return <span aria-label="Missing" className="block h-5 w-5 rounded-full border bg-background/85 backdrop-blur-sm" role="img" style={{ borderColor: `color-mix(in oklch, ${color} 50%, transparent)` }} />;
+    return <span aria-label="Missing" className="block h-5 w-5 rounded-full border bg-background/85" role="img" style={{ borderColor: `color-mix(in oklch, ${color} 50%, transparent)` }} />;
+});
+
+function getColumnCount(): number {
+    if (typeof window === "undefined") return COL_BREAKPOINTS[0].cols;
+    const w = window.innerWidth;
+    for (const { minWidth, cols } of COL_BREAKPOINTS) {
+        if (w >= minWidth) return cols;
+    }
+    return COL_BREAKPOINTS[COL_BREAKPOINTS.length - 1].cols;
+}
+
+function useColumnCount(): number {
+    const [cols, setCols] = useState<number>(getColumnCount);
+    useEffect(() => {
+        const handler = () => setCols(getColumnCount());
+        handler();
+        window.addEventListener("resize", handler, { passive: true });
+        return () => window.removeEventListener("resize", handler);
+    }, []);
+    return cols;
+}
+
+interface IVirtualizedSkinGridProps {
+    cards: ICardData[];
+    color: string;
+    ownedIds: Set<string>;
+    popularityMap: Map<string, ISkinPopularityInfo> | null;
+    onSelect: (skinId: string) => void;
+}
+
+const CARD_TEXT_HEIGHT_PX = 32;
+
+function gapForCols(cols: number): number {
+    return cols <= 3 ? 8 : 10;
+}
+
+function VirtualizedSkinGrid({ cards, color, ownedIds, popularityMap, onSelect }: IVirtualizedSkinGridProps) {
+    const cols = useColumnCount();
+
+    const rows = useMemo(() => {
+        const out: ICardData[][] = [];
+        for (let i = 0; i < cards.length; i += cols) {
+            out.push(cards.slice(i, i + cols));
+        }
+        return out;
+    }, [cards, cols]);
+
+    const innerRef = useRef<HTMLDivElement | null>(null);
+    const [scrollEl, setScrollEl] = useState<HTMLElement | null>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+
+    useEffect(() => {
+        const el = innerRef.current;
+        if (!el) return;
+        let cur: HTMLElement | null = el.parentElement;
+        while (cur) {
+            if (cur.getAttribute("data-slot") === "scroll-area-viewport") {
+                setScrollEl(cur);
+                break;
+            }
+            cur = cur.parentElement;
+        }
+        const observer = new ResizeObserver((entries) => {
+            const w = entries[0]?.contentRect.width ?? 0;
+            if (w > 0) setContainerWidth(w);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    const rowHeight = useMemo(() => {
+        if (containerWidth <= 0) return VIRTUAL_ROW_ESTIMATE_PX;
+        const gap = gapForCols(cols);
+        const cardWidth = (containerWidth - (cols - 1) * gap) / cols;
+        return Math.round(cardWidth + CARD_TEXT_HEIGHT_PX + gap);
+    }, [containerWidth, cols]);
+
+    const virtualizer = useVirtualizer({
+        count: rows.length,
+        getScrollElement: () => scrollEl,
+        estimateSize: () => rowHeight,
+        overscan: 4,
+        scrollMargin: VIRTUAL_SCROLL_MARGIN,
+    });
+
+    useEffect(() => {
+        virtualizer.measure();
+    }, [virtualizer, rowHeight]);
+
+    const virtualItems = virtualizer.getVirtualItems();
+    const totalSize = virtualizer.getTotalSize();
+
+    return (
+        <div ref={innerRef} style={{ height: totalSize, position: "relative", width: "100%" }}>
+            {virtualItems.map((vi) => {
+                const row = rows[vi.index];
+                if (!row) return null;
+                return (
+                    <div
+                        key={vi.key}
+                        style={{
+                            contain: "content",
+                            height: rowHeight,
+                            left: 0,
+                            position: "absolute",
+                            top: 0,
+                            transform: `translateY(${vi.start}px)`,
+                            width: "100%",
+                            willChange: "transform",
+                        }}
+                    >
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-2.5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12">
+                            {row.map((c) => (
+                                <SkinCard card={c} color={color} key={c.skin.skinId} onSelect={onSelect} owned={ownedIds.has(c.skin.skinId)} popularity={popularityMap?.get(c.skin.skinId) ?? null} />
+                            ))}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
 }
 
 interface ISkinDetailDialogProps {
-    skin: ISkin;
-    op: IOperatorListItem | undefined;
+    card: ICardData;
     owned: boolean;
     color: string;
     popularity: ISkinPopularityInfo | null;
 }
 
-function SkinDetailDialog({ skin, op, owned, color, popularity }: ISkinDetailDialogProps) {
-    const opName = op?.name ?? skin.charId;
+function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogProps) {
+    const { skin, op, skinName, price, avatarUrl } = card;
+    const opName = card.opName || skin.charId;
     const ds = skin.displaySkin;
-    const skinName = ds?.skinName ?? ds?.skinGroupName ?? "Skin";
     const groupName = ds?.skinGroupName;
     const description = ds?.description ?? ds?.content ?? null;
     const dialog = ds?.dialog ?? null;
@@ -311,15 +559,13 @@ function SkinDetailDialog({ skin, op, owned, color, popularity }: ISkinDetailDia
     const drawers = ds?.drawerList ?? null;
     const releaseTs = ds?.getTime ? ds.getTime * 1000 : null;
     const heroUrl = skinTexture(skin.charId, skin.skinId);
-    const fallbackUrl = getAvatarById(skin.skinId);
-    const price = getSkinPrice(skin);
 
     return (
-        <DialogContent className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" bottomStickOnMobile={false} showCloseButton>
+        <DialogContent bottomStickOnMobile={false} className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" showCloseButton>
             <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[5fr_4fr]">
                 <div className="relative flex items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:border-border/60 md:border-r">
-                    <img alt={`${opName} ${skinName}`} className="h-full w-full object-contain object-bottom" decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = fallbackUrl)} src={heroUrl} />
+                    <img alt={`${opName} ${skinName}`} className="h-full w-full object-contain object-bottom" decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarUrl)} src={heroUrl} />
                     <span className="absolute top-3 left-3">
                         <OwnershipBadge color={color} owned={owned} />
                     </span>
@@ -399,7 +645,7 @@ interface ISkinSection {
     channel: SectionChannel;
     tag: string | null;
     sortIndex: number;
-    skins: ISkin[];
+    cards: ICardData[];
 }
 
 const CHANNEL_PRIORITY: Record<SectionChannel, number> = {
@@ -440,41 +686,38 @@ function classifyChannel(tagId: string | null | undefined): SectionChannel {
 // characters" is left untouched (it has no iteration roman numeral).
 const ITERATION_SUFFIX_RE = /\/[IVXLCDM]+$/i;
 
-function buildSections(filtered: ISkin[], operatorsMap: Map<string, IOperatorListItem>, mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null): ISkinSection[] {
-    const sortByDate = (a: ISkin, b: ISkin) => {
-        const aTime = a.displaySkin?.getTime ?? 0;
-        const bTime = b.displaySkin?.getTime ?? 0;
+function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null): ISkinSection[] {
+    const sortByDate = (a: ICardData, b: ICardData) => {
+        const aTime = a.skin.displaySkin?.getTime ?? 0;
+        const bTime = b.skin.displaySkin?.getTime ?? 0;
         if (aTime !== bTime) return bTime - aTime;
-        const aSid = a.displaySkin?.sortId ?? 0;
-        const bSid = b.displaySkin?.sortId ?? 0;
+        const aSid = a.skin.displaySkin?.sortId ?? 0;
+        const bSid = b.skin.displaySkin?.sortId ?? 0;
         if (aSid !== bSid) return bSid - aSid;
-        const aOp = operatorsMap.get(a.charId)?.name ?? "";
-        const bOp = operatorsMap.get(b.charId)?.name ?? "";
-        return aOp.localeCompare(bOp);
+        return a.opName.localeCompare(b.opName);
     };
 
     if (mode === "date") {
         const all = [...filtered].sort(sortByDate);
         if (all.length === 0) return [];
-        return [{ key: "all-by-date", title: "All Skins", channel: "store", tag: null, sortIndex: 0, skins: all }];
+        return [{ key: "all-by-date", title: "All Skins", channel: "store", tag: null, sortIndex: 0, cards: all }];
     }
 
     if (mode === "popularity") {
-        // Skins with no popularity entry have zero recorded owners - push to the end.
-        const ownerOf = (s: ISkin) => popularity?.get(s.skinId)?.owners ?? 0;
+        const ownerOf = (c: ICardData) => popularity?.get(c.skin.skinId)?.owners ?? 0;
         const all = [...filtered].sort((a, b) => {
             const diff = ownerOf(b) - ownerOf(a);
             if (diff !== 0) return diff;
             return sortByDate(a, b);
         });
         if (all.length === 0) return [];
-        return [{ key: "all-by-popularity", title: "All Skins", channel: "store", tag: null, sortIndex: 0, skins: all }];
+        return [{ key: "all-by-popularity", title: "All Skins", channel: "store", tag: null, sortIndex: 0, cards: all }];
     }
 
     // mode === "brand"
     const map = new Map<string, ISkinSection>();
-    for (const s of filtered) {
-        const ds = s.displaySkin;
+    for (const c of filtered) {
+        const ds = c.skin.displaySkin;
         const rawName = ds?.skinGroupName ?? "Other";
         const baseName = rawName.replace(ITERATION_SUFFIX_RE, "").trim() || rawName;
         const channel = classifyChannel(ds?.displayTagId);
@@ -488,16 +731,16 @@ function buildSections(filtered: ISkin[], operatorsMap: Map<string, IOperatorLis
                 channel,
                 tag: CHANNEL_LABEL[channel],
                 sortIndex: ds?.skinGroupSortIndex ?? 0,
-                skins: [],
+                cards: [],
             };
             map.set(key, section);
         } else if ((ds?.skinGroupSortIndex ?? 0) > section.sortIndex) {
             section.sortIndex = ds.skinGroupSortIndex ?? section.sortIndex;
         }
-        section.skins.push(s);
+        section.cards.push(c);
     }
 
-    for (const s of map.values()) s.skins.sort(sortByDate);
+    for (const s of map.values()) s.cards.sort(sortByDate);
 
     return Array.from(map.values()).sort((a, b) => {
         const pa = CHANNEL_PRIORITY[a.channel];
