@@ -83,3 +83,24 @@ export function userSkinsQueryOptions(uid: string, bearerToken?: string) {
         gcTime: 5 * 60 * 1000,
     });
 }
+
+export interface ISkinPopularity {
+    totalUsers: number;
+    counts: Record<string, number>;
+    computedAt: string;
+}
+
+export const getSkinPopularityFn = createServerFn({ method: "GET" }).handler(async () => {
+    const res = await backendFetch("/skins/popularity");
+    if (!res.ok) throw new Error(`Failed to load skin popularity: ${res.status}`);
+    return (await res.json()) as ISkinPopularity;
+});
+
+export function skinPopularityQueryOptions() {
+    return queryOptions({
+        queryKey: ["skins", "popularity"],
+        queryFn: () => getSkinPopularityFn(),
+        staleTime: 30 * 60 * 1000,
+        gcTime: 60 * 60 * 1000,
+    });
+}

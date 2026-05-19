@@ -50,6 +50,7 @@ pub enum CacheKey<'a> {
         server: &'a str,
         window: u32,
     },
+    SkinPopularity,
 }
 
 impl CacheKey<'_> {
@@ -110,6 +111,7 @@ impl CacheKey<'_> {
             } => {
                 format!("leaderboard:standing:{server}:{uid}:{window}")
             }
+            CacheKey::SkinPopularity => "skins:popularity".to_owned(),
         }
     }
 
@@ -129,6 +131,7 @@ impl CacheKey<'_> {
             CacheKey::LeaderboardMovers { .. } => Duration::from_secs(900), // 15 min
             CacheKey::LeaderboardDistribution { .. } => Duration::from_secs(600), // 10 min
             CacheKey::LeaderboardStanding { .. } => Duration::from_secs(60), // 1 min
+            CacheKey::SkinPopularity => Duration::from_secs(3600), // 1 hour
         }
     }
 }
