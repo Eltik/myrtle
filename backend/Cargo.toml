@@ -61,3 +61,4 @@ urlencoding = "2"
 uuid = { version = "1.22.0", features = ["serde"] }
 validator = { version = "0.20.0", features = ["derive"] }
 walkdir = "2.5.0"
+zip = "8.6.0"

@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use reqwest::{Client, Response};
+use serde::Deserialize;
 
 use crate::core::hypergryph::{
     config::config,
@@ -10,12 +11,43 @@ use crate::core::hypergryph::{
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
+#[derive(Debug, Deserialize)]
+pub struct UpstreamError {
+    #[serde(default, rename = "statusCode")]
+    pub status_code: i64,
+    #[serde(default)]
+    pub code: i64,
+    #[serde(default)]
+    pub error: String,
+    #[serde(default)]
+    pub message: String,
+    #[serde(default)]
+    pub msg: String,
+    #[serde(default)]
+    pub info: String,
+}
+
+impl std::fmt::Display for UpstreamError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "upstream {} (code={}) {}: {} {}",
+            self.status_code, self.code, self.error, self.msg, self.info
+        )
+    }
+}
+
+pub mod upstream_code {
+    pub const STAGE_NO_REPLAY: i64 = 5516;
+}
+
 #[derive(Debug)]
 pub enum FetchError {
     DomainNotFound(Server, Domain),
     RequestFailed(reqwest::Error),
     NotLoggedIn,
     ParseError(String),
+    Upstream(UpstreamError),
 }
 
 impl From<reqwest::Error> for FetchError {
@@ -99,30 +131,40 @@ pub async fn fetch_domain(
     fetch(client, &raw_url, req).await
 }
 
-pub async fn parse_json<T: serde::de::DeserializeOwned>(
-    response: Response,
-    context: &str,
-) -> Result<T, FetchError> {
+/// Read the response body. Non-2xx statuses are parsed as the Arknights error
+/// envelope (`FetchError::Upstream`) or, failing that, surfaced as `ParseError`.
+pub async fn read_body(response: Response, context: &str) -> Result<String, FetchError> {
     let status = response.status();
     let text = response
         .text()
         .await
         .map_err(|e| FetchError::ParseError(format!("{context}: read body: {e}")))?;
 
+    if status.is_success() {
+        return Ok(text);
+    }
+
+    if let Ok(err) = serde_json::from_str::<UpstreamError>(&text) {
+        tracing::warn!(context, %status, code = err.code, msg = %err.msg, "upstream error");
+        return Err(FetchError::Upstream(err));
+    }
+
+    tracing::warn!(context, %status, body = %text, "non-success without error envelope");
+    Err(FetchError::ParseError(format!(
+        "{context}: upstream non-success (status={status})"
+    )))
+}
+
+pub async fn parse_json<T: serde::de::DeserializeOwned>(
+    response: Response,
+    context: &str,
+) -> Result<T, FetchError> {
+    let text = read_body(response, context).await?;
     serde_json::from_str::<T>(&text).map_err(|e| {
-        tracing::warn!(
-            context = context,
-            status = %status,
-            body = %text,
-            error = %e,
-            "failed to parse response body"
-        );
-        // Do not surface the upstream body or serde error to the client:
-        // the body can contain provider-internal data and the serde message
-        // leaks the upstream schema. Full details remain in the warn log above.
-        FetchError::ParseError(format!(
-            "{context}: invalid upstream response (status={status})"
-        ))
+        // Body and serde detail stay in logs; the surfaced error is intentionally generic
+        // so we don't leak the upstream schema to API clients.
+        tracing::warn!(context, body = %text, error = %e, "failed to parse response body");
+        FetchError::ParseError(format!("{context}: invalid upstream response"))
     })
 }
 

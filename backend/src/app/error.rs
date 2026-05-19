@@ -118,6 +118,15 @@ impl From<FetchError> for ApiError {
             FetchError::DomainNotFound(_, _) => ApiError::BadRequest("unsupported server".into()),
             FetchError::RequestFailed(e) => ApiError::Internal(e.into()),
             FetchError::ParseError(msg) => ApiError::BadRequest(msg),
+            FetchError::Upstream(err) => ApiError::BadRequest(format!(
+                "{} ({})",
+                if err.msg.is_empty() {
+                    &err.message
+                } else {
+                    &err.msg
+                },
+                err.code
+            )),
         }
     }
 }
