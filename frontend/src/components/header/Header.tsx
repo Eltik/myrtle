@@ -66,7 +66,7 @@ export default function Header() {
                     <Link to="/" className="flex shrink-0 items-center gap-2 text-foreground no-underline">
                         <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         <span className="font-semibold text-[15px] tracking-tight">myrtle.moe</span>
-                        <span className="hidden rounded-[5px] border border-white/5 not-dark:bg-[oklch(0.22_0.005_285/0.1)] px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block dark:bg-[oklch(0.22_0.005_285/0.7)]">v3</span>
+                        <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>
 
                     <MainNav items={navItems} onOpenCommand={openCmd} />

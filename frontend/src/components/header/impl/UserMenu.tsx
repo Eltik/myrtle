@@ -17,13 +17,13 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
     if (user !== null) {
         return (
             <DropdownMenu>
-                <div className="flex h-8 items-center rounded-md border border-border bg-transparent text-foreground text-sm">
-                    <Link to="/user/$id" params={{ id: user.uid }} className="flex h-full items-center gap-2 rounded-l-md px-2 transition-colors hover:bg-secondary">
+                <div className="flex h-8 min-w-0 shrink-0 items-center rounded-md border border-border bg-transparent text-foreground text-sm">
+                    <Link to="/user/$id" params={{ id: user.uid }} aria-label={user.nickname ?? "Doctor"} className="flex h-full min-w-0 items-center gap-2 rounded-l-md px-1.5 transition-colors hover:bg-secondary sm:px-2">
                         <Avatar className="h-5 w-5">
                             <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
                             <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
-                        <span className="max-w-24 truncate font-medium">{user.nickname ?? "Doctor"}</span>
+                        <span className="hidden max-w-24 truncate font-medium sm:inline-block">{user.nickname ?? "Doctor"}</span>
                     </Link>
                     <DropdownMenuTrigger
                         render={(triggerProps) => (

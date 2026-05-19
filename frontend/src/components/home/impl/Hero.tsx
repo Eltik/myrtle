@@ -33,14 +33,14 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                     <div className="mb-5 inline-flex w-max items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 pl-2.5">
                         <span className={styles.dotPulse} aria-hidden="true" />
                         <span className="font-medium font-mono text-[11.5px] text-muted-foreground leading-none">v3</span>
-                        <Separator orientation="vertical" className="h-3.5 bg-white/10" />
+                        <Separator orientation="vertical" className="h-3.5 bg-border" />
                         <a href="/changelog" className="cursor-pointer font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[oklch(0.85_0.12_25)]" rel="noreferrer">
                             changelog →
                         </a>
                     </div>
 
                     <h1 className="m-0 mb-4.5 max-w-[14ch] font-bold font-sans text-[42px] text-foreground leading-[1.04] tracking-[-0.03em] md:text-[62px]">
-                        The <span className="text-primary [text-shadow:0_0_30px_oklch(0.75_0.15_25/0.35)]">Arknights</span> companion.
+                        The <span className="text-primary [text-shadow:0_0_30px_var(--glow-primary)]">Arknights</span> companion.
                     </h1>
 
                     <p className="m-0 mb-7 flex max-w-[48ch] flex-wrap items-center gap-1 font-sans text-[17px] text-muted-foreground leading-[1.55]">

@@ -15,6 +15,7 @@ import { Route as StatsRouteImport } from './routes/stats'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as EnemiesRouteImport } from './routes/enemies'
+import { Route as DiscordRouteImport } from './routes/discord'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
@@ -71,6 +72,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
 const EnemiesRoute = EnemiesRouteImport.update({
   id: '/enemies',
   path: '/enemies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscordRoute = DiscordRouteImport.update({
+  id: '/discord',
+  path: '/discord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -212,6 +218,7 @@ const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/discord': typeof DiscordRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/discord': typeof DiscordRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/discord': typeof DiscordRoute
   '/enemies': typeof EnemiesRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/discord'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/discord'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/discord'
     | '/enemies'
     | '/operators'
     | '/privacy'
@@ -421,6 +433,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  DiscordRoute: typeof DiscordRoute
   EnemiesRoute: typeof EnemiesRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -484,6 +497,13 @@ declare module '@tanstack/react-router' {
       path: '/enemies'
       fullPath: '/enemies'
       preLoaderRoute: typeof EnemiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discord': {
+      id: '/discord'
+      path: '/discord'
+      fullPath: '/discord'
+      preLoaderRoute: typeof DiscordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -724,6 +744,7 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  DiscordRoute: DiscordRoute,
   EnemiesRoute: EnemiesRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
