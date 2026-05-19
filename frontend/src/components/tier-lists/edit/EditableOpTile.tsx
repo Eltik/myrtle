@@ -28,6 +28,11 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
     const startPress = useStartOperatorDrag();
     const [isMouseDragging, setMouseDragging] = useState(false);
     const dragStartedRef = useRef(false);
+    // Cache the chip's center-x for the duration of one hover so we don't call
+    // getBoundingClientRect on every dragover event, and skip the parent
+    // callback unless the resolved side actually changes.
+    const centerXRef = useRef<number | null>(null);
+    const sideRef = useRef<"before" | "after" | null>(null);
 
     const isDragging = isTouchDragging || isMouseDragging;
 
@@ -72,14 +77,28 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
             }}
             onDragEnd={() => {
                 setMouseDragging(false);
+                centerXRef.current = null;
+                sideRef.current = null;
                 onDragEnd?.();
             }}
             onDragOver={(e) => {
                 if (!onDragOverChip) return;
                 e.preventDefault();
-                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                const side = e.clientX - rect.left < rect.width / 2 ? "before" : "after";
+                let centerX = centerXRef.current;
+                if (centerX === null) {
+                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                    centerX = rect.left + rect.width / 2;
+                    centerXRef.current = centerX;
+                }
+                const side: "before" | "after" = e.clientX < centerX ? "before" : "after";
+                if (side === sideRef.current) return;
+                sideRef.current = side;
                 onDragOverChip(operator.id, side);
+            }}
+            onDragLeave={() => {
+                if (!onDragOverChip) return;
+                centerXRef.current = null;
+                sideRef.current = null;
             }}
         >
             <OperatorAvatar charId={operator.id} name={operator.name} />

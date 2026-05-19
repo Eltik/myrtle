@@ -254,6 +254,39 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
     }, [store, stopAutoScroll]);
 
     useEffect(() => {
+        // Coalesce pointermove work to one rAF tick. Pointer events can fire at
+        // 120+ Hz on high-refresh devices; collapsing to display refresh rate
+        // halves the hit-test + setState load without changing how the drag
+        // looks (the ghost is positioned in the same rAF).
+        let pendingMove: { x: number; y: number } | null = null;
+        let moveRaf: number | null = null;
+
+        const flushMove = () => {
+            moveRaf = null;
+            const m = pendingMove;
+            pendingMove = null;
+            if (!m) return;
+            const cur = store.state;
+            if (!cur || !cur.isLifted) return;
+            const target = hitTest(m.x, m.y, cur.operatorId);
+            store.setState((prev) => (prev ? { ...prev, currentX: m.x, currentY: m.y, target } : prev));
+            updateAutoScroll(m.y);
+        };
+
+        const scheduleMove = (x: number, y: number) => {
+            pendingMove = { x, y };
+            if (moveRaf !== null) return;
+            moveRaf = requestAnimationFrame(flushMove);
+        };
+
+        const cancelScheduledMove = () => {
+            if (moveRaf !== null) {
+                cancelAnimationFrame(moveRaf);
+                moveRaf = null;
+            }
+            pendingMove = null;
+        };
+
         const onMove = (e: PointerEvent) => {
             const cur = store.state;
             if (!cur || e.pointerId !== cur.pointerId) return;
@@ -267,20 +300,19 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
                 if (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX) {
                     lift();
                     e.preventDefault();
-                    const target = hitTest(e.clientX, e.clientY, cur.operatorId);
-                    store.setState((prev) => (prev ? { ...prev, currentX: e.clientX, currentY: e.clientY, target } : prev));
-                    updateAutoScroll(e.clientY);
+                    scheduleMove(e.clientX, e.clientY);
                 }
                 return;
             }
 
             e.preventDefault();
-            const target = hitTest(e.clientX, e.clientY, cur.operatorId);
-            store.setState((prev) => (prev ? { ...prev, currentX: e.clientX, currentY: e.clientY, target } : prev));
-            updateAutoScroll(e.clientY);
+            scheduleMove(e.clientX, e.clientY);
         };
 
         const commit = () => {
+            // Drain any queued move so the drop target reflects the final
+            // pointer position, not the previous rAF's snapshot.
+            if (pendingMove) flushMove();
             const cur = store.state;
             if (!cur) return;
             if (cur.isLifted && cur.target) {
@@ -303,6 +335,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
         const onCancel = (e: PointerEvent) => {
             const cur = store.state;
             if (!cur || e.pointerId !== cur.pointerId) return;
+            cancelScheduledMove();
             reset();
         };
 
@@ -315,6 +348,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
         window.addEventListener("pointercancel", onCancel);
         window.addEventListener("contextmenu", onContextMenu);
         return () => {
+            cancelScheduledMove();
             window.removeEventListener("pointermove", onMove);
             window.removeEventListener("pointerup", onUp);
             window.removeEventListener("pointercancel", onCancel);
