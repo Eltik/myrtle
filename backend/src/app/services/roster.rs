@@ -7,7 +7,7 @@ use crate::{
         grade::calculate::calculate_user_grade,
         hypergryph::{
             constants::{AuthSession, Server},
-            fetch::auth_request,
+            yostar::sync_data_raw,
         },
     },
     database::{
@@ -174,16 +174,8 @@ pub async fn refresh(
     let mut session: AuthSession = serde_json::from_str(&session_json)
         .map_err(|_| ApiError::BadRequest("invalid game session".into()))?;
 
-    let response = match auth_request(
-        &state.http_client,
-        "account/syncData",
-        Some(&serde_json::json!({"platform": 1})),
-        &mut session,
-        server,
-    )
-    .await
-    {
-        Ok(r) => r,
+    let text = match sync_data_raw(&state.http_client, &mut session, server).await {
+        Ok(t) => t,
         Err(e) => {
             tracing::warn!(
                 uid = %user_id,
@@ -195,16 +187,11 @@ pub async fn refresh(
         }
     };
 
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| ApiError::Internal(e.into()))?;
-
     let data: SyncDataResponse =
-        serde_json::from_slice(&bytes).map_err(|e| ApiError::Internal(e.into()))?;
+        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
 
     let raw: serde_json::Value =
-        serde_json::from_slice(&bytes).map_err(|e| ApiError::Internal(e.into()))?;
+        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
 
     let user = data
         .user
