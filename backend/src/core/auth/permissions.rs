@@ -109,6 +109,15 @@ impl GlobalRole {
             _ => None,
         }
     }
+
+    pub const fn all() -> &'static [GlobalRole] {
+        &[
+            GlobalRole::User,
+            GlobalRole::TierListEditor,
+            GlobalRole::TierListAdmin,
+            GlobalRole::SuperAdmin,
+        ]
+    }
 }
 
 impl fmt::Display for GlobalRole {
