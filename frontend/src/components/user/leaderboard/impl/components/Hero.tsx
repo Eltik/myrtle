@@ -30,7 +30,7 @@ export function Hero({ rankedDoctors, topScore, updatedAt, isLoading }: IHeroPro
                 aria-hidden
                 className="pointer-events-none absolute inset-0"
                 style={{
-                    background: "radial-gradient(ellipse 80% 60% at 60% 40%, oklch(0.58 0.22 25 / 0.07), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, oklch(0.696 0.17 162 / 0.06), transparent 70%)",
+                    background: "radial-gradient(ellipse 80% 60% at 60% 40%, color-mix(in oklab, var(--primary) 7%, transparent), transparent 70%), radial-gradient(ellipse 60% 80% at 80% 20%, oklch(0.696 0.17 162 / 0.06), transparent 70%)",
                 }}
             />
 

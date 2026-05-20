@@ -49,7 +49,7 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; label: string }> = [
 export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
     const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, label: "Favorites" }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
-    const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "trending";
+    const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "recent";
     const [mobileFlairsOpen, setMobileFlairsOpen] = useState(false);
 
     return (

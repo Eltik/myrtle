@@ -21,22 +21,15 @@ function colorForTag(tag: string): string {
 
 const tagRegex = /<((?:@ba\.[a-z]+|\$[^>]+))>([\s\S]*?)<\/>/g;
 const interpolationRegex = /-?\{-?([^}:]+)(?::([^}]+))?\}/g;
+const atomicTagRegex = /^<(?:@ba\.[a-z]+|\$[^>]+)>[\s\S]*?<\/>/;
+const leadingWsRegex = /^\s+/;
 
-export function descriptionToHtml(description: string, blackboard: IBlackboard[] | { key: string; value: number }[] = []): string {
-    if (!description) return "";
-
+function interpolateValues(text: string, blackboard: IBlackboard[] | { key: string; value: number }[]): string {
     const interp = new Map<string, number>();
     for (const b of blackboard) {
         if (b?.key) interp.set(b.key.toLowerCase(), Number.parseFloat(b.value.toPrecision(6)));
     }
-
-    let html = description.replace(/&/g, "&amp;");
-
-    html = html.replace(tagRegex, (_match, tag: string, content: string) => {
-        return `<span style="color:${colorForTag(tag)}">${content}</span>`;
-    });
-
-    html = html.replace(interpolationRegex, (_match, rawKey: string, format?: string) => {
+    return text.replace(interpolationRegex, (_match, rawKey: string, format?: string) => {
         const key = rawKey.toLowerCase();
         const value = interp.get(key);
         if (value === undefined) return `[${key}]`;
@@ -45,19 +38,50 @@ export function descriptionToHtml(description: string, blackboard: IBlackboard[]
         if (format === "0.0") return value.toFixed(1);
         return `${value}`;
     });
+}
 
-    html = html.replace(/\n/g, "<br/>");
-    return html;
+function renderTagsAndNewlines(text: string): string {
+    const tagged = text.replace(tagRegex, (_match, tag: string, content: string) => {
+        return `<span style="color:${colorForTag(tag)}">${content}</span>`;
+    });
+    return tagged.replace(/\n/g, "<br/>");
+}
+
+export function descriptionToHtml(description: string, blackboard: IBlackboard[] | { key: string; value: number }[] = []): string {
+    if (!description) return "";
+    const escaped = description.replace(/&/g, "&amp;");
+    return renderTagsAndNewlines(interpolateValues(escaped, blackboard));
 }
 
 type DiffOp = { type: "equal" | "delete" | "insert"; tokens: string[] };
 
-function tokenizeForDiff(html: string): string[] {
-    const re = /<[^>]+>|\s+|[^\s<]+/g;
+function tokenizeRawForDiff(text: string): string[] {
     const out: string[] = [];
-    let m: RegExpExecArray | null;
-    // biome-ignore lint/suspicious/noAssignInExpressions: standard regex iteration
-    while ((m = re.exec(html)) !== null) out.push(m[0]);
+    let i = 0;
+    while (i < text.length) {
+        const rest = text.slice(i);
+        const tagMatch = rest.match(atomicTagRegex);
+        if (tagMatch) {
+            out.push(tagMatch[0]);
+            i += tagMatch[0].length;
+            continue;
+        }
+        const wsMatch = rest.match(leadingWsRegex);
+        if (wsMatch) {
+            out.push(wsMatch[0]);
+            i += wsMatch[0].length;
+            continue;
+        }
+        let end = 1;
+        while (end < rest.length) {
+            const c = rest[end];
+            if (/\s/.test(c)) break;
+            if (c === "<" && atomicTagRegex.test(rest.slice(end))) break;
+            end++;
+        }
+        out.push(rest.slice(0, end));
+        i += end;
+    }
     return out;
 }
 
@@ -103,13 +127,16 @@ export function renderDescriptionDiffHtml(oldDesc: string | null | undefined, ne
     if (!oldHtml) return newHtml;
     if (!newHtml) return oldHtml;
 
-    const ops = lcsDiff(tokenizeForDiff(oldHtml), tokenizeForDiff(newHtml));
+    const oldPre = interpolateValues((oldDesc ?? "").replace(/&/g, "&amp;"), oldBlackboard);
+    const newPre = interpolateValues((newDesc ?? "").replace(/&/g, "&amp;"), newBlackboard);
+
+    const ops = lcsDiff(tokenizeRawForDiff(oldPre), tokenizeRawForDiff(newPre));
     return ops
         .map((op) => {
-            const segment = op.tokens.join("");
-            if (op.type === "equal") return segment;
-            if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${segment}</span>`;
-            return `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${segment}</span>`;
+            const html = renderTagsAndNewlines(op.tokens.join(""));
+            if (op.type === "equal") return html;
+            if (op.type === "delete") return `<span class="rounded bg-red-500/15 px-0.5 text-red-300 line-through decoration-red-400/70">${html}</span>`;
+            return `<span class="rounded bg-emerald-500/15 px-0.5 text-emerald-300">${html}</span>`;
         })
         .join("");
 }

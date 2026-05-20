@@ -24,7 +24,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>
-                            <BreadcrumbLink render={<Link to="/tier-lists" search={{ type: "all", sort: "trending", q: "", flair: [] }} />}>Tier Lists</BreadcrumbLink>
+                            <BreadcrumbLink render={<Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} />}>Tier Lists</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>

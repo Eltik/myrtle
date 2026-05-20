@@ -58,7 +58,7 @@ export function TierListDetail() {
             <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
                 <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">Tier list not found</h1>
                 <p className="mt-3 font-sans text-muted-foreground text-sm">It may have been removed or the link could be wrong.</p>
-                <Link to="/tier-lists" search={{ type: "all", sort: "trending", q: "", flair: [] }} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-border bg-popover px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
+                <Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-border bg-popover px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
                         <path d="m12 19-7-7 7-7" />
                         <path d="M19 12H5" />
