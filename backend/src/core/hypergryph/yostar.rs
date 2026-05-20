@@ -1,14 +1,16 @@
 use std::io::{Cursor, Read};
+use std::time::Duration;
 
 use anyhow::{Context, Result};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tokio::time::sleep;
 
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
-    fetch::{FetchError, FetchRequest, auth_request, fetch, parse_json, read_body},
+    fetch::{FetchError, FetchRequest, auth_request, fetch, parse_json, read_body, upstream_code},
 };
 
 #[derive(Serialize)]
@@ -498,4 +500,196 @@ pub async fn get_battle_replay(
 
     decode_battle_replay(&data.battle_replay)
         .map_err(|e| FetchError::ParseError(format!("decode battle replay: {e}")))
+}
+
+/// Pacing for [`harvest_replays`].
+///
+/// A single session must call `getBattleReplay` sequentially — the auth `seqnum`
+/// is a monotonic counter, so concurrent calls on the same `AuthSession` would
+/// race and invalidate it. Different sessions are independent rate-limit
+/// buckets on the server side, so for many-players-at-once throughput, spawn
+/// one task per player and let them run in parallel.
+///
+/// `interval` is intentionally small by default (100ms). The server tolerates
+/// back-to-back requests on a single session well; the pause exists mainly to
+/// keep one runaway loop from starving other tasks on the same tokio runtime.
+/// Set to `Duration::ZERO` for max throughput.
+///
+/// **Build a target list from `account/syncData`** rather than enumerating
+/// every stage in your gamedata. The live client only calls `getBattleReplay`
+/// on stages the player has saved a replay for; a stream of 5516 misses is the
+/// kind of anomalous traffic anti-abuse systems can fingerprint.
+#[derive(Debug, Clone)]
+pub struct ReplayHarvestOptions {
+    pub min_interval: Duration,
+    pub max_interval: Duration,
+    pub max_consecutive_errors: usize,
+}
+
+impl Default for ReplayHarvestOptions {
+    fn default() -> Self {
+        Self {
+            min_interval: Duration::from_millis(80),
+            max_interval: Duration::from_millis(180),
+            max_consecutive_errors: 3,
+        }
+    }
+}
+
+fn jitter_delay(min: Duration, max: Duration) -> Duration {
+    if max <= min {
+        return min;
+    }
+    let lo = min.as_millis() as u64;
+    let hi = max.as_millis() as u64;
+    Duration::from_millis(rand::random_range(lo..=hi))
+}
+
+#[derive(Debug)]
+pub enum ReplayOutcome {
+    Replay(BattleReplay),
+    /// Upstream code 5516: account has no saved auto-deploy script for the stage.
+    NoSaved,
+}
+
+pub async fn harvest_replays<I, F>(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+    targets: I,
+    opts: &ReplayHarvestOptions,
+    mut on_progress: F,
+) -> Result<(), FetchError>
+where
+    I: IntoIterator<Item = (String, String)>,
+    F: FnMut(&str, &str, Result<ReplayOutcome, &FetchError>),
+{
+    let mut consecutive_errors = 0usize;
+    let mut first = true;
+
+    for (battle_type, stage_id) in targets {
+        if !first {
+            let delay = jitter_delay(opts.min_interval, opts.max_interval);
+            if !delay.is_zero() {
+                sleep(delay).await;
+            }
+        }
+        first = false;
+
+        match get_battle_replay(client, session, server, &battle_type, &stage_id).await {
+            Ok(r) => {
+                consecutive_errors = 0;
+                on_progress(&battle_type, &stage_id, Ok(ReplayOutcome::Replay(r)));
+            }
+            Err(FetchError::Upstream(ref err)) if err.code == upstream_code::STAGE_NO_REPLAY => {
+                consecutive_errors = 0;
+                on_progress(&battle_type, &stage_id, Ok(ReplayOutcome::NoSaved));
+            }
+            Err(e) => {
+                consecutive_errors += 1;
+                on_progress(&battle_type, &stage_id, Err(&e));
+                if consecutive_errors >= opts.max_consecutive_errors {
+                    return Err(e);
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Fetch the player's full state blob. Single authenticated call returning the
+/// raw JSON; callers extract whatever subset they need.
+///
+/// Body of `{"platform": 1}` matches what ArkPRTS and the existing roster
+/// refresh send. Response is large (often megabytes for endgame accounts);
+/// each call is independent of other sessions, so for many-players-at-once
+/// throughput spawn one task per player.
+pub async fn sync_data_raw(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+) -> Result<String, FetchError> {
+    let body = serde_json::json!({ "platform": 1 });
+    let response = auth_request(client, "account/syncData", Some(&body), session, server).await?;
+    read_body(response, "yostar::sync_data").await
+}
+
+/// Convenience wrapper over [`sync_data_raw`] that parses the body into a
+/// `serde_json::Value`. Use this for downstream extractors like
+/// [`saved_replay_targets`]; if you need both a typed view and raw access,
+/// call [`sync_data_raw`] directly and parse twice.
+pub async fn sync_data(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+) -> Result<serde_json::Value, FetchError> {
+    let text = sync_data_raw(client, session, server).await?;
+    serde_json::from_str(&text).map_err(|e| FetchError::ParseError(format!("parse syncData ({e})")))
+}
+
+/// Walk a `sync_data` response and return every `(battle_type, stage_id)` where
+/// the player has a saved auto-deploy replay. Only these stages will return a
+/// real replay from [`get_battle_replay`]; everything else returns code 5516.
+///
+/// Source of truth per OpenBachelorS / DoctoratePy server reimpls:
+/// - `user.dungeon.stages[*].hasBattleReplay == 1`     → `battle_type = "quest"`
+/// - `user.dungeon.campaignsV2[*].hasBattleReplay == 1` → `battle_type = "campaignV2"`
+pub fn saved_replay_targets(sync: &serde_json::Value) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    let Some(dungeon) = sync.pointer("/user/dungeon") else {
+        return out;
+    };
+    collect_replay_flags(dungeon.get("stages"), "quest", &mut out);
+    collect_replay_flags(dungeon.get("campaignsV2"), "campaignV2", &mut out);
+    out
+}
+
+fn collect_replay_flags(
+    node: Option<&serde_json::Value>,
+    battle_type: &str,
+    out: &mut Vec<(String, String)>,
+) {
+    let Some(serde_json::Value::Object(stages)) = node else {
+        return;
+    };
+    out.extend(stages.iter().filter_map(|(stage_id, entry)| {
+        let flag = entry.get("hasBattleReplay")?;
+        let on = flag.as_i64().is_some_and(|n| n != 0) || flag.as_bool().unwrap_or(false);
+        on.then(|| (battle_type.to_string(), stage_id.clone()))
+    }));
+}
+
+/// One per-player pipeline: discover via syncData → harvest only the stages
+/// that actually have a saved replay. This is the safe-by-construction path —
+/// no 5516 misses, traffic shape matches the live client.
+///
+/// Scale across players by spawning one task per session:
+/// ```ignore
+/// let sem = Arc::new(Semaphore::new(64));   // cap network fan-out
+/// let mut set = tokio::task::JoinSet::new();
+/// for (uid, mut session) in players {
+///     let permit = sem.clone().acquire_owned().await?;
+///     let client = client.clone();
+///     set.spawn(async move {
+///         let _permit = permit;
+///         collect_player_replays(&client, &mut session, server,
+///             &Default::default(), |_, _, _| {}).await
+///     });
+/// }
+/// ```
+pub async fn collect_player_replays<F>(
+    client: &Client,
+    session: &mut AuthSession,
+    server: Server,
+    opts: &ReplayHarvestOptions,
+    on_progress: F,
+) -> Result<(), FetchError>
+where
+    F: FnMut(&str, &str, Result<ReplayOutcome, &FetchError>),
+{
+    let sync = sync_data(client, session, server).await?;
+    let targets = saved_replay_targets(&sync);
+    tracing::info!(count = targets.len(), "discovered saved replays");
+    harvest_replays(client, session, server, targets, opts, on_progress).await
 }
