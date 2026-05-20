@@ -23,6 +23,10 @@ path = "src/bin/translate_backup.rs"
 name = "regrade-users"
 path = "src/bin/regrade_users.rs"
 
+[[bin]]
+name = "manage-permissions"
+path = "src/bin/manage_permissions.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"
