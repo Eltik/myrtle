@@ -46,7 +46,10 @@ function skillIconURL(iconId: string): string {
 }
 
 const charartURL = (operatorId: string) => assetURL(`/textures/chararts/${operatorId}/${operatorId}_2.png`);
-const skinpackURL = (operatorId: string, skinId: string) => assetURL(`/textures/skinpack/${operatorId}/${skinId.replaceAll("@", "_").replaceAll("#", "%23")}.png`);
+const skinpackURL = (operatorId: string, skinId: string) => {
+    const owner = skinId.split("@")[0] || operatorId;
+    return assetURL(`/textures/skinpack/${owner}/${skinId.replaceAll("@", "_").replaceAll("#", "%23")}.png`);
+};
 const campLogoURL = (id: string) => assetURL(`/textures/spritepack/ui_camp_logo_0/logo_${id.toLowerCase()}.png`);
 const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
 const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
@@ -108,7 +111,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
     },
 };
 
-const USER_HASH_VERSION = "v14";
+const USER_HASH_VERSION = "v15";
 
 interface ISupportUnitResponse {
     slot: number;
