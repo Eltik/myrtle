@@ -12,7 +12,7 @@ interface ITierListsSearch {
     flair: string[];
 }
 
-const DEFAULTS: ITierListsSearch = { type: "all", sort: "trending", q: "", flair: [] };
+const DEFAULTS: ITierListsSearch = { type: "all", sort: "recent", q: "", flair: [] };
 
 const VALID_TYPES = new Set<TierListType>(["all", "official", "community", "favorites"]);
 const VALID_SORTS = new Set<TierListSort>(SORT_OPTIONS.map((s) => s.value));
@@ -38,8 +38,8 @@ export const Route = createFileRoute("/tier-lists")({
     validateSearch: (search: Record<string, unknown>): ITierListsSearch => {
         const typeRaw = typeof search.type === "string" ? (search.type as TierListType) : "all";
         const type: TierListType = VALID_TYPES.has(typeRaw) ? typeRaw : "all";
-        const sortRaw = typeof search.sort === "string" ? (search.sort as TierListSort) : "trending";
-        const sort: TierListSort = VALID_SORTS.has(sortRaw) ? sortRaw : "trending";
+        const sortRaw = typeof search.sort === "string" ? (search.sort as TierListSort) : "recent";
+        const sort: TierListSort = VALID_SORTS.has(sortRaw) ? sortRaw : "recent";
         const q = typeof search.q === "string" ? search.q : "";
         const flair = parseFlair(search.flair);
         return { type, sort, q, flair };

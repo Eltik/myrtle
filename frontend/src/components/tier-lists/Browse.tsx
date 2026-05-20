@@ -138,7 +138,7 @@ export function Browse() {
 
     const clearAllFilters = () => {
         setInputQuery("");
-        navigate({ search: { type: "all", sort: "trending", q: "", flair: [] }, replace: true, resetScroll: false });
+        navigate({ search: { type: "all", sort: "recent", q: "", flair: [] }, replace: true, resetScroll: false });
     };
 
     const scrollToGrid = () => {
