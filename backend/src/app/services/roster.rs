@@ -122,6 +122,27 @@ pub struct TroopChar {
     pub current_tmpl: Option<String>,
     pub skills: Option<Vec<TroopSkill>>,
     pub equip: Option<serde_json::Map<String, serde_json::Value>>,
+    /// Amiya stores per-form data under `tmpl[<form_id>]` instead of mirroring
+    /// it at the top level. Each entry has its own elite/level/skills/equip/skin.
+    /// `None` for normal operators.
+    pub tmpl: Option<std::collections::HashMap<String, TroopTmpl>>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopTmpl {
+    pub skin_id: Option<String>,
+    pub default_skill_index: Option<i64>,
+    pub current_equip: Option<String>,
+    pub skills: Option<Vec<TroopSkill>>,
+    pub equip: Option<serde_json::Map<String, serde_json::Value>>,
+    // Per-form progression (Hypergryph sometimes stores these inside the tmpl
+    // entry; fall back to the parent TroopChar fields when missing).
+    pub evolve_phase: Option<i64>,
+    pub level: Option<i64>,
+    pub exp: Option<i64>,
+    pub main_skill_lvl: Option<i64>,
+    pub favor_point: Option<i64>,
 }
 
 #[derive(Deserialize)]
@@ -313,28 +334,58 @@ fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
         return serde_json::json!([]);
     };
 
-    let ops: Vec<serde_json::Value> = chars
-        .values()
-        .filter_map(|raw| {
-            let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-            let char_id = c.char_id?;
-            Some(serde_json::json!({
-                "operator_id": char_id,
-                "elite": c.evolve_phase.unwrap_or(0),
-                "level": c.level.unwrap_or(1),
-                "exp": c.exp.unwrap_or(0),
-                "potential": c.potential_rank.unwrap_or(0),
-                "skill_level": c.main_skill_lvl.unwrap_or(1),
-                "favor_point": c.favor_point.unwrap_or(0),
-                "skin_id": c.skin.unwrap_or_default(),
-                "default_skill": c.default_skill_index.unwrap_or(0),
-                "current_equip": c.current_equip,
-                "obtained_at": c.gain_time.unwrap_or(0),
-                "voice_lan": c.voice_lan,
-                "current_tmpl": c.current_tmpl,
-            }))
-        })
-        .collect();
+    let mut ops: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        // Amiya: emit one row per form. The base char_id row uses the same
+        // id as the original troop key (e.g. `char_002_amiya`) so existing
+        // lookups still resolve. Branches (`char_1001_amiya2`,
+        // `char_1037_amiya3`) get their own rows with per-form progression.
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                ops.push(serde_json::json!({
+                    "operator_id": form_id,
+                    "elite": form.evolve_phase.or(c.evolve_phase).unwrap_or(0),
+                    "level": form.level.or(c.level).unwrap_or(1),
+                    "exp": form.exp.or(c.exp).unwrap_or(0),
+                    "potential": c.potential_rank.unwrap_or(0),
+                    "skill_level": form.main_skill_lvl.or(c.main_skill_lvl).unwrap_or(1),
+                    "favor_point": form.favor_point.or(c.favor_point).unwrap_or(0),
+                    "skin_id": form.skin_id.clone().or_else(|| c.skin.clone()).unwrap_or_default(),
+                    "default_skill": form.default_skill_index.or(c.default_skill_index).unwrap_or(0),
+                    "current_equip": form.current_equip.clone().or_else(|| c.current_equip.clone()),
+                    "obtained_at": c.gain_time.unwrap_or(0),
+                    "voice_lan": c.voice_lan.clone(),
+                    "current_tmpl": c.current_tmpl.clone(),
+                }));
+            }
+            continue;
+        }
+
+        ops.push(serde_json::json!({
+            "operator_id": char_id,
+            "elite": c.evolve_phase.unwrap_or(0),
+            "level": c.level.unwrap_or(1),
+            "exp": c.exp.unwrap_or(0),
+            "potential": c.potential_rank.unwrap_or(0),
+            "skill_level": c.main_skill_lvl.unwrap_or(1),
+            "favor_point": c.favor_point.unwrap_or(0),
+            "skin_id": c.skin.clone().unwrap_or_default(),
+            "default_skill": c.default_skill_index.unwrap_or(0),
+            "current_equip": c.current_equip.clone(),
+            "obtained_at": c.gain_time.unwrap_or(0),
+            "voice_lan": c.voice_lan.clone(),
+            "current_tmpl": c.current_tmpl.clone(),
+        }));
+    }
 
     serde_json::to_value(ops).unwrap_or_default()
 }
@@ -344,27 +395,42 @@ fn extract_skills(troop: &Option<Troop>) -> serde_json::Value {
         return serde_json::json!([]);
     };
 
-    let skills: Vec<serde_json::Value> = chars
-        .values()
-        .flat_map(|raw| {
-            let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-            let char_id = c.char_id?;
-            Some(
-                c.skills
-                    .unwrap_or_default()
-                    .into_iter()
-                    .enumerate()
-                    .map(move |(i, skill)| {
-                        serde_json::json!({
-                            "operator_id": char_id,
-                            "skill_index": i,
-                            "specialize_level": skill.specialize_level.unwrap_or(0),
-                        })
-                    }),
-            )
-        })
-        .flatten()
-        .collect();
+    let mut skills: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                let Some(form_skills) = form.skills.as_ref() else {
+                    continue;
+                };
+                for (i, skill) in form_skills.iter().enumerate() {
+                    skills.push(serde_json::json!({
+                        "operator_id": form_id,
+                        "skill_index": i,
+                        "specialize_level": skill.specialize_level.unwrap_or(0),
+                    }));
+                }
+            }
+            continue;
+        }
+
+        let Some(c_skills) = c.skills else { continue };
+        for (i, skill) in c_skills.into_iter().enumerate() {
+            skills.push(serde_json::json!({
+                "operator_id": char_id,
+                "skill_index": i,
+                "specialize_level": skill.specialize_level.unwrap_or(0),
+            }));
+        }
+    }
 
     serde_json::to_value(skills).unwrap_or_default()
 }
@@ -374,29 +440,56 @@ fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
         return serde_json::json!([]);
     };
 
-    let modules: Vec<serde_json::Value> =
-        chars
-            .values()
-            .flat_map(|raw| {
-                let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-                let char_id = c.char_id?;
-                Some(c.equip.unwrap_or_default().into_iter().filter_map(
-                    move |(module_id, data)| {
-                        if module_id.starts_with("uniequip_001_") {
-                            return None;
-                        }
-                        let entry: EquipEntry = serde_json::from_value(data).ok()?;
-                        Some(serde_json::json!({
-                            "operator_id": char_id,
-                            "module_id": module_id,
-                            "module_level": entry.level.unwrap_or(0),
-                            "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
-                        }))
-                    },
-                ))
-            })
-            .flatten()
-            .collect();
+    let mut modules: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                let Some(form_equip) = form.equip.as_ref() else {
+                    continue;
+                };
+                for (module_id, data) in form_equip {
+                    if module_id.starts_with("uniequip_001_") {
+                        continue;
+                    }
+                    let Ok(entry) = serde_json::from_value::<EquipEntry>(data.clone()) else {
+                        continue;
+                    };
+                    modules.push(serde_json::json!({
+                        "operator_id": form_id,
+                        "module_id": module_id,
+                        "module_level": entry.level.unwrap_or(0),
+                        "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+                    }));
+                }
+            }
+            continue;
+        }
+
+        let Some(c_equip) = c.equip else { continue };
+        for (module_id, data) in c_equip {
+            if module_id.starts_with("uniequip_001_") {
+                continue;
+            }
+            let Ok(entry) = serde_json::from_value::<EquipEntry>(data) else {
+                continue;
+            };
+            modules.push(serde_json::json!({
+                "operator_id": char_id,
+                "module_id": module_id,
+                "module_level": entry.level.unwrap_or(0),
+                "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+            }));
+        }
+    }
 
     serde_json::to_value(modules).unwrap_or_default()
 }

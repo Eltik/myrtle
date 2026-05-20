@@ -32,8 +32,13 @@ pub async fn avatar(
     AxumPath(avatar_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
     let idx = state.asset_index.load();
+    // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
+    // ship only the `_2` avatar variant — no bare-id file exists. Fall back
+    // to the E2 then E1 suffix so plain char-id lookups still resolve.
     let rel_path = idx
         .path(AssetKind::Avatar, &avatar_id)
+        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
+        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
         .ok_or(ApiError::NotFound)?;
 
     serve_file(&state.config.assets_dir, rel_path, &headers).await

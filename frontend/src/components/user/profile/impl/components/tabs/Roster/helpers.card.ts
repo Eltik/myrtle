@@ -69,6 +69,10 @@ export function isMaxed(entry: IOwnedEntry): boolean {
     if (entry.rarity > 2 && entry.skill_level !== 7) return false;
 
     if (maxElite === 2) {
+        // 4★+ operators at E2 should have at least one mastery row recorded
+        // (even at mastery=0). An empty array means the data is missing/never
+        // synced — treat that as not-maxed instead of vacuously true.
+        if (entry.rarity >= 4 && entry.masteries.length === 0) return false;
         if (!entry.masteries.every((m) => m.mastery === 3)) return false;
 
         const unlockedModules = entry.modules.filter((m) => m.level > 0);
