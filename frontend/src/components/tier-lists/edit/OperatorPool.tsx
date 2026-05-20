@@ -175,13 +175,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                     const placed = placedIds.has(entry.id);
                                     return (
                                         <li key={entry.id} className="contents">
-                                            <Tooltip>
-                                                <TooltipTrigger render={<EditableOpTile operator={indexEntryToTierOperator(entry)} placed={placed} onActivate={(op) => onPickerActivate(op)} />} />
-                                                <TooltipContent>
-                                                    <span className="font-sans font-semibold text-xs">{entry.name}</span>
-                                                    {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">Placed</span> : null}
-                                                </TooltipContent>
-                                            </Tooltip>
+                                            <EditableOpTile operator={indexEntryToTierOperator(entry)} placed={placed} onActivate={(op) => onPickerActivate(op)} />
                                         </li>
                                     );
                                 })}
@@ -269,7 +263,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                 </EmptyHeader>
                             </Empty>
                         ) : (
-                            <ScrollArea scrollFade scrollbarGutter viewportClassName="pr-2">
+                            <ScrollArea scrollFade={!anyDragLifted} scrollbarGutter viewportClassName="pr-2">
                                 <ul className={styles.poolGrid} aria-label="Available operators">
                                     {filtered.map((entry) => {
                                         const placed = placedIds.has(entry.id);

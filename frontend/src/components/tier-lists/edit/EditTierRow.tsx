@@ -31,6 +31,16 @@ export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp,
     const lastIndex = tier.operatorIds.length;
     const dropIndex = touchDropIndex ?? mouseDropIndex;
 
+    const pendingIdxRef = useRef<number | null>(null);
+    const rafRef = useRef<number | null>(null);
+
+    const flushIdx = useCallback(() => {
+        rafRef.current = null;
+        const next = pendingIdxRef.current;
+        pendingIdxRef.current = null;
+        if (next !== null) setMouseDropIndex(next);
+    }, []);
+
     const handleOver = useCallback(
         (e: React.DragEvent) => {
             if (!hasOperatorDrag(e)) return;
@@ -62,13 +72,11 @@ export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp,
     const handleChipDragOver = useCallback(
         (operatorId: string, side: "before" | "after") => {
             const idx = tier.operatorIds.indexOf(operatorId);
-            if (idx < 0) {
-                setMouseDropIndex(lastIndex);
-                return;
-            }
-            setMouseDropIndex(side === "before" ? idx : idx + 1);
+            const next = idx < 0 ? lastIndex : side === "before" ? idx : idx + 1;
+            pendingIdxRef.current = next;
+            if (rafRef.current === null) rafRef.current = requestAnimationFrame(flushIdx);
         },
-        [lastIndex, tier.operatorIds],
+        [lastIndex, tier.operatorIds, flushIdx],
     );
 
     const isEmpty = operators.length === 0;
