@@ -34,7 +34,12 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
     const operatorVoices: IVoice[] = useMemo(() => {
         if (!voicesData) return [];
-        return Object.values(voicesData.charWords).filter((v) => v.charId === operator.id);
+        // For Amiya, every voice line has `charId == "char_002_amiya"` regardless
+        // of form, but the line's key (`charWordId`) is prefixed with the
+        // form-specific id (e.g. `char_1001_amiya2_CN_001`). Filter by that
+        // prefix so each form only shows its own lines.
+        const prefix = `${operator.id}_`;
+        return Object.values(voicesData.charWords).filter((v) => v.charWordId?.startsWith(prefix));
     }, [voicesData, operator.id]);
 
     const availableLanguages = useMemo(() => {

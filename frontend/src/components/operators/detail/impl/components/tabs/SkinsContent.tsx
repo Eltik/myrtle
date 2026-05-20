@@ -20,9 +20,13 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     const { data: skinsResponse, isLoading: skinsLoading } = useQuery(skinsQueryOptions());
     const { data: chibis } = useQuery(chibisQueryOptions());
 
+    const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
     const skins: IUISkin[] = useMemo(() => {
         const charSkins = skinsResponse?.charSkins ?? {};
-        const operatorSkins: ISkin[] = Object.values(charSkins).filter((s) => s.charId === operator.id);
+        // For Amiya, every skin's `charId` is the base; `tmplId` identifies
+        // the form. Match by tmplId when present so each form only shows its
+        // own skins. Falls back to charId for regular operators.
+        const operatorSkins: ISkin[] = Object.values(charSkins).filter((s) => (s.tmplId ? s.tmplId === operator.id : s.charId === operator.id));
         return buildOperatorSkinList({
             skinsFromBackend: operatorSkins,
             operatorId: operator.id ?? "",
@@ -30,8 +34,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             operatorPortrait: operator.portrait,
             phasesLength: operator.phases.length,
             artistFallback: operator.artists?.[0],
+            isBranchForm,
         });
-    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0]]);
+    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);

@@ -21,8 +21,18 @@ export function operatorElite2(opId: string, skin: string | null, portrait: stri
 }
 
 export function skinTexture(opId: string, skinId: string): string {
-    const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-    return asset(`/textures/skinpack/${opId}/${file}.png`);
+    // Skin ids without `@` are elite/default-art variants (e.g. `char_002_amiya#1+`)
+    // and live under `/textures/chararts/`. Skins with `@` are alternate outfits
+    // (e.g. `char_002_amiya@winter#1`) and live under `/textures/skinpack/`.
+    if (skinId.includes("@")) {
+        const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
+        return asset(`/textures/skinpack/${opId}/${file}.png`);
+    }
+    if (skinId.includes("#")) {
+        const file = skinId.replace("#", "_");
+        return asset(`/textures/chararts/${opId}/${file}.png`);
+    }
+    return asset(`/textures/chararts/${opId}/${skinId}.png`);
 }
 
 export function campLogo(id: string): string {

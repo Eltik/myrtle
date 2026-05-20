@@ -22,7 +22,7 @@ use crate::core::gamedata::{
         material::ItemTableFile,
         medal::{MedalData, MedalTableFile},
         module::{BattleEquipTableFile, UniequipTableFile},
-        operator::CharacterTable,
+        operator::{CharPatchTable, CharacterTable},
         range::Ranges,
         retro::RetroTableFile,
         roguelike::{RoguelikeGameData, RoguelikeTopicTableFile},
@@ -49,7 +49,25 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let assets = AssetIndex::build(assets_dir);
 
     let char_table: CharacterTable = load_table(data_dir, "character_table")?;
-    let raw_operators = char_table.characters;
+    let mut raw_operators = char_table.characters;
+
+    // Merge Amiya's branch forms (Guard `char_1001_amiya2`, Medic
+    // `char_1037_amiya3`) from char_patch_table - Hypergryph stores them
+    // separately. Without this, those ids 404 everywhere and grade
+    // calculations silently skip them.
+    let char_patch: CharPatchTable =
+        load_table_or_warn(data_dir, "char_patch_table", &mut warnings);
+    for (id, op) in char_patch.patch_chars {
+        raw_operators.entry(id).or_insert(op);
+    }
+    // Re-key `Infos` by every tmpl_id so a lookup with any of Amiya's three
+    // form ids resolves to the same group metadata.
+    let mut tmpl_groups: std::collections::HashMap<String, _> = std::collections::HashMap::new();
+    for info in char_patch.infos.into_values() {
+        for id in &info.tmpl_ids {
+            tmpl_groups.insert(id.clone(), info.clone());
+        }
+    }
 
     let skill_file: SkillTableFile = load_table_or_warn(data_dir, "skill_table", &mut warnings);
     let equip_file: UniequipTableFile =
@@ -124,6 +142,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             assets: &assets,
             drones: &drones,
             building: &building_file,
+            tmpl_groups: &tmpl_groups,
         },
     );
 

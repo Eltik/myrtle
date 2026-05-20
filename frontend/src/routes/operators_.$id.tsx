@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
-import { operatorQueryOptions } from "#/lib/api/operators";
+import { operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
@@ -21,7 +21,14 @@ export const Route = createFileRoute("/operators_/$id")({
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
         const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id));
-        if (operator) warmOg("operator", params.id, buildOgData(operator));
+        if (operator) {
+            warmOg("operator", params.id, buildOgData(operator));
+            // For operators with alternate forms (Amiya), preload the index so
+            // the form switcher renders in SSR without a hydration flash.
+            if ((operator.tmplIds?.length ?? 0) >= 2) {
+                await context.queryClient.ensureQueryData(operatorsIndexQueryOptions());
+            }
+        }
         return operator;
     },
     head: ({ loaderData, params }) => {

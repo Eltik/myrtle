@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use super::handbook::{HandbookItem, OperatorProfile};
 use super::material::{Item, ItemType};
 use super::module::{Module, ModuleData};
-use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
+use super::serde_helpers::{
+    deserialize_fb_map, deserialize_fb_map_option, deserialize_fb_map_or_default,
+};
 use super::skill::SkillLevel;
 
 // ============================================================================
@@ -346,6 +348,26 @@ pub struct CharacterTable {
     pub characters: HashMap<String, RawOperator>,
 }
 
+/// Wrapper for char_patch_table.json - Hypergryph stores Amiya's branch forms
+/// (Guard `char_1001_amiya2`, Medic `char_1037_amiya3`) here instead of the
+/// main character_table, alongside an `Infos` map that groups the base id
+/// with all its template ids.
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct CharPatchTable {
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub infos: HashMap<String, CharPatchInfo>,
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub patch_chars: HashMap<String, RawOperator>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CharPatchInfo {
+    pub default: String,
+    pub tmpl_ids: Vec<String>,
+}
+
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawOperator {
@@ -487,6 +509,17 @@ pub struct Operator {
     /// Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png
     /// None if not available (use portrait as fallback)
     pub skin: Option<String>,
+    /// All template ids for operators that have alternate forms (Amiya only,
+    /// at time of writing). `None` for normal operators. Each id in this list
+    /// is itself a fully-enriched entry in `GameData.operators`. The list is
+    /// populated on *every* form in the group, with `default` indicating the
+    /// canonical base id.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tmpl_ids: Option<Vec<String>>,
+    /// Canonical base id for a template group (e.g. `char_002_amiya` for all
+    /// three Amiya forms). `None` when `tmpl_ids` is `None`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tmpl_default: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
