@@ -28,6 +28,9 @@ export interface IDisplaySkin {
 export interface ISkin {
     skinId: string;
     charId: string;
+    /** Template id (form) the skin belongs to. For Amiya, `charId` is always
+     *  the base `char_002_amiya` and `tmplId` identifies the specific form. */
+    tmplId: string | null;
     illustId: string;
     portraitId: string;
     avatarId: string;

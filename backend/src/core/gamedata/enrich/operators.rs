@@ -9,8 +9,8 @@ use crate::core::gamedata::{
         material::Materials,
         module::{BattleEquip, RawModules},
         operator::{
-            AllSkillLevelUp, Drone, EvolveCost, LevelUpCostItem, Operator, OperatorBaseSkill,
-            Phase, RawOperator,
+            AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, LevelUpCostItem, Operator,
+            OperatorBaseSkill, Phase, RawOperator,
         },
         skill::Skill,
         skin::SkinData,
@@ -33,6 +33,9 @@ pub struct EnrichCtx<'a> {
     pub assets: &'a AssetIndex,
     pub drones: &'a HashMap<String, Drone>,
     pub building: &'a BuildingDataFile,
+    /// Template groups keyed by *every* id in the group (so a lookup by any
+    /// of Amiya's three form ids returns the same `CharPatchInfo`).
+    pub tmpl_groups: &'a HashMap<String, CharPatchInfo>,
 }
 
 pub fn enrich_all_operators(
@@ -103,13 +106,25 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         enrich_operator_skills(&raw.skills, ctx.skills, ctx.materials, ctx.assets);
     let operator_modules =
         get_operator_modules(id, ctx.modules, ctx.battle_equip, ctx.materials, ctx.assets);
-    let (handbook_item, profile) = get_handbook_and_profile(id, ctx.handbook);
+    // Handbook/profile lore is shared across Amiya's three forms - fall back
+    // to the template default id so branches inherit the base entry.
+    let handbook_id = ctx
+        .tmpl_groups
+        .get(id)
+        .map(|info| info.default.as_str())
+        .unwrap_or(id);
+    let (handbook_item, profile) = get_handbook_and_profile(handbook_id, ctx.handbook);
     let artists = get_artists(id, ctx.skins);
 
     let portrait = ctx.assets.portrait_path(id).map(str::to_owned);
     let skin = ctx.assets.charart_path(id);
 
     let base_skills = get_operator_base_skills(id, ctx.building);
+
+    let (tmpl_ids, tmpl_default) = match ctx.tmpl_groups.get(id) {
+        Some(info) => (Some(info.tmpl_ids.clone()), Some(info.default.clone())),
+        None => (None, None),
+    };
 
     Operator {
         id: Some(id.to_owned()),
@@ -152,6 +167,8 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         base_skills,
         portrait,
         skin,
+        tmpl_ids,
+        tmpl_default,
     }
 }
 

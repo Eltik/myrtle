@@ -40,7 +40,9 @@ export function TierListEditor({ slug }: ITierListEditorProps) {
 
     const isOwner = Boolean(user && detail.author?.id === user.id);
     const isTierListAdmin = user?.role === "tier_list_admin" || user?.role === "super_admin";
-    const canEdit = isOwner || isTierListAdmin;
+    const isTierListEditor = user?.role === "tier_list_editor";
+    const canEditOfficial = detail.listType === "official" && isTierListEditor;
+    const canEdit = isOwner || isTierListAdmin || canEditOfficial;
     if (!canEdit) return <EditorForbidden slug={slug} />;
 
     return <EditorContent slug={slug} detail={detail} operators={operators ?? []} queryClient={queryClient} />;
@@ -358,7 +360,7 @@ function EditorForbidden({ slug }: { slug: string }) {
     return (
         <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
             <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">You can't edit this list</h1>
-            <p className="mt-3 font-sans text-muted-foreground text-sm">Only the author can edit this tier list.</p>
+            <p className="mt-3 font-sans text-muted-foreground text-sm">You don't have permission to edit this tier list.</p>
             <Button render={<Link to="/tier-lists/$id" params={{ id: slug }} />} variant="outline" className="mt-6">
                 View public page
             </Button>

@@ -474,6 +474,11 @@ export interface IOperatorListItem {
     portrait: string | null;
     /** Full character art - /upk/chararts/{id}/{id}_{1|2}.png; null → use portrait as fallback */
     skin: string | null;
+    /** Template group ids for operators with alternate forms (Amiya).
+     *  Present on every form in the group. */
+    tmplIds?: string[];
+    /** Canonical base id for the template group (e.g. "char_002_amiya"). */
+    tmplDefault?: string;
 }
 
 export type IOperatorsStaticMap = Record<string, IOperatorListItem>;

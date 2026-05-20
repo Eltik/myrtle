@@ -21,34 +21,50 @@ interface IBuildArgs {
     operatorPortrait: string | null;
     phasesLength: number;
     artistFallback?: string;
+    /** True when this operator is an alternate form (e.g. Amiya Guard/Medic).
+     *  Branches unlock at E2 and have no E0/E1 art, so the default placeholder
+     *  is replaced with the E2 art and the "Evolved" entry is suppressed. */
+    isBranchForm?: boolean;
 }
 
-export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback }: IBuildArgs): IUISkin[] {
+export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm }: IBuildArgs): IUISkin[] {
     const skins: IUISkin[] = [];
 
     const e0 = operatorElite0(operatorId, operatorSkin, operatorPortrait);
     const e2 = operatorElite2(operatorId, operatorSkin, operatorPortrait);
 
-    skins.push({
-        id: `${operatorId}_default`,
-        name: "Default",
-        kicker: phasesLength > 2 ? "Elite 0 / Elite 1" : "Elite 0",
-        sub: artistFallback ? `Artist · ${artistFallback}` : "Unlocked by default",
-        image: e0,
-        thumbnail: e0,
-        isDefault: true,
-    });
-
-    if (phasesLength > 2) {
+    if (isBranchForm) {
         skins.push({
-            id: `${operatorId}_e2`,
-            name: "Evolved Art",
+            id: `${operatorId}_default`,
+            name: "Default",
             kicker: "Elite 2",
-            sub: artistFallback ? `Artist · ${artistFallback}` : "Elite 2 Promotion",
+            sub: artistFallback ? `Artist · ${artistFallback}` : "Unlocked by default",
             image: e2,
             thumbnail: e2,
-            isDefault: false,
+            isDefault: true,
         });
+    } else {
+        skins.push({
+            id: `${operatorId}_default`,
+            name: "Default",
+            kicker: phasesLength > 2 ? "Elite 0 / Elite 1" : "Elite 0",
+            sub: artistFallback ? `Artist · ${artistFallback}` : "Unlocked by default",
+            image: e0,
+            thumbnail: e0,
+            isDefault: true,
+        });
+
+        if (phasesLength > 2) {
+            skins.push({
+                id: `${operatorId}_e2`,
+                name: "Evolved Art",
+                kicker: "Elite 2",
+                sub: artistFallback ? `Artist · ${artistFallback}` : "Elite 2 Promotion",
+                image: e2,
+                thumbnail: e2,
+                isDefault: false,
+            });
+        }
     }
 
     for (const skin of skinsFromBackend) {
