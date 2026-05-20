@@ -703,7 +703,7 @@ fn build_operator_improvements(
         if !advanced_modules.is_empty() && max_module_level < 3 {
             missing.push("MOD3");
         }
-        if rarity_potential_matters(static_op) && entry.potential < 6 {
+        if rarity_potential_matters(static_op) && entry.potential < 5 {
             missing.push("POT6");
         }
 
