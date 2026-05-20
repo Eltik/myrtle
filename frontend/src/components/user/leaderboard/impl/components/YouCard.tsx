@@ -20,8 +20,8 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(player.avatar_id ?? DEFAULT_AVATAR_ID);
     const rank = player.rank_global ?? null;
-    const percentileFromRank = rank != null && rankedDoctors && rankedDoctors > 0 ? (1 - rank / rankedDoctors) * 100 : null;
-    const percentile = percentileFromRank ?? (1 - standing.percentile) * 100;
+    const percentileFromRank = rank != null && rankedDoctors && rankedDoctors > 0 ? (rank / rankedDoctors) * 100 : null;
+    const percentile = percentileFromRank ?? standing.percentile * 100;
     const delta = standing.rank_delta;
     const grade = player.grade ?? "-";
 
