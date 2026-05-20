@@ -65,7 +65,12 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
         const unowned: IDisplayEntry[] = [];
         for (const op of operatorsIndex) {
             if (op.isNotObtainable || ownedIds.has(op.id)) continue;
-            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticMap.get(op.id) ?? null });
+            // Branch forms (e.g. Amiya Guard `char_1001_amiya2`, Medic
+            // `char_1037_amiya3`) are alt forms of a base operator. Ownership
+            // follows the base — never show a branch in the "unowned" list.
+            const staticOp = staticMap.get(op.id);
+            if (staticOp?.tmplDefault && staticOp.tmplDefault !== op.id) continue;
+            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticOp ?? null });
         }
         return filters.ownership === "unowned" ? unowned : [...owned, ...unowned];
     }, [roster, operatorsIndex, indexMap, staticMap, ownedIds, filters.ownership]);
