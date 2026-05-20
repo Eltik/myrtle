@@ -50,7 +50,12 @@ const skinpackURL = (operatorId: string, skinId: string) => assetURL(`/textures/
 const campLogoURL = (id: string) => assetURL(`/textures/spritepack/ui_camp_logo_0/logo_${id.toLowerCase()}.png`);
 const moduleIconURL = (uniEquipIcon: string) => assetURL(`/textures/spritepack/ui_equip_big_img_hub_0/${uniEquipIcon}.png`);
 const masteryIconURL = (mastery: number) => assetURL(`/textures/arts/specialized_hub/specialized_${mastery}.png`);
-const secretaryArtURL = (operatorId: string, skinId: string | null) => (skinId?.includes("@") ? skinpackURL(operatorId, skinId) : charartURL(operatorId));
+const secretaryArtURL = (operatorId: string, skinId: string | null, op?: IOperatorListItem): string => {
+    if (skinId?.includes("@")) return skinpackURL(operatorId, skinId);
+    if (op?.skin) return assetURL(op.skin);
+    if (op?.portrait) return assetURL(op.portrait);
+    return charartURL(operatorId);
+};
 const professionIconURL = (profession: string) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`);
 
 const OPERATOR_HASH_VERSION = "v8";
@@ -103,7 +108,7 @@ const operatorHandler: IOgHandler<IOperatorOgData> = {
     },
 };
 
-const USER_HASH_VERSION = "v13";
+const USER_HASH_VERSION = "v14";
 
 interface ISupportUnitResponse {
     slot: number;
@@ -265,7 +270,7 @@ const userHandler: IOgHandler<IUserOgData> = {
             skinCount: u.skin_count ?? 0,
             itemCount: u.item_count ?? 0,
             lmd: u.lmd ?? 0,
-            secretaryArtURL: u.secretary ? secretaryArtURL(u.secretary, u.secretary_skin_id) : undefined,
+            secretaryArtURL: u.secretary ? secretaryArtURL(u.secretary, u.secretary_skin_id, opByIdMap.get(u.secretary)) : undefined,
             supportUnits,
             supportUnitsKind,
             rarityCounts: hasRarityCounts ? rarityCounts : undefined,
