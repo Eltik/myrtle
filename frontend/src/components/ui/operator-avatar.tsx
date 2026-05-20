@@ -20,5 +20,5 @@ export function OperatorAvatar({ charId, name, className }: IOperatorAvatarProps
         return <>{name.charAt(0).toUpperCase()}</>;
     }
 
-    return <img src={getAvatarById(charId)} alt="" aria-hidden="true" loading="lazy" decoding="async" className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;
+    return <img src={getAvatarById(charId)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onDragStart={(e) => e.preventDefault()} className={className ?? "block h-full w-full rounded-[inherit] object-cover"} onError={() => setFailed(true)} />;
 }

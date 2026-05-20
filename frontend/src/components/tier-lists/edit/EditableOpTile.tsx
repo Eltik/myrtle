@@ -47,6 +47,7 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
             draggable={!disabled}
             data-dragging={isDragging || undefined}
             data-disabled={disabled || undefined}
+            aria-disabled={disabled || undefined}
             aria-label={`${operator.name} (${operator.rarity}★)${placed ? " - already placed" : ""}`}
             title={title ?? `${operator.name} (${operator.rarity}★)`}
             onClick={() => {
@@ -71,6 +72,7 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
                     e.preventDefault();
                     return;
                 }
+                e.dataTransfer.clearData();
                 setOperatorDrag(e, { operatorId: operator.id });
                 setMouseDragging(true);
                 onDragStart?.(operator.id);
