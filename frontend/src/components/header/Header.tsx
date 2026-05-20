@@ -5,7 +5,7 @@ import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { useCommand } from "#/lib/command-context";
-import { modKey, TOOLS, toolKb } from "#/lib/registry/tools";
+import { modKey, TOOLS } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
 import styles from "./impl/Header.module.css";
 import { type INavItem, MainNav } from "./impl/MainNav";
@@ -24,7 +24,6 @@ export default function Header() {
             label: t.label,
             desc: t.desc,
             icon: t.icon,
-            kb: toolKb(t, isMac),
         }));
         return [
             { href: "/", label: "Home" },
@@ -56,7 +55,7 @@ export default function Header() {
             },
             { href: "/tools", label: "Tools", items: toolItems },
         ];
-    }, [isMac, user]);
+    }, [user]);
 
     return (
         <header className="sticky top-0 z-50 w-full border-border border-b bg-background/80 backdrop-blur-lg backdrop-saturate-150 supports-backdrop-filter:bg-background/60">

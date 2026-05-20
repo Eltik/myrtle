@@ -13,7 +13,6 @@ export interface INavItem {
     label: string;
     desc?: string;
     icon?: string;
-    kb?: string[] | null;
     items?: INavItem[];
 }
 
@@ -159,13 +158,6 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                                     <span className="font-medium font-sans text-[13px] text-foreground leading-none tracking-tight">{t.label}</span>
                                     {t.desc && <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t.desc}</span>}
                                 </span>
-                                {t.kb && (
-                                    <span className="inline-flex shrink-0 gap-0.5">
-                                        {t.kb.map((k) => (
-                                            <Kbd key={k}>{k}</Kbd>
-                                        ))}
-                                    </span>
-                                )}
                             </Link>
                         ))}
                     </div>

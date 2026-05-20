@@ -1,9 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { useIsMac } from "#/hooks/use-is-mac";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
-import { TOOLS, toolKb } from "#/lib/registry/tools";
+import { TOOLS } from "#/lib/registry/tools";
 import { ROLE_GRADIENT, type Role } from "#/lib/role-styles";
 import styles from "./Hero.module.css";
 
@@ -27,7 +26,6 @@ interface ICommandPreviewProps {
 }
 
 export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) {
-    const isMac = useIsMac();
     const toolsById = new Map(TOOLS.map((t) => [t.id, t]));
     const tools = PREVIEW_TOOL_IDS.map((id) => toolsById.get(id)).filter((t): t is NonNullable<typeof t> => Boolean(t));
 
@@ -63,18 +61,12 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
                 <div className={styles.cmdSep} />
                 <div className={styles.cmdGroup} role="menu">
                     <div className={styles.cmdGroupLabel}>Tools</div>
-                    {tools.map((tool) => {
-                        const kb = toolKb(tool, isMac);
-                        return (
-                            <Link key={tool.id} to={tool.href} className={styles.cmdItem} role="menuitem" onClick={stop}>
-                                <ToolIcon name={tool.icon} />
-                                <span className={styles.cmdPrimary}>{tool.label}</span>
-                                {kb?.map((k) => (
-                                    <Kbd key={k}>{k}</Kbd>
-                                ))}
-                            </Link>
-                        );
-                    })}
+                    {tools.map((tool) => (
+                        <Link key={tool.id} to={tool.href} className={styles.cmdItem} role="menuitem" onClick={stop}>
+                            <ToolIcon name={tool.icon} />
+                            <span className={styles.cmdPrimary}>{tool.label}</span>
+                        </Link>
+                    ))}
                 </div>
             </div>
             <div className={styles.cmdFooter}>

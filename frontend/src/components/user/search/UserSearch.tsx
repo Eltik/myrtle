@@ -8,6 +8,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
 import { useDebounce } from "#/hooks/use-debounce";
 import { searchUsersQueryOptions } from "#/lib/api/user";
+import { isEditableTarget, isPlainKey } from "#/lib/hotkeys";
 import { formatNumber } from "#/lib/utils";
 import { Route } from "#/routes/user.search";
 import { UserCard } from "./impl/components/UserCard";
@@ -42,14 +43,15 @@ export function UserSearch() {
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-                e.preventDefault();
-                inputRef.current?.focus();
-                inputRef.current?.select();
-            }
+            if (e.key !== "/" || !isPlainKey(e) || e.shiftKey) return;
+            if (isEditableTarget(e.target)) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            inputRef.current?.focus();
+            inputRef.current?.select();
         };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
+        document.addEventListener("keydown", onKeyDown, { capture: true });
+        return () => document.removeEventListener("keydown", onKeyDown, { capture: true });
     }, []);
 
     const offset = (currentPage - 1) * PAGE_SIZE;
