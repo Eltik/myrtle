@@ -48,7 +48,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                         <span className="flex flex-row items-center gap-2">
                             Hit{" "}
                             <span>
-                                <Kbd>{isMac ? "⌘" : "CTRL"}</Kbd> <Kbd>K</Kbd>
+                                <Kbd>{isMac ? "⌘" : "Ctrl"}</Kbd> <Kbd>K</Kbd>
                             </span>{" "}
                             to jump anywhere.
                         </span>

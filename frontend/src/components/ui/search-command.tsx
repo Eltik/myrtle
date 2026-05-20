@@ -4,18 +4,18 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { Command, CommandDialog, CommandDialogPopup, CommandEmpty, CommandFooter, CommandGroup, CommandGroupLabel, CommandInput, CommandItem, CommandList, CommandPanel, CommandSeparator, CommandShortcut } from "#/components/ui/command";
+import { Command, CommandDialog, CommandDialogPopup, CommandEmpty, CommandFooter, CommandGroup, CommandGroupLabel, CommandInput, CommandItem, CommandList, CommandPanel, CommandSeparator } from "#/components/ui/command";
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useDebounce } from "#/hooks/use-debounce";
-import { useIsMac } from "#/hooks/use-is-mac";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { searchUsersQueryOptions } from "#/lib/api/user";
+import { hasMod, isEditableTarget } from "#/lib/hotkeys";
 import { professionClass, professionLabel } from "#/lib/registry/operator-display";
 import { type IPage, PAGES } from "#/lib/registry/pages";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
-import { type ITool, TOOLS, toolShortcut } from "#/lib/registry/tools";
+import { type ITool, TOOLS } from "#/lib/registry/tools";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import { formatNumber, getAvatarById } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
@@ -40,12 +40,18 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
-            if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                onOpenChange(!open);
-            }
             if (e.key === "Escape") {
                 onOpenChange(false);
+                return;
+            }
+            if (e.key.toLowerCase() === "k" && hasMod(e)) {
+                e.preventDefault();
+                onOpenChange(!open);
+                return;
+            }
+            if (e.key === "/" && !hasMod(e) && !e.altKey && !e.shiftKey && !isEditableTarget(e.target)) {
+                e.preventDefault();
+                onOpenChange(!open);
             }
         };
         document.addEventListener("keydown", down);
@@ -214,13 +220,11 @@ function PageRow({ page, onClick }: { page: IPage; onClick: () => void }): React
 }
 
 function ToolRow({ tool, onClick }: { tool: ITool; onClick: () => void }): React.ReactElement {
-    const isMac = useIsMac();
-    const shortcut = toolShortcut(tool, isMac);
     return (
         <CommandItem value={`tool:${tool.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <ToolIcon name={tool.icon} className="size-4 text-muted-foreground" />
             <span className="flex-1">{tool.label}</span>
-            {shortcut && <CommandShortcut>{shortcut}</CommandShortcut>}
+            <span className="hidden text-muted-foreground text-xs sm:inline">{tool.desc}</span>
         </CommandItem>
     );
 }
