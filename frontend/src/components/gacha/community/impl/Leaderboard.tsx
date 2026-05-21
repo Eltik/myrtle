@@ -20,7 +20,7 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
     const filtered = useMemo(() => ops.filter((o) => o.rarity === rarity), [ops, rarity]);
 
     return (
-        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
+        <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
                     <Kicker className="mb-1.5">Most pulled · per rarity</Kicker>
@@ -71,7 +71,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
     const max = Math.max(...ops.map((o) => o.pullCount));
 
     return (
-        <div className="-mx-1 max-h-105 overflow-y-auto pr-1 pl-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+        <div className="-mx-1 max-h-105 min-h-0 overflow-y-auto pr-1 pl-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] lg:max-h-none lg:flex-1">
             <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-10 bg-card">
                     <tr>

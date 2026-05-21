@@ -77,7 +77,9 @@ export function CommunityPage() {
                 <KpiStrip data={data} />
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr]">
-                    <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
+                    <div className="lg:relative lg:min-h-0">
+                        <Leaderboard ops={data?.mostCommonOperators ?? []} operatorsById={operatorsById} isLoading={isLoading} />
+                    </div>
                     <RarityPanel data={data} personal={personalRates} />
                 </div>
 
