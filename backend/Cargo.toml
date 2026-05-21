@@ -27,6 +27,10 @@ path = "src/bin/regrade_users.rs"
 name = "manage-permissions"
 path = "src/bin/manage_permissions.rs"
 
+[[bin]]
+name = "resync-gacha"
+path = "src/bin/resync_gacha.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"

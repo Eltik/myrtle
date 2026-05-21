@@ -65,13 +65,15 @@ impl GachaApiItem {
     /// Convert to the JSONB shape that `sp_insert_gacha_batch` expects.
     /// Rarity is sourced from game data (`character_table`) keyed on `char_id`;
     /// the `star` field from the Yostar API is only used as a fallback.
-    fn to_record_json(&self, gd: &GameData) -> serde_json::Value {
+    /// `missing` collects char_ids that fell back, so the caller can emit a
+    /// single deduped warning instead of one line per record.
+    fn to_record_json(
+        &self,
+        gd: &GameData,
+        missing: &mut std::collections::HashSet<String>,
+    ) -> serde_json::Value {
         let rarity = rarity_from_gamedata(gd, &self.char_id).unwrap_or_else(|| {
-            tracing::warn!(
-                char_id = %self.char_id,
-                star = %self.star,
-                "char_id missing from game data; falling back to API star value"
-            );
+            missing.insert(self.char_id.clone());
             self.api_rarity()
         });
         serde_json::json!({
@@ -173,10 +175,21 @@ pub async fn fetch_and_store(
     }
 
     let gd = state.game_data.load();
+    let mut missing: std::collections::HashSet<String> = std::collections::HashSet::new();
     let records_json: Vec<serde_json::Value> = all_items
         .iter()
-        .map(|item| item.to_record_json(&gd))
+        .map(|item| item.to_record_json(&gd, &mut missing))
         .collect();
+
+    if !missing.is_empty() {
+        let mut ids: Vec<&str> = missing.iter().map(String::as_str).collect();
+        ids.sort_unstable();
+        tracing::warn!(
+            count = missing.len(),
+            char_ids = ?ids,
+            "char_id(s) missing from game data; rarity falling back to API star value — will reconcile on next hot-reload",
+        );
+    }
 
     let records_value =
         serde_json::to_value(&records_json).map_err(|e| ApiError::Internal(e.into()))?;
