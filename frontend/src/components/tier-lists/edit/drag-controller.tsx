@@ -7,6 +7,7 @@ import { RARITY_HEX_MUTED } from "#/lib/utils";
 
 const TOUCH_LONG_PRESS_MS = 220;
 const DRAG_THRESHOLD_PX = 6;
+const LONG_PRESS_CANCEL_PX = 10;
 const SCROLL_EDGE_PX = 80;
 const SCROLL_VELOCITY_PX = 18;
 
@@ -118,6 +119,15 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
 
     const lift = useCallback(() => {
         clearLongPress();
+        const cur = store.state;
+        const src = sourceElRef.current;
+        if (cur && src) {
+            try {
+                src.setPointerCapture(cur.pointerId);
+            } catch {
+                /* capture unavailable */
+            }
+        }
         store.setState((prev) => (prev ? { ...prev, isLifted: true } : prev));
         try {
             if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -208,12 +218,6 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
                 target: null,
             }));
 
-            try {
-                target.setPointerCapture(e.pointerId);
-            } catch {
-                /* capture unavailable */
-            }
-
             longPressTimerRef.current = window.setTimeout(lift, TOUCH_LONG_PRESS_MS);
         },
         [lift, store],
@@ -230,12 +234,14 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
                     document.body.style.userSelect = "none";
                     document.body.style.setProperty("-webkit-user-select", "none");
                     document.body.style.cursor = "grabbing";
+                    document.body.style.touchAction = "none";
                     didLockBody = true;
                 }
             } else if (didLockBody) {
                 document.body.style.userSelect = "";
                 document.body.style.removeProperty("-webkit-user-select");
                 document.body.style.cursor = "";
+                document.body.style.touchAction = "";
                 didLockBody = false;
             }
             if (!cur) stopAutoScroll();
@@ -249,6 +255,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
                 document.body.style.userSelect = "";
                 document.body.style.removeProperty("-webkit-user-select");
                 document.body.style.cursor = "";
+                document.body.style.touchAction = "";
             }
         };
     }, [store, stopAutoScroll]);
@@ -294,13 +301,15 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             const dy = e.clientY - cur.startY;
 
             if (!cur.isLifted) {
-                // Tiles use `touch-action: none`, so JS owns the gesture from
-                // the first move - lift immediately past the threshold instead
-                // of waiting out the full long-press timer.
-                if (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX) {
+                if (cur.pointerType === "pen" && (Math.abs(dx) > DRAG_THRESHOLD_PX || Math.abs(dy) > DRAG_THRESHOLD_PX)) {
                     lift();
                     e.preventDefault();
                     scheduleMove(e.clientX, e.clientY);
+                    return;
+                }
+
+                if (cur.pointerType === "touch" && (Math.abs(dx) > LONG_PRESS_CANCEL_PX || Math.abs(dy) > LONG_PRESS_CANCEL_PX)) {
+                    reset();
                 }
                 return;
             }
@@ -343,16 +352,23 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             if (store.state?.isLifted) e.preventDefault();
         };
 
+
+        const onTouchMove = (e: TouchEvent) => {
+            if (store.state?.isLifted) e.preventDefault();
+        };
+
         window.addEventListener("pointermove", onMove, { passive: false });
         window.addEventListener("pointerup", onUp);
         window.addEventListener("pointercancel", onCancel);
         window.addEventListener("contextmenu", onContextMenu);
+        window.addEventListener("touchmove", onTouchMove, { passive: false });
         return () => {
             cancelScheduledMove();
             window.removeEventListener("pointermove", onMove);
             window.removeEventListener("pointerup", onUp);
             window.removeEventListener("pointercancel", onCancel);
             window.removeEventListener("contextmenu", onContextMenu);
+            window.removeEventListener("touchmove", onTouchMove);
         };
     }, [store, hitTest, reset, updateAutoScroll, lift]);
 
