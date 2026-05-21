@@ -7,21 +7,9 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, healthQueryOptions } from "#/lib/api/admin";
-import { cn } from "#/lib/utils";
+import { cn, formatRelativeShort } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
 import { CardKV } from "../Primitives";
-
-function formatRelative(iso: string | null | undefined): string {
-    if (!iso) return "-";
-    const t = Date.parse(iso);
-    if (!Number.isFinite(t)) return iso;
-    const diff = (Date.now() - t) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(t).toLocaleDateString();
-}
 
 interface IGameDataTileProps {
     label: string;
@@ -149,7 +137,7 @@ export function AdminSettings(): React.ReactElement {
                             </div>
                             <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 border-border border-t pt-3 text-[12px] text-muted-foreground">
                                 <span>
-                                    Snapshot computed <span className="font-medium text-foreground">{formatRelative(statsQuery.data?.computedAt)}</span>
+                                    Snapshot computed <span className="font-medium text-foreground">{formatRelativeShort(statsQuery.data?.computedAt)}</span>
                                     <span className="ml-1.5 opacity-70">(cached for ~60s)</span>
                                 </span>
                                 <span>

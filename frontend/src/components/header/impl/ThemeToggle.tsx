@@ -3,10 +3,8 @@ import { useId } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { useTheme } from "#/hooks/use-theme";
-import { accentToRenderedHex, COLOR_PRESETS } from "#/lib/theme/color-utils";
+import { accentToRenderedHex, COLOR_PRESETS, PRESET_MATCH_TOLERANCE } from "#/lib/theme/color-utils";
 import { cn } from "#/lib/utils";
-
-const PRESET_MATCH_TOLERANCE = 5;
 
 export default function ThemeToggle() {
     const { mode, resolved, accent, isDefaultAccent, setMode, setPresetHue, setCustomHex, resetAccent } = useTheme();
