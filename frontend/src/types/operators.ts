@@ -383,6 +383,8 @@ export interface IOperatorBaseSkill {
     roomType: string;
     efficiency: number;
     targets: string[];
+    /** Sprite stem in `building_ui_buff_skills_h1_0/`; empty if absent. */
+    skillIcon: string;
     unlockElite: number;
     unlockLevel: number;
 }

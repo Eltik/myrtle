@@ -352,7 +352,6 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             if (store.state?.isLifted) e.preventDefault();
         };
 
-
         const onTouchMove = (e: TouchEvent) => {
             if (store.state?.isLifted) e.preventDefault();
         };

@@ -31,6 +31,10 @@ path = "src/bin/manage_permissions.rs"
 name = "resync-gacha"
 path = "src/bin/resync_gacha.rs"
 
+[[bin]]
+name = "export-gacha"
+path = "src/bin/export_gacha.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"
