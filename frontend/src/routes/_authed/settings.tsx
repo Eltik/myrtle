@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { SettingsPage } from "#/components/settings/SettingsPage";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -22,5 +23,7 @@ export const Route = createFileRoute("/_authed/settings")({
 });
 
 function RouteComponent() {
-    return <div>Hello "/_authed/settings"!</div>;
+    const { user } = Route.useRouteContext();
+    if (!user) return null;
+    return <SettingsPage user={user} />;
 }

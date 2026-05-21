@@ -12,18 +12,15 @@ import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "#/c
 import { Spinner } from "#/components/ui/spinner";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import type { AKServer } from "#/lib/auth/login";
+import { type AKServer, formatServerForPicker, SERVERS } from "#/lib/auth/login";
 import { sendCodeFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
 
-export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean }[] = [
-    { value: "en", label: "Global (EN)", disabled: false },
-    { value: "jp", label: "Japan (JP)", disabled: false },
-    { value: "kr", label: "Korea (KR)", disabled: false },
-    { value: "cn", label: "China (CN)", disabled: true },
-    { value: "bili", label: "Bilibili", disabled: true },
-    { value: "tw", label: "Taiwan (TW)", disabled: true },
-];
+export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean }[] = SERVERS.map((s) => ({
+    value: s.code,
+    label: formatServerForPicker(s.code),
+    disabled: s.loginDisabled,
+}));
 
 const OTP_LENGTH = 6;
 const OTP_SLOT_KEYS = Array.from({ length: OTP_LENGTH }, (_, i) => `otp-slot-${i}`);

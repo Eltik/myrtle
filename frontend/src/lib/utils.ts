@@ -473,6 +473,29 @@ export function formatRelative(iso: string | null | undefined): string {
     return `${Math.floor(days / 365)}y ago`;
 }
 
+/**
+ * Verbose "5 min ago / 3 h ago / 2 d ago" style used by admin dashboards and
+ * the settings page. Falls back to a locale date for anything older than 30
+ * days. Accepts either an ISO timestamp or a unix epoch (seconds or ms).
+ */
+export function formatRelativeShort(input: string | number | null | undefined): string {
+    if (input == null) return "-";
+    let ms: number;
+    if (typeof input === "number") {
+        ms = input > 1e12 ? input : input * 1000;
+    } else {
+        ms = Date.parse(input);
+    }
+    if (!Number.isFinite(ms)) return typeof input === "string" ? input : "-";
+    const diff = (Date.now() - ms) / 1000;
+    if (diff < 0) return "just now";
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
+    return new Date(ms).toLocaleDateString();
+}
+
 export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
     if (maxLevel <= 1) return base;
     return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));

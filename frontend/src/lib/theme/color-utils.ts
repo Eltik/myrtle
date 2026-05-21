@@ -10,6 +10,8 @@
 
 export const DEFAULT_PRIMARY_HUE = 25;
 
+export const PRESET_MATCH_TOLERANCE = 5;
+
 export const COLOR_PRESETS = [
     { name: "Orange", hue: 25, color: "#e66e68" },
     { name: "Red", hue: 15, color: "#e65050" },

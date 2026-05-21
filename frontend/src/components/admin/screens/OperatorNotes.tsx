@@ -13,7 +13,7 @@ import { toastManager } from "#/components/ui/toast";
 import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, updateOperatorNoteFn } from "#/lib/api/admin";
 import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { cn, formatSubProfession } from "#/lib/utils";
+import { cn, formatRelativeShort, formatSubProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
 import { MonoSection, RARITY_BG } from "../Primitives";
@@ -222,22 +222,11 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
 
             <div className="flex shrink-0 flex-col items-end gap-1.5 self-stretch">
                 {hasContent ? <Badge variant="success">filled</Badge> : <Badge variant="outline">empty</Badge>}
-                {note?.updated_at ? <span className="whitespace-nowrap font-mono text-[10.5px] text-muted-foreground">{formatRelative(note.updated_at)}</span> : null}
+                {note?.updated_at ? <span className="whitespace-nowrap font-mono text-[10.5px] text-muted-foreground">{formatRelativeShort(note.updated_at)}</span> : null}
                 <ChevronRightIcon className="mt-auto hidden size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 sm:block" strokeWidth={1.9} />
             </div>
         </button>
     );
-}
-
-function formatRelative(iso: string): string {
-    const t = Date.parse(iso);
-    if (!Number.isFinite(t)) return iso;
-    const diff = (Date.now() - t) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(t).toLocaleDateString();
 }
 
 function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () => void }): React.ReactElement {
@@ -317,7 +306,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                     <CardDescription className="text-xs">
                         {note ? (
                             <>
-                                Last updated {formatRelative(note.updated_at)} · {auditQuery.data?.length ?? 0} revision{(auditQuery.data?.length ?? 0) === 1 ? "" : "s"}
+                                Last updated {formatRelativeShort(note.updated_at)} · {auditQuery.data?.length ?? 0} revision{(auditQuery.data?.length ?? 0) === 1 ? "" : "s"}
                             </>
                         ) : (
                             "New note - nothing saved yet."
@@ -470,7 +459,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                 <div key={rev.id} className="relative pb-3.5 last:pb-0">
                                     <span className={`absolute top-1 -left-4.5 size-2.5 rounded-full border-2 bg-card shadow-[0_0_0_3px_var(--background)] ${i === 0 ? "border-primary" : "border-border"}`} />
                                     <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">
-                                        {formatRelative(rev.changed_at)} · {rev.field_name}
+                                        {formatRelativeShort(rev.changed_at)} · {rev.field_name}
                                     </div>
                                     <div className="mt-1 text-[12.5px] leading-normal">
                                         <span className="font-mono text-muted-foreground">UID&nbsp;{rev.changed_by}</span> updated <span className="font-mono">{rev.field_name}</span>

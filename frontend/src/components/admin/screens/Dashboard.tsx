@@ -9,7 +9,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
 import { userQueryOptions } from "#/lib/api/user";
-import { getSecretaryAvatarURL } from "#/lib/utils";
+import { formatRelativeShort, getSecretaryAvatarURL } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { HCode, PageHead } from "../AdminShell";
 import { StatTile, StatusDot, Timeline } from "../Primitives";
@@ -44,17 +44,6 @@ function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string
             </span>
         </span>
     );
-}
-
-function formatRelative(iso: string): string {
-    const t = Date.parse(iso);
-    if (!Number.isFinite(t)) return iso;
-    const diff = (Date.now() - t) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(t).toLocaleDateString();
 }
 
 function compactNumber(n: number): string {
@@ -200,7 +189,7 @@ export function Dashboard(): React.ReactElement {
                                                     </td>
                                                     <td className="px-2 py-2 font-mono text-muted-foreground">{serverIdToCode(u.serverId)}</td>
                                                     <td className="hidden px-2 py-2 tabular-nums sm:table-cell">{u.level ?? "-"}</td>
-                                                    <td className="whitespace-nowrap px-2 py-2 text-right text-muted-foreground tabular-nums">{formatRelative(u.createdAt)}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2 text-right text-muted-foreground tabular-nums">{formatRelativeShort(u.createdAt)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

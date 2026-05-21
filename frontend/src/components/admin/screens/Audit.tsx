@@ -10,7 +10,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { globalAuditLogQueryOptions, type IAuditLogActor, type IAuditLogEntry } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { cn, getSecretaryAvatarURL } from "#/lib/utils";
+import { cn, formatRelativeShort, getSecretaryAvatarURL } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
 
 function ActorCell({ actor }: { actor: IAuditLogActor }): React.ReactElement {
@@ -56,17 +56,6 @@ function OperatorTargetCell({ operatorId }: { operatorId: string }): React.React
             <ExternalLinkIcon className="size-3 opacity-60" />
         </Link>
     );
-}
-
-function formatRelative(iso: string): string {
-    const t = Date.parse(iso);
-    if (!Number.isFinite(t)) return iso;
-    const diff = (Date.now() - t) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(t).toLocaleDateString();
 }
 
 type FieldFilter = "all" | "pros" | "cons" | "notes" | "trivia" | "summary";
@@ -209,7 +198,7 @@ export function Audit(): React.ReactElement {
                                 {filtered.map((r) => (
                                     <tr key={r.id} className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
                                         <td className="whitespace-nowrap px-3.5 py-2.5 text-muted-foreground" title={r.changed_at}>
-                                            {formatRelative(r.changed_at)}
+                                            {formatRelativeShort(r.changed_at)}
                                         </td>
                                         <td className="px-3.5 py-2.5">
                                             <ActorCell actor={r.actor} />
