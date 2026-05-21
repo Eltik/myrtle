@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { rarityToNumber } from "#/lib/utils";
 import { CLASS_SORT_ORDER } from "./constants";
 import type { ArrayFilterKey, IFilterOptions, IFilterState, IOperatorView, IUseOperatorFiltersReturn } from "./types";
@@ -71,7 +72,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     // Filter first, then sort - separating the two memos means changing sort
     // doesn't rerun the (more expensive) filter pass.
     const filtered = useMemo(() => {
-        const query = filters.searchQuery.trim().toLowerCase();
+        const query = normalizeForSearch(filters.searchQuery.trim());
         const sets = {
             classes: new Set(filters.classes),
             subclasses: new Set(filters.subclasses),
@@ -87,7 +88,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
 
         return data.filter((op) => {
             if (query) {
-                const haystack = `${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`.toLowerCase();
+                const haystack = normalizeForSearch(`${op.name} ${op.appellation ?? ""} ${op.subProfessionId}`);
                 if (!haystack.includes(query)) return false;
             }
             if (sets.classes.size && !sets.classes.has(op.profession)) return false;
