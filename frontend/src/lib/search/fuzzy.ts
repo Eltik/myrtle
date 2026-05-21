@@ -16,6 +16,41 @@ export interface IScored<T> {
     score: number;
 }
 
+// Non-decomposable Latin letters: NFD leaves these as single base codepoints,
+// so the diacritic-strip regex below doesn't touch them. Map them manually.
+const LATIN_FOLD: Record<string, string> = {
+    ł: "l",
+    Ł: "L",
+    ø: "o",
+    Ø: "O",
+    æ: "ae",
+    Æ: "AE",
+    œ: "oe",
+    Œ: "OE",
+    ß: "ss",
+    đ: "d",
+    Đ: "D",
+    ð: "d",
+    Ð: "D",
+    þ: "th",
+    Þ: "Th",
+    ı: "i",
+    İ: "I",
+};
+const LATIN_FOLD_RE = new RegExp(`[${Object.keys(LATIN_FOLD).join("")}]`, "g");
+
+/**
+ * Folds a string into a diacritic-free, lowercase form suitable for search
+ * comparison: `Młynar` → `mlynar`, `Vigïl` → `vigil`, `Ægir` → `aegir`.
+ */
+export function normalizeForSearch(input: string): string {
+    return input
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(LATIN_FOLD_RE, (c) => LATIN_FOLD[c] ?? c)
+        .toLowerCase();
+}
+
 const SCORE_NAME_EXACT = 1000;
 const SCORE_NAME_PREFIX = 600;
 const SCORE_NAME_WORD_PREFIX = 450;
@@ -29,11 +64,11 @@ const SCORE_EXTRA_SUBSEQUENCE = 40;
  * An empty query returns a small positive score so the list still renders.
  */
 export function scoreMatch(query: string, target: IScoreTarget): number {
-    const q = query.trim().toLowerCase();
+    const q = normalizeForSearch(query.trim());
     if (q.length === 0) return 1;
 
-    const name = target.name.toLowerCase();
-    const extra = (target.extra ?? "").toLowerCase();
+    const name = normalizeForSearch(target.name);
+    const extra = normalizeForSearch(target.extra ?? "");
 
     if (name === q) return SCORE_NAME_EXACT + lengthBonus(name);
     if (name.startsWith(q)) return SCORE_NAME_PREFIX + lengthBonus(name);
