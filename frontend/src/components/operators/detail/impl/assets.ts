@@ -70,3 +70,8 @@ export function moduleIconURL(mod: IModule): string {
 export function specializedIcon(level: number): string {
     return asset(`/textures/arts/specialized_hub/specialized_${level}.png`);
 }
+
+export function baseSkillIcon(skillIconStem: string): string {
+    if (!skillIconStem) return "";
+    return asset(`/textures/spritepack/building_ui_buff_skills_h1_0/${skillIconStem}.png`);
+}

@@ -67,10 +67,14 @@ impl GachaApiItem {
     /// the `star` field from the Yostar API is only used as a fallback.
     /// `missing` collects char_ids that fell back, so the caller can emit a
     /// single deduped warning instead of one line per record.
+    /// `batch_index` is the row's position within its (pull_timestamp, pool_id)
+    /// batch — it distinguishes duplicate operators in the same 10-pull (e.g.
+    /// two of the same 6★) so the DB unique constraint doesn't drop them.
     fn to_record_json(
         &self,
         gd: &GameData,
         missing: &mut std::collections::HashSet<String>,
+        batch_index: i16,
     ) -> serde_json::Value {
         let rarity = rarity_from_gamedata(gd, &self.char_id).unwrap_or_else(|| {
             missing.insert(self.char_id.clone());
@@ -83,6 +87,7 @@ impl GachaApiItem {
             "pull_timestamp": self.at,
             "pool_name": self.pool_name,
             "gacha_type": self.gacha_type(),
+            "batch_index": batch_index,
         })
     }
 }
@@ -176,9 +181,22 @@ pub async fn fetch_and_store(
 
     let gd = state.game_data.load();
     let mut missing: std::collections::HashSet<String> = std::collections::HashSet::new();
+    // Yostar returns every row in a 10-pull with the same `at` (batch
+    // timestamp), so we assign a per-batch positional index to keep duplicates
+    // unique. Iteration order matches the API response, which is stable for a
+    // given batch — what matters is that the (ts, pool, char, index) tuple is
+    // distinct, not that the index has any particular meaning.
+    let mut batch_counters: std::collections::HashMap<(i64, String), i16> =
+        std::collections::HashMap::new();
     let records_json: Vec<serde_json::Value> = all_items
         .iter()
-        .map(|item| item.to_record_json(&gd, &mut missing))
+        .map(|item| {
+            let key = (item.at, item.pool_id.clone());
+            let counter = batch_counters.entry(key).or_insert(0);
+            let idx = *counter;
+            *counter += 1;
+            item.to_record_json(&gd, &mut missing, idx)
+        })
         .collect();
 
     if !missing.is_empty() {

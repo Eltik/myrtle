@@ -587,6 +587,9 @@ pub struct OperatorBaseSkill {
     pub room_type: String,
     pub efficiency: i32,
     pub targets: Vec<String>,
+    /// Sprite stem under `textures/spritepack/building_ui_buff_skills_h1_0/`
+    /// (e.g. `bskill_ctrl_p_spd`). Empty if the source data omits an icon.
+    pub skill_icon: String,
     /// Elite phase required to unlock (0, 1, or 2)
     pub unlock_elite: i32,
     /// Level required to unlock

@@ -40,6 +40,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v015_repair_tier_list_updated_at",
         include_str!("v015_repair_tier_list_updated_at.sql"),
     ),
+    (
+        "v016_gacha_batch_index",
+        include_str!("v016_gacha_batch_index.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

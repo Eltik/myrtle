@@ -14,6 +14,7 @@ pub struct GachaRecord {
     pub pull_timestamp: i64,
     pub pool_name: Option<String>,
     pub gacha_type: Option<String>,
+    pub batch_index: i16,
     pub created_at: DateTime<Utc>,
 }
 
