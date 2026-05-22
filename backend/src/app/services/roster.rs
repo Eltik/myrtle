@@ -598,15 +598,21 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
 /// Returns true when a medal entry from Hypergryph's `user.medal.medals` map
 /// represents an actually earned medal, not in-progress tracking.
 ///
-/// The map includes every medal the account has *seen* (so `fts` is set when
-/// the medal becomes tracked, well before completion). Two earn signals:
+/// Hypergryph's unearned-default row is `{val: 0, fts: 0, rts: 0}` — those are
+/// initialized but never touched by gameplay. Earn signals:
 ///   1. `rts > 0` — medal was claimed/awarded; `rts` is the reach timestamp.
-///   2. `rts == -1` with `val` showing every `[achieved, required]` pair met —
-///      common for story-unlock and one-shot medals that report completion
-///      via `val` but never set an explicit reach timestamp.
+///   2. `rts == -1` with `fts > 0` and `val` being an array:
+///      - Non-empty: every `[achieved, required]` pair must be met (story
+///        unlocks, multi-step medals).
+///      - Empty `[]`: "binary completion" templates with no trackable
+///        condition pairs (`PassStageKilled`, `PassStageWithSimpleCount*`,
+///        etc.). For these, Hypergryph stamps `fts` + `rts=-1` on award and
+///        leaves `val` at its zero-condition shape; that combo is the earn
+///        signal. Empirically, ~30% of activity-medal templates use this
+///        pattern (see Break the Ice medals 01/02/07/09/10).
 ///
-/// Everything else (legacy `rts=0/fts=0` rows from the v2 import, in-progress
-/// tracking with partial val, no val at all) is treated as unearned.
+/// Everything else (rts=0/fts=0 defaults, in-progress with partial val, no
+/// val at all) is treated as unearned.
 pub(crate) fn is_medal_earned(val: &serde_json::Value, fts: i64, rts: i64) -> bool {
     if rts > 0 {
         return true;
@@ -614,10 +620,11 @@ pub(crate) fn is_medal_earned(val: &serde_json::Value, fts: i64, rts: i64) -> bo
     if rts == -1
         && fts > 0
         && let Some(arr) = val.as_array()
-        && !arr.is_empty()
-        && arr.iter().all(is_condition_met)
     {
-        return true;
+        if arr.is_empty() {
+            return true;
+        }
+        return arr.iter().all(is_condition_met);
     }
     false
 }

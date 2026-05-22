@@ -98,6 +98,18 @@ pub async fn item_icon(
     serve_file(&state.config.assets_dir, rel_path, &headers).await
 }
 
+pub async fn medal_icon(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath(medal_id): AxumPath<String>,
+) -> Result<Response, ApiError> {
+    let idx = state.asset_index.load();
+    let rel_path = idx
+        .path(AssetKind::MedalIcon, &medal_id)
+        .ok_or(ApiError::NotFound)?;
+    serve_file(&state.config.assets_dir, rel_path, &headers).await
+}
+
 pub async fn skin_portrait(
     State(state): State<AppState>,
     headers: HeaderMap,

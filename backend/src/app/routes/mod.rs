@@ -43,6 +43,7 @@ pub fn router() -> Router<AppState> {
         .route("/module-big/{id}", get(assets::module_big))
         .route("/enemy-icon/{id}", get(assets::enemy_icon))
         .route("/item-icon/{id}", get(assets::item_icon))
+        .route("/medal-icon/{id}", get(assets::medal_icon))
         .route("/charart/{id}", get(assets::charart))
         .route("/skin-portrait/{id}", get(assets::skin_portrait))
         .route("/assets/{*path}", get(assets::generic))
