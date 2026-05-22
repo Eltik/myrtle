@@ -20,6 +20,9 @@ use crate::core::grade::base::buff_registry::build_registry;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, ShiftAssignment, UserBuilding,
 };
+use crate::core::grade::grade_operators::{
+    UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
+};
 use crate::core::grade::stages::SYNC_GRACE_SECONDS;
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::{
@@ -154,6 +157,20 @@ pub struct OperatorGap {
     pub is_support: bool,
     /// Short tags for what's still left, e.g. ["E2", "MAX_LEVEL", "M3", "MOD3", "TRUST"].
     pub missing: Vec<&'static str>,
+    /// Per-tag projected score gain if the user completed that milestone.
+    /// One entry per tag in `missing`, in the same order. See `UpgradeDelta`
+    /// for the exact fields — surfaces both the operator-local delta and its
+    /// contribution to the user's subscore + total_score.
+    pub deltas: Vec<UpgradeDelta>,
+    /// Combined `operator_grade_delta` if the user did every available upgrade
+    /// path on this operator. ELITE (promote + max level at new phase) and
+    /// MAX_LEVEL (max level at current phase) overlap — only the larger of
+    /// the two is counted. All other tags (M3, MOD3, SL7, POT6, TRUST) are
+    /// independent and added directly.
+    pub subscore_potential_gain: f64,
+    /// Same combination as `subscore_potential_gain` but in `total_score`
+    /// units — overall grade points the user could still pull from this op.
+    pub total_potential_gain: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
@@ -650,6 +667,9 @@ fn build_operator_improvements(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> OperatorImprovements {
+    // Total weight across all invested operators — used to translate per-op
+    // score deltas into a contribution against operator_grade.
+    let total_weight = total_roster_weight(roster, game_data);
     let mut below_milestone: Vec<OperatorGap> = Vec::new();
     for entry in roster {
         let Some(static_op) = game_data.operators.get(&entry.operator_id) else {
@@ -729,6 +749,34 @@ fn build_operator_improvements(
             continue;
         }
 
+        let rarity_weight = rarity_to_weight(&static_op.rarity);
+        let deltas = operator_upgrade_deltas(
+            entry,
+            static_op,
+            &game_data.favor,
+            is_support,
+            &missing,
+            rarity_weight,
+            total_weight,
+        );
+        // ELITE simulates "promote + max level at new phase", which also
+        // covers the level dimension that MAX_LEVEL targets. When both tags
+        // appear, take whichever delta is larger — additivity would double-
+        // count the level dimension.
+        let (mut subscore_overlap, mut total_overlap) = (0.0_f64, 0.0_f64);
+        let (mut subscore_independent, mut total_independent) = (0.0_f64, 0.0_f64);
+        for d in &deltas {
+            if d.tag == "ELITE" || d.tag == "MAX_LEVEL" {
+                subscore_overlap = subscore_overlap.max(d.operator_grade_delta);
+                total_overlap = total_overlap.max(d.total_score_delta);
+            } else {
+                subscore_independent += d.operator_grade_delta;
+                total_independent += d.total_score_delta;
+            }
+        }
+        let subscore_potential_gain = subscore_overlap + subscore_independent;
+        let total_potential_gain = total_overlap + total_independent;
+
         below_milestone.push(OperatorGap {
             operator_id: entry.operator_id.clone(),
             name: static_op.name.clone(),
@@ -741,12 +789,23 @@ fn build_operator_improvements(
             current_trust,
             is_support,
             missing,
+            deltas,
+            subscore_potential_gain,
+            total_potential_gain,
         });
     }
 
+    // Within a rarity bucket, the highest-potential gains rank first so users
+    // see the most worthwhile upgrades at the top. Ties fall back to op id
+    // for a stable order.
     below_milestone.sort_by(|a, b| {
         b.rarity
             .cmp(&a.rarity)
+            .then_with(|| {
+                b.total_potential_gain
+                    .partial_cmp(&a.total_potential_gain)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
             .then_with(|| a.operator_id.cmp(&b.operator_id))
     });
 

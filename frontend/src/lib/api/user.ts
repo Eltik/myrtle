@@ -227,6 +227,17 @@ export interface IMedalImprovements {
     event_in_window_missing: IMedalGap[];
 }
 
+export interface IUpgradeDelta {
+    /** Matching one of the entries in `IOperatorGap.missing` (ELITE, MAX_LEVEL, M3, SL7, MOD3, POT6, TRUST). */
+    tag: string;
+    /** Change in this operator's own score if the milestone were reached (0.0–1.0). */
+    operator_score_delta: number;
+    /** Change in the user's operator_grade subscore (0.0–1.0). */
+    operator_grade_delta: number;
+    /** Change in the user's overall total_score (0.0–1.0). */
+    total_score_delta: number;
+}
+
 export interface IOperatorGap {
     operator_id: string;
     name: string;
@@ -237,7 +248,15 @@ export interface IOperatorGap {
     max_mastery: number;
     max_module_level: number;
     current_trust: number;
+    is_support: boolean;
     missing: string[];
+    /** One delta per tag in `missing` (same order). */
+    deltas: IUpgradeDelta[];
+    /** Combined gain to the Operators subscore (0.0–1.0) if the user did every
+     *  upgrade on this op - ELITE and MAX_LEVEL overlap are deduped. */
+    subscore_potential_gain: number;
+    /** Same combination as `subscore_potential_gain` but in overall total_score units. */
+    total_potential_gain: number;
 }
 
 export interface IOperatorImprovements {
