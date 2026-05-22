@@ -7,6 +7,7 @@ use crate::{
         GameData,
         module::ModuleType,
         operator::{Operator, OperatorModule, OperatorProfession, OperatorRarity},
+        trust::Favor,
     },
     database::models::roster::RosterEntry,
 };
@@ -17,6 +18,15 @@ const WEIGHT_MASTERY: f64 = 30.0;
 const WEIGHT_MODULE: f64 = 25.0;
 const WEIGHT_POTENTIAL: f64 = 10.0;
 const WEIGHT_SKILL_LEVEL: f64 = 20.0;
+/// Trust is mostly passive accrual through usage, so it weighs lighter than
+/// the active investment dimensions but still rewards engagement.
+const WEIGHT_TRUST: f64 = 5.0;
+
+/// Trust percent at which an ordinary operator is considered fully invested.
+/// Reaching this maps to a perfect trust dimension; trust beyond doesn't help
+/// non-support ops. Support-unit operators are held to `max_favor` instead —
+/// publishing an op for others to borrow implies completionist intent.
+const TRUST_MILESTONE_PCT: f64 = 100.0;
 
 /// Maximum partial credit when no milestone (M3 / Mod3) has been reached.
 const PARTIAL_CAP: f64 = 0.30;
@@ -46,7 +56,11 @@ fn parse_modules(roster: &RosterEntry) -> Vec<ModuleEntry> {
     serde_json::from_value(roster.modules.clone()).unwrap_or_default()
 }
 
-pub fn grade_operators(roster: &[RosterEntry], game_data: &GameData) -> f64 {
+pub fn grade_operators(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    support_ids: &HashSet<&str>,
+) -> f64 {
     let roster_map: HashMap<&str, &RosterEntry> =
         roster.iter().map(|r| (r.operator_id.as_str(), r)).collect();
     let mut weighted_sum = 0.0;
@@ -72,7 +86,8 @@ pub fn grade_operators(roster: &[RosterEntry], game_data: &GameData) -> f64 {
         }
 
         let rarity_weight = rarity_to_weight(&static_op.rarity);
-        let op_score = grade_operator(roster_entry, static_op);
+        let is_support = support_ids.contains(op_id.as_str());
+        let op_score = grade_operator(roster_entry, static_op, &game_data.favor, is_support);
 
         weighted_sum += op_score * rarity_weight;
         weight_total += rarity_weight;
@@ -85,7 +100,12 @@ pub fn grade_operators(roster: &[RosterEntry], game_data: &GameData) -> f64 {
     }
 }
 
-fn grade_operator(roster: &RosterEntry, static_op: &Operator) -> f64 {
+fn grade_operator(
+    roster: &RosterEntry,
+    static_op: &Operator,
+    favor: &Favor,
+    is_support: bool,
+) -> f64 {
     let max_elite = (static_op.phases.len() - 1) as f64;
     let num_skills = static_op.skills.len();
     let can_master = num_skills > 0 && static_op.phases.len() >= 3;
@@ -131,6 +151,12 @@ fn grade_operator(roster: &RosterEntry, static_op: &Operator) -> f64 {
     if potential_matters(static_op) {
         let pot_score = (roster.potential - 1) as f64 / 5.0;
         dimensions.push((WEIGHT_POTENTIAL, pot_score));
+    }
+
+    // Trust — only meaningful once the favor table is loaded.
+    if favor.max_trust_pct() > 0.0 {
+        let trust_score = trust_milestone_score(roster, favor, is_support);
+        dimensions.push((WEIGHT_TRUST, trust_score));
     }
 
     let total_weight: f64 = dimensions.iter().map(|(w, _)| w).sum();
@@ -253,6 +279,32 @@ fn module_milestone_score(roster: &RosterEntry, advanced_modules: &[&OperatorMod
 
         (milestone + partial).min(1.0)
     }
+}
+
+/// Returns 0.0–1.0 based on trust progress.
+///
+/// The target trust depends on whether the operator is currently published as
+/// a support unit:
+///   - Ordinary roster ops: full score at `TRUST_MILESTONE_PCT` (100% trust).
+///     Trust beyond doesn't help — 100 is "complete".
+///   - Support-unit ops: full score only at the favor table's max (typically
+///     200% trust). Falls linearly below that, so a published op at 100 trust
+///     scores ~0.5 and drags the dimension down.
+///
+/// All thresholds derive from the favor table so the curve adjusts
+/// automatically if the game ships a different max trust.
+fn trust_milestone_score(roster: &RosterEntry, favor: &Favor, is_support: bool) -> f64 {
+    let trust_pct = favor.trust_pct(roster.favor_point);
+    let max_pct = favor.max_trust_pct();
+    let target = if is_support {
+        max_pct
+    } else {
+        TRUST_MILESTONE_PCT.min(max_pct)
+    };
+    if target <= 0.0 {
+        return 0.0;
+    }
+    (trust_pct / target).clamp(0.0, 1.0)
 }
 
 fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {

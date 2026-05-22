@@ -10,7 +10,7 @@ interface IProps {
     accent: string;
 }
 
-const TAG_ORDER = ["ELITE", "MAX_LEVEL", "M3", "SL7", "MOD3", "POT6"] as const;
+const TAG_ORDER = ["ELITE", "MAX_LEVEL", "M3", "SL7", "MOD3", "POT6", "TRUST"] as const;
 type Tag = (typeof TAG_ORDER)[number];
 
 const TAG_LABEL: Record<Tag, string> = {
@@ -20,6 +20,7 @@ const TAG_LABEL: Record<Tag, string> = {
     SL7: "SL7",
     MOD3: "Mod",
     POT6: "Pot",
+    TRUST: "Trust",
 };
 
 const TAG_DESC: Record<Tag, string> = {
@@ -29,6 +30,7 @@ const TAG_DESC: Record<Tag, string> = {
     SL7: "Skill 7",
     MOD3: "Module L3",
     POT6: "Potential 6",
+    TRUST: "Max trust",
 };
 
 const INITIAL_VISIBLE = 18;
@@ -39,7 +41,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
     // Counts per upgrade type - drives the breakdown summary and the filter chips.
     const tagCounts = useMemo(() => {
-        const counts: Record<Tag, number> = { ELITE: 0, MAX_LEVEL: 0, M3: 0, SL7: 0, MOD3: 0, POT6: 0 };
+        const counts: Record<Tag, number> = { ELITE: 0, MAX_LEVEL: 0, M3: 0, SL7: 0, MOD3: 0, POT6: 0, TRUST: 0 };
         for (const op of ops) {
             for (const tag of op.missing) {
                 if (tag in counts) counts[tag as Tag] += 1;
@@ -181,6 +183,7 @@ const OperatorRow = memo(function OperatorRow({ op, color }: { op: IOperatorGap;
                     E{op.current_elite}·L{op.current_level}
                     {op.max_mastery >= 0 && `·M${op.max_mastery}`}
                     {op.max_module_level >= 0 && `·Mod${op.max_module_level}`}
+                    {op.current_trust > 0 && `·T${Math.round(op.current_trust)}`}
                 </span>
                 {/* Tags live on their own row so they wrap freely instead of fighting the name for horizontal space. */}
                 {sortedTags.length > 0 && (

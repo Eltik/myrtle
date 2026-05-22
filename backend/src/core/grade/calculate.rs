@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -28,8 +30,17 @@ pub async fn calculate_user_grade(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<UserGrade, sqlx::Error> {
-    let (user_roster, building_json, roguelike_data, user_medals, stage_grade, sandbox_grade) = tokio::try_join!(
+    let (
+        user_roster,
+        supports,
+        building_json,
+        roguelike_data,
+        user_medals,
+        stage_grade,
+        sandbox_grade,
+    ) = tokio::try_join!(
         roster::get_roster(pool, user_id),
+        roster::get_supports(pool, user_id),
         building::get_building(pool, user_id),
         roguelike::get_roguelike_progress(pool, user_id),
         medals::get_user_medals(pool, user_id),
@@ -37,7 +48,8 @@ pub async fn calculate_user_grade(
         grade_sandbox(pool, user_id, game_data),
     )?;
 
-    let operator_grade = grade_operators(&user_roster, game_data);
+    let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
+    let operator_grade = grade_operators(&user_roster, game_data, &support_ids);
     let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
     let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
     let medal_grade = grade_medals(&user_medals, &game_data.medals);

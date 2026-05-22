@@ -236,7 +236,7 @@ export interface IOperatorGap {
     current_skill_level: number;
     max_mastery: number;
     max_module_level: number;
-    /** Tags like "ELITE", "MAX_LEVEL", "M3", "MOD3", "SL7", "POT6". */
+    current_trust: number;
     missing: string[];
 }
 
