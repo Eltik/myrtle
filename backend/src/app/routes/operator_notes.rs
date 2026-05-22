@@ -68,7 +68,7 @@ pub async fn update(
     Path(operator_id): Path<String>,
     Json(body): Json<UpdateNoteRequest>,
 ) -> Result<Json<OperatorNote>, ApiError> {
-    if !auth.role.is_tier_list_admin() {
+    if !auth.role.is_any_admin_role() {
         return Err(ApiError::Forbidden);
     }
 

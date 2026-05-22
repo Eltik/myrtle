@@ -38,7 +38,14 @@ function StageBucket({ title, pool, accent }: { title: string; pool: IStagePoolI
             </div>
 
             <StageList title="Missing" stages={pool.missing} accent={accent} emptyLabel="All stages cleared." stateColor="rose" />
-            <StageList title="Cleared, not 3★" subtitle="Run again with a sharper squad to hit 3-star." stages={regularGaps} accent={accent} emptyLabel="Every clear is 3★." stateColor="amber" />
+            <StageList
+                title="Cleared, not 3★"
+                subtitle="Run again with a sharper squad to hit 3-star."
+                stages={regularGaps}
+                accent={accent}
+                emptyLabel={annihilationGaps.length > 0 ? `Every regular clear is 3★. ${annihilationGaps.length} Annihilation map${annihilationGaps.length === 1 ? "" : "s"} below still need${annihilationGaps.length === 1 ? "s" : ""} maxing.` : "Every clear is 3★."}
+                stateColor="amber"
+            />
             {annihilationGaps.length > 0 && <StageList title="Annihilation - not maxed" subtitle="State 2 means cleared but enemy-kill count below the cap. Higher kill counts unlock the Orundum reward tier." stages={annihilationGaps} accent={accent} emptyLabel="All Annihilation maps are maxed." stateColor="amber" />}
         </div>
     );

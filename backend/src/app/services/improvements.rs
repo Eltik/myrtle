@@ -8,7 +8,7 @@ use crate::app::error::ApiError;
 use crate::app::services::roster::is_medal_earned;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
-use crate::core::gamedata::types::medal::MedalDefinition;
+use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainability};
 use crate::core::gamedata::types::operator::{
     Operator, OperatorModule, OperatorProfession, OperatorRarity,
 };
@@ -560,17 +560,29 @@ async fn build_medal_improvements(
         if earned.contains(&medal.medal_id) {
             continue;
         }
-        if medal_is_permanent(medal) {
-            permanent_missing.push(medal_gap(medal, None));
-            continue;
-        }
-        if let Some(end) = medal_event_end(medal) {
-            // Skip events whose window has already closed - the user can't
-            // reach them anymore so it isn't an improvement opportunity.
-            if end > 0 && end < now {
-                continue;
+        match game_data.medals.obtainability(&medal.medal_id, now) {
+            Obtainability::Permanent => {
+                permanent_missing.push(medal_gap(medal, &game_data.medals, None));
             }
-            event_in_window_missing.push(medal_gap(medal, Some(end)));
+            Obtainability::Event { proxy_close_ts } => {
+                // Skip events whose window has already closed - the user can't
+                // reach them anymore so it isn't an improvement opportunity.
+                // (Past-event medals still affect scoring via the event pool
+                // with recency decay - see grade_medals.rs - but they don't
+                // belong in the user's "missing" lists.)
+                if proxy_close_ts > 0 && proxy_close_ts < now {
+                    continue;
+                }
+                event_in_window_missing.push(medal_gap(
+                    medal,
+                    &game_data.medals,
+                    if proxy_close_ts > 0 {
+                        Some(proxy_close_ts)
+                    } else {
+                        None
+                    },
+                ));
+            }
         }
     }
 
@@ -593,38 +605,13 @@ async fn build_medal_improvements(
     })
 }
 
-fn medal_is_permanent(medal: &MedalDefinition) -> bool {
-    if medal.expire_times.is_empty() {
-        return true;
-    }
-    let latest = medal.expire_times.iter().max_by_key(|e| e.start);
-    latest
-        .map(|e| e.expire_type == "PERM" && e.end == -1)
-        .unwrap_or(false)
-}
-
-fn medal_event_end(medal: &MedalDefinition) -> Option<i64> {
-    if medal.expire_times.is_empty() {
-        return None;
-    }
-    let latest = medal.expire_times.iter().max_by_key(|e| e.start)?;
-    if latest.expire_type == "PERM" && latest.end == -1 {
-        return None;
-    }
-    if latest.end > 0 {
-        Some(latest.end)
-    } else {
-        Some(latest.start.max(0))
-    }
-}
-
-fn medal_gap(medal: &MedalDefinition, end_time: Option<i64>) -> MedalGap {
+fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i64>) -> MedalGap {
     MedalGap {
         medal_id: medal.medal_id.clone(),
         name: medal.medal_name.clone(),
         rarity: medal.rarity.clone(),
         get_method: medal.get_method.clone(),
-        description: medal.description.clone(),
+        description: medal_data.resolve_description(&medal.medal_id),
         is_hidden: medal.is_hidden,
         end_time,
     }

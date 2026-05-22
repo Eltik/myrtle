@@ -10,6 +10,7 @@ pub enum AssetKind {
     ModuleBig,    // textures/spritepack/ui_equip_big_img_hub_N/
     EnemyIcon,    // textures/spritepack/icon_enemies_N/
     ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/
+    MedalIcon,    // textures/spritepack/ui_medal_icons_N/
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -21,6 +22,7 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::ModuleBig,
     AssetKind::EnemyIcon,
     AssetKind::ItemIcon,
+    AssetKind::MedalIcon,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -201,6 +203,8 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         || dir_name == "item_icons_stack_hub"
     {
         Some(AssetKind::ItemIcon)
+    } else if dir_name.starts_with("ui_medal_icons_") {
+        Some(AssetKind::MedalIcon)
     } else {
         None
     }
