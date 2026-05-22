@@ -145,7 +145,14 @@ pub struct OperatorGap {
     pub max_mastery: i16,
     /// Highest module level the user has on any advanced module (-1 if no module).
     pub max_module_level: i16,
-    /// Short tags for what's still left, e.g. ["E2", "MAX_LEVEL", "M3", "MOD3"].
+    /// Current trust percent (0–200), resolved from `favor_point` via the
+    /// favor table. Surfaced so the client can show "Trust 87 / 200".
+    pub current_trust: f64,
+    /// True if this operator is currently published as one of the user's
+    /// support units. Support ops are held to the favor table's max trust
+    /// (typically 200%) — ordinary ops are "complete" at 100%.
+    pub is_support: bool,
+    /// Short tags for what's still left, e.g. ["E2", "MAX_LEVEL", "M3", "MOD3", "TRUST"].
     pub missing: Vec<&'static str>,
 }
 
@@ -208,13 +215,17 @@ pub async fn get_improvements(
     let user_id = user.id;
     let game_data = state.game_data.load();
 
-    let roster = roster_queries::get_roster(&state.db, user_id).await?;
+    let (roster, supports) = tokio::try_join!(
+        roster_queries::get_roster(&state.db, user_id),
+        roster_queries::get_supports(&state.db, user_id),
+    )?;
+    let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
 
     let stages = build_stage_improvements(&state.db, user_id, &game_data).await?;
     let roguelike = build_roguelike_improvements(&state.db, user_id, &game_data).await?;
     let sandbox = build_sandbox_improvements(&state.db, user_id, &game_data).await?;
     let medals = build_medal_improvements(&state.db, user_id, &game_data).await?;
-    let operators = build_operator_improvements(&roster, &game_data);
+    let operators = build_operator_improvements(&roster, &game_data, &support_ids);
     let base = build_base_improvements(&state.db, user_id, &roster, &game_data).await?;
 
     Ok(ImprovementsResponse {
@@ -630,9 +641,14 @@ fn rarity_weight(rarity: &str) -> f64 {
     }
 }
 
+/// Trust percent at which an ordinary operator is considered "complete" — must
+/// stay in sync with `core::grade::grade_operators::TRUST_MILESTONE_PCT`.
+const TRUST_COMPLETE_PCT: f64 = 100.0;
+
 fn build_operator_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
+    support_ids: &HashSet<&str>,
 ) -> OperatorImprovements {
     let mut below_milestone: Vec<OperatorGap> = Vec::new();
     for entry in roster {
@@ -673,6 +689,18 @@ fn build_operator_improvements(
             .max()
             .unwrap_or(-1);
 
+        let current_trust = game_data.favor.trust_pct(entry.favor_point);
+        let max_trust = game_data.favor.max_trust_pct();
+        let is_support = support_ids.contains(entry.operator_id.as_str());
+        // Support units must reach the table max (typically 200); ordinary ops
+        // are done at 100. Clamp the target by max_trust so a stripped favor
+        // table doesn't produce an unreachable threshold.
+        let trust_target = if is_support {
+            max_trust
+        } else {
+            TRUST_COMPLETE_PCT.min(max_trust)
+        };
+
         let mut missing: Vec<&'static str> = Vec::new();
         if entry.elite < max_elite {
             missing.push("ELITE");
@@ -693,6 +721,9 @@ fn build_operator_improvements(
         if rarity_potential_matters(static_op) && entry.potential < 5 {
             missing.push("POT6");
         }
+        if trust_target > 0.0 && current_trust < trust_target {
+            missing.push("TRUST");
+        }
 
         if missing.is_empty() {
             continue;
@@ -707,6 +738,8 @@ fn build_operator_improvements(
             current_skill_level: entry.skill_level,
             max_mastery,
             max_module_level,
+            current_trust,
+            is_support,
             missing,
         });
     }
