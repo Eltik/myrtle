@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
-import { Textarea } from "#/components/ui/textarea";
+import { MarkdownEditor } from "#/components/ui/markdown-editor";
 
 const CHANGELOG_MAX = 1000;
 
@@ -60,7 +60,7 @@ export function PublishVersionDialog({ open, publishing, latestVersion, nextVers
                                     {changelog.length} / {CHANGELOG_MAX}
                                 </span>
                             </FieldLabel>
-                            <Textarea id={changelogId} value={changelog} onChange={(e) => setChangelog(e.target.value.slice(0, CHANGELOG_MAX))} placeholder="What changed in this version? e.g. Promoted Texas to S, added Wis'adel." rows={4} autoFocus disabled={publishing} />
+                            <MarkdownEditor id={changelogId} value={changelog} onChange={setChangelog} placeholder="What changed in this version? e.g. Promoted Texas to S, added Wis'adel." rows={4} autoFocus disabled={publishing} maxLength={CHANGELOG_MAX} showHint={false} />
                             <FieldDescription>Optional but recommended. Viewers see this on the version history.</FieldDescription>
                         </Field>
 

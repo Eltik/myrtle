@@ -3,6 +3,7 @@ import { ArrowUpRight, MessageSquareText } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
+import { Markdown } from "#/lib/markdown";
 import { formatProfession, formatRelative, formatSubProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
@@ -65,7 +66,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
 
             <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:space-y-6 sm:px-6 sm:py-6">
                 {tier.description ? (
-                    <p className="wrap-break-word m-0 max-w-prose whitespace-pre-line font-sans text-[14.5px] text-foreground leading-[1.65] tracking-[-0.005em]">{tier.description}</p>
+                    <Markdown text={tier.description} className="wrap-break-word max-w-prose font-sans text-[14.5px] text-foreground leading-[1.65] tracking-[-0.005em]" flush />
                 ) : (
                     <p className="m-0 font-sans text-[13px] text-muted-foreground italic leading-relaxed">The author hasn't written a description for this tier.</p>
                 )}

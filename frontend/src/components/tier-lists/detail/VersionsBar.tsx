@@ -3,6 +3,7 @@ import { CheckIcon, ChevronDownIcon, HistoryIcon, RotateCcwIcon } from "lucide-r
 import { memo, useMemo } from "react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import type { ITierListVersion } from "#/lib/api/tier-lists";
+import { Markdown, stripMarkdown } from "#/lib/markdown";
 import { cn, formatRelative } from "#/lib/utils";
 
 interface IVersionsBarProps {
@@ -22,7 +23,8 @@ function formatPublishedAt(iso: string): string {
 
 function previewChangelog(text: string | null): string | null {
     if (!text) return null;
-    const collapsed = text.replace(/\s+/g, " ").trim();
+    const collapsed = stripMarkdown(text).replace(/\s+/g, " ").trim();
+    if (!collapsed) return null;
     if (collapsed.length <= CHANGELOG_PREVIEW_CHARS) return collapsed;
     return `${collapsed.slice(0, CHANGELOG_PREVIEW_CHARS).trimEnd()}…`;
 }
@@ -116,7 +118,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
                             v{selectedVersion.version} · published <time dateTime={selectedVersion.publishedAt}>{formatPublishedAt(selectedVersion.publishedAt)}</time>
                         </span>
                     </div>
-                    {selectedVersion.changelog && <p className="wrap-anywhere m-0 mt-1.5 font-sans text-[13px] text-foreground leading-relaxed">{selectedVersion.changelog}</p>}
+                    {selectedVersion.changelog && <Markdown text={selectedVersion.changelog} className="wrap-anywhere mt-1.5 font-sans text-[13px] text-foreground leading-relaxed" flush />}
                 </output>
             )}
         </section>

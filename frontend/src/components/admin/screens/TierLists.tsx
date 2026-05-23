@@ -340,13 +340,13 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
     return (
         <>
             <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
-                <div className="pointer-events-auto w-120 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)]">
-                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
+                <div className="pointer-events-auto flex max-h-[92dvh] w-120 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
+                    <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
                         <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · permissions</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Grant access on /{slug}</div>
                     </div>
-                    <div className="flex flex-col gap-4 p-5">
+                    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 [-webkit-overflow-scrolling:touch]">
                         <div className="flex flex-col gap-1.5">
                             <span className="font-medium text-[12px]">Find a Doctor</span>
                             <InputGroup>
@@ -399,7 +399,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
                             <LevelDots level={permission} onChange={setPermission} />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
+                    <div className="flex shrink-0 justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -430,27 +430,33 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
     return (
         <>
             <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
-                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
+                <div className="pointer-events-auto flex max-h-[92dvh] w-105 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
+                    <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
                         <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · flair</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Change flair on /{list.slug}</div>
                     </div>
-                    <div className="p-5">
+                    <div className="min-h-0 flex-1 overflow-y-auto p-5 [-webkit-overflow-scrolling:touch]">
                         <div className="flex flex-wrap items-center gap-2">
-                            <button type="button" onClick={() => setSelected(null)} className={cn("inline-flex h-7 items-center rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === null && "ring-2 ring-ring")}>
+                            <button type="button" onClick={() => setSelected(null)} className={cn("inline-flex h-9 items-center rounded-md border border-border bg-card px-2.5 font-medium text-[13px] sm:h-7 sm:px-2 sm:text-[12px]", selected === null && "ring-2 ring-ring")}>
                                 <span className="mr-1.5 inline-block size-2.5 rounded-xs bg-muted-foreground/40" />
                                 None
                             </button>
                             {flairs.map((f) => (
-                                <button key={f.code} type="button" onClick={() => setSelected(f.id)} className={cn("inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-card px-2 font-medium text-[12px]", selected === f.id && "ring-2 ring-ring")} style={{ color: f.color ?? undefined }}>
+                                <button
+                                    key={f.code}
+                                    type="button"
+                                    onClick={() => setSelected(f.id)}
+                                    className={cn("inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[13px] sm:h-7 sm:px-2 sm:text-[12px]", selected === f.id && "ring-2 ring-ring")}
+                                    style={{ color: f.color ?? undefined }}
+                                >
                                     <span className="size-2.5 rounded-xs" style={{ background: f.color ?? "var(--muted-foreground)" }} />
                                     {f.label}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 border-border border-t p-3.5">
+                    <div className="flex shrink-0 justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>
@@ -478,16 +484,16 @@ function DeleteDialog({ list, onClose, onDeleted }: { list: ITierListBrowseItem;
     return (
         <>
             <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
-            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center">
-                <div className="pointer-events-auto w-105 max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)]">
-                    <div className="border-border border-b px-5 pt-4 pb-3.5">
+            <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
+                <div className="pointer-events-auto flex max-h-[92dvh] w-105 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
+                    <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
                         <span className="font-bold text-[10px] text-destructive-foreground uppercase tracking-[0.22em]">Manage · delete</span>
                         <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Delete /{list.slug}?</div>
                         <div className="mt-1 text-[12.5px] text-muted-foreground">
                             This is permanent. All tiers, placements, and version history for <strong>{list.title}</strong> are destroyed.
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 p-3.5">
+                    <div className="flex shrink-0 justify-end gap-2 p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
                             Cancel
                         </Button>

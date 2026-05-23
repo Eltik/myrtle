@@ -5,6 +5,7 @@ import { Dialog, DialogPopup } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
+import { Markdown } from "#/lib/markdown";
 import { FALLBACK_TIER_COLORS, formatProfession } from "#/lib/utils";
 import { readableTextColor } from "./contrast";
 import { OperatorTile } from "./OperatorTile";
@@ -120,7 +121,13 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
             </div>
 
             <div className="flex flex-col gap-3.5 px-4 py-3.5">
-                {hasDescription ? <p className="m-0 line-clamp-3 font-sans text-[13.5px] text-foreground leading-[1.55] tracking-[-0.005em]">{tier.description}</p> : <p className="m-0 font-sans text-[12.5px] text-muted-foreground italic leading-[1.55]">No description provided for this tier.</p>}
+                {hasDescription ? (
+                    <div className="line-clamp-3 font-sans text-[13.5px] text-foreground leading-[1.55] tracking-[-0.005em]">
+                        <Markdown text={tier.description ?? ""} flush />
+                    </div>
+                ) : (
+                    <p className="m-0 font-sans text-[12.5px] text-muted-foreground italic leading-[1.55]">No description provided for this tier.</p>
+                )}
 
                 {totalOps > 0 && (
                     <>

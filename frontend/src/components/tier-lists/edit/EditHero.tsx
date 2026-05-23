@@ -6,7 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
-import { Textarea } from "#/components/ui/textarea";
+import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
 import type { IPendingChange } from "./state";
 
@@ -75,14 +75,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                 <FieldLabel htmlFor={descId} className="sr-only">
                                     Description
                                 </FieldLabel>
-                                <Textarea
-                                    id={descId}
-                                    value={description}
-                                    onChange={(e) => onDescriptionChange(e.target.value.slice(0, DESC_MAX))}
-                                    placeholder="Add a short description so viewers know what this list is about."
-                                    rows={4}
-                                    className="[&_textarea]:max-h-80 [&_textarea]:min-h-24 [&_textarea]:font-sans [&_textarea]:text-sm"
-                                />
+                                <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder="Add a short description so viewers know what this list is about." rows={4} maxLength={DESC_MAX} showHint={false} />
                             </Field>
 
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">

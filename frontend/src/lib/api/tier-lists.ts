@@ -5,12 +5,20 @@ import { getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server
 import type { IOperator, ITierEntry, ITierList } from "#/components/home/impl/data";
 import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
+import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
+
+const LIST_NAME_LIMIT = 80;
+const LIST_DESCRIPTION_LIMIT = 4000;
+const TIER_NAME_LIMIT = 24;
+const TIER_DESCRIPTION_LIMIT = 1000;
+const PLACEMENT_NOTES_LIMIT = 1000;
+const CHANGELOG_LIMIT = 1000;
 
 function ensureViewSessionId(): string {
     const existing = getCookie(VIEW_SESSION_COOKIE);
@@ -717,8 +725,8 @@ export const createTierListFn = createServerFn({ method: "POST" })
             method: "POST",
             bearerToken: token,
             body: JSON.stringify({
-                name: data.name,
-                description: data.description ?? null,
+                name: sanitizePlainName(data.name, LIST_NAME_LIMIT),
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: LIST_DESCRIPTION_LIMIT, nullOnEmpty: true }),
                 list_type: data.listType,
             }),
         });
@@ -734,8 +742,8 @@ export const updateTierListFn = createServerFn({ method: "POST" })
             method: "PUT",
             bearerToken: token,
             body: JSON.stringify({
-                name: data.name,
-                description: data.description ?? null,
+                name: sanitizePlainName(data.name, LIST_NAME_LIMIT),
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: LIST_DESCRIPTION_LIMIT, nullOnEmpty: true }),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -862,10 +870,10 @@ export const createTierFn = createServerFn({ method: "POST" })
             method: "POST",
             bearerToken: token,
             body: JSON.stringify({
-                name: data.name,
+                name: sanitizePlainName(data.name, TIER_NAME_LIMIT),
                 display_order: data.displayOrder,
                 color: data.color ?? null,
-                description: data.description ?? null,
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: TIER_DESCRIPTION_LIMIT, nullOnEmpty: true }),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -880,10 +888,10 @@ export const updateTierFn = createServerFn({ method: "POST" })
             method: "PUT",
             bearerToken: token,
             body: JSON.stringify({
-                name: data.name,
+                name: sanitizePlainName(data.name, TIER_NAME_LIMIT),
                 display_order: data.displayOrder,
                 color: data.color ?? null,
-                description: data.description ?? null,
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: TIER_DESCRIPTION_LIMIT, nullOnEmpty: true }),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -910,7 +918,7 @@ export const addTierListPlacementFn = createServerFn({ method: "POST" })
                 tier_id: data.tierId,
                 operator_id: data.operatorId,
                 sub_order: data.subOrder ?? 0,
-                notes: data.notes ?? null,
+                notes: sanitizeMarkdownForStorage(data.notes, { maxLength: PLACEMENT_NOTES_LIMIT, nullOnEmpty: true }),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -977,7 +985,7 @@ export const publishTierListVersionFn = createServerFn({ method: "POST" })
         const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/publish`, {
             method: "POST",
             bearerToken: token,
-            body: JSON.stringify({ changelog: data.changelog ?? null }),
+            body: JSON.stringify({ changelog: sanitizeMarkdownForStorage(data.changelog, { maxLength: CHANGELOG_LIMIT, nullOnEmpty: true }) }),
         });
         if (!res.ok) throw await parseError(res);
         return mapTierListVersion((await res.json()) as IBackendTierListVersion);

@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { operatorNoteQueryOptions } from "#/lib/api/operator-notes";
+import { Markdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
 
 interface IOperatorNotesProps {
@@ -12,8 +13,8 @@ interface IOperatorNotesProps {
 
 const COLLAPSED_MAX_HEIGHT = 120;
 
-function ExpandableText({ text }: { text: string }) {
-    const ref = useRef<HTMLParagraphElement>(null);
+function ExpandableText({ text, markdown = false }: { text: string; markdown?: boolean }) {
+    const ref = useRef<HTMLDivElement>(null);
     const [overflows, setOverflows] = useState(false);
     const [expanded, setExpanded] = useState(false);
 
@@ -30,9 +31,9 @@ function ExpandableText({ text }: { text: string }) {
     return (
         <div>
             <div className="relative">
-                <p ref={ref} className={cn("whitespace-pre-line text-muted-foreground text-sm transition-[max-height] duration-200", !expanded && overflows && "overflow-hidden")} style={!expanded && overflows ? { maxHeight: COLLAPSED_MAX_HEIGHT } : undefined}>
-                    {text}
-                </p>
+                <div ref={ref} className={cn("text-muted-foreground text-sm transition-[max-height] duration-200", !markdown && "whitespace-pre-line", !expanded && overflows && "overflow-hidden")} style={!expanded && overflows ? { maxHeight: COLLAPSED_MAX_HEIGHT } : undefined}>
+                    {markdown ? <Markdown text={text} flush /> : text}
+                </div>
                 {!expanded && overflows && <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-secondary/40 to-transparent" />}
             </div>
             {overflows && (
@@ -89,7 +90,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
             <CollapsibleContent>
                 <div className="mt-3 space-y-4">
                     {hasSummary && (
-                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 font-medium">
                             <ExpandableText text={summary} />
                         </div>
                     )}
@@ -102,7 +103,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                         <ThumbsUp className="h-4 w-4 text-green-500" />
                                         <span className="font-medium text-sm">Pros</span>
                                     </div>
-                                    <ExpandableText text={pros} />
+                                    <ExpandableText text={pros} markdown />
                                 </div>
                             )}
                             {hasCons && (
@@ -111,7 +112,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                         <ThumbsDown className="h-4 w-4 text-red-500" />
                                         <span className="font-medium text-sm">Cons</span>
                                     </div>
-                                    <ExpandableText text={cons} />
+                                    <ExpandableText text={cons} markdown />
                                 </div>
                             )}
                         </div>
@@ -123,7 +124,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                 <StickyNote className="h-4 w-4 text-yellow-500" />
                                 <span className="font-medium text-sm">Notes</span>
                             </div>
-                            <ExpandableText text={notesText} />
+                            <ExpandableText text={notesText} markdown />
                         </div>
                     )}
 
@@ -133,7 +134,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                 <Lightbulb className="h-4 w-4 text-amber-500" />
                                 <span className="font-medium text-sm">Trivia</span>
                             </div>
-                            <ExpandableText text={trivia} />
+                            <ExpandableText text={trivia} markdown />
                         </div>
                     )}
 

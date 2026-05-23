@@ -6,6 +6,7 @@ import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
+import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -13,6 +14,7 @@ import { toastManager } from "#/components/ui/toast";
 import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, updateOperatorNoteFn } from "#/lib/api/admin";
 import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { Markdown } from "#/lib/markdown";
 import { cn, formatRelativeShort, formatSubProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
@@ -345,16 +347,16 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                             <Input size="sm" value={summary} onChange={(e) => setSummary(e.target.value)} />
                         </Field>
                         <Field label="Pros">
-                            <textarea value={pros} onChange={(e) => setPros(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
+                            <MarkdownEditor value={pros} onChange={setPros} rows={3} size="sm" placeholder="What's strong about this operator?" showHint={false} />
                         </Field>
                         <Field label="Cons">
-                            <textarea value={cons} onChange={(e) => setCons(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
+                            <MarkdownEditor value={cons} onChange={setCons} rows={3} size="sm" placeholder="Where do they fall short?" showHint={false} />
                         </Field>
                         <Field label="Notes">
-                            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="h-32 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
+                            <MarkdownEditor value={notes} onChange={setNotes} rows={5} size="sm" placeholder="Deeper guidance, usage tips, synergies." showHint={false} />
                         </Field>
                         <Field label="Trivia">
-                            <textarea value={trivia} onChange={(e) => setTrivia(e.target.value)} className="h-20 w-full resize-none rounded-lg border border-input bg-background p-2 font-mono text-[12.5px] text-foreground outline-none focus:border-ring" />
+                            <MarkdownEditor value={trivia} onChange={setTrivia} rows={3} size="sm" placeholder="Lore, fun facts." showHint={false} />
                         </Field>
                         <Field label="Tags">
                             <div className="flex gap-2">
@@ -399,25 +401,25 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                             {pros ? (
                                 <>
                                     <h3 className="mt-2 mb-1.5 font-semibold text-[14px]">Pros</h3>
-                                    <p className="whitespace-pre-line text-muted-foreground">{pros}</p>
+                                    <Markdown text={pros} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {cons ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Cons</h3>
-                                    <p className="whitespace-pre-line text-muted-foreground">{cons}</p>
+                                    <Markdown text={cons} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {notes ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Notes</h3>
-                                    <p className="whitespace-pre-line text-muted-foreground">{notes}</p>
+                                    <Markdown text={notes} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {trivia ? (
                                 <>
                                     <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Trivia</h3>
-                                    <p className="whitespace-pre-line text-muted-foreground">{trivia}</p>
+                                    <Markdown text={trivia} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {tags.length > 0 ? (
