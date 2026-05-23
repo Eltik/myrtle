@@ -4,7 +4,7 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
-import { Textarea } from "#/components/ui/textarea";
+import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { TIER_DESCRIPTION_MAX as DESC_MAX, TIER_NAME_MAX as NAME_MAX } from "../shared";
 import { ColorPicker } from "./ColorPicker";
 import type { IEditTier } from "./state";
@@ -84,7 +84,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
-                            <Textarea id={descId} value={description} onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))} placeholder="When should an operator land here?" rows={5} />
+                            <MarkdownEditor id={descId} value={description} onChange={setDescription} placeholder="When should an operator land here?" rows={5} maxLength={DESC_MAX} showHint={false} />
                             <FieldDescription>Optional. Shown to viewers in the tier hover/detail.</FieldDescription>
                         </Field>
                     </div>

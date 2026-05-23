@@ -1,5 +1,6 @@
 import type { IOperator } from "#/components/home/impl/data";
 import type { ITierListBrowseItem, ITierOperator } from "#/lib/api/tier-lists";
+import { stripMarkdown } from "#/lib/markdown";
 import { FALLBACK_TIER_COLORS } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
@@ -79,7 +80,7 @@ export function matchesBrowseQuery(list: ITierListBrowseItem, q: string): boolea
     if (!q) return true;
     const needle = q.toLowerCase();
     if (list.title.toLowerCase().includes(needle)) return true;
-    if (list.description.toLowerCase().includes(needle)) return true;
+    if (stripMarkdown(list.description).toLowerCase().includes(needle)) return true;
     if (list.author.name.toLowerCase().includes(needle)) return true;
     if (list.flairLabel?.toLowerCase().includes(needle)) return true;
     return false;

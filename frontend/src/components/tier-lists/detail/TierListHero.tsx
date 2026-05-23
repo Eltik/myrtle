@@ -82,7 +82,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                         <Kicker>Tier List</Kicker>
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
-                        {detail.description && <ExpandableDescription text={detail.description} className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
+                        {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
 
                         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-[12.5px] text-muted-foreground">
                             {author ? (
