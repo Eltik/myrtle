@@ -74,6 +74,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Roll a random stage, squad, and modifier for your next run.",
         activeTag: "Tools",
     },
+    "tools-birthdays": {
+        title: "Birthdays",
+        subtitle: "View and track Arknights operator birthdays.",
+        activeTag: "Tools",
+    },
     "tier-lists": {
         title: "Tier Lists",
         subtitle: "Browse official and community tier lists.",
