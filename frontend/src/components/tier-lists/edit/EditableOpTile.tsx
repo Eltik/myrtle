@@ -13,6 +13,7 @@ interface IEditableOpTileProps extends ButtonExtras {
     operator: ITierOperator;
     disabled?: boolean;
     placed?: boolean;
+    hasNote?: boolean;
     onActivate?: (operator: ITierOperator) => void;
     onDragStart?: (operatorId: string) => void;
     onDragEnd?: () => void;
@@ -22,7 +23,7 @@ interface IEditableOpTileProps extends ButtonExtras {
     className?: string;
 }
 
-export function EditableOpTile({ operator, disabled, placed, onActivate, onDragStart, onDragEnd, onDragOverChip, title, ref, className, ...rest }: IEditableOpTileProps) {
+export function EditableOpTile({ operator, disabled, placed, hasNote, onActivate, onDragStart, onDragEnd, onDragOverChip, title, ref, className, ...rest }: IEditableOpTileProps) {
     const color = RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1];
     const isTouchDragging = useIsDragSource(operator.id);
     const startPress = useStartOperatorDrag();
@@ -48,8 +49,8 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
             data-dragging={isDragging || undefined}
             data-disabled={disabled || undefined}
             aria-disabled={disabled || undefined}
-            aria-label={`${operator.name} (${operator.rarity}★)${placed ? " - already placed" : ""}`}
-            title={title ?? `${operator.name} (${operator.rarity}★)`}
+            aria-label={`${operator.name} (${operator.rarity}★)${placed ? " - already placed" : ""}${hasNote ? " - has a description" : ""}`}
+            title={title ?? `${operator.name} (${operator.rarity}★)${hasNote ? " · has a description" : ""}`}
             onClick={() => {
                 if (dragStartedRef.current) {
                     dragStartedRef.current = false;
@@ -105,6 +106,7 @@ export function EditableOpTile({ operator, disabled, placed, onActivate, onDragS
         >
             <OperatorAvatar charId={operator.id} name={operator.name} />
             <span className={styles.opRarity} aria-hidden="true" />
+            {hasNote && <span className={styles.opNote} aria-hidden="true" />}
         </button>
     );
 }

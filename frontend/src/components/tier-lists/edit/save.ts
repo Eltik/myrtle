@@ -1,5 +1,9 @@
-import { addTierListPlacementFn, createTierFn, deleteTierFn, moveTierListPlacementFn, removeTierListPlacementFn, updateTierFn, updateTierListFn } from "#/lib/api/tier-lists";
+import { addTierListPlacementFn, createTierFn, deleteTierFn, moveTierListPlacementFn, removeTierListPlacementFn, updateTierFn, updateTierListFn, updateTierListPlacementDescriptionFn } from "#/lib/api/tier-lists";
 import { type IEditState, type IEditTier, isDraftId } from "./state";
+
+function descFor(state: IEditState, operatorId: string): string {
+    return (state.descriptionByOperatorId[operatorId] ?? "").trim();
+}
 
 export interface ISaveProgress {
     step: number;
@@ -199,7 +203,19 @@ export async function saveEdits({ slug, original, current, onProgress }: ISaveCo
             run: async () => {
                 const resolvedTierId = isDraftId(now.tier.id) ? draftIdToReal.get(now.tier.id) : now.tier.id;
                 if (!resolvedTierId) throw new Error(`Tier "${now.tier.name}" wasn't created`);
-                await addTierListPlacementFn({ data: { slug, tierId: resolvedTierId, operatorId: opId, subOrder: now.subOrder } });
+                await addTierListPlacementFn({ data: { slug, tierId: resolvedTierId, operatorId: opId, subOrder: now.subOrder, description: descFor(current, opId) || null } });
+            },
+        });
+    }
+
+    for (const [opId] of currPlacement) {
+        if (!origPlacement.has(opId)) continue;
+        const next = descFor(current, opId);
+        if (next === descFor(original, opId)) continue;
+        operations.push({
+            label: `Updating description`,
+            run: async () => {
+                await updateTierListPlacementDescriptionFn({ data: { slug, operatorId: opId, description: next || null } });
             },
         });
     }

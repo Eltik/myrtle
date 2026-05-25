@@ -68,7 +68,7 @@ pub struct TierPlacement {
     pub tier_id: Uuid,
     pub operator_id: String,
     pub sub_order: i16,
-    pub notes: Option<String>,
+    pub description: Option<String>,
     pub updated_at: DateTime<Utc>,
 }
 

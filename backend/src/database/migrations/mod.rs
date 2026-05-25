@@ -44,6 +44,14 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v016_gacha_batch_index",
         include_str!("v016_gacha_batch_index.sql"),
     ),
+    (
+        "v017_placement_description",
+        include_str!("v017_placement_description.sql"),
+    ),
+    (
+        "v018_consolidate_placement_notes",
+        include_str!("v018_consolidate_placement_notes.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -1,4 +1,5 @@
 import type { ITierListDetail, ITierOperator } from "#/lib/api/tier-lists";
+import { operatorPlacementNote } from "../shared";
 
 const DRAFT_PREFIX = "draft_";
 
@@ -25,6 +26,7 @@ export interface IEditState {
     description: string;
     tiers: IEditTier[];
     operatorById: Record<string, ITierOperator>;
+    descriptionByOperatorId: Record<string, string>;
 }
 
 export type EditAction =
@@ -35,6 +37,7 @@ export type EditAction =
     | { type: "CLEAR_TIER"; tierId: string }
     | { type: "MOVE_TIER"; tierId: string; direction: "up" | "down" }
     | { type: "PLACE_OPERATOR"; operatorId: string; tierId: string | null; index?: number }
+    | { type: "SET_OPERATOR_DESCRIPTION"; operatorId: string; description: string }
     | { type: "RESET"; state: IEditState };
 
 const DEFAULT_TIER_COLORS = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
@@ -53,9 +56,14 @@ function sanitizeTierColor(raw: string | null | undefined, index: number): strin
 export function detailToEditState(detail: ITierListDetail): IEditState {
     const sortedTiers = [...detail.tiers].sort((a, b) => a.displayOrder - b.displayOrder);
     const operatorById: Record<string, ITierOperator> = {};
+    const descriptionByOperatorId: Record<string, string> = {};
     const tiers: IEditTier[] = sortedTiers.map((t, i) => {
         const sortedOps = [...t.operators].sort((a, b) => a.subOrder - b.subOrder);
-        for (const op of sortedOps) operatorById[op.id] = op;
+        for (const op of sortedOps) {
+            operatorById[op.id] = op;
+            const blurb = operatorPlacementNote(op);
+            if (blurb) descriptionByOperatorId[op.id] = blurb;
+        }
         return {
             id: t.id,
             name: t.name,
@@ -69,6 +77,7 @@ export function detailToEditState(detail: ITierListDetail): IEditState {
         description: detail.description ?? "",
         tiers,
         operatorById,
+        descriptionByOperatorId,
     };
 }
 
@@ -143,6 +152,11 @@ export function editReducer(state: IEditState, action: EditAction): IEditState {
             });
             return { ...state, tiers };
         }
+        case "SET_OPERATOR_DESCRIPTION":
+            return {
+                ...state,
+                descriptionByOperatorId: { ...state.descriptionByOperatorId, [action.operatorId]: action.description },
+            };
         default:
             return state;
     }
@@ -155,8 +169,12 @@ export function placedOperatorIds(state: IEditState): Set<string> {
 }
 
 export interface IPendingChange {
-    kind: "title-desc" | "tier-create" | "tier-update" | "tier-delete" | "tier-move" | "placement-add" | "placement-remove" | "placement-move";
+    kind: "title-desc" | "tier-create" | "tier-update" | "tier-delete" | "tier-move" | "placement-add" | "placement-remove" | "placement-move" | "placement-desc";
     label: string;
+}
+
+function operatorDescription(state: IEditState, operatorId: string): string {
+    return (state.descriptionByOperatorId[operatorId] ?? "").trim();
 }
 
 export function diffStates(original: IEditState, current: IEditState): IPendingChange[] {
@@ -212,10 +230,17 @@ export function diffStates(original: IEditState, current: IEditState): IPendingC
     for (const id of origPlacement.keys()) {
         if (!currPlacement.has(id)) removed++;
     }
+    let described = 0;
+    for (const id of currPlacement.keys()) {
+        if (!origPlacement.has(id)) continue;
+        if (operatorDescription(original, id) !== operatorDescription(current, id)) described++;
+    }
+
     if (added) changes.push({ kind: "placement-add", label: `${added} operator${added === 1 ? "" : "s"} placed` });
     if (moved) changes.push({ kind: "placement-move", label: `${moved} operator${moved === 1 ? "" : "s"} moved` });
     if (reordered) changes.push({ kind: "placement-move", label: `${reordered} operator${reordered === 1 ? "" : "s"} reordered` });
     if (removed) changes.push({ kind: "placement-remove", label: `${removed} operator${removed === 1 ? "" : "s"} unplaced` });
+    if (described) changes.push({ kind: "placement-desc", label: `${described} description${described === 1 ? "" : "s"} edited` });
 
     return changes;
 }

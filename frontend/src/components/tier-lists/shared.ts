@@ -8,7 +8,12 @@ export const LIST_NAME_MAX = 80;
 export const LIST_DESCRIPTION_MAX = 4000;
 export const TIER_NAME_MAX = 24;
 export const TIER_DESCRIPTION_MAX = 1000;
+export const PLACEMENT_DESCRIPTION_MAX = 1000;
 export const DESCRIPTION_CLAMP_THRESHOLD = 280;
+
+export function operatorPlacementNote(op: { description: string | null }): string | null {
+    return op.description?.trim() || null;
+}
 
 export const MAX_THUMB_TIERS = 5;
 const OPS_PER_ROW_BY_COUNT: Record<number, number> = { 1: 4, 2: 6, 3: 7 };
@@ -43,7 +48,7 @@ export function indexEntryToTierOperator(entry: IOperatorIndexEntry): ITierOpera
         position: entry.position,
         nationId: entry.nationId || null,
         subOrder: 0,
-        notes: null,
+        description: null,
         updatedAt: new Date().toISOString(),
     };
 }

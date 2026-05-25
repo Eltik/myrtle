@@ -12,6 +12,7 @@ import type { IEditTier } from "./state";
 interface IEditTierRowProps {
     tier: IEditTier;
     operators: (ITierOperator | undefined)[];
+    notedOperatorIds: Set<string>;
     canMoveUp: boolean;
     canMoveDown: boolean;
     onMoveUp: () => void;
@@ -22,7 +23,7 @@ interface IEditTierRowProps {
     onActivateOperator: (operator: ITierOperator) => void;
 }
 
-export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onActivateOperator }: IEditTierRowProps) {
+export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onActivateOperator }: IEditTierRowProps) {
     const textColor = readableTextColor(tier.color);
     const touchDropIndex = useTierDropIndex(tier.id);
     const [mouseDropIndex, setMouseDropIndex] = useState<number | null>(null);
@@ -104,7 +105,7 @@ export function EditTierRow({ tier, operators, canMoveUp, canMoveDown, onMoveUp,
                         <Fragment key={op.id}>
                             <li className={styles.dropMarker} data-active={showMarker(i) || undefined} aria-hidden="true" />
                             <li className="contents">
-                                <EditableOpTile operator={op} onDragOverChip={handleChipDragOver} onActivate={onActivateOperator} />
+                                <EditableOpTile operator={op} hasNote={notedOperatorIds.has(op.id)} onDragOverChip={handleChipDragOver} onActivate={onActivateOperator} />
                             </li>
                         </Fragment>
                     );

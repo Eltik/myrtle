@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, MessageSquareText } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { Markdown } from "#/lib/markdown";
 import { formatProfession, formatRelative, formatSubProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
+import { ExpandableDescription } from "../ExpandableDescription";
+import { operatorPlacementNote } from "../shared";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
 import { computeTierStats } from "./tierStats";
 
@@ -120,33 +122,30 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                         <p className="rounded-lg border border-border border-dashed bg-muted/20 px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground italic">No operators have been placed in this tier yet.</p>
                     ) : (
                         <ul className="m-0 grid grid-cols-1 gap-1 p-0 sm:grid-cols-2">
-                            {ops.map((op) => (
-                                <li key={op.id} className="list-none">
-                                    <Link to="/operators/$id" params={{ id: op.id }} className="group flex items-center gap-3 rounded-lg border border-transparent px-2 py-2 no-underline transition-colors hover:border-border hover:bg-muted/40">
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px] text-foreground" style={{ borderBottom: `2px solid ${RARITY_VAR[op.rarity]}` }}>
-                                            <OperatorAvatar charId={op.id} name={op.name} />
-                                        </span>
-                                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                            <span className="flex min-w-0 items-center gap-1.5">
+                            {ops.map((op) => {
+                                const note = operatorPlacementNote(op);
+                                return (
+                                    <li key={op.id} className="list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40">
+                                        <Link to="/operators/$id" params={{ id: op.id }} className="group flex items-center gap-3 px-2 py-2 no-underline">
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px] text-foreground" style={{ borderBottom: `2px solid ${RARITY_VAR[op.rarity]}` }}>
+                                                <OperatorAvatar charId={op.id} name={op.name} />
+                                            </span>
+                                            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                 <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
-                                                {op.notes?.trim() && (
-                                                    <MessageSquareText className="h-3 w-3 shrink-0 text-muted-foreground/70" aria-label={`${op.name} has a note`}>
-                                                        <title>Has note</title>
-                                                    </MessageSquareText>
-                                                )}
-                                            </span>
-                                            <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">
-                                                <span style={{ color: RARITY_VAR[op.rarity] }} className="font-semibold">
-                                                    {op.rarity}★
+                                                <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">
+                                                    <span style={{ color: RARITY_VAR[op.rarity] }} className="font-semibold">
+                                                        {op.rarity}★
+                                                    </span>
+                                                    <span className="mx-1 opacity-50">·</span>
+                                                    <span>{formatSubProfession(op.subProfessionId).replace(formatProfession(op.profession), "").trim() || formatProfession(op.profession)}</span>
                                                 </span>
-                                                <span className="mx-1 opacity-50">·</span>
-                                                <span>{formatSubProfession(op.subProfessionId).replace(formatProfession(op.profession), "").trim() || formatProfession(op.profession)}</span>
                                             </span>
-                                        </span>
-                                        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" aria-hidden="true" />
-                                    </Link>
-                                </li>
-                            ))}
+                                            <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" aria-hidden="true" />
+                                        </Link>
+                                        {note && <ExpandableDescription text={note} markdown clampLines={2} threshold={140} className="border-border/60 border-t px-3 py-2 font-sans text-[12.5px] text-muted-foreground leading-[1.55]" />}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </section>

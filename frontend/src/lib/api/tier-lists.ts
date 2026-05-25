@@ -17,7 +17,7 @@ const LIST_NAME_LIMIT = 80;
 const LIST_DESCRIPTION_LIMIT = 4000;
 const TIER_NAME_LIMIT = 24;
 const TIER_DESCRIPTION_LIMIT = 1000;
-const PLACEMENT_NOTES_LIMIT = 1000;
+const PLACEMENT_DESCRIPTION_LIMIT = 1000;
 const CHANGELOG_LIMIT = 1000;
 
 function ensureViewSessionId(): string {
@@ -62,7 +62,7 @@ interface IBackendPlacement {
     tier_id: string;
     operator_id: string;
     sub_order: number;
-    notes: string | null;
+    description: string | null;
     updated_at: string;
 }
 
@@ -354,7 +354,8 @@ export interface ITierOperator {
     position: OperatorPosition;
     nationId: string | null;
     subOrder: number;
-    notes: string | null;
+    /** Editor-authored blurb explaining why this operator sits where it does. */
+    description: string | null;
     /** ISO timestamp of when this placement was last updated. */
     updatedAt: string;
 }
@@ -394,7 +395,7 @@ function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, I
                         position: op.position,
                         nationId: op.nationId || null,
                         subOrder: p.sub_order,
-                        notes: p.notes,
+                        description: p.description,
                         updatedAt: p.updated_at,
                     };
                 })
@@ -578,7 +579,13 @@ export interface IAddPlacementInput {
     tierId: string;
     operatorId: string;
     subOrder?: number;
-    notes?: string | null;
+    description?: string | null;
+}
+
+export interface IUpdatePlacementDescriptionInput {
+    slug: string;
+    operatorId: string;
+    description?: string | null;
 }
 
 export interface IRemovePlacementInput {
@@ -635,7 +642,7 @@ export interface ITierPlacementSummary {
     tierId: string;
     operatorId: string;
     subOrder: number;
-    notes: string | null;
+    description: string | null;
     updatedAt: string;
 }
 
@@ -700,7 +707,7 @@ function mapPlacementSummary(raw: IBackendPlacement): ITierPlacementSummary {
         tierId: raw.tier_id,
         operatorId: raw.operator_id,
         subOrder: raw.sub_order,
-        notes: raw.notes,
+        description: raw.description,
         updatedAt: raw.updated_at,
     };
 }
@@ -918,7 +925,23 @@ export const addTierListPlacementFn = createServerFn({ method: "POST" })
                 tier_id: data.tierId,
                 operator_id: data.operatorId,
                 sub_order: data.subOrder ?? 0,
-                notes: sanitizeMarkdownForStorage(data.notes, { maxLength: PLACEMENT_NOTES_LIMIT, nullOnEmpty: true }),
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: PLACEMENT_DESCRIPTION_LIMIT, nullOnEmpty: true }),
+            }),
+        });
+        if (!res.ok) throw await parseError(res);
+        return mapPlacementSummary((await res.json()) as IBackendPlacement);
+    });
+
+/** Update the editor-authored description of an existing placement, keyed by operator. */
+export const updateTierListPlacementDescriptionFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IUpdatePlacementDescriptionInput) => data)
+    .handler(async ({ data }): Promise<ITierPlacementSummary> => {
+        const token = requireSiteToken();
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}`, {
+            method: "PATCH",
+            bearerToken: token,
+            body: JSON.stringify({
+                description: sanitizeMarkdownForStorage(data.description, { maxLength: PLACEMENT_DESCRIPTION_LIMIT, nullOnEmpty: true }),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -1028,7 +1051,7 @@ export function snapshotToTiers(snapshot: TierListJsonValue, opIndex: Record<str
                 position: op.position,
                 nationId: op.nationId || null,
                 subOrder: typeof p.sub_order === "number" ? p.sub_order : 0,
-                notes: typeof p.notes === "string" ? p.notes : null,
+                description: typeof p.description === "string" ? p.description : null,
                 updatedAt: typeof p.updated_at === "string" ? p.updated_at : new Date(0).toISOString(),
             });
         }
