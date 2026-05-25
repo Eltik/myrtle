@@ -89,6 +89,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "How we protect and handle your personal information.",
         activeTag: "Home",
     },
+    changelog: {
+        title: "Changelog",
+        subtitle: "Every commit and change shipped to myrtle.moe.",
+        activeTag: "Home",
+    },
 } as const satisfies Record<string, IDefaultOgData>;
 
 export type DefaultOgPresetSlug = keyof typeof DEFAULT_OG_PRESETS;

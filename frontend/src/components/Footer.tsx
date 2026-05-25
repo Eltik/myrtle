@@ -12,6 +12,9 @@ export default function Footer() {
                         </span>
                     </div>
                     <nav aria-label="Legal" className="inline-flex items-center gap-4">
+                        <Link to="/changelog" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
+                            Changelog
+                        </Link>
                         <Link to="/terms" className="font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground">
                             Terms
                         </Link>
