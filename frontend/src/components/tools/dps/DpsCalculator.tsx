@@ -22,8 +22,8 @@ import { useDpsResults } from "./impl/useDpsResults";
 import { useDpsState } from "./impl/useDpsState";
 
 const AXES = [
-    { value: "defense", label: X_AXIS_LABELS.defense },
-    { value: "res", label: X_AXIS_LABELS.res },
+    { value: "defense", label: X_AXIS_LABELS.defense, short: "DEF" },
+    { value: "res", label: X_AXIS_LABELS.res, short: "RES %" },
 ];
 const METRICS = (Object.keys(Y_METRIC_LABELS) as YMetric[]).map((k) => ({ value: k, label: Y_METRIC_LABELS[k] }));
 const COLUMNS = [
