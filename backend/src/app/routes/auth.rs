@@ -1,6 +1,7 @@
 use axum::{Json, extract::State};
 use serde::Deserialize;
 
+use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
@@ -86,6 +87,12 @@ pub async fn update_settings(
         body.share_stats,
     )
     .await?;
+    // v_user_profile is read through a 10-minute cache; without this, fresh
+    // reads after the write would still return the old settings.
+    state
+        .cache
+        .invalidate(&CacheKey::User { uid: &auth.uid })
+        .await;
     Ok(Json(serde_json::json!({ "status": "ok" })))
 }
 

@@ -9,8 +9,8 @@ use crate::core::gamedata::{
         material::Materials,
         module::{BattleEquip, RawModules},
         operator::{
-            AllSkillLevelUp, Drone, EvolveCost, LevelUpCostItem, Operator, OperatorBaseSkill,
-            Phase, RawOperator,
+            AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, LevelUpCostItem, Operator,
+            OperatorBaseSkill, Phase, RawOperator,
         },
         skill::Skill,
         skin::SkinData,
@@ -33,6 +33,9 @@ pub struct EnrichCtx<'a> {
     pub assets: &'a AssetIndex,
     pub drones: &'a HashMap<String, Drone>,
     pub building: &'a BuildingDataFile,
+    /// Template groups keyed by *every* id in the group (so a lookup by any
+    /// of Amiya's three form ids returns the same `CharPatchInfo`).
+    pub tmpl_groups: &'a HashMap<String, CharPatchInfo>,
 }
 
 pub fn enrich_all_operators(
@@ -103,13 +106,33 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         enrich_operator_skills(&raw.skills, ctx.skills, ctx.materials, ctx.assets);
     let operator_modules =
         get_operator_modules(id, ctx.modules, ctx.battle_equip, ctx.materials, ctx.assets);
-    let (handbook_item, profile) = get_handbook_and_profile(id, ctx.handbook);
+    // Handbook/profile lore is shared across Amiya's three forms - fall back
+    // to the template default id so branches inherit the base entry.
+    let handbook_id = ctx
+        .tmpl_groups
+        .get(id)
+        .map(|info| info.default.as_str())
+        .unwrap_or(id);
+    let (handbook_item, profile) = get_handbook_and_profile(handbook_id, ctx.handbook);
     let artists = get_artists(id, ctx.skins);
 
     let portrait = ctx.assets.portrait_path(id).map(str::to_owned);
     let skin = ctx.assets.charart_path(id);
 
-    let base_skills = get_operator_base_skills(id, ctx.building);
+    // Base skills are stored only on the default form's BuildingChar entry
+    // (Amiya alt forms have no `building.chars` entry of their own). Walk every
+    // id in the template group so each branch inherits the shared skill list;
+    // dedupe by buff_id in case a future tmpl group genuinely splits skills.
+    let base_skill_lookup_ids: Vec<&str> = match ctx.tmpl_groups.get(id) {
+        Some(info) => info.tmpl_ids.iter().map(String::as_str).collect(),
+        None => vec![id],
+    };
+    let base_skills = get_operator_base_skills(&base_skill_lookup_ids, ctx.building);
+
+    let (tmpl_ids, tmpl_default) = match ctx.tmpl_groups.get(id) {
+        Some(info) => (Some(info.tmpl_ids.clone()), Some(info.default.clone())),
+        None => (None, None),
+    };
 
     Operator {
         id: Some(id.to_owned()),
@@ -152,6 +175,8 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         base_skills,
         portrait,
         skin,
+        tmpl_ids,
+        tmpl_default,
     }
 }
 
@@ -247,25 +272,34 @@ fn enrich_all_skill_level_up(all: &[AllSkillLevelUp], ctx: &EnrichCtx) -> Vec<Al
         .collect()
 }
 
-fn get_operator_base_skills(char_id: &str, building: &BuildingDataFile) -> Vec<OperatorBaseSkill> {
-    let Some(building_char) = building.chars.get(char_id) else {
-        return Vec::new();
-    };
-
-    let mut skills = Vec::new();
-    for slot in &building_char.buff_char {
-        for entry in &slot.buff_data {
-            if let Some(buff) = building.buffs.get(&entry.buff_id) {
-                skills.push(OperatorBaseSkill {
-                    buff_id: entry.buff_id.clone(),
-                    buff_name: buff.buff_name.clone(),
-                    description: buff.description.clone(),
-                    room_type: buff.room_type.clone(),
-                    efficiency: buff.efficiency,
-                    targets: buff.targets.clone(),
-                    unlock_elite: entry.cond.elite(),
-                    unlock_level: entry.cond.level,
-                });
+fn get_operator_base_skills(
+    char_ids: &[&str],
+    building: &BuildingDataFile,
+) -> Vec<OperatorBaseSkill> {
+    let mut skills: Vec<OperatorBaseSkill> = Vec::new();
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for char_id in char_ids {
+        let Some(building_char) = building.chars.get(*char_id) else {
+            continue;
+        };
+        for slot in &building_char.buff_char {
+            for entry in &slot.buff_data {
+                if !seen.insert(entry.buff_id.clone()) {
+                    continue;
+                }
+                if let Some(buff) = building.buffs.get(&entry.buff_id) {
+                    skills.push(OperatorBaseSkill {
+                        buff_id: entry.buff_id.clone(),
+                        buff_name: buff.buff_name.clone(),
+                        description: buff.description.clone(),
+                        room_type: buff.room_type.clone(),
+                        efficiency: buff.efficiency,
+                        targets: buff.targets.clone(),
+                        skill_icon: buff.skill_icon.clone(),
+                        unlock_elite: entry.cond.elite(),
+                        unlock_level: entry.cond.level,
+                    });
+                }
             }
         }
     }

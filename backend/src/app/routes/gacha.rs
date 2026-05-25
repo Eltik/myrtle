@@ -68,6 +68,13 @@ pub async fn enhanced_stats(
     Ok(Json(stats))
 }
 
+pub async fn per_banner_stats(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<services::gacha::BannerPullStat>>, ApiError> {
+    let stats = services::gacha::get_per_banner_stats(&state).await?;
+    Ok(Json(stats))
+}
+
 pub async fn history(
     State(state): State<AppState>,
     auth: AuthUser,

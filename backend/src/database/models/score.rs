@@ -10,6 +10,7 @@ pub struct LeaderboardEntry {
     pub id: Uuid,
     pub uid: String,
     pub nickname: Option<String>,
+    pub nick_number: Option<String>,
     pub level: Option<i16>,
     pub avatar_id: Option<String>,
     pub secretary: Option<String>,
@@ -26,6 +27,11 @@ pub struct LeaderboardEntry {
     pub skin_score: Option<f64>,
     pub rank_global: Option<i64>, // RANK() returns i64
     pub rank_server: Option<i64>,
+    /// Rank change vs. the snapshot baseline for the requested movement interval.
+    /// Positive = climbed. `None` when the caller didn't request movement data
+    /// or no baseline snapshot exists for the user yet.
+    #[sqlx(default)]
+    pub rank_delta: Option<i64>,
 }
 
 /// user_scores table
@@ -42,4 +48,32 @@ pub struct UserScore {
     pub skin_score: f64,
     pub grade: Option<String>,
     pub calculated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct LeaderboardMover {
+    pub uid: String,
+    pub nickname: Option<String>,
+    pub nick_number: Option<String>,
+    pub avatar_id: Option<String>,
+    pub server: String,
+    pub current_rank: i64,
+    pub previous_rank: i64,
+    pub rank_delta: i64, // positive = climbed
+    pub current_score: Option<f64>,
+    pub score_delta: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ServerShare {
+    pub server: String,
+    pub players: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PlayerStanding {
+    pub player: LeaderboardEntry,
+    pub neighbors: Vec<LeaderboardEntry>,
+    pub percentile: f64,         // 0.0 = top, 1.0 = bottom
+    pub rank_delta: Option<i64>, // delta vs. the requested interval; None if no baseline
 }

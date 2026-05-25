@@ -21,7 +21,15 @@ pub fn get_operator_modules(
     modules
         .equip_dict
         .values()
-        .filter(|m| m.char_id == char_id)
+        // For Amiya, every module's `char_id` is the base (`char_002_amiya`)
+        // but branch modules have `tmpl_id` set to their form id. Branch
+        // modules belong only to their tmpl; base modules (no tmpl_id) belong
+        // only to the base form. For regular ops, tmpl_id is always None and
+        // this reduces to a simple `char_id` match.
+        .filter(|m| match &m.tmpl_id {
+            Some(tmpl) => tmpl == char_id,
+            None => m.char_id == char_id,
+        })
         .map(|raw| {
             let data = battle_equip
                 .get(&raw.uni_equip_id)

@@ -5,6 +5,7 @@ use axum::extract::{Path as AxumPath, State};
 use axum::http::{HeaderMap, header};
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
+use tokio::io::{AsyncReadExt, AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
 use crate::app::{error::ApiError, state::AppState};
@@ -31,8 +32,13 @@ pub async fn avatar(
     AxumPath(avatar_id): AxumPath<String>,
 ) -> Result<Response, ApiError> {
     let idx = state.asset_index.load();
+    // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
+    // ship only the `_2` avatar variant — no bare-id file exists. Fall back
+    // to the E2 then E1 suffix so plain char-id lookups still resolve.
     let rel_path = idx
         .path(AssetKind::Avatar, &avatar_id)
+        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_2")))
+        .or_else(|| idx.path(AssetKind::Avatar, &format!("{avatar_id}_1")))
         .ok_or(ApiError::NotFound)?;
 
     serve_file(&state.config.assets_dir, rel_path, &headers).await
@@ -88,6 +94,18 @@ pub async fn item_icon(
     let idx = state.asset_index.load();
     let rel_path = idx
         .path(AssetKind::ItemIcon, &item_id)
+        .ok_or(ApiError::NotFound)?;
+    serve_file(&state.config.assets_dir, rel_path, &headers).await
+}
+
+pub async fn medal_icon(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath(medal_id): AxumPath<String>,
+) -> Result<Response, ApiError> {
+    let idx = state.asset_index.load();
+    let rel_path = idx
+        .path(AssetKind::MedalIcon, &medal_id)
         .ok_or(ApiError::NotFound)?;
     serve_file(&state.config.assets_dir, rel_path, &headers).await
 }
@@ -180,10 +198,7 @@ async fn serve_file(
             StatusCode::NOT_MODIFIED,
             [
                 (header::ETAG, etag),
-                (
-                    header::CACHE_CONTROL,
-                    "public, max-age=86400, stale-while-revalidate=3600".into(),
-                ),
+                (header::CACHE_CONTROL, "no-cache".into()),
             ],
         )
             .into_response());
@@ -194,10 +209,45 @@ async fn serve_file(
         .first_or_octet_stream()
         .to_string();
 
-    // Stream the file
-    let file = tokio::fs::File::open(&full_path)
+    let range = request_headers
+        .get(header::RANGE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| parse_range(v, size));
+
+    let mut file = tokio::fs::File::open(&full_path)
         .await
         .map_err(|_| ApiError::NotFound)?;
+
+    if let Some((start, end)) = range {
+        if start >= size {
+            return Ok((
+                StatusCode::RANGE_NOT_SATISFIABLE,
+                [(header::CONTENT_RANGE, format!("bytes */{size}"))],
+            )
+                .into_response());
+        }
+        let len = end - start + 1;
+        file.seek(std::io::SeekFrom::Start(start))
+            .await
+            .map_err(|_| ApiError::NotFound)?;
+        let stream = ReaderStream::new(file.take(len));
+        let body = axum::body::Body::from_stream(stream);
+
+        return Ok((
+            StatusCode::PARTIAL_CONTENT,
+            [
+                (header::CONTENT_TYPE, mime),
+                (header::CONTENT_LENGTH, len.to_string()),
+                (header::ACCEPT_RANGES, "bytes".into()),
+                (header::CONTENT_RANGE, format!("bytes {start}-{end}/{size}")),
+                (header::ETAG, etag),
+                (header::CACHE_CONTROL, "no-cache".into()),
+            ],
+            body,
+        )
+            .into_response());
+    }
+
     let stream = ReaderStream::new(file);
     let body = axum::body::Body::from_stream(stream);
 
@@ -205,13 +255,49 @@ async fn serve_file(
         [
             (header::CONTENT_TYPE, mime),
             (header::CONTENT_LENGTH, size.to_string()),
+            (header::ACCEPT_RANGES, "bytes".into()),
             (header::ETAG, etag),
-            (
-                header::CACHE_CONTROL,
-                "public, max-age=86400, stale-while-revalidate=3600".into(),
-            ),
+            (header::CACHE_CONTROL, "no-cache".into()),
         ],
         body,
     )
         .into_response())
+}
+
+/// Parse a single-range `Range: bytes=<start>-<end>` header.
+/// Returns inclusive `(start, end)` byte offsets. `start` may be `>= size` when
+/// the request is unsatisfiable; the caller is responsible for emitting 416.
+/// Returns `None` only when the header is unparseable (in which case the
+/// caller falls back to a full 200 response, per RFC 7233).
+fn parse_range(value: &str, size: u64) -> Option<(u64, u64)> {
+    let spec = value.strip_prefix("bytes=")?.trim();
+    if spec.contains(',') {
+        return None;
+    }
+    let (start_s, end_s) = spec.split_once('-')?;
+    let start_s = start_s.trim();
+    let end_s = end_s.trim();
+
+    if start_s.is_empty() {
+        // Suffix range: last N bytes
+        let n: u64 = end_s.parse().ok()?;
+        if n == 0 || size == 0 {
+            return Some((size, size));
+        }
+        let n = n.min(size);
+        return Some((size - n, size - 1));
+    }
+
+    let start: u64 = start_s.parse().ok()?;
+    let end = if end_s.is_empty() {
+        size.saturating_sub(1)
+    } else {
+        end_s.parse::<u64>().ok()?.min(size.saturating_sub(1))
+    };
+    // Reject reversed/inverted ranges; per RFC 7233 these are unsatisfiable
+    // and the server may ignore the header (we fall back to a full 200).
+    if start > end {
+        return None;
+    }
+    Some((start, end))
 }

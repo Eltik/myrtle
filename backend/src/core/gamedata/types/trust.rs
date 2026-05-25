@@ -36,3 +36,28 @@ pub struct Favor {
     #[serde(alias = "FavorFrames")]
     pub favor_frames: Vec<FavorFrame>,
 }
+
+impl Favor {
+    /// Resolves a raw favor-point count to its trust percent (0–200) using the
+    /// frame thresholds shipped with the game. Returns 0.0 if the table is
+    /// empty (e.g. game data not loaded).
+    ///
+    /// Frames are sorted ascending by level in the source data; we scan in
+    /// reverse to grab the highest threshold the player has reached.
+    pub fn trust_pct(&self, favor_point: i32) -> f64 {
+        self.favor_frames
+            .iter()
+            .rev()
+            .find(|f| f.level <= favor_point)
+            .map(|f| f.data.percent)
+            .unwrap_or(0.0)
+    }
+
+    /// Maximum trust percent defined by the table (typically 200.0).
+    pub fn max_trust_pct(&self) -> f64 {
+        self.favor_frames
+            .last()
+            .map(|f| f.data.percent)
+            .unwrap_or(0.0)
+    }
+}

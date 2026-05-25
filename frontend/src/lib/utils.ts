@@ -1,80 +1,77 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { OperatorRarity } from "~/types/api";
+import { env } from "#/env";
+import type { OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
-export function cn(...inputs: ClassValue[]) {
+export function cn(...inputs: ClassValue[]): string {
     return twMerge(clsx(inputs));
 }
 
-/**
- * Creates an array of numbers from start (inclusive) to end (exclusive).
- * Native replacement for lodash range function.
- *
- * @example
- * range(4) // => [0, 1, 2, 3]
- * range(1, 5) // => [1, 2, 3, 4]
- */
-export function range(start: number, end?: number): number[] {
-    if (end === undefined) {
-        end = start;
-        start = 0;
+type User = {
+    secretary?: string | null;
+    secretary_skin_id?: string | null;
+} | null;
+
+const DEFAULT_SECRETARY_ID = "char_002_amiya";
+
+function avatarBase(): string {
+    return env.VITE_BACKEND_URL ?? "";
+}
+
+// Skin IDs from game data look like `char_002_amiya@winter#1`.
+// Backend asset stems use `_` where game data uses `@`, and keep `#`.
+// encodeURIComponent handles `#` → `%23` so it survives the URL path.
+export function toAvatarStem(id: string): string {
+    if (id.includes("@")) {
+        // Skin: char_X@winter#1 → char_X_winter#1
+        return encodeURIComponent(id.replaceAll("@", "_"));
     }
-    const length = Math.max(end - start, 0);
-    return Array.from({ length }, (_, i) => start + i);
+    // Base art: char_X#1 → char_X, char_X#2 → char_X_2
+    const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+)$/, "_$1");
+    return encodeURIComponent(stem);
 }
 
-/**
- * Calculates the relative luminance of a hex color.
- * Uses the WCAG formula for calculating luminance.
- * @param hex - A hex color string (with or without #)
- * @returns A number between 0 (black) and 1 (white)
- */
-export function getLuminance(hex: string): number {
-    const color = hex.replace("#", "");
-
-    const r = Number.parseInt(color.substring(0, 2), 16) / 255;
-    const g = Number.parseInt(color.substring(2, 4), 16) / 255;
-    const b = Number.parseInt(color.substring(4, 6), 16) / 255;
-
-    const toLinear = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-
-    const rLinear = toLinear(r);
-    const gLinear = toLinear(g);
-    const bLinear = toLinear(b);
-
-    return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+export function getAvatarById(charId: string): string {
+    return `${avatarBase()}/api/avatar/${toAvatarStem(charId)}`;
 }
 
-/**
- * Returns the optimal text color (black or white) based on background color.
- * Uses WCAG luminance threshold for accessibility.
- * @param backgroundColor - A hex color string for the background
- * @returns "#000000" for light backgrounds, "#ffffff" for dark backgrounds
- */
-export function getContrastTextColor(backgroundColor: string): string {
-    const luminance = getLuminance(backgroundColor);
-    // Threshold of 0.179 provides good contrast per WCAG guidelines
-    return luminance > 0.179 ? "#000000" : "#ffffff";
+function resolveSecretarySkinId(user: User): string | null {
+    if (!user?.secretary) return null;
+    return user.secretary_skin_id || user.secretary;
 }
 
-export const rarityToNumber = (rarity: OperatorRarity): number => {
-    switch (rarity) {
-        case "TIER_6":
-            return 6;
-        case "TIER_5":
-            return 5;
-        case "TIER_4":
-            return 4;
-        case "TIER_3":
-            return 3;
-        case "TIER_2":
-            return 2;
-        case "TIER_1":
-            return 1;
-        default:
-            return 0;
-    }
-};
+export function getSecretaryAvatarURL(user: User): string {
+    const skinId = resolveSecretarySkinId(user) ?? DEFAULT_SECRETARY_ID;
+    return `${avatarBase()}/api/avatar/${toAvatarStem(skinId)}`;
+}
+
+export const getAvatarSkinId = getSecretaryAvatarURL;
+
+export function rarityToNumber(rarity: OperatorRarityTier | string | null | undefined, fallback: OperatorRarity = 1): OperatorRarity {
+    const n = Number(String(rarity ?? "").replace("TIER_", ""));
+    return n >= 1 && n <= 6 ? (n as OperatorRarity) : fallback;
+}
+
+const NAME_SPLIT_REGEX = /( the )|\(/gi;
+
+/** "Reed (the Flame Shadow)" → { displayName: "Reed", subtitle: "the Flame Shadow" }. */
+export function parseOperatorName(name: string): { displayName: string; subtitle: string | null } {
+    const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
+    return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
+}
+
+/** Locale number formatting - "1,234,567". */
+export function formatNumber(n: number | null | undefined): string {
+    return Number(n ?? 0).toLocaleString("en-US");
+}
+
+/** Brand-style compact: 1.2k / 2.3M (lowercase k, uppercase M). */
+export function formatNumberCompact(n: number | null | undefined): string {
+    const v = Number(n ?? 0);
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+    return formatNumber(v);
+}
 
 export const formatProfession = (profession: string): string => {
     if (!profession) return "Guard";
@@ -132,7 +129,7 @@ export const formatSubProfession = (subProfession: string): string => {
         case "guardian":
             return "Guardian Defender";
         case "unyield":
-            return "Juggernaught Defender";
+            return "Juggernaut Defender";
         case "primprotector":
             return "Primal Protector Defender";
         case "protector":
@@ -263,6 +260,88 @@ export const formatSubProfession = (subProfession: string): string => {
     }
 };
 
+export const SUB_PROFESSION_TO_PROFESSION: Record<string, string> = {
+    blastcaster: "CASTER",
+    chain: "CASTER",
+    corecaster: "CASTER",
+    funnel: "CASTER",
+    mystic: "CASTER",
+    phalanx: "CASTER",
+    primcaster: "CASTER",
+    soulcaster: "CASTER",
+    splashcaster: "CASTER",
+
+    artsprotector: "TANK",
+    duelist: "TANK",
+    fortress: "TANK",
+    guardian: "TANK",
+    unyield: "TANK",
+    primprotector: "TANK",
+    protector: "TANK",
+    shotprotector: "TANK",
+
+    artsfghter: "WARRIOR",
+    centurion: "WARRIOR",
+    crusher: "WARRIOR",
+    fearless: "WARRIOR",
+    hammer: "WARRIOR",
+    fighter: "WARRIOR",
+    instructor: "WARRIOR",
+    librator: "WARRIOR",
+    lord: "WARRIOR",
+    mercenary: "WARRIOR",
+    primguard: "WARRIOR",
+    reaper: "WARRIOR",
+    musha: "WARRIOR",
+    sword: "WARRIOR",
+
+    chainhealer: "MEDIC",
+    incantationmedic: "MEDIC",
+    physician: "MEDIC",
+    ringhealer: "MEDIC",
+    healer: "MEDIC",
+    wandermedic: "MEDIC",
+
+    aoesniper: "SNIPER",
+    siegesniper: "SNIPER",
+    longrange: "SNIPER",
+    bombarder: "SNIPER",
+    closerange: "SNIPER",
+    hunter: "SNIPER",
+    loopshooter: "SNIPER",
+    fastshot: "SNIPER",
+    skybreaker: "SNIPER",
+    reaperrange: "SNIPER",
+
+    alchemist: "SPECIAL",
+    stalker: "SPECIAL",
+    dollkeeper: "SPECIAL",
+    executor: "SPECIAL",
+    geek: "SPECIAL",
+    hookmaster: "SPECIAL",
+    merchant: "SPECIAL",
+    pusher: "SPECIAL",
+    skywalker: "SPECIAL",
+    traper: "SPECIAL",
+
+    blessing: "SUPPORT",
+    craftsman: "SUPPORT",
+    bard: "SUPPORT",
+    slower: "SUPPORT",
+    underminer: "SUPPORT",
+    ritualist: "SUPPORT",
+    summoner: "SUPPORT",
+
+    agent: "PIONEER",
+    charger: "PIONEER",
+    pioneer: "PIONEER",
+    bearer: "PIONEER",
+    counsellor: "PIONEER",
+    tactician: "PIONEER",
+};
+
+export const subProfessionToProfession = (subProfession: string): string => SUB_PROFESSION_TO_PROFESSION[subProfession] ?? "OTHER";
+
 export const formatNationId = (nationId: string) => {
     switch (nationId.toLowerCase()) {
         case "rhodes":
@@ -371,100 +450,134 @@ export function capitalize(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
+export const DEFAULT_AVATAR_ID = "char_002_amiya";
+
+export function formatRelative(iso: string | null | undefined): string {
+    if (!iso) return "-";
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return "-";
+    const diffMs = Date.now() - then;
+    if (diffMs < 60_000) return "just now";
+    const mins = Math.floor(diffMs / 60_000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return "yesterday";
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks === 1) return "last week";
+    if (weeks < 5) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+}
+
 /**
- * Normalizes a skin ID for use in avatar URLs.
- * Replaces "@" or "#" with "_" and URL encodes the result.
+ * Verbose "5 min ago / 3 h ago / 2 d ago" style used by admin dashboards and
+ * the settings page. Falls back to a locale date for anything older than 30
+ * days. Accepts either an ISO timestamp or a unix epoch (seconds or ms).
  */
-export function normalizeSkinId(skinId: string): string {
-    if (skinId.includes("@")) {
-        return encodeURIComponent(skinId.replaceAll("@", "_"));
+export function formatRelativeShort(input: string | number | null | undefined): string {
+    if (input == null) return "-";
+    let ms: number;
+    if (typeof input === "number") {
+        ms = input > 1e12 ? input : input * 1000;
+    } else {
+        ms = Date.parse(input);
     }
-    return encodeURIComponent(skinId.replaceAll("#", "_"));
+    if (!Number.isFinite(ms)) return typeof input === "string" ? input : "-";
+    const diff = (Date.now() - ms) / 1000;
+    if (diff < 0) return "just now";
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
+    return new Date(ms).toLocaleDateString();
 }
 
-/**
- * Returns the GitHub avatar URL for a given character/skin ID.
- */
-export function getAvatarById(charId: string): string {
-    return `https://raw.githubusercontent.com/yuanyan3060/ArknightsGameResource/main/avatar/${normalizeSkinId(charId)}.png`;
+export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {
+    if (maxLevel <= 1) return base;
+    return Math.round(base + ((level - 1) * (max - base)) / (maxLevel - 1));
 }
 
-/**
- * Gets the avatar URL for a user's secretary.
- * Handles both default skins (ending in #1) and purchased skins (containing @).
- * Uses the dynamic avatar route which looks up the correct directory.
- */
-export function getAvatarSkinId(user: { secretary?: string | null; secretary_skin_id?: string | null } | null): string {
-    return getSecretaryAvatarURL(user);
+export function downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-/**
- * Extracts the star count (1-6) from a rarity string like "TIER_6".
- * Returns 0 if the format doesn't match.
- */
-export function getRarityStarCount(rarity: string): number {
-    const match = rarity?.match(/TIER_(\d)/);
-    return match ? Number.parseInt(match[1] ?? "", 10) : 0;
+export function loadImage(url: string, options?: { crossOrigin?: boolean }): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        if (options?.crossOrigin) img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+        img.src = url;
+    });
 }
 
-/**
- * Maps a profession code to its icon name for CDN paths.
- */
-export function getProfessionIconName(profession: string): string {
-    if (!profession) return "warrior";
-    const iconMap: Record<string, string> = {
-        WARRIOR: "warrior",
-        SNIPER: "sniper",
-        TANK: "tank",
-        MEDIC: "medic",
-        SUPPORT: "support",
-        CASTER: "caster",
-        SPECIAL: "special",
-        PIONEER: "pioneer",
-    };
-    return iconMap[profession.toUpperCase()] ?? profession.toLowerCase() ?? "warrior";
-}
-
-/**
- * Gets the operator image URL based on character ID, skin, evolve phase, and template.
- * Handles different skin types: default skins, E2 skins, and custom skins.
- */
-export function getOperatorImageURL(charId: string, skin: string, evolvePhase: number, currentTmpl?: string | null, tmpl?: Record<string, { skinId: string }> | null): string {
-    let skinId = skin;
-
-    if (currentTmpl && tmpl && tmpl[currentTmpl]) {
-        skinId = tmpl[currentTmpl].skinId;
+export function rarityGradient(rarity: number): string {
+    switch (rarity) {
+        case 6:
+            return "linear-gradient(155deg,#f7d166,#f59e0b)";
+        case 5:
+            return "linear-gradient(155deg,#f7e79e,#d4b94a)";
+        case 4:
+            return "linear-gradient(155deg,#bcabdb,#8a72ad)";
+        case 3:
+            return "linear-gradient(155deg,#88c8e3,#5a9bbf)";
+        case 2:
+            return "linear-gradient(155deg,#7ef2a3,#4fc97a)";
+        default:
+            return "linear-gradient(155deg,#cfcfcf,#9a9a9a)";
     }
-
-    if (!skinId) {
-        const suffix = evolvePhase >= 2 ? "_2" : "_1";
-        return `/api/cdn/upk/chararts/${charId}/${charId}${suffix}.png`;
-    }
-
-    if (skinId.includes("@")) {
-        const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return `/api/cdn/upk/skinpack/${charId}/${normalizedSkinId}.png`;
-    }
-
-    const normalizedSkinId = skinId.replaceAll("@", "_").replaceAll("#", "_");
-    return `/api/cdn/upk/chararts/${charId}/${normalizedSkinId}.png`;
 }
 
-/**
- * Gets the avatar URL for a user's secretary using the dynamic avatar route.
- * The backend will look up the correct directory from asset mappings.
- */
-export function getSecretaryAvatarURL(user: { secretary?: string | null; secretary_skin_id?: string | null } | null): string {
-    const DEFAULT_AVATAR = "/api/cdn/avatar/char_002_amiya";
+export const RARITY_HEX: Record<number, string> = {
+    6: "#f7a452",
+    5: "#f7e79e",
+    4: "#bcabdb",
+    3: "#88c8e3",
+    2: "#7ef2a3",
+    1: "#ffffff",
+};
 
-    if (!user?.secretary) return DEFAULT_AVATAR;
+export const RARITY_HEX_MUTED: Record<number, string> = {
+    ...RARITY_HEX,
+    1: "#b5b5b5",
+};
 
-    const secretaryId = user.secretary;
-    const secretarySkinId = user.secretary_skin_id ?? "";
+export const RARITY_LABELS: Record<number, string> = {
+    6: "6★",
+    5: "5★",
+    4: "4★",
+    3: "3★",
+    2: "2★",
+    1: "1★",
+};
 
-    const skinId = !secretarySkinId.includes("@") && secretarySkinId.endsWith("#1") ? secretaryId : secretarySkinId;
+export const FALLBACK_TIER_COLORS = ["oklch(0.62 0.21 24)", "oklch(0.70 0.17 50)", "oklch(0.78 0.15 92)", "oklch(0.66 0.17 150)", "oklch(0.60 0.15 230)", "oklch(0.55 0.18 290)", "oklch(0.50 0.04 285)"] as const;
 
-    const normalizedSkinId = skinId.includes("@") ? skinId.replaceAll("@", "_").replaceAll("#", "%23") : skinId.replaceAll("@", "_").replaceAll("#", "_");
-
-    return `/api/cdn/avatar/${normalizedSkinId}`;
+export function rarityStarColor(rarity: number): string {
+    switch (rarity) {
+        case 6:
+            return "#f7a452";
+        case 5:
+            return "#f7e79e";
+        case 4:
+            return "#bcabdb";
+        case 3:
+            return "#88c8e3";
+        case 2:
+            return "#7ef2a3";
+        default:
+            return "#b5b5b5";
+    }
 }

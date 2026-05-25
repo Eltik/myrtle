@@ -1,10 +1,13 @@
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
-use crate::dps::engine::{self, DpsResult};
+use crate::core::gamedata::types::module::ModuleType;
+use crate::core::gamedata::types::operator::Operator;
+use crate::dps::engine::{self, DpsResult, HpsResult, OperatorFormula};
 use crate::dps::operator_unit::{
     EnemyStats, OperatorBuffs, OperatorConditionals, OperatorParams, OperatorShred,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,29 +31,95 @@ pub struct OperatorListEntry {
     pub conditionals: Vec<ConditionalInfo>,
 }
 
-pub fn list_operators() -> Vec<OperatorListEntry> {
-    engine::supported_operators()
+type OperatorModuleRef<'a> = &'a crate::core::gamedata::types::operator::OperatorModule;
+
+/// The operator's ADVANCED modules, sorted by uniequip number — the same order
+/// `OperatorData` uses, so a formula module's position indexes into it.
+fn advanced_modules_sorted(operator: &Operator) -> Vec<OperatorModuleRef<'_>> {
+    let mut mods: Vec<_> = operator
+        .modules
         .iter()
-        .map(|(id, formula)| OperatorListEntry {
-            id: id.clone(),
-            name: formula.name.clone(),
-            available_skills: formula.available_skills.clone(),
-            available_modules: formula.available_modules.clone(),
-            default_skill: formula.default_skill,
-            default_module: formula.default_module,
-            conditionals: formula
-                .conditionals
-                .iter()
-                .map(|c| ConditionalInfo {
-                    conditional_type: c.cond_type.clone(),
-                    name: c.name.clone(),
-                    default: c.default,
-                    skills: c.skills.clone(),
-                    modules: c.modules.clone(),
-                })
-                .collect(),
+        .filter(|m| m.module.module_type == ModuleType::Advanced)
+        .collect();
+    mods.sort_by_key(|m| {
+        m.module
+            .id
+            .as_deref()
+            .and_then(|id| id.split('_').nth(1))
+            .and_then(|n| n.parse::<i32>().ok())
+            .unwrap_or(i32::MAX)
+    });
+    mods
+}
+
+/// Whether a formula module at `pos` resolves to a physical module present in
+/// the current game data. Mirrors the resolution in `OperatorUnit::new`.
+fn module_resolvable(sorted: &[OperatorModuleRef<'_>], pos: usize, module_value: i32) -> bool {
+    sorted.get(pos).is_some()
+        || sorted
+            .iter()
+            .any(|m| m.module.char_equip_order == module_value)
+}
+
+fn build_list_entries(
+    state: &AppState,
+    formulas: &HashMap<String, OperatorFormula>,
+) -> Vec<OperatorListEntry> {
+    let gd = state.game_data.load();
+    formulas
+        .iter()
+        .map(|(id, formula)| {
+            // Only advertise modules the current game data can actually resolve.
+            let available_modules: Vec<i32> = match gd.operators.get(id) {
+                Some(operator) => {
+                    let sorted = advanced_modules_sorted(operator);
+                    formula
+                        .available_modules
+                        .iter()
+                        .copied()
+                        .enumerate()
+                        .filter(|&(pos, m)| module_resolvable(&sorted, pos, m))
+                        .map(|(_, m)| m)
+                        .collect()
+                }
+                // Operator absent from game data entirely — advertise nothing.
+                None => Vec::new(),
+            };
+            // Keep default_module consistent: if it's been filtered out, drop it.
+            let default_module = if available_modules.contains(&formula.default_module) {
+                formula.default_module
+            } else {
+                0
+            };
+            OperatorListEntry {
+                id: id.clone(),
+                name: formula.name.clone(),
+                available_skills: formula.available_skills.clone(),
+                available_modules,
+                default_skill: formula.default_skill,
+                default_module,
+                conditionals: formula
+                    .conditionals
+                    .iter()
+                    .map(|c| ConditionalInfo {
+                        conditional_type: c.cond_type.clone(),
+                        name: c.name.clone(),
+                        default: c.default,
+                        skills: c.skills.clone(),
+                        modules: c.modules.clone(),
+                    })
+                    .collect(),
+            }
         })
         .collect()
+}
+
+pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
+    build_list_entries(state, engine::supported_operators())
+}
+
+pub fn list_healers(state: &AppState) -> Vec<OperatorListEntry> {
+    build_list_entries(state, engine::supported_healers())
 }
 
 #[derive(Deserialize)]
@@ -74,6 +143,8 @@ pub struct CalculateRequest {
     pub trust: Option<i32>,
     pub skill_index: Option<i32>,
     pub mastery_level: Option<i32>,
+    /// Explicit pre-mastery skill level (1-7). Overrides `mastery_level` when set.
+    pub skill_level: Option<i32>,
     pub module_index: Option<i32>,
     pub module_level: Option<i32>,
     // Enemy
@@ -108,20 +179,15 @@ pub struct RequestShred {
     pub res_flat: Option<i32>,
 }
 
-pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
-    let gd = state.game_data.load();
-    let operator = gd
-        .operators
-        .get(&req.operator_id)
-        .ok_or(ApiError::NotFound)?;
-
-    let params = OperatorParams {
+fn build_params(req: CalculateRequest) -> OperatorParams {
+    OperatorParams {
         promotion: req.promotion,
         level: req.level,
         potential: req.potential,
         trust: req.trust.or(Some(100)),
         skill_index: req.skill_index,
         mastery_level: req.mastery_level,
+        skill_level: req.skill_level,
         module_index: req.module_index,
         module_level: req.module_level,
         buffs: req
@@ -150,14 +216,37 @@ pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, A
         }),
         all_cond: req.all_cond,
         ..Default::default()
-    };
+    }
+}
+
+pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
+    let gd = state.game_data.load();
+    let operator = gd
+        .operators
+        .get(&req.operator_id)
+        .ok_or(ApiError::NotFound)?;
 
     let enemy = EnemyStats {
         defense: req.defense.unwrap_or(0.0),
         res: req.res.unwrap_or(0.0),
     };
+    let params = build_params(req);
 
     engine::calculate_dps(operator, params, &enemy).ok_or(ApiError::BadRequest(
         "DPS calculation failed for this operator/config".into(),
+    ))
+}
+
+pub fn calculate_hps(state: &AppState, req: CalculateRequest) -> Result<HpsResult, ApiError> {
+    let gd = state.game_data.load();
+    let operator = gd
+        .operators
+        .get(&req.operator_id)
+        .ok_or(ApiError::NotFound)?;
+
+    let params = build_params(req);
+
+    engine::calculate_hps(operator, params).ok_or(ApiError::BadRequest(
+        "HPS calculation failed for this operator/config".into(),
     ))
 }

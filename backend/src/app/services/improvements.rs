@@ -1,0 +1,972 @@
+use std::collections::{HashMap, HashSet};
+
+use serde::Serialize;
+use sqlx::PgPool;
+use uuid::Uuid;
+
+use crate::app::error::ApiError;
+use crate::app::services::roster::is_medal_earned;
+use crate::app::state::AppState;
+use crate::core::gamedata::types::GameData;
+use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainability};
+use crate::core::gamedata::types::operator::{
+    Operator, OperatorModule, OperatorProfession, OperatorRarity,
+};
+use crate::core::gamedata::types::stage_universe::EventEntry;
+use crate::core::grade::base::assignment::{
+    compute_optimal_assignment, compute_sustained_assignment,
+};
+use crate::core::grade::base::buff_registry::build_registry;
+use crate::core::grade::base::types::{
+    BaseAssignment, OperatorBaseProfile, RoomAssignment, ShiftAssignment, UserBuilding,
+};
+use crate::core::grade::grade_operators::{
+    UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
+};
+use crate::core::grade::stages::SYNC_GRACE_SECONDS;
+use crate::database::models::roster::RosterEntry;
+use crate::database::queries::{
+    building as building_queries, medals as medal_queries, roguelike as roguelike_queries,
+    roster as roster_queries, sandbox as sandbox_queries, stages as stage_queries, users,
+};
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ImprovementsResponse {
+    pub uid: String,
+    pub stages: StageImprovements,
+    pub roguelike: Vec<RoguelikeThemeImprovement>,
+    pub sandbox: SandboxImprovements,
+    pub medals: MedalImprovements,
+    pub operators: OperatorImprovements,
+    pub base: BaseImprovements,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct StageImprovements {
+    pub permanent: StagePoolImprovements,
+    pub event: StagePoolImprovements,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct StagePoolImprovements {
+    pub total: usize,
+    pub cleared: usize,
+    pub three_starred: usize,
+    /// Stages in the user's server-scoped universe that they have not cleared
+    /// (state < 2). Sorted by weight desc.
+    pub missing: Vec<StageGap>,
+    /// Stages cleared but not yet 3-starred. Sorted by weight desc.
+    pub not_three_starred: Vec<StageGap>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct StageGap {
+    pub stage_id: String,
+    pub code: String,
+    pub name: Option<String>,
+    pub zone_id: String,
+    pub weight: f64,
+    pub state: i16,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoguelikeThemeImprovement {
+    pub theme_id: String,
+    pub theme_name: String,
+    pub endings: ProgressPair,
+    pub difficulty: RoguelikeDifficulty,
+    pub collectibles: RoguelikeCollectibles,
+    pub bp: ProgressPair,
+    pub challenges: ProgressPair,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct ProgressPair {
+    pub current: usize,
+    pub max: usize,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoguelikeDifficulty {
+    pub highest_cleared: i32,
+    pub max: i32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoguelikeCollectibles {
+    pub relics: ProgressPair,
+    pub capsules: ProgressPair,
+    pub bands: ProgressPair,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct SandboxImprovements {
+    pub achievements: ProgressPair,
+    pub nodes: ProgressPair,
+    pub tech: ProgressPair,
+    pub quests: ProgressPair,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MedalImprovements {
+    /// Permanent medals (no expiry / latest entry is `PERM:-1`) the user
+    /// hasn't earned. Sorted by rarity weight desc.
+    pub permanent_missing: Vec<MedalGap>,
+    /// Event medals still in their reachable window the user hasn't earned.
+    /// Sorted by end_time asc (most urgent first).
+    pub event_in_window_missing: Vec<MedalGap>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MedalGap {
+    pub medal_id: String,
+    pub name: String,
+    pub rarity: String,
+    pub get_method: String,
+    pub description: String,
+    pub is_hidden: bool,
+    /// Event end-timestamp in unix seconds, if this is an event medal.
+    pub end_time: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OperatorImprovements {
+    /// Owned operators that haven't reached their full investment milestones.
+    /// Each entry lists what's still upgradeable. Sorted by rarity desc.
+    pub below_milestone: Vec<OperatorGap>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OperatorGap {
+    pub operator_id: String,
+    pub name: String,
+    pub rarity: i16,
+    pub current_elite: i16,
+    pub current_level: i16,
+    pub current_skill_level: i16,
+    /// Highest mastery the user has on any of this operator's skills (-1 if no skills).
+    pub max_mastery: i16,
+    /// Highest module level the user has on any advanced module (-1 if no module).
+    pub max_module_level: i16,
+    /// Current trust percent (0–200), resolved from `favor_point` via the
+    /// favor table. Surfaced so the client can show "Trust 87 / 200".
+    pub current_trust: f64,
+    /// True if this operator is currently published as one of the user's
+    /// support units. Support ops are held to the favor table's max trust
+    /// (typically 200%) — ordinary ops are "complete" at 100%.
+    pub is_support: bool,
+    /// Short tags for what's still left, e.g. ["E2", "MAX_LEVEL", "M3", "MOD3", "TRUST"].
+    pub missing: Vec<&'static str>,
+    /// Per-tag projected score gain if the user completed that milestone.
+    /// One entry per tag in `missing`, in the same order. See `UpgradeDelta`
+    /// for the exact fields — surfaces both the operator-local delta and its
+    /// contribution to the user's subscore + total_score.
+    pub deltas: Vec<UpgradeDelta>,
+    /// Combined `operator_grade_delta` if the user did every available upgrade
+    /// path on this operator. ELITE (promote + max level at new phase) and
+    /// MAX_LEVEL (max level at current phase) overlap — only the larger of
+    /// the two is counted. All other tags (M3, MOD3, SL7, POT6, TRUST) are
+    /// independent and added directly.
+    pub subscore_potential_gain: f64,
+    /// Same combination as `subscore_potential_gain` but in `total_score`
+    /// units — overall grade points the user could still pull from this op.
+    pub total_potential_gain: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Default)]
+pub struct BaseImprovements {
+    /// Single-shift peak assignment - the highest-efficiency arrangement of
+    /// the user's roster across their existing rooms. Useful as a "what's
+    /// possible right now" view.
+    pub optimal: Option<BaseAssignmentDto>,
+    /// Two-shift rotation for sustained 24/7 operation. `sustained_efficiency`
+    /// is the average of both shifts and is what the base score uses.
+    pub rotation: Option<RotationDto>,
+    /// User's room layout (counts + levels per room type)
+    pub layout: Vec<RoomLayoutEntry>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct BaseAssignmentDto {
+    pub rooms: Vec<RoomAssignmentDto>,
+    pub total_production_efficiency: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationDto {
+    pub shift_a: BaseAssignmentDto,
+    pub shift_b: BaseAssignmentDto,
+    pub sustained_efficiency: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoomAssignmentDto {
+    pub slot_id: String,
+    pub room_type: String,
+    pub level: i32,
+    pub formula_type: Option<String>,
+    pub total_efficiency: f64,
+    pub operators: Vec<AssignedOperator>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AssignedOperator {
+    pub operator_id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoomLayoutEntry {
+    pub room_type: String,
+    pub count: usize,
+    pub levels: Vec<i32>,
+}
+
+pub async fn get_improvements(
+    state: &AppState,
+    uid: &str,
+) -> Result<ImprovementsResponse, ApiError> {
+    let user = users::find_by_uid(&state.db, uid)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    let user_id = user.id;
+    let game_data = state.game_data.load();
+
+    let (roster, supports) = tokio::try_join!(
+        roster_queries::get_roster(&state.db, user_id),
+        roster_queries::get_supports(&state.db, user_id),
+    )?;
+    let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
+
+    let stages = build_stage_improvements(&state.db, user_id, &game_data).await?;
+    let roguelike = build_roguelike_improvements(&state.db, user_id, &game_data).await?;
+    let sandbox = build_sandbox_improvements(&state.db, user_id, &game_data).await?;
+    let medals = build_medal_improvements(&state.db, user_id, &game_data).await?;
+    let operators = build_operator_improvements(&roster, &game_data, &support_ids);
+    let base = build_base_improvements(&state.db, user_id, &roster, &game_data).await?;
+
+    Ok(ImprovementsResponse {
+        uid: user.uid,
+        stages,
+        roguelike,
+        sandbox,
+        medals,
+        operators,
+        base,
+    })
+}
+
+async fn build_stage_improvements(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &GameData,
+) -> Result<StageImprovements, ApiError> {
+    let (data, known) = tokio::try_join!(
+        stage_queries::get_user_stage_clears(pool, user_id),
+        stage_queries::get_known_stage_ids_for_server(pool, user_id),
+    )?;
+    let clears = &data.clears;
+    let last_synced_ts = data.last_synced_ts;
+    let universe = &game_data.stage_universe;
+
+    let event_in_window = |e: &EventEntry| -> bool {
+        if !known.contains(&e.stage_id) {
+            return false;
+        }
+        match (e.start_time, last_synced_ts) {
+            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
+            _ => true,
+        }
+    };
+
+    let mut permanent = StagePoolImprovements::default();
+    for entry in &universe.permanent {
+        if !known.contains(&entry.stage_id) {
+            continue;
+        }
+        permanent.total += 1;
+        let clear = clears.get(&entry.stage_id);
+        let state = clear.map(|c| c.state).unwrap_or(0);
+        let stage_meta = game_data.stages.get(&entry.stage_id);
+        let gap = StageGap {
+            stage_id: entry.stage_id.clone(),
+            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
+            name: stage_meta.and_then(|s| s.name.clone()),
+            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
+            weight: entry.weight,
+            state,
+        };
+        match state {
+            s if s >= 3 => {
+                permanent.cleared += 1;
+                permanent.three_starred += 1;
+            }
+            s if s >= 2 => {
+                permanent.cleared += 1;
+                permanent.not_three_starred.push(gap);
+            }
+            _ => {
+                permanent.missing.push(gap);
+            }
+        }
+    }
+    sort_by_weight_desc(&mut permanent.missing);
+    sort_by_weight_desc(&mut permanent.not_three_starred);
+
+    let mut event = StagePoolImprovements::default();
+    for entry in &universe.event {
+        if !event_in_window(entry) {
+            continue;
+        }
+        event.total += 1;
+        let clear = clears.get(&entry.stage_id);
+        let state = clear.map(|c| c.state).unwrap_or(0);
+        let stage_meta = game_data.stages.get(&entry.stage_id);
+        let gap = StageGap {
+            stage_id: entry.stage_id.clone(),
+            code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
+            name: stage_meta.and_then(|s| s.name.clone()),
+            zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
+            weight: entry.weight,
+            state,
+        };
+        match state {
+            s if s >= 3 => {
+                event.cleared += 1;
+                event.three_starred += 1;
+            }
+            s if s >= 2 => {
+                event.cleared += 1;
+                event.not_three_starred.push(gap);
+            }
+            _ => {
+                event.missing.push(gap);
+            }
+        }
+    }
+    sort_by_weight_desc(&mut event.missing);
+    sort_by_weight_desc(&mut event.not_three_starred);
+
+    Ok(StageImprovements { permanent, event })
+}
+
+fn sort_by_weight_desc(items: &mut [StageGap]) {
+    items.sort_by(|a, b| {
+        b.weight
+            .partial_cmp(&a.weight)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.code.cmp(&b.code))
+    });
+}
+
+async fn build_roguelike_improvements(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &GameData,
+) -> Result<Vec<RoguelikeThemeImprovement>, ApiError> {
+    let progress_rows = roguelike_queries::get_roguelike_progress(pool, user_id).await?;
+    let progress_by_theme: HashMap<String, &serde_json::Value> = progress_rows
+        .iter()
+        .map(|(theme_id, json)| (theme_id.clone(), json))
+        .collect();
+
+    let mut themes: Vec<RoguelikeThemeImprovement> = Vec::new();
+    for (theme_id, theme) in &game_data.roguelike.themes {
+        let progress = progress_by_theme.get(theme_id).copied();
+
+        let endings_unlocked = progress
+            .and_then(|p| p.get("record"))
+            .and_then(|r| r.get("endingCnt"))
+            .and_then(|ec| ec.as_object())
+            .map(|obj| {
+                let mut ids = HashSet::new();
+                for mode in obj.values() {
+                    if let Some(mode_obj) = mode.as_object() {
+                        for ending_id in mode_obj.keys() {
+                            ids.insert(ending_id.clone());
+                        }
+                    }
+                }
+                ids.len()
+            })
+            .unwrap_or(0);
+
+        let highest_difficulty = progress
+            .and_then(|p| p.get("collect"))
+            .and_then(|c| c.get("modeGrade"))
+            .and_then(|mg| mg.get("NORMAL"))
+            .and_then(|n| n.as_object())
+            .map(|obj| {
+                obj.iter()
+                    .filter(|(_, e)| e.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 2)
+                    .filter_map(|(grade_str, _)| grade_str.parse::<i32>().ok())
+                    .max()
+                    .unwrap_or(-1)
+            })
+            .unwrap_or(-1);
+
+        let count_unlocked = |bucket: &str| -> usize {
+            progress
+                .and_then(|p| p.get("collect"))
+                .and_then(|c| c.get(bucket))
+                .and_then(|b| b.as_object())
+                .map(|obj| {
+                    obj.values()
+                        .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                        .count()
+                })
+                .unwrap_or(0)
+        };
+
+        let relics_unlocked = count_unlocked("relic");
+        let capsules_unlocked = count_unlocked("capsule");
+        let bands_unlocked = count_unlocked("band");
+
+        let bp_level = progress
+            .and_then(|p| p.get("bp"))
+            .and_then(|b| b.get("reward"))
+            .and_then(|r| r.as_object())
+            .map(|o| o.len())
+            .unwrap_or(0);
+
+        let challenges_completed = progress
+            .and_then(|p| p.get("challenge"))
+            .and_then(|c| c.get("grade"))
+            .and_then(|g| g.as_object())
+            .map(|o| o.len())
+            .unwrap_or(0);
+
+        themes.push(RoguelikeThemeImprovement {
+            theme_id: theme_id.clone(),
+            theme_name: theme.theme_name.clone(),
+            endings: ProgressPair {
+                current: endings_unlocked,
+                max: theme.max_endings as usize,
+            },
+            difficulty: RoguelikeDifficulty {
+                highest_cleared: highest_difficulty,
+                max: theme.max_difficulty_grade,
+            },
+            collectibles: RoguelikeCollectibles {
+                relics: ProgressPair {
+                    current: relics_unlocked.min(theme.max_relics as usize),
+                    max: theme.max_relics as usize,
+                },
+                capsules: ProgressPair {
+                    current: capsules_unlocked.min(theme.max_capsules as usize),
+                    max: theme.max_capsules as usize,
+                },
+                bands: ProgressPair {
+                    current: bands_unlocked.min(theme.max_bands as usize),
+                    max: theme.max_bands as usize,
+                },
+            },
+            bp: ProgressPair {
+                current: bp_level,
+                max: theme.max_bp_levels as usize,
+            },
+            challenges: ProgressPair {
+                current: challenges_completed,
+                max: theme.max_challenges as usize,
+            },
+        });
+    }
+
+    themes.sort_by(|a, b| a.theme_id.cmp(&b.theme_id));
+    Ok(themes)
+}
+
+async fn build_sandbox_improvements(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &GameData,
+) -> Result<SandboxImprovements, ApiError> {
+    let progress = sandbox_queries::get_user_sandbox_progress(pool, user_id).await?;
+    let universe = &game_data.sandbox_universe;
+
+    let Some(sandbox) = progress.as_ref().and_then(|p| {
+        p.get("template")
+            .and_then(|t| t.get("SANDBOX_V2"))
+            .and_then(|t| t.get("sandbox_1"))
+    }) else {
+        return Ok(SandboxImprovements {
+            achievements: ProgressPair {
+                current: 0,
+                max: universe.max_achievements,
+            },
+            nodes: ProgressPair {
+                current: 0,
+                max: universe.max_nodes,
+            },
+            tech: ProgressPair {
+                current: 0,
+                max: universe.max_tech_nodes,
+            },
+            quests: ProgressPair {
+                current: 0,
+                max: universe.max_quests,
+            },
+        });
+    };
+
+    let achievements = sandbox
+        .get("collect")
+        .and_then(|c| c.get("complete"))
+        .and_then(|c| c.get("achievement"))
+        .and_then(|a| a.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+
+    let nodes_explored = sandbox
+        .get("main")
+        .and_then(|m| m.get("map"))
+        .and_then(|m| m.get("node"))
+        .and_then(|n| n.as_object())
+        .map(|obj| {
+            obj.values()
+                .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                .count()
+        })
+        .unwrap_or(0);
+
+    let tech_unlocked = sandbox
+        .get("tech")
+        .and_then(|t| t.get("unlock"))
+        .and_then(|u| u.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+
+    let quests_completed = sandbox
+        .get("collect")
+        .and_then(|c| c.get("complete"))
+        .and_then(|c| c.get("quest"))
+        .and_then(|q| q.as_array())
+        .map(|a| a.len())
+        .unwrap_or(0);
+
+    Ok(SandboxImprovements {
+        achievements: ProgressPair {
+            current: achievements,
+            max: universe.max_achievements,
+        },
+        nodes: ProgressPair {
+            current: nodes_explored,
+            max: universe.max_nodes,
+        },
+        tech: ProgressPair {
+            current: tech_unlocked,
+            max: universe.max_tech_nodes,
+        },
+        quests: ProgressPair {
+            current: quests_completed,
+            max: universe.max_quests,
+        },
+    })
+}
+
+async fn build_medal_improvements(
+    pool: &PgPool,
+    user_id: Uuid,
+    game_data: &GameData,
+) -> Result<MedalImprovements, ApiError> {
+    let rows = medal_queries::get_user_medals(pool, user_id).await?;
+    let earned: HashSet<String> = rows
+        .iter()
+        .filter(|(_, val, fts, rts)| {
+            let v = val.as_ref().unwrap_or(&serde_json::Value::Null);
+            is_medal_earned(v, fts.unwrap_or(0), rts.unwrap_or(0))
+        })
+        .map(|(id, _, _, _)| id.clone())
+        .collect();
+
+    let now = chrono::Utc::now().timestamp();
+
+    let mut permanent_missing: Vec<MedalGap> = Vec::new();
+    let mut event_in_window_missing: Vec<MedalGap> = Vec::new();
+
+    for medal in game_data.medals.medals.values() {
+        if earned.contains(&medal.medal_id) {
+            continue;
+        }
+        match game_data.medals.obtainability(&medal.medal_id, now) {
+            Obtainability::Permanent => {
+                permanent_missing.push(medal_gap(medal, &game_data.medals, None));
+            }
+            Obtainability::Event { proxy_close_ts } => {
+                // Skip events whose window has already closed - the user can't
+                // reach them anymore so it isn't an improvement opportunity.
+                // (Past-event medals still affect scoring via the event pool
+                // with recency decay - see grade_medals.rs - but they don't
+                // belong in the user's "missing" lists.)
+                if proxy_close_ts > 0 && proxy_close_ts < now {
+                    continue;
+                }
+                event_in_window_missing.push(medal_gap(
+                    medal,
+                    &game_data.medals,
+                    if proxy_close_ts > 0 {
+                        Some(proxy_close_ts)
+                    } else {
+                        None
+                    },
+                ));
+            }
+        }
+    }
+
+    permanent_missing.sort_by(|a, b| {
+        rarity_weight(&b.rarity)
+            .partial_cmp(&rarity_weight(&a.rarity))
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.medal_id.cmp(&b.medal_id))
+    });
+
+    event_in_window_missing.sort_by(|a, b| {
+        a.end_time
+            .unwrap_or(i64::MAX)
+            .cmp(&b.end_time.unwrap_or(i64::MAX))
+    });
+
+    Ok(MedalImprovements {
+        permanent_missing,
+        event_in_window_missing,
+    })
+}
+
+fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i64>) -> MedalGap {
+    MedalGap {
+        medal_id: medal.medal_id.clone(),
+        name: medal.medal_name.clone(),
+        rarity: medal.rarity.clone(),
+        get_method: medal.get_method.clone(),
+        description: medal_data.resolve_description(&medal.medal_id),
+        is_hidden: medal.is_hidden,
+        end_time,
+    }
+}
+
+fn rarity_weight(rarity: &str) -> f64 {
+    // TODO: Keep this in sync with `core/grade/grade_medals.rs`.
+    match rarity {
+        "T1" => 1.0,
+        "T1D5" => 2.5,
+        "T2" => 4.0,
+        "T2D5" => 10.0,
+        "T3" => 20.0,
+        "T3D5" => 40.0,
+        _ => 1.0,
+    }
+}
+
+/// Trust percent at which an ordinary operator is considered "complete" — must
+/// stay in sync with `core::grade::grade_operators::TRUST_MILESTONE_PCT`.
+const TRUST_COMPLETE_PCT: f64 = 100.0;
+
+fn build_operator_improvements(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    support_ids: &HashSet<&str>,
+) -> OperatorImprovements {
+    // Total weight across all invested operators — used to translate per-op
+    // score deltas into a contribution against operator_grade.
+    let total_weight = total_roster_weight(roster, game_data);
+    let mut below_milestone: Vec<OperatorGap> = Vec::new();
+    for entry in roster {
+        let Some(static_op) = game_data.operators.get(&entry.operator_id) else {
+            continue;
+        };
+        if matches!(
+            static_op.profession,
+            OperatorProfession::Token | OperatorProfession::Trap
+        ) || static_op.is_not_obtainable
+        {
+            continue;
+        }
+
+        let max_elite = (static_op.phases.len().saturating_sub(1)) as i16;
+        let max_level_at_current_elite = static_op
+            .phases
+            .get(entry.elite as usize)
+            .map(|p| p.max_level as i16)
+            .unwrap_or(0);
+
+        let num_skills = static_op.skills.len();
+        let can_master = num_skills > 0 && static_op.phases.len() >= 3;
+        let advanced_modules = advanced_modules(static_op);
+
+        let masteries = parse_skill_levels(&entry.masteries);
+        let modules = parse_module_levels(&entry.modules);
+
+        let max_mastery = masteries.iter().copied().max().unwrap_or(-1);
+        let max_module_level = modules
+            .iter()
+            .filter(|(id, _)| {
+                advanced_modules
+                    .iter()
+                    .any(|m| m.module.uni_equip_id == *id)
+            })
+            .map(|(_, lvl)| *lvl)
+            .max()
+            .unwrap_or(-1);
+
+        let current_trust = game_data.favor.trust_pct(entry.favor_point);
+        let max_trust = game_data.favor.max_trust_pct();
+        let is_support = support_ids.contains(entry.operator_id.as_str());
+        // Support units must reach the table max (typically 200); ordinary ops
+        // are done at 100. Clamp the target by max_trust so a stripped favor
+        // table doesn't produce an unreachable threshold.
+        let trust_target = if is_support {
+            max_trust
+        } else {
+            TRUST_COMPLETE_PCT.min(max_trust)
+        };
+
+        let mut missing: Vec<&'static str> = Vec::new();
+        if entry.elite < max_elite {
+            missing.push("ELITE");
+        }
+        if max_level_at_current_elite > 0 && entry.level < max_level_at_current_elite {
+            missing.push("MAX_LEVEL");
+        }
+        if can_master {
+            if max_mastery < 3 {
+                missing.push("M3");
+            }
+        } else if num_skills > 0 && entry.skill_level < 7 {
+            missing.push("SL7");
+        }
+        if !advanced_modules.is_empty() && max_module_level < 3 {
+            missing.push("MOD3");
+        }
+        if rarity_potential_matters(static_op) && entry.potential < 5 {
+            missing.push("POT6");
+        }
+        if trust_target > 0.0 && current_trust < trust_target {
+            missing.push("TRUST");
+        }
+
+        if missing.is_empty() {
+            continue;
+        }
+
+        let rarity_weight = rarity_to_weight(&static_op.rarity);
+        let deltas = operator_upgrade_deltas(
+            entry,
+            static_op,
+            &game_data.favor,
+            is_support,
+            &missing,
+            rarity_weight,
+            total_weight,
+        );
+        // ELITE simulates "promote + max level at new phase", which also
+        // covers the level dimension that MAX_LEVEL targets. When both tags
+        // appear, take whichever delta is larger — additivity would double-
+        // count the level dimension.
+        let (mut subscore_overlap, mut total_overlap) = (0.0_f64, 0.0_f64);
+        let (mut subscore_independent, mut total_independent) = (0.0_f64, 0.0_f64);
+        for d in &deltas {
+            if d.tag == "ELITE" || d.tag == "MAX_LEVEL" {
+                subscore_overlap = subscore_overlap.max(d.operator_grade_delta);
+                total_overlap = total_overlap.max(d.total_score_delta);
+            } else {
+                subscore_independent += d.operator_grade_delta;
+                total_independent += d.total_score_delta;
+            }
+        }
+        let subscore_potential_gain = subscore_overlap + subscore_independent;
+        let total_potential_gain = total_overlap + total_independent;
+
+        below_milestone.push(OperatorGap {
+            operator_id: entry.operator_id.clone(),
+            name: static_op.name.clone(),
+            rarity: static_op.rarity.to_star_int(),
+            current_elite: entry.elite,
+            current_level: entry.level,
+            current_skill_level: entry.skill_level,
+            max_mastery,
+            max_module_level,
+            current_trust,
+            is_support,
+            missing,
+            deltas,
+            subscore_potential_gain,
+            total_potential_gain,
+        });
+    }
+
+    // Within a rarity bucket, the highest-potential gains rank first so users
+    // see the most worthwhile upgrades at the top. Ties fall back to op id
+    // for a stable order.
+    below_milestone.sort_by(|a, b| {
+        b.rarity
+            .cmp(&a.rarity)
+            .then_with(|| {
+                b.total_potential_gain
+                    .partial_cmp(&a.total_potential_gain)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.operator_id.cmp(&b.operator_id))
+    });
+
+    OperatorImprovements { below_milestone }
+}
+
+fn advanced_modules(op: &Operator) -> Vec<&OperatorModule> {
+    use crate::core::gamedata::types::module::ModuleType;
+    op.modules
+        .iter()
+        .filter(|m| m.module.module_type == ModuleType::Advanced)
+        .collect()
+}
+
+fn rarity_potential_matters(op: &Operator) -> bool {
+    !op.can_use_general_potential_item || op.is_sp_char
+}
+
+fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
+    let Some(arr) = masteries_json.as_array() else {
+        return Vec::new();
+    };
+    arr.iter()
+        .filter_map(|m| m.get("mastery").and_then(|v| v.as_i64()).map(|v| v as i16))
+        .collect()
+}
+
+fn parse_module_levels(modules_json: &serde_json::Value) -> Vec<(String, i16)> {
+    let Some(arr) = modules_json.as_array() else {
+        return Vec::new();
+    };
+    arr.iter()
+        .filter_map(|m| {
+            let id = m.get("id").and_then(|v| v.as_str())?.to_string();
+            let level = m.get("level").and_then(|v| v.as_i64())? as i16;
+            Some((id, level))
+        })
+        .collect()
+}
+
+// Re-export the rarity star helper from OperatorRarity for symmetry. (We
+// intentionally don't depend on `grade_operators.rs` internals - those are
+// scoring-specific and would change the response shape if reused.)
+#[allow(dead_code)]
+fn rarity_to_star(rarity: &OperatorRarity) -> i16 {
+    rarity.to_star_int()
+}
+
+async fn build_base_improvements(
+    pool: &PgPool,
+    user_id: Uuid,
+    roster: &[RosterEntry],
+    game_data: &GameData,
+) -> Result<BaseImprovements, ApiError> {
+    let building_json = building_queries::get_building(pool, user_id).await?;
+    let Some(building_json) = building_json else {
+        return Ok(BaseImprovements::default());
+    };
+
+    let user_building = UserBuilding::from_json(&building_json);
+    if user_building.is_empty() {
+        return Ok(BaseImprovements::default());
+    }
+
+    // Roster → base-skill profiles. Drops operators with no entry in
+    // building_data.chars (e.g. tokens, drones).
+    let profiles: Vec<OperatorBaseProfile> = roster
+        .iter()
+        .filter_map(|entry| {
+            let bc = game_data.building.chars.get(&entry.operator_id)?;
+            Some(OperatorBaseProfile::build(entry, bc))
+        })
+        .collect();
+
+    let (registry, morale_drains) = build_registry(&game_data.building.buffs);
+
+    let optimal = compute_optimal_assignment(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+        &morale_drains,
+    );
+    let sustained = compute_sustained_assignment(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+        &morale_drains,
+    );
+
+    let optimal_dto = base_assignment_to_dto(&optimal, game_data);
+    let rotation_dto = shift_assignment_to_dto(&sustained, game_data);
+    let layout = build_layout_summary(&user_building);
+
+    Ok(BaseImprovements {
+        optimal: Some(optimal_dto),
+        rotation: Some(rotation_dto),
+        layout,
+    })
+}
+
+fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {
+    BaseAssignmentDto {
+        rooms: asn
+            .rooms
+            .iter()
+            .map(|r| room_assignment_to_dto(r, game_data))
+            .collect(),
+        total_production_efficiency: asn.total_production_efficiency,
+    }
+}
+
+fn shift_assignment_to_dto(asn: &ShiftAssignment, game_data: &GameData) -> RotationDto {
+    RotationDto {
+        shift_a: base_assignment_to_dto(&asn.shift_a, game_data),
+        shift_b: base_assignment_to_dto(&asn.shift_b, game_data),
+        sustained_efficiency: asn.sustained_efficiency,
+    }
+}
+
+fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAssignmentDto {
+    RoomAssignmentDto {
+        slot_id: room.slot_id.clone(),
+        room_type: room.room_type.clone(),
+        level: room.level,
+        formula_type: room.formula_type.clone(),
+        total_efficiency: room.total_efficiency,
+        operators: room
+            .operators
+            .iter()
+            .map(|id| AssignedOperator {
+                operator_id: id.clone(),
+                name: game_data
+                    .operators
+                    .get(id)
+                    .map(|o| o.name.clone())
+                    .unwrap_or_else(|| id.clone()),
+            })
+            .collect(),
+    }
+}
+
+fn build_layout_summary(building: &UserBuilding) -> Vec<RoomLayoutEntry> {
+    use std::collections::BTreeMap;
+    let mut by_type: BTreeMap<String, Vec<i32>> = BTreeMap::new();
+    for room in &building.rooms {
+        by_type
+            .entry(room.room_type.clone())
+            .or_default()
+            .push(room.level);
+    }
+    by_type
+        .into_iter()
+        .map(|(room_type, mut levels)| {
+            levels.sort_unstable_by(|a, b| b.cmp(a));
+            RoomLayoutEntry {
+                count: levels.len(),
+                room_type,
+                levels,
+            }
+        })
+        .collect()
+}

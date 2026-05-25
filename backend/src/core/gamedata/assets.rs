@@ -10,6 +10,7 @@ pub enum AssetKind {
     ModuleBig,    // textures/spritepack/ui_equip_big_img_hub_N/
     EnemyIcon,    // textures/spritepack/icon_enemies_N/
     ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/
+    MedalIcon,    // textures/spritepack/ui_medal_icons_N/
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -21,6 +22,7 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::ModuleBig,
     AssetKind::EnemyIcon,
     AssetKind::ItemIcon,
+    AssetKind::MedalIcon,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -143,7 +145,7 @@ impl AssetIndex {
     pub fn charart_path(&self, char_id: &str) -> Option<String> {
         let suffixes = self.chararts.get(char_id)?;
         for preferred in &["_2", "_1"] {
-            if suffixes.contains(&"_2".to_owned()) {
+            if suffixes.iter().any(|s| s == preferred) {
                 return Some(format!(
                     "/textures/chararts/{char_id}/{char_id}{preferred}.png"
                 ));
@@ -184,7 +186,7 @@ impl AssetIndex {
 }
 
 fn classify_dir(dir_name: &str) -> Option<AssetKind> {
-    if dir_name.starts_with("ui_char_avatar_") {
+    if dir_name.starts_with("ui_char_avatar_") || dir_name.starts_with("ui_player_avatar_list_") {
         Some(AssetKind::Avatar)
     } else if dir_name.starts_with("arts_shop_skin_portrait_") {
         Some(AssetKind::SkinPortrait)
@@ -201,6 +203,8 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         || dir_name == "item_icons_stack_hub"
     {
         Some(AssetKind::ItemIcon)
+    } else if dir_name.starts_with("ui_medal_icons_") {
+        Some(AssetKind::MedalIcon)
     } else {
         None
     }

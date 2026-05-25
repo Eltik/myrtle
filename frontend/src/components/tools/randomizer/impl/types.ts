@@ -1,38 +1,71 @@
-/**
- * Raw game data shape used by the randomizer for stage completion
- * and operator E2 checks. This data comes from the old game sync
- * and may not be available in v3 (AuthUser is a flat UserProfile).
- */
-export interface GameUserData {
-    troop: {
-        chars: Record<
-            string,
-            {
-                charId: string;
-                evolvePhase: number;
-            }
-        >;
-    };
-    dungeon: {
-        stages: Record<string, { completeTimes: number }>;
-    };
+import type { IOperatorListItem, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import type { IStage } from "#/types/stages";
+
+export interface IRandomizerOperator {
+    id: string;
+    name: string;
+    rarity: OperatorRarity;
+    profession: OperatorProfession;
+    subProfessionId: string;
+    position: OperatorPosition;
 }
 
-export interface RandomizerSettings {
-    allowedClasses: string[];
-    allowedRarities: number[];
+export interface IRandomizerSettings {
+    allowedClasses: OperatorProfession[];
+    allowedRarities: OperatorRarity[];
     allowedZoneTypes: string[];
     squadSize: number;
     allowDuplicates: boolean;
-    allowUnplayableOperators: boolean;
+    hideUnplayableOperators: boolean;
+    onlyOwnedOperators: boolean;
     onlyCompletedStages: boolean;
-    onlyAvailableStages: boolean; // Only show stages from currently open or permanent events
+    onlyAvailableStages: boolean;
     onlyE2Operators: boolean;
-    selectedStages: string[]; // Stage IDs that are manually selected
+    /** Stage IDs the user has explicitly opted out of. Empty = all stages allowed. */
+    deselectedStageIds: string[];
 }
 
-export interface Challenge {
-    type: "restriction" | "modifier" | "objective";
+export type ChallengeKind = "restriction" | "modifier" | "objective";
+
+export type ChallengeType = "PLAIN" | "SQUAD_FILTER" | "STAGE";
+
+export interface IChallengeBase {
+    /** Stable identifier for the challenge (used for keys / debugging). */
+    id: string;
+    kind: ChallengeKind;
     title: string;
     description: string;
+    /** Relative weight in the weighted pick (defaults to 1). Use 0 to disable temporarily. */
+    weight?: number;
+}
+
+/** A challenge with no automatic effect */
+export interface IPlainChallenge extends IChallengeBase {
+    type: "PLAIN";
+}
+
+/** A challenge that filters the squad pool before the squad is rolled. */
+export interface ISquadFilterChallenge extends IChallengeBase {
+    type: "SQUAD_FILTER";
+    /**
+     * Predicate applied to the full operator data. Return true to KEEP the operator.
+     * Filter runs after settings/roster filtering.
+     */
+    filter: (op: IOperatorListItem) => boolean;
+}
+
+/** A challenge that only applies when the rolled stage matches a predicate. */
+export interface IStageChallenge extends IChallengeBase {
+    type: "STAGE";
+    /** Return true if this challenge should be eligible for the given rolled stage. */
+    match: (stage: IStage) => boolean;
+}
+
+export type IChallenge = IPlainChallenge | ISquadFilterChallenge | IStageChallenge;
+
+export interface IRosterIndex {
+    /** Set of operator IDs the user owns. */
+    owned: Set<string>;
+    /** Subset of owned operators with elite ≥ 2. */
+    e2: Set<string>;
 }

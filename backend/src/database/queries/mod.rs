@@ -7,6 +7,7 @@ pub mod roguelike;
 pub mod roster;
 pub mod sandbox;
 pub mod score;
+pub mod skins;
 pub mod stages;
 pub mod tier_lists;
 pub mod users;

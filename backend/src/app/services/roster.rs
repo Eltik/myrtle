@@ -7,7 +7,7 @@ use crate::{
         grade::calculate::calculate_user_grade,
         hypergryph::{
             constants::{AuthSession, Server},
-            fetch::auth_request,
+            yostar::sync_data_raw,
         },
     },
     database::{
@@ -41,6 +41,24 @@ pub struct GameUser {
     pub sandbox_perm: Option<serde_json::Value>,
     #[serde(rename = "checkIn")]
     pub checkin: Option<CheckIn>,
+    pub social: Option<Social>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Social {
+    /// Up to 3 entries (some may be `null` for empty slots) — references
+    /// troop slots by `charInstId`. Resolved to operator_id in
+    /// `extract_supports`.
+    pub assist_char_list: Option<Vec<Option<AssistChar>>>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistChar {
+    pub char_inst_id: Option<i64>,
+    pub skill_index: Option<i64>,
+    pub current_equip: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -104,6 +122,27 @@ pub struct TroopChar {
     pub current_tmpl: Option<String>,
     pub skills: Option<Vec<TroopSkill>>,
     pub equip: Option<serde_json::Map<String, serde_json::Value>>,
+    /// Amiya stores per-form data under `tmpl[<form_id>]` instead of mirroring
+    /// it at the top level. Each entry has its own elite/level/skills/equip/skin.
+    /// `None` for normal operators.
+    pub tmpl: Option<std::collections::HashMap<String, TroopTmpl>>,
+}
+
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TroopTmpl {
+    pub skin_id: Option<String>,
+    pub default_skill_index: Option<i64>,
+    pub current_equip: Option<String>,
+    pub skills: Option<Vec<TroopSkill>>,
+    pub equip: Option<serde_json::Map<String, serde_json::Value>>,
+    // Per-form progression (Hypergryph sometimes stores these inside the tmpl
+    // entry; fall back to the parent TroopChar fields when missing).
+    pub evolve_phase: Option<i64>,
+    pub level: Option<i64>,
+    pub exp: Option<i64>,
+    pub main_skill_lvl: Option<i64>,
+    pub favor_point: Option<i64>,
 }
 
 #[derive(Deserialize)]
@@ -136,13 +175,6 @@ pub struct MedalStore {
 }
 
 #[derive(Deserialize)]
-pub struct MedalEntry {
-    pub val: Option<i64>,
-    pub fts: Option<i64>,
-    pub rts: Option<i64>,
-}
-
-#[derive(Deserialize)]
 pub struct CheckIn {
     pub history: Option<Vec<i16>>,
 }
@@ -163,25 +195,24 @@ pub async fn refresh(
     let mut session: AuthSession = serde_json::from_str(&session_json)
         .map_err(|_| ApiError::BadRequest("invalid game session".into()))?;
 
-    let response = auth_request(
-        &state.http_client,
-        "account/syncData",
-        Some(&serde_json::json!({"platform": 1})),
-        &mut session,
-        server,
-    )
-    .await?;
-
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| ApiError::Internal(e.into()))?;
+    let text = match sync_data_raw(&state.http_client, &mut session, server).await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::warn!(
+                uid = %user_id,
+                server = server.as_str(),
+                error = ?e,
+                "yostar refresh (account/syncData) failed"
+            );
+            return Err(e.into());
+        }
+    };
 
     let data: SyncDataResponse =
-        serde_json::from_slice(&bytes).map_err(|e| ApiError::Internal(e.into()))?;
+        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
 
     let raw: serde_json::Value =
-        serde_json::from_slice(&bytes).map_err(|e| ApiError::Internal(e.into()))?;
+        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
 
     let user = data
         .user
@@ -190,6 +221,12 @@ pub async fn refresh(
     let status = user.status.as_ref();
 
     let nickname = status.and_then(|s| s.nick_name.as_deref()).unwrap_or("");
+    // nickNumber comes from Hypergryph as either a string ("1234") or an
+    // integer (1234) depending on server/version, and may live on
+    // `status` or as a sibling of it. Probe both paths and accept either
+    // type. Stored as string so leading zeros survive.
+    let nick_number_owned = extract_nick_number(&raw);
+    let nick_number = nick_number_owned.as_deref();
     let level = status.and_then(|s| s.level).unwrap_or(0) as i16;
     let avatar_id = status
         .and_then(|s| s.avatar.as_ref())
@@ -204,6 +241,7 @@ pub async fn refresh(
     let items = extract_items(&user.inventory);
     let skins = extract_skins(&user.skin);
     let status_json = extract_status(status);
+    let supports = extract_supports(&user.troop, &user.social);
     let stages = user
         .dungeon
         .as_ref()
@@ -238,6 +276,8 @@ pub async fn refresh(
         &medals,
         &building,
         &checkin,
+        &supports,
+        nick_number,
     )
     .await?;
 
@@ -266,33 +306,86 @@ pub async fn refresh(
     Ok(raw)
 }
 
+/// Pull `nickNumber` out of the raw syncData. Tolerates string,
+/// integer, or absent values, and probes the few paths Arknights has
+/// been observed to put it under.
+fn extract_nick_number(raw: &serde_json::Value) -> Option<String> {
+    let candidates = [
+        raw.pointer("/user/status/nickNumber"),
+        raw.pointer("/user/social/nickNumber"),
+        raw.pointer("/user/nickNumber"),
+    ];
+
+    for candidate in candidates.into_iter().flatten() {
+        let value = match candidate {
+            serde_json::Value::String(s) if !s.is_empty() => Some(s.clone()),
+            serde_json::Value::Number(n) => Some(n.to_string()),
+            _ => None,
+        };
+        if value.is_some() {
+            return value;
+        }
+    }
+    None
+}
+
 fn extract_operators(troop: &Option<Troop>) -> serde_json::Value {
     let Some(chars) = troop.as_ref().and_then(|t| t.chars.as_ref()) else {
         return serde_json::json!([]);
     };
 
-    let ops: Vec<serde_json::Value> = chars
-        .values()
-        .filter_map(|raw| {
-            let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-            let char_id = c.char_id?;
-            Some(serde_json::json!({
-                "operator_id": char_id,
-                "elite": c.evolve_phase.unwrap_or(0),
-                "level": c.level.unwrap_or(1),
-                "exp": c.exp.unwrap_or(0),
-                "potential": c.potential_rank.unwrap_or(0),
-                "skill_level": c.main_skill_lvl.unwrap_or(1),
-                "favor_point": c.favor_point.unwrap_or(0),
-                "skin_id": c.skin.unwrap_or_default(),
-                "default_skill": c.default_skill_index.unwrap_or(0),
-                "current_equip": c.current_equip,
-                "obtained_at": c.gain_time.unwrap_or(0),
-                "voice_lan": c.voice_lan,
-                "current_tmpl": c.current_tmpl,
-            }))
-        })
-        .collect();
+    let mut ops: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        // Amiya: emit one row per form. The base char_id row uses the same
+        // id as the original troop key (e.g. `char_002_amiya`) so existing
+        // lookups still resolve. Branches (`char_1001_amiya2`,
+        // `char_1037_amiya3`) get their own rows with per-form progression.
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                ops.push(serde_json::json!({
+                    "operator_id": form_id,
+                    "elite": form.evolve_phase.or(c.evolve_phase).unwrap_or(0),
+                    "level": form.level.or(c.level).unwrap_or(1),
+                    "exp": form.exp.or(c.exp).unwrap_or(0),
+                    "potential": c.potential_rank.unwrap_or(0),
+                    "skill_level": form.main_skill_lvl.or(c.main_skill_lvl).unwrap_or(1),
+                    "favor_point": form.favor_point.or(c.favor_point).unwrap_or(0),
+                    "skin_id": form.skin_id.clone().or_else(|| c.skin.clone()).unwrap_or_default(),
+                    "default_skill": form.default_skill_index.or(c.default_skill_index).unwrap_or(0),
+                    "current_equip": form.current_equip.clone().or_else(|| c.current_equip.clone()),
+                    "obtained_at": c.gain_time.unwrap_or(0),
+                    "voice_lan": c.voice_lan.clone(),
+                    "current_tmpl": c.current_tmpl.clone(),
+                }));
+            }
+            continue;
+        }
+
+        ops.push(serde_json::json!({
+            "operator_id": char_id,
+            "elite": c.evolve_phase.unwrap_or(0),
+            "level": c.level.unwrap_or(1),
+            "exp": c.exp.unwrap_or(0),
+            "potential": c.potential_rank.unwrap_or(0),
+            "skill_level": c.main_skill_lvl.unwrap_or(1),
+            "favor_point": c.favor_point.unwrap_or(0),
+            "skin_id": c.skin.clone().unwrap_or_default(),
+            "default_skill": c.default_skill_index.unwrap_or(0),
+            "current_equip": c.current_equip.clone(),
+            "obtained_at": c.gain_time.unwrap_or(0),
+            "voice_lan": c.voice_lan.clone(),
+            "current_tmpl": c.current_tmpl.clone(),
+        }));
+    }
 
     serde_json::to_value(ops).unwrap_or_default()
 }
@@ -302,27 +395,42 @@ fn extract_skills(troop: &Option<Troop>) -> serde_json::Value {
         return serde_json::json!([]);
     };
 
-    let skills: Vec<serde_json::Value> = chars
-        .values()
-        .flat_map(|raw| {
-            let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-            let char_id = c.char_id?;
-            Some(
-                c.skills
-                    .unwrap_or_default()
-                    .into_iter()
-                    .enumerate()
-                    .map(move |(i, skill)| {
-                        serde_json::json!({
-                            "operator_id": char_id,
-                            "skill_index": i,
-                            "specialize_level": skill.specialize_level.unwrap_or(0),
-                        })
-                    }),
-            )
-        })
-        .flatten()
-        .collect();
+    let mut skills: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                let Some(form_skills) = form.skills.as_ref() else {
+                    continue;
+                };
+                for (i, skill) in form_skills.iter().enumerate() {
+                    skills.push(serde_json::json!({
+                        "operator_id": form_id,
+                        "skill_index": i,
+                        "specialize_level": skill.specialize_level.unwrap_or(0),
+                    }));
+                }
+            }
+            continue;
+        }
+
+        let Some(c_skills) = c.skills else { continue };
+        for (i, skill) in c_skills.into_iter().enumerate() {
+            skills.push(serde_json::json!({
+                "operator_id": char_id,
+                "skill_index": i,
+                "specialize_level": skill.specialize_level.unwrap_or(0),
+            }));
+        }
+    }
 
     serde_json::to_value(skills).unwrap_or_default()
 }
@@ -332,29 +440,56 @@ fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
         return serde_json::json!([]);
     };
 
-    let modules: Vec<serde_json::Value> =
-        chars
-            .values()
-            .flat_map(|raw| {
-                let c: TroopChar = serde_json::from_value(raw.clone()).ok()?;
-                let char_id = c.char_id?;
-                Some(c.equip.unwrap_or_default().into_iter().filter_map(
-                    move |(module_id, data)| {
-                        if module_id.starts_with("uniequip_001_") {
-                            return None;
-                        }
-                        let entry: EquipEntry = serde_json::from_value(data).ok()?;
-                        Some(serde_json::json!({
-                            "operator_id": char_id,
-                            "module_id": module_id,
-                            "module_level": entry.level.unwrap_or(0),
-                            "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
-                        }))
-                    },
-                ))
-            })
-            .flatten()
-            .collect();
+    let mut modules: Vec<serde_json::Value> = Vec::new();
+    for raw in chars.values() {
+        let Ok(c) = serde_json::from_value::<TroopChar>(raw.clone()) else {
+            continue;
+        };
+        let Some(char_id) = c.char_id.clone() else {
+            continue;
+        };
+
+        if let Some(tmpl) = c.tmpl.as_ref()
+            && !tmpl.is_empty()
+        {
+            for (form_id, form) in tmpl {
+                let Some(form_equip) = form.equip.as_ref() else {
+                    continue;
+                };
+                for (module_id, data) in form_equip {
+                    if module_id.starts_with("uniequip_001_") {
+                        continue;
+                    }
+                    let Ok(entry) = serde_json::from_value::<EquipEntry>(data.clone()) else {
+                        continue;
+                    };
+                    modules.push(serde_json::json!({
+                        "operator_id": form_id,
+                        "module_id": module_id,
+                        "module_level": entry.level.unwrap_or(0),
+                        "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+                    }));
+                }
+            }
+            continue;
+        }
+
+        let Some(c_equip) = c.equip else { continue };
+        for (module_id, data) in c_equip {
+            if module_id.starts_with("uniequip_001_") {
+                continue;
+            }
+            let Ok(entry) = serde_json::from_value::<EquipEntry>(data) else {
+                continue;
+            };
+            modules.push(serde_json::json!({
+                "operator_id": char_id,
+                "module_id": module_id,
+                "module_level": entry.level.unwrap_or(0),
+                "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+            }));
+        }
+    }
 
     serde_json::to_value(modules).unwrap_or_default()
 }
@@ -437,18 +572,96 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
 
     let entries: Vec<serde_json::Value> = medals
         .iter()
-        .map(|(id, data)| {
-            let entry: MedalEntry = serde_json::from_value(data.clone()).unwrap_or(MedalEntry {
-                val: None,
-                fts: None,
-                rts: None,
-            });
-            serde_json::json!({
+        .filter_map(|(id, data)| {
+            // Field-by-field so a non-int `val` (multi-condition medals are
+            // arrays like [[achieved, required], ...]) doesn't blow up parsing.
+            let val = data.get("val").cloned().unwrap_or(serde_json::Value::Null);
+            let fts = data.get("fts").and_then(|v| v.as_i64()).unwrap_or(0);
+            let rts = data.get("rts").and_then(|v| v.as_i64()).unwrap_or(0);
+
+            if !is_medal_earned(&val, fts, rts) {
+                return None;
+            }
+
+            Some(serde_json::json!({
                 "medal_id": id,
-                "val": entry.val.unwrap_or(0),
-                "first_ts": entry.fts.unwrap_or(0),
-                "reach_ts": entry.rts.unwrap_or(0),
-            })
+                "val": val,
+                "first_ts": fts,
+                "reach_ts": rts,
+            }))
+        })
+        .collect();
+
+    serde_json::to_value(entries).unwrap_or_default()
+}
+
+/// Returns true when a medal entry from Hypergryph's `user.medal.medals` map
+/// represents an actually earned medal, not in-progress tracking.
+///
+/// Hypergryph's unearned-default row is `{val: 0, fts: 0, rts: 0}` — those are
+/// initialized but never touched by gameplay. Earn signals:
+///   1. `rts > 0` — medal was claimed/awarded; `rts` is the reach timestamp.
+///   2. `rts == -1` with `fts > 0` and `val` being an array:
+///      - Non-empty: every `[achieved, required]` pair must be met (story
+///        unlocks, multi-step medals).
+///      - Empty `[]`: "binary completion" templates with no trackable
+///        condition pairs (`PassStageKilled`, `PassStageWithSimpleCount*`,
+///        etc.). For these, Hypergryph stamps `fts` + `rts=-1` on award and
+///        leaves `val` at its zero-condition shape; that combo is the earn
+///        signal. Empirically, ~30% of activity-medal templates use this
+///        pattern (see Break the Ice medals 01/02/07/09/10).
+///
+/// Everything else (rts=0/fts=0 defaults, in-progress with partial val, no
+/// val at all) is treated as unearned.
+pub(crate) fn is_medal_earned(val: &serde_json::Value, fts: i64, rts: i64) -> bool {
+    if rts > 0 {
+        return true;
+    }
+    if rts == -1
+        && fts > 0
+        && let Some(arr) = val.as_array()
+    {
+        if arr.is_empty() {
+            return true;
+        }
+        return arr.iter().all(is_condition_met);
+    }
+    false
+}
+
+fn is_condition_met(cond: &serde_json::Value) -> bool {
+    cond.as_array()
+        .and_then(|pair| {
+            let a = pair.first()?.as_i64()?;
+            let r = pair.get(1)?.as_i64()?;
+            Some(a >= r)
+        })
+        .unwrap_or(false)
+}
+
+fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_json::Value {
+    let Some(list) = social.as_ref().and_then(|s| s.assist_char_list.as_ref()) else {
+        return serde_json::json!([]);
+    };
+    let chars = troop.as_ref().and_then(|t| t.chars.as_ref());
+
+    let entries: Vec<serde_json::Value> = list
+        .iter()
+        .enumerate()
+        .filter_map(|(slot, maybe)| {
+            let assist = maybe.as_ref()?;
+            let inst_id = assist.char_inst_id?;
+            let troop_entry = chars?.get(&inst_id.to_string())?;
+            let parsed: TroopChar = serde_json::from_value(troop_entry.clone()).ok()?;
+            let char_id = parsed.char_id?;
+            let skin_id = parsed.skin.filter(|s| !s.is_empty());
+            Some(serde_json::json!({
+                "slot": slot as i16,
+                "operator_id": char_id,
+                "skin_id": skin_id,
+                "skill_index": assist.skill_index.unwrap_or(0),
+                "current_equip": assist.current_equip,
+            }))
         })
         .collect();
 

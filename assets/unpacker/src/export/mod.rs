@@ -5,6 +5,7 @@ pub mod gamedata;
 pub mod manifest;
 pub mod portrait;
 pub mod spine;
+pub mod stage_preview;
 pub mod text_asset;
 pub mod texture;
 

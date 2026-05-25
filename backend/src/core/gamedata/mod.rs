@@ -4,6 +4,7 @@ use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
         chibi::init_chibi_data,
+        gacha::enrich_banners,
         modules::enrich_modules_global,
         operators::{EnrichCtx, enrich_all_operators, extract_all_drones},
         skills::enrich_all_skills,
@@ -21,8 +22,9 @@ use crate::core::gamedata::{
         material::ItemTableFile,
         medal::{MedalData, MedalTableFile},
         module::{BattleEquipTableFile, UniequipTableFile},
-        operator::CharacterTable,
+        operator::{CharPatchTable, CharacterTable},
         range::Ranges,
+        retro::RetroTableFile,
         roguelike::{RoguelikeGameData, RoguelikeTopicTableFile},
         sandbox_universe::SandboxUniverse,
         skill::SkillTableFile,
@@ -47,7 +49,25 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let assets = AssetIndex::build(assets_dir);
 
     let char_table: CharacterTable = load_table(data_dir, "character_table")?;
-    let raw_operators = char_table.characters;
+    let mut raw_operators = char_table.characters;
+
+    // Merge Amiya's branch forms (Guard `char_1001_amiya2`, Medic
+    // `char_1037_amiya3`) from char_patch_table - Hypergryph stores them
+    // separately. Without this, those ids 404 everywhere and grade
+    // calculations silently skip them.
+    let char_patch: CharPatchTable =
+        load_table_or_warn(data_dir, "char_patch_table", &mut warnings);
+    for (id, op) in char_patch.patch_chars {
+        raw_operators.entry(id).or_insert(op);
+    }
+    // Re-key `Infos` by every tmpl_id so a lookup with any of Amiya's three
+    // form ids resolves to the same group metadata.
+    let mut tmpl_groups: std::collections::HashMap<String, _> = std::collections::HashMap::new();
+    for info in char_patch.infos.into_values() {
+        for id in &info.tmpl_ids {
+            tmpl_groups.insert(id.clone(), info.clone());
+        }
+    }
 
     let skill_file: SkillTableFile = load_table_or_warn(data_dir, "skill_table", &mut warnings);
     let equip_file: UniequipTableFile =
@@ -73,13 +93,15 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
     let activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
+    let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
 
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
     let battle_equip = battle_equip_file.into_battle_equip();
     let handbook = handbook_file.into_handbook();
     let skins = skin_file.into_skin_data();
-    let gacha = gacha_file.into_gacha_data();
+    let mut gacha = gacha_file.into_gacha_data();
+    enrich_banners(&mut gacha.gacha_pool_client);
     let zones = zone_file.zones;
     let stages = stage_file.stages;
     let medals = MedalData::from_table(medal_file);
@@ -120,6 +142,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             assets: &assets,
             drones: &drones,
             building: &building_file,
+            tmpl_groups: &tmpl_groups,
         },
     );
 
@@ -155,6 +178,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         chibis: init_chibi_data(assets_dir),
         zones,
         stages,
+        activities: activity_file.basic_info,
+        retro_acts: retro_file.retro_act_list,
         medals,
         roguelike,
         enemies,

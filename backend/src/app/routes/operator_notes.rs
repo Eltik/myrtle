@@ -1,10 +1,11 @@
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use serde::Deserialize;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
+use crate::app::services::operator_notes::GlobalAuditLogResponse;
 use crate::app::state::AppState;
 use crate::database::models::operator_notes::{OperatorNote, OperatorNoteAuditEntry};
 
@@ -30,6 +31,28 @@ pub async fn audit_log(
 }
 
 #[derive(Deserialize)]
+pub struct GlobalAuditQuery {
+    #[serde(default)]
+    pub limit: Option<i64>,
+    #[serde(default)]
+    pub before: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+pub async fn global_audit_log(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(params): Query<GlobalAuditQuery>,
+) -> Result<Json<GlobalAuditLogResponse>, ApiError> {
+    if !auth.role.is_tier_list_admin() {
+        return Err(ApiError::Forbidden);
+    }
+    let limit = params.limit.unwrap_or(100);
+    let response =
+        services::operator_notes::get_global_audit_log(&state, limit, params.before).await?;
+    Ok(Json(response))
+}
+
+#[derive(Deserialize)]
 pub struct UpdateNoteRequest {
     pub pros: Option<String>,
     pub cons: Option<String>,
@@ -45,7 +68,7 @@ pub async fn update(
     Path(operator_id): Path<String>,
     Json(body): Json<UpdateNoteRequest>,
 ) -> Result<Json<OperatorNote>, ApiError> {
-    if !auth.role.is_tier_list_admin() {
+    if !auth.role.is_any_admin_role() {
         return Err(ApiError::Forbidden);
     }
 

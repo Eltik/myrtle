@@ -1,9 +1,37 @@
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::database::models::operator_notes::{OperatorNote, OperatorNoteAuditEntry};
 use crate::database::queries::operator_notes as queries;
+
+#[derive(Debug, Serialize)]
+pub struct AuditLogActor {
+    pub user_id: Uuid,
+    pub uid: Option<String>,
+    pub nickname: Option<String>,
+    pub secretary: Option<String>,
+    pub secretary_skin_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct AuditLogEntry {
+    pub id: i64,
+    pub note_id: Uuid,
+    pub operator_id: String,
+    pub field_name: String,
+    pub old_value: Option<String>,
+    pub new_value: Option<String>,
+    pub changed_at: chrono::DateTime<chrono::Utc>,
+    pub actor: AuditLogActor,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GlobalAuditLogResponse {
+    pub entries: Vec<AuditLogEntry>,
+    pub total: i64,
+}
 
 pub async fn get_all(state: &AppState) -> Result<Vec<OperatorNote>, ApiError> {
     queries::get_all(&state.db).await.map_err(|e| e.into())
@@ -25,6 +53,40 @@ pub async fn get_audit_log(
     queries::get_audit_log(&state.db, operator_id)
         .await
         .map_err(|e| e.into())
+}
+
+pub async fn get_global_audit_log(
+    state: &AppState,
+    limit: i64,
+    before: Option<chrono::DateTime<chrono::Utc>>,
+) -> Result<GlobalAuditLogResponse, ApiError> {
+    let capped_limit = limit.clamp(1, 500);
+    let (rows, total) = tokio::try_join!(
+        queries::get_audit_log_global(&state.db, capped_limit, before),
+        queries::count_audit_log(&state.db),
+    )?;
+
+    let entries = rows
+        .into_iter()
+        .map(|r| AuditLogEntry {
+            id: r.id,
+            note_id: r.note_id,
+            operator_id: r.operator_id,
+            field_name: r.field_name,
+            old_value: r.old_value,
+            new_value: r.new_value,
+            changed_at: r.changed_at,
+            actor: AuditLogActor {
+                user_id: r.actor_user_id,
+                uid: r.actor_uid,
+                nickname: r.actor_nickname,
+                secretary: r.actor_secretary,
+                secretary_skin_id: r.actor_secretary_skin_id,
+            },
+        })
+        .collect();
+
+    Ok(GlobalAuditLogResponse { entries, total })
 }
 
 pub struct UpdateFields {

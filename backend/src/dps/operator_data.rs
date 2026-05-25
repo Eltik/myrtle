@@ -18,6 +18,18 @@ const ZERO_DEFAULT_KEYS: &[&str] = &[
     "magic_resist_penetrate_fixed",
 ];
 
+/// Parse the uniequip number from a module's id, e.g. `uniequip_002_poca` → 2.
+/// This is the canonical order formulas index modules by. Unparseable ids sort last.
+pub fn uniequip_number(module: &OperatorModule) -> i32 {
+    module
+        .module
+        .id
+        .as_deref()
+        .and_then(|id| id.split('_').nth(1))
+        .and_then(|n| n.parse::<i32>().ok())
+        .unwrap_or(i32::MAX)
+}
+
 pub struct OperatorData {
     pub data: Operator,
 
@@ -304,38 +316,27 @@ impl OperatorData {
             }
         }
 
-        let op_id_suffix = operator
-            .id
-            .as_ref()
-            .and_then(|id| id.split("_").nth(2))
-            .unwrap_or("");
+        // Sort by uniequip number, not `char_equip_order`: the latter is a
+        // display-order field that doesn't match uniequip numbering for some
+        // operators (uniequip_003 can sort before 002).
+        available_modules.sort_by_key(uniequip_number);
 
         let mut talent1_module_extra: Vec<OperatorModuleExtra> = Vec::new();
         let mut talent2_module_extra: Vec<OperatorModuleExtra> = Vec::new();
 
-        for (seq_idx, module_prefix) in ["uniequip_002_", "uniequip_003_", "uniequip_004_"]
-            .iter()
-            .enumerate()
-        {
-            let module_key = format!("{module_prefix}{op_id_suffix}");
-            let module_sequential = (seq_idx + 1) as i32; // 1, 2, 3
-
-            if let Some(op_module) = operator
-                .modules
-                .iter()
-                .find(|m| m.module.id.as_deref() == Some(module_key.as_str()))
-            {
-                Self::process_module_talents(
-                    op_module,
-                    module_sequential,
-                    talent1_name,
-                    talent2_name,
-                    &mut talent1_parameters,
-                    &mut talent2_parameters,
-                    &mut talent1_module_extra,
-                    &mut talent2_module_extra,
-                );
-            }
+        // 1-indexed position is the sequential number used for talent gating.
+        for (idx, op_module) in available_modules.iter().enumerate() {
+            let module_sequential = (idx + 1) as i32;
+            Self::process_module_talents(
+                op_module,
+                module_sequential,
+                talent1_name,
+                talent2_name,
+                &mut talent1_parameters,
+                &mut talent2_parameters,
+                &mut talent1_module_extra,
+                &mut talent2_module_extra,
+            );
         }
 
         // Store all drones' data for skill-dependent selection

@@ -1,0 +1,37 @@
+.tlCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border-radius: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 18px oklch(0 0 0 / 0.08);
+    overflow: hidden;
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+}
+.tlCard:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+.tlCard:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+    box-shadow: 0 14px 32px oklch(0 0 0 / 0.14);
+}
+.tlCard::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--tl-a, var(--primary)), var(--tl-b, oklch(0.55 0.16 25)));
+    opacity: 0.9;
+}

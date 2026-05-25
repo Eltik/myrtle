@@ -9,6 +9,12 @@ const ANIM_DIRS: &[(&str, &str)] = &[
     ("DynIllust", "dynamic"),
 ];
 
+/// Prefixes the game uses on file stems to identify the variant flavor.
+/// `dyn_illust_` is the canonical dynamic; `dyn_portrait_` is its portrait
+/// counterpart and we prefer `dyn_illust_` whenever both exist for a skin.
+/// `build_` is used inside `Building/` directories.
+const KNOWN_PREFIXES: &[&str] = &["dyn_illust_", "dyn_portrait_", "build_"];
+
 pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
     let spine_dir = assets_dir.join("spine");
     let mut characters: HashMap<String, ChibiCharacter> = HashMap::new();
@@ -36,7 +42,7 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
                 continue;
             }
 
-            let (char_id, skin_name) = parse_skin_identity(&dir_name);
+            let (char_id, _) = parse_skin_identity(&dir_name);
 
             let character = characters
                 .entry(char_id.clone())
@@ -47,19 +53,16 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
                     skins: Vec::new(),
                 });
 
-            if is_dyn_illust {
-                if let Some(spine) = pick_best_spine_set(all_sets, &dir_name) {
-                    let skin = get_or_create_skin(character, &skin_name, &base_url);
-                    skin.animation_types.insert(anim_key.to_owned(), spine);
-                    skin.has_spine_data = true;
-                }
+            let assignments = if is_dyn_illust {
+                resolve_dyn_illust_skins(all_sets, &dir_name, &char_id)
             } else {
-                for (stem, spine) in all_sets {
-                    let skin_name = derive_skin_name(&stem, &char_id);
-                    let skin = get_or_create_skin(character, &skin_name, &base_url);
-                    skin.animation_types.insert(anim_key.to_owned(), spine);
-                    skin.has_spine_data = true;
-                }
+                resolve_dir_skins(all_sets, &char_id)
+            };
+
+            for (skin_name, spine) in assignments {
+                let skin = get_or_create_skin(character, &skin_name, &base_url);
+                skin.animation_types.insert(anim_key.to_owned(), spine);
+                skin.has_spine_data = true;
             }
         }
     }
@@ -77,7 +80,7 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
     }
 }
 
-/// Helper to find or create a skin entry on a character
+/// Helper to find or create a skin entry on a character.
 fn get_or_create_skin<'a>(
     character: &'a mut ChibiCharacter,
     skin_name: &str,
@@ -105,9 +108,9 @@ fn get_or_create_skin<'a>(
 /// "char_002_amiya" → ("char_002_amiya", "default")
 /// "char_002_amiya_epoque#4" → ("char_002_amiya", "epoque#4")
 /// "char_003_kalts_sale#14" → ("char_003_kalts", "sale#14")
+/// Names that don't begin with "char_" (e.g. "token_*") are treated as a
+/// single opaque char_id with a "default" skin.
 fn parse_skin_identity(dir_name: &str) -> (String, String) {
-    // Pattern: char_{digits}_{name} optionally followed by _{skin_suffix}
-    // Find the third underscore group boundary
     let parts: Vec<&str> = dir_name.splitn(4, '_').collect();
     if parts.len() >= 3 && parts[0] == "char" {
         let char_id = format!("{}_{}_{}", parts[0], parts[1], parts[2]);
@@ -122,7 +125,9 @@ fn parse_skin_identity(dir_name: &str) -> (String, String) {
     }
 }
 
-/// Collect .atlas, .skel, .png from a directory, returning full paths.
+/// Collect .atlas, .skel, .png from a directory, returning each spine set
+/// keyed by its file stem. [alpha]/[mask] companion textures are excluded
+/// and any stem missing both atlas+skel is dropped (incomplete set).
 fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles)> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Vec::new();
@@ -155,15 +160,9 @@ fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles
         let group = groups.entry(stem.to_owned()).or_default();
 
         match ext {
-            "atlas" => {
-                group.atlas = Some(url);
-            }
-            "skel" => {
-                group.skel = Some(url);
-            }
-            "png" => {
-                group.png = Some(url);
-            }
+            "atlas" => group.atlas = Some(url),
+            "skel" => group.skel = Some(url),
+            "png" => group.png = Some(url),
             _ => {}
         }
     }
@@ -174,65 +173,131 @@ fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles
         .collect()
 }
 
-/// Given a file stem like "char_4087_ines_boc#8" and char_id "char_4087_ines",
-/// returns the skin name "boc#8". If the stem IS the char_id, returns "default".
-/// For DynIllust stems like "dyn_illust_char_4087_ines_boc#8", strips the prefix first.
-fn derive_skin_name(stem: &str, char_id: &str) -> String {
-    // Strip common DynIllust prefixes
-    let cleaned = stem
-        .strip_prefix("dyn_illust_")
-        .or_else(|| stem.strip_prefix("dyn_portrait_"))
-        .or_else(|| stem.strip_prefix("build_"))
-        .unwrap_or(stem);
+fn strip_known_prefix(stem: &str) -> &str {
+    for prefix in KNOWN_PREFIXES {
+        if let Some(rest) = stem.strip_prefix(prefix) {
+            return rest;
+        }
+    }
+    stem
+}
+
+/// Derive a skin name for a non-DynIllust spine stem.
+/// Returns `(skin_name, is_conventional)`. `is_conventional` is true when
+/// the stem matched the directory's char_id (either as the default or as a
+/// `{char_id}_{suffix}` variant). Non-conventional stems mean the file
+/// inside this character's folder has an unrelated name (e.g.
+/// `BattleFront/char_008_owl/char_502_nblade.atlas` — owl reuses Blade's
+/// chibi); the caller may decide to promote them to "default".
+fn derive_skin_name_for_dir(stem: &str, char_id: &str) -> (String, bool) {
+    let cleaned = strip_known_prefix(stem);
 
     let char_lower = char_id.to_lowercase();
     let cleaned_lower = cleaned.to_lowercase();
 
     if cleaned_lower == char_lower {
-        "default".to_owned()
-    } else if cleaned_lower.starts_with(&format!("{char_lower}_")) {
-        // Return the ORIGINAL case suffix, not the lowercased one
-        cleaned[char_id.len() + 1..].to_owned()
+        ("default".to_owned(), true)
+    } else if let Some(rest_lower) = cleaned_lower.strip_prefix(&format!("{char_lower}_")) {
+        // Preserve the original case from `cleaned` rather than the lowercased copy.
+        let suffix = &cleaned[cleaned.len() - rest_lower.len()..];
+        (suffix.to_owned(), true)
     } else {
-        cleaned.to_owned()
+        (cleaned.to_owned(), false)
     }
 }
 
-/// Pick the best spine file set for a given base name.
-///
-/// Scoring (higher = better match):
-///   - Exact stem match with base_name         → 100
-///   - Stem ends with base_name (e.g. dyn_illust_{base}) → 50
-///   - Stem contains base_name                  → 10
-///   - Prefer non-"portrait" stems              → +5 bonus
-///
-fn pick_best_spine_set(sets: Vec<(String, SpineFiles)>, base_name: &str) -> Option<SpineFiles> {
-    if sets.is_empty() {
-        return None;
+/// Resolve all spine sets in a non-DynIllust directory into (skin, files)
+/// pairs. When a directory contains exactly one stem that does not follow
+/// the `{char_id}` / `{char_id}_{suffix}` convention and no conventional
+/// default exists, that stem is promoted to "default" — which covers cases
+/// like Owl reusing Blade's chibi or Liskarm-the-typo files living under
+/// `char_107_liskam/`.
+fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(String, SpineFiles)> {
+    let mut tagged: Vec<(String, bool, SpineFiles)> = sets
+        .into_iter()
+        .map(|(stem, files)| {
+            let (skin, conventional) = derive_skin_name_for_dir(&stem, char_id);
+            (skin, conventional, files)
+        })
+        .collect();
+
+    let has_conventional_default = tagged.iter().any(|(s, c, _)| *c && s == "default");
+    let non_conventional_indices: Vec<usize> = tagged
+        .iter()
+        .enumerate()
+        .filter(|(_, (_, c, _))| !*c)
+        .map(|(i, _)| i)
+        .collect();
+
+    if !has_conventional_default && non_conventional_indices.len() == 1 {
+        let i = non_conventional_indices[0];
+        tagged[i].0 = "default".to_owned();
+        tagged[i].1 = true;
     }
 
-    let base_lower = base_name.to_lowercase();
+    tagged.into_iter().map(|(s, _, f)| (s, f)).collect()
+}
 
-    sets.into_iter()
-        .map(|(stem, files)| {
-            let mut score: i32 = 0;
+/// Resolve DynIllust directory contents.
+///
+/// One DynIllust folder corresponds to exactly one skin variant, so the
+/// folder name is the canonical skin identifier (e.g. dir
+/// `char_4087_ines_ambiencesynesthesia#5/` is the `ambiencesynesthesia#5`
+/// skin's dynamic — even when the file inside drops the `#5` and case).
+///
+/// The one exception is "duplicate-of-default" folders such as
+/// `char_1012_skadi2_2/` whose file is just `dyn_illust_char_1012_skadi2.atlas`
+/// (no `_2` suffix in the file name). The trailing `_2` is a disambiguator,
+/// not a skin variant, and the spine actually belongs to the default skin —
+/// we detect this by checking whether the file's stripped stem matches the
+/// dir's char_id with no skin suffix at all.
+///
+/// Across files within one folder we prefer `dyn_illust_` over
+/// `dyn_portrait_` and skip `_Start` intro-animation companions.
+fn resolve_dyn_illust_skins(
+    sets: Vec<(String, SpineFiles)>,
+    dir_name: &str,
+    char_id: &str,
+) -> Vec<(String, SpineFiles)> {
+    let (_, dir_skin) = parse_skin_identity(dir_name);
+    let char_lower = char_id.to_lowercase();
 
-            if stem == base_lower {
-                score = 100;
-            } else if stem.ends_with(&base_lower) {
-                score = 50;
-            } else if stem.contains(&base_lower) {
-                score = 10;
+    // Pure numeric dir suffixes (`_2`, `_3`, …) are duplicate-of-default
+    // counters, not real skin variants — Arknights' real skin IDs always
+    // use named tags like `sale#X` / `boc#X` / `iteration#N`. Folders such
+    // as `char_2014_nian_2/` whose file is `dyn_illust_char_2014_nian2.atlas`
+    // (concatenated, not the bare char_id) only fall through to this check.
+    let dir_skin_is_numeric = !dir_skin.is_empty() && dir_skin.chars().all(|c| c.is_ascii_digit());
+
+    let mut by_skin: HashMap<String, (i32, SpineFiles)> = HashMap::new();
+
+    for (stem, files) in sets {
+        let cleaned = strip_known_prefix(&stem);
+        if cleaned.ends_with("_Start") || cleaned.ends_with("_start") {
+            continue;
+        }
+
+        let skin_name = if cleaned.eq_ignore_ascii_case(&char_lower) || dir_skin_is_numeric {
+            "default".to_owned()
+        } else {
+            dir_skin.clone()
+        };
+
+        let priority = if stem.starts_with("dyn_illust_") {
+            2
+        } else if stem.starts_with("dyn_portrait_") {
+            1
+        } else {
+            0
+        };
+
+        match by_skin.get(&skin_name) {
+            Some((existing, _)) if *existing >= priority => {}
+            _ => {
+                by_skin.insert(skin_name, (priority, files));
             }
+        }
+    }
 
-            // Prefer non-portrait variants (dyn_illust over dyn_portrait)
-            if !stem.contains("portrait") {
-                score += 5;
-            }
-
-            (score, files)
-        })
-        .filter(|(score, _)| *score > 0)
-        .max_by_key(|(score, _)| *score)
-        .map(|(_, files)| files)
+    by_skin.into_iter().map(|(s, (_, f))| (s, f)).collect()
 }

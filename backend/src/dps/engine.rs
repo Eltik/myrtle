@@ -10,9 +10,14 @@ use super::formulas;
 use super::operator_unit::{EnemyStats, OperatorUnit};
 
 const FORMULAS_JSON: &str = include_str!("config/operator_formulas.json");
+const HEAL_FORMULAS_JSON: &str = include_str!("config/heal_formulas.json");
 
 pub fn load_formulas() -> HashMap<String, OperatorFormula> {
     serde_json::from_str(FORMULAS_JSON).expect("Invalid operator_formulas.json")
+}
+
+pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
+    serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json")
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,6 +25,16 @@ pub struct DpsResult {
     pub skill_dps: f64,
     pub total_damage: f64,
     pub average_dps: f64,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct HpsResult {
+    /// Heal-per-second while the active skill is up.
+    pub skill_hps: f64,
+    /// Heal-per-second during the SP-charge phase (0 for burst healers).
+    pub base_hps: f64,
+    /// Cycle-averaged HPS including charge time.
+    pub avg_hps: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -97,6 +112,8 @@ pub fn calculate_skill_dps(
 }
 
 static FORMULAS: LazyLock<HashMap<String, OperatorFormula>> = LazyLock::new(load_formulas);
+static HEAL_FORMULAS: LazyLock<HashMap<String, OperatorFormula>> =
+    LazyLock::new(load_heal_formulas);
 
 pub fn get_formula(op_id: &str) -> Option<&OperatorFormula> {
     FORMULAS.get(op_id)
@@ -104,6 +121,14 @@ pub fn get_formula(op_id: &str) -> Option<&OperatorFormula> {
 
 pub fn supported_operators() -> &'static HashMap<String, OperatorFormula> {
     &FORMULAS
+}
+
+pub fn get_heal_formula(op_id: &str) -> Option<&OperatorFormula> {
+    HEAL_FORMULAS.get(op_id)
+}
+
+pub fn supported_healers() -> &'static HashMap<String, OperatorFormula> {
+    &HEAL_FORMULAS
 }
 
 pub fn calculate_dps(
@@ -128,7 +153,10 @@ pub fn calculate_dps(
         formula.available_modules.clone(),
     );
 
-    // Apply shreds to enemy
+    if unit.module_unavailable {
+        return None;
+    }
+
     let shredded = formulas::apply_shreds(enemy, &unit.shreds);
 
     // Get the skill formula for current skill index
@@ -171,4 +199,39 @@ pub fn calculate_dps(
         total_damage,
         average_dps,
     })
+}
+
+/// Returns `None` for operators without a transpiled HPS implementation.
+pub fn calculate_hps(operator: &Operator, params: OperatorParams) -> Option<HpsResult> {
+    let op_id = operator.id.as_deref()?;
+    let formula = HEAL_FORMULAS.get(op_id)?;
+
+    let data = OperatorData::new(operator.clone());
+    let mut unit = OperatorUnit::new(
+        data,
+        params,
+        formula.default_skill,
+        formula.default_potential,
+        formula.default_module,
+        formula.available_skills.clone(),
+        formula.available_modules.clone(),
+    );
+
+    if unit.module_unavailable {
+        return None;
+    }
+
+    apply_init_fixups(&mut unit, op_id);
+
+    super::custom::dispatch_hps(&unit)
+}
+
+/// Per-operator init side effects that the transpiler can't derive from the
+/// skill formula alone (e.g. values set in the operator's Python `__init__`).
+fn apply_init_fixups(unit: &mut OperatorUnit, op_id: &str) {
+    // Warfarin S1 heals for a fraction of the target's max HP; default it the
+    // way the reference does when no explicit target HP is supplied.
+    if op_id == "char_171_bldsk" && unit.skill_index == 1 {
+        unit.target_hp = (1000.0 * (unit.elite as f64 + 1.0)).max(100.0);
+    }
 }

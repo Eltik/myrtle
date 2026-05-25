@@ -1,0 +1,13 @@
+.parallax-hero {
+    --parallax-progress: 0;
+}
+
+.parallax-image {
+    transform: translate3d(0, calc(var(--parallax-progress) * 80px), 0) scale(calc(1 + var(--parallax-progress) * 0.1));
+    transition: transform 75ms ease-out;
+}
+
+.parallax-content {
+    transform: translate3d(0, calc(var(--parallax-progress) * -40px), 0);
+    opacity: calc(1 - var(--parallax-progress));
+}
