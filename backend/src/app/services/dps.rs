@@ -2,11 +2,12 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::module::ModuleType;
 use crate::core::gamedata::types::operator::Operator;
-use crate::dps::engine::{self, DpsResult};
+use crate::dps::engine::{self, DpsResult, HpsResult, OperatorFormula};
 use crate::dps::operator_unit::{
     EnemyStats, OperatorBuffs, OperatorConditionals, OperatorParams, OperatorShred,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -60,9 +61,12 @@ fn module_resolvable(sorted: &[OperatorModuleRef<'_>], pos: usize, module_value:
             .any(|m| m.module.char_equip_order == module_value)
 }
 
-pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
+fn build_list_entries(
+    state: &AppState,
+    formulas: &HashMap<String, OperatorFormula>,
+) -> Vec<OperatorListEntry> {
     let gd = state.game_data.load();
-    engine::supported_operators()
+    formulas
         .iter()
         .map(|(id, formula)| {
             // Only advertise modules the current game data can actually resolve.
@@ -108,6 +112,14 @@ pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
             }
         })
         .collect()
+}
+
+pub fn list_operators(state: &AppState) -> Vec<OperatorListEntry> {
+    build_list_entries(state, engine::supported_operators())
+}
+
+pub fn list_healers(state: &AppState) -> Vec<OperatorListEntry> {
+    build_list_entries(state, engine::supported_healers())
 }
 
 #[derive(Deserialize)]
@@ -165,14 +177,8 @@ pub struct RequestShred {
     pub res_flat: Option<i32>,
 }
 
-pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
-    let gd = state.game_data.load();
-    let operator = gd
-        .operators
-        .get(&req.operator_id)
-        .ok_or(ApiError::NotFound)?;
-
-    let params = OperatorParams {
+fn build_params(req: CalculateRequest) -> OperatorParams {
+    OperatorParams {
         promotion: req.promotion,
         level: req.level,
         potential: req.potential,
@@ -207,14 +213,37 @@ pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, A
         }),
         all_cond: req.all_cond,
         ..Default::default()
-    };
+    }
+}
+
+pub fn calculate(state: &AppState, req: CalculateRequest) -> Result<DpsResult, ApiError> {
+    let gd = state.game_data.load();
+    let operator = gd
+        .operators
+        .get(&req.operator_id)
+        .ok_or(ApiError::NotFound)?;
 
     let enemy = EnemyStats {
         defense: req.defense.unwrap_or(0.0),
         res: req.res.unwrap_or(0.0),
     };
+    let params = build_params(req);
 
     engine::calculate_dps(operator, params, &enemy).ok_or(ApiError::BadRequest(
         "DPS calculation failed for this operator/config".into(),
+    ))
+}
+
+pub fn calculate_hps(state: &AppState, req: CalculateRequest) -> Result<HpsResult, ApiError> {
+    let gd = state.game_data.load();
+    let operator = gd
+        .operators
+        .get(&req.operator_id)
+        .ok_or(ApiError::NotFound)?;
+
+    let params = build_params(req);
+
+    engine::calculate_hps(operator, params).ok_or(ApiError::BadRequest(
+        "HPS calculation failed for this operator/config".into(),
     ))
 }

@@ -80,6 +80,8 @@ pub fn router() -> Router<AppState> {
         .route("/operators/index", get(operators::index))
         .route("/dps/operators", get(dps::operators))
         .route("/dps/calculate", post(dps::calculate))
+        .route("/hps/operators", get(dps::healers))
+        .route("/hps/calculate", post(dps::calculate_hps))
         .route("/operator-notes", get(operator_notes::list))
         .route("/operator-notes/{operator_id}", get(operator_notes::get))
         .route("/operator-notes/{operator_id}", put(operator_notes::update))
