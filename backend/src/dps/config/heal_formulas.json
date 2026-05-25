@@ -1,0 +1,1576 @@
+{
+  "char_284_spot": {
+    "name": "Spot",
+    "class_name": "Spot",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 0,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_179_cgbird": {
+    "name": "Nightingale",
+    "class_name": "Nightingale",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1,
+      2
+    ],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_473_mberry": {
+    "name": "Unknown",
+    "class_name": "Mulberry",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {},
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "No",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_128_plosis": {
+    "name": "Ptilopsis",
+    "class_name": "Ptilopsis",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_1012_skadi2": {
+    "name": "SkadiAlter",
+    "class_name": "Skalter",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "AHinRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "module",
+        "name": "noModBonus",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_343_tknogi": {
+    "name": "Tsukinogi",
+    "class_name": "Tsukinogi",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4163_rosesa": {
+    "name": "Unknown",
+    "class_name": "RoseSalt",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_4041_chnut": {
+    "name": "Chestnut",
+    "class_name": "Chestnut",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4134_cetsyr": {
+    "name": "CivilightEterna",
+    "class_name": "CivilightEterna",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 3,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "module",
+        "name": "noModBonus",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_4114_harold": {
+    "name": "Harold",
+    "class_name": "Harold",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_148_nearl": {
+    "name": "Nearl",
+    "class_name": "Nearl",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_003_kalts": {
+    "name": "Kaltsit",
+    "class_name": "Kaltsit",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1,
+      2,
+      3
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_449_glider": {
+    "name": "Unknown",
+    "class_name": "Honeyberry",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_1037_amiya3": {
+    "name": "AmiyaMedic",
+    "class_name": "AmiyaMedic",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "skill",
+        "name": "noStacks",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_187_ccheal": {
+    "name": "Gavial",
+    "class_name": "Gavial",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "first",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "module",
+        "name": "groundUnit",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "skill",
+        "name": "lowHp",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_202_demkni": {
+    "name": "Saria",
+    "class_name": "Saria",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1,
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "noStacks",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_108_silent": {
+    "name": "Silence",
+    "class_name": "Silence",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "module",
+        "name": "healingMelee",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_4119_wanqin": {
+    "name": "Wanqing",
+    "class_name": "Wanqing",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_117_myrrh": {
+    "name": "Myrrh",
+    "class_name": "Myrrh",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4173_nowell": {
+    "name": "Nowell",
+    "class_name": "Nowell",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "trait",
+        "name": "atRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "talent",
+        "name": "vsNegStat",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_258_podego": {
+    "name": "Podenco",
+    "class_name": "Podenco",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4139_papyrs": {
+    "name": "Papyrus",
+    "class_name": "Papyrus",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 0,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4172_xingzh": {
+    "name": "Xingzhu",
+    "class_name": "Xingzhu",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4196_reckpr": {
+    "name": "Recordkeeper",
+    "class_name": "RecordKeeper",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "talentInactive",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "module",
+        "name": "vs",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_275_breeze": {
+    "name": "Unknown",
+    "class_name": "Breeze",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_4071_peper": {
+    "name": "Paprika",
+    "class_name": "Paprika",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "f",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_479_sleach": {
+    "name": "Saileach",
+    "class_name": "Saileach",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_164_nightm": {
+    "name": "Nightmare",
+    "class_name": "Nightmare",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_1020_reed2": {
+    "name": "ReedAlter",
+    "class_name": "ReedAlter",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_402_tuye": {
+    "name": "Tuye",
+    "class_name": "Tuye",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_345_folnic": {
+    "name": "Folinic",
+    "class_name": "Folinic",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "module",
+        "name": "groundUnit",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_4179_monstr": {
+    "name": "Mon3tr",
+    "class_name": "Mon3tr",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "noConstruct",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_226_hmau": {
+    "name": "Hung",
+    "class_name": "Hung",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "highGroundTarget",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_1033_swire2": {
+    "name": "SwireAlter",
+    "class_name": "SwireAlter",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [
+      1,
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent",
+        "name": "noCoinStacks",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "module",
+        "name": "noModStacks",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_1031_slent2": {
+    "name": "SilenceAlter",
+    "class_name": "SilenceAlter",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1,
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4125_rdoc": {
+    "name": "Doc",
+    "class_name": "Doc",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_285_medic2": {
+    "name": "Lancet2",
+    "class_name": "Lancet2",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 0,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_492_quercu": {
+    "name": "Quercus",
+    "class_name": "Quercus",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_181_flower": {
+    "name": "Unknown",
+    "class_name": "Perfumer",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 0,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_4143_sensi": {
+    "name": "Senshi",
+    "class_name": "Senshi",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_151_myrtle": {
+    "name": "Myrtle",
+    "class_name": "Myrtle",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4109_baslin": {
+    "name": "Bassline",
+    "class_name": "Bassline",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_385_finlpp": {
+    "name": "Purestream",
+    "class_name": "Purestream",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "trait",
+        "name": "atRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_1016_agoat2": {
+    "name": "EyjafjallaAlter",
+    "class_name": "Eyjaberry",
+    "available_skills": [
+      1,
+      3
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_147_shining": {
+    "name": "Shining",
+    "class_name": "Shining",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      2,
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4045_heidi": {
+    "name": "Heidi",
+    "class_name": "Heidi",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "module",
+        "name": "noModBonus",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_2025_shu": {
+    "name": "Shu",
+    "class_name": "Shu",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "3": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "talent2",
+        "name": "maxTalent2",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "skill",
+        "name": "noEnemies",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_171_bldsk": {
+    "name": "Warfarin",
+    "class_name": "Warfarin",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_212_ansel": {
+    "name": "Ansel",
+    "class_name": "Ansel",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4042_lumen": {
+    "name": "Lumen",
+    "class_name": "Lumen",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      1,
+      2
+    ],
+    "default_skill": 3,
+    "default_potential": 6,
+    "default_module": 2,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "trait",
+        "name": "atRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_4019_ncdeer": {
+    "name": "NineColoredDeer",
+    "class_name": "NineColoredDeer",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4202_haruka": {
+    "name": "Haruka",
+    "class_name": "Haruka",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      2
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 2,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "skill",
+        "name": "1stActivation",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_436_whispr": {
+    "name": "Whisperain",
+    "class_name": "Whisperain",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "trait",
+        "name": "atRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_196_sunbr": {
+    "name": "Gummy",
+    "class_name": "Gummy",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_348_ceylon": {
+    "name": "Ceylon",
+    "class_name": "Ceylon",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "trait",
+        "name": "atRange",
+        "default": false,
+        "skills": [],
+        "modules": []
+      },
+      {
+        "type": "talent",
+        "name": "watermap",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_101_sora": {
+    "name": "Sora",
+    "class_name": "Sora",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": [
+      {
+        "type": "module",
+        "name": "noModBonus",
+        "default": false,
+        "skills": [],
+        "modules": []
+      }
+    ]
+  },
+  "char_423_blemsh": {
+    "name": "Blemishine",
+    "class_name": "Blemishine",
+    "available_skills": [
+      1,
+      2,
+      3
+    ],
+    "available_modules": [
+      2,
+      1
+    ],
+    "default_skill": 3,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "3": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_298_susuro": {
+    "name": "Sussurro",
+    "class_name": "Sussurro",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 2,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      },
+      "2": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_4091_ulika": {
+    "name": "UOfficial",
+    "class_name": "UOfficial",
+    "available_skills": [],
+    "available_modules": [],
+    "default_skill": 0,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {},
+    "conditionals": []
+  },
+  "char_1039_thorn2": {
+    "name": "ThornsAlter",
+    "class_name": "ThornsAlter",
+    "available_skills": [
+      1,
+      2
+    ],
+    "available_modules": [
+      1
+    ],
+    "default_skill": 1,
+    "default_potential": 1,
+    "default_module": 1,
+    "skills": {
+      "2": {
+        "type": "custom"
+      },
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  },
+  "char_120_hibisc": {
+    "name": "Hibiscus",
+    "class_name": "Hibiscus",
+    "available_skills": [
+      1
+    ],
+    "available_modules": [],
+    "default_skill": 1,
+    "default_potential": 6,
+    "default_module": 1,
+    "skills": {
+      "1": {
+        "type": "custom"
+      }
+    },
+    "conditionals": []
+  }
+}
