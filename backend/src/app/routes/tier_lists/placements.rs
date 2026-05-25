@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
 use crate::app::state::AppState;
+use crate::app::validation::{PLACEMENT_DESCRIPTION_MAX, validate_opt_length};
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierPlacement;
 use crate::database::queries::tier_lists as queries;
@@ -16,7 +17,7 @@ pub struct AddPlacementRequest {
     pub tier_id: Uuid,
     pub operator_id: String,
     pub sub_order: Option<i16>,
-    pub notes: Option<String>,
+    pub description: Option<String>,
 }
 
 pub async fn add(
@@ -25,6 +26,11 @@ pub async fn add(
     Path(slug): Path<String>,
     Json(body): Json<AddPlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
+    validate_opt_length(
+        "placement description",
+        body.description.as_deref(),
+        PLACEMENT_DESCRIPTION_MAX,
+    )?;
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
@@ -37,9 +43,43 @@ pub async fn add(
         body.tier_id,
         &body.operator_id,
         body.sub_order.unwrap_or(0),
-        body.notes.as_deref(),
+        body.description.as_deref(),
     )
     .await?;
+    Ok(Json(placement))
+}
+
+#[derive(Deserialize)]
+pub struct UpdateDescriptionRequest {
+    pub description: Option<String>,
+}
+
+pub async fn update_description(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path((slug, operator_id)): Path<(String, String)>,
+    Json(body): Json<UpdateDescriptionRequest>,
+) -> Result<Json<TierPlacement>, ApiError> {
+    validate_opt_length(
+        "placement description",
+        body.description.as_deref(),
+        PLACEMENT_DESCRIPTION_MAX,
+    )?;
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let list = queries::find_by_slug(&state.db, &slug)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
+        .await?;
+
+    let placement = queries::set_placement_description(
+        &state.db,
+        list.id,
+        &operator_id,
+        body.description.as_deref(),
+    )
+    .await?
+    .ok_or(ApiError::NotFound)?;
     Ok(Json(placement))
 }
 

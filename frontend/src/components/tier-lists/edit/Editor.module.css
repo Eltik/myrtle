@@ -233,6 +233,18 @@
     pointer-events: none;
 }
 
+.opNote {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 1.5px var(--card);
+    pointer-events: none;
+}
+
 .rowActions {
     grid-area: actions;
     display: flex;

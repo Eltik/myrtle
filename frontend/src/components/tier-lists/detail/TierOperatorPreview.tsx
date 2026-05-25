@@ -1,6 +1,8 @@
 import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { stripMarkdown } from "#/lib/markdown";
 import { formatNationId, formatProfession, formatSubProfession, getAvatarById, parseOperatorName } from "#/lib/utils";
+import { operatorPlacementNote } from "../shared";
 import styles from "./TierOperatorPreview.module.css";
 
 interface ITierOperatorPreviewProps {
@@ -9,6 +11,7 @@ interface ITierOperatorPreviewProps {
 
 export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
     const { displayName, subtitle } = parseOperatorName(operator.name);
+    const note = operatorPlacementNote(operator);
     const archetype = formatSubProfession(operator.subProfessionId).replace(formatProfession(operator.profession), "").trim();
     const factionId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : "rhodes";
     const positionLabel = operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : null;
@@ -65,7 +68,11 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
                 </div>
             )}
 
-            {operator.notes?.trim() && <p className={styles.notes}>“{operator.notes.trim()}”</p>}
+            {note && (
+                <p className={styles.notes} style={{ display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 5, overflow: "hidden" }}>
+                    “{stripMarkdown(note)}”
+                </p>
+            )}
 
             <p className={styles.hint}>Click to view operator</p>
         </article>

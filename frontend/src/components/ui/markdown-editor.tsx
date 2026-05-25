@@ -97,7 +97,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
         >
             <Tabs value={tab} onValueChange={(v) => setTab(v as "write" | "preview")} className="gap-0">
                 {/* Tabs row */}
-                <div className="flex items-center gap-2 border-border/70 border-b px-1.5 py-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-border/70 border-b px-1.5 py-1.5">
                     <TabsList variant="default" className="h-9 p-0.5 sm:h-7">
                         <TabsTab value="write" className="h-8 gap-1.5 px-2.5 text-[13px] sm:h-6 sm:px-2 sm:text-[12px]">
                             <PencilLineIcon className="size-4 sm:size-3.5" />
@@ -111,7 +111,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
 
                     {/* Desktop toolbar lives on this row */}
                     {!hideToolbar && isWrite && (
-                        <div className="ml-auto hidden items-center gap-0.5 sm:flex" role="toolbar" aria-label="Formatting">
+                        <div className="hidden items-center gap-0.5 sm:flex" role="toolbar" aria-label="Formatting">
                             <ToolbarButtons apply={apply} disabled={disabled} />
                         </div>
                     )}

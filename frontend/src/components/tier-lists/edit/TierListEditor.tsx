@@ -24,11 +24,6 @@ interface ITierListEditorProps {
     slug: string;
 }
 
-interface IPickerState {
-    operator: ITierOperator;
-    currentTierId: string | null;
-}
-
 export function TierListEditor({ slug }: ITierListEditorProps) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -60,7 +55,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     const [originalState, setOriginalState] = useState<IEditState>(initial);
     const [state, dispatch] = useReducer(editReducer, initial);
     const [editingTier, setEditingTier] = useState<IEditTier | null>(null);
-    const [picker, setPicker] = useState<IPickerState | null>(null);
+    const [picker, setPicker] = useState<ITierOperator | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveProgress, setSaveProgress] = useState<ISaveProgress | null>(null);
     const [publishOpen, setPublishOpen] = useState(false);
@@ -82,6 +77,13 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     }, [state.operatorById, operators]);
 
     const placedIds = useMemo(() => placedOperatorIds(state), [state]);
+    const notedOperatorIds = useMemo(() => {
+        const set = new Set<string>();
+        for (const [id, desc] of Object.entries(state.descriptionByOperatorId)) {
+            if (desc.trim()) set.add(id);
+        }
+        return set;
+    }, [state.descriptionByOperatorId]);
     const pendingChanges: IPendingChange[] = useMemo(() => diffStates(originalState, state), [originalState, state]);
     const findCurrentTierId = useCallback((operatorId: string): string | null => state.tiers.find((t) => t.operatorIds.includes(operatorId))?.id ?? null, [state.tiers]);
 
@@ -97,11 +99,16 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         dispatch({ type: "ADD_TIER", name: defaultTierName(state.tiers.length), color: nextFallbackTierColor(state.tiers.length), description: "" });
     }, [state.tiers.length]);
 
-    const handleActivateOperator = useCallback(
-        (operator: ITierOperator) => {
-            setPicker({ operator, currentTierId: findCurrentTierId(operator.id) });
+    const handleActivateOperator = useCallback((operator: ITierOperator) => {
+        setPicker(operator);
+    }, []);
+
+    const handleOperatorDescriptionChange = useCallback(
+        (description: string) => {
+            if (!picker) return;
+            dispatch({ type: "SET_OPERATOR_DESCRIPTION", operatorId: picker.id, description });
         },
-        [findCurrentTierId],
+        [picker],
     );
 
     const saveMutation = useMutation({
@@ -258,8 +265,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     const handlePickTier = useCallback(
         (tierId: string | null) => {
             if (!picker) return;
-            dispatch({ type: "PLACE_OPERATOR", operatorId: picker.operator.id, tierId });
-            setPicker(null);
+            dispatch({ type: "PLACE_OPERATOR", operatorId: picker.id, tierId });
         },
         [picker],
     );
@@ -290,6 +296,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                                     key={tier.id}
                                     tier={tier}
                                     operators={tier.operatorIds.map((id) => operatorById[id])}
+                                    notedOperatorIds={notedOperatorIds}
                                     canMoveUp={idx > 0}
                                     canMoveDown={idx < state.tiers.length - 1}
                                     onMoveUp={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "up" })}
@@ -331,7 +338,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
 
                 <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} onClear={handleClearTier} />
 
-                <PickTierDialog operator={picker?.operator ?? null} currentTierId={picker?.currentTierId ?? null} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} />
+                <PickTierDialog operator={picker} currentTierId={picker ? findCurrentTierId(picker.id) : null} description={picker ? (state.descriptionByOperatorId[picker.id] ?? "") : ""} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} onDescriptionChange={handleOperatorDescriptionChange} />
 
                 <PublishVersionDialog open={publishOpen} publishing={publishMutation.isPending} latestVersion={latestVersion} nextVersion={nextVersion} publishError={publishError} onClose={handleClosePublishDialog} onPublish={handlePublish} />
             </main>

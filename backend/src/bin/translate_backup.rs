@@ -214,7 +214,8 @@ fn main() -> Result<()> {
                 "tier_id": tier_id,
                 "operator_id": op_id,
                 "sub_order": r.get("sub_order").and_then(|v| v.as_i64()).unwrap_or(0),
-                "notes": r.get("notes"),
+                // Old `notes` maps to v3's `description`.
+                "description": r.get("notes"),
                 "updated_at": r.get("updated_at"),
             }))?;
         }

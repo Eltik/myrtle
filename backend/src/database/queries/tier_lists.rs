@@ -204,22 +204,48 @@ pub async fn add_placement(
     tier_id: Uuid,
     operator_id: &str,
     sub_order: i16,
-    notes: Option<&str>,
+    description: Option<&str>,
 ) -> Result<TierPlacement, sqlx::Error> {
     sqlx::query_as::<_, TierPlacement>(
-        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, notes)
+        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, description)
           VALUES ($1,$2,$3,$4)
           ON CONFLICT (tier_id, operator_id)
           DO UPDATE SET sub_order = EXCLUDED.sub_order,
-                        notes = EXCLUDED.notes,
+                        description = EXCLUDED.description,
                         updated_at = NOW()
           RETURNING *",
     )
     .bind(tier_id)
     .bind(operator_id)
     .bind(sub_order)
-    .bind(notes)
+    .bind(description)
     .fetch_one(pool)
+    .await
+}
+
+/// Update just the editor-facing description of a placement, identified by the
+/// owning tier list + operator. Uses a join so we avoid loading every tier to
+/// locate the placement. Returns the updated row, or `None` if the operator is
+/// not placed on this list.
+pub async fn set_placement_description(
+    pool: &PgPool,
+    tier_list_id: Uuid,
+    operator_id: &str,
+    description: Option<&str>,
+) -> Result<Option<TierPlacement>, sqlx::Error> {
+    sqlx::query_as::<_, TierPlacement>(
+        "UPDATE tier_placements tp
+            SET description = $3, updated_at = NOW()
+          FROM tiers t
+          WHERE tp.tier_id = t.id
+            AND t.tier_list_id = $1
+            AND tp.operator_id = $2
+          RETURNING tp.*",
+    )
+    .bind(tier_list_id)
+    .bind(operator_id)
+    .bind(description)
+    .fetch_optional(pool)
     .await
 }
 
@@ -243,12 +269,25 @@ pub async fn move_placement(
     operator_id: &str,
     sub_order: i16,
 ) -> Result<TierPlacement, sqlx::Error> {
+    // Re-insert via add_placement rather than UPDATE the PK so the upsert's
+    // conflict handling applies when the operator already exists in the target
+    // tier; the existing description is carried across the move.
+    let existing = sqlx::query_as::<_, TierPlacement>(
+        "SELECT * FROM tier_placements WHERE tier_id = $1 AND operator_id = $2",
+    )
+    .bind(old_tier_id)
+    .bind(operator_id)
+    .fetch_optional(pool)
+    .await?;
+
     sqlx::query("DELETE FROM tier_placements WHERE tier_id = $1 AND operator_id = $2")
         .bind(old_tier_id)
         .bind(operator_id)
         .execute(pool)
         .await?;
-    add_placement(pool, new_tier_id, operator_id, sub_order, None).await
+
+    let description = existing.as_ref().and_then(|p| p.description.as_deref());
+    add_placement(pool, new_tier_id, operator_id, sub_order, description).await
 }
 
 pub async fn get_permissions(

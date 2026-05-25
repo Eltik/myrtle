@@ -4,6 +4,7 @@ pub const TIER_NAME_MAX: usize = 24;
 pub const TIER_DESCRIPTION_MAX: usize = 1000;
 pub const LIST_NAME_MAX: usize = 80;
 pub const LIST_DESCRIPTION_MAX: usize = 4000;
+pub const PLACEMENT_DESCRIPTION_MAX: usize = 1000;
 
 /// Reject anything that isn't a 6-digit `#rrggbb` hex color. Mirrors the
 /// frontend's `HEX_RE` so user-submitted values can't be smuggled into inline

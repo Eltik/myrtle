@@ -1,5 +1,6 @@
 import type { ITierEntryFull, ITierOperator } from "#/lib/api/tier-lists";
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import { operatorPlacementNote } from "../shared";
 
 export interface ITierStats {
     total: number;
@@ -7,7 +8,7 @@ export interface ITierStats {
     profession: { profession: OperatorProfession; count: number }[];
     position: { melee: number; ranged: number; other: number };
     averageRarity: number | null;
-    notesCount: number;
+    describedCount: number;
     lastUpdatedAt: string | null;
     topOperator: ITierOperator | null;
 }
@@ -22,7 +23,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
     const professionCounts: Partial<Record<OperatorProfession, number>> = {};
     const position = { melee: 0, ranged: 0, other: 0 };
     let raritySum = 0;
-    let notesCount = 0;
+    let describedCount = 0;
     let lastUpdatedAt: string | null = null;
 
     for (const op of ops) {
@@ -30,7 +31,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
         professionCounts[op.profession] = (professionCounts[op.profession] ?? 0) + 1;
         bumpPosition(position, op.position);
         raritySum += op.rarity;
-        if (op.notes?.trim()) notesCount += 1;
+        if (operatorPlacementNote(op)) describedCount += 1;
         if (op.updatedAt) {
             if (lastUpdatedAt === null || op.updatedAt > lastUpdatedAt) lastUpdatedAt = op.updatedAt;
         }
@@ -43,7 +44,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
     const averageRarity = total > 0 ? raritySum / total : null;
     const topOperator = ops.length > 0 ? [...ops].sort((a, b) => b.rarity - a.rarity || a.subOrder - b.subOrder)[0] : null;
 
-    return { total, rarity, profession, position, averageRarity, notesCount, lastUpdatedAt, topOperator };
+    return { total, rarity, profession, position, averageRarity, describedCount, lastUpdatedAt, topOperator };
 }
 
 function bumpPosition(position: { melee: number; ranged: number; other: number }, p: OperatorPosition) {

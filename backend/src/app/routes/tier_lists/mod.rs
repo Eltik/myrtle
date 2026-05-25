@@ -1,7 +1,7 @@
 use crate::app::state::AppState;
 use axum::{
     Router,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
 };
 
 pub mod crud;
@@ -30,6 +30,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/tier-lists/{slug}/placements/{operator_id}",
             delete(placements::remove),
+        )
+        .route(
+            "/tier-lists/{slug}/placements/{operator_id}",
+            patch(placements::update_description),
         )
         .route(
             "/tier-lists/{slug}/placements/{operator_id}/move",
