@@ -5,6 +5,9 @@ export const env = createEnv({
     server: {
         NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
         BACKEND_URL: z.url().optional(),
+        GITHUB_REPO: z.string().default("Eltik/myrtle"),
+        GITHUB_TOKEN: z.string().optional(),
+        GITHUB_BRANCH: z.string().optional(),
     },
 
     /**
@@ -27,6 +30,9 @@ export const env = createEnv({
         ...import.meta.env,
         BACKEND_URL: process.env.BACKEND_URL,
         NODE_ENV: process.env.NODE_ENV,
+        GITHUB_REPO: process.env.GITHUB_REPO,
+        GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+        GITHUB_BRANCH: process.env.GITHUB_BRANCH,
     },
 
     /**
