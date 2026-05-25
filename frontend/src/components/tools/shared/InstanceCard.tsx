@@ -9,29 +9,34 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
-import type { IDpsCalculateBuffs, IDpsCalculateConditionals, IDpsConditionalInfo } from "#/lib/api/dps";
 import { cn } from "#/lib/utils";
-import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "../icons";
-import type { IDpsInstance, IDpsInstanceConfig } from "../types";
-import { useOperatorDetail } from "../useOperatorDetail";
+import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "./icons";
+import { conditionalKey } from "./instance";
+import { clampRankToElite, isMasteryRank, maxSkillRankForElite, rankLockReason, skillRankLabel } from "./skill";
+import type { IBuildConfig, ICalcBuffs, ICalcConditionals, IInstance } from "./types";
+import { useOperatorDetail } from "./useOperatorDetail";
 
 interface IInstanceCardProps {
-    inst: IDpsInstance;
+    inst: IInstance;
     index: number;
     isFirst: boolean;
     isLast: boolean;
-    onUpdate: (patch: Partial<IDpsInstanceConfig>) => void;
-    onUpdateBuffs: (patch: Partial<IDpsCalculateBuffs>) => void;
-    onToggleConditional: (key: keyof IDpsCalculateConditionals, value: boolean) => void;
+    onUpdate: (patch: Partial<IBuildConfig>) => void;
+    onToggleConditional: (key: keyof ICalcConditionals, value: boolean) => void;
     onToggleVisibility: () => void;
     onToggleCollapsed: () => void;
     onMoveUp: () => void;
     onMoveDown: () => void;
     onDuplicate: () => void;
     onRemove: () => void;
+    /** When provided, renders the External buffs section (per-instance buffs, DPS). */
+    onUpdateBuffs?: (patch: Partial<ICalcBuffs>) => void;
 }
 
-export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateBuffs, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove }: IInstanceCardProps): React.ReactElement {
+const SKILL_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const;
+const MASTERY_RANKS = [8, 9, 10] as const;
+
+export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, onUpdateBuffs }: IInstanceCardProps): React.ReactElement {
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
     const detail = useOperatorDetail(op.id);
@@ -39,6 +44,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
     const promotion = config.promotion ?? Math.max(0, detail.phaseCount - 1);
     const maxLevel = detail.maxLevelForPromotion(promotion);
     const level = config.level ?? maxLevel;
+    const maxRank = maxSkillRankForElite(promotion);
 
     const skillSummary = detail.skillName(config.skillIndex);
     const moduleSummary = config.moduleIndex > 0 ? detail.moduleName(config.moduleIndex) : "No module";
@@ -57,14 +63,13 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                         <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">#{index + 1}</span>
                     </div>
                     <div className="truncate text-[11px] text-muted-foreground">
-                        {skillSummary} · {moduleSummary}
+                        {skillSummary} · {skillRankLabel(config.skillRank)} · {moduleSummary}
                     </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
                     <IconButton label={visible ? "Hide curve" : "Show curve"} onClick={onToggleVisibility}>
                         {visible ? <Eye /> : <EyeOff />}
                     </IconButton>
-                    {/* Reorder controls take space, so hide on the smallest screens - duplicate/remove still let users prune */}
                     {!isFirst && (
                         <span className="hidden sm:inline-flex">
                             <IconButton label="Move up" onClick={onMoveUp}>
@@ -102,11 +107,9 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                                     iconURL={eliteIcon(p)}
                                     onClick={() => {
                                         const newMax = detail.maxLevelForPromotion(p);
-                                        // If `level` was at the previous max (or undefined → "max" sentinel), keep
-                                        // it as undefined so the new promotion's max applies. Otherwise clamp to
-                                        // the new max so we never exceed the cap.
                                         const wasAtMax = config.level === undefined || config.level >= maxLevel;
-                                        onUpdate({ promotion: p, level: wasAtMax ? undefined : Math.min(level, newMax) });
+                                        // Clamp both level and skill rank to what the new promotion allows.
+                                        onUpdate({ promotion: p, level: wasAtMax ? undefined : Math.min(level, newMax), skillRank: clampRankToElite(config.skillRank, p) });
                                     }}
                                 />
                             ))}
@@ -189,30 +192,17 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                         </FieldRow>
                     )}
 
-                    <FieldRow label="Mastery">
-                        <div className="flex flex-wrap gap-1">
-                            {[0, 1, 2, 3].map((m) => (
-                                <Tooltip key={`mastery-${m}`}>
-                                    <TooltipTrigger
-                                        render={(triggerProps) => (
-                                            <button
-                                                {...triggerProps}
-                                                type="button"
-                                                onClick={() => onUpdate({ masteryLevel: m })}
-                                                aria-label={m === 0 ? "No mastery (Lv 7)" : `Mastery ${m}`}
-                                                className={cn(
-                                                    "flex h-8 cursor-pointer items-center justify-center gap-1 rounded-md border bg-card px-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                                                    config.masteryLevel === m ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
-                                                )}
-                                            >
-                                                {m === 0 ? <span className="font-medium font-mono text-[11px]">L7</span> : <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(m)} />}
-                                            </button>
-                                        )}
-                                    />
-                                    <TooltipPopup>{m === 0 ? "Skill Lv 7 (no mastery)" : `Mastery ${m}`}</TooltipPopup>
-                                </Tooltip>
+                    <FieldRow label="Skill level">
+                        <div className="flex flex-wrap items-center gap-1">
+                            {SKILL_LEVELS.map((lvl) => (
+                                <RankChip key={`lvl-${lvl}`} rank={lvl} selected={config.skillRank === lvl} lockReason={rankLockReason(lvl, promotion)} onSelect={() => onUpdate({ skillRank: lvl })} />
+                            ))}
+                            <span aria-hidden="true" className="mx-0.5 h-6 w-px shrink-0 bg-border" />
+                            {MASTERY_RANKS.map((m) => (
+                                <RankChip key={`m-${m}`} rank={m} selected={config.skillRank === m} lockReason={rankLockReason(m, promotion)} onSelect={() => onUpdate({ skillRank: m })} />
                             ))}
                         </div>
+                        {maxRank < 10 && <p className="mt-1 text-[10px] text-muted-foreground/80 leading-snug">{maxRank < 7 ? "Promote to E1 for skill levels 5-7, E2 for masteries." : "Promote to E2 to unlock masteries."}</p>}
                     </FieldRow>
 
                     {optionalModules.length > 0 && (
@@ -294,7 +284,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                             <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">Conditionals</Label>
                             <div className="space-y-1">
                                 {op.conditionals.map((cond) => {
-                                    const key = mapConditionalKey(cond);
+                                    const key = conditionalKey(cond);
                                     if (!key) return null;
                                     const checked = Boolean(config.conditionals[key]);
                                     return (
@@ -319,23 +309,62 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onUpdateB
                         </div>
                     )}
 
-                    <Collapsible open={buffsOpen} onOpenChange={setBuffsOpen}>
-                        <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
-                            External buffs
-                            {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                        </button>
-                        <CollapsibleContent>
-                            <div className="grid grid-cols-2 gap-2 pt-1.5">
-                                <NumField label="ATK %" value={Math.round((config.buffs.atk ?? 0) * 100)} min={0} max={500} step={5} onChange={(v) => onUpdateBuffs({ atk: v / 100 })} />
-                                <NumField label="Flat ATK" value={config.buffs.flatAtk ?? 0} min={0} max={2000} step={10} onChange={(v) => onUpdateBuffs({ flatAtk: v })} />
-                                <NumField label="ASPD" value={config.buffs.aspd ?? 0} min={0} max={200} step={5} onChange={(v) => onUpdateBuffs({ aspd: v })} />
-                                <NumField label="Fragile %" value={Math.round((config.buffs.fragile ?? 0) * 100)} min={0} max={300} step={5} onChange={(v) => onUpdateBuffs({ fragile: v / 100 })} />
-                            </div>
-                        </CollapsibleContent>
-                    </Collapsible>
+                    {onUpdateBuffs && (
+                        <Collapsible open={buffsOpen} onOpenChange={setBuffsOpen}>
+                            <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
+                                External buffs
+                                {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                            </button>
+                            <CollapsibleContent>
+                                <div className="grid grid-cols-2 gap-2 pt-1.5">
+                                    <NumField label="ATK %" value={Math.round((config.buffs.atk ?? 0) * 100)} min={0} max={500} step={5} onChange={(v) => onUpdateBuffs({ atk: v / 100 })} />
+                                    <NumField label="Flat ATK" value={config.buffs.flatAtk ?? 0} min={0} max={2000} step={10} onChange={(v) => onUpdateBuffs({ flatAtk: v })} />
+                                    <NumField label="ASPD" value={config.buffs.aspd ?? 0} min={0} max={200} step={5} onChange={(v) => onUpdateBuffs({ aspd: v })} />
+                                    <NumField label="Fragile %" value={Math.round((config.buffs.fragile ?? 0) * 100)} min={0} max={300} step={5} onChange={(v) => onUpdateBuffs({ fragile: v / 100 })} />
+                                </div>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    )}
                 </CardPanel>
             )}
         </Card>
+    );
+}
+
+interface IRankChipProps {
+    rank: number;
+    selected: boolean;
+    lockReason: string | null;
+    onSelect: () => void;
+}
+
+function RankChip({ rank, selected, lockReason, onSelect }: IRankChipProps): React.ReactElement {
+    const locked = lockReason !== null;
+    const mastery = isMasteryRank(rank);
+    const tip = locked ? lockReason : skillRankLabel(rank);
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={(triggerProps) => (
+                    <button
+                        {...triggerProps}
+                        type="button"
+                        disabled={locked}
+                        aria-label={skillRankLabel(rank)}
+                        aria-pressed={selected}
+                        onClick={() => !locked && onSelect()}
+                        className={cn(
+                            "flex h-8 min-w-8 shrink-0 items-center justify-center rounded-md border bg-card px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                            locked ? "cursor-not-allowed border-border/60 opacity-40" : "cursor-pointer",
+                            selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : !locked && "border-border hover:border-primary/50",
+                        )}
+                    >
+                        {mastery ? <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
+                    </button>
+                )}
+            />
+            <TooltipPopup>{tip}</TooltipPopup>
+        </Tooltip>
     );
 }
 
@@ -389,23 +418,6 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
 
 function ScopeTag({ children }: { children: React.ReactNode }): React.ReactElement {
     return <span className="rounded bg-background px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">{children}</span>;
-}
-
-function mapConditionalKey(cond: IDpsConditionalInfo): keyof IDpsCalculateConditionals | null {
-    switch (cond.conditionalType) {
-        case "trait":
-            return "traitDamage";
-        case "talent":
-            return "talentDamage";
-        case "talent2":
-            return "talent2Damage";
-        case "skill":
-            return "skillDamage";
-        case "module":
-            return "moduleDamage";
-        default:
-            return null;
-    }
 }
 
 interface INumFieldProps {

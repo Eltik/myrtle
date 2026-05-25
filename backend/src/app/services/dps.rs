@@ -143,6 +143,8 @@ pub struct CalculateRequest {
     pub trust: Option<i32>,
     pub skill_index: Option<i32>,
     pub mastery_level: Option<i32>,
+    /// Explicit pre-mastery skill level (1-7). Overrides `mastery_level` when set.
+    pub skill_level: Option<i32>,
     pub module_index: Option<i32>,
     pub module_level: Option<i32>,
     // Enemy
@@ -185,6 +187,7 @@ fn build_params(req: CalculateRequest) -> OperatorParams {
         trust: req.trust.or(Some(100)),
         skill_index: req.skill_index,
         mastery_level: req.mastery_level,
+        skill_level: req.skill_level,
         module_index: req.module_index,
         module_level: req.module_level,
         buffs: req

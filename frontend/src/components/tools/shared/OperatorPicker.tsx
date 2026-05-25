@@ -3,25 +3,29 @@ import { Plus, Search } from "lucide-react";
 import * as React from "react";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup } from "#/components/ui/combobox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { dpsOperatorsQueryOptions, type IDpsOperatorListEntry } from "#/lib/api/dps";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { scoreMatch } from "#/lib/search/fuzzy";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { IOperatorListEntry } from "./types";
 
 interface IOperatorPickerProps {
-    onAdd: (op: IDpsOperatorListEntry) => void;
+    operators: IOperatorListEntry[];
+    isLoading: boolean;
+    isError: boolean;
+    error?: unknown;
     existingCount: number;
+    onAdd: (op: IOperatorListEntry) => void;
+    /** Singular noun for labels/copy, e.g. "operator" or "healer". */
+    noun: string;
 }
 
 interface IPickerEntry {
-    op: IDpsOperatorListEntry;
+    op: IOperatorListEntry;
     index?: IOperatorIndexEntry;
 }
 
-export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): React.ReactElement {
-    const operatorsQuery = useQuery(dpsOperatorsQueryOptions());
-    const { data: operators = [], isLoading, isError, error } = operatorsQuery;
+export function OperatorPicker({ operators, isLoading, isError, error, existingCount, onAdd, noun }: IOperatorPickerProps): React.ReactElement {
     const { data: indexEntries } = useQuery(operatorsIndexQueryOptions());
 
     const indexById = React.useMemo(() => {
@@ -32,7 +36,6 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
 
     const items = React.useMemo<IPickerEntry[]>(() => {
         const enriched = operators.map((op) => ({ op, index: indexById.get(op.id) }));
-        // Sort: rarity desc, then by name. Operators without index data sink to the bottom.
         return enriched.sort((a, b) => {
             const ra = a.index?.rarity ?? -1;
             const rb = b.index?.rarity ?? -1;
@@ -57,13 +60,13 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
 
     return (
         <div className="space-y-2">
-            <label className="block font-medium text-[12px] text-muted-foreground leading-none" htmlFor="dps-operator-picker">
-                {existingCount === 0 ? "Add an operator" : "Add another operator"}
+            <label className="block font-medium text-[12px] text-muted-foreground leading-none" htmlFor="operator-picker">
+                {existingCount === 0 ? `Add ${aOrAn(noun)}` : `Add another ${noun}`}
             </label>
             <Combobox<IPickerEntry, false> items={items} value={null} onValueChange={handleChange} filter={filter} itemToStringLabel={(e) => e.op.name} itemToStringValue={(e) => e.op.id}>
-                <ComboboxInput id="dps-operator-picker" placeholder={isLoading ? "Loading operators..." : `Search ${items.length} operator${items.length === 1 ? "" : "s"}...`} startAddon={existingCount === 0 ? <Search /> : <Plus />} />
+                <ComboboxInput id="operator-picker" placeholder={isLoading ? `Loading ${noun}s...` : `Search ${items.length} ${noun}${items.length === 1 ? "" : "s"}...`} startAddon={existingCount === 0 ? <Search /> : <Plus />} />
                 <ComboboxPopup>
-                    <ComboboxEmpty>No matching operators.</ComboboxEmpty>
+                    <ComboboxEmpty>No matching {noun}s.</ComboboxEmpty>
                     <ComboboxList>
                         {(entry: IPickerEntry) => {
                             const op = entry.op;
@@ -92,12 +95,18 @@ export function OperatorPicker({ onAdd, existingCount }: IOperatorPickerProps): 
                 </ComboboxPopup>
             </Combobox>
             {isError ? (
-                <p className="rounded border border-destructive/30 bg-destructive/8 px-2 py-1.5 text-[11px] text-foreground/90 leading-snug">Couldn't load operator list. {(error as Error)?.message ?? ""}</p>
+                <p className="rounded border border-destructive/30 bg-destructive/8 px-2 py-1.5 text-[11px] text-foreground/90 leading-snug">
+                    Couldn't load {noun} list. {(error as Error)?.message ?? ""}
+                </p>
             ) : existingCount === 0 ? (
-                <p className="text-[11px] text-muted-foreground leading-snug">Pick any operator to start. You can add the same one multiple times to compare different builds.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">Pick any {noun} to start. You can add the same one multiple times to compare different builds.</p>
             ) : existingCount === 1 ? (
-                <p className="text-[11px] text-muted-foreground leading-snug">Tip: add the same operator again with the picker, then tweak skill/mastery/module to compare two setups.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">Tip: add the same {noun} again with the picker, then tweak skill/level/module to compare two setups.</p>
             ) : null}
         </div>
     );
+}
+
+function aOrAn(noun: string): string {
+    return /^[aeiou]/i.test(noun) ? `an ${noun}` : `a ${noun}`;
 }

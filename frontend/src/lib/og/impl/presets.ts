@@ -59,6 +59,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "Compare Arknights operator DPS.",
         activeTag: "Tools",
     },
+    "tools-hps": {
+        title: "HPS Calculator",
+        subtitle: "Compare Arknights healer HPS.",
+        activeTag: "Tools",
+    },
     "tools-recruitment": {
         title: "Recruitment Calculator",
         subtitle: "Calculate recruitment combos.",

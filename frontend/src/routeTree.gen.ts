@@ -23,6 +23,7 @@ import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
 import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
 import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
+import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
@@ -111,6 +112,11 @@ const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
 const ToolsRandomizerRoute = ToolsRandomizerRouteImport.update({
   id: '/tools/randomizer',
   path: '/tools/randomizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsHpsRoute = ToolsHpsRouteImport.update({
+  id: '/tools/hps',
+  path: '/tools/hps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsDpsRoute = ToolsDpsRouteImport.update({
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/operators/$id': typeof OperatorsIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/operators/$id': typeof OperatorsIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
@@ -303,6 +311,7 @@ export interface FileRoutesById {
   '/operators_/$id': typeof OperatorsIdRoute
   '/tier-lists_/$id': typeof TierListsIdRoute
   '/tools/dps': typeof ToolsDpsRoute
+  '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
   '/user/$id': typeof UserIdRoute
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/tier-lists/$id'
     | '/tools/dps'
+    | '/tools/hps'
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/tier-lists/$id'
     | '/tools/dps'
+    | '/tools/hps'
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/operators_/$id'
     | '/tier-lists_/$id'
     | '/tools/dps'
+    | '/tools/hps'
     | '/tools/randomizer'
     | '/tools/recruitment'
     | '/user/$id'
@@ -445,6 +457,7 @@ export interface RootRouteChildren {
   OperatorsIdRoute: typeof OperatorsIdRoute
   TierListsIdRoute: typeof TierListsIdRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
+  ToolsHpsRoute: typeof ToolsHpsRoute
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
   UserIdRoute: typeof UserIdRoute
@@ -553,6 +566,13 @@ declare module '@tanstack/react-router' {
       path: '/tools/randomizer'
       fullPath: '/tools/randomizer'
       preLoaderRoute: typeof ToolsRandomizerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/hps': {
+      id: '/tools/hps'
+      path: '/tools/hps'
+      fullPath: '/tools/hps'
+      preLoaderRoute: typeof ToolsHpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/dps': {
@@ -756,6 +776,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsIdRoute: OperatorsIdRoute,
   TierListsIdRoute: TierListsIdRoute,
   ToolsDpsRoute: ToolsDpsRoute,
+  ToolsHpsRoute: ToolsHpsRoute,
   ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,
   UserIdRoute: UserIdRoute,

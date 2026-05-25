@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack" | "search" | "trophy" | "users" | "history" | "tiers";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart";
 
 export interface ITool {
     id: string;
@@ -21,6 +21,14 @@ export const TOOLS: ITool[] = [
         desc: "Interactive damage curves per skill",
         icon: "chart",
         keywords: ["damage", "dps", "chart", "skill", "curve", "calculator"],
+    },
+    {
+        id: "hps",
+        href: "/tools/hps",
+        label: "HPS charts",
+        desc: "Interactive healing curves per skill",
+        icon: "heart",
+        keywords: ["healing", "hps", "heal", "medic", "chart", "skill", "curve", "calculator"],
     },
     {
         id: "recruitment",
