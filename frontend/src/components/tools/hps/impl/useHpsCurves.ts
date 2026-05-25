@@ -2,24 +2,37 @@ import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { buildSweepPoints } from "#/components/tools/shared/constants";
 import type { ICurvePoint, ISweepRange } from "#/components/tools/shared/types";
-import { dpsCalculateQueryOptions } from "#/lib/api/dps";
-import { instanceToRequest } from "./state";
-import type { IDpsState, IEnemyConfig, YMetric } from "./types";
+import { hpsCalculateQueryOptions } from "#/lib/api/hps";
+import { type IAxisOverride, instanceToRequest } from "./state";
+import type { HpsXAxis, HpsYMetric, IHpsBuffConfig, IHpsState } from "./types";
 
 interface ICurvePlan {
     instUid: string;
     pointIdx: number;
 }
 
-interface IUseDpsCurvesResult {
+interface IUseHpsCurvesResult {
     points: number[];
     rows: ICurvePoint[];
     isPending: boolean;
 }
 
-export function useDpsCurves(state: IDpsState, enemy: IEnemyConfig): IUseDpsCurvesResult {
+/** Translate a swept X value (display units) into a per-request override. */
+function axisOverride(axis: HpsXAxis, x: number): IAxisOverride {
+    switch (axis) {
+        case "targets":
+            return { targets: x };
+        case "atk":
+            return { atkPercent: x };
+        case "aspd":
+            return { aspd: x };
+    }
+}
+
+export function useHpsCurves(state: IHpsState, buffs: IHpsBuffConfig): IUseHpsCurvesResult {
     const range: ISweepRange = state.sweep[state.xAxis];
-    const points = useMemo(() => buildSweepPoints(range), [range]);
+    const isInteger = state.xAxis === "targets";
+    const points = useMemo(() => buildSweepPoints(range, isInteger), [range, isInteger]);
 
     const visibleInstances = useMemo(() => state.instances.filter((i) => i.visible), [state.instances]);
 
@@ -28,14 +41,11 @@ export function useDpsCurves(state: IDpsState, enemy: IEnemyConfig): IUseDpsCurv
         const queryConfigs = visibleInstances.flatMap((inst) =>
             points.map((x, idx) => {
                 plans.push({ instUid: inst.uid, pointIdx: idx });
-                const override: { defense?: number; res?: number } = {};
-                if (state.xAxis === "defense") override.defense = x;
-                else override.res = x;
-                return dpsCalculateQueryOptions(instanceToRequest(inst, enemy, override));
+                return hpsCalculateQueryOptions(instanceToRequest(inst, buffs, axisOverride(state.xAxis, x)));
             }),
         );
         return { plans, queryConfigs };
-    }, [visibleInstances, points, enemy, state.xAxis]);
+    }, [visibleInstances, points, buffs, state.xAxis]);
 
     const queries = useQueries({ queries: queryConfigs });
 
@@ -55,13 +65,13 @@ export function useDpsCurves(state: IDpsState, enemy: IEnemyConfig): IUseDpsCurv
     }, [plans, queries, points, state.yMetric]);
 }
 
-function selectMetric(d: { skill_dps: number; total_damage: number; average_dps: number }, metric: YMetric): number {
+function selectMetric(d: { skill_hps: number; base_hps: number; avg_hps: number }, metric: HpsYMetric): number {
     switch (metric) {
-        case "skill_dps":
-            return d.skill_dps;
-        case "average_dps":
-            return d.average_dps;
-        case "total_damage":
-            return d.total_damage;
+        case "skill_hps":
+            return d.skill_hps;
+        case "base_hps":
+            return d.base_hps;
+        case "avg_hps":
+            return d.avg_hps;
     }
 }

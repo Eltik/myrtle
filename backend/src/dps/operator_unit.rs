@@ -227,17 +227,21 @@ impl OperatorUnit {
 
         // Calculate skill level
         let mastery_level = params.mastery_level.unwrap_or(-1);
-        let skill_level =
-            if mastery_level > 0 && mastery_level + 6 < MAX_SKILL_LEVELS[elite as usize] {
-                match mastery_level {
-                    3 => 9,
-                    2 => 8,
-                    1 => 7,
-                    _ => 9,
-                }
-            } else {
-                MAX_SKILL_LEVELS[elite as usize]
-            };
+        let skill_level = if let Some(explicit) = params.skill_level.filter(|&v| v >= 1) {
+            // Explicit pre-mastery skill level (1-7), clamped to the elite's
+            // max (E0 caps at 4, E1/E2 at 7). Higher ranks (masteries) go
+            // through the mastery_level path below.
+            explicit.min(MAX_SKILL_LEVELS[elite as usize])
+        } else if mastery_level > 0 && mastery_level + 6 < MAX_SKILL_LEVELS[elite as usize] {
+            match mastery_level {
+                3 => 9,
+                2 => 8,
+                1 => 7,
+                _ => 9,
+            }
+        } else {
+            MAX_SKILL_LEVELS[elite as usize]
+        };
 
         // Calculate trust (already got default above, but need to clamp)
         let trust = if (0..100).contains(&trust) {
@@ -865,6 +869,10 @@ pub struct OperatorParams {
 
     pub skill_index: Option<i32>,
     pub mastery_level: Option<i32>,
+    /// Explicit skill level 1-7 (pre-mastery). When set, overrides the
+    /// mastery-derived skill level (clamped to the elite's max). Leave `None`
+    /// to derive the skill level from `mastery_level`.
+    pub skill_level: Option<i32>,
 
     pub module_index: Option<i32>,
     pub module_level: Option<i32>,
@@ -902,6 +910,7 @@ impl Default for OperatorParams {
             trust: Some(100),
             skill_index: None,
             mastery_level: None,
+            skill_level: None,
             module_index: None,
             module_level: None,
             buffs: OperatorBuffs::default(),
