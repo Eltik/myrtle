@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "history" | "tiers" | "heart";
 
 export type ToolCategory = "calculator" | "fun";
 
@@ -62,6 +62,15 @@ export const TOOLS: ITool[] = [
         icon: "dice",
         category: "fun",
         keywords: ["random", "squad", "pick", "roll"],
+    },
+    {
+        id: "birthdays",
+        href: "/tools/birthdays",
+        label: "Birthdays",
+        desc: "View and track operator birthdays",
+        icon: "cake",
+        category: "fun",
+        keywords: ["birthday", "operator", "track"],
     },
 ];
 

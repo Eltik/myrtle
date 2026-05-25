@@ -26,6 +26,7 @@ import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment
 import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
 import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
+import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
 import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
@@ -128,6 +129,11 @@ const ToolsHpsRoute = ToolsHpsRouteImport.update({
 const ToolsDpsRoute = ToolsDpsRouteImport.update({
   id: '/tools/dps',
   path: '/tools/dps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsBirthdaysRoute = ToolsBirthdaysRouteImport.update({
+  id: '/tools/birthdays',
+  path: '/tools/birthdays',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TierListsIdRoute = TierListsIdRouteImport.update({
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
+  '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
+  '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/tier-lists_/$id': typeof TierListsIdRoute
+  '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
   '/tools/hps': typeof ToolsHpsRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tier-lists/$id'
+    | '/tools/birthdays'
     | '/tools/dps'
     | '/tools/hps'
     | '/tools/randomizer'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/tier-lists/$id'
+    | '/tools/birthdays'
     | '/tools/dps'
     | '/tools/hps'
     | '/tools/randomizer'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators_/$id'
     | '/tier-lists_/$id'
+    | '/tools/birthdays'
     | '/tools/dps'
     | '/tools/hps'
     | '/tools/randomizer'
@@ -469,6 +481,7 @@ export interface RootRouteChildren {
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   TierListsIdRoute: typeof TierListsIdRoute
+  ToolsBirthdaysRoute: typeof ToolsBirthdaysRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
   ToolsHpsRoute: typeof ToolsHpsRoute
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
@@ -600,6 +613,13 @@ declare module '@tanstack/react-router' {
       path: '/tools/dps'
       fullPath: '/tools/dps'
       preLoaderRoute: typeof ToolsDpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/birthdays': {
+      id: '/tools/birthdays'
+      path: '/tools/birthdays'
+      fullPath: '/tools/birthdays'
+      preLoaderRoute: typeof ToolsBirthdaysRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tier-lists_/$id': {
@@ -796,6 +816,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   TierListsIdRoute: TierListsIdRoute,
+  ToolsBirthdaysRoute: ToolsBirthdaysRoute,
   ToolsDpsRoute: ToolsDpsRoute,
   ToolsHpsRoute: ToolsHpsRoute,
   ToolsRandomizerRoute: ToolsRandomizerRoute,
