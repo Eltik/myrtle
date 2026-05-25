@@ -37,6 +37,19 @@ export function moduleBadgeLetter(mod: Pick<IModule, "typeName1" | "typeName2">)
     return mod.typeName2 ?? mod.typeName1 ?? "X";
 }
 
+/**
+ * Full module-type label for dialogs/lists where horizontal space allows,
+ * e.g. "CCR-X" / "CCR-Δ". Combines typeName1 with the X/Y/Δ designator so two
+ * modules of the same group stay distinguishable (unlike typeName1 alone).
+ * Falls back to the single badge letter when there is no second designator
+ * (ISW/RA modules, which carry no X/Y suffix).
+ */
+export function moduleTypeLabel(mod: Pick<IModule, "typeName1" | "typeName2">): string {
+    const letter = moduleBadgeLetter(mod);
+    if (!mod.typeName1 || !mod.typeName2) return letter;
+    return `${mod.typeName1}-${letter}`;
+}
+
 /** Skin-aware avatar. `getAvatarById` already normalizes `@`-skins and `#1` base IDs. */
 export function ownedAvatar(opId: string, skinId: string | null): string {
     return getAvatarById(skinId ?? opId);

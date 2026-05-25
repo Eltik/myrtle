@@ -10,7 +10,7 @@ import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { formatProfession } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
-import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
 
@@ -240,7 +240,7 @@ function ModuleRow({ module, level, isEquipped }: { module: IModule; level: numb
                 </span>
             </div>
             <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
-                <span>{module.typeName1}</span>
+                <span>{moduleTypeLabel(module)}</span>
                 <span>Lv.{level}</span>
             </div>
         </div>
