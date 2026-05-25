@@ -1,0 +1,58 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.4.5/schema.json",
+    "vcs": {
+        "enabled": false,
+        "clientKind": "git",
+        "useIgnoreFile": false
+    },
+    "files": {
+        "ignoreUnknown": false,
+        "includes": ["**/src/**/*", "**/.vscode/**/*", "**/index.html", "**/vite.config.ts", "!**/src/routeTree.gen.ts", "!**/src/styles.css"]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 320,
+        "lineEnding": "lf"
+    },
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "nursery": {
+                "useSortedClasses": {
+                    "level": "warn",
+                    "fix": "safe",
+                    "options": {
+                        "attributes": ["className"],
+                        "functions": ["clsx", "cva", "cn"]
+                    }
+                }
+            }
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "enabled": true,
+            "quoteStyle": "double",
+            "semicolons": "always",
+            "bracketSpacing": true,
+            "bracketSameLine": false,
+            "arrowParentheses": "always"
+        }
+    },
+    "css": {
+        "formatter": {
+            "enabled": true,
+            "indentStyle": "space",
+            "indentWidth": 4,
+            "lineWidth": 320,
+            "quoteStyle": "double"
+        },
+        "linter": {
+            "enabled": true
+        }
+    }
+}

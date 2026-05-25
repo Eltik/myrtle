@@ -12,6 +12,17 @@ pub struct TierListDetail {
     #[serde(flatten)]
     pub list: TierList,
     pub tiers: Vec<TierDetail>,
+    pub stats: Option<TierListStats>,
+    pub flair: Option<TierListFlair>,
+    pub author: Option<TierListAuthor>,
+}
+
+#[derive(Serialize, sqlx::FromRow)]
+pub struct TierListAuthor {
+    pub id: Uuid,
+    pub uid: String,
+    pub nickname: Option<String>,
+    pub avatar_id: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -70,9 +81,29 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
         tier_details.push(TierDetail { tier, placements });
     }
 
+    let stats = queries::get_stats(&state.db, list.id).await?;
+    let flair = match list.flair_id {
+        Some(id) => queries::get_flair_by_id(&state.db, id).await?,
+        None => None,
+    };
+    let author = match list.created_by {
+        Some(uid) => {
+            sqlx::query_as::<_, TierListAuthor>(
+                "SELECT id, uid, nickname, avatar_id FROM users WHERE id = $1",
+            )
+            .bind(uid)
+            .fetch_optional(&state.db)
+            .await?
+        }
+        None => None,
+    };
+
     Ok(TierListDetail {
         list,
         tiers: tier_details,
+        stats,
+        flair,
+        author,
     })
 }
 
@@ -92,15 +123,14 @@ pub async fn create(
         }
     }
 
-    // Official lists: admin only
-    if list_type == "official" && !role.is_tier_list_admin() {
+    if list_type == "official" && !role.is_any_admin_role() {
         return Err(ApiError::Forbidden);
     }
 
     let slug = generate_slug(name);
-    queries::create(&state.db, name, &slug, description, list_type, user_id)
-        .await
-        .map_err(|e| e.into())
+    let list = queries::create(&state.db, name, &slug, description, list_type, user_id).await?;
+    queries::ensure_stats_row(&state.db, list.id).await?;
+    Ok(list)
 }
 
 pub async fn update_list(
@@ -121,12 +151,24 @@ pub async fn update_list(
 }
 
 fn generate_slug(name: &str) -> String {
-    name.to_lowercase()
+    let base: String = name
+        .to_lowercase()
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '-' })
         .collect::<String>()
         .split('-')
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
-        .join("-")
+        .join("-");
+    let suffix: String = (0..6)
+        .map(|_| {
+            let n = rand::random::<u8>() % 36;
+            if n < 10 {
+                (b'0' + n) as char
+            } else {
+                (b'a' + n - 10) as char
+            }
+        })
+        .collect();
+    format!("{base}-{suffix}")
 }

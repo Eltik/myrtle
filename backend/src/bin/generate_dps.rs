@@ -1,16 +1,21 @@
-//! All-in-one DPS generator for the Arknights DPS calculator.
+//! All-in-one DPS/HPS generator for the Arknights damage calculator.
 //!
 //! Reads Python source from ArknightsDpsCompare and generates:
-//! - `src/dps/config/operator_formulas.json` — operator metadata (skills, modules, conditionals)
+//! - `src/dps/config/operator_formulas.json`  — DPS operator metadata
 //! - `src/dps/custom/generated.rs` + `mod.rs` — transpiled Rust DPS functions
-//! - `tests/fixtures/expected_dps.json` — Python-computed reference DPS values for testing
+//! - `src/dps/config/heal_formulas.json`      — HPS operator metadata
+//! - `src/dps/custom_hps/generated.rs` + `mod.rs` — transpiled Rust HPS functions
+//! - `tests/fixtures/expected_dps.json`       — Python-computed reference DPS values
 //!
 //! Usage:
-//!   cargo run --bin generate-dps                     # Run all steps
-//!   cargo run --bin generate-dps -- --formulas       # Only regenerate operator_formulas.json
-//!   cargo run --bin generate-dps -- --transpile      # Only transpile Python → Rust
-//!   cargo run --bin generate-dps -- --expected       # Only regenerate expected_dps.json
-//!   cargo run --bin generate-dps -- --repo <path>    # Custom ArknightsDpsCompare path
+//!   cargo run --bin generate-dps                          # Run all DPS steps (default)
+//!   cargo run --bin generate-dps -- --formulas            # Only regen operator_formulas.json
+//!   cargo run --bin generate-dps -- --transpile           # Only transpile DPS Python → Rust
+//!   cargo run --bin generate-dps -- --expected            # Only regen expected_dps.json
+//!   cargo run --bin generate-dps -- --healing             # Run all HPS steps (formulas+transpile)
+//!   cargo run --bin generate-dps -- --healing-formulas    # Only regen heal_formulas.json
+//!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python → Rust
+//!   cargo run --bin generate-dps -- --repo <path>         # Custom ArknightsDpsCompare path
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -66,6 +71,165 @@ struct TestCase {
     res_shred_flat: f64,
 }
 
+// ── Generator modes ─────────────────────────────────────────────────────
+
+/// Selects which upstream source + which output shape we're targeting.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+enum Mode {
+    /// DPS: `damage_formulas.py`, `skill_dps`, single-f64 output.
+    Damage,
+    /// HPS: `healing_formulas.py`, `skill_hps` (then `skill_dps`), HpsResult triple.
+    Healing,
+}
+
+impl Mode {
+    fn py_source_rel(&self) -> &'static str {
+        match self {
+            Self::Damage => "damagecalc/damage_formulas.py",
+            Self::Healing => "damagecalc/healing_formulas.py",
+        }
+    }
+
+    /// Base classes accepted in the class-header regex (healers may extend
+    /// `Operator` or `Healer`).
+    fn class_base_alt(&self) -> &'static str {
+        match self {
+            Self::Damage => "Operator",
+            Self::Healing => "(?:Operator|Healer)",
+        }
+    }
+
+    /// Methods to try, in priority order.
+    fn method_names(&self) -> &'static [&'static str] {
+        match self {
+            Self::Damage => &["skill_dps"],
+            Self::Healing => &["skill_hps", "skill_dps"],
+        }
+    }
+
+    fn formulas_json_path(&self) -> &'static str {
+        match self {
+            Self::Damage => "src/dps/config/operator_formulas.json",
+            Self::Healing => "src/dps/config/heal_formulas.json",
+        }
+    }
+
+    fn generated_rs_path(&self) -> &'static str {
+        match self {
+            Self::Damage => "src/dps/custom/generated.rs",
+            Self::Healing => "src/dps/custom/generated_hps.rs",
+        }
+    }
+
+    /// Path to the generated dispatch function file. Sibling of generated.rs
+    /// inside `custom/`; the stable hand-written `custom/mod.rs` declares both.
+    fn dispatch_rs_path(&self) -> &'static str {
+        match self {
+            Self::Damage => "src/dps/custom/dispatch.rs",
+            Self::Healing => "src/dps/custom/dispatch_hps.rs",
+        }
+    }
+
+    /// Name of the sibling generated module that dispatch.rs delegates to.
+    fn generated_mod_name(&self) -> &'static str {
+        match self {
+            Self::Damage => "generated",
+            Self::Healing => "generated_hps",
+        }
+    }
+
+    /// Path to the Python-fixture file for this mode.
+    fn expected_json_path(&self) -> &'static str {
+        match self {
+            Self::Damage => "tests/fixtures/expected_dps.json",
+            Self::Healing => "tests/fixtures/expected_hps.json",
+        }
+    }
+
+    fn output_shape(&self) -> OutputShape {
+        match self {
+            Self::Damage => OutputShape::F64Dps,
+            Self::Healing => OutputShape::HpsTriple,
+        }
+    }
+
+    fn human_label(&self) -> &'static str {
+        match self {
+            Self::Damage => "DPS",
+            Self::Healing => "HPS",
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+enum OutputShape {
+    /// Single `Option<f64>` returned from `Some(dps)`.
+    F64Dps,
+    /// `Option<HpsResult>` returned from `Some(HpsResult { skill_hps, base_hps, avg_hps })`.
+    HpsTriple,
+}
+
+/// Healers whose body uses constructs the transpiler can't handle; emit `None` stubs.
+const HEAL_FALLBACKS: &[&str] = &["AmiyaMedic", "ReedAlter"];
+
+/// Locate a Python interpreter that supports the 3.10+ `match` statement
+/// (required by upstream `damage_formulas.py`). Honors `PYTHON_BIN` env var
+/// for explicit override; otherwise probes common names in priority order.
+fn python_command() -> String {
+    if let Ok(explicit) = std::env::var("PYTHON_BIN") {
+        return explicit;
+    }
+    for candidate in [
+        "python3.13",
+        "python3.12",
+        "python3.11",
+        "python3.10",
+        "python3",
+    ] {
+        if let Ok(out) = Command::new(candidate).arg("--version").output()
+            && out.status.success()
+        {
+            let version = String::from_utf8_lossy(&out.stdout);
+            // Extract minor: "Python 3.XX.YY"
+            if let Some(minor) = version
+                .split_whitespace()
+                .nth(1)
+                .and_then(|v| v.split('.').nth(1))
+                .and_then(|m| m.parse::<u32>().ok())
+                && minor >= 10
+            {
+                return candidate.to_string();
+            }
+        }
+    }
+    // Fallback: hope `python3` works.
+    "python3".to_string()
+}
+
+/// Normalize alternate spellings of the canonical heal variables so the rest of
+/// the transpiler can stay shape-agnostic.
+fn normalize_heal_variables(py_body: &str) -> String {
+    let mut s = py_body.to_string();
+    s = s.replace("skillhps", "skill_hps");
+    s = s.replace("avghps", "avg_hps");
+    s = s.replace("skilldown_hps", "base_hps");
+
+    // When a body rebinds a local `atk_interval` but still reads the original
+    // `self.atk_interval`, rename the local so the two don't collapse onto the
+    // single hoisted variable. Skipped when `self.atk_interval` is itself
+    // reassigned (a genuine instance rebind we want to keep).
+    let has_local_assign = s
+        .lines()
+        .any(|l| l.trim_start().starts_with("atk_interval ="));
+    let has_self_assign = s.contains("self.atk_interval =");
+    if has_local_assign && !has_self_assign {
+        s = s.replace("atk_interval", "_atk_interval_w");
+        s = s.replace("self._atk_interval_w", "self.atk_interval");
+    }
+
+    s
+}
+
 fn main() {
     dotenv::dotenv().ok();
     let args: Vec<String> = std::env::args().collect();
@@ -83,52 +247,92 @@ fn main() {
             .unwrap_or_else(|| "external/ArknightsDpsCompare".to_string())
     };
 
+    // DPS flags
     let run_formulas = args.contains(&"--formulas".to_string());
     let run_transpile = args.contains(&"--transpile".to_string());
     let run_expected = args.contains(&"--expected".to_string());
-    let run_all = !run_formulas && !run_transpile && !run_expected;
 
-    // Load Python source
-    let py_src = fs::read_to_string(format!("{repo_path}/damagecalc/damage_formulas.py"))
-        .expect("Failed to read damage_formulas.py");
+    // HPS flags
+    let run_healing = args.contains(&"--healing".to_string());
+    let run_healing_formulas = args.contains(&"--healing-formulas".to_string());
+    let run_healing_transpile = args.contains(&"--healing-transpile".to_string());
+    let run_healing_expected = args.contains(&"--healing-expected".to_string());
 
-    // Step 1: Generate operator_formulas.json (must run before transpile)
-    if run_all || run_formulas {
-        generate_formulas_json(&repo_path, &py_src);
+    let any_dps_flag = run_formulas || run_transpile || run_expected;
+    let any_hps_flag =
+        run_healing || run_healing_formulas || run_healing_transpile || run_healing_expected;
+
+    // When no flags are passed, default to the full DPS pipeline (back-compat).
+    let run_all_dps = !any_dps_flag && !any_hps_flag;
+
+    // ── DPS path ────────────────────────────────────────────────────────
+    if run_all_dps || any_dps_flag {
+        let py_src = fs::read_to_string(format!("{repo_path}/{}", Mode::Damage.py_source_rel()))
+            .expect("Failed to read damage_formulas.py");
+
+        if run_all_dps || run_formulas {
+            generate_formulas_json(Mode::Damage, &repo_path, &py_src);
+        }
+
+        let formulas_str = fs::read_to_string(Mode::Damage.formulas_json_path())
+            .expect("Failed to read operator_formulas.json");
+        let formulas: HashMap<String, OperatorFormula> =
+            serde_json::from_str(&formulas_str).expect("Invalid operator_formulas.json");
+
+        if run_all_dps || run_transpile {
+            transpile_all(Mode::Damage, &py_src, &formulas);
+        }
+
+        if run_all_dps || run_expected {
+            generate_expected_dps(&repo_path, &formulas);
+        }
     }
 
-    // Load operator_formulas.json (freshly generated or existing)
-    let formulas_str = fs::read_to_string("src/dps/config/operator_formulas.json")
-        .expect("Failed to read operator_formulas.json");
-    let formulas: HashMap<String, OperatorFormula> =
-        serde_json::from_str(&formulas_str).expect("Invalid operator_formulas.json");
+    // ── HPS path ────────────────────────────────────────────────────────
+    if any_hps_flag {
+        let py_src = fs::read_to_string(format!("{repo_path}/{}", Mode::Healing.py_source_rel()))
+            .expect("Failed to read healing_formulas.py");
 
-    // Step 2: Transpile Python → Rust
-    if run_all || run_transpile {
-        transpile_all(&py_src, &formulas);
-    }
+        let run_full_healing = run_healing;
+        if run_full_healing || run_healing_formulas {
+            generate_formulas_json(Mode::Healing, &repo_path, &py_src);
+        }
 
-    // Step 3: Generate expected_dps.json via Python subprocess
-    if run_all || run_expected {
-        generate_expected_dps(&repo_path, &formulas);
+        let formulas_str = fs::read_to_string(Mode::Healing.formulas_json_path())
+            .expect("Failed to read heal_formulas.json");
+        let formulas: HashMap<String, OperatorFormula> =
+            serde_json::from_str(&formulas_str).expect("Invalid heal_formulas.json");
+
+        if run_full_healing || run_healing_transpile {
+            transpile_all(Mode::Healing, &py_src, &formulas);
+        }
+
+        if run_full_healing || run_healing_expected {
+            generate_expected_hps(&repo_path, &formulas);
+        }
     }
 }
 
 // ── Step 1: Generate operator_formulas.json ─────────────────────────────
 
-fn generate_formulas_json(repo_path: &str, py_src: &str) {
-    println!("=== Generating operator_formulas.json ===");
+fn generate_formulas_json(mode: Mode, repo_path: &str, py_src: &str) {
+    let out_path = mode.formulas_json_path();
+    println!("=== Generating {} ({}) ===", out_path, mode.human_label());
 
     let id_dict = parse_id_dict(repo_path);
     println!("Parsed {} char_id mappings", id_dict.len());
 
-    let operators = parse_operators(py_src, &id_dict);
+    let operators = parse_operators(mode, py_src, &id_dict);
     println!("Parsed {} operators", operators.len());
 
     let json = serde_json::to_string_pretty(&operators).unwrap();
-    fs::remove_file("src/dps/config/operator_formulas.json").unwrap();
-    fs::write("src/dps/config/operator_formulas.json", &json).unwrap();
-    println!("Written to src/dps/config/operator_formulas.json");
+    // Best-effort delete — file may not exist on first run for HPS.
+    let _ = fs::remove_file(out_path);
+    if let Some(parent) = std::path::Path::new(out_path).parent() {
+        fs::create_dir_all(parent).ok();
+    }
+    fs::write(out_path, &json).unwrap();
+    println!("Written to {out_path}");
 }
 
 fn parse_id_dict(repo_path: &str) -> HashMap<String, String> {
@@ -141,10 +345,15 @@ fn parse_id_dict(repo_path: &str) -> HashMap<String, String> {
 }
 
 fn parse_operators(
+    mode: Mode,
     src: &str,
     id_dict: &HashMap<String, String>,
 ) -> HashMap<String, OperatorFormula> {
-    let class_re = Regex::new(r"class\s+(\w+)\s*\(\s*Operator\s*\)\s*:").unwrap();
+    let class_re = Regex::new(&format!(
+        r"class\s+(\w+)\s*\(\s*{}\s*\)\s*:",
+        mode.class_base_alt()
+    ))
+    .unwrap();
     let class_positions: Vec<(usize, String)> = class_re
         .captures_iter(src)
         .map(|cap| (cap.get(0).unwrap().start(), cap[1].to_string()))
@@ -152,6 +361,12 @@ fn parse_operators(
 
     let mut result = HashMap::new();
     for (i, (start, class_name)) in class_positions.iter().enumerate() {
+        // Skip base classes that aren't real operators. `Healer` extends
+        // `Operator` but is itself just a thin shim used for inheritance.
+        if class_name == "Healer" {
+            continue;
+        }
+
         let end = class_positions
             .get(i + 1)
             .map(|(pos, _)| *pos)
@@ -449,13 +664,16 @@ json.dump(results, sys.stdout)
     println!("Running Python DPS calculator...");
     let cases_json = serde_json::to_string(&cases).unwrap();
 
-    let mut child = Command::new("python3")
+    let py_bin = python_command();
+    let mut child = Command::new(&py_bin)
         .arg(&tmp_script)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("Failed to start Python. Is python3 installed?");
+        .unwrap_or_else(|e| {
+            panic!("Failed to start Python ({py_bin}). Install Python 3.10+ or set PYTHON_BIN: {e}")
+        });
 
     child
         .stdin
@@ -524,10 +742,213 @@ fn make_test_key(
     }
 }
 
+// ── HPS fixture generation ──────────────────────────────────────────────
+
+#[derive(Serialize)]
+struct HpsTestCase {
+    key: String,
+    operator: String,
+    skill: i32,
+    module: i32,
+}
+
+#[derive(Deserialize, Serialize)]
+struct HpsExpected {
+    skill_hps: i64,
+    base_hps: i64,
+    avg_hps: i64,
+}
+
+fn make_hps_test_key(name: &str, skill: i32, module: i32) -> String {
+    format!("{name}_s{skill}_m{module}")
+}
+
+/// Generate tests/fixtures/expected_hps.json by running each healer in upstream
+/// Python and capturing the `(skill_hps, base_hps, avg_hps)` locals at return.
+fn generate_expected_hps(repo_path: &str, formulas: &HashMap<String, OperatorFormula>) {
+    let out_path = Mode::Healing.expected_json_path();
+    println!("\n=== Generating {out_path} (HPS) ===");
+
+    let mut cases: Vec<HpsTestCase> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for formula in formulas.values() {
+        // Skip operators whose Rust impl is a None stub — they'd always fail.
+        if HEAL_FALLBACKS.contains(&formula.class_name.as_str()) {
+            continue;
+        }
+        // For every available skill × every module (including module=0).
+        let modules: Vec<i32> = std::iter::once(0)
+            .chain(formula.available_modules.iter().copied())
+            .collect();
+        for &skill in &formula.available_skills {
+            for &module in &modules {
+                let key = make_hps_test_key(&formula.class_name, skill, module);
+                if seen.insert(key.clone()) {
+                    cases.push(HpsTestCase {
+                        key,
+                        operator: formula.class_name.clone(),
+                        skill,
+                        module,
+                    });
+                }
+            }
+        }
+    }
+
+    println!("Generated {} test cases", cases.len());
+
+    // Python script: instantiate each healer, call skill_hps(), extract the
+    // (skill_hps, base_hps, avg_hps) triple from the formatted name string.
+    let py_script = format!(
+        r#"#!/usr/bin/env python3
+import sys, json, os, io, contextlib
+os.chdir("{repo_path}")
+sys.path.insert(0, ".")
+# Silence stray prints from upstream code so only the final JSON reaches stdout.
+_real_stdout = sys.stdout
+sys.stdout = io.StringIO()
+from damagecalc.healing_formulas import *
+from damagecalc.utils import PlotParameters
+
+cases = json.load(sys.stdin)
+
+# Healers with required kwargs — pass safe defaults so they don't KeyError.
+# Operators that derive a default in __init__ are omitted so Python uses that
+# default (the Rust engine mirrors it).
+KWARGS_BY_OPERATOR = {{
+    "Blemishine": {{"hits": 0}},
+    "Hung": {{"hits": 0}},
+}}
+
+# Canonical local names + accepted aliases. Some healers use single-word
+# variants (skillhps, avghps) or domain-specific synonyms.
+SKILL_KEYS = ("skill_hps", "skillhps")
+BASE_KEYS  = ("base_hps", "skilldown_hps")
+AVG_KEYS   = ("avg_hps", "avghps")
+
+def _pick(local_dict, keys):
+    for k in keys:
+        if k in local_dict:
+            try:
+                return float(local_dict[k])
+            except (TypeError, ValueError):
+                continue
+    return 0.0
+
+class LocalsCapture:
+    "Capture the locals of skill_hps() at the moment it returns."
+    def __init__(self):
+        self.locals = {{}}
+        self.target_code = None
+    def install(self, method_code):
+        self.locals = {{}}
+        self.target_code = method_code
+        sys.settrace(self._trace)
+    def uninstall(self):
+        sys.settrace(None)
+    def _trace(self, frame, event, arg):
+        # Restrict to the target function; return self to keep tracing inside it.
+        if event == 'call':
+            if frame.f_code is self.target_code:
+                return self._trace
+            return None
+        if event == 'return' and frame.f_code is self.target_code:
+            self.locals = dict(frame.f_locals)
+        return self._trace
+
+results = {{}}
+for tc in cases:
+    op_name = tc['operator']
+    if op_name not in globals():
+        continue
+    cap = LocalsCapture()
+    try:
+        pp = PlotParameters(skill=tc['skill'], module=tc['module'])
+        kwargs = KWARGS_BY_OPERATOR.get(op_name, {{}})
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            op = globals()[op_name](pp, **kwargs)
+            cap.install(op.skill_hps.__func__.__code__)
+            try:
+                op.skill_hps(**kwargs)
+            finally:
+                cap.uninstall()
+    except Exception:
+        cap.uninstall()
+        continue
+    locs = cap.locals
+    skill_h = int(_pick(locs, SKILL_KEYS))
+    base_h  = int(_pick(locs, BASE_KEYS))
+    avg_h   = int(_pick(locs, AVG_KEYS))
+    results[tc['key']] = {{"skill_hps": skill_h, "base_hps": base_h, "avg_hps": avg_h}}
+
+# Restore real stdout and write the JSON.
+sys.stdout = _real_stdout
+json.dump(results, sys.stdout)
+"#
+    );
+
+    let tmp_script = std::env::temp_dir().join("myrtle_hps_calc.py");
+    fs::write(&tmp_script, &py_script).expect("Failed to write temp Python script");
+
+    println!("Running Python HPS calculator...");
+    let cases_json = serde_json::to_string(&cases).unwrap();
+
+    let py_bin = python_command();
+    let mut child = Command::new(&py_bin)
+        .arg(&tmp_script)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap_or_else(|e| {
+            panic!("Failed to start Python ({py_bin}). Install Python 3.10+ or set PYTHON_BIN: {e}")
+        });
+
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(cases_json.as_bytes())
+        .expect("Failed to write to Python stdin");
+
+    let output = child
+        .wait_with_output()
+        .expect("Failed to read Python output");
+    if !output.status.success() {
+        eprintln!(
+            "Python failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        std::process::exit(1);
+    }
+
+    let results: HashMap<String, HpsExpected> =
+        serde_json::from_slice(&output.stdout).expect("Failed to parse Python output");
+
+    println!("Received {} HPS triples from Python", results.len());
+
+    let output_path = std::path::Path::new(out_path);
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent).unwrap();
+    }
+    let json = serde_json::to_string_pretty(&results).unwrap();
+    let _ = fs::remove_file(output_path);
+    let file = fs::File::create(output_path).unwrap();
+    let mut writer = BufWriter::new(file);
+    writer.write_all(json.as_bytes()).unwrap();
+    println!("Written to {out_path}");
+
+    let _ = fs::remove_file(&tmp_script);
+}
+
 // ── Step 2: Transpile Python → Rust ─────────────────────────────────────
 
-fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
-    println!("\n=== Transpiling Python → Rust ===");
+fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
+    println!(
+        "\n=== Transpiling Python → Rust ({}) ===",
+        mode.human_label()
+    );
 
     let mut custom_ops: Vec<(&str, &str, &OperatorFormula)> = Vec::new();
     for (char_id, formula) in formulas {
@@ -537,8 +958,13 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
 
     println!("Found {} operators", custom_ops.len());
 
-    // Parse all Python classes
-    let class_re = Regex::new(r"class\s+(\w+)\s*\(\s*Operator\s*\)\s*:").unwrap();
+    // Parse all Python classes — use mode-specific base class alternation so
+    // healers extending Healer (not just Operator) get picked up.
+    let class_re = Regex::new(&format!(
+        r"class\s+(\w+)\s*\(\s*{}\s*\)\s*:",
+        mode.class_base_alt()
+    ))
+    .unwrap();
     let class_positions: Vec<(usize, String)> = class_re
         .captures_iter(py_src)
         .map(|cap| (cap.get(0).unwrap().start(), cap[1].to_string()))
@@ -553,13 +979,33 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
         class_bodies.insert(name.clone(), py_src[*start..end].to_string());
     }
 
+    let shape = mode.output_shape();
+    let (header_blurb, return_type, fn_signature_suffix) = match shape {
+        OutputShape::F64Dps => (
+            "//! Auto-generated custom DPS implementations.\n",
+            "Option<f64>",
+            "unit: &OperatorUnit, enemy: &EnemyStats",
+        ),
+        OutputShape::HpsTriple => (
+            "//! Auto-generated custom HPS implementations.\n",
+            "Option<HpsResult>",
+            "unit: &OperatorUnit, enemy: &EnemyStats",
+        ),
+    };
+    let use_stmt = match shape {
+        OutputShape::F64Dps => "use super::super::operator_unit::{EnemyStats, OperatorUnit};\n\n",
+        OutputShape::HpsTriple => {
+            "use super::super::engine::HpsResult;\nuse super::super::operator_unit::{EnemyStats, OperatorUnit};\n\n"
+        }
+    };
+
     // Generate Rust code
     let mut generated = String::new();
-    generated.push_str("//! Auto-generated custom DPS implementations.\n");
-    generated.push_str("//! Generated by `cargo run --bin generate-custom-dps`\n");
+    generated.push_str(header_blurb);
+    generated.push_str("//! Generated by `cargo run --bin generate-dps`\n");
     generated.push_str("//! DO NOT EDIT MANUALLY.\n\n");
     generated.push_str("#![allow(unused_variables, unused_mut, unused_assignments, unused_parens, unreachable_code, path_statements, unused_must_use, non_snake_case, clippy::excessive_precision, clippy::unnecessary_cast, clippy::needless_return, clippy::collapsible_if, clippy::collapsible_else_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first, clippy::bool_comparison, clippy::no_effect)]\n\n");
-    generated.push_str("use super::super::operator_unit::{EnemyStats, OperatorUnit};\n\n");
+    generated.push_str(use_stmt);
 
     let mut dispatch_arms: Vec<(String, String)> = Vec::new();
     let mut success = 0;
@@ -572,28 +1018,48 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
             continue;
         };
 
-        let skill_dps_body = extract_method(class_body, "skill_dps");
-        if skill_dps_body.trim().is_empty() {
-            eprintln!("  SKIP: {class_name} — no skill_dps method");
+        // Try each method name in priority order.
+        let mut method_body = String::new();
+        for method in mode.method_names() {
+            let body = extract_method(class_body, method);
+            if !body.trim().is_empty() {
+                method_body = body;
+                break;
+            }
+        }
+        if method_body.trim().is_empty() {
+            eprintln!(
+                "  SKIP: {class_name} — no {} method",
+                mode.method_names().join(" or ")
+            );
             failed += 1;
             continue;
+        }
+
+        // For HPS, normalize variable spellings so the rest of the transpiler
+        // sees the canonical names (skill_hps, base_hps, avg_hps).
+        if shape == OutputShape::HpsTriple {
+            method_body = normalize_heal_variables(&method_body);
         }
 
         let init_body = extract_init_method(class_body);
         let init_mutations = extract_and_transpile_init_mutations(&init_body);
         let rust_fn_name = to_snake_case(class_name);
-        let rust_body = transpile_skill_dps(&skill_dps_body, &init_mutations);
+        let rust_body = transpile_skill_dps(&method_body, &init_mutations, shape);
 
         let fn_start_pos = generated.len();
         generated.push_str(&format!(
-            "/// {class_name} — auto-transpiled from Python\npub fn {rust_fn_name}(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {{\n"
+            "/// {class_name} — auto-transpiled from Python\npub fn {rust_fn_name}({fn_signature_suffix}) -> {return_type} {{\n"
         ));
         generated.push_str(&rust_body);
         generated.push_str("}\n\n");
 
         // Quick syntax check: look for known bad patterns — only in THIS function
         let fn_body_check = &generated[fn_start_pos..];
-        let hardcoded_fallbacks: &[&str] = &[];
+        let hardcoded_fallbacks: &[&str] = match shape {
+            OutputShape::F64Dps => &[],
+            OutputShape::HpsTriple => HEAL_FALLBACKS,
+        };
 
         let has_bad_syntax = hardcoded_fallbacks.contains(class_name)
             || fn_body_check.contains("= = ")
@@ -602,8 +1068,12 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
         if has_bad_syntax {
             // Replace this function with a fallback stub
             generated.truncate(fn_start_pos);
+            let stub_return = match shape {
+                OutputShape::F64Dps => "    None\n",
+                OutputShape::HpsTriple => "    None\n",
+            };
             generated.push_str(&format!(
-                "/// {class_name} — fallback (transpiler limitation)\npub fn {rust_fn_name}(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {{\n    None\n}}\n\n"
+                "/// {class_name} — fallback (transpiler limitation)\npub fn {rust_fn_name}({fn_signature_suffix}) -> {return_type} {{\n{stub_return}}}\n\n"
             ));
             eprintln!("  FALLBACK: {class_name} — syntax check failed");
         }
@@ -615,34 +1085,80 @@ fn transpile_all(py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
     println!("Transpiled: {success}, Failed: {failed}");
 
     // Write generated.rs
-    fs::remove_file("src/dps/custom/generated.rs").unwrap();
-    fs::write("src/dps/custom/generated.rs", &generated).expect("Failed to write generated.rs");
-    println!("Written to src/dps/custom/generated.rs");
-
-    // Write mod.rs with dispatch
-    let mut mod_rs = String::new();
-    mod_rs.push_str("use super::operator_unit::{EnemyStats, OperatorUnit};\n\n");
-    mod_rs.push_str("mod generated;\n\n");
-    mod_rs.push_str("pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {\n");
-    mod_rs.push_str("    let op_id = unit.data.data.id.as_deref().unwrap_or(\"\");\n");
-    mod_rs.push_str("    match op_id {\n");
-
-    for (char_id, fn_name) in &dispatch_arms {
-        mod_rs.push_str(&format!(
-            "        \"{char_id}\" => generated::{fn_name}(unit, enemy),\n"
-        ));
+    let generated_path = mode.generated_rs_path();
+    if let Some(parent) = std::path::Path::new(generated_path).parent() {
+        fs::create_dir_all(parent).ok();
     }
+    let _ = fs::remove_file(generated_path);
+    fs::write(generated_path, &generated)
+        .unwrap_or_else(|e| panic!("Failed to write {generated_path}: {e}"));
+    println!("Written to {generated_path}");
 
-    mod_rs.push_str("        _ => None,\n");
-    mod_rs.push_str("    }\n");
-    mod_rs.push_str("}\n");
-
-    fs::remove_file("src/dps/custom/mod.rs").unwrap();
-    fs::write("src/dps/custom/mod.rs", &mod_rs).expect("Failed to write mod.rs");
+    // Write dispatch.rs (sibling of generated.rs)
+    let mod_rs = build_dispatch_mod(shape, mode.generated_mod_name(), &dispatch_arms);
+    let dispatch_path = mode.dispatch_rs_path();
+    let _ = fs::remove_file(dispatch_path);
+    fs::write(dispatch_path, &mod_rs)
+        .unwrap_or_else(|e| panic!("Failed to write {dispatch_path}: {e}"));
     println!(
-        "Written to src/dps/custom/mod.rs ({} dispatch arms)",
+        "Written to {dispatch_path} ({} dispatch arms)",
         dispatch_arms.len()
     );
+}
+
+fn build_dispatch_mod(
+    shape: OutputShape,
+    generated_mod: &str,
+    dispatch_arms: &[(String, String)],
+) -> String {
+    let mut out = String::new();
+    out.push_str("//! Auto-generated dispatch table. DO NOT EDIT MANUALLY.\n");
+    out.push_str(&format!(
+        "//! Sibling of `{generated_mod}.rs` — both are declared by the hand-written `mod.rs`.\n\n"
+    ));
+    match shape {
+        OutputShape::F64Dps => {
+            out.push_str("use super::super::operator_unit::{EnemyStats, OperatorUnit};\n");
+            out.push_str(&format!("use super::{generated_mod};\n\n"));
+            out.push_str(
+                "pub fn dispatch(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {\n",
+            );
+            out.push_str("    let op_id = unit.data.data.id.as_deref().unwrap_or(\"\");\n");
+            out.push_str("    match op_id {\n");
+            for (char_id, fn_name) in dispatch_arms {
+                out.push_str(&format!(
+                    "        \"{char_id}\" => {generated_mod}::{fn_name}(unit, enemy),\n"
+                ));
+            }
+            out.push_str("        _ => None,\n");
+            out.push_str("    }\n");
+            out.push_str("}\n");
+        }
+        OutputShape::HpsTriple => {
+            out.push_str("use super::super::engine::HpsResult;\n");
+            out.push_str("use super::super::operator_unit::{EnemyStats, OperatorUnit};\n");
+            out.push_str(&format!("use super::{generated_mod};\n\n"));
+            out.push_str("/// Dispatch the operator's healing formula. Returns None when the\n");
+            out.push_str("/// operator has no transpiled HPS implementation.\n");
+            out.push_str("pub fn dispatch(unit: &OperatorUnit) -> Option<HpsResult> {\n");
+            out.push_str("    // Most healers don't need enemy stats; pass a zero target so the\n");
+            out.push_str(
+                "    // generated functions' boilerplate `defense`/`res` locals stay 0.\n",
+            );
+            out.push_str("    let enemy = EnemyStats { defense: 0.0, res: 0.0 };\n");
+            out.push_str("    let op_id = unit.data.data.id.as_deref().unwrap_or(\"\");\n");
+            out.push_str("    match op_id {\n");
+            for (char_id, fn_name) in dispatch_arms {
+                out.push_str(&format!(
+                    "        \"{char_id}\" => {generated_mod}::{fn_name}(unit, &enemy),\n"
+                ));
+            }
+            out.push_str("        _ => None,\n");
+            out.push_str("    }\n");
+            out.push_str("}\n");
+        }
+    }
+    out
 }
 
 // ── Transpilation ───────────────────────────────────────────────────────
@@ -1001,6 +1517,7 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
             "skill_duration",
             "let mut skill_duration: f64 = unit.skill_duration;",
         ),
+        ("target_hp", "let mut target_hp: f64 = unit.target_hp;"),
     ];
     let bool_fields: &[(&str, &str)] = &[
         (
@@ -1066,6 +1583,7 @@ fn transpile_init_expr(py_expr: &str) -> String {
     s = s.replace("self.atk_interval", "unit.attack_interval as f64");
     s = s.replace("self.attack_speed", "unit.attack_speed");
     s = s.replace("self.ammo", "unit.ammo");
+    s = s.replace("self.target_hp", "unit.target_hp");
     s = s.replace("self.skill", "skillf");
     s = s.replace("pp.pot", "unit.potential");
     // Boolean
@@ -1114,13 +1632,25 @@ fn transpile_init_expr(py_expr: &str) -> String {
     s
 }
 
-fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String {
+fn transpile_skill_dps(
+    py_body: &str,
+    init_mutations: &InitMutations,
+    shape: OutputShape,
+) -> String {
     let mut lines: Vec<String> = Vec::new();
 
     // Pass 1: Collect all assigned variable names for hoisting
     let mut all_vars: Vec<String> = Vec::new();
     let mut vec_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
     let builtin_vars = ["dps", "skill", "defense", "res", "self", "atk_interval"];
+
+    // Force-hoist the canonical output vars so the final `Some(HpsResult { … })`
+    // always references declared locals, even if a healer sets only some of them.
+    if shape == OutputShape::HpsTriple {
+        for v in ["skill_hps", "base_hps", "avg_hps"] {
+            all_vars.push(v.to_string());
+        }
+    }
 
     // Detect if the Python body mutates self.atk_interval (field write vs local assignment)
     // If yes: map self.atk_interval → atk_interval (the local shadow)
@@ -1246,6 +1776,20 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
             if expr == "dps" {
                 continue;
             }
+            // Healers `return self.name`; the canonical locals are emitted at the
+            // tail. A top-level return is dropped (the tail handles it); an
+            // indented early-return emits the triple with whatever locals are set
+            // so far, matching Python returning with what it had computed.
+            if shape == OutputShape::HpsTriple && expr == "self.name" {
+                if tab_count == 0 {
+                    continue;
+                }
+                let rust_indent = "    ".repeat(tab_count + 1);
+                lines.push(format!(
+                    "{rust_indent}return Some(HpsResult {{ skill_hps, base_hps, avg_hps }});"
+                ));
+                continue;
+            }
             let transpiled = transpile_expressions(expr, &mut declared_vars);
             let coerced = coerce_arithmetic_literals(&transpiled);
             // Top-level return (indent 0): capture as final expression instead of early return
@@ -1268,6 +1812,10 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
         // Close braces when indent decreases
         // `else:` and `elif` are continuations (attach to preceding if block).
         let is_continuation = trimmed.starts_with("else:") || trimmed.starts_with("elif ");
+        // Track whether this continuation consumed a block from the outer scope
+        // — if so, the resulting `} else {` belongs to that OUTER block, not to
+        // any inline `if X { stmt; }` that happens to be the previous line.
+        let mut else_consumed_outer_block = false;
         if !is_continuation {
             while py_indent < *indent_stack.last().unwrap_or(&0) {
                 indent_stack.pop();
@@ -1282,9 +1830,11 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
                 let depth = *indent_stack.last().unwrap_or(&0);
                 let rust_indent = "    ".repeat(depth);
                 lines.push(format!("{rust_indent}}}"));
+                else_consumed_outer_block = true;
             }
             if py_indent < *indent_stack.last().unwrap_or(&0) {
                 indent_stack.pop();
+                else_consumed_outer_block = true;
             }
         }
 
@@ -1295,11 +1845,12 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
         // Apply integer coercion to ALL transpiled lines (including early returns)
         let rust_line = coerce_arithmetic_literals(&raw_line);
 
-        // Merge inline else/elif with preceding inline if:
-        // Previous: "if COND { STMT; }"
-        // Current:  "} else { STMT; }" or "} else if COND { STMT; }"
-        // Result:   "if COND { STMT; } else { STMT; }" or "if COND { STMT; } else if COND { STMT; }"
-        if rust_line.trim_start().starts_with("} else ")
+        // Merge an inline else/elif onto a preceding inline if:
+        //   "if COND { STMT; }" + "} else { STMT; }" → "if COND { STMT; } else { STMT; }"
+        // Skipped when the `else:` closed an outer block-if, otherwise it would
+        // hijack that else and break the outer structure.
+        if !else_consumed_outer_block
+            && rust_line.trim_start().starts_with("} else ")
             && let Some(prev) = lines.last_mut()
         {
             let pt = prev.trim();
@@ -1341,10 +1892,17 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
     }
 
     lines.push(String::new());
-    if let Some(expr) = final_return_expr {
-        lines.push(format!("    Some({expr})"));
-    } else {
-        lines.push("    Some(dps)".into());
+    match shape {
+        OutputShape::F64Dps => {
+            if let Some(expr) = final_return_expr {
+                lines.push(format!("    Some({expr})"));
+            } else {
+                lines.push("    Some(dps)".into());
+            }
+        }
+        OutputShape::HpsTriple => {
+            lines.push("    Some(HpsResult { skill_hps, base_hps, avg_hps })".into());
+        }
     }
     lines.push(String::new());
 
@@ -1394,6 +1952,7 @@ fn transpile_skill_dps(py_body: &str, init_mutations: &InitMutations) -> String 
             "skill_duration" => {
                 processed_body = processed_body.replace("unit.skill_duration", "skill_duration")
             }
+            "target_hp" => processed_body = processed_body.replace("unit.target_hp", "target_hp"),
             _ => {}
         }
     }
@@ -1525,12 +2084,24 @@ fn coerce_arithmetic_literals(line: &str) -> String {
 }
 
 fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) -> String {
-    // Skip Python-only constructs
-    if py.starts_with("self.name +=")
-        || py.starts_with("self.name=")
-        || py.starts_with("self.name +=")
-        || py.starts_with("print(")
+    // `self.name` is display-only; drop any line touching it, including inline
+    // `if COND: self.name += ...` / `else: self.name += ...` forms.
+    let trimmed_py = py.trim_start();
+    if trimmed_py.starts_with("self.name")
+        || trimmed_py.starts_with("print(")
+        || py.contains(": self.name +=")
+        || py.contains(": self.name=")
     {
+        return String::new();
+    }
+
+    // Skip `self.<x>_params[N] = ...` blackboard mutations — they'd need a
+    // mutable owned copy in Rust. Match assignment (`= …`), not comparison (`==`).
+    static PARAMS_ASSIGN_RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let re = PARAMS_ASSIGN_RE.get_or_init(|| {
+        Regex::new(r"self\.(?:talent[12]?_params|skill_params)\[\d+\]\s*=[^=]").unwrap()
+    });
+    if re.is_match(py) {
         return String::new();
     }
 
@@ -1783,10 +2354,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // int(x) → truncate toward zero (stays f64) — uses balanced paren matching
     {
         let mut search_from = 0;
-        loop {
-            let Some(m) = RE.int_pat.find(&s[search_from..]) else {
-                break;
-            };
+        while let Some(m) = RE.int_pat.find(&s[search_from..]) {
             let abs_start = search_from + m.start();
             let open = search_from + m.end() - 1;
             let mut depth = 1;
@@ -2015,6 +2583,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.module", "unit.module_index");
     s = s.replace("self.ammo", "unit.ammo");
     s = s.replace("self.shadows", "unit.shadows");
+    s = s.replace("self.target_hp", "unit.target_hp");
 
     // Additional operator property mappings
     s = s.replace("self.below50", "unit.talent2_damage");
@@ -2148,10 +2717,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
             &RE.max_func
         };
         let mut search_from = 0;
-        loop {
-            let Some(m) = re.find(&s[search_from..]) else {
-                break;
-            };
+        while let Some(m) = re.find(&s[search_from..]) {
             let abs_start = search_from + m.start();
             let open = search_from + m.end() - 1;
             // Find matching closing paren

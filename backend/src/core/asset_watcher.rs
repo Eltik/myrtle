@@ -143,6 +143,33 @@ async fn perform_reload(state: &AppState) {
             state.cache.invalidate_by_prefix("static:").await;
 
             tracing::info!(operators = op_count, "hot-reload complete");
+
+            // Reconcile gacha_records.rarity against the new game data, in the
+            // background — don't block the watcher loop. New operators that
+            // were previously API-fallback can now be looked up canonically,
+            // and any historically-incorrect rarities get fixed.
+            let state = state.clone();
+            tokio::spawn(async move {
+                let gd = state.game_data.load_full();
+                match crate::core::gacha_resync::reconcile_rarities(&state.db, &gd).await {
+                    Ok(stats) if stats.rows_updated > 0 => {
+                        tracing::info!(
+                            rows = stats.rows_updated,
+                            char_ids = stats.fixed_char_ids,
+                            distinct_pairs = stats.distinct_pairs,
+                            "gacha resync complete",
+                        );
+                        state.cache.invalidate_by_prefix("gacha:").await;
+                    }
+                    Ok(stats) => {
+                        tracing::debug!(
+                            distinct_pairs = stats.distinct_pairs,
+                            "gacha resync: no changes",
+                        );
+                    }
+                    Err(e) => tracing::warn!(error = %e, "gacha resync failed"),
+                }
+            });
         }
         Ok(Err(e)) => {
             tracing::error!(error = %e, "hot-reload failed: game data parse error, keeping old data");

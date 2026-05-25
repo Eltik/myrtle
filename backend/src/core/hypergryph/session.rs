@@ -5,7 +5,7 @@ use crate::core::hypergryph::{
     config::config,
     constants::{AuthSession, Domain, Server},
     crypto::generate_u8_sign,
-    fetch::{FetchError, FetchRequest, fetch_domain},
+    fetch::{FetchError, FetchRequest, fetch_domain, parse_json},
     loaders,
     yostar::{AccountPortalSession, account_portal_login, request_token, submit_auth},
 };
@@ -92,10 +92,7 @@ async fn get_secret(
     )
     .await?;
 
-    let data: GetSecretResponse = response
-        .json()
-        .await
-        .map_err(|e| FetchError::ParseError(e.to_string()))?;
+    let data: GetSecretResponse = parse_json(response, "get_secret").await?;
 
     if data.result != 0 {
         return Err(FetchError::ParseError(format!(
@@ -183,10 +180,7 @@ async fn get_u8_token(
     )
     .await?;
 
-    response
-        .json()
-        .await
-        .map_err(|e| FetchError::ParseError(e.to_string()))
+    parse_json(response, "get_u8_token").await
 }
 
 pub struct LoginResult {

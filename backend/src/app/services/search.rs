@@ -1,16 +1,24 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     database::{models::user::UserProfile, queries::users},
 };
 
+#[derive(Serialize, Deserialize)]
+pub struct SearchPage {
+    pub entries: Vec<UserProfile>,
+    pub total: i64,
+}
+
 pub async fn search_users(
     state: &AppState,
-    query: &str,
+    query: Option<&str>,
     limit: u32,
     offset: u32,
-) -> Result<Vec<UserProfile>, ApiError> {
+) -> Result<SearchPage, ApiError> {
     let mut hasher = DefaultHasher::new();
     (query, limit, offset).hash(&mut hasher);
     let key = CacheKey::Search {
@@ -21,7 +29,12 @@ pub async fn search_users(
         return Ok(cached);
     }
 
-    let results = users::search_by_nickname(&state.db, query, limit as i64, offset as i64).await?;
-    state.cache.set(&key, &results).await;
-    Ok(results)
+    let (entries, total) = tokio::try_join!(
+        users::search_by_nickname(&state.db, query, limit as i64, offset as i64),
+        users::count_by_nickname(&state.db, query),
+    )?;
+
+    let page = SearchPage { entries, total };
+    state.cache.set(&key, &page).await;
+    Ok(page)
 }

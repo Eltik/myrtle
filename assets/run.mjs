@@ -8,6 +8,7 @@ import {
 	readdirSync,
 	readFileSync,
 	statSync,
+	unlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { readdir, stat } from "node:fs/promises";
@@ -55,30 +56,40 @@ const SERVERS = {
 		label: "Global/EN (Yostar)",
 		versionUrl:
 			"https://ark-us-static-online.yo-star.com/assetbundle/official/Android/version",
+		cdnBaseUrl:
+			"https://ark-us-static-online.yo-star.com/assetbundle/official/Android/assets",
 	},
 	jp: {
 		label: "Japan (Yostar)",
 		versionUrl:
 			"https://ark-jp-static-online.yo-star.com/assetbundle/official/Android/version",
+		cdnBaseUrl:
+			"https://ark-jp-static-online.yo-star.com/assetbundle/official/Android/assets",
 	},
 	kr: {
 		label: "Korea (Yostar)",
 		versionUrl:
 			"https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/version",
+		cdnBaseUrl:
+			"https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/assets",
 	},
 	tw: {
 		label: "Taiwan (Gryphline)",
 		versionUrl:
 			"https://ark-tw-static-online.yo-star.com/assetbundle/official/Android/version",
+		cdnBaseUrl:
+			"https://ark-tw-static-online.yo-star.com/assetbundle/official/Android/assets",
 	},
 	cn: {
 		label: "CN Official (Hypergryph)",
 		versionUrl:
 			"https://ak-conf.hypergryph.com/config/prod/official/Android/version",
+		cdnBaseUrl: "https://ak.hycdn.cn/assetbundle/official/Android/assets",
 	},
 	bilibili: {
 		label: "CN Bilibili",
 		versionUrl: "https://ak-conf.hypergryph.com/config/prod/b/Android/version",
+		cdnBaseUrl: "https://ak.hycdn.cn/assetbundle/bilibili/Android/assets",
 	},
 };
 
@@ -116,6 +127,65 @@ async function fetchServerVersion(serverKey) {
 	return { resVersion: data.resVersion, clientVersion: data.clientVersion };
 }
 
+async function fetchHotUpdateList(serverKey, resVersion) {
+	const server = SERVERS[serverKey];
+	if (!server) throw new Error(`Unknown server: ${serverKey}`);
+	const url = `${server.cdnBaseUrl}/${resVersion}/hot_update_list.json`;
+	const res = await fetch(url);
+	if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+	return res.json();
+}
+
+/**
+ * Delete .bin files in savedir/anon/ and .idx files at savedir root that
+ * aren't referenced by the given hot_update_list.json. Orphans accumulate
+ * across version bumps and silently corrupt gamedata extraction because the
+ * unpacker walks all .bin files and writes by TextAsset m_Name — when two
+ * bundles share an m_Name (the suffix is stable across versions), last write
+ * wins and old content can clobber new.
+ */
+function pruneOrphans(savedir, hotList) {
+	const keepBin = new Set();
+	for (const a of hotList.abInfos ?? []) {
+		if (a.name?.startsWith("anon/")) {
+			keepBin.add(a.name.slice("anon/".length));
+		}
+	}
+	const keepIdx = new Set([hotList.manifestName].filter(Boolean));
+
+	let deleted = 0;
+	let freedBytes = 0;
+
+	const anonDir = join(savedir, "anon");
+	if (existsSync(anonDir)) {
+		for (const f of readdirSync(anonDir)) {
+			if (!f.endsWith(".bin") || keepBin.has(f)) continue;
+			const path = join(anonDir, f);
+			try {
+				freedBytes += statSync(path).size;
+				unlinkSync(path);
+				deleted++;
+			} catch (err) {
+				console.warn(`  prune: failed to delete ${path}: ${err.message}`);
+			}
+		}
+	}
+
+	for (const f of readdirSync(savedir)) {
+		if (!f.endsWith(".idx") || keepIdx.has(f)) continue;
+		const path = join(savedir, f);
+		try {
+			freedBytes += statSync(path).size;
+			unlinkSync(path);
+			deleted++;
+		} catch (err) {
+			console.warn(`  prune: failed to delete ${path}: ${err.message}`);
+		}
+	}
+
+	return { deleted, freedBytes };
+}
+
 function readStoredVersion(savedir) {
 	const versionFile = join(savedir, ".version");
 	try {
@@ -147,17 +217,20 @@ function unpackerIsNewer(savedir) {
 }
 
 /**
- * Check if the extraction output directory is missing or empty.
- * Returns true if re-extraction is needed because output doesn't exist.
+ * Check whether the extraction output is missing/empty enough to require a
+ * re-extract. Returns true if outputDir is missing or empty, or if the
+ * `gamedata/` subdir is missing — the backend depends on it, and an admin
+ * who deletes only that subdir to force a re-extract (a deliberate path for
+ * recovering from orphan-bundle corruption) should be honored.
  */
 function outputMissingOrEmpty(outputDir) {
 	try {
 		const entries = readdirSync(outputDir);
-		return entries.length === 0;
+		if (entries.length === 0) return true;
 	} catch {
-		// Directory doesn't exist
 		return true;
 	}
+	return !existsSync(join(outputDir, "gamedata"));
 }
 
 /** Touch the extraction timestamp file after a successful unpack. */
@@ -865,6 +938,22 @@ async function runUpdate() {
 			dlBar.fail(`Download failed: ${err.message}`);
 			return;
 		}
+
+		// Prune orphans before unpack so stale .bin bundles can't clobber
+		// fresh ones via last-write-wins on shared TextAsset m_Names.
+		try {
+			const hotList = await fetchHotUpdateList(serverKey, serverVer.resVersion);
+			const { deleted, freedBytes } = pruneOrphans(savedir, hotList);
+			if (deleted > 0) {
+				console.log(
+					chalk.dim(
+						`  Pruned ${deleted} orphan file(s), freed ${formatBytes(freedBytes)}`,
+					),
+				);
+			}
+		} catch (err) {
+			console.warn(chalk.yellow(`  Orphan prune skipped: ${err.message}`));
+		}
 	}
 
 	// Unpack phase
@@ -1099,6 +1188,29 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				totalBytes: dlStats.totalBytes,
 				totalBytesFormatted: formatBytes(dlStats.totalBytes),
 			});
+
+			// Prune orphans before unpack. Without this, stale .bin bundles from
+			// prior versions sharing a TextAsset m_Name with the current bundle
+			// can clobber the new content via last-write-wins in the unpacker.
+			try {
+				const ver = await fetchServerVersion(config.serverKey);
+				const hotList = await fetchHotUpdateList(config.serverKey, ver.resVersion);
+				const { deleted, freedBytes } = pruneOrphans(config.savedir, hotList);
+				if (deleted > 0) {
+					console.log(
+						chalk.dim(
+							`[${new Date().toLocaleTimeString()}] Pruned ${deleted} orphan file(s), freed ${formatBytes(freedBytes)}`,
+						),
+					);
+				}
+				broadcast({ type: "prune_complete", deleted, freedBytes });
+			} catch (err) {
+				console.warn(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] Orphan prune skipped: ${err.message}`,
+					),
+				);
+			}
 
 			// Unpack phase
 			currentState = "unpacking";

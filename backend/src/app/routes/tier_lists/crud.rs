@@ -7,8 +7,17 @@ use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services;
 use crate::app::state::AppState;
+use crate::app::validation::{
+    LIST_DESCRIPTION_MAX, LIST_NAME_MAX, validate_length, validate_opt_length,
+};
 use crate::database::models::tier_list::TierList;
 use crate::database::queries::tier_lists as queries;
+
+fn validate_list_body(name: &str, description: Option<&str>) -> Result<(), ApiError> {
+    validate_length("list name", name, LIST_NAME_MAX)?;
+    validate_opt_length("list description", description, LIST_DESCRIPTION_MAX)?;
+    Ok(())
+}
 
 pub async fn get(
     State(state): State<AppState>,
@@ -35,6 +44,7 @@ pub async fn create(
     auth: AuthUser,
     Json(body): Json<CreateRequest>,
 ) -> Result<Json<TierList>, ApiError> {
+    validate_list_body(&body.name, body.description.as_deref())?;
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = services::tier_list::create(
         &state,
@@ -54,6 +64,15 @@ pub async fn mine(
 ) -> Result<Json<Vec<TierList>>, ApiError> {
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let lists = queries::find_by_user(&state.db, user_id).await?;
+    Ok(Json(lists))
+}
+
+pub async fn favorites(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<Vec<TierList>>, ApiError> {
+    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let lists = queries::find_favorited_by_user(&state.db, user_id).await?;
     Ok(Json(lists))
 }
 
@@ -91,6 +110,7 @@ pub async fn update(
     Path(slug): Path<String>,
     Json(body): Json<UpdateRequest>,
 ) -> Result<Json<TierList>, ApiError> {
+    validate_list_body(&body.name, body.description.as_deref())?;
     let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
     let list = services::tier_list::update_list(
         &state,

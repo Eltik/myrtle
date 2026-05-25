@@ -28,20 +28,40 @@ pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<UserProfile>, 
         .await
 }
 
-/// Search users by nickname
+/// Search public user profiles by nickname, ranked by total score.
+/// When `query` is `None`, returns all public profiles ranked by score.
 pub async fn search_by_nickname(
     pool: &PgPool,
-    query: &str,
+    query: Option<&str>,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<UserProfile>, sqlx::Error> {
+    let pattern = query.map(|q| format!("%{q}%"));
     sqlx::query_as::<_, UserProfile>(
-        "SELECT * FROM v_user_profile WHERE nickname ILIKE $1 LIMIT $2 OFFSET $3",
+        "SELECT * FROM v_user_profile \
+         WHERE public_profile = true \
+           AND ($1::text IS NULL OR nickname ILIKE $1) \
+         ORDER BY total_score DESC NULLS LAST \
+         LIMIT $2 OFFSET $3",
     )
-    .bind(format!("%{query}%"))
+    .bind(pattern)
     .bind(limit)
     .bind(offset)
     .fetch_all(pool)
+    .await
+}
+
+/// Count public user profiles matching a nickname search.
+/// When `query` is `None`, counts all public profiles.
+pub async fn count_by_nickname(pool: &PgPool, query: Option<&str>) -> Result<i64, sqlx::Error> {
+    let pattern = query.map(|q| format!("%{q}%"));
+    sqlx::query_scalar(
+        "SELECT COUNT(*) FROM v_user_profile \
+         WHERE public_profile = true \
+           AND ($1::text IS NULL OR nickname ILIKE $1)",
+    )
+    .bind(pattern)
+    .fetch_one(pool)
     .await
 }
 

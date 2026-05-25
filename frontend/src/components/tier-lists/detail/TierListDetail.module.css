@@ -1,0 +1,228 @@
+.tierBoard {
+    --tier-row-min: 76px;
+    --tier-label-w: 76px;
+    --op-size: 48px;
+    --op-gap: 4px;
+    --op-pad-x: 8px;
+    --op-pad-y: 8px;
+    --op-radius: 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
+}
+
+@media (min-width: 480px) {
+    .tierBoard {
+        --tier-row-min: 84px;
+        --tier-label-w: 88px;
+        --op-size: 56px;
+        --op-gap: 6px;
+        --op-pad-x: 10px;
+        --op-pad-y: 10px;
+    }
+}
+
+@media (min-width: 768px) {
+    .tierBoard {
+        --tier-row-min: 92px;
+        --tier-label-w: 124px;
+        --op-size: 64px;
+        --op-pad-x: 12px;
+        --op-pad-y: 10px;
+        border-radius: 14px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .tierBoard {
+        --tier-label-w: 140px;
+        --op-size: 72px;
+    }
+}
+
+.tierRow {
+    --row-color: var(--primary);
+    display: grid;
+    grid-template-columns: var(--tier-label-w) 1fr;
+    align-items: stretch;
+    min-height: var(--tier-row-min);
+    background: linear-gradient(to right, color-mix(in srgb, var(--row-color) 8%, transparent), transparent 70%);
+}
+
+.tierRow + .tierRow {
+    border-top: 1px solid color-mix(in srgb, var(--row-color) 16%, var(--border));
+}
+
+.tierLabel {
+    appearance: none;
+    border: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    min-height: var(--tier-row-min);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    background: var(--row-color);
+    color: var(--tier-fg, white);
+    text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.3));
+    cursor: pointer;
+    overflow: hidden;
+    transition: filter 180ms ease;
+}
+
+.tierLabel:hover,
+.tierLabel:focus-visible {
+    filter: brightness(1.06);
+}
+
+.tierLabel:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -3px;
+}
+
+.tierLabelGlyph {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1.1;
+    letter-spacing: -0.005em;
+    font-feature-settings: "ss01", "cv11";
+    text-align: center;
+    word-break: normal;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+    hyphens: none;
+    max-width: 100%;
+    text-shadow: var(--tier-shadow, 0 1px 0 oklch(0 0 0 / 0.18));
+}
+
+.tierLabel[data-size="xl"] .tierLabelGlyph {
+    font-size: clamp(40px, 4.6vw, 52px);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+}
+
+.tierLabel[data-size="lg"] .tierLabelGlyph {
+    font-size: clamp(22px, 2.4vw, 28px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+}
+
+.tierLabel[data-size="md"] .tierLabelGlyph {
+    font-size: clamp(17px, 1.8vw, 21px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+}
+
+.tierLabel[data-size="sm"] .tierLabelGlyph {
+    font-size: clamp(14px, 1.4vw, 16.5px);
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+}
+
+.tierLabel[data-size="xs"] .tierLabelGlyph {
+    font-size: clamp(12.5px, 1.2vw, 14.5px);
+    line-height: 1.3;
+    letter-spacing: 0;
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tierLabel {
+        transition: none;
+    }
+}
+
+.tierOps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--op-gap, 6px);
+    padding: var(--op-pad-y, 10px) var(--op-pad-x, 12px);
+    align-content: flex-start;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.opTile {
+    width: var(--op-size);
+    height: var(--op-size);
+    border-radius: var(--op-radius);
+    overflow: hidden;
+    flex: 0 0 auto;
+    background: oklch(0.22 0.005 285);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: calc(var(--op-size) * 0.4);
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    position: relative;
+    border: 1.5px solid transparent;
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.1);
+    transition:
+        transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 160ms ease;
+    cursor: pointer;
+}
+
+:global(.light) .opTile,
+:global([data-theme="light"]) .opTile {
+    background: oklch(0.93 0.005 285);
+    color: var(--foreground);
+}
+
+.opTile:hover,
+.opTile:focus-visible {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--rarity-color, var(--foreground)) 70%, transparent);
+}
+
+.opTile:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+.opTile img {
+    image-rendering: -webkit-optimize-contrast;
+}
+
+.opRarity {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: var(--rarity-color, var(--foreground));
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+.emptyTier {
+    display: flex;
+    align-items: center;
+    padding: 14px 12px;
+    color: var(--muted-foreground);
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-style: italic;
+    background: repeating-linear-gradient(45deg, transparent, transparent 7px, oklch(0 0 0 / 0.035) 7px, oklch(0 0 0 / 0.035) 8px);
+    width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .opTile {
+        transition: none;
+    }
+    .opTile:hover,
+    .opTile:focus-visible {
+        transform: none;
+    }
+}

@@ -72,6 +72,6 @@ pub async fn fetch_hot_update_list(
     if !other.files.is_empty() {
         result.push(other);
     }
-    result.sort_by(|a, b| b.total_size.cmp(&a.total_size));
+    result.sort_by_key(|g| std::cmp::Reverse(g.total_size));
     Ok(result)
 }

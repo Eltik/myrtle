@@ -1,189 +1,395 @@
-import type { Stage } from "~/types/api/impl/stage";
-import type { GameUserData } from "./types";
-import type { Zone } from "~/types/api/impl/zone";
-import type { RandomizerOperator } from "../index";
-import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, isActivityCurrentlyOpen, PERMANENT_EVENTS } from "./activity-names";
-import type { Challenge } from "./types";
+import type { IRosterEntry } from "#/lib/api/user";
+import { rarityToNumber } from "#/lib/utils";
+import type { IOperatorListItem } from "#/types/operators";
+import type { IStage, IZone, StageClearsMap } from "#/types/stages";
+import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix, type IActivityLookup, isActivityCurrentlyOpen } from "./activity-lookup";
+import { CHALLENGES } from "./challenges";
+import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
+import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
 
-// Heart of Surging Flame activity IDs - these are exempt from the 0 AP cost filter
-// because the event has playable stages that cost 0 sanity
-const HEART_OF_SURGING_FLAME_IDS = new Set(["act3d0", "act11d7"]);
-const HEART_OF_SURGING_FLAME_PERMANENT_PREFIX = "permanent_sidestory_2";
+const HEART_OF_SURGING_FLAME_NAME = "Heart of Surging Flame";
 
-/**
- * Checks if a stage is from the Heart of Surging Flame event
- * This event is exempt from the 0 AP cost filter
- */
-function isHeartOfSurgingFlameStage(zoneId: string): boolean {
+function isHeartOfSurgingFlameStage(zoneId: string, lookup: IActivityLookup): boolean {
     const permanentPrefix = getPermanentZonePrefix(zoneId);
-    if (permanentPrefix === HEART_OF_SURGING_FLAME_PERMANENT_PREFIX) {
-        return true;
+    if (permanentPrefix) {
+        const retro = lookup.retroByZonePrefix.get(permanentPrefix);
+        if (retro?.name === HEART_OF_SURGING_FLAME_NAME) return true;
     }
 
     const activityId = getActivityIdFromZoneId(zoneId);
-    if (activityId && HEART_OF_SURGING_FLAME_IDS.has(activityId)) {
-        return true;
-    }
+    if (!activityId) return false;
 
-    if (activityId) {
-        const permanentInfo = PERMANENT_EVENTS[activityId];
-        if (permanentInfo?.retroId.includes("Heart_Of_Surging_Flame")) {
-            return true;
-        }
-    }
+    const activityName = lookup.activityById.get(activityId)?.name;
+    if (activityName === HEART_OF_SURGING_FLAME_NAME || activityName === `${HEART_OF_SURGING_FLAME_NAME} - Rerun`) return true;
+
+    const linkedRetro = lookup.retroByActivityId.get(activityId);
+    if (linkedRetro?.name === HEART_OF_SURGING_FLAME_NAME) return true;
 
     return false;
 }
 
-/**
- * Checks if a stage should be included based on sanity cost
- * Excludes stages with 0 AP cost, except for Heart of Surging Flame playable stages
- */
-function shouldIncludeBySanityCost(stage: Stage): boolean {
-    if (stage.apCost > 0) {
-        return true;
-    }
+function shouldIncludeBySanityCost(stage: IStage, lookup: IActivityLookup): boolean {
+    if (stage.apCost > 0) return true;
 
-    if (isHeartOfSurgingFlameStage(stage.zoneId)) {
+    if (isHeartOfSurgingFlameStage(stage.zoneId, lookup)) {
         const code = stage.code.toUpperCase();
-        if (code.includes("ST") || code.includes("TR")) {
-            return false;
-        }
+        if (code.includes("ST") || code.includes("TR")) return false;
         return true;
     }
 
     return false;
 }
 
-const CHALLENGES: Challenge[] = [
-    // Restrictions
-    { type: "restriction", title: "No Guards", description: "Cannot deploy any Guard operators" },
-    { type: "restriction", title: "No Medics", description: "Cannot deploy any Medic operators" },
-    { type: "restriction", title: "No Casters", description: "Cannot deploy any Caster operators" },
-    { type: "restriction", title: "No Snipers", description: "Cannot deploy any Sniper operators" },
-    { type: "restriction", title: "No Defenders", description: "Cannot deploy any Defender operators" },
-    { type: "restriction", title: "Low Rarity Only", description: "Only 1★-3★ operators allowed" },
-    { type: "restriction", title: "4★ Max", description: "No operators above 4★ rarity" },
-    { type: "restriction", title: "No Ranged", description: "Only melee operators allowed" },
-    { type: "restriction", title: "No Melee", description: "Only ranged operators allowed" },
-    { type: "restriction", title: "Half Squad", description: "Deploy at most 6 operators" },
+/** Drops 0-AP tutorial/story-only stages (except Heart of Surging Flame playables). */
+export function filterPlayableStages(stages: IStage[], lookup: IActivityLookup): IStage[] {
+    return stages.filter((stage) => shouldIncludeBySanityCost(stage, lookup));
+}
 
-    // Modifiers
-    { type: "modifier", title: "Speed Run", description: "Complete as fast as possible" },
-    { type: "modifier", title: "Minimal Deployment", description: "Use the fewest operators possible" },
-    { type: "modifier", title: "No Retreating", description: "Cannot retreat any operator once deployed" },
-    {
-        type: "modifier",
-        title: "Deploy Order Challenge",
-        description: "Must deploy operators in roster order from left to right",
-    },
-    { type: "modifier", title: "First Try Only", description: "Must complete on first attempt, no retry" },
-    { type: "modifier", title: "Auto Deploy", description: "Must use auto-deploy after first clear" },
+export function buildRosterIndex(roster: IRosterEntry[] | null | undefined): IRosterIndex {
+    const owned = new Set<string>();
+    const e2 = new Set<string>();
+    if (!roster) return { owned, e2 };
+    for (const entry of roster) {
+        if (!entry.operator_id) continue;
+        owned.add(entry.operator_id);
+        if (entry.elite >= 2) e2.add(entry.operator_id);
+    }
+    return { owned, e2 };
+}
 
-    // Objectives
-    { type: "objective", title: "No Leaks", description: "Do not let any enemy through" },
-    { type: "objective", title: "3-Star Clear", description: "Must achieve 3-star rating" },
-    { type: "objective", title: "Trust Farm", description: "Fill unused slots with operators for trust farming" },
-];
+export function toRandomizerOperator(op: IOperatorListItem): IRandomizerOperator | null {
+    if (!op.id) return null;
+    return {
+        id: op.id,
+        name: op.name,
+        rarity: rarityToNumber(op.rarity),
+        profession: op.profession,
+        subProfessionId: op.subProfessionId,
+        position: op.position,
+    };
+}
 
-export function selectRandomStage(stages: Stage[], zones: Zone[], allowedZoneTypes: string[] = [], user?: GameUserData | null, onlyCompleted = false, selectedStages: string[] = [], onlyAvailableStages = false): Stage | null {
-    if (stages.length === 0) return null;
+export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex): IRandomizerOperator[] {
+    return operators.filter((op) => {
+        if (!settings.allowedRarities.includes(op.rarity)) return false;
+        if (!settings.allowedClasses.includes(op.profession)) return false;
+        if (settings.hideUnplayableOperators && UNPLAYABLE_OPERATOR_IDS.has(op.id)) return false;
+        if (settings.onlyOwnedOperators && !rosterIndex.owned.has(op.id)) return false;
+        if (settings.onlyE2Operators && !rosterIndex.e2.has(op.id)) return false;
+        return true;
+    });
+}
 
-    let filteredStages = stages;
+/** Zone types whose stages are always available (mainline, retro, daily farming, annihilation). */
+const PERMANENT_ZONE_TYPES = new Set(["MAINLINE", "MAINLINE_ACTIVITY", "MAINLINE_RETRO", "WEEKLY", "CAMPAIGN"]);
 
-    if (selectedStages.length > 0) {
-        filteredStages = filteredStages.filter((stage) => selectedStages.includes(stage.stageId));
-    } else {
-        if (allowedZoneTypes.length > 0) {
-            filteredStages = filteredStages.filter((stage) => {
-                const zone = zones.find((z) => z.zoneId === stage.zoneId);
-                return zone && allowedZoneTypes.includes(zone.type);
-            });
+export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: IActivityLookup): IStage[] {
+    const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
+    const deselectedStages = new Set(settings.deselectedStageIds);
+    const now = Math.floor(Date.now() / 1000);
+
+    return stages.filter((stage) => {
+        const zone = zoneById.get(stage.zoneId);
+        if (!zone) return false;
+        if (!settings.allowedZoneTypes.includes(zone.type)) return false;
+        if (deselectedStages.has(stage.stageId)) return false;
+
+        if (settings.onlyCompletedStages) {
+            if (!isStageCleared(stage.stageId, stageClears)) return false;
         }
-    }
 
-    if (onlyCompleted && user) {
-        filteredStages = filteredStages.filter((stage) => {
-            const stageData = user.dungeon.stages[stage.stageId];
-            return stageData && stageData.completeTimes > 0;
-        });
-    }
-
-    if (onlyAvailableStages) {
-        filteredStages = filteredStages.filter((stage) => {
-            const zone = zones.find((z) => z.zoneId === stage.zoneId);
-            if (!zone) return false;
-
-            if (zone.type === "MAINLINE") return true;
-
-            const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
-            if (permanentPrefix) return true;
-
+        if (settings.onlyAvailableStages) {
+            if (PERMANENT_ZONE_TYPES.has(zone.type)) return true;
+            if (getPermanentZonePrefix(stage.zoneId)) return true;
             const activityId = getActivityIdFromZoneId(stage.zoneId);
             if (!activityId) return false;
+            if (getPermanentEventInfo(activityId, lookup)) return true;
+            return isActivityCurrentlyOpen(activityId, lookup, now);
+        }
 
-            const permanentInfo = getPermanentEventInfo(activityId);
-            if (permanentInfo) return true;
-
-            return isActivityCurrentlyOpen(activityId);
-        });
-    }
-
-    if (filteredStages.length === 0) return null;
-
-    const randomIndex = Math.floor(Math.random() * filteredStages.length);
-    return filteredStages[randomIndex] ?? null;
+        return true;
+    });
 }
 
-export function generateRandomSquad(operators: RandomizerOperator[], squadSize: number, allowDuplicates: boolean): RandomizerOperator[] {
+export function pickRandomStage(stages: IStage[]): IStage | null {
+    if (stages.length === 0) return null;
+    return stages[Math.floor(Math.random() * stages.length)] ?? null;
+}
+
+export function pickRandomSquad(operators: IRandomizerOperator[], squadSize: number, allowDuplicates: boolean): IRandomizerOperator[] {
     if (operators.length === 0) return [];
 
-    const squad: RandomizerOperator[] = [];
-    const availablePool = [...operators];
+    const out: IRandomizerOperator[] = [];
+    const pool = [...operators];
 
     for (let i = 0; i < squadSize; i++) {
-        if (availablePool.length === 0) {
-            if (allowDuplicates && operators.length > 0) {
-                availablePool.push(...operators);
+        if (pool.length === 0) {
+            if (allowDuplicates) {
+                pool.push(...operators);
             } else {
                 break;
             }
         }
+        const idx = Math.floor(Math.random() * pool.length);
+        const chosen = pool[idx];
+        if (!chosen) break;
+        out.push(chosen);
+        if (!allowDuplicates) pool.splice(idx, 1);
+    }
 
-        const randomIndex = Math.floor(Math.random() * availablePool.length);
-        const selectedOperator = availablePool[randomIndex];
+    return out;
+}
 
-        if (selectedOperator) {
-            squad.push(selectedOperator);
-            if (!allowDuplicates) {
-                availablePool.splice(randomIndex, 1);
+export interface IChallengePickContext {
+    /** The rolled stage. Stage-specific challenges check this. */
+    stage: IStage;
+    /**
+     * Full operator pool after settings + roster filtering. Squad-filter
+     * challenges run their predicate against this list.
+     */
+    operators: IOperatorListItem[];
+    /** Minimum pool size a SQUAD_FILTER challenge must yield to be eligible. */
+    squadSize: number;
+}
+
+export interface IPickedChallenge {
+    challenge: IChallenge;
+    /** For SQUAD_FILTER: the operators that survived the filter. Undefined for PLAIN/STAGE. */
+    filteredOperators?: IOperatorListItem[];
+}
+
+/**
+ * Weighted random pick over the challenge registry, respecting eligibility:
+ *   - PLAIN: always eligible.
+ *   - STAGE: eligible iff match(stage) returns true.
+ *   - SQUAD_FILTER: eligible iff the filtered pool has at least squadSize operators.
+ *
+ * Returns null only if no challenge is eligible (e.g. empty operator pool and no
+ * applicable stage / plain challenges in the registry).
+ */
+export function pickRandomChallenge(ctx: IChallengePickContext): IPickedChallenge | null {
+    type Entry = { challenge: IChallenge; weight: number; filteredOperators?: IOperatorListItem[] };
+    const eligible: Entry[] = [];
+
+    for (const ch of CHALLENGES) {
+        const weight = ch.weight ?? 1;
+        if (weight <= 0) continue;
+
+        if (ch.type === "PLAIN") {
+            eligible.push({ challenge: ch, weight });
+        } else if (ch.type === "STAGE") {
+            if (ch.match(ctx.stage)) eligible.push({ challenge: ch, weight });
+        } else {
+            const filtered = ctx.operators.filter(ch.filter);
+            if (filtered.length >= ctx.squadSize) {
+                eligible.push({ challenge: ch, weight, filteredOperators: filtered });
             }
         }
     }
 
-    return squad;
+    if (eligible.length === 0) return null;
+
+    const total = eligible.reduce((s, e) => s + e.weight, 0);
+    let r = Math.random() * total;
+    for (const e of eligible) {
+        r -= e.weight;
+        if (r <= 0) return { challenge: e.challenge, filteredOperators: e.filteredOperators };
+    }
+    const last = eligible[eligible.length - 1];
+    return last ? { challenge: last.challenge, filteredOperators: last.filteredOperators } : null;
 }
 
-export function generateChallenge(): Challenge {
-    const randomIndex = Math.floor(Math.random() * CHALLENGES.length);
-    return (
-        CHALLENGES[randomIndex] ?? {
-            type: "restriction",
-            title: "Random Challenge",
-            description: "Complete the stage with any restrictions you choose",
-        }
-    );
-}
-
-export function getRarityNumber(rarity: string): number {
-    return Number.parseInt(rarity.replace("TIER_", ""), 10);
+export function getZoneDisplayName(zone: IZone | undefined, stageZoneId: string): string {
+    if (!zone) return stageZoneId;
+    return zone.zoneNameSecond ?? zone.zoneNameFirst ?? stageZoneId;
 }
 
 /**
- * Filters stages to only include playable stages (those that cost sanity)
- * Excludes tutorial stages, story-only stages, and other 0 AP stages
- * Exception: Heart of Surging Flame stages are included even with 0 AP
+ * A stage is cleared when its `state` is 3 (passed). Note that for adverse/tough
+ * variants, clearing the harder version auto-passes the Normal/Easy variant with
+ * `state: 3` and `completeTimes: 0`, so checking `completeTimes` alone would miss them.
  */
-export function filterPlayableStages(stages: Stage[]): Stage[] {
-    return stages.filter(shouldIncludeBySanityCost);
+export function isStageCleared(stageId: string, stageClears: StageClearsMap | null | undefined): boolean {
+    const clear = stageClears?.[stageId];
+    return !!clear && (clear.state ?? 0) >= 3;
 }
+
+export type StageGroupSection = "MAIN" | "EVENT" | "OTHER";
+
+export interface IStageGroup {
+    id: string;
+    label: string;
+    sublabel?: string;
+    section: StageGroupSection;
+    /** Underlying zone type bucket (MAINLINE vs ACTIVITY) for cross-referencing source filters. */
+    zoneType: string;
+    /** Whether the event is currently open / always-available (permanent or mainline). */
+    isOpen: boolean;
+    sortKey: number;
+    stages: IStage[];
+}
+
+function natCompareCode(a: string, b: string): number {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+}
+
+/** Activity ID suffixes that mark non-mainstream content (mini events, sandbox, fun, etc.). */
+const OTHER_ACTIVITY_SUFFIXES = ["mini", "fun", "festival", "melee", "rune", "sandbox", "april", "vsint", "trial", "training"];
+
+function isOtherActivity(activityId: string): boolean {
+    const m = activityId.match(/^act\d+([a-z]+)$/i);
+    if (!m) return false;
+    const suffix = (m[1] ?? "").toLowerCase();
+    return OTHER_ACTIVITY_SUFFIXES.includes(suffix);
+}
+
+/**
+ * Extract the activity id from a stageId prefix. Some legacy event stages
+ * (e.g. `act7d5_04`, `act4d0_05`) are attached to a `main_X` zone in the
+ * game data despite being event content; the stageId itself is the reliable
+ * source of truth for which activity they actually belong to.
+ */
+function getActivityIdFromStageId(stageId: string): string | null {
+    const underscore = stageId.indexOf("_");
+    if (underscore <= 0) return null;
+    const prefix = stageId.slice(0, underscore);
+    return /^act\d/i.test(prefix) ? prefix : null;
+}
+
+/**
+ * Bucket the supplied stages into user-facing groups partitioned into three sections:
+ * Main Story (one per mainline episode), Events (full sidestories / permanent SS/BL),
+ * and Other (mini events, sandbox, festivals, etc.).
+ */
+export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActivityLookup): IStageGroup[] {
+    const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
+    const now = Math.floor(Date.now() / 1000);
+
+    const groups = new Map<string, IStageGroup>();
+
+    for (const stage of stages) {
+        const zone = zoneById.get(stage.zoneId);
+        if (!zone) continue;
+
+        let groupId: string;
+        let label: string;
+        let sublabel: string | undefined;
+        let section: StageGroupSection;
+        let isOpen: boolean;
+        let sortKey: number;
+
+        const stageActivityId = getActivityIdFromStageId(stage.stageId);
+        const stageActivity = stageActivityId ? lookup.activityById.get(stageActivityId) : undefined;
+        const stageRetro = stageActivityId ? lookup.retroByActivityId.get(stageActivityId) : undefined;
+        const stageBelongsToActivity = !!(stageActivity || stageRetro);
+
+        const isMainlineZoneType = zone.type === "MAINLINE" || zone.type === "MAINLINE_ACTIVITY" || zone.type === "MAINLINE_RETRO";
+        // Stage IDs for genuine mainline content are `main_/tough_/easy_/hard_/st_` prefixed;
+        // legacy event stages (e.g. `act7d5_04`) sometimes share a `main_X` zone but should
+        // NOT be considered main story.
+        const stageIdPrefix = stage.stageId.split("_", 1)[0] ?? "";
+        const isMainlineStageId = /^(main|tough|easy|hard|st)$/i.test(stageIdPrefix);
+        const isTrueMainStory = isMainlineZoneType && isMainlineStageId;
+
+        if (isTrueMainStory) {
+            const chapterNumber = zone.zoneNameTitleCurrent?.replace(/^0+/, "") || String(zone.zoneIndex ?? 0);
+            const chapterName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zone.zoneId;
+            // Group by chapter number so MAINLINE / MAINLINE_ACTIVITY / MAINLINE_RETRO
+            // variants of the same chapter merge into one entry.
+            groupId = `mainline:${chapterNumber || zone.zoneId}`;
+            label = `Chapter ${chapterNumber} - ${chapterName}`;
+            sublabel = zone.zoneNameFirst && zone.zoneNameFirst !== chapterName ? zone.zoneNameFirst : undefined;
+            section = "MAIN";
+            isOpen = true;
+            sortKey = Number.parseInt(zone.zoneNameTitleCurrent ?? "", 10);
+            if (!Number.isFinite(sortKey)) sortKey = zone.zoneIndex ?? 0;
+        } else if (stageBelongsToActivity && stageActivityId) {
+            const activityId = stageActivityId;
+            const activity = stageActivity;
+            const retro = stageRetro;
+            groupId = `activity:${activityId}`;
+            label = activity?.name ?? retro?.name ?? activityId;
+
+            const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
+            if (isPermanentSideOrBranch) {
+                sublabel = "Permanent";
+                isOpen = true;
+            } else if (activity) {
+                isOpen = activity.startTime <= now && now <= activity.endTime;
+                sublabel = activity.isReplicate ? "Rerun" : undefined;
+            } else {
+                isOpen = false;
+            }
+
+            section = isOtherActivity(activityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
+            sortKey = activity?.startTime ?? retro?.startTime ?? 0;
+        } else {
+            const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
+            const zoneActivityId = getActivityIdFromZoneId(stage.zoneId);
+
+            if (permanentPrefix) {
+                const retro = lookup.retroByZonePrefix.get(permanentPrefix);
+                groupId = `permanent:${permanentPrefix}`;
+                label = retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
+                sublabel = "Permanent";
+                section = "EVENT";
+                isOpen = true;
+                sortKey = retro?.startTime ?? 0;
+            } else if (zoneActivityId) {
+                const activity = lookup.activityById.get(zoneActivityId);
+                const retro = lookup.retroByActivityId.get(zoneActivityId);
+                groupId = `activity:${zoneActivityId}`;
+                label = activity?.name ?? retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
+
+                const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
+                if (isPermanentSideOrBranch) {
+                    sublabel = "Permanent";
+                    isOpen = true;
+                } else if (activity) {
+                    isOpen = activity.startTime <= now && now <= activity.endTime;
+                    sublabel = activity.isReplicate ? "Rerun" : undefined;
+                } else {
+                    isOpen = false;
+                }
+
+                section = isOtherActivity(zoneActivityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
+                sortKey = activity?.startTime ?? retro?.startTime ?? 0;
+            } else {
+                groupId = `zone:${stage.zoneId}`;
+                label = getZoneDisplayName(zone, zone.zoneId);
+                section = "OTHER";
+                isOpen = PERMANENT_ZONE_TYPES.has(zone.type);
+                sortKey = zone.zoneIndex ?? 0;
+            }
+        }
+
+        let group = groups.get(groupId);
+        if (!group) {
+            group = { id: groupId, label, sublabel, section, zoneType: zone.type, isOpen, sortKey, stages: [] };
+            groups.set(groupId, group);
+        }
+        group.stages.push(stage);
+    }
+
+    const out = Array.from(groups.values());
+
+    for (const g of out) {
+        g.stages.sort((a, b) => natCompareCode(a.code, b.code) || a.stageId.localeCompare(b.stageId));
+    }
+
+    const SECTION_ORDER: Record<StageGroupSection, number> = { MAIN: 0, EVENT: 1, OTHER: 2 };
+    out.sort((a, b) => {
+        const sec = SECTION_ORDER[a.section] - SECTION_ORDER[b.section];
+        if (sec !== 0) return sec;
+        if (a.section === "MAIN") return a.sortKey - b.sortKey;
+        return b.sortKey - a.sortKey;
+    });
+
+    return out;
+}
+
+export const STAGE_SECTION_LABEL: Record<StageGroupSection, string> = {
+    MAIN: "Main Story",
+    EVENT: "Events",
+    OTHER: "Other",
+};

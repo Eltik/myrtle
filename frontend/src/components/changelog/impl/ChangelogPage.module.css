@@ -1,0 +1,43 @@
+.pageAmbient {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(60% 50% at 0% 0%, oklch(0.58 0.22 25 / 0.06), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.04), transparent 70%);
+}
+:global(.dark) .pageAmbient {
+    background: radial-gradient(60% 50% at 0% 0%, oklch(0.75 0.15 25 / 0.1), transparent 70%), radial-gradient(50% 40% at 100% 100%, oklch(0.55 0.15 184 / 0.08), transparent 70%);
+}
+
+.heroGlow {
+    position: absolute;
+    inset: -60px -10% auto auto;
+    width: 70%;
+    height: 280px;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(closest-side, var(--glow-primary, oklch(0.75 0.15 25 / 0.1)), transparent 72%);
+    filter: blur(14px);
+    opacity: 0.6;
+}
+
+/* Activity bars grow from the baseline on first paint; disabled for reduced motion. */
+.activityBar {
+    transform-origin: bottom;
+    animation: barRise 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes barRise {
+    from {
+        transform: scaleY(0.04);
+        opacity: 0;
+    }
+    to {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .activityBar {
+        animation: none;
+    }
+}

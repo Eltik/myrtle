@@ -13,8 +13,44 @@ pub struct TierList {
     pub list_type: String,
     pub created_by: Option<Uuid>,
     pub is_active: bool,
+    pub is_listed: bool,
+    pub flair_id: Option<i16>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TierListFlair {
+    pub id: i16,
+    pub code: String,
+    pub label: String,
+    pub color: Option<String>,
+    pub display_order: i16,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TierListStats {
+    pub tier_list_id: Uuid,
+    pub view_count: i64,
+    pub unique_view_count: i64,
+    pub favorite_count: i32,
+    pub share_count: i32,
+    pub is_trending: bool,
+    pub trending_score: f64,
+    pub views_last_24h: i32,
+    pub views_last_7d: i32,
+    pub last_viewed_at: Option<DateTime<Utc>>,
+    pub stats_updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+pub struct TierListFavorite {
+    pub tier_list_id: Uuid,
+    pub user_id: Uuid,
+    pub favorited_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]

@@ -10,6 +10,7 @@ pub struct UserProfile {
     pub id: Uuid,
     pub uid: String,
     pub nickname: Option<String>,
+    pub nick_number: Option<String>,
     pub level: Option<i16>,
     pub avatar_id: Option<String>,
     pub secretary: Option<String>,
@@ -41,6 +42,7 @@ pub struct UserProfile {
     pub operator_count: Option<i64>,
     pub item_count: Option<i64>,
     pub skin_count: Option<i64>,
+    pub non_default_skin_count: Option<i64>,
 }
 
 /// users table
@@ -50,6 +52,7 @@ pub struct User {
     pub uid: String,
     pub server_id: i16,
     pub nickname: Option<String>,
+    pub nick_number: Option<String>,
     pub level: Option<i16>,
     pub role: String,
     pub avatar_id: Option<String>,

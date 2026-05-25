@@ -1,0 +1,285 @@
+.filterSidebar {
+    position: sticky;
+    top: 80px;
+    flex: 0 0 280px;
+    width: 280px;
+    align-self: stretch;
+    max-height: calc(100vh - 96px);
+    overflow: hidden;
+    margin-right: 8px;
+    box-sizing: border-box;
+    opacity: 1;
+    transition:
+        flex-basis 300ms cubic-bezier(0.32, 0.72, 0, 1),
+        width 300ms cubic-bezier(0.32, 0.72, 0, 1),
+        margin-right 300ms cubic-bezier(0.32, 0.72, 0, 1),
+        opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: flex-basis, width, opacity;
+}
+.filterSidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.filterSidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+.filterSidebarInner {
+    width: 280px;
+    height: 100%;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-sizing: border-box;
+}
+.filterSidebarInner::-webkit-scrollbar {
+    width: 6px;
+}
+.filterSidebarInner::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+.filterSidebarCollapsed {
+    flex-basis: 0;
+    width: 0;
+    margin-right: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media (max-width: 800px) {
+    .filterSidebar {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filterSidebar {
+        transition: none;
+    }
+}
+
+.fpHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+}
+.fpHead h3 {
+    margin: 0;
+    font: 600 14px / 1 var(--font-sans);
+    color: var(--foreground);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.fpHead h3 svg {
+    color: var(--muted-foreground);
+}
+.fpHead .clear {
+    all: unset;
+    cursor: pointer;
+    font: 500 11.5px / 1 var(--font-sans);
+    color: var(--muted-foreground);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.fpHead .clear:hover {
+    color: var(--foreground);
+}
+
+.sectionHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+}
+.sectionHead.expandable {
+    cursor: pointer;
+    user-select: none;
+}
+.sectionHead .lbl {
+    font: 500 10.5px / 1 var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted-foreground);
+}
+.sectionHead .line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+.sectionHead .chev {
+    width: 13px;
+    height: 13px;
+    color: var(--muted-foreground);
+    transition: transform 180ms ease;
+}
+.sectionHead.expandable.open .chev {
+    transform: rotate(180deg);
+}
+.sectionHead .n {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-radius: 999px;
+    font: 600 10px / 1 var(--font-mono);
+}
+
+.field {
+    container-type: inline-size;
+}
+.field + .field {
+    margin-top: 14px;
+}
+.fieldLabel {
+    font: 500 12px / 1 var(--font-sans);
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+}
+
+.classRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+}
+.classBtn {
+    all: unset;
+    cursor: pointer;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--secondary) 50%, transparent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-foreground);
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+.classBtn:hover {
+    border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
+    color: var(--foreground);
+}
+.classBtn.on {
+    border-color: var(--primary);
+    background: color-mix(in oklch, var(--primary) 16%, transparent);
+    color: var(--primary);
+}
+
+.rarityRow {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+}
+@container (max-width: 240px) {
+    .rarityRow {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@container (max-width: 140px) {
+    .rarityRow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+.rarityBtn {
+    all: unset;
+    cursor: pointer;
+    height: 28px;
+    padding: 0 4px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--secondary) 50%, transparent);
+    font: 600 12.5px / 1 var(--font-sans);
+    color: var(--muted-foreground);
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+.rarityBtn[data-rarity="6"] {
+    --rc: var(--rarity-6);
+}
+.rarityBtn[data-rarity="5"] {
+    --rc: var(--rarity-5);
+}
+.rarityBtn[data-rarity="4"] {
+    --rc: var(--rarity-4);
+}
+.rarityBtn[data-rarity="3"] {
+    --rc: var(--rarity-3);
+}
+.rarityBtn[data-rarity="2"] {
+    --rc: var(--rarity-2);
+}
+.rarityBtn[data-rarity="1"] {
+    --rc: var(--rarity-1);
+}
+.rarityBtn:hover {
+    border-color: color-mix(in oklch, var(--rc, var(--primary)) 55%, var(--border));
+    color: var(--foreground);
+}
+.rarityBtn.on {
+    background: color-mix(in oklch, var(--rc) 18%, transparent);
+    color: var(--rc);
+    border-color: var(--rc);
+}
+
+.tagRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.tg {
+    all: unset;
+    cursor: pointer;
+    font: 500 11.5px / 1 var(--font-sans);
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--secondary) 50%, transparent);
+    color: var(--muted-foreground);
+    display: inline-flex;
+    align-items: center;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease;
+}
+.tg:hover {
+    color: var(--foreground);
+}
+.tg.on {
+    background: color-mix(in oklch, var(--primary) 16%, transparent);
+    border-color: var(--primary);
+    color: var(--primary);
+}

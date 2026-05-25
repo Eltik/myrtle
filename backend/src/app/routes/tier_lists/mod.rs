@@ -7,6 +7,7 @@ use axum::{
 pub mod crud;
 pub mod permissions;
 pub mod placements;
+pub mod stats;
 pub mod tiers;
 pub mod versions;
 
@@ -16,6 +17,7 @@ pub fn router() -> Router<AppState> {
         .route("/tier-lists", post(crud::create))
         .route("/tier-lists", get(crud::list))
         .route("/tier-lists/mine", get(crud::mine))
+        .route("/tier-lists/favorites", get(crud::favorites))
         .route("/tier-lists/{slug}", get(crud::get))
         .route("/tier-lists/{slug}", put(crud::update))
         .route("/tier-lists/{slug}", delete(crud::delete))
@@ -40,7 +42,17 @@ pub fn router() -> Router<AppState> {
         .route("/tier-lists/{slug}/permissions", get(permissions::list))
         .route("/tier-lists/{slug}/permissions", post(permissions::grant))
         .route(
-            "/tier-lists/{slug}/permissions/{user_id}",
+            "/tier-lists/{slug}/permissions/{user_id}/{permission}",
             delete(permissions::revoke),
         )
+        // Stats & engagement
+        .route("/tier-lists/{slug}/view", post(stats::record_view))
+        .route("/tier-lists/{slug}/stats", get(stats::get_stats))
+        .route("/tier-lists/{slug}/favorite", get(stats::get_favorite))
+        .route("/tier-lists/{slug}/favorite", post(stats::toggle_favorite))
+        .route("/tier-lists/{slug}/flair", put(stats::set_flair))
+        .route("/tier-lists/{slug}/visibility", put(stats::set_visibility))
+        // Flair catalog (admin + public read)
+        .route("/tier-list-flairs", get(stats::list_flairs))
+        .route("/tier-list-flairs", post(stats::create_flair))
 }

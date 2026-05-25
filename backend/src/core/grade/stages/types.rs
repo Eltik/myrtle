@@ -7,7 +7,10 @@ pub struct StageClear {
 
 impl StageClear {
     pub fn is_cleared(&self) -> bool {
-        self.state >= 2 && (self.complete_times > 0 || self.practice_times > 0)
+        // state >= 2 means "cleared" in Arknights' dungeon record. Some auto-passed
+        // stages (easy_*, mainline cutscene variants) carry state=3 with no
+        // completeTimes/practiceTimes; gating on those zeroes them out.
+        self.state >= 2
     }
 
     pub fn clear_score(&self) -> f64 {

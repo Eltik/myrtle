@@ -86,9 +86,14 @@ impl IntoResponse for ApiError {
 
 impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
-        match e {
+        match &e {
             sqlx::Error::RowNotFound => ApiError::NotFound,
-            other => ApiError::Internal(other.into()),
+            sqlx::Error::Database(db) => match db.code().as_deref() {
+                Some("23505") => ApiError::Conflict("resource already exists".into()),
+                Some("22001") => ApiError::BadRequest("value too long".into()),
+                _ => ApiError::Internal(e.into()),
+            },
+            _ => ApiError::Internal(e.into()),
         }
     }
 }
@@ -113,6 +118,15 @@ impl From<FetchError> for ApiError {
             FetchError::DomainNotFound(_, _) => ApiError::BadRequest("unsupported server".into()),
             FetchError::RequestFailed(e) => ApiError::Internal(e.into()),
             FetchError::ParseError(msg) => ApiError::BadRequest(msg),
+            FetchError::Upstream(err) => ApiError::BadRequest(format!(
+                "{} ({})",
+                if err.msg.is_empty() {
+                    &err.message
+                } else {
+                    &err.msg
+                },
+                err.code
+            )),
         }
     }
 }

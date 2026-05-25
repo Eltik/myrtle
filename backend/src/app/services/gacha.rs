@@ -1,11 +1,20 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
+use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::yostar::AccountPortalSession;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::queries::gacha;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+/// Look up a char_id's canonical rarity from game data. The Yostar API echoes a
+/// `star` value with each pull, but it has been wrong/stale in the past, so we
+/// always prefer the value from `character_table`. Returns `None` if the char
+/// isn't in game data — callers may fall back to whatever the API reported.
+pub fn rarity_from_gamedata(gd: &GameData, char_id: &str) -> Option<i16> {
+    gd.operators.get(char_id).map(|op| op.rarity.to_star_int())
+}
 
 #[derive(Deserialize)]
 pub struct GachaApiResponse {
@@ -31,8 +40,8 @@ pub struct GachaApiItem {
 }
 
 impl GachaApiItem {
-    /// Parse the "star" string ("6", "5", etc.) to i16 rarity
-    fn rarity(&self) -> i16 {
+    /// Fallback rarity from the Yostar `star` field if game data has no entry.
+    fn api_rarity(&self) -> i16 {
         self.star.parse().unwrap_or(3)
     }
 
@@ -53,15 +62,32 @@ impl GachaApiItem {
         }
     }
 
-    /// Convert to the JSONB shape that sp_insert_gacha_batch expects
-    fn to_record_json(&self) -> serde_json::Value {
+    /// Convert to the JSONB shape that `sp_insert_gacha_batch` expects.
+    /// Rarity is sourced from game data (`character_table`) keyed on `char_id`;
+    /// the `star` field from the Yostar API is only used as a fallback.
+    /// `missing` collects char_ids that fell back, so the caller can emit a
+    /// single deduped warning instead of one line per record.
+    /// `batch_index` is the row's position within its (pull_timestamp, pool_id)
+    /// batch — it distinguishes duplicate operators in the same 10-pull (e.g.
+    /// two of the same 6★) so the DB unique constraint doesn't drop them.
+    fn to_record_json(
+        &self,
+        gd: &GameData,
+        missing: &mut std::collections::HashSet<String>,
+        batch_index: i16,
+    ) -> serde_json::Value {
+        let rarity = rarity_from_gamedata(gd, &self.char_id).unwrap_or_else(|| {
+            missing.insert(self.char_id.clone());
+            self.api_rarity()
+        });
         serde_json::json!({
             "char_id": self.char_id,
             "pool_id": self.pool_id,
-            "rarity": self.rarity(),
+            "rarity": rarity,
             "pull_timestamp": self.at,
             "pool_name": self.pool_name,
             "gacha_type": self.gacha_type(),
+            "batch_index": batch_index,
         })
     }
 }
@@ -153,8 +179,35 @@ pub async fn fetch_and_store(
         });
     }
 
-    let records_json: Vec<serde_json::Value> =
-        all_items.iter().map(|item| item.to_record_json()).collect();
+    let gd = state.game_data.load();
+    let mut missing: std::collections::HashSet<String> = std::collections::HashSet::new();
+    // Yostar returns every row in a 10-pull with the same `at` (batch
+    // timestamp), so we assign a per-batch positional index to keep duplicates
+    // unique. Iteration order matches the API response, which is stable for a
+    // given batch — what matters is that the (ts, pool, char, index) tuple is
+    // distinct, not that the index has any particular meaning.
+    let mut batch_counters: std::collections::HashMap<(i64, String), i16> =
+        std::collections::HashMap::new();
+    let records_json: Vec<serde_json::Value> = all_items
+        .iter()
+        .map(|item| {
+            let key = (item.at, item.pool_id.clone());
+            let counter = batch_counters.entry(key).or_insert(0);
+            let idx = *counter;
+            *counter += 1;
+            item.to_record_json(&gd, &mut missing, idx)
+        })
+        .collect();
+
+    if !missing.is_empty() {
+        let mut ids: Vec<&str> = missing.iter().map(String::as_str).collect();
+        ids.sort_unstable();
+        tracing::warn!(
+            count = missing.len(),
+            char_ids = ?ids,
+            "char_id(s) missing from game data; rarity falling back to API star value — will reconcile on next hot-reload",
+        );
+    }
 
     let records_value =
         serde_json::to_value(&records_json).map_err(|e| ApiError::Internal(e.into()))?;
@@ -224,6 +277,9 @@ pub struct CollectiveStats {
     pub total_five_stars: i64,
     pub total_four_stars: i64,
     pub total_three_stars: i64,
+    /// Unix seconds. None when the corpus is empty.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub first_pull_at: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -313,6 +369,7 @@ pub async fn get_enhanced_stats(
         total_five_stars: i64,
         total_four_stars: i64,
         total_three_stars: i64,
+        first_pull_at: Option<i64>,
     }
 
     let collective = sqlx::query_as::<_, CollectiveRow>(
@@ -323,7 +380,8 @@ pub async fn get_enhanced_stats(
             COUNT(*) FILTER (WHERE rarity = 6) AS total_six_stars,
             COUNT(*) FILTER (WHERE rarity = 5) AS total_five_stars,
             COUNT(*) FILTER (WHERE rarity = 4) AS total_four_stars,
-            COUNT(*) FILTER (WHERE rarity = 3) AS total_three_stars
+            COUNT(*) FILTER (WHERE rarity = 3) AS total_three_stars,
+            (MIN(gr.pull_timestamp) / 1000) AS first_pull_at
         FROM gacha_records gr
         JOIN user_settings us ON us.user_id = gr.user_id
         WHERE us.share_stats = true
@@ -340,6 +398,7 @@ pub async fn get_enhanced_stats(
         total_five_stars: collective.total_five_stars,
         total_four_stars: collective.total_four_stars,
         total_three_stars: collective.total_three_stars,
+        first_pull_at: collective.first_pull_at,
     };
     let pull_rates = PullRates {
         six_star_rate: collective.total_six_stars as f64 / total,
@@ -422,7 +481,7 @@ pub async fn get_enhanced_stats(
 
         let hours = sqlx::query_as::<_, HourRow>(
             r#"
-            SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp))::int AS hour,
+            SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp / 1000))::int AS hour,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
@@ -436,7 +495,7 @@ pub async fn get_enhanced_stats(
 
         let dows = sqlx::query_as::<_, DowRow>(
             r#"
-            SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp))::int AS day,
+            SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp / 1000))::int AS day,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
@@ -450,7 +509,7 @@ pub async fn get_enhanced_stats(
 
         let dates = sqlx::query_as::<_, DateRow>(
             r#"
-            SELECT to_char(to_timestamp(gr.pull_timestamp), 'YYYY-MM-DD') AS date,
+            SELECT to_char(to_timestamp(gr.pull_timestamp / 1000), 'YYYY-MM-DD') AS date,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
             JOIN user_settings us ON us.user_id = gr.user_id
@@ -530,6 +589,67 @@ pub async fn get_enhanced_stats(
         computed_at: chrono::Utc::now().to_rfc3339(),
         cached: false,
     };
+
+    state.cache.set(&key, &result).await;
+    Ok(result)
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BannerPullStat {
+    pub pool_id: String,
+    pub pull_count: i64,
+    pub six_star_count: i64,
+    pub five_star_count: i64,
+    pub user_count: i64,
+}
+
+/// Community pull totals grouped by `pool_id`. Only share_stats=true users are
+/// included, matching the rest of the community-stats pipeline. Cached for the
+/// same TTL as the enhanced stats so the two are coherent.
+pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat>, ApiError> {
+    let key = CacheKey::GachaPerBannerStats;
+    if let Some(cached) = state.cache.get::<Vec<BannerPullStat>>(&key).await {
+        return Ok(cached);
+    }
+
+    #[derive(sqlx::FromRow)]
+    struct Row {
+        pool_id: String,
+        pull_count: i64,
+        six_star_count: i64,
+        five_star_count: i64,
+        user_count: i64,
+    }
+
+    let rows = sqlx::query_as::<_, Row>(
+        r#"
+        SELECT
+            gr.pool_id,
+            COUNT(*) AS pull_count,
+            COUNT(*) FILTER (WHERE gr.rarity = 6) AS six_star_count,
+            COUNT(*) FILTER (WHERE gr.rarity = 5) AS five_star_count,
+            COUNT(DISTINCT gr.user_id) AS user_count
+        FROM gacha_records gr
+        JOIN user_settings us ON us.user_id = gr.user_id
+        WHERE us.share_stats = true
+        GROUP BY gr.pool_id
+        ORDER BY pull_count DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let result: Vec<BannerPullStat> = rows
+        .into_iter()
+        .map(|r| BannerPullStat {
+            pool_id: r.pool_id,
+            pull_count: r.pull_count,
+            six_star_count: r.six_star_count,
+            five_star_count: r.five_star_count,
+            user_count: r.user_count,
+        })
+        .collect();
 
     state.cache.set(&key, &result).await;
     Ok(result)

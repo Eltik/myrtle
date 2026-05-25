@@ -2,9 +2,9 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::core::gamedata::types::GameData;
-use crate::database::queries::stages::get_user_stage_clears;
+use crate::database::queries::stages::{get_known_stage_ids_for_server, get_user_stage_clears};
 
-use super::event::score_event_pool;
+use super::event::{SYNC_GRACE_SECONDS, score_event_pool};
 use super::permanent::score_permanent_pool;
 
 const PERMANENT_POOL_WEIGHT: f64 = 0.70;
@@ -38,25 +38,44 @@ pub async fn grade_stages_detail(
     user_id: Uuid,
     game_data: &GameData,
 ) -> Result<StageGradeDetail, sqlx::Error> {
-    let clears = get_user_stage_clears(pool, user_id).await?;
+    // Fetch the user's clears and the per-server "stages the gamedata table has
+    // that this server actually ships" set in parallel. The bundled gamedata
+    // can be ahead of a user's server (e.g. EN players against CN-era tables);
+    // anything no user on the same server has ever seen is treated as not yet
+    // available on that server and excluded from grading.
+    let (data, known_stage_ids) = tokio::try_join!(
+        get_user_stage_clears(pool, user_id),
+        get_known_stage_ids_for_server(pool, user_id),
+    )?;
+    let clears = &data.clears;
+    let last_synced_ts = data.last_synced_ts;
     let now = chrono::Utc::now().timestamp();
+    let allowed = Some(&known_stage_ids);
 
     let universe = &game_data.stage_universe;
-    let permanent_pool = score_permanent_pool(universe, &clears);
-    let event_pool = score_event_pool(universe, &clears, now);
+    let permanent_pool = score_permanent_pool(universe, clears, allowed);
+    let event_pool = score_event_pool(universe, clears, now, last_synced_ts, allowed);
 
     let total = ((PERMANENT_POOL_WEIGHT * permanent_pool) + (EVENT_POOL_WEIGHT * event_pool))
         .clamp(0.0, 1.0);
 
-    let permanent_total = universe.permanent.len();
+    let in_known = |stage_id: &str| known_stage_ids.contains(stage_id);
+
+    let permanent_total = universe
+        .permanent
+        .iter()
+        .filter(|e| in_known(&e.stage_id))
+        .count();
     let permanent_cleared = universe
         .permanent
         .iter()
+        .filter(|e| in_known(&e.stage_id))
         .filter(|e| clears.get(&e.stage_id).is_some_and(|c| c.is_cleared()))
         .count();
     let permanent_three_starred = universe
         .permanent
         .iter()
+        .filter(|e| in_known(&e.stage_id))
         .filter(|e| {
             clears
                 .get(&e.stage_id)
@@ -64,15 +83,27 @@ pub async fn grade_stages_detail(
         })
         .count();
 
-    let event_total = universe.event.len();
+    let event_in_window = |e: &crate::core::gamedata::types::stage_universe::EventEntry| -> bool {
+        if !in_known(&e.stage_id) {
+            return false;
+        }
+        match (e.start_time, last_synced_ts) {
+            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
+            _ => true,
+        }
+    };
+
+    let event_total = universe.event.iter().filter(|e| event_in_window(e)).count();
     let event_cleared = universe
         .event
         .iter()
+        .filter(|e| event_in_window(e))
         .filter(|e| clears.get(&e.stage_id).is_some_and(|c| c.is_cleared()))
         .count();
     let event_three_starred = universe
         .event
         .iter()
+        .filter(|e| event_in_window(e))
         .filter(|e| {
             clears
                 .get(&e.stage_id)

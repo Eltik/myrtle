@@ -10,6 +10,53 @@ type Aes128CbcDec = Decryptor<Aes128>;
 /// Arknights AES-CBC mask (chat_mask v2)
 const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
 
+/// Decode a TextAsset's `m_Script` into a JSON `Value`, mirroring the full
+/// pipeline used by `export_text_asset` (base64, AES-CBC, FlatBuffer with
+/// optional 128-byte RSA header). Returns `None` if no decode path yields
+/// structured data — e.g. plain text or invalid payloads.
+///
+/// Used by callers that need the parsed JSON in-memory rather than written
+/// to disk — for example the mappreview pre-scan that reads each level's
+/// tile grid dimensions to compute its display aspect.
+pub fn parse_text_asset_json(obj: &Value) -> Option<Value> {
+    let script = obj.get("m_Script")?.as_str()?;
+    if script.is_empty() {
+        return None;
+    }
+    let raw = if let Some(b64) = script.strip_prefix("base64:") {
+        base64::engine::general_purpose::STANDARD.decode(b64).ok()?
+    } else {
+        script.as_bytes().to_vec()
+    };
+    if raw.is_empty() {
+        return None;
+    }
+
+    let decrypted = try_aes_decrypt(&raw);
+    let bytes = decrypted.as_deref().unwrap_or(&raw);
+
+    // Plain JSON (post-decrypt or original)
+    if let Ok(json) = serde_json::from_slice::<Value>(bytes) {
+        return Some(json);
+    }
+
+    let name = obj.get("m_Name").and_then(|v| v.as_str()).unwrap_or("");
+
+    // FlatBuffer on raw (most level data: 128-byte RSA header + FlatBuffer)
+    if let Some(json) = try_flatbuffer_decode(&raw, name) {
+        return Some(json);
+    }
+
+    // FlatBuffer on AES-decrypted bytes
+    if decrypted.is_some()
+        && let Some(json) = try_flatbuffer_decode(bytes, name)
+    {
+        return Some(json);
+    }
+
+    None
+}
+
 pub fn export_text_asset(
     obj: &Value,
     output_dir: &Path,

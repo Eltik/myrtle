@@ -1,10 +1,13 @@
 pub mod auth;
 pub mod dps;
 pub mod gacha;
+pub mod improvements;
 pub mod leaderboard;
 pub mod operator_notes;
+pub mod operators;
 pub mod roster;
 pub mod search;
+pub mod social;
 pub mod static_data;
 pub mod stats;
 pub mod tier_list;
