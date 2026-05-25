@@ -273,3 +273,75 @@ fn test_engine_vs_python_expected() {
 
     assert!(tested > 0, "No test cases were executed");
 }
+
+/// When a specific module is requested that the current game data can't resolve,
+/// `calculate_dps` must return `None` rather than silently computing a hybrid
+/// (default/no-module) result.
+///
+/// "Missing" is derived from the operator's actual advanced modules (sorted by
+/// uniequip number) — a formula module at position `pos` is unavailable when the
+/// operator has fewer than `pos + 1` advanced modules. No hardcoded uniequip IDs.
+#[test]
+fn test_unavailable_module_returns_none() {
+    dotenv::dotenv().ok();
+    let data_dir_str =
+        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
+    let assets_dir_str = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
+    let game_data = gamedata::init_game_data(Path::new(&data_dir_str), Path::new(&assets_dir_str))
+        .expect("Failed to load game data");
+
+    use backend::core::gamedata::types::module::ModuleType;
+    let formulas = engine::load_formulas();
+    let enemy = EnemyStats {
+        defense: 0.0,
+        res: 0.0,
+    };
+
+    let mut checked = 0u64;
+    for (char_id, formula) in &formulas {
+        if formula.available_modules.is_empty() {
+            continue;
+        }
+        let Some(operator) = game_data.operators.get(char_id) else {
+            continue;
+        };
+
+        // The operator's advanced modules, sorted by uniequip number.
+        let mut advanced: Vec<i32> = operator
+            .modules
+            .iter()
+            .filter(|m| m.module.module_type == ModuleType::Advanced)
+            .filter_map(|m| {
+                m.module
+                    .id
+                    .as_deref()
+                    .and_then(|id| id.split('_').nth(1))
+                    .and_then(|n| n.parse::<i32>().ok())
+            })
+            .collect();
+        advanced.sort_unstable();
+        let advanced_count = advanced.len();
+
+        for (pos, &module_idx) in formula.available_modules.iter().enumerate() {
+            // Module is resolvable iff the operator has a module at this position.
+            if pos < advanced_count {
+                continue;
+            }
+
+            // Missing module → must return None at E2/maxed (where modules apply).
+            let missing_params = OperatorParams {
+                promotion: Some(2),
+                module_index: Some(module_idx),
+                ..Default::default()
+            };
+            let result = engine::calculate_dps(operator, missing_params, &enemy);
+            assert!(
+                result.is_none(),
+                "{char_id}: requesting unavailable module {module_idx} (position {pos}, operator has {advanced_count} advanced modules) should return None, got {result:?}"
+            );
+            checked += 1;
+        }
+    }
+
+    println!("Verified None-on-missing-module for {checked} operator/module combos");
+}

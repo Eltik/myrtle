@@ -6,8 +6,10 @@ use crate::app::services;
 use crate::app::state::AppState;
 use crate::dps::engine::DpsResult;
 
-pub async fn operators() -> Json<Vec<services::dps::OperatorListEntry>> {
-    Json(services::dps::list_operators())
+pub async fn operators(
+    State(state): State<AppState>,
+) -> Json<Vec<services::dps::OperatorListEntry>> {
+    Json(services::dps::list_operators(&state))
 }
 
 pub async fn calculate(
