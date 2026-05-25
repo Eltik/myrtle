@@ -5,7 +5,7 @@ import { DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { Separator } from "#/components/ui/separator";
 import { capitalize, formatProfession } from "#/lib/utils";
 
-import { getAttributeStats, getTrustPercent, moduleIconURL, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import { getAttributeStats, getTrustPercent, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
 import type { IOwnedEntry } from "./types";
 
 function voiceLabel(v: string | null): string {
@@ -240,7 +240,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                             {isEquipped && <span className="text-[0.625rem] text-primary uppercase tracking-wide">Equipped</span>}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
-                                            <span className="rounded bg-background/60 px-1.5 py-0.5">{module.typeName1}</span>
+                                            <span className="rounded bg-background/60 px-1.5 py-0.5">{moduleTypeLabel(module)}</span>
                                             <span className="tabular-nums">Lv.{level}</span>
                                         </div>
                                     </div>
