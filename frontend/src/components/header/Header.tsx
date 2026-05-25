@@ -5,10 +5,10 @@ import { Separator } from "#/components/ui/separator";
 import { useAuth } from "#/hooks/use-auth";
 import { useIsMac } from "#/hooks/use-is-mac";
 import { useCommand } from "#/lib/command-context";
-import { modKey, TOOLS } from "#/lib/registry/tools";
+import { getToolsByCategory, modKey } from "#/lib/registry/tools";
 import { Kbd } from "../ui/kbd";
 import styles from "./impl/Header.module.css";
-import { type INavItem, MainNav } from "./impl/MainNav";
+import { type INavItem, type INavSection, MainNav } from "./impl/MainNav";
 import { MobileNav } from "./impl/MobileNav";
 import ThemeToggle from "./impl/ThemeToggle";
 import UserMenu from "./impl/UserMenu";
@@ -19,12 +19,11 @@ export default function Header() {
     const isMac = useIsMac();
 
     const navItems = useMemo<INavItem[]>(() => {
-        const toolItems: INavItem[] = TOOLS.map((t) => ({
-            href: t.href,
-            label: t.label,
-            desc: t.desc,
-            icon: t.icon,
+        const toolSections: INavSection[] = getToolsByCategory().map(({ category, tools }) => ({
+            title: category.label,
+            items: tools.map((t) => ({ href: t.href, label: t.label, desc: t.desc, icon: t.icon })),
         }));
+        const toolItems: INavItem[] = toolSections.flatMap((s) => s.items);
         return [
             { href: "/", label: "Home" },
             {
@@ -53,7 +52,7 @@ export default function Header() {
                     { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
                 ],
             },
-            { href: "/tools", label: "Tools", items: toolItems },
+            { href: "/tools", label: "Tools", items: toolItems, sections: toolSections },
         ];
     }, [user]);
 

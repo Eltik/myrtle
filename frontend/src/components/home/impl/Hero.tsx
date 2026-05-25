@@ -34,7 +34,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                         <span className={styles.dotPulse} aria-hidden="true" />
                         <span className="font-medium font-mono text-[11.5px] text-muted-foreground leading-none">v3</span>
                         <Separator orientation="vertical" className="h-3.5 bg-border" />
-                        <a href="/changelog" className="cursor-pointer font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[oklch(0.85_0.12_25)]" rel="noreferrer">
+                        <a href="/changelog" className="cursor-pointer font-medium font-sans text-[11.5px] text-primary leading-none transition-colors hover:text-[color-mix(in_oklab,var(--primary),white_40%)]" rel="noreferrer">
                             changelog →
                         </a>
                     </div>
