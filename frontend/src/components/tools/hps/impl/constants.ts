@@ -25,6 +25,13 @@ export const X_AXIS_LABELS: Record<HpsXAxis, string> = {
     aspd: "ASPD buff",
 };
 
+/** Compact tab labels so the three axes fit on narrow screens. */
+export const X_AXIS_SHORT: Record<HpsXAxis, string> = {
+    targets: "Targets",
+    atk: "ATK %",
+    aspd: "ASPD",
+};
+
 export const X_AXIS_INPUT: Record<HpsXAxis, IAxisInput> = {
     targets: { step: 1, maxBound: 12, integer: true, unit: "" },
     atk: { step: 10, maxBound: 400, integer: false, unit: "%" },

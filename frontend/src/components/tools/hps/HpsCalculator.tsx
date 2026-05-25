@@ -15,13 +15,13 @@ import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { hpsOperatorsQueryOptions, type IHpsOperatorListEntry } from "#/lib/api/hps";
 import { BuffsPanel } from "./impl/components/BuffsPanel";
-import { X_AXIS_INPUT, X_AXIS_LABELS, Y_METRIC_HINTS, Y_METRIC_LABELS } from "./impl/constants";
+import { X_AXIS_INPUT, X_AXIS_LABELS, X_AXIS_SHORT, Y_METRIC_HINTS, Y_METRIC_LABELS } from "./impl/constants";
 import type { HpsXAxis, HpsYMetric } from "./impl/types";
 import { useHpsCurves } from "./impl/useHpsCurves";
 import { useHpsResults } from "./impl/useHpsResults";
 import { useHpsState } from "./impl/useHpsState";
 
-const AXES = (Object.keys(X_AXIS_LABELS) as HpsXAxis[]).map((k) => ({ value: k, label: X_AXIS_LABELS[k] }));
+const AXES = (Object.keys(X_AXIS_LABELS) as HpsXAxis[]).map((k) => ({ value: k, label: X_AXIS_LABELS[k], short: X_AXIS_SHORT[k] }));
 const METRICS = (Object.keys(Y_METRIC_LABELS) as HpsYMetric[]).map((k) => ({ value: k, label: Y_METRIC_LABELS[k] }));
 const COLUMNS = [
     { key: "skill_hps", label: "Skill HPS" },
