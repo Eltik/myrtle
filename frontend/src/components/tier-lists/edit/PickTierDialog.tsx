@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { Button } from "#/components/ui/button";
-import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -42,7 +42,7 @@ export function PickTierDialog({ operator, currentTierId, description, tiers, on
                     <DialogDescription>Choose a tier, then add an optional note. You can also drag operators directly onto a tier.</DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col gap-4 px-6 pb-2">
+                <DialogPanel className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
                         <p className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.16em]">Placement</p>
                         {tiers.map((t) => {
@@ -86,7 +86,7 @@ export function PickTierDialog({ operator, currentTierId, description, tiers, on
                         <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder="Why does this operator land here?" rows={4} maxLength={PLACEMENT_DESCRIPTION_MAX} showHint={false} />
                         <FieldDescription>{isPlaced ? "Optional. Shown to viewers on this operator's tile." : "Pick a tier above to save this note with the placement."}</FieldDescription>
                     </Field>
-                </div>
+                </DialogPanel>
 
                 <DialogFooter className="justify-between sm:justify-between">
                     {isPlaced ? (
