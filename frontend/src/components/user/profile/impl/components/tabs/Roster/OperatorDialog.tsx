@@ -256,16 +256,27 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                             <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Info</h3>
                             <Separator className="flex-1" />
                         </header>
-                        <div className="grid grid-cols-2 gap-1.5">
+                        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                             {(
                                 [
-                                    ["Recruited", entry.obtained_at ? new Date(entry.obtained_at * 1000).toLocaleDateString() : "Unknown"],
+                                    [
+                                        "Recruited",
+                                        entry.obtained_at
+                                            ? new Date(entry.obtained_at * 1000).toLocaleString(undefined, {
+                                                  year: "numeric",
+                                                  month: "short",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "2-digit",
+                                              })
+                                            : "Unknown",
+                                    ],
                                     ["Voice", voiceLabel(entry.voice_lan)],
                                 ] as const
                             ).map(([label, value]) => (
-                                <div key={label} className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
-                                    <span className="text-muted-foreground text-xs">{label}</span>
-                                    <span className="font-medium text-sm">{value}</span>
+                                <div key={label} className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-2.5 py-1.5">
+                                    <span className="shrink-0 text-muted-foreground text-xs">{label}</span>
+                                    <span className="min-w-0 text-right font-medium text-sm">{value}</span>
                                 </div>
                             ))}
                         </div>
