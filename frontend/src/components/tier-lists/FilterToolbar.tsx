@@ -117,6 +117,26 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         </MenuPopup>
                     </Menu>
 
+                    {flairOptions.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setFlairsOpenOverride(!flairsOpen)}
+                            aria-expanded={flairsOpen}
+                            aria-controls="tier-list-flairs"
+                            className="hidden h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent sm:inline-flex"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-80" aria-hidden="true">
+                                <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+                                <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
+                            </svg>
+                            <span>Flairs</span>
+                            {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 opacity-80 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                    )}
+
                     <div className="relative min-w-0 flex-1 sm:ml-auto sm:w-72 sm:max-w-72 sm:flex-none">
                         <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-2.5 z-10 flex items-center text-black dark:text-muted-foreground">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
@@ -143,7 +163,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             onClick={() => setFlairsOpenOverride(!flairsOpen)}
                             aria-expanded={flairsOpen}
                             aria-controls="tier-list-flairs"
-                            className="mt-2.5 inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:w-auto sm:justify-start"
+                            className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
                         >
                             <span className="inline-flex items-center gap-1.5">
                                 <span>Flairs</span>
