@@ -7,10 +7,10 @@ import { operatorRarity, rarityVar } from "../helpers";
 type OpChipSize = "sm" | "default" | "lg" | "xl";
 
 const SIZE_CLASS: Record<OpChipSize, string> = {
-    sm: "size-5 rounded-[5px] text-[10px]",
-    default: "size-7 rounded-md text-[12px]",
-    lg: "size-10 rounded-[10px] text-[15px]",
-    xl: "size-14 rounded-xl text-[20px]",
+    sm: "size-6 rounded-md text-[11px]",
+    default: "size-9 rounded-lg text-[14px]",
+    lg: "size-12 rounded-xl text-[17px]",
+    xl: "size-16 rounded-2xl text-[22px]",
 };
 
 interface IOpChipProps {

@@ -6,7 +6,7 @@ import type { IOperatorBirthday, ISelectedDay } from "../types";
 import { OpChip } from "./OpChip";
 
 /** Operator chips shown per month cell before collapsing to "+N". */
-const MAX_CHIPS = 4;
+const MAX_CHIPS = 9;
 
 interface IMonthGridProps {
     anchor: Date;
@@ -35,7 +35,7 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
                 {cells.map((c) => {
                     const ops = c.outside ? [] : opsOn(byDay, c.month, c.day);
                     const cellIsToday = isToday(today, c.year, c.month, c.day);
-                    const visible = ops.slice(0, MAX_CHIPS);
+                    const visible = ops.length > MAX_CHIPS + 1 ? ops.slice(0, MAX_CHIPS) : ops;
                     const overflow = ops.length - visible.length;
 
                     return (
