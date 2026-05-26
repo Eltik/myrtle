@@ -11,11 +11,9 @@ import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType 
 import { Hero } from "./Hero";
 import { OfficialRail } from "./OfficialRail";
 import { matchesBrowseQuery, sortBrowseItems } from "./shared";
-import { TrendingStrip } from "./TrendingStrip";
 
 const PAGE_INCREMENT = 24;
 const INITIAL_PAGE_SIZE = 24;
-const TRENDING_LIMIT = 3;
 const OFFICIAL_RAIL_LIMIT = 8;
 
 export function Browse() {
@@ -101,18 +99,6 @@ export function Browse() {
         [allLists],
     );
 
-    const trendingExplicit = useMemo(
-        () =>
-            sortBrowseItems(
-                allLists.filter((l) => l.isTrending),
-                "trending",
-            ).slice(0, TRENDING_LIMIT),
-        [allLists],
-    );
-    const trendingFallback = useMemo(() => sortBrowseItems(allLists, "trending").slice(0, TRENDING_LIMIT), [allLists]);
-    const trendingTop = trendingExplicit.length > 0 ? trendingExplicit : trendingFallback;
-    const isTrendingMode = trendingExplicit.length > 0;
-
     const filtered = useMemo(() => {
         return allLists.filter((list) => {
             if (!viewingFavorites && search.type !== "all" && list.listType !== search.type) return false;
@@ -154,17 +140,14 @@ export function Browse() {
             <Hero total={allLists.length} canCreate={Boolean(user)} />
 
             {!isLoading && !isError && !viewingFavorites && (
-                <>
-                    <OfficialRail
-                        lists={officialFeatured}
-                        onOpen={handleOpen}
-                        onViewAll={() => {
-                            setType("official");
-                            scrollToGrid();
-                        }}
-                    />
-                    <TrendingStrip lists={trendingTop} onOpen={handleOpen} isTrendingMode={isTrendingMode} />
-                </>
+                <OfficialRail
+                    lists={officialFeatured}
+                    onOpen={handleOpen}
+                    onViewAll={() => {
+                        setType("official");
+                        scrollToGrid();
+                    }}
+                />
             )}
 
             <div id="tier-lists-grid" className="mx-auto mt-8 w-[min(1080px,calc(100%-2rem))] scroll-mt-32">

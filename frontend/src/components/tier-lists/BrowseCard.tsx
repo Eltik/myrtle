@@ -22,8 +22,6 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
     const hasOps = rows.some((r) => r.visible.length > 0);
     const showCornerRibbon = trending || typeof rank === "number";
     const showOfficial = isOfficial;
-    const showFlair = Boolean(tl.flairLabel);
-    const flairColor = tl.flairColor ?? null;
 
     return (
         <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`} onClick={() => onOpen?.(tl.slug)}>
@@ -71,34 +69,11 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
             </div>
 
             <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 pb-3">
-                {showFlair && (
-                    <span
-                        className="inline-flex w-fit max-w-full items-center gap-1.5 self-start rounded-full border px-2 py-0.5 font-mono font-semibold text-[10px] uppercase leading-none tracking-wider"
-                        style={
-                            flairColor
-                                ? {
-                                      background: `color-mix(in srgb, ${flairColor} 12%, transparent)`,
-                                      borderColor: `color-mix(in srgb, ${flairColor} 38%, transparent)`,
-                                      color: `color-mix(in srgb, ${flairColor} 80%, var(--foreground))`,
-                                  }
-                                : {
-                                      background: "var(--muted)",
-                                      borderColor: "var(--border)",
-                                      color: "var(--muted-foreground)",
-                                  }
-                        }
-                        title={`Flair: ${tl.flairLabel}`}
-                    >
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: flairColor ?? "currentColor" }} aria-hidden="true" />
-                        <span className="truncate">{tl.flairLabel}</span>
-                    </span>
-                )}
-
                 <h3 id={`tl-${tl.id}-title`} className={`m-0 font-sans font-semibold text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary ${trending ? "line-clamp-2 text-[16px]" : "line-clamp-1 text-[15px]"}`} title={tl.title}>
                     {tl.title}
                 </h3>
 
-                <div className="flex min-w-0 items-center gap-2 font-mono text-[11px] text-muted-foreground tabular-nums leading-none">
+                <div className="flex min-w-0 items-center gap-2 font-sans text-[11px] text-muted-foreground tabular-nums leading-none">
                     <span className="flex min-w-0 items-center gap-1.5">
                         <Avatar className="h-4 w-4 shrink-0 rounded-full border border-border bg-linear-to-br from-muted to-border font-sans font-semibold text-[8px] text-foreground">
                             {tl.author.avatarId && <AvatarImage src={getAvatarById(tl.author.avatarId)} alt="" />}
