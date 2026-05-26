@@ -49,7 +49,7 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; label: string }> = [
 
 // The bar spans the full viewport but its surface stays fully opaque across the centered 1080px content,
 // fading into the empty page gutters only on wider screens. On mobile the content fills the width, so
-// `max(0px, …)` clamps the fade to zero — no gradient, matching the full-bleed look there.
+// `max(0px, …)` clamps the fade to zero - no gradient, matching the full-bleed look there.
 const CONTENT_WIDTH = "1080px";
 const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
 
