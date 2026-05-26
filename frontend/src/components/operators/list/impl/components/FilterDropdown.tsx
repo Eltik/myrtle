@@ -9,7 +9,8 @@ interface IGroup {
 }
 
 interface IFilterDropdownProps {
-    label: string;
+    /** Visible field label. Omit when an outer wrapper already labels the control (the input still gets an aria-label). */
+    label?: string;
     placeholder: string;
     options: string[];
     selected: string[];
@@ -64,11 +65,13 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
 
     return (
         <div className="space-y-2">
-            <label htmlFor={id} className="block font-medium text-[12px] text-muted-foreground leading-none">
-                {label}
-            </label>
+            {label && (
+                <label htmlFor={id} className="block font-medium text-[12px] text-muted-foreground leading-none">
+                    {label}
+                </label>
+            )}
             <Combobox<string, true> multiple items={items} value={selected} onValueChange={onChange} itemToStringLabel={format}>
-                <ComboboxInput id={id} placeholder={selected.length > 0 ? `${selected.length} selected` : placeholder} />
+                <ComboboxInput id={id} aria-label={label ?? placeholder} placeholder={selected.length > 0 ? `${selected.length} selected` : placeholder} />
                 <ComboboxPopup>
                     <ComboboxEmpty>No matches</ComboboxEmpty>
                     <ComboboxList>
