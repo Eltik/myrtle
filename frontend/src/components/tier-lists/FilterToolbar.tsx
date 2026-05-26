@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { cn } from "#/lib/utils";
 
 export type TierListType = "all" | "official" | "community" | "favorites";
@@ -46,15 +47,23 @@ const BASE_TYPE_TABS: Array<{ value: TierListType; label: string }> = [
     { value: "community", label: "Community" },
 ];
 
+// The bar spans the full viewport but its surface stays fully opaque across the centered 1080px content,
+// fading into the empty page gutters only on wider screens. On mobile the content fills the width, so
+// `max(0px, …)` clamps the fade to zero — no gradient, matching the full-bleed look there.
+const CONTENT_WIDTH = "1080px";
+const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
+
 export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
     const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, label: "Favorites" }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
     const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "recent";
-    const [mobileFlairsOpen, setMobileFlairsOpen] = useState(false);
+    const isDesktop = useMediaQuery("sm");
+    const [flairsOpenOverride, setFlairsOpenOverride] = useState<boolean | null>(null);
+    const flairsOpen = flairsOpenOverride ?? isDesktop;
 
     return (
-        <div className="sticky top-14 z-30 -mx-3 border-border border-y bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
-            <div className="mx-auto w-[min(1080px,100%)] py-3">
+        <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-card/85 backdrop-blur-md backdrop-saturate-150 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
+            <div className="mx-auto w-[min(1080px,calc(100%-2rem))] py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <div role="tablist" aria-label="Tier list type" className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
                         {typeTabs.map((tab) => {
@@ -131,21 +140,20 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                     <>
                         <button
                             type="button"
-                            onClick={() => setMobileFlairsOpen((v) => !v)}
-                            aria-expanded={mobileFlairsOpen}
+                            onClick={() => setFlairsOpenOverride(!flairsOpen)}
+                            aria-expanded={flairsOpen}
                             aria-controls="tier-list-flairs"
-                            className="mt-2.5 inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
+                            className="mt-2.5 inline-flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:w-auto sm:justify-start"
                         >
                             <span className="inline-flex items-center gap-1.5">
                                 <span>Flairs</span>
                                 {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
                             </span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 transition-transform duration-200", mobileFlairsOpen && "rotate-180")} aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
                         </button>
-                        <div id="tier-list-flairs" className={cn("mt-2.5 items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", "hidden sm:flex", mobileFlairsOpen && "flex")}>
-                            <span className="hidden shrink-0 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider sm:inline">Flairs</span>
+                        <div id="tier-list-flairs" className={cn("mt-2.5 items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", flairsOpenOverride === null ? "hidden sm:flex" : flairsOpen ? "flex" : "hidden")}>
                             {flairOptions.map((flair) => {
                                 const active = selectedFlairs.includes(flair.code);
                                 const color = flair.color ?? "var(--primary)";

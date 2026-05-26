@@ -43,6 +43,12 @@
     min-height: var(--thumb-target);
     background: oklch(0.15 0.005 285);
     isolation: isolate;
+    filter: saturate(0.5) brightness(0.94);
+    transition: filter 200ms ease;
+}
+.card:hover .thumb,
+.card:focus-within .thumb {
+    filter: saturate(1) brightness(1);
 }
 :global(.light) .thumb,
 :global([data-theme="light"]) .thumb {
@@ -236,7 +242,8 @@
     flex-shrink: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-    .card {
+    .card,
+    .thumb {
         transition: none;
     }
     .card:hover,
