@@ -85,10 +85,10 @@
     padding: 3px 6px;
     min-height: 30px;
     flex: 1 1 0;
-    background: linear-gradient(to right, color-mix(in srgb, var(--row-color) 22%, transparent), transparent 90%);
+    background: linear-gradient(to right, color-mix(in srgb, var(--row-color) 9%, transparent), transparent 80%);
 }
 .tierRow + .tierRow {
-    border-top: 1px solid color-mix(in srgb, var(--row-color) 18%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .tierPill {
