@@ -1,4 +1,7 @@
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AssetKind {
@@ -33,6 +36,16 @@ pub struct AssetIndex {
     chararts: HashMap<String, Vec<String>>,
     /// char_id -> list of skin art paths in skinpack/
     skinpacks: HashMap<String, Vec<String>>,
+    /// Audio file stem -> relative paths under `audio/audio/sound_beta_2/`.
+    /// Battle SFX assets reference a logical path whose directory is flattened
+    /// into arbitrary numbered buckets on disk, so they resolve by basename.
+    audio_by_name: HashMap<String, Vec<String>>,
+    /// As above but keyed by the stem with a trailing `_<digits>` stripped, so a
+    /// base asset (`b_char_kong`) also collects its weighted variants (`_1`,`_2`).
+    audio_by_base: HashMap<String, Vec<String>>,
+    /// Every relative audio path under `sound_beta_2/` (verbatim, unencoded).
+    /// Used to confirm voice-bark assets, which resolve by direct path.
+    audio_paths: HashSet<String>,
 }
 
 impl AssetIndex {
@@ -111,7 +124,83 @@ impl AssetIndex {
             }
         }
 
+        let audio_root = assets_dir.join("audio/audio/sound_beta_2");
+        for entry in walkdir::WalkDir::new(&audio_root).min_depth(1) {
+            let Ok(entry) = entry else { continue };
+            let path = entry.path();
+
+            if path.extension().is_none_or(|e| e != "ogg") {
+                continue;
+            }
+
+            let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            let Some(rel) = path.strip_prefix(&audio_root).ok().and_then(|p| p.to_str()) else {
+                continue;
+            };
+            let rel = rel.to_owned();
+
+            idx.audio_paths.insert(rel.clone());
+            idx.audio_by_name
+                .entry(stem.to_owned())
+                .or_default()
+                .push(rel.clone());
+            if let Some(base) = strip_numeric_suffix(stem) {
+                idx.audio_by_base
+                    .entry(base.to_owned())
+                    .or_default()
+                    .push(rel);
+            }
+        }
+
         idx
+    }
+
+    /// Resolve a logical audio asset (`Audio/Sound_Beta_2/...`) to playable URLs
+    /// (`/audio/sound_beta_2/...`). Voice-bark assets (`Voice*`/`Vox`) resolve by
+    /// their verbatim disk path with the first segment lowercased; everything
+    /// else (battle SFX) resolves by basename, returning the base file plus any
+    /// weighted variants. Returns empty when nothing matches.
+    pub fn resolve_audio(&self, asset: &str) -> Vec<String> {
+        const PREFIX: &str = "audio/sound_beta_2/";
+        const VOICE_DIRS: &[&str] = &["voice", "voice_cn", "voice_en", "voice_kr", "vox"];
+
+        let logical =
+            if asset.len() >= PREFIX.len() && asset[..PREFIX.len()].eq_ignore_ascii_case(PREFIX) {
+                &asset[PREFIX.len()..]
+            } else {
+                asset
+            };
+
+        let (seg0, rest) = match logical.split_once('/') {
+            Some((a, b)) => (a, Some(b)),
+            None => (logical, None),
+        };
+        let seg0_lower = seg0.to_ascii_lowercase();
+
+        if VOICE_DIRS.contains(&seg0_lower.as_str()) {
+            if let Some(rest) = rest {
+                let rel = format!("{seg0_lower}/{rest}.ogg");
+                if self.audio_paths.contains(&rel) {
+                    return vec![audio_url(&rel)];
+                }
+            }
+            return Vec::new();
+        }
+
+        let base = logical.rsplit('/').next().unwrap_or(logical);
+        let mut urls: Vec<String> = self
+            .audio_by_name
+            .get(base)
+            .into_iter()
+            .chain(self.audio_by_base.get(base))
+            .flatten()
+            .map(|rel| audio_url(rel))
+            .collect();
+        urls.sort();
+        urls.dedup();
+        urls
     }
 
     pub fn path(&self, kind: AssetKind, name: &str) -> Option<&str> {
@@ -208,6 +297,27 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
     } else {
         None
     }
+}
+
+/// Returns the stem with a trailing `_<digits>` removed, if present
+/// (`b_char_kong_2` -> `b_char_kong`). `None` for stems like `b_char_kong` or
+/// `p_atk_arrow_n` where the suffix after the last `_` is not all digits.
+fn strip_numeric_suffix(stem: &str) -> Option<&str> {
+    let idx = stem.rfind('_')?;
+    let base = &stem[..idx];
+    let suffix = &stem[idx + 1..];
+    if !base.is_empty() && !suffix.is_empty() && suffix.bytes().all(|b| b.is_ascii_digit()) {
+        Some(base)
+    } else {
+        None
+    }
+}
+
+/// Build the served URL for a disk-relative audio path, percent-encoding `#`
+/// (present in skin folder names like `char_1012_skadi2_iteration#2`) so it is
+/// not treated as a URL fragment.
+fn audio_url(rel: &str) -> String {
+    format!("/audio/sound_beta_2/{}", rel.replace('#', "%23"))
 }
 
 fn grandparent_name(path: &Path) -> Option<&str> {
