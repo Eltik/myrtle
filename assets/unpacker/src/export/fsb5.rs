@@ -244,10 +244,16 @@ pub fn fsb5_to_ogg(data: &[u8]) -> Result<Vec<(String, Vec<u8>)>, String> {
         ]);
         pos += 8;
 
+        // FSB5 sample-header bit layout (little-endian u64):
+        //   bit 0      : has additional chunks
+        //   bits 1-4   : frequency index (4 bits)
+        //   bits 5-6   : channel field (2 bits)
+        //   bits 7-33  : data offset / 32 (27 bits)
+        //   bits 34-63 : PCM sample count (30 bits)
         let has_chunks = val & 1 != 0;
-        let freq_idx = ((val >> 1) & 0x1F) as usize;
-        let ch_bits = (val >> 6) & 0x3;
-        let data_offset = (((val >> 8) & 0x3FFFFFF) as usize) * 32;
+        let freq_idx = ((val >> 1) & 0xF) as usize;
+        let ch_bits = (val >> 5) & 0x3;
+        let data_offset = (((val >> 7) & 0x7FFFFFF) as usize) * 32;
         let num_pcm_samples = ((val >> 34) & 0x3FFFFFFF) as u32;
 
         let mut frequency = if freq_idx < FREQ_TABLE.len() {
