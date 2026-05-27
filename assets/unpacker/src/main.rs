@@ -4,7 +4,7 @@ use unpacker::export;
 use unpacker::unity;
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use clap::Parser;
@@ -168,6 +168,49 @@ fn find_idx_file(input_dir: &Path) -> Option<std::path::PathBuf> {
 /// Class IDs needed for spine MonoBehaviour reference chain:
 /// 114=MonoBehaviour, 49=TextAsset, 21=Material, 28=Texture2D
 const SPINE_CLASS_IDS: &[i32] = &[114, 49, 21, 28];
+
+/// Map local (`m_FileID == 0`) object path_ids to their intended output directory,
+/// taken from the bundle's AssetBundle (class 142) `m_Container`.
+///
+/// Some bundles co-pack many assets that share the same `m_Name` — e.g. the
+/// seasonal voice packs `voice/extra_*.ab` hold a dozen operators' `CN_038`/
+/// `CN_044` clips, where the per-operator identity lives only in the container
+/// map (`dyn/audio/sound_beta_2/voice/char_002_amiya/cn_044.ogg → path_id`).
+/// Naming output by `m_Name` alone would collide (last-write-wins) and land at
+/// the bundle's name instead of the operator's path. We strip the `dyn/`
+/// addressable prefix and keep the parent directory; callers pair it with the
+/// object's `m_Name` for the filename (preserving its casing, e.g. `CN_044`).
+fn build_container_dirs(sf: &SerializedFile) -> HashMap<i64, PathBuf> {
+    let mut map = HashMap::new();
+    for obj in &sf.objects {
+        if obj.class_id != 142 {
+            continue;
+        }
+        let Ok(val) = read_object(sf, obj) else {
+            continue;
+        };
+        let Some(container) = val["m_Container"].as_object() else {
+            continue;
+        };
+        for (asset_path, info) in container {
+            let asset = &info["asset"];
+            // Skip external references that point into dependency bundles.
+            if asset["m_FileID"].as_i64().unwrap_or(0) != 0 {
+                continue;
+            }
+            let Some(pid) = asset["m_PathID"].as_i64() else {
+                continue;
+            };
+            let rel = asset_path.strip_prefix("dyn/").unwrap_or(asset_path);
+            if let Some(parent) = Path::new(rel).parent()
+                && !parent.as_os_str().is_empty()
+            {
+                map.insert(pid, parent.to_path_buf());
+            }
+        }
+    }
+    map
+}
 
 #[allow(clippy::too_many_arguments)]
 fn process_bundle(
@@ -370,6 +413,15 @@ fn process_bundle(
         // Buffer decoded textures for alpha merging
         let mut decoded_textures: HashMap<String, export::texture::DecodedTexture> = HashMap::new();
 
+        // Voice bundles are resolved by exact path (VoiceAsset → file path), so
+        // co-packed clips must land at their real per-operator path from the
+        // container map. SFX resolve by stem, so they stay under the bundle name.
+        let is_voice_bundle = bundle_subdir.components().any(|c| {
+            c.as_os_str()
+                .to_str()
+                .is_some_and(|s| s == "voice" || s.starts_with("voice_"))
+        });
+
         for entry in &bundle.files {
             if entry.path.ends_with(".resS") || entry.path.ends_with(".resource") {
                 continue;
@@ -380,6 +432,46 @@ fn process_bundle(
                 Err(_) => continue,
             };
 
+            // Audio pass: export AudioClips, disambiguating shared bundles via
+            // the AssetBundle container map. Only built when this file holds audio.
+            if extract_audio && sf.objects.iter().any(|o| o.class_id == 83) {
+                let container_dirs = build_container_dirs(&sf);
+                let audio: Vec<(i64, serde_json::Value)> = sf
+                    .objects
+                    .iter()
+                    .filter(|o| o.class_id == 83 && !claimed_pids.contains(&o.path_id))
+                    .filter_map(|o| read_object(&sf, o).ok().map(|v| (o.path_id, v)))
+                    .collect();
+
+                // Count output filenames to detect intra-bundle m_Name collisions.
+                let mut name_counts: HashMap<&str, u32> = HashMap::new();
+                for (_, v) in &audio {
+                    *name_counts
+                        .entry(v["m_Name"].as_str().unwrap_or("unnamed"))
+                        .or_default() += 1;
+                }
+
+                for (pid, val) in &audio {
+                    let name = val["m_Name"].as_str().unwrap_or("unnamed");
+                    let collides = name_counts.get(name).copied().unwrap_or(0) > 1;
+                    // Use the container path when co-packed (collision) or in a
+                    // voice bundle; for per-character voice bundles the container
+                    // dir equals bundle_subdir, so this is a no-op there.
+                    let dir = match container_dirs.get(pid) {
+                        Some(cdir) if collides || is_voice_bundle => {
+                            output_dir.join("audio").join(cdir)
+                        }
+                        _ => output_dir.join("audio").join(&bundle_subdir),
+                    };
+                    std::fs::create_dir_all(&dir).ok();
+                    match export_audio(val, &dir, &resources) {
+                        Ok(()) => exported += 1,
+                        Err(e) => eprintln!("  error exporting {name}: {e}"),
+                    }
+                }
+            }
+
+            // Texture/text pass.
             for obj in &sf.objects {
                 // Skip assets claimed by spine/portrait extraction
                 if !claimed_pids.is_empty() && claimed_pids.contains(&obj.path_id) {
@@ -390,7 +482,6 @@ fn process_bundle(
                 match obj.class_id {
                     28 if extract_image => {}
                     49 if extract_text => {}
-                    83 if extract_audio => {}
                     _ => continue,
                 }
 
@@ -416,14 +507,6 @@ fn process_bundle(
                         let dir = output_dir.join("text").join(&bundle_subdir);
                         std::fs::create_dir_all(&dir).ok();
                         match export_text_asset(&val, &dir, None) {
-                            Ok(()) => exported += 1,
-                            Err(e) => eprintln!("  error exporting {name}: {e}"),
-                        }
-                    }
-                    83 => {
-                        let dir = output_dir.join("audio").join(&bundle_subdir);
-                        std::fs::create_dir_all(&dir).ok();
-                        match export_audio(&val, &dir, &resources) {
                             Ok(()) => exported += 1,
                             Err(e) => eprintln!("  error exporting {name}: {e}"),
                         }
