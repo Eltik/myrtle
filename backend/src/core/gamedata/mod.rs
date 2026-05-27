@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::core::gamedata::{
     assets::AssetIndex,
     enrich::{
+        audio::build_operator_audio,
         chibi::init_chibi_data,
         gacha::enrich_banners,
         modules::enrich_modules_global,
@@ -15,6 +16,7 @@ use crate::core::gamedata::{
     types::{
         GameData,
         activity::ActivityTableFile,
+        audio::RawAudioData,
         building::BuildingDataFile,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
@@ -85,6 +87,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let stage_file: StageTableFile = load_table_or_warn(data_dir, "stage_table", &mut warnings);
     let medal_file: MedalTableFile = load_table_or_warn(data_dir, "medal_table", &mut warnings);
     let voice_file: VoicesTableFile = load_table_or_warn(data_dir, "charword_table", &mut warnings);
+    let audio_file: RawAudioData = load_table_or_warn(data_dir, "audio_data", &mut warnings);
     let enemy_file: EnemyHandbookTableFile =
         load_table_or_warn(data_dir, "enemy_handbook_table", &mut warnings);
     let building_file: BuildingDataFile =
@@ -130,6 +133,12 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         ..Default::default()
     };
 
+    // Map battle SoundFX banks (deploy/attack/skill sounds, voice barks) to
+    // operators by char id, resolving each asset to a playable URL.
+    let op_ids: std::collections::HashSet<&str> =
+        raw_operators.keys().map(String::as_str).collect();
+    let operator_audio = build_operator_audio(&audio_file, &op_ids, &assets);
+
     let operators = enrich_all_operators(
         &raw_operators,
         &EnrichCtx {
@@ -143,6 +152,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             drones: &drones,
             building: &building_file,
             tmpl_groups: &tmpl_groups,
+            audio: &operator_audio,
         },
     );
 

@@ -1,3 +1,5 @@
+import type { LangType } from "#/types/voices";
+
 export type OperatorProfession = "MEDIC" | "CASTER" | "WARRIOR" | "PIONEER" | "SNIPER" | "SPECIAL" | "SUPPORT" | "TANK" | "TOKEN" | "TRAP";
 export type OperatorPosition = "MELEE" | "RANGED" | "ALL" | "NONE";
 export type OperatorRarityTier = "TIER_1" | "TIER_2" | "TIER_3" | "TIER_4" | "TIER_5" | "TIER_6";
@@ -12,6 +14,23 @@ export type ModuleType = "INITIAL" | "ADVANCED";
 export type ModuleTarget = "TRAIT" | "TRAIT_DATA_ONLY" | "TALENT_DATA_ONLY" | "TALENT" | "DISPLAY" | "OVERWRITE_BATTLE_DATA" | "UNKNOWN";
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+export type AudioCategory = "deploy" | "attack" | "skill" | "voice" | "other";
+
+export interface IAudioSound {
+    asset: string;
+    urls: string[];
+}
+
+export interface IOperatorAudio {
+    bankName: string;
+    event: string;
+    category: AudioCategory;
+    skillId?: string;
+    skillSlot?: number;
+    language?: LangType;
+    sounds: IAudioSound[];
+}
 
 export interface IOperatorIndexEntry {
     id: string;
@@ -472,6 +491,7 @@ export interface IOperatorListItem {
     profile: IOperatorProfile | null;
     artists: string[];
     baseSkills: IOperatorBaseSkill[];
+    audio: IOperatorAudio[];
     /** Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png */
     portrait: string | null;
     /** Full character art - /upk/chararts/{id}/{id}_{1|2}.png; null → use portrait as fallback */

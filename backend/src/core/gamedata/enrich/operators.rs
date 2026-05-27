@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::core::gamedata::{
     assets::AssetIndex,
     types::{
+        audio::OperatorAudio,
         building::BuildingDataFile,
         handbook::Handbook,
         material::Materials,
@@ -36,6 +37,8 @@ pub struct EnrichCtx<'a> {
     /// Template groups keyed by *every* id in the group (so a lookup by any
     /// of Amiya's three form ids returns the same `CharPatchInfo`).
     pub tmpl_groups: &'a HashMap<String, CharPatchInfo>,
+    /// Operator-linked battle audio, keyed by char id (see `enrich::audio`).
+    pub audio: &'a HashMap<String, Vec<OperatorAudio>>,
 }
 
 pub fn enrich_all_operators(
@@ -173,6 +176,7 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         profile,
         artists,
         base_skills,
+        audio: ctx.audio.get(id).cloned().unwrap_or_default(),
         portrait,
         skin,
         tmpl_ids,

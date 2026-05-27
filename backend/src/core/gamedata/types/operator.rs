@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::audio::OperatorAudio;
 use super::handbook::{HandbookItem, OperatorProfile};
 use super::material::{Item, ItemType};
 use super::module::{Module, ModuleData};
@@ -504,6 +505,11 @@ pub struct Operator {
     pub profile: Option<OperatorProfile>,
     pub artists: Vec<String>,
     pub base_skills: Vec<OperatorBaseSkill>,
+    /// Battle sound effects + in-battle voice barks linked to this operator,
+    /// resolved from `audio_data.json` to playable `/audio/sound_beta_2/...`
+    /// URLs. Empty for operators with no battle audio (and for drones).
+    #[serde(default)]
+    pub audio: Vec<OperatorAudio>,
     /// Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png
     pub portrait: Option<String>,
     /// Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png

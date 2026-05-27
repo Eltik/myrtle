@@ -1,5 +1,6 @@
 use crate::core::gamedata::{assets::AssetIndex, types::material::Materials};
 
+pub mod audio;
 pub mod chibi;
 pub mod enemies;
 pub mod gacha;

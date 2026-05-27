@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 pub mod activity;
+pub mod audio;
 pub mod building;
 pub mod chibi;
 pub mod enemy;
