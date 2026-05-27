@@ -1,5 +1,5 @@
 import { BookOpen, Info, Shirt, Sparkles, TrendingUp, Volume2 } from "lucide-react";
-import type { OperatorRarityTier } from "#/types/operators";
+import type { AudioCategory, OperatorRarityTier } from "#/types/operators";
 
 export type TabType = "info" | "skills" | "levelup" | "skins" | "audio" | "lore";
 
@@ -46,6 +46,20 @@ export const VOICE_LANGUAGE_LABELS: Record<string, string> = {
 
 export const VOICE_LANGUAGE_ORDER = ["JP", "CN_MANDARIN", "EN", "KR", "CN_TOPOLECT", "GER", "ITA", "RUS", "FRE", "SPA", "LINKAGE"] as const;
 
+export const VOICE_LANGUAGE_SHORT: Record<string, string> = {
+    JP: "JP",
+    CN_MANDARIN: "CN",
+    EN: "EN",
+    KR: "KR",
+    CN_TOPOLECT: "粤",
+    GER: "DE",
+    ITA: "IT",
+    RUS: "RU",
+    FRE: "FR",
+    SPA: "ES",
+    LINKAGE: "LINK",
+};
+
 export const VOICE_CATEGORY_ORDER = ["Greetings", "Conversations", "Trust", "Promotions", "Battle", "Idle", "Dorm", "Special", "Other"];
 
 export const VOICE_CATEGORY_MAP: Record<string, string> = {
@@ -78,4 +92,33 @@ export const VOICE_CATEGORY_MAP: Record<string, string> = {
     BUILDING_TOUCHING: "Dorm",
     BUILDING_FAVOR_BUBBLE: "Dorm",
     LOADING_PANEL: "Other",
+};
+
+export const SFX_CATEGORY_ORDER: AudioCategory[] = ["deploy", "attack", "skill", "voice", "other"];
+
+export const SFX_CATEGORY_LABELS: Record<AudioCategory, string> = {
+    deploy: "Deploy",
+    attack: "Attack",
+    skill: "Skill",
+    voice: "Voice",
+    other: "Other",
+};
+
+export const SFX_EVENT_LABELS: Record<string, string> = {
+    ON_UNIT_BORN: "Deployment",
+    ON_ABILITY_START: "Attack",
+    ON_ABILITY_HIT: "Attack Impact",
+    ON_ABILITY_ON: "Attack (Active)",
+    ON_ABILITY_END: "Attack End",
+    ON_ABILITY_ATTACK_FINISH: "Attack Finish",
+    ON_ABILITY_CHECK_POINT: "Attack Checkpoint",
+    ON_SKILL_START: "Skill Activation",
+    ON_SKILL_CHANT_START: "Skill Charge",
+    ON_SKILL_SPECIAL_POINT: "Skill Trigger",
+    ON_SKILL_FINISH: "Skill End",
+    ON_SKILL_ON: "Skill Ready",
+    ON_SKILL_FAILED: "Skill Failed",
+    ON_UNIT_DEAD: "Defeated",
+    ON_SPINE_EVENT_TRIGGER: "Animation Cue",
+    ON_CUSTOM_TRIGGER: "Custom Trigger",
 };

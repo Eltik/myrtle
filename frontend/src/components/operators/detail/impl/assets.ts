@@ -56,10 +56,6 @@ export function audioURL(relativeURL: string): string {
     return `${env.VITE_BACKEND_URL}/api/assets/audio${relativeURL}`;
 }
 
-export function voiceAudio(voiceURL: string): string {
-    return audioURL(voiceURL);
-}
-
 export function skillIconURL(skill: IEnrichedSkill): string {
     if (skill.static?.image) return asset(skill.static.image);
     const id = skill.static?.iconId ?? skill.static?.skillId ?? skill.skillId;
