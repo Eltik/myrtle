@@ -8,8 +8,5 @@
     "local_frontend": "http://localhost:5173",
     "public_backend": "https://api.example.com",
     "public_frontend": "https://example.com"
-  },
-  "roles": {
-    "auto_role_id": null
   }
 }

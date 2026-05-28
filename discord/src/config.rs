@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use serde::Deserialize;
-use serenity::all::{GuildId, RoleId};
+use serenity::all::GuildId;
 
 use crate::types::Error;
 
@@ -18,8 +18,6 @@ pub struct Config {
     pub registration: RegistrationConfig,
     #[serde(default)]
     pub endpoints: EndpointsConfig,
-    #[serde(default)]
-    pub roles: RolesConfig,
 }
 
 /// Command-registration target.
@@ -46,15 +44,6 @@ pub struct EndpointsConfig {
     pub public_backend: String,
     #[serde(default)]
     pub public_frontend: String,
-}
-
-/// Role-related constants. Add new role ids here as features need them.
-#[derive(Debug, Clone, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RolesConfig {
-    /// Role automatically granted to new members on join. `None` disables auto-role.
-    #[serde(default)]
-    pub auto_role_id: Option<RoleId>,
 }
 
 impl Config {
