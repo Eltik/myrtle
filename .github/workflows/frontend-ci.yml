@@ -148,6 +148,9 @@ jobs:
         with:
           name: frontend-build
           path: frontend/.output
+          # .output is a hidden directory (leading dot); upload-artifact excludes
+          # hidden paths by default, so this must be enabled or nothing is uploaded.
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: error
 
