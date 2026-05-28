@@ -8,7 +8,7 @@ use crate::database::queries::gacha;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Look up a char_id's canonical rarity from game data. The Yostar API echoes a
+/// Look up a `char_id`'s canonical rarity from game data. The Yostar API echoes a
 /// `star` value with each pull, but it has been wrong/stale in the past, so we
 /// always prefer the value from `character_table`. Returns `None` if the char
 /// isn't in game data — callers may fall back to whatever the API reported.
@@ -45,7 +45,7 @@ impl GachaApiItem {
         self.star.parse().unwrap_or(3)
     }
 
-    /// Derive gacha type from pool_id prefix
+    /// Derive gacha type from `pool_id` prefix
     fn gacha_type(&self) -> &'static str {
         if self.pool_id.starts_with("LIMITED_") {
             "limited"
@@ -65,9 +65,9 @@ impl GachaApiItem {
     /// Convert to the JSONB shape that `sp_insert_gacha_batch` expects.
     /// Rarity is sourced from game data (`character_table`) keyed on `char_id`;
     /// the `star` field from the Yostar API is only used as a fallback.
-    /// `missing` collects char_ids that fell back, so the caller can emit a
+    /// `missing` collects `char_ids` that fell back, so the caller can emit a
     /// single deduped warning instead of one line per record.
-    /// `batch_index` is the row's position within its (pull_timestamp, pool_id)
+    /// `batch_index` is the row's position within its (`pull_timestamp`, `pool_id`)
     /// batch — it distinguishes duplicate operators in the same 10-pull (e.g.
     /// two of the same 6★) so the DB unique constraint doesn't drop them.
     fn to_record_json(
@@ -131,8 +131,7 @@ pub async fn fetch_and_store(
 
     loop {
         let url = format!(
-            "{}?key=ark&index={}&size={}",
-            GACHA_API_URL, index, PAGE_SIZE
+            "{GACHA_API_URL}?key=ark&index={index}&size={PAGE_SIZE}"
         );
 
         let response = state
@@ -236,7 +235,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
     }
 
     let stats = sqlx::query_as::<_, GlobalGachaStatsRow>(
-        r#"
+        r"
         SELECT
             COUNT(*) AS total_pulls,
             COUNT(DISTINCT gr.user_id) AS total_users,
@@ -245,7 +244,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
         FROM gacha_records gr
         JOIN user_settings us ON us.user_id = gr.user_id
         WHERE us.share_stats = true
-        "#,
+        ",
     )
     .fetch_one(&state.db)
     .await?;
@@ -373,7 +372,7 @@ pub async fn get_enhanced_stats(
     }
 
     let collective = sqlx::query_as::<_, CollectiveRow>(
-        r#"
+        r"
         SELECT
             COUNT(*) AS total_pulls,
             COUNT(DISTINCT gr.user_id) AS total_users,
@@ -385,7 +384,7 @@ pub async fn get_enhanced_stats(
         FROM gacha_records gr
         JOIN user_settings us ON us.user_id = gr.user_id
         WHERE us.share_stats = true
-        "#,
+        ",
     )
     .fetch_one(&state.db)
     .await?;
@@ -417,7 +416,7 @@ pub async fn get_enhanced_stats(
     // 3-stars (which drop far more often than higher rarities) so the 6/5/4-star
     // buckets would always be empty. Windowing fixes that.
     let op_rows = sqlx::query_as::<_, OpRow>(
-        r#"
+        r"
         SELECT char_id, rarity, pull_count FROM (
             SELECT gr.char_id, gr.rarity, COUNT(*) AS pull_count,
                    ROW_NUMBER() OVER (PARTITION BY gr.rarity ORDER BY COUNT(*) DESC) AS rn
@@ -428,9 +427,9 @@ pub async fn get_enhanced_stats(
         ) t
         WHERE rn <= $1
         ORDER BY rarity DESC, pull_count DESC
-        "#,
+        ",
     )
-    .bind(top_n as i64)
+    .bind(i64::from(top_n))
     .fetch_all(&state.db)
     .await?;
 
@@ -480,7 +479,7 @@ pub async fn get_enhanced_stats(
         }
 
         let hours = sqlx::query_as::<_, HourRow>(
-            r#"
+            r"
             SELECT EXTRACT(HOUR FROM to_timestamp(gr.pull_timestamp / 1000))::int AS hour,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
@@ -488,13 +487,13 @@ pub async fn get_enhanced_stats(
             WHERE us.share_stats = true
             GROUP BY hour
             ORDER BY hour
-            "#,
+            ",
         )
         .fetch_all(&state.db)
         .await?;
 
         let dows = sqlx::query_as::<_, DowRow>(
-            r#"
+            r"
             SELECT EXTRACT(DOW FROM to_timestamp(gr.pull_timestamp / 1000))::int AS day,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
@@ -502,13 +501,13 @@ pub async fn get_enhanced_stats(
             WHERE us.share_stats = true
             GROUP BY day
             ORDER BY day
-            "#,
+            ",
         )
         .fetch_all(&state.db)
         .await?;
 
         let dates = sqlx::query_as::<_, DateRow>(
-            r#"
+            r"
             SELECT to_char(to_timestamp(gr.pull_timestamp / 1000), 'YYYY-MM-DD') AS date,
                    COUNT(*) AS pull_count
             FROM gacha_records gr
@@ -516,7 +515,7 @@ pub async fn get_enhanced_stats(
             WHERE us.share_stats = true
             GROUP BY date
             ORDER BY date
-            "#,
+            ",
         )
         .fetch_all(&state.db)
         .await?;
@@ -604,7 +603,7 @@ pub struct BannerPullStat {
     pub user_count: i64,
 }
 
-/// Community pull totals grouped by `pool_id`. Only share_stats=true users are
+/// Community pull totals grouped by `pool_id`. Only `share_stats=true` users are
 /// included, matching the rest of the community-stats pipeline. Cached for the
 /// same TTL as the enhanced stats so the two are coherent.
 pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat>, ApiError> {
@@ -623,7 +622,7 @@ pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat
     }
 
     let rows = sqlx::query_as::<_, Row>(
-        r#"
+        r"
         SELECT
             gr.pool_id,
             COUNT(*) AS pull_count,
@@ -635,7 +634,7 @@ pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat
         WHERE us.share_stats = true
         GROUP BY gr.pool_id
         ORDER BY pull_count DESC
-        "#,
+        ",
     )
     .fetch_all(&state.db)
     .await?;
@@ -663,7 +662,7 @@ pub async fn get_history(
     offset: u32,
 ) -> Result<Vec<GachaRecord>, ApiError> {
     let records =
-        gacha::get_history(&state.db, user_id, rarity, limit as i64, offset as i64).await?;
+        gacha::get_history(&state.db, user_id, rarity, i64::from(limit), i64::from(offset)).await?;
     Ok(records)
 }
 
@@ -867,8 +866,8 @@ pub async fn get_history_envelope(
         from_ts,
         to_ts,
         order_desc,
-        limit as i64,
-        offset as i64,
+        i64::from(limit),
+        i64::from(offset),
     )
     .await?;
 
@@ -882,7 +881,7 @@ pub async fn get_history_envelope(
     };
 
     let records: Vec<GachaRecordEntryDto> = rows.into_iter().map(Into::into).collect();
-    let has_more = (offset as i64 + records.len() as i64) < total;
+    let has_more = (i64::from(offset) + records.len() as i64) < total;
 
     Ok(GachaHistoryEnvelopeDto {
         records,

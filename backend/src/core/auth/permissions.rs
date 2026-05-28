@@ -20,29 +20,29 @@ impl Permission {
             Self::Admin => 3,
         }
     }
-    pub const fn grants(self, required: Permission) -> bool {
+    pub const fn grants(self, required: Self) -> bool {
         self.level() >= required.level()
     }
 
-    pub const fn all() -> &'static [Permission] {
+    pub const fn all() -> &'static [Self] {
         &[
-            Permission::View,
-            Permission::Edit,
-            Permission::Publish,
-            Permission::Admin,
+            Self::View,
+            Self::Edit,
+            Self::Publish,
+            Self::Admin,
         ]
     }
 
-    pub const fn includes(self) -> &'static [Permission] {
+    pub const fn includes(self) -> &'static [Self] {
         match self {
-            Permission::View => &[Permission::View],
-            Permission::Edit => &[Permission::View, Permission::Edit],
-            Permission::Publish => &[Permission::View, Permission::Edit, Permission::Publish],
-            Permission::Admin => &[
-                Permission::View,
-                Permission::Edit,
-                Permission::Publish,
-                Permission::Admin,
+            Self::View => &[Self::View],
+            Self::Edit => &[Self::View, Self::Edit],
+            Self::Publish => &[Self::View, Self::Edit, Self::Publish],
+            Self::Admin => &[
+                Self::View,
+                Self::Edit,
+                Self::Publish,
+                Self::Admin,
             ],
         }
     }
@@ -51,10 +51,10 @@ impl Permission {
 impl fmt::Display for Permission {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Permission::View => write!(f, "view"),
-            Permission::Edit => write!(f, "edit"),
-            Permission::Publish => write!(f, "publish"),
-            Permission::Admin => write!(f, "admin"),
+            Self::View => write!(f, "view"),
+            Self::Edit => write!(f, "edit"),
+            Self::Publish => write!(f, "publish"),
+            Self::Admin => write!(f, "admin"),
         }
     }
 }
@@ -64,10 +64,10 @@ impl FromStr for Permission {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "view" => Ok(Permission::View),
-            "edit" => Ok(Permission::Edit),
-            "publish" => Ok(Permission::Publish),
-            "admin" => Ok(Permission::Admin),
+            "view" => Ok(Self::View),
+            "edit" => Ok(Self::Edit),
+            "publish" => Ok(Self::Publish),
+            "admin" => Ok(Self::Admin),
             _ => Err(format!("Unknown permission: {s}")),
         }
     }
@@ -85,37 +85,37 @@ pub enum GlobalRole {
 
 impl GlobalRole {
     pub const fn is_tier_list_admin(self) -> bool {
-        matches!(self, GlobalRole::TierListAdmin | GlobalRole::SuperAdmin)
+        matches!(self, Self::TierListAdmin | Self::SuperAdmin)
     }
 
     pub const fn is_super_admin(self) -> bool {
-        matches!(self, GlobalRole::SuperAdmin)
+        matches!(self, Self::SuperAdmin)
     }
 
     pub const fn is_any_admin_role(self) -> bool {
         matches!(
             self,
-            GlobalRole::TierListEditor | GlobalRole::TierListAdmin | GlobalRole::SuperAdmin
+            Self::TierListEditor | Self::TierListAdmin | Self::SuperAdmin
         )
     }
 
     pub const fn can_have_tier_permissions(self) -> bool {
-        !matches!(self, GlobalRole::User)
+        !matches!(self, Self::User)
     }
 
-    pub fn global_tier_permission(self) -> Option<Permission> {
+    pub const fn global_tier_permission(self) -> Option<Permission> {
         match self {
-            GlobalRole::TierListAdmin | GlobalRole::SuperAdmin => Some(Permission::Admin),
+            Self::TierListAdmin | Self::SuperAdmin => Some(Permission::Admin),
             _ => None,
         }
     }
 
-    pub const fn all() -> &'static [GlobalRole] {
+    pub const fn all() -> &'static [Self] {
         &[
-            GlobalRole::User,
-            GlobalRole::TierListEditor,
-            GlobalRole::TierListAdmin,
-            GlobalRole::SuperAdmin,
+            Self::User,
+            Self::TierListEditor,
+            Self::TierListAdmin,
+            Self::SuperAdmin,
         ]
     }
 }
@@ -123,10 +123,10 @@ impl GlobalRole {
 impl fmt::Display for GlobalRole {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            GlobalRole::User => "user",
-            GlobalRole::TierListEditor => "tier_list_editor",
-            GlobalRole::TierListAdmin => "tier_list_admin",
-            GlobalRole::SuperAdmin => "super_admin",
+            Self::User => "user",
+            Self::TierListEditor => "tier_list_editor",
+            Self::TierListAdmin => "tier_list_admin",
+            Self::SuperAdmin => "super_admin",
         })
     }
 }
@@ -138,7 +138,7 @@ pub struct AuthContext {
 }
 
 impl AuthContext {
-    pub fn new(user_id: u128, role: GlobalRole) -> Self {
+    pub const fn new(user_id: u128, role: GlobalRole) -> Self {
         Self { user_id, role }
     }
 

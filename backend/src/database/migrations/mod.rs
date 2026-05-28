@@ -56,12 +56,12 @@ const MIGRATIONS: &[(&str, &str)] = &[
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"
+        r"
         CREATE TABLE IF NOT EXISTS _migrations (
             name VARCHAR(100) PRIMARY KEY,
             applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-    "#,
+    ",
     )
     .execute(pool)
     .await?;

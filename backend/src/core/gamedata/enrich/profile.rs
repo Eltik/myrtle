@@ -42,7 +42,7 @@ fn parse_basic_info(text: &str) -> BasicInfo {
             "Race" | "种族" => info.race = parse_race(value),
             "Height" | "身高" => info.height = value.to_owned(),
             "Infection Status" | "矿石病感染情况" => {
-                info.infection_status = value.to_owned()
+                info.infection_status = value.to_owned();
             }
             _ => {}
         }
@@ -64,7 +64,7 @@ fn parse_physical_exam(text: &str) -> PhysicalExam {
             "Tactical Acumen" | "战术规划" => exam.tactical_acumen = value.to_owned(),
             "Combat Skill" | "战斗技巧" => exam.combat_skill = value.to_owned(),
             "Originium Arts Assimilation" | "源石技艺适应性" => {
-                exam.originium_arts_assimilation = value.to_owned()
+                exam.originium_arts_assimilation = value.to_owned();
             }
             _ => {}
         }

@@ -18,7 +18,7 @@ static CHAR_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"char_\d+_[a-z0-9
 static SK_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:skchr|tachr)_([a-z0-9]+)_(\d+)").unwrap());
 
-/// Resolve every operator-linked SoundFX bank to playable clips, keyed by char id.
+/// Resolve every operator-linked `SoundFX` bank to playable clips, keyed by char id.
 ///
 /// A bank links to an operator either directly (`char_<id>_<code>`) or by
 /// codename via a skill/talent entity (`skchr_<code>_<n>` / `tachr_<code>_<n>`).

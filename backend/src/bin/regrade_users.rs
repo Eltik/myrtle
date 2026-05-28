@@ -12,6 +12,15 @@
 //!   cargo run --release --bin regrade-users -- --dry-run                # compute, don't write
 //!   cargo run --release --bin regrade-users -- --fail-fast               # stop on first error
 
+// CLI tool: a long top-level `main` and intentional numeric casts on counters/indices
+// (which would only gain noise from `try_from` + error handling) are expected here.
+#![allow(
+    clippy::too_many_lines,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
+
 use anyhow::{Context, Result};
 use backend::{
     core::{
@@ -162,7 +171,7 @@ async fn main() -> Result<()> {
         .max_connections(max_conns)
         .min_connections(2)
         .acquire_timeout(Duration::from_secs(10))
-        .idle_timeout(Duration::from_secs(600))
+        .idle_timeout(Duration::from_mins(10))
         .connect(&database_url)
         .await
         .context("failed to connect to database")?;

@@ -31,7 +31,7 @@ impl FromRequestParts<AppState> for AuthUser {
                 .ct_eq(state.config.service_key.as_bytes())
                 .into()
         {
-            return Ok(AuthUser {
+            return Ok(Self {
                 user_id: "service".to_owned(),
                 uid: "service".to_owned(),
                 server: "internal".to_owned(),
@@ -45,7 +45,7 @@ impl FromRequestParts<AppState> for AuthUser {
 
         let role = parse_role(&claims.role);
 
-        Ok(AuthUser {
+        Ok(Self {
             user_id: claims.sub,
             uid: claims.uid,
             server: claims.server,
@@ -64,8 +64,8 @@ impl FromRequestParts<AppState> for MaybeAuthUser {
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         match AuthUser::from_request_parts(parts, state).await {
-            Ok(user) => Ok(MaybeAuthUser(Some(user))),
-            Err(_) => Ok(MaybeAuthUser(None)),
+            Ok(user) => Ok(Self(Some(user))),
+            Err(_) => Ok(Self(None)),
         }
     }
 }

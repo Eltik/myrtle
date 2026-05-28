@@ -1,4 +1,5 @@
 use crate::types::{Context, Data, Error};
+use poise::CreateReply;
 
 pub async fn pre_command(_ctx: Context<'_>) {
     // let name = ctx.command().qualified_name.clone();
@@ -24,6 +25,12 @@ pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
                 "Error in command '{}': {error:?}",
                 ctx.command().qualified_name
             );
+            let reply = CreateReply::default()
+                .content(format!("{error}"))
+                .ephemeral(true);
+            if let Err(e) = ctx.send(reply).await {
+                tracing::error!("Failed to send error reply: {e}");
+            }
         }
         error => {
             if let Err(e) = poise::builtins::on_error(error).await {

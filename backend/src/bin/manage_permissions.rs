@@ -39,21 +39,15 @@ async fn main() -> Result<()> {
 
     // Optional operator identity - stamped onto grants so audit_log shows who
     // ran the tool. Missing/unknown UID just becomes NULL.
-    let operator = match std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) {
-        Some(uid) => match find_user_by_id_or_uid(&pool, &uid).await? {
-            Some(u) => {
-                println!("Operating as: {} ({})\n", u.uid, display_name(&u));
-                Some(u.id)
-            }
-            None => {
-                println!("ADMIN_UID '{uid}' not found — grants will record NULL.\n");
-                None
-            }
-        },
-        None => {
-            println!("ADMIN_UID not set — grants will record NULL.\n");
-            None
-        }
+    let operator = if let Some(uid) = std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) { if let Some(u) = find_user_by_id_or_uid(&pool, &uid).await? {
+        println!("Operating as: {} ({})\n", u.uid, display_name(&u));
+        Some(u.id)
+    } else {
+        println!("ADMIN_UID '{uid}' not found — grants will record NULL.\n");
+        None
+    } } else {
+        println!("ADMIN_UID not set — grants will record NULL.\n");
+        None
     };
 
     loop {
@@ -305,14 +299,14 @@ async fn revoke_permission(
 async fn list_tier_lists(pool: &PgPool) -> Result<()> {
     println!("\n--- Tier Lists ---");
     let lists = sqlx::query_as::<_, TierListDetailRow>(
-        r#"SELECT
+        r"SELECT
               t.id, t.name, t.slug, t.is_active, t.is_listed, t.list_type,
               (SELECT COUNT(*) FROM tiers WHERE tier_list_id = t.id) AS tier_count,
               (SELECT COUNT(*) FROM tier_placements tp
                  JOIN tiers ti ON tp.tier_id = ti.id
                 WHERE ti.tier_list_id = t.id) AS placement_count
             FROM tier_lists t
-            ORDER BY t.created_at DESC"#,
+            ORDER BY t.created_at DESC",
     )
     .fetch_all(pool)
     .await?;
@@ -406,11 +400,11 @@ async fn find_user_by_id_or_uid(pool: &PgPool, input: &str) -> Result<Option<Use
 
 async fn fetch_permissions(pool: &PgPool, tier_list_id: Uuid) -> Result<Vec<PermissionRow>> {
     Ok(sqlx::query_as::<_, PermissionRow>(
-        r#"SELECT p.user_id, p.permission, u.uid, u.nickname
+        r"SELECT p.user_id, p.permission, u.uid, u.nickname
              FROM tier_list_permissions p
              JOIN users u ON p.user_id = u.id
             WHERE p.tier_list_id = $1
-            ORDER BY p.permission, u.uid"#,
+            ORDER BY p.permission, u.uid",
     )
     .bind(tier_list_id)
     .fetch_all(pool)
@@ -524,7 +518,7 @@ fn prompt_index<'a, T>(prompt: &str, options: &'a [T]) -> Result<Option<&'a T>> 
     Ok(options.get(n.wrapping_sub(1)))
 }
 
-fn describe_role(r: GlobalRole) -> &'static str {
+const fn describe_role(r: GlobalRole) -> &'static str {
     match r {
         GlobalRole::User => "Default, no special permissions",
         GlobalRole::TierListEditor => "Can edit tier lists they have permission for",
@@ -533,7 +527,7 @@ fn describe_role(r: GlobalRole) -> &'static str {
     }
 }
 
-fn describe_permission(p: Permission) -> &'static str {
+const fn describe_permission(p: Permission) -> &'static str {
     match p {
         Permission::View => "Can view the tier list",
         Permission::Edit => "Can modify placements",
@@ -556,7 +550,7 @@ fn truncate(s: &str, max_len: usize) -> String {
     }
 }
 
-fn yesno(b: bool) -> &'static str {
+const fn yesno(b: bool) -> &'static str {
     if b { "Yes" } else { "No" }
 }
 

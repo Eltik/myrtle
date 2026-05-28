@@ -52,7 +52,7 @@ pub enum FetchError {
 
 impl From<reqwest::Error> for FetchError {
     fn from(e: reqwest::Error) -> Self {
-        FetchError::RequestFailed(e)
+        Self::RequestFailed(e)
     }
 }
 

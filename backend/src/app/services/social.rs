@@ -21,7 +21,7 @@ async fn load_session(state: &AppState, user_id: &str) -> Result<AuthSession, Ap
 
 async fn save_session(state: &AppState, user_id: &str, session: &AuthSession) {
     if let Ok(json) = serde_json::to_string(session) {
-        let _ = state
+        let () = state
             .cache
             .set(&CacheKey::GameSession { uid: user_id }, &json)
             .await;

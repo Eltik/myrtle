@@ -113,7 +113,7 @@ pub struct MedalImprovements {
     /// hasn't earned. Sorted by rarity weight desc.
     pub permanent_missing: Vec<MedalGap>,
     /// Event medals still in their reachable window the user hasn't earned.
-    /// Sorted by end_time asc (most urgent first).
+    /// Sorted by `end_time` asc (most urgent first).
     pub event_in_window_missing: Vec<MedalGap>,
 }
 
@@ -155,16 +155,16 @@ pub struct OperatorGap {
     /// support units. Support ops are held to the favor table's max trust
     /// (typically 200%) — ordinary ops are "complete" at 100%.
     pub is_support: bool,
-    /// Short tags for what's still left, e.g. ["E2", "MAX_LEVEL", "M3", "MOD3", "TRUST"].
+    /// Short tags for what's still left, e.g. ["E2", "`MAX_LEVEL`", "M3", "MOD3", "TRUST"].
     pub missing: Vec<&'static str>,
     /// Per-tag projected score gain if the user completed that milestone.
     /// One entry per tag in `missing`, in the same order. See `UpgradeDelta`
     /// for the exact fields — surfaces both the operator-local delta and its
-    /// contribution to the user's subscore + total_score.
+    /// contribution to the user's subscore + `total_score`.
     pub deltas: Vec<UpgradeDelta>,
     /// Combined `operator_grade_delta` if the user did every available upgrade
     /// path on this operator. ELITE (promote + max level at new phase) and
-    /// MAX_LEVEL (max level at current phase) overlap — only the larger of
+    /// `MAX_LEVEL` (max level at current phase) overlap — only the larger of
     /// the two is counted. All other tags (M3, MOD3, SL7, POT6, TRUST) are
     /// independent and added directly.
     pub subscore_potential_gain: f64,
@@ -286,7 +286,7 @@ async fn build_stage_improvements(
         }
         permanent.total += 1;
         let clear = clears.get(&entry.stage_id);
-        let state = clear.map(|c| c.state).unwrap_or(0);
+        let state = clear.map_or(0, |c| c.state);
         let stage_meta = game_data.stages.get(&entry.stage_id);
         let gap = StageGap {
             stage_id: entry.stage_id.clone(),
@@ -320,7 +320,7 @@ async fn build_stage_improvements(
         }
         event.total += 1;
         let clear = clears.get(&entry.stage_id);
-        let state = clear.map(|c| c.state).unwrap_or(0);
+        let state = clear.map_or(0, |c| c.state);
         let stage_meta = game_data.stages.get(&entry.stage_id);
         let gap = StageGap {
             stage_id: entry.stage_id.clone(),
@@ -378,7 +378,7 @@ async fn build_roguelike_improvements(
             .and_then(|p| p.get("record"))
             .and_then(|r| r.get("endingCnt"))
             .and_then(|ec| ec.as_object())
-            .map(|obj| {
+            .map_or(0, |obj| {
                 let mut ids = HashSet::new();
                 for mode in obj.values() {
                     if let Some(mode_obj) = mode.as_object() {
@@ -388,34 +388,31 @@ async fn build_roguelike_improvements(
                     }
                 }
                 ids.len()
-            })
-            .unwrap_or(0);
+            });
 
         let highest_difficulty = progress
             .and_then(|p| p.get("collect"))
             .and_then(|c| c.get("modeGrade"))
             .and_then(|mg| mg.get("NORMAL"))
             .and_then(|n| n.as_object())
-            .map(|obj| {
+            .map_or(-1, |obj| {
                 obj.iter()
-                    .filter(|(_, e)| e.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 2)
+                    .filter(|(_, e)| e.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 2)
                     .filter_map(|(grade_str, _)| grade_str.parse::<i32>().ok())
                     .max()
                     .unwrap_or(-1)
-            })
-            .unwrap_or(-1);
+            });
 
         let count_unlocked = |bucket: &str| -> usize {
             progress
                 .and_then(|p| p.get("collect"))
                 .and_then(|c| c.get(bucket))
                 .and_then(|b| b.as_object())
-                .map(|obj| {
+                .map_or(0, |obj| {
                     obj.values()
-                        .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                        .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
                         .count()
                 })
-                .unwrap_or(0)
         };
 
         let relics_unlocked = count_unlocked("relic");
@@ -426,15 +423,13 @@ async fn build_roguelike_improvements(
             .and_then(|p| p.get("bp"))
             .and_then(|b| b.get("reward"))
             .and_then(|r| r.as_object())
-            .map(|o| o.len())
-            .unwrap_or(0);
+            .map_or(0, serde_json::Map::len);
 
         let challenges_completed = progress
             .and_then(|p| p.get("challenge"))
             .and_then(|c| c.get("grade"))
             .and_then(|g| g.as_object())
-            .map(|o| o.len())
-            .unwrap_or(0);
+            .map_or(0, serde_json::Map::len);
 
         themes.push(RoguelikeThemeImprovement {
             theme_id: theme_id.clone(),
@@ -514,35 +509,31 @@ async fn build_sandbox_improvements(
         .and_then(|c| c.get("complete"))
         .and_then(|c| c.get("achievement"))
         .and_then(|a| a.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     let nodes_explored = sandbox
         .get("main")
         .and_then(|m| m.get("map"))
         .and_then(|m| m.get("node"))
         .and_then(|n| n.as_object())
-        .map(|obj| {
+        .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
                 .count()
-        })
-        .unwrap_or(0);
+        });
 
     let tech_unlocked = sandbox
         .get("tech")
         .and_then(|t| t.get("unlock"))
         .and_then(|u| u.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     let quests_completed = sandbox
         .get("collect")
         .and_then(|c| c.get("complete"))
         .and_then(|c| c.get("quest"))
         .and_then(|q| q.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     Ok(SandboxImprovements {
         achievements: ProgressPair {
@@ -687,8 +678,7 @@ fn build_operator_improvements(
         let max_level_at_current_elite = static_op
             .phases
             .get(entry.elite as usize)
-            .map(|p| p.max_level as i16)
-            .unwrap_or(0);
+            .map_or(0, |p| p.max_level as i16);
 
         let num_skills = static_op.skills.len();
         let can_master = num_skills > 0 && static_op.phases.len() >= 3;
@@ -820,7 +810,7 @@ fn advanced_modules(op: &Operator) -> Vec<&OperatorModule> {
         .collect()
 }
 
-fn rarity_potential_matters(op: &Operator) -> bool {
+const fn rarity_potential_matters(op: &Operator) -> bool {
     !op.can_use_general_potential_item || op.is_sp_char
 }
 
@@ -829,7 +819,7 @@ fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
         return Vec::new();
     };
     arr.iter()
-        .filter_map(|m| m.get("mastery").and_then(|v| v.as_i64()).map(|v| v as i16))
+        .filter_map(|m| m.get("mastery").and_then(serde_json::Value::as_i64).map(|v| v as i16))
         .collect()
 }
 
@@ -840,7 +830,7 @@ fn parse_module_levels(modules_json: &serde_json::Value) -> Vec<(String, i16)> {
     arr.iter()
         .filter_map(|m| {
             let id = m.get("id").and_then(|v| v.as_str())?.to_string();
-            let level = m.get("level").and_then(|v| v.as_i64())? as i16;
+            let level = m.get("level").and_then(serde_json::Value::as_i64)? as i16;
             Some((id, level))
         })
         .collect()
@@ -850,7 +840,7 @@ fn parse_module_levels(modules_json: &serde_json::Value) -> Vec<(String, i16)> {
 // intentionally don't depend on `grade_operators.rs` internals - those are
 // scoring-specific and would change the response shape if reused.)
 #[allow(dead_code)]
-fn rarity_to_star(rarity: &OperatorRarity) -> i16 {
+const fn rarity_to_star(rarity: &OperatorRarity) -> i16 {
     rarity.to_star_int()
 }
 
@@ -941,9 +931,7 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
                 operator_id: id.clone(),
                 name: game_data
                     .operators
-                    .get(id)
-                    .map(|o| o.name.clone())
-                    .unwrap_or_else(|| id.clone()),
+                    .get(id).map_or_else(|| id.clone(), |o| o.name.clone()),
             })
             .collect(),
     }

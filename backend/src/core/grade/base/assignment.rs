@@ -149,8 +149,7 @@ fn max_stationed_for_room(
         .rooms
         .get(room_type)
         .and_then(|def| def.phases.get((level - 1) as usize))
-        .map(|phase| phase.max_stationed_num)
-        .unwrap_or(1)
+        .map_or(1, |phase| phase.max_stationed_num)
 }
 
 /// Get max stationed for a specific room at a specific level
@@ -159,12 +158,11 @@ fn max_stationed_at_level(building_data: &BuildingDataFile, room_type: &str, lev
         .rooms
         .get(room_type)
         .and_then(|def| def.phases.get((level - 1) as usize))
-        .map(|phase| phase.max_stationed_num)
-        .unwrap_or(1)
+        .map_or(1, |phase| phase.max_stationed_num)
 }
 
 /// Assign operators to the Control Center to maximize global production bonuses.
-/// Returns (assigned char_ids, global bonuses map: room_type -> total bonus %).
+/// Returns (assigned `char_ids`, global bonuses map: `room_type` -> total bonus %).
 fn assign_control_center(
     operators: &[OperatorBaseProfile],
     max_slots: i32,
@@ -385,14 +383,14 @@ fn assign_single_room(
         slot_id: room.slot_id.clone(),
         room_type: room.room_type.clone(),
         level: room.level,
-        formula_type: formula_type.map(|s| s.to_string()),
+        formula_type: formula_type.map(std::string::ToString::to_string),
         operators: room_ops,
         total_efficiency: best_eff,
     }
 }
 
-/// Fill a room greedily. Returns (operator_ids, teammate_infos, total_efficiency).
-/// If automation_only is true, only considers FacilityCountScaling buffs.
+/// Fill a room greedily. Returns (`operator_ids`, `teammate_infos`, `total_efficiency`).
+/// If `automation_only` is true, only considers `FacilityCountScaling` buffs.
 #[allow(clippy::too_many_arguments)]
 fn greedy_fill_room(
     room: &UserRoom,
@@ -529,7 +527,7 @@ fn greedy_fill_room(
     (room_ops, room_teammates, total)
 }
 
-/// Score only FacilityCountScaling buffs for an operator (used in automation rooms).
+/// Score only `FacilityCountScaling` buffs for an operator (used in automation rooms).
 fn score_operator_facility_only(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -624,9 +622,9 @@ fn score_operator_in_room(
     total * duration_ratio
 }
 
-/// Compute only the DirectEfficiency sum for an operator in a room type.
-/// Used for TeammateInfo.direct_efficiency, which feeds into
-/// TeammateOutputMirroring and TeammateSkillScaling calculations.
+/// Compute only the `DirectEfficiency` sum for an operator in a room type.
+/// Used for `TeammateInfo.direct_efficiency`, which feeds into
+/// `TeammateOutputMirroring` and `TeammateSkillScaling` calculations.
 fn compute_direct_efficiency(
     op: &OperatorBaseProfile,
     room_type: &str,

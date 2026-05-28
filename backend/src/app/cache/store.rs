@@ -17,7 +17,7 @@ pub enum CacheStore {
 }
 
 impl CacheStore {
-    pub fn new_redis(conn: ConnectionManager) -> Self {
+    pub const fn new_redis(conn: ConnectionManager) -> Self {
         Self::Redis(conn)
     }
 
@@ -34,7 +34,7 @@ impl CacheStore {
                 let json = raw?;
                 serde_json::from_str(&json)
                     .inspect_err(|e| {
-                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache deser failed")
+                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache deser failed");
                     })
                     .ok()
             }
@@ -72,7 +72,7 @@ impl CacheStore {
                     .set_ex(key.to_key_string(), json, key.ttl().as_secs())
                     .await
                     .inspect_err(|e| {
-                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache set failed")
+                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache set failed");
                     });
             }
             Self::Memory { entries } => {
@@ -143,7 +143,7 @@ impl CacheStore {
         }
     }
 
-    pub fn is_redis(&self) -> bool {
+    pub const fn is_redis(&self) -> bool {
         matches!(self, Self::Redis(_))
     }
 
@@ -153,7 +153,7 @@ impl CacheStore {
         if let Self::Memory { entries } = self {
             let entries = Arc::clone(entries);
             tokio::spawn(async move {
-                let mut interval = tokio::time::interval(Duration::from_secs(60));
+                let mut interval = tokio::time::interval(Duration::from_mins(1));
                 loop {
                     interval.tick().await;
                     entries.retain(|_, (_, expires_at)| Instant::now() < *expires_at);

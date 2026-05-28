@@ -83,8 +83,7 @@ impl OperatorData {
             .phases
             .first()
             .and_then(|p| p.attributes_key_frames.first())
-            .map(|kf| kf.data.base_attack_time as f32)
-            .unwrap_or(1.6);
+            .map_or(1.6, |kf| kf.data.base_attack_time as f32);
 
         let atk = OperatorAtk {
             e0: Self::get_phase_atk(operator.phases.first()),
@@ -103,8 +102,7 @@ impl OperatorData {
         let atk_trust = operator
             .favor_key_frames
             .get(1)
-            .map(|kf| kf.data.atk as f64)
-            .unwrap_or(0.0);
+            .map_or(0.0, |kf| f64::from(kf.data.atk));
 
         let mut atk_potential = PotentialValues {
             required_potential: 0,
@@ -147,8 +145,7 @@ impl OperatorData {
         let aspd_trust = operator
             .favor_key_frames
             .get(1)
-            .map(|kf| kf.data.attack_speed)
-            .unwrap_or(0.0);
+            .map_or(0.0, |kf| kf.data.attack_speed);
 
         let is_physical = if operator.profession == OperatorProfession::Caster
             || operator.profession == OperatorProfession::Medic
@@ -215,8 +212,7 @@ impl OperatorData {
         let talent1_candidates = operator
             .talents
             .first()
-            .map(|t| t.candidates.as_slice())
-            .unwrap_or(&[]);
+            .map_or(&[][..], |t| t.candidates.as_slice());
 
         for candidate in talent1_candidates {
             let params = TalentParameters {
@@ -235,8 +231,7 @@ impl OperatorData {
             let talent2_candidates = operator
                 .talents
                 .get(1)
-                .map(|t| t.candidates.as_slice())
-                .unwrap_or(&[]);
+                .map_or(&[][..], |t| t.candidates.as_slice());
 
             for candidate in talent2_candidates {
                 let params = TalentParameters {
@@ -259,8 +254,7 @@ impl OperatorData {
             .talents
             .first()
             .and_then(|t| t.candidates.last())
-            .map(|c| c.blackboard.as_slice())
-            .unwrap_or(&[]);
+            .map_or(&[][..], |c| c.blackboard.as_slice());
 
         for data in talent1_last_blackboard {
             if ZERO_DEFAULT_KEYS.contains(&data.key.as_str()) {
@@ -275,8 +269,7 @@ impl OperatorData {
                 .talents
                 .get(1)
                 .and_then(|t| t.candidates.last())
-                .map(|c| c.blackboard.as_slice())
-                .unwrap_or(&[]);
+                .map_or(&[][..], |c| c.blackboard.as_slice());
             for data in talent2_last_blackboard {
                 if ZERO_DEFAULT_KEYS.contains(&data.key.as_str()) {
                     talent2_defaults.push(0.0);
@@ -304,7 +297,7 @@ impl OperatorData {
                     let module_value = ModuleValues {
                         module_id: op_module.module.id.clone().unwrap_or_default(),
                         value: data.value as i64,
-                        level: mod_level.equip_level as f64,
+                        level: f64::from(mod_level.equip_level),
                     };
 
                     if data.key == "atk" {
@@ -366,8 +359,7 @@ impl OperatorData {
                 .phases
                 .first()
                 .and_then(|p| p.attributes_key_frames.first())
-                .map(|kf| kf.data.base_attack_time as f32)
-                .unwrap_or(1.0);
+                .map_or(1.0, |kf| kf.data.base_attack_time as f32);
             drone_atk_interval.push(base_attack_time);
         }
 
@@ -408,7 +400,7 @@ impl OperatorData {
         }
     }
 
-    fn rarity_to_number(rarity: &OperatorRarity) -> i32 {
+    const fn rarity_to_number(rarity: &OperatorRarity) -> i32 {
         match rarity {
             OperatorRarity::SixStar => 6,
             OperatorRarity::FiveStar => 5,
@@ -422,18 +414,16 @@ impl OperatorData {
     fn get_phase_atk(phase: Option<&Phase>) -> MinMax {
         let min = phase
             .and_then(|p| p.attributes_key_frames.first())
-            .map(|kf| kf.data.atk)
-            .unwrap_or(0);
+            .map_or(0, |kf| kf.data.atk);
 
         let max = phase
             .and_then(|p| p.attributes_key_frames.get(1))
-            .map(|kf| kf.data.atk)
-            .unwrap_or(0);
+            .map_or(0, |kf| kf.data.atk);
 
         MinMax { min, max }
     }
 
-    fn phase_to_number(phase: &OperatorPhase) -> i32 {
+    const fn phase_to_number(phase: &OperatorPhase) -> i32 {
         match phase {
             OperatorPhase::Elite0 => 0,
             OperatorPhase::Elite1 => 1,
@@ -490,7 +480,7 @@ impl OperatorData {
                             required_level: candidate.unlock_condition.level,
                             // Sequential module number: 1=uniequip_002, 2=uniequip_003, 3=uniequip_004
                             // Matches Python's req_module assignment in JsonReader.py
-                            required_module_id: format!("{}", module_sequential),
+                            required_module_id: format!("{module_sequential}"),
                             required_module_level: equip_level,
                             required_potential: candidate.required_potential_rank,
                             talent_data,

@@ -1,5 +1,5 @@
 use discord::{cmds, handler, hooks, types::Data};
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use std::env;
 
 use serenity::{
@@ -46,8 +46,7 @@ async fn main() {
                 let commands = &framework.options().commands;
 
                 let use_guild = std::env::var("USE_GUILD_COMMANDS")
-                    .map(|v| matches!(v.trim().to_lowercase().as_str(), "true" | "1" | "yes"))
-                    .unwrap_or(false);
+                    .is_ok_and(|v| matches!(v.trim().to_lowercase().as_str(), "true" | "1" | "yes"));
 
                 if use_guild {
                     let guild_id = GuildId::new(

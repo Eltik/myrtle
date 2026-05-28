@@ -187,7 +187,7 @@ pub fn calculate_dps(
         // Calculate off-skill DPS (basic attack)
         let off_skill_dps =
             unit.normal_attack(&shredded, None, None, None) * (1.0 + unit.buff_fragile);
-        let sp_time = unit.skill_cost as f64 / (1.0 + unit.sp_boost as f64);
+        let sp_time = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost));
         let cycle_dmg = skill_dps * unit.skill_duration + off_skill_dps * sp_time;
         cycle_dmg / (unit.skill_duration + sp_time)
     } else {
@@ -232,6 +232,6 @@ fn apply_init_fixups(unit: &mut OperatorUnit, op_id: &str) {
     // Warfarin S1 heals for a fraction of the target's max HP; default it the
     // way the reference does when no explicit target HP is supplied.
     if op_id == "char_171_bldsk" && unit.skill_index == 1 {
-        unit.target_hp = (1000.0 * (unit.elite as f64 + 1.0)).max(100.0);
+        unit.target_hp = (1000.0 * (f64::from(unit.elite) + 1.0)).max(100.0);
     }
 }

@@ -1,6 +1,6 @@
 //! All-in-one DPS/HPS generator for the Arknights damage calculator.
 //!
-//! Reads Python source from ArknightsDpsCompare and generates:
+//! Reads Python source from `ArknightsDpsCompare` and generates:
 //! - `src/dps/config/operator_formulas.json`  — DPS operator metadata
 //! - `src/dps/custom/generated.rs` + `mod.rs` — transpiled Rust DPS functions
 //! - `src/dps/config/heal_formulas.json`      — HPS operator metadata
@@ -9,13 +9,34 @@
 //!
 //! Usage:
 //!   cargo run --bin generate-dps                          # Run all DPS steps (default)
-//!   cargo run --bin generate-dps -- --formulas            # Only regen operator_formulas.json
+//!   cargo run --bin generate-dps -- --formulas            # Only regen `operator_formulas.json`
 //!   cargo run --bin generate-dps -- --transpile           # Only transpile DPS Python → Rust
-//!   cargo run --bin generate-dps -- --expected            # Only regen expected_dps.json
+//!   cargo run --bin generate-dps -- --expected            # Only regen `expected_dps.json`
 //!   cargo run --bin generate-dps -- --healing             # Run all HPS steps (formulas+transpile)
-//!   cargo run --bin generate-dps -- --healing-formulas    # Only regen heal_formulas.json
+//!   cargo run --bin generate-dps -- --healing-formulas    # Only regen `heal_formulas.json`
 //!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python → Rust
-//!   cargo run --bin generate-dps -- --repo <path>         # Custom ArknightsDpsCompare path
+//!   cargo run --bin generate-dps -- --repo <path>         # Custom `ArknightsDpsCompare` path
+
+// This binary is a code generator/transpiler: large emit functions, intentional
+// numeric casts when emitting literals, float comparisons against parsed constants,
+// string-building via `push_str(format!(..))`, and explicit token-mapping match arms
+// are inherent to the job. Silence the pedantic/nursery lints that flag those patterns
+// rather than distort the generator.
+#![allow(
+    clippy::too_many_lines,
+    clippy::trivially_copy_pass_by_ref,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::float_cmp,
+    clippy::similar_names,
+    clippy::struct_field_names,
+    clippy::format_push_string,
+    clippy::option_if_let_else,
+    clippy::match_same_arms,
+    clippy::items_after_statements,
+    clippy::branches_sharing_code
+)]
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -78,12 +99,12 @@ struct TestCase {
 enum Mode {
     /// DPS: `damage_formulas.py`, `skill_dps`, single-f64 output.
     Damage,
-    /// HPS: `healing_formulas.py`, `skill_hps` (then `skill_dps`), HpsResult triple.
+    /// HPS: `healing_formulas.py`, `skill_hps` (then `skill_dps`), `HpsResult` triple.
     Healing,
 }
 
 impl Mode {
-    fn py_source_rel(&self) -> &'static str {
+    const fn py_source_rel(&self) -> &'static str {
         match self {
             Self::Damage => "damagecalc/damage_formulas.py",
             Self::Healing => "damagecalc/healing_formulas.py",
@@ -92,7 +113,7 @@ impl Mode {
 
     /// Base classes accepted in the class-header regex (healers may extend
     /// `Operator` or `Healer`).
-    fn class_base_alt(&self) -> &'static str {
+    const fn class_base_alt(&self) -> &'static str {
         match self {
             Self::Damage => "Operator",
             Self::Healing => "(?:Operator|Healer)",
@@ -100,21 +121,21 @@ impl Mode {
     }
 
     /// Methods to try, in priority order.
-    fn method_names(&self) -> &'static [&'static str] {
+    const fn method_names(&self) -> &'static [&'static str] {
         match self {
             Self::Damage => &["skill_dps"],
             Self::Healing => &["skill_hps", "skill_dps"],
         }
     }
 
-    fn formulas_json_path(&self) -> &'static str {
+    const fn formulas_json_path(&self) -> &'static str {
         match self {
             Self::Damage => "src/dps/config/operator_formulas.json",
             Self::Healing => "src/dps/config/heal_formulas.json",
         }
     }
 
-    fn generated_rs_path(&self) -> &'static str {
+    const fn generated_rs_path(&self) -> &'static str {
         match self {
             Self::Damage => "src/dps/custom/generated.rs",
             Self::Healing => "src/dps/custom/generated_hps.rs",
@@ -123,7 +144,7 @@ impl Mode {
 
     /// Path to the generated dispatch function file. Sibling of generated.rs
     /// inside `custom/`; the stable hand-written `custom/mod.rs` declares both.
-    fn dispatch_rs_path(&self) -> &'static str {
+    const fn dispatch_rs_path(&self) -> &'static str {
         match self {
             Self::Damage => "src/dps/custom/dispatch.rs",
             Self::Healing => "src/dps/custom/dispatch_hps.rs",
@@ -131,7 +152,7 @@ impl Mode {
     }
 
     /// Name of the sibling generated module that dispatch.rs delegates to.
-    fn generated_mod_name(&self) -> &'static str {
+    const fn generated_mod_name(&self) -> &'static str {
         match self {
             Self::Damage => "generated",
             Self::Healing => "generated_hps",
@@ -139,21 +160,21 @@ impl Mode {
     }
 
     /// Path to the Python-fixture file for this mode.
-    fn expected_json_path(&self) -> &'static str {
+    const fn expected_json_path(&self) -> &'static str {
         match self {
             Self::Damage => "tests/fixtures/expected_dps.json",
             Self::Healing => "tests/fixtures/expected_hps.json",
         }
     }
 
-    fn output_shape(&self) -> OutputShape {
+    const fn output_shape(&self) -> OutputShape {
         match self {
             Self::Damage => OutputShape::F64Dps,
             Self::Healing => OutputShape::HpsTriple,
         }
     }
 
-    fn human_label(&self) -> &'static str {
+    const fn human_label(&self) -> &'static str {
         match self {
             Self::Damage => "DPS",
             Self::Healing => "HPS",
@@ -369,8 +390,7 @@ fn parse_operators(
 
         let end = class_positions
             .get(i + 1)
-            .map(|(pos, _)| *pos)
-            .unwrap_or(src.len());
+            .map_or(src.len(), |(pos, _)| *pos);
         let class_body = &src[*start..end];
 
         let init_body = extract_init_method(class_body);
@@ -504,7 +524,7 @@ fn extract_init_method(class_body: &str) -> String {
 
 // ── Step 3: Generate expected_dps.json ──────────────────────────────────
 
-/// Load all module IDs from battle_equip_table.json for existence checks.
+/// Load all module IDs from `battle_equip_table.json` for existence checks.
 fn load_equip_keys(path: &str) -> std::collections::HashSet<String> {
     let raw = fs::read_to_string(path).unwrap_or_else(|_| "{}".to_string());
     let parsed: serde_json::Value = serde_json::from_str(&raw).unwrap_or_default();
@@ -727,7 +747,7 @@ fn make_test_key(
     res_mult: f64,
     res_flat: f64,
 ) -> String {
-    let base = format!("{name}_s{skill}_m{module}_{:.0}_{:.0}", def, res);
+    let base = format!("{name}_s{skill}_m{module}_{def:.0}_{res:.0}");
     if fragile != 0.0 || def_mult != 1.0 || res_mult != 1.0 || def_flat != 0.0 || res_flat != 0.0 {
         format!(
             "{base}_db{}_{}_{}_{}_{}",
@@ -763,7 +783,7 @@ fn make_hps_test_key(name: &str, skill: i32, module: i32) -> String {
     format!("{name}_s{skill}_m{module}")
 }
 
-/// Generate tests/fixtures/expected_hps.json by running each healer in upstream
+/// Generate `tests/fixtures/expected_hps.json` by running each healer in upstream
 /// Python and capturing the `(skill_hps, base_hps, avg_hps)` locals at return.
 fn generate_expected_hps(repo_path: &str, formulas: &HashMap<String, OperatorFormula>) {
     let out_path = Mode::Healing.expected_json_path();
@@ -974,8 +994,7 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
     for (i, (start, name)) in class_positions.iter().enumerate() {
         let end = class_positions
             .get(i + 1)
-            .map(|(pos, _)| *pos)
-            .unwrap_or(py_src.len());
+            .map_or(py_src.len(), |(pos, _)| *pos);
         class_bodies.insert(name.clone(), py_src[*start..end].to_string());
     }
 
@@ -1004,7 +1023,9 @@ fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFo
     generated.push_str(header_blurb);
     generated.push_str("//! Generated by `cargo run --bin generate-dps`\n");
     generated.push_str("//! DO NOT EDIT MANUALLY.\n\n");
-    generated.push_str("#![allow(unused_variables, unused_mut, unused_assignments, unused_parens, unreachable_code, path_statements, unused_must_use, non_snake_case, clippy::excessive_precision, clippy::unnecessary_cast, clippy::needless_return, clippy::collapsible_if, clippy::collapsible_else_if, clippy::double_parens, clippy::if_same_then_else, clippy::nonminimal_bool, clippy::overly_complex_bool_expr, clippy::neg_multiply, clippy::assign_op_pattern, clippy::eq_op, clippy::get_first, clippy::bool_comparison, clippy::no_effect)]\n\n");
+    // Generated code is transpiled, not hand-written — silence rustc style lints
+    // and all clippy groups so the linter ignores this file entirely.
+    generated.push_str("#![allow(unused_variables, unused_mut, unused_assignments, unused_parens, unreachable_code, path_statements, unused_must_use, non_snake_case, clippy::all, clippy::pedantic, clippy::nursery)]\n\n");
     generated.push_str(use_stmt);
 
     let mut dispatch_arms: Vec<(String, String)> = Vec::new();
@@ -1116,6 +1137,7 @@ fn build_dispatch_mod(
     out.push_str(&format!(
         "//! Sibling of `{generated_mod}.rs` — both are declared by the hand-written `mod.rs`.\n\n"
     ));
+    out.push_str("#![allow(clippy::all, clippy::pedantic, clippy::nursery)]\n\n");
     match shape {
         OutputShape::F64Dps => {
             out.push_str("use super::super::operator_unit::{EnemyStats, OperatorUnit};\n");
@@ -1598,8 +1620,7 @@ fn transpile_init_expr(py_expr: &str) -> String {
     {
         let var_start = s[..start]
             .rfind(|c: char| !c.is_alphanumeric() && c != '_' && c != '.')
-            .map(|i| i + 1)
-            .unwrap_or(0);
+            .map_or(0, |i| i + 1);
         let var = &s[var_start..start];
         if let Some(end) = s[start..].find(']') {
             let items_str = &s[start + 5..start + end];
@@ -1736,7 +1757,7 @@ fn transpile_skill_dps(
     // Pass 2: Transpile lines — NO `let mut` in the body, just assignments
     let mut declared_vars: std::collections::HashSet<String> = std::collections::HashSet::new();
     // Mark everything as already declared so transpile_expressions won't add `let mut`
-    declared_vars.extend(builtin_vars.iter().map(|s| s.to_string()));
+    declared_vars.extend(builtin_vars.iter().map(std::string::ToString::to_string));
     declared_vars.extend(all_vars.iter().cloned());
 
     let mut indent_stack: Vec<usize> = vec![0];
@@ -1816,13 +1837,7 @@ fn transpile_skill_dps(
         // — if so, the resulting `} else {` belongs to that OUTER block, not to
         // any inline `if X { stmt; }` that happens to be the previous line.
         let mut else_consumed_outer_block = false;
-        if !is_continuation {
-            while py_indent < *indent_stack.last().unwrap_or(&0) {
-                indent_stack.pop();
-                let rust_indent = "    ".repeat(py_indent + 1);
-                lines.push(format!("{rust_indent}}}"));
-            }
-        } else {
+        if is_continuation {
             // For else/elif: close ALL blocks deeper than this indent, then pop one more
             // for the if-block that this else belongs to
             while *indent_stack.last().unwrap_or(&0) > py_indent + 1 {
@@ -1835,6 +1850,12 @@ fn transpile_skill_dps(
             if py_indent < *indent_stack.last().unwrap_or(&0) {
                 indent_stack.pop();
                 else_consumed_outer_block = true;
+            }
+        } else {
+            while py_indent < *indent_stack.last().unwrap_or(&0) {
+                indent_stack.pop();
+                let rust_indent = "    ".repeat(py_indent + 1);
+                lines.push(format!("{rust_indent}}}"));
             }
         }
 
@@ -1858,7 +1879,7 @@ fn transpile_skill_dps(
                 let else_part = rust_line
                     .trim_start()
                     .strip_prefix("}")
-                    .unwrap_or(rust_line.trim_start());
+                    .unwrap_or_else(|| rust_line.trim_start());
                 prev.push_str(else_part);
                 // Track else block if it opens a new scope (ends with { but not })
                 if else_part.trim_end().ends_with('{')
@@ -1931,26 +1952,26 @@ fn transpile_skill_dps(
                 processed_body = processed_body.replace("___ASPD___", "unit.attack_speed");
             }
             "attack_speed" => {
-                processed_body = processed_body.replace("unit.attack_speed", "attack_speed")
+                processed_body = processed_body.replace("unit.attack_speed", "attack_speed");
             }
             "ammo" => processed_body = processed_body.replace("unit.ammo", "ammo"),
             "trait_damage" => {
-                processed_body = processed_body.replace("unit.trait_damage", "trait_damage")
+                processed_body = processed_body.replace("unit.trait_damage", "trait_damage");
             }
             "talent_damage" => {
-                processed_body = processed_body.replace("unit.talent_damage", "talent_damage")
+                processed_body = processed_body.replace("unit.talent_damage", "talent_damage");
             }
             "talent2_damage" => {
-                processed_body = processed_body.replace("unit.talent2_damage", "talent2_damage")
+                processed_body = processed_body.replace("unit.talent2_damage", "talent2_damage");
             }
             "skill_damage" => {
-                processed_body = processed_body.replace("unit.skill_damage", "skill_damage")
+                processed_body = processed_body.replace("unit.skill_damage", "skill_damage");
             }
             "module_damage" => {
-                processed_body = processed_body.replace("unit.module_damage", "module_damage")
+                processed_body = processed_body.replace("unit.module_damage", "module_damage");
             }
             "skill_duration" => {
-                processed_body = processed_body.replace("unit.skill_duration", "skill_duration")
+                processed_body = processed_body.replace("unit.skill_duration", "skill_duration");
             }
             "target_hp" => processed_body = processed_body.replace("unit.target_hp", "target_hp"),
             _ => {}
@@ -2202,15 +2223,13 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
             val = format!("vec![{}]", elements.join(", "));
         }
         // Handle nested ternary in the value
-        else {
-            if let Some(tc) = RE.inner_ternary.captures(&val) {
-                let t_val = transpile_expressions(&tc[1], declared);
-                let t_cond = transpile_expressions(&tc[2], declared);
-                let f_val = transpile_expressions(&tc[3], declared);
-                val = format!("if {t_cond} {{ {t_val} }} else {{ {f_val} }}");
-            } else {
-                val = transpile_expressions(&val, declared);
-            }
+        else if let Some(tc) = RE.inner_ternary.captures(&val) {
+            let t_val = transpile_expressions(&tc[1], declared);
+            let t_cond = transpile_expressions(&tc[2], declared);
+            let f_val = transpile_expressions(&tc[3], declared);
+            val = format!("if {t_cond} {{ {t_val} }} else {{ {f_val} }}");
+        } else {
+            val = transpile_expressions(&val, declared);
         }
         return format!("if {cond} {{ {var} = {val}; }}");
     }

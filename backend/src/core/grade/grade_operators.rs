@@ -154,7 +154,7 @@ fn build_dimensions(
 
     // Elite promotion progress
     if max_elite > 0.0 {
-        let elite_score = roster.elite as f64 / max_elite;
+        let elite_score = f64::from(roster.elite) / max_elite;
         dimensions.push((WEIGHT_ELITE, elite_score));
     }
 
@@ -164,7 +164,7 @@ fn build_dimensions(
 
     // Skill level
     if !can_master && num_skills > 0 {
-        let sl_score = (roster.skill_level - 1) as f64 / 6.0; // SL1=0, SL7=1.0
+        let sl_score = f64::from(roster.skill_level - 1) / 6.0; // SL1=0, SL7=1.0
         dimensions.push((WEIGHT_SKILL_LEVEL, sl_score));
     }
 
@@ -182,7 +182,7 @@ fn build_dimensions(
 
     // Potential
     if potential_matters(static_op) {
-        let pot_score = (roster.potential - 1) as f64 / 5.0;
+        let pot_score = f64::from(roster.potential - 1) / 5.0;
         dimensions.push((WEIGHT_POTENTIAL, pot_score));
     }
 
@@ -203,7 +203,7 @@ fn weighted_average(dims: &[Dimension]) -> f64 {
     dims.iter().map(|(w, s)| w * s).sum::<f64>() / total_weight
 }
 
-fn level_weight(rarity: &OperatorRarity) -> f64 {
+const fn level_weight(rarity: &OperatorRarity) -> f64 {
     match rarity {
         OperatorRarity::SixStar => 15.0,
         OperatorRarity::FiveStar => 18.0,
@@ -225,13 +225,13 @@ fn cumulative_level_progress(roster: &RosterEntry, static_op: &Operator) -> f64 
     let mut total = 0.0;
 
     for (i, phase) in static_op.phases.iter().enumerate() {
-        let max_lvl = phase.max_level as f64;
+        let max_lvl = f64::from(phase.max_level);
         total += max_lvl;
 
         if (i as i16) < roster.elite {
             progress += max_lvl;
         } else if i as i16 == roster.elite {
-            progress += roster.level as f64;
+            progress += f64::from(roster.level);
         }
     }
 
@@ -244,17 +244,17 @@ fn cumulative_level_progress(roster: &RosterEntry, static_op: &Operator) -> f64 
 }
 
 /// Same shape as `cumulative_level_progress` but for an overridden (elite, level)
-/// pair — used by the delta simulator without mutating the RosterEntry.
+/// pair — used by the delta simulator without mutating the `RosterEntry`.
 fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) -> f64 {
     let mut progress = 0.0;
     let mut total = 0.0;
     for (i, phase) in static_op.phases.iter().enumerate() {
-        let max_lvl = phase.max_level as f64;
+        let max_lvl = f64::from(phase.max_level);
         total += max_lvl;
         if (i as i16) < elite {
             progress += max_lvl;
         } else if i as i16 == elite {
-            progress += level as f64;
+            progress += f64::from(level);
         }
     }
     if total == 0.0 {
@@ -279,7 +279,7 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
     let m3_count = levels.iter().filter(|&&m| m >= 3).count();
 
     if m3_count == 0 {
-        let total: f64 = levels.iter().map(|&m| m as f64).sum();
+        let total: f64 = levels.iter().map(|&m| f64::from(m)).sum();
         let max = num_skills as f64 * 3.0;
         if max > 0.0 {
             (total / max) * PARTIAL_CAP
@@ -295,7 +295,7 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
 
         let remaining_skills = num_skills - m3_count;
         if remaining_skills > 0 {
-            let non_m3_mastery: f64 = levels.iter().filter(|&&m| m < 3).map(|&m| m as f64).sum();
+            let non_m3_mastery: f64 = levels.iter().filter(|&&m| m < 3).map(|&m| f64::from(m)).sum();
             let remaining_max = remaining_skills as f64 * 3.0;
             let partial = (non_m3_mastery / remaining_max) * PARTIAL_BONUS;
             (base + partial).min(1.0)
@@ -332,7 +332,7 @@ fn module_milestone_from_levels(user_advanced: &[i16], num_available: usize) -> 
     let mod3_count = user_advanced.iter().filter(|&&lvl| lvl >= 3).count();
 
     if mod3_count == 0 {
-        let total_levels: f64 = user_advanced.iter().map(|&l| l as f64).sum();
+        let total_levels: f64 = user_advanced.iter().map(|&l| f64::from(l)).sum();
         let max_total = num_available as f64 * 3.0;
         (total_levels / max_total) * PARTIAL_CAP
     } else {
@@ -342,7 +342,7 @@ fn module_milestone_from_levels(user_advanced: &[i16], num_available: usize) -> 
         let non_max_levels: f64 = user_advanced
             .iter()
             .filter(|&&lvl| lvl < 3)
-            .map(|&l| l as f64)
+            .map(|&l| f64::from(l))
             .sum();
         let remaining_max = (num_available - mod3_count) as f64 * 3.0;
         let partial = if remaining_max > 0.0 {
@@ -389,7 +389,7 @@ fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {
         .collect()
 }
 
-pub fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
+pub const fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
     match rarity {
         OperatorRarity::SixStar => 1.0,
         OperatorRarity::FiveStar => 0.7,
@@ -400,12 +400,12 @@ pub fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
     }
 }
 
-fn potential_matters(static_op: &Operator) -> bool {
+const fn potential_matters(static_op: &Operator) -> bool {
     !static_op.can_use_general_potential_item || static_op.is_sp_char
 }
 
 /// Returns true if the player has invested beyond the initial pull state (E0 L1).
-pub fn has_investment(roster: &RosterEntry) -> bool {
+pub const fn has_investment(roster: &RosterEntry) -> bool {
     roster.elite > 0 || roster.level > 1
 }
 
@@ -445,7 +445,7 @@ const TOTAL_CATEGORY_WEIGHT: f64 = 2.6;
 /// "what if you completed this milestone" score against the current state.
 ///
 /// `rarity_weight` and `total_roster_weight` are the inputs from
-/// `grade_operators` used to translate per-op delta → operator_grade delta.
+/// `grade_operators` used to translate per-op delta → `operator_grade` delta.
 pub fn operator_upgrade_deltas(
     roster: &RosterEntry,
     static_op: &Operator,
@@ -504,13 +504,13 @@ fn simulate_score_for_tag(
     // can selectively replace one (or two, for ELITE which also lifts the
     // level dimension).
     let mut elite_dim: Option<Dimension> = if max_elite > 0 {
-        Some((WEIGHT_ELITE, roster.elite as f64 / max_elite as f64))
+        Some((WEIGHT_ELITE, f64::from(roster.elite) / f64::from(max_elite)))
     } else {
         None
     };
     let mut level_dim: Dimension = (level_w, cumulative_level_progress(roster, static_op));
     let mut sl_dim: Option<Dimension> = if !can_master && num_skills > 0 {
-        Some((WEIGHT_SKILL_LEVEL, (roster.skill_level - 1) as f64 / 6.0))
+        Some((WEIGHT_SKILL_LEVEL, f64::from(roster.skill_level - 1) / 6.0))
     } else {
         None
     };
@@ -519,16 +519,16 @@ fn simulate_score_for_tag(
     } else {
         None
     };
-    let mut module_dim: Option<Dimension> = if !advanced_mods.is_empty() {
+    let mut module_dim: Option<Dimension> = if advanced_mods.is_empty() {
+        None
+    } else {
         Some((
             WEIGHT_MODULE,
             module_milestone_score(roster, &advanced_mods),
         ))
-    } else {
-        None
     };
     let mut pot_dim: Option<Dimension> = if potential_matters(static_op) {
-        Some((WEIGHT_POTENTIAL, (roster.potential - 1) as f64 / 5.0))
+        Some((WEIGHT_POTENTIAL, f64::from(roster.potential - 1) / 5.0))
     } else {
         None
     };
@@ -556,8 +556,7 @@ fn simulate_score_for_tag(
             let max_lvl_here = static_op
                 .phases
                 .get(roster.elite as usize)
-                .map(|p| p.max_level as i16)
-                .unwrap_or(0);
+                .map_or(0, |p| p.max_level as i16);
             level_dim = (
                 level_w,
                 cumulative_level_progress_at(static_op, roster.elite, max_lvl_here),
@@ -601,7 +600,7 @@ fn simulate_score_for_tag(
                 .collect();
             // Pad with zeros so the slice length matches the number of slots —
             // module_milestone_from_levels treats absent slots as level 0.
-            let mut padded = user_advanced.clone();
+            let mut padded = user_advanced;
             while padded.len() < advanced_mods.len() {
                 padded.push(0);
             }

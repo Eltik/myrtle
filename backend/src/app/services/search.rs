@@ -30,7 +30,7 @@ pub async fn search_users(
     }
 
     let (entries, total) = tokio::try_join!(
-        users::search_by_nickname(&state.db, query, limit as i64, offset as i64),
+        users::search_by_nickname(&state.db, query, i64::from(limit), i64::from(offset)),
         users::count_by_nickname(&state.db, query),
     )?;
 

@@ -1,10 +1,10 @@
 //! Translate an old-myrtle backup directory into a v3 import bundle.
 //!
 //! Usage:
-//!   cargo run --release --bin translate-backup -- --in <backup_dir> --out <out_dir>
+//!   cargo run --release --bin translate-backup -- --in <`backup_dir`> --out <`out_dir`>
 //!
 //! Then feed the result into v3:
-//!   cargo run --release --bin import-database -- --in <out_dir> --truncate
+//!   cargo run --release --bin import-database -- --in <`out_dir`> --truncate
 //!
 //! The old backend stored each user as a row with a giant `data` JSONB blob
 //! holding the raw Arknights syncData response (status, troop, inventory,
@@ -19,15 +19,23 @@
 //!   - roster (operators, skills, modules), inventory, skins
 //!   - status / currencies, building, medals, stages, roguelike, sandbox, checkin
 //!   - precomputed score breakdown (totalScore + per-pillar)
-//!   - tier_lists, tiers, tier_placements, operator_notes, operator_notes_audit_log
-//!   - gacha_records (renaming columns where they drift from v3)
-//!   - user_settings (folded from old `settings` blob + user_gacha_settings)
+//!   - `tier_lists`, tiers, `tier_placements`, `operator_notes`, `operator_notes_audit_log`
+//!   - `gacha_records` (renaming columns where they drift from v3)
+//!   - `user_settings` (folded from old `settings` blob + `user_gacha_settings`)
 //!
 //! What we drop:
-//!   - tier_change_log (no equivalent table in v3)
-//!   - tier_list_reports (no equivalent in v3)
+//!   - `tier_change_log` (no equivalent table in v3)
+//!   - `tier_list_reports` (no equivalent in v3)
 //!   - the giant raw `data` blob beyond what we extract (v3 reconstructs from
 //!     normalized tables on demand)
+
+// CLI tool: a long top-level fn, an intentional cast, and explicit token→id match arms
+// (kept verbose for clarity) are expected here.
+#![allow(
+    clippy::too_many_lines,
+    clippy::cast_possible_wrap,
+    clippy::match_same_arms
+)]
 
 use anyhow::{Context, Result, bail};
 use backend::db_export::{FORMAT_VERSION, MANIFEST_FILE, TABLES};
@@ -146,7 +154,7 @@ fn main() -> Result<()> {
         for r in &tier_lists {
             // skip soft-deleted rows — v3 has no is_deleted column
             if r.get("is_deleted")
-                .and_then(|v| v.as_bool())
+                .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false)
             {
                 continue;
@@ -162,7 +170,7 @@ fn main() -> Result<()> {
                 "description": r.get("description"),
                 "list_type": list_type,
                 "created_by": r.get("created_by"),
-                "is_active": r.get("is_active").and_then(|v| v.as_bool()).unwrap_or(true),
+                "is_active": r.get("is_active").and_then(serde_json::Value::as_bool).unwrap_or(true),
                 "created_at": r.get("created_at"),
                 "updated_at": r.get("updated_at"),
             }))?;
@@ -213,7 +221,7 @@ fn main() -> Result<()> {
             w.write(&json!({
                 "tier_id": tier_id,
                 "operator_id": op_id,
-                "sub_order": r.get("sub_order").and_then(|v| v.as_i64()).unwrap_or(0),
+                "sub_order": r.get("sub_order").and_then(serde_json::Value::as_i64).unwrap_or(0),
                 // Old `notes` maps to v3's `description`.
                 "description": r.get("notes"),
                 "updated_at": r.get("updated_at"),
@@ -314,7 +322,7 @@ fn main() -> Result<()> {
             .and_then(|v| v.as_str());
         let level = status
             .and_then(|s| s.get("level"))
-            .and_then(|v| v.as_i64())
+            .and_then(serde_json::Value::as_i64)
             .unwrap_or(0);
         let avatar_id = status
             .and_then(|s| s.get("avatar"))
@@ -378,18 +386,18 @@ fn main() -> Result<()> {
                 tables.get_mut("user_operators").unwrap().write(&json!({
                     "user_id": id,
                     "operator_id": char_id,
-                    "elite": raw.get("evolvePhase").and_then(|v| v.as_i64()).unwrap_or(0),
-                    "level": raw.get("level").and_then(|v| v.as_i64()).unwrap_or(1),
-                    "exp": raw.get("exp").and_then(|v| v.as_i64()).unwrap_or(0),
-                    "potential": raw.get("potentialRank").and_then(|v| v.as_i64()).unwrap_or(0),
-                    "skill_level": raw.get("mainSkillLvl").and_then(|v| v.as_i64()).unwrap_or(1),
-                    "favor_point": raw.get("favorPoint").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "elite": raw.get("evolvePhase").and_then(serde_json::Value::as_i64).unwrap_or(0),
+                    "level": raw.get("level").and_then(serde_json::Value::as_i64).unwrap_or(1),
+                    "exp": raw.get("exp").and_then(serde_json::Value::as_i64).unwrap_or(0),
+                    "potential": raw.get("potentialRank").and_then(serde_json::Value::as_i64).unwrap_or(0),
+                    "skill_level": raw.get("mainSkillLvl").and_then(serde_json::Value::as_i64).unwrap_or(1),
+                    "favor_point": raw.get("favorPoint").and_then(serde_json::Value::as_i64).unwrap_or(0),
                     "skin_id": raw.get("skin").and_then(|v| v.as_str()),
-                    "default_skill": raw.get("defaultSkillIndex").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "default_skill": raw.get("defaultSkillIndex").and_then(serde_json::Value::as_i64).unwrap_or(0),
                     "voice_lan": raw.get("voiceLan").and_then(|v| v.as_str()),
                     "current_equip": raw.get("currentEquip").and_then(|v| v.as_str()),
                     "current_tmpl": raw.get("currentTmpl").and_then(|v| v.as_str()),
-                    "obtained_at": raw.get("gainTime").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "obtained_at": raw.get("gainTime").and_then(serde_json::Value::as_i64).unwrap_or(0),
                 }))?;
 
                 if let Some(skills) = raw.get("skills").and_then(|v| v.as_array()) {
@@ -398,7 +406,7 @@ fn main() -> Result<()> {
                             "user_id": id,
                             "operator_id": char_id,
                             "skill_index": i as i64,
-                            "specialize_level": s.get("specializeLevel").and_then(|v| v.as_i64()).unwrap_or(0),
+                            "specialize_level": s.get("specializeLevel").and_then(serde_json::Value::as_i64).unwrap_or(0),
                         }))?;
                     }
                 }
@@ -413,8 +421,8 @@ fn main() -> Result<()> {
                             "user_id": id,
                             "operator_id": char_id,
                             "module_id": mid,
-                            "module_level": e.get("level").and_then(|v| v.as_i64()).unwrap_or(0),
-                            "locked": e.get("locked").and_then(|v| v.as_i64()).map(|n| n != 0).unwrap_or(false),
+                            "module_level": e.get("level").and_then(serde_json::Value::as_i64).unwrap_or(0),
+                            "locked": e.get("locked").and_then(serde_json::Value::as_i64).is_some_and(|n| n != 0),
                         }))?;
                     }
                 }
@@ -430,7 +438,7 @@ fn main() -> Result<()> {
             for (item_id, val) in inv {
                 let q = val
                     .get("amount")
-                    .and_then(|v| v.as_i64())
+                    .and_then(serde_json::Value::as_i64)
                     .or_else(|| val.as_i64())
                     .unwrap_or(0);
                 if q <= 0 {
@@ -458,8 +466,8 @@ fn main() -> Result<()> {
                 tables.get_mut("user_skins").unwrap().write(&json!({
                     "user_id": id,
                     "skin_id": sid,
-                    "obtained_at": e.get("obtainTime").and_then(|v| v.as_i64())
-                        .or_else(|| e.get("obtainedAt").and_then(|v| v.as_i64()))
+                    "obtained_at": e.get("obtainTime").and_then(serde_json::Value::as_i64)
+                        .or_else(|| e.get("obtainedAt").and_then(serde_json::Value::as_i64))
                         .unwrap_or(0),
                 }))?;
             }
@@ -530,8 +538,8 @@ fn main() -> Result<()> {
                     "user_id": id,
                     "medal_id": mid,
                     "val": e.get("val").cloned().unwrap_or(json!(null)),
-                    "first_ts": e.get("fts").and_then(|v| v.as_i64()).unwrap_or(0),
-                    "reach_ts": e.get("rts").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "first_ts": e.get("fts").and_then(serde_json::Value::as_i64).unwrap_or(0),
+                    "reach_ts": e.get("rts").and_then(serde_json::Value::as_i64).unwrap_or(0),
                 }))?;
             }
         }
@@ -567,24 +575,20 @@ fn main() -> Result<()> {
             let calculated_at = score
                 .get("grade")
                 .and_then(|g| g.get("calculatedAt"))
-                .and_then(|v| v.as_i64())
-                .map(epoch_to_iso)
-                .unwrap_or_else(|| {
+                .and_then(serde_json::Value::as_i64).map_or_else(|| {
                     obj.get("updated_at")
-                        .and_then(|v| v.as_str())
-                        .map(String::from)
-                        .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string())
-                });
+                        .and_then(|v| v.as_str()).map_or_else(|| "1970-01-01T00:00:00Z".to_string(), String::from)
+                }, epoch_to_iso);
             tables.get_mut("user_scores").unwrap().write(&json!({
                 "user_id": id,
-                "total_score": score.get("totalScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "operator_score": score.get("operatorScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "stage_score": score.get("stageScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "roguelike_score": score.get("roguelikeScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "sandbox_score": score.get("sandboxScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "medal_score": score.get("medalScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "base_score": score.get("baseScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
-                "skin_score": score.get("skinScore").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                "total_score": score.get("totalScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "operator_score": score.get("operatorScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "stage_score": score.get("stageScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "roguelike_score": score.get("roguelikeScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "sandbox_score": score.get("sandboxScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "medal_score": score.get("medalScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "base_score": score.get("baseScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
+                "skin_score": score.get("skinScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
                 "grade": grade_str,
                 "calculated_at": calculated_at,
             }))?;
@@ -614,11 +618,11 @@ fn main() -> Result<()> {
                 let u = r.get("user_id")?.as_str()?.to_string();
                 let store = r
                     .get("store_records")
-                    .and_then(|v| v.as_bool())
+                    .and_then(serde_json::Value::as_bool)
                     .unwrap_or(true);
                 let share = r
                     .get("share_anonymous_stats")
-                    .and_then(|v| v.as_bool())
+                    .and_then(serde_json::Value::as_bool)
                     .unwrap_or(true);
                 Some((u, (store, share)))
             })
@@ -649,7 +653,7 @@ fn main() -> Result<()> {
                 .to_string();
             let pull_ts = r
                 .get("pull_timestamp")
-                .and_then(|v| v.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0);
             let key = (
                 user_id.to_string(),
@@ -665,7 +669,7 @@ fn main() -> Result<()> {
                 "user_id": user_id,
                 "char_id": char_id,
                 "pool_id": pool_id,
-                "rarity": r.get("rarity").and_then(|v| v.as_i64()).unwrap_or(0),
+                "rarity": r.get("rarity").and_then(serde_json::Value::as_i64).unwrap_or(0),
                 "pull_timestamp": pull_ts,
                 "pool_name": r.get("pool_name"),
                 "gacha_type": r.get("gacha_type"),
@@ -715,7 +719,7 @@ fn server_code_to_id(code: &str) -> i16 {
 fn settings_bool(settings: Option<&Value>, key: &str, default: bool) -> bool {
     settings
         .and_then(|s| s.get(key))
-        .and_then(|v| v.as_bool())
+        .and_then(serde_json::Value::as_bool)
         .unwrap_or(default)
 }
 
@@ -723,7 +727,7 @@ fn build_status_row(user_id: &str, status: Option<&Value>) -> Value {
     let g = |k: &str| -> i64 {
         status
             .and_then(|s| s.get(k))
-            .and_then(|v| v.as_i64())
+            .and_then(serde_json::Value::as_i64)
             .unwrap_or(0)
     };
     let gs = |k: &str| -> Option<String> {
@@ -763,9 +767,7 @@ fn epoch_to_iso(secs: i64) -> String {
     use chrono::TimeZone;
     chrono::Utc
         .timestamp_opt(secs, 0)
-        .single()
-        .map(|dt| dt.to_rfc3339())
-        .unwrap_or_else(|| "1970-01-01T00:00:00Z".to_string())
+        .single().map_or_else(|| "1970-01-01T00:00:00Z".to_string(), |dt| dt.to_rfc3339())
 }
 
 /// Read a small/medium JSON-array file fully into memory. For multi-GB files
@@ -829,11 +831,7 @@ where
         buf.push(start_byte);
         // We expect each element to be an object or array. Track depth +
         // string state so we know when the element ends.
-        let mut depth: i32 = if start_byte == b'{' || start_byte == b'[' {
-            1
-        } else {
-            0
-        };
+        let mut depth: i32 = i32::from(start_byte == b'{' || start_byte == b'[');
         let mut in_string = start_byte == b'"';
         let mut escape = false;
 
@@ -885,7 +883,7 @@ where
     }
 }
 
-/// Patch user_settings.jsonl with overrides from user_gacha_settings.
+/// Patch `user_settings.jsonl` with overrides from `user_gacha_settings`.
 fn rewrite_user_settings(out_dir: &Path, overrides: &HashMap<String, (bool, bool)>) -> Result<()> {
     let path = out_dir.join("user_settings.jsonl");
     let f = File::open(&path)?;

@@ -400,9 +400,9 @@ impl TryFrom<u8> for Op {
     type Error = String;
     fn try_from(v: u8) -> Result<Self, Self::Error> {
         match v {
-            0 => Ok(Op::Deploy),
-            1 => Ok(Op::Retreat),
-            2 => Ok(Op::Skill),
+            0 => Ok(Self::Deploy),
+            1 => Ok(Self::Retreat),
+            2 => Ok(Self::Skill),
             _ => Err(format!("unknown op code: {v}")),
         }
     }
@@ -411,9 +411,9 @@ impl TryFrom<u8> for Op {
 impl std::fmt::Display for Op {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Op::Deploy => "deploy",
-            Op::Retreat => "retreat",
-            Op::Skill => "skill",
+            Self::Deploy => "deploy",
+            Self::Retreat => "retreat",
+            Self::Skill => "skill",
         })
     }
 }
@@ -431,10 +431,10 @@ impl TryFrom<u8> for Direction {
     type Error = String;
     fn try_from(v: u8) -> Result<Self, Self::Error> {
         match v {
-            0 => Ok(Direction::Up),
-            1 => Ok(Direction::Right),
-            2 => Ok(Direction::Down),
-            3 => Ok(Direction::Left),
+            0 => Ok(Self::Up),
+            1 => Ok(Self::Right),
+            2 => Ok(Self::Down),
+            3 => Ok(Self::Left),
             _ => Err(format!("unknown direction code: {v}")),
         }
     }
@@ -443,10 +443,10 @@ impl TryFrom<u8> for Direction {
 impl std::fmt::Display for Direction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Direction::Up => "up",
-            Direction::Right => "right",
-            Direction::Down => "down",
-            Direction::Left => "left",
+            Self::Up => "up",
+            Self::Right => "right",
+            Self::Down => "down",
+            Self::Left => "left",
         })
     }
 }
@@ -601,7 +601,7 @@ where
 /// Fetch the player's full state blob. Single authenticated call returning the
 /// raw JSON; callers extract whatever subset they need.
 ///
-/// Body of `{"platform": 1}` matches what ArkPRTS and the existing roster
+/// Body of `{"platform": 1}` matches what `ArkPRTS` and the existing roster
 /// refresh send. Response is large (often megabytes for endgame accounts);
 /// each call is independent of other sessions, so for many-players-at-once
 /// throughput spawn one task per player.
@@ -632,7 +632,7 @@ pub async fn sync_data(
 /// the player has a saved auto-deploy replay. Only these stages will return a
 /// real replay from [`get_battle_replay`]; everything else returns code 5516.
 ///
-/// Source of truth per OpenBachelorS / DoctoratePy server reimpls:
+/// Source of truth per `OpenBachelorS` / `DoctoratePy` server reimpls:
 /// - `user.dungeon.stages[*].hasBattleReplay == 1`     → `battle_type = "quest"`
 /// - `user.dungeon.campaignsV2[*].hasBattleReplay == 1` → `battle_type = "campaignV2"`
 pub fn saved_replay_targets(sync: &serde_json::Value) -> Vec<(String, String)> {

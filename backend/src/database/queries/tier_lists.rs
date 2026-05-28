@@ -497,7 +497,7 @@ pub async fn is_favorited(
     .await
 }
 
-/// Tier lists favorited by a user (active only; ignores is_listed so users can
+/// Tier lists favorited by a user (active only; ignores `is_listed` so users can
 /// still find lists they've favorited even if the owner unlists them).
 /// Ordered by most recently favorited first.
 pub async fn find_favorited_by_user(
@@ -570,7 +570,7 @@ pub async fn set_flair(
 
 pub async fn recompute_trending(pool: &PgPool, top_n: i64) -> Result<(), sqlx::Error> {
     // One query: refresh windowed counts + score for all lists
-    sqlx::query(r#"
+    sqlx::query(r"
         UPDATE tier_list_stats s SET
             views_last_24h = COALESCE(w.v24, 0),
             views_last_7d  = COALESCE(w.v7, 0),
@@ -593,11 +593,11 @@ pub async fn recompute_trending(pool: &PgPool, top_n: i64) -> Result<(), sqlx::E
             GROUP BY tier_list_id
         ) f ON f.tier_list_id = tl.id
         WHERE s.tier_list_id = tl.id AND tl.is_active = true
-    "#).execute(pool).await?;
+    ").execute(pool).await?;
 
     // Flip top-N active lists to is_trending = true, all others false.
     sqlx::query(
-        r#"
+        r"
         WITH ranked AS (
             SELECT s.tier_list_id,
                    RANK() OVER (ORDER BY s.trending_score DESC) AS rnk
@@ -611,7 +611,7 @@ pub async fn recompute_trending(pool: &PgPool, top_n: i64) -> Result<(), sqlx::E
              FROM ranked r WHERE r.tier_list_id = s.tier_list_id),
             false
         )
-    "#,
+    ",
     )
     .bind(top_n)
     .execute(pool)

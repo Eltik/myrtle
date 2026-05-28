@@ -28,31 +28,28 @@ async fn resolve_uid(
     auth: &MaybeAuthUser,
     uid_param: Option<&str>,
 ) -> Result<String, ApiError> {
-    match uid_param {
-        Some(uid) => {
-            let profile = users::find_by_uid(&state.db, uid)
-                .await?
-                .ok_or(ApiError::NotFound)?;
+    if let Some(uid) = uid_param {
+        let profile = users::find_by_uid(&state.db, uid)
+            .await?
+            .ok_or(ApiError::NotFound)?;
 
-            let is_own = auth
-                .0
-                .as_ref()
-                .and_then(|a| a.user_id.parse::<uuid::Uuid>().ok())
-                .is_some_and(|id| id == profile.id);
+        let is_own = auth
+            .0
+            .as_ref()
+            .and_then(|a| a.user_id.parse::<uuid::Uuid>().ok())
+            .is_some_and(|id| id == profile.id);
 
-            if !is_own && profile.public_profile != Some(true) {
-                return Err(ApiError::Forbidden);
-            }
-
-            Ok(profile.uid)
+        if !is_own && profile.public_profile != Some(true) {
+            return Err(ApiError::Forbidden);
         }
-        None => {
-            let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-            let user_uuid: uuid::Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-            let profile = users::find_by_id(&state.db, user_uuid)
-                .await?
-                .ok_or(ApiError::Unauthorized)?;
-            Ok(profile.uid)
-        }
+
+        Ok(profile.uid)
+    } else {
+        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+        let user_uuid: uuid::Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+        let profile = users::find_by_id(&state.db, user_uuid)
+            .await?
+            .ok_or(ApiError::Unauthorized)?;
+        Ok(profile.uid)
     }
 }

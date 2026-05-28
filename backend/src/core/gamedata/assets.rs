@@ -32,9 +32,9 @@ const ALL_KINDS: &[AssetKind] = &[
 pub struct AssetIndex {
     /// category -> name (stem without .png) -> relative path from assets root
     map: HashMap<AssetKind, HashMap<String, String>>,
-    /// char_id -> list of available suffixes (e.g. ["_1", "_1+", "_2", "_2b"])
+    /// `char_id` -> list of available suffixes (e.g. ["_1", "_1+", "_2", "_2b"])
     chararts: HashMap<String, Vec<String>>,
-    /// char_id -> list of skin art paths in skinpack/
+    /// `char_id` -> list of skin art paths in skinpack/
     skinpacks: HashMap<String, Vec<String>>,
     /// Audio file stem -> relative paths under `audio/audio/sound_beta_2/`.
     /// Battle SFX assets reference a logical path whose directory is flattened
@@ -119,7 +119,7 @@ impl AssetIndex {
             let portraits = idx.map.get_mut(&AssetKind::Portrait).unwrap();
             for entry in entries.flatten() {
                 if let Some(stem) = png_stem(&entry) {
-                    portraits.insert(stem.clone(), format!("/portraits/{}.png", stem));
+                    portraits.insert(stem.clone(), format!("/portraits/{stem}.png"));
                 }
             }
         }
@@ -204,7 +204,7 @@ impl AssetIndex {
     }
 
     pub fn path(&self, kind: AssetKind, name: &str) -> Option<&str> {
-        self.map.get(&kind)?.get(name).map(|s| s.as_str())
+        self.map.get(&kind)?.get(name).map(std::string::String::as_str)
     }
 
     pub fn portrait_path(&self, char_id: &str) -> Option<&str> {
@@ -244,7 +244,7 @@ impl AssetIndex {
     }
 
     pub fn charart_variants(&self, char_id: &str) -> Option<&[String]> {
-        self.chararts.get(char_id).map(|v| v.as_slice())
+        self.chararts.get(char_id).map(std::vec::Vec::as_slice)
     }
 
     pub fn has_charart(&self, char_id: &str) -> bool {
@@ -270,7 +270,7 @@ impl AssetIndex {
     }
 
     pub fn skinpack_paths(&self, char_id: &str) -> Option<&[String]> {
-        self.skinpacks.get(char_id).map(|v| v.as_slice())
+        self.skinpacks.get(char_id).map(std::vec::Vec::as_slice)
     }
 }
 

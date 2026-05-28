@@ -2,10 +2,10 @@
 //!
 //! Built once at gamedata load from stages + zones + activities.
 //! Stages are split into two pools:
-//!     - permanent: Mainline, MainlineActivity, MainlineRetro, Sidestory, Branchline, Campaign,
-//!       and any zone whose id starts with "permanent_sidestory".
-//!       MainlineActivity is treated as permanent because in the data it covers chapters that
-//!       are permanent campaign content (e.g. ch.15/16); the matching MainlineRetro zones are
+//!     - permanent: Mainline, `MainlineActivity`, `MainlineRetro`, Sidestory, Branchline, Campaign,
+//!       and any zone whose id starts with "`permanent_sidestory`".
+//!       `MainlineActivity` is treated as permanent because in the data it covers chapters that
+//!       are permanent campaign content (e.g. ch.15/16); the matching `MainlineRetro` zones are
 //!       currently empty, so the gameplay stages still live under the activity ID.
 //!     - event: Activity zones (subject to recency decay).
 //!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
@@ -31,7 +31,7 @@ pub struct UniverseEntry {
 pub struct EventEntry {
     pub stage_id: String,
     pub weight: f64,
-    /// Activity start_time (unix seconds), if resolvable. Used to skip events that
+    /// Activity `start_time` (unix seconds), if resolvable. Used to skip events that
     /// launched after a user's last sync so stale data isn't penalized.
     pub start_time: Option<i64>,
     pub end_time: Option<i64>,
@@ -96,13 +96,12 @@ impl StageUniverse {
                 }
 
                 let (start_time, end_time) = activity
-                    .map(|a| {
+                    .map_or((None, None), |a| {
                         (
                             (a.start_time > 0).then_some(a.start_time),
                             (a.end_time > 0).then_some(a.end_time),
                         )
-                    })
-                    .unwrap_or((None, None));
+                    });
 
                 event.push(EventEntry {
                     stage_id: stage.stage_id.clone(),
@@ -166,7 +165,7 @@ fn is_permanent(zone_id: &str, zone_type: &ZoneType) -> bool {
     )
 }
 
-fn zone_weight(zone_type: &ZoneType) -> Option<f64> {
+const fn zone_weight(zone_type: &ZoneType) -> Option<f64> {
     match zone_type {
         ZoneType::Mainline => Some(1.0),
         ZoneType::Sidestory | ZoneType::Branchline | ZoneType::MainlineRetro => Some(0.85),
@@ -176,7 +175,7 @@ fn zone_weight(zone_type: &ZoneType) -> Option<f64> {
     }
 }
 
-fn difficulty_multiplier(difficulty: &StageDifficulty) -> f64 {
+const fn difficulty_multiplier(difficulty: &StageDifficulty) -> f64 {
     match difficulty {
         StageDifficulty::Normal => 1.0,
         StageDifficulty::FourStar => 1.25,

@@ -124,12 +124,11 @@ fn score_infrastructure(building: &UserBuilding, building_data: &BuildingDataFil
     let mut max_level_sum: f64 = 0.0;
 
     for room in &building.rooms {
-        level_sum += room.level as f64;
+        level_sum += f64::from(room.level);
         let max_level = building_data
             .rooms
             .get(&room.room_type)
-            .map(|def| def.phases.len() as f64)
-            .unwrap_or(3.0);
+            .map_or(3.0, |def| def.phases.len() as f64);
         max_level_sum += max_level;
     }
 
@@ -156,7 +155,7 @@ fn score_infrastructure(building: &UserBuilding, building_data: &BuildingDataFil
     }
 
     let power_score = if power_consumed > 0 {
-        (power_generated as f64 / power_consumed as f64).min(1.0)
+        (f64::from(power_generated) / f64::from(power_consumed)).min(1.0)
     } else {
         1.0
     };
@@ -179,8 +178,7 @@ fn score_morale_sustainability(
                 building_data
                     .buffs
                     .get(b)
-                    .map(|buff| buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING")
-                    .unwrap_or(false)
+                    .is_some_and(|buff| buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING")
             })
         })
         .count();
@@ -195,13 +193,12 @@ fn score_morale_sustainability(
                 .rooms
                 .get(&r.room_type)
                 .and_then(|def| def.phases.get((r.level - 1) as usize))
-                .map(|p| p.max_stationed_num)
-                .unwrap_or(1)
+                .map_or(1, |p| p.max_stationed_num)
         })
         .sum();
 
     // Rotation depth: need 2x slots for shift rotation
-    let needed = (production_slots * 2) as f64;
+    let needed = f64::from(production_slots * 2);
     let rotation_score = if needed > 0.0 {
         (production_ops as f64 / needed).min(1.0)
     } else {
@@ -215,8 +212,7 @@ fn score_morale_sustainability(
             p.available_buffs.iter().any(|b| {
                 registry
                     .get(b)
-                    .map(|s| matches!(s, BuffResolutionStrategy::MoraleModifier { .. }))
-                    .unwrap_or(false)
+                    .is_some_and(|s| matches!(s, BuffResolutionStrategy::MoraleModifier { .. }))
             })
         })
         .count();
@@ -230,13 +226,12 @@ fn score_morale_sustainability(
                 .rooms
                 .get("DORMITORY")
                 .and_then(|def| def.phases.get((r.level - 1) as usize))
-                .map(|p| p.max_stationed_num)
-                .unwrap_or(5)
+                .map_or(5, |p| p.max_stationed_num)
         })
         .sum();
 
     let recovery_score = if dorm_slots > 0 {
-        (dorm_ops as f64 / dorm_slots as f64).min(1.0)
+        (dorm_ops as f64 / f64::from(dorm_slots)).min(1.0)
     } else {
         0.0
     };
@@ -260,8 +255,7 @@ fn score_secondary_facilities(
                     building_data
                         .buffs
                         .get(b)
-                        .map(|buff| buff.room_type == *room_type)
-                        .unwrap_or(false)
+                        .is_some_and(|buff| buff.room_type == *room_type)
                 })
             })
             .count();
@@ -311,8 +305,8 @@ fn score_production_flexibility(
         return 0.0;
     }
 
-    let max_side = gold_total.max(exp_total) as f64;
-    let min_side = gold_total.min(exp_total) as f64;
+    let max_side = f64::from(gold_total.max(exp_total));
+    let min_side = f64::from(gold_total.min(exp_total));
 
     if max_side > 0.0 {
         min_side / max_side

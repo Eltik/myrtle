@@ -49,15 +49,13 @@ impl Favor {
             .iter()
             .rev()
             .find(|f| f.level <= favor_point)
-            .map(|f| f.data.percent)
-            .unwrap_or(0.0)
+            .map_or(0.0, |f| f.data.percent)
     }
 
     /// Maximum trust percent defined by the table (typically 200.0).
     pub fn max_trust_pct(&self) -> f64 {
         self.favor_frames
             .last()
-            .map(|f| f.data.percent)
-            .unwrap_or(0.0)
+            .map_or(0.0, |f| f.data.percent)
     }
 }

@@ -30,7 +30,7 @@ fn merge_level_entry(
         if mv.defined {
             mv.value
         } else {
-            base_attrs.map(pick_base).unwrap_or(0)
+            base_attrs.map_or(0, pick_base)
         }
     };
     let pick_f64 = |mv: &crate::core::gamedata::types::enemy::MaybeValue<f64>,
@@ -39,7 +39,7 @@ fn merge_level_entry(
         if mv.defined {
             mv.value
         } else {
-            base_attrs.map(pick_base).unwrap_or(0.0)
+            base_attrs.map_or(0.0, pick_base)
         }
     };
     let pick_bool = |mv: &crate::core::gamedata::types::enemy::MaybeValue<bool>,
@@ -48,7 +48,7 @@ fn merge_level_entry(
         if mv.defined {
             mv.value
         } else {
-            base_attrs.map(pick_base).unwrap_or(false)
+            base_attrs.is_some_and(pick_base)
         }
     };
 
@@ -87,7 +87,7 @@ fn merge_level_entry(
     let life_point_reduce = if data.life_point_reduce.defined {
         data.life_point_reduce.value
     } else {
-        base.map(|l| l.life_point_reduce).unwrap_or(0)
+        base.map_or(0, |l| l.life_point_reduce)
     };
 
     // Skills are authored once at level 0 for nearly every enemy; higher

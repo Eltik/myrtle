@@ -1,12 +1,12 @@
 //! Medal game data types
 //!
-//! Contains types for parsing medal_table.json and storing processed medal data
+//! Contains types for parsing `medal_table.json` and storing processed medal data
 //! for use in user scoring calculations.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Root structure for medal_table.json
+/// Root structure for `medal_table.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MedalTableFile {
@@ -94,19 +94,19 @@ pub struct MedalGroup {
 /// Processed medal data for efficient lookups during scoring
 #[derive(Debug, Clone, Default)]
 pub struct MedalData {
-    /// All medals indexed by medal_id
+    /// All medals indexed by `medal_id`
     pub medals: HashMap<String, MedalDefinition>,
-    /// All medal groups indexed by group_id
+    /// All medal groups indexed by `group_id`
     pub groups: HashMap<String, MedalGroup>,
-    /// Medals organized by type/category (e.g., "playerMedal" -> vec of medal_ids)
+    /// Medals organized by type/category (e.g., "playerMedal" -> vec of `medal_ids`)
     pub medals_by_type: HashMap<String, Vec<String>>,
-    /// Medals organized by rarity (e.g., "T1" -> vec of medal_ids)
+    /// Medals organized by rarity (e.g., "T1" -> vec of `medal_ids`)
     pub medals_by_rarity: HashMap<String, Vec<String>>,
     /// Category display names (e.g., "playerMedal" -> "Records Medal")
     pub category_names: HashMap<String, String>,
-    /// medal_id -> group_id, populated for medals that belong to a group.
+    /// `medal_id` -> `group_id`, populated for medals that belong to a group.
     /// Activity medals are the only type the game groups; everything else
-    /// (player / story / camp / etc.) falls back to the medal's own ExpireTimes.
+    /// (player / story / camp / etc.) falls back to the medal's own `ExpireTimes`.
     pub medal_to_group: HashMap<String, String>,
 }
 
@@ -129,7 +129,7 @@ pub enum Obtainability {
 impl MedalData {
     /// Process raw medal table data into indexed structures
     pub fn from_table(table: MedalTableFile) -> Self {
-        let mut data = MedalData::default();
+        let mut data = Self::default();
 
         // Index all medals
         for medal in table.medal_list {
@@ -200,8 +200,7 @@ impl MedalData {
 
         let group = self.resolve_group(medal);
         let times: &[ExpireTime] = group
-            .map(|g| g.shared_expire_times.as_slice())
-            .unwrap_or(&medal.expire_times);
+            .map_or(&medal.expire_times, |g| g.shared_expire_times.as_slice());
 
         classify_expire_times(times, group.is_some(), now)
     }

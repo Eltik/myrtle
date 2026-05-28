@@ -33,11 +33,9 @@ impl DpsWatcherConfig {
             state_file: std::env::var("DPS_STATE_FILE")
                 .unwrap_or_else(|_| ".dps-updater-state.json".into()),
             auto_build: std::env::var("DPS_AUTO_BUILD")
-                .map(|v| v != "false" && v != "0")
-                .unwrap_or(true),
+                .map_or(true, |v| v != "false" && v != "0"),
             auto_restart: std::env::var("DPS_AUTO_RESTART")
-                .map(|v| v == "true" || v == "1")
-                .unwrap_or(false),
+                .is_ok_and(|v| v == "true" || v == "1"),
         })
     }
 }
@@ -271,12 +269,9 @@ async fn poll_loop(config: DpsWatcherConfig, state: AppState) {
 // ── Public API ──────────────────────────────────────────────────────────
 
 pub fn spawn(state: AppState) {
-    let config = match DpsWatcherConfig::from_env() {
-        Some(c) => c,
-        None => {
-            tracing::info!("DPS_POLL_INTERVAL not set, DPS auto-update disabled");
-            return;
-        }
+    let Some(config) = DpsWatcherConfig::from_env() else {
+        tracing::info!("DPS_POLL_INTERVAL not set, DPS auto-update disabled");
+        return;
     };
 
     // Verify local repo exists

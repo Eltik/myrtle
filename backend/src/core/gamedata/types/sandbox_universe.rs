@@ -26,8 +26,7 @@ impl SandboxUniverse {
             sandbox_data
                 .get(key)
                 .and_then(|v| v.as_array())
-                .map(|a| a.len())
-                .unwrap_or(0)
+                .map_or(0, std::vec::Vec::len)
         };
 
         Self {

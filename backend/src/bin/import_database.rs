@@ -1,4 +1,4 @@
-//! Import a JSONL export produced by `export-database` back into PostgreSQL.
+//! Import a JSONL export produced by `export-database` back into `PostgreSQL`.
 //!
 //! Usage:
 //!   cargo run --release --bin import-database -- --in <dir> [--truncate] [--batch-size N]
@@ -23,6 +23,9 @@
 //!     ON CONFLICT DO NOTHING-friendly).
 //!   - `--truncate` uses `TRUNCATE ... RESTART IDENTITY CASCADE` inside the
 //!     transaction so a failure rolls back to the pre-import state.
+
+// CLI tool: a long top-level `main` and an intentional sign-dropping cast are fine here.
+#![allow(clippy::too_many_lines, clippy::cast_sign_loss)]
 
 use anyhow::{Context, Result, bail};
 use backend::database::run_migrations;
@@ -117,12 +120,11 @@ async fn main() -> Result<()> {
                 // Single pass at the start: truncate every table, cascaded, in
                 // one statement so we don't fight FK ordering.
                 break;
-            } else {
-                bail!(
-                    "refusing to import: table {table} already has {count} rows. \
-                     Re-run with --truncate to replace existing data."
-                );
             }
+            bail!(
+                "refusing to import: table {table} already has {count} rows. \
+                 Re-run with --truncate to replace existing data."
+            );
         }
     }
 
@@ -261,9 +263,7 @@ fn verify_manifest_tables(manifest: &Manifest) -> Result<()> {
     let manifest_names: Vec<&str> = manifest.tables.iter().map(|t| t.name.as_str()).collect();
     if manifest_names != TABLES {
         bail!(
-            "manifest table list does not match current binary.\n  manifest: {:?}\n  expected: {:?}",
-            manifest_names,
-            TABLES
+            "manifest table list does not match current binary.\n  manifest: {manifest_names:?}\n  expected: {TABLES:?}"
         );
     }
     for entry in &manifest.tables {

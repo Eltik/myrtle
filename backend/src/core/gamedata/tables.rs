@@ -17,16 +17,16 @@ pub enum DataError {
 impl fmt::Display for DataError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DataError::Io(e) => write!(f, "IO error: {e}"),
-            DataError::Parse { table, error } => write!(f, "Failed to parse {table}: {error}"),
-            DataError::Missing { table } => write!(f, "Missing table: {table}"),
+            Self::Io(e) => write!(f, "IO error: {e}"),
+            Self::Parse { table, error } => write!(f, "Failed to parse {table}: {error}"),
+            Self::Missing { table } => write!(f, "Missing table: {table}"),
         }
     }
 }
 
 impl From<std::io::Error> for DataError {
     fn from(e: std::io::Error) -> Self {
-        DataError::Io(e)
+        Self::Io(e)
     }
 }
 
@@ -55,8 +55,8 @@ pub fn load_table<T: DeserializeOwned>(data_dir: &Path, table_name: &str) -> Res
 
 /// Replace unpaired UTF-16 surrogate escapes (`\uD800`-`\uDFFF` without a valid
 /// low-surrogate pair) with the Unicode replacement character escape `\uFFFD`.
-/// The upstream FlatBuffer JSON emitter occasionally writes lone surrogates,
-/// which serde_json rejects with "invalid unicode code point".
+/// The upstream `FlatBuffer` JSON emitter occasionally writes lone surrogates,
+/// which `serde_json` rejects with "invalid unicode code point".
 fn sanitize_lone_surrogates(input: &str) -> String {
     let bytes = input.as_bytes();
     let mut out = String::with_capacity(input.len());

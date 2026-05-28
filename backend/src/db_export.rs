@@ -1,7 +1,7 @@
 //! Shared table metadata for the `export-database` and `import-database` binaries.
 //!
 //! TABLES is the topological order dictated by FK constraints: parents first,
-//! children second, audit_log last. Export writes in this order; import replays
+//! children second, `audit_log` last. Export writes in this order; import replays
 //! it unchanged.
 
 pub const TABLES: &[&str] = &[

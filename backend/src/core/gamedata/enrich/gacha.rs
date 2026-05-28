@@ -1,19 +1,19 @@
 //! Decode the base64-wrapped BSON blobs that Yostar emits on each
 //! `GachaPoolClient` (in `LimitParam` and `DynMeta`) into structured
-//! lists of featured 5★/6★ char_ids.
+//! lists of featured 5★/6★ `char_ids`.
 //!
-//! The blobs are standard MongoDB BSON. Their shape varies by
+//! The blobs are standard `MongoDB` BSON. Their shape varies by
 //! `gacha_rule_type`:
 //!
-//! | Rule              | Field      | Where the char_ids live
+//! | Rule              | Field      | Where the `char_ids` live
 //! |-------------------|------------|----------------------------------------------------
-//! | LIMITED           | LimitParam | `limitedCharId` (one 6★)
-//! | CLASSIC           | DynMeta    | `main6RarityCharId` + `sub6RarityCharId`, `rare5CharList`
-//! | CLASSIC_DOUBLE    | DynMeta    | same as CLASSIC
-//! | CLASSIC_ATTAIN    | DynMeta    | `attainRare6CharList`
-//! | ATTAIN            | LimitParam | `attainRare6CharList`
-//! | FESCLASSIC        | DynMeta    | `rarityPickCharDict.TIER_5` + `TIER_6`
-//! | SPECIAL           | DynMeta    | same as FESCLASSIC
+//! | LIMITED           | `LimitParam` | `limitedCharId` (one 6★)
+//! | CLASSIC           | `DynMeta`    | `main6RarityCharId` + `sub6RarityCharId`, `rare5CharList`
+//! | `CLASSIC_DOUBLE`    | `DynMeta`    | same as CLASSIC
+//! | `CLASSIC_ATTAIN`    | `DynMeta`    | `attainRare6CharList`
+//! | ATTAIN            | `LimitParam` | `attainRare6CharList`
+//! | FESCLASSIC        | `DynMeta`    | `rarityPickCharDict.TIER_5` + `TIER_6`
+//! | SPECIAL           | `DynMeta`    | same as FESCLASSIC
 //! | LINKAGE / SINGLE / NORMAL / DOUBLE | (no blob - rate-ups come from elsewhere)
 //!
 //! Decoding is best-effort: a malformed blob never errors out, it just

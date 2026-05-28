@@ -13,7 +13,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
         } => {
             if *per_level {
                 // "+X% per level of each Dormitory" → per_unit_pct * total_dorm_levels
-                per_unit_pct * ctx.total_dorm_levels as f64
+                per_unit_pct * f64::from(ctx.total_dorm_levels)
             } else {
                 // "+X% per Power Plant" → per_unit_pct * count
                 let count = ctx
@@ -94,7 +94,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
                 .map(|t| t.order_limit_contribution)
                 .sum();
             // Only count positive CAP for threshold calculation
-            let effective_cap = total_cap.max(0) as f64;
+            let effective_cap = f64::from(total_cap.max(0));
             let thresholds_met = (effective_cap / per_cap_threshold).floor();
             (thresholds_met * bonus_per_threshold).min(*cap_pct)
         }
