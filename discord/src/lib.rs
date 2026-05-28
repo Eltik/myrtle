@@ -1,5 +1,5 @@
 // Poise requires command bodies, parent-command stubs, hooks, and checks to be
-// `async fn`s regardless of whether they await — opting out of this lint here
+// `async fn`s regardless of whether they await - opting out of this lint here
 // avoids littering the codebase with `#[allow]`s on every command/hook.
 #![allow(clippy::unused_async)]
 // Codebase convention: error/panic docs are omitted on internal helpers. The
@@ -14,6 +14,7 @@ pub mod api;
 pub mod checks;
 pub mod cmds;
 pub mod config;
+pub mod db;
 pub mod handler;
 pub mod hooks;
 pub mod types;

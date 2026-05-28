@@ -1,3 +1,4 @@
+use sqlx::SqlitePool;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 
@@ -7,6 +8,7 @@ pub struct Data {
     pub command_counter: Mutex<HashMap<String, u64>>,
     pub config: Config,
     pub http_client: reqwest::Client,
+    pub pool: SqlitePool,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

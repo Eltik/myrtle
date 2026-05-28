@@ -1,4 +1,4 @@
-use discord::{cmds, config::Config, handler, hooks, types::Data};
+use discord::{cmds, config::Config, db, handler, hooks, types::Data};
 use dotenvy::dotenv;
 use std::env;
 
@@ -17,6 +17,11 @@ async fn main() {
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let config = Config::load_default().expect("Failed to load config");
+    let database_url =
+        env::var("DATABASE_URL").unwrap_or_else(|_| db::DEFAULT_DATABASE_URL.to_string());
+    let pool = db::init_pool(&database_url)
+        .await
+        .expect("Failed to initialize database");
     let http_client = reqwest::Client::builder()
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
         .build()
@@ -67,6 +72,7 @@ async fn main() {
                     command_counter: Mutex::default(),
                     config,
                     http_client,
+                    pool,
                 })
             })
         })

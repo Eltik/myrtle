@@ -1,3 +1,4 @@
+use crate::db;
 use crate::types::{Context, Error};
 use ::serenity::model::user::User;
 use poise::CreateReply;
@@ -399,6 +400,93 @@ pub async fn kick_user(
             .ephemeral(true),
     )
     .await?;
+    Ok(())
+}
+
+/// Manage the role automatically granted to new members of this guild.
+///
+/// Subcommands: `set`, `clear`, `show`.
+/// Requires the Manage Roles permission.
+#[poise::command(
+    slash_command,
+    guild_only,
+    default_member_permissions = "MANAGE_ROLES",
+    subcommands("autorole_set", "autorole_clear", "autorole_show"),
+    subcommand_required
+)]
+pub async fn autorole(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Set the auto-role for this guild.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "set",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn autorole_set(
+    ctx: Context<'_>,
+    #[description = "Role to grant new members on join"] role: serenity::Role,
+) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    db::set_auto_role(&ctx.data().pool, guild, role.id)
+        .await
+        .map_err(|e| format!("Couldn't save auto-role: {e}"))?;
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Auto-role set to <@&{}>.", role.id))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Clear the auto-role for this guild.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "clear",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn autorole_clear(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    db::clear_auto_role(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't clear auto-role: {e}"))?;
+    ctx.send(
+        CreateReply::default()
+            .content("Auto-role cleared.")
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Show the current auto-role for this guild.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "show",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn autorole_show(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let content = match db::get_auto_role(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't read auto-role: {e}"))?
+    {
+        Some(role_id) => format!("Auto-role: <@&{role_id}>"),
+        None => "No auto-role configured.".to_string(),
+    };
+    ctx.send(CreateReply::default().content(content).ephemeral(true))
+        .await?;
     Ok(())
 }
 
