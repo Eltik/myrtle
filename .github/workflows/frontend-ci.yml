@@ -1,0 +1,195 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, v3]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: [main, v3]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+# Cancel in-progress runs for the same branch/PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned to the version in frontend/package.json "packageManager"
+  BUN_VERSION: "1.3.12"
+  # Disable telemetry / interactive prompts
+  CI: "true"
+  # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Lint + format (Biome)
+  # ──────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check formatting + lint
+        run: bun run check
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Type checking
+  # ──────────────────────────────────────────────────────────────────────────────
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bunx tsc --noEmit
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Tests (Vitest)
+  # ──────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # --passWithNoTests so the job stays green until the test suite exists
+      - name: Run tests
+        run: bunx vitest run --passWithNoTests
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Production build
+  # ──────────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Verify build output
+        run: |
+          test -d ".output/server" || { echo "::error::Missing .output/server"; exit 1; }
+          test -d ".output/public" || { echo "::error::Missing .output/public"; exit 1; }
+          test -f ".output/server/index.mjs" || { echo "::error::Missing server entry"; exit 1; }
+          echo "Build output verified"
+
+      - name: Upload build artifact
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
+        uses: actions/upload-artifact@v5
+        with:
+          name: frontend-build
+          path: frontend/.output
+          retention-days: 7
+          if-no-files-found: error
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Security audit (non-blocking)
+  # ──────────────────────────────────────────────────────────────────────────────
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Audit dependencies
+        run: bun audit || echo "::warning::Frontend audit found vulnerabilities"
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Final status
+  # ──────────────────────────────────────────────────────────────────────────────
+  ci-pass:
+    name: CI Pass
+    if: always()
+    needs: [lint, typecheck, test, build, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs
+        working-directory: ${{ github.workspace }}
+        run: |
+          results=(
+            "${{ needs.lint.result }}"
+            "${{ needs.typecheck.result }}"
+            "${{ needs.test.result }}"
+            "${{ needs.build.result }}"
+            "${{ needs.audit.result }}"
+          )
+          for result in "${results[@]}"; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "::error::Job failed with result: $result"
+              exit 1
+            fi
+          done
+          echo "All jobs passed!"

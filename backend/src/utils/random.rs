@@ -68,7 +68,7 @@ mod platform {
                 -1 => {
                     let errno = unsafe { *errno_ptr() };
                     match errno {
-                        4 => continue, // EINTR — retry
+                        4 => {} // EINTR — retry
                         _ => panic!("getrandom failed: errno {errno}"),
                     }
                 }
@@ -92,7 +92,7 @@ mod platform {
                 -1 => {
                     let errno = unsafe { *errno_ptr() };
                     match errno {
-                        4 => continue, // EINTR — retry
+                        4 => {} // EINTR — retry
                         _ => panic!("/dev/urandom read failed: errno {errno}"),
                     }
                 }
