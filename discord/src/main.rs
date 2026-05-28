@@ -1,11 +1,8 @@
-use discord::{cmds, handler, hooks, types::Data};
+use discord::{cmds, config::Config, handler, hooks, types::Data};
 use dotenvy::dotenv;
 use std::env;
 
-use serenity::{
-    all::{ClientBuilder, GuildId},
-    prelude::*,
-};
+use serenity::{all::ClientBuilder, prelude::*};
 
 #[tokio::main]
 async fn main() {
@@ -19,6 +16,7 @@ async fn main() {
         .init();
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    let config = Config::load_default().expect("Failed to load config");
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
@@ -45,16 +43,12 @@ async fn main() {
             Box::pin(async move {
                 let commands = &framework.options().commands;
 
-                let use_guild = std::env::var("USE_GUILD_COMMANDS")
-                    .is_ok_and(|v| matches!(v.trim().to_lowercase().as_str(), "true" | "1" | "yes"));
-
-                if use_guild {
-                    let guild_id = GuildId::new(
-                        std::env::var("GUILD_ID")
-                            .expect("GUILD_ID is required when USE_GUILD_COMMANDS=true")
-                            .parse::<u64>()
-                            .expect("GUILD_ID must be a valid u64"),
-                    );
+                if config.registration.use_guild_commands {
+                    // validate() guarantees guild_id is Some when use_guild_commands is true
+                    let guild_id = config
+                        .registration
+                        .guild_id
+                        .expect("guild_id validated at config load");
                     poise::builtins::register_in_guild(ctx, commands, guild_id).await?;
                     tracing::info!(
                         "Registered {} command(s) in guild {guild_id}",
@@ -67,6 +61,7 @@ async fn main() {
 
                 Ok(Data {
                     command_counter: Default::default(),
+                    config,
                 })
             })
         })
