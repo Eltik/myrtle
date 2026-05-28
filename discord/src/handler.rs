@@ -1,6 +1,9 @@
 use crate::types::{Data, Error};
 use poise::{FrameworkContext, serenity_prelude::FullEvent::Ready};
-use serenity::{all::prelude::Context, client::FullEvent::{self, GuildMemberAddition}};
+use serenity::{
+    all::prelude::Context,
+    client::FullEvent::{self, GuildMemberAddition},
+};
 
 pub async fn event_handler(
     ctx: &Context,
@@ -16,12 +19,14 @@ pub async fn event_handler(
         }
         GuildMemberAddition { new_member, .. } => {
             if let Some(role_id) = data.config.roles.auto_role_id
-                && let Err(e) = new_member.add_role(&ctx.http, role_id).await {
-                    tracing::error!(
-                        "Failed to add auto-role {role_id} to {} in {}: {e}",
-                        new_member.user.id, new_member.guild_id
-                    );
-                }
+                && let Err(e) = new_member.add_role(&ctx.http, role_id).await
+            {
+                tracing::error!(
+                    "Failed to add auto-role {role_id} to {} in {}: {e}",
+                    new_member.user.id,
+                    new_member.guild_id
+                );
+            }
         }
         // add more arms as needed: Message { .. }, GuildMemberAddition { .. }, etc.
         _ => {}

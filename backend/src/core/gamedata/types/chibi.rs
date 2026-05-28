@@ -152,7 +152,9 @@ impl ChibiData {
     }
 
     pub fn get_by_operator(&self, operator_code: &str) -> Option<&ChibiCharacter> {
-        self.by_operator.get(operator_code).map(std::convert::AsRef::as_ref)
+        self.by_operator
+            .get(operator_code)
+            .map(std::convert::AsRef::as_ref)
     }
 
     pub const fn is_loaded(&self) -> bool {

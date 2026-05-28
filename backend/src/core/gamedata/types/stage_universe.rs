@@ -95,13 +95,12 @@ impl StageUniverse {
                     continue;
                 }
 
-                let (start_time, end_time) = activity
-                    .map_or((None, None), |a| {
-                        (
-                            (a.start_time > 0).then_some(a.start_time),
-                            (a.end_time > 0).then_some(a.end_time),
-                        )
-                    });
+                let (start_time, end_time) = activity.map_or((None, None), |a| {
+                    (
+                        (a.start_time > 0).then_some(a.start_time),
+                        (a.end_time > 0).then_some(a.end_time),
+                    )
+                });
 
                 event.push(EventEntry {
                     stage_id: stage.stage_id.clone(),

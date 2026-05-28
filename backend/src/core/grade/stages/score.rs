@@ -70,7 +70,11 @@ pub async fn grade_stages_detail(
         .permanent
         .iter()
         .filter(|e| in_known(&e.stage_id))
-        .filter(|e| clears.get(&e.stage_id).is_some_and(super::types::StageClear::is_cleared))
+        .filter(|e| {
+            clears
+                .get(&e.stage_id)
+                .is_some_and(super::types::StageClear::is_cleared)
+        })
         .count();
     let permanent_three_starred = universe
         .permanent
@@ -98,7 +102,11 @@ pub async fn grade_stages_detail(
         .event
         .iter()
         .filter(|e| event_in_window(e))
-        .filter(|e| clears.get(&e.stage_id).is_some_and(super::types::StageClear::is_cleared))
+        .filter(|e| {
+            clears
+                .get(&e.stage_id)
+                .is_some_and(super::types::StageClear::is_cleared)
+        })
         .count();
     let event_three_starred = universe
         .event

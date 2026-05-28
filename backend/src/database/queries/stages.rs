@@ -73,7 +73,10 @@ pub async fn get_user_stage_clears(
 
     let mut clears = HashMap::with_capacity(obj.len());
     for (stage_id, entry) in obj {
-        let state = entry.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) as i16;
+        let state = entry
+            .get("state")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(0) as i16;
         let complete_times = entry
             .get("completeTimes")
             .and_then(serde_json::Value::as_i64)

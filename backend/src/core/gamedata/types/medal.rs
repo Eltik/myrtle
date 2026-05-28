@@ -199,8 +199,8 @@ impl MedalData {
         };
 
         let group = self.resolve_group(medal);
-        let times: &[ExpireTime] = group
-            .map_or(&medal.expire_times, |g| g.shared_expire_times.as_slice());
+        let times: &[ExpireTime] =
+            group.map_or(&medal.expire_times, |g| g.shared_expire_times.as_slice());
 
         classify_expire_times(times, group.is_some(), now)
     }

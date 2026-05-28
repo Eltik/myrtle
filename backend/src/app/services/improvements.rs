@@ -397,7 +397,12 @@ async fn build_roguelike_improvements(
             .and_then(|n| n.as_object())
             .map_or(-1, |obj| {
                 obj.iter()
-                    .filter(|(_, e)| e.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 2)
+                    .filter(|(_, e)| {
+                        e.get("state")
+                            .and_then(serde_json::Value::as_i64)
+                            .unwrap_or(0)
+                            >= 2
+                    })
                     .filter_map(|(grade_str, _)| grade_str.parse::<i32>().ok())
                     .max()
                     .unwrap_or(-1)
@@ -410,7 +415,12 @@ async fn build_roguelike_improvements(
                 .and_then(|b| b.as_object())
                 .map_or(0, |obj| {
                     obj.values()
-                        .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
+                        .filter(|v| {
+                            v.get("state")
+                                .and_then(serde_json::Value::as_i64)
+                                .unwrap_or(0)
+                                >= 1
+                        })
                         .count()
                 })
         };
@@ -518,7 +528,12 @@ async fn build_sandbox_improvements(
         .and_then(|n| n.as_object())
         .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
+                .filter(|v| {
+                    v.get("state")
+                        .and_then(serde_json::Value::as_i64)
+                        .unwrap_or(0)
+                        >= 1
+                })
                 .count()
         });
 
@@ -819,7 +834,11 @@ fn parse_skill_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
         return Vec::new();
     };
     arr.iter()
-        .filter_map(|m| m.get("mastery").and_then(serde_json::Value::as_i64).map(|v| v as i16))
+        .filter_map(|m| {
+            m.get("mastery")
+                .and_then(serde_json::Value::as_i64)
+                .map(|v| v as i16)
+        })
         .collect()
 }
 
@@ -931,7 +950,8 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
                 operator_id: id.clone(),
                 name: game_data
                     .operators
-                    .get(id).map_or_else(|| id.clone(), |o| o.name.clone()),
+                    .get(id)
+                    .map_or_else(|| id.clone(), |o| o.name.clone()),
             })
             .collect(),
     }

@@ -130,9 +130,7 @@ pub async fn fetch_and_store(
     let mut index: i64 = 1;
 
     loop {
-        let url = format!(
-            "{GACHA_API_URL}?key=ark&index={index}&size={PAGE_SIZE}"
-        );
+        let url = format!("{GACHA_API_URL}?key=ark&index={index}&size={PAGE_SIZE}");
 
         let response = state
             .http_client
@@ -661,8 +659,14 @@ pub async fn get_history(
     limit: u32,
     offset: u32,
 ) -> Result<Vec<GachaRecord>, ApiError> {
-    let records =
-        gacha::get_history(&state.db, user_id, rarity, i64::from(limit), i64::from(offset)).await?;
+    let records = gacha::get_history(
+        &state.db,
+        user_id,
+        rarity,
+        i64::from(limit),
+        i64::from(offset),
+    )
+    .await?;
     Ok(records)
 }
 

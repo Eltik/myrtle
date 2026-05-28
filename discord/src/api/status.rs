@@ -24,11 +24,7 @@ pub struct EndpointStatus {
 
 async fn check_endpoint(client: &Client, url: String) -> EndpointStatus {
     let start = Instant::now();
-    let result = client
-        .get(&url)
-        .timeout(CONFIG_TIMEOUT)
-        .send()
-        .await;
+    let result = client.get(&url).timeout(CONFIG_TIMEOUT).send().await;
 
     match result {
         Ok(response) => EndpointStatus {

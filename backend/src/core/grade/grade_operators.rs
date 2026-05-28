@@ -295,7 +295,11 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
 
         let remaining_skills = num_skills - m3_count;
         if remaining_skills > 0 {
-            let non_m3_mastery: f64 = levels.iter().filter(|&&m| m < 3).map(|&m| f64::from(m)).sum();
+            let non_m3_mastery: f64 = levels
+                .iter()
+                .filter(|&&m| m < 3)
+                .map(|&m| f64::from(m))
+                .sum();
             let remaining_max = remaining_skills as f64 * 3.0;
             let partial = (non_m3_mastery / remaining_max) * PARTIAL_BONUS;
             (base + partial).min(1.0)

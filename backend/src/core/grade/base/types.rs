@@ -23,8 +23,14 @@ impl UserBuilding {
                     .get("roomId")
                     .and_then(|v| v.as_str())
                     .unwrap_or_default();
-                let level = slot.get("level").and_then(serde_json::Value::as_i64).unwrap_or(0) as i32;
-                let state = slot.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0);
+                let level = slot
+                    .get("level")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(0) as i32;
+                let state = slot
+                    .get("state")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(0);
                 if state > 0 && level > 0 {
                     rooms.push(UserRoom {
                         slot_id: slot_id.clone(),

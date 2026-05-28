@@ -1,18 +1,21 @@
 use crate::types::{Context, Data, Error};
 use poise::CreateReply;
 
-pub async fn pre_command(_ctx: Context<'_>) {
-    // let name = ctx.command().qualified_name.clone();
-    // tracing::info!("Got command '{name}' from user '{}'", ctx.author().name);
+pub async fn pre_command(ctx: Context<'_>) {
+    let name = ctx.command().qualified_name.clone();
+    tracing::info!("Got command '{name}' from user '{}'", ctx.author().name);
 
-    // let mut counter = ctx.data().command_counter.lock().await;
-    // let entry = counter.entry(name).or_insert(0);
-    // *entry += 1;
-    // tracing::info!("Command used {} time(s)", *entry);
+    // Hold the lock only long enough to bump the counter, then log without it.
+    let mut counter = ctx.data().command_counter.lock().await;
+    let entry = counter.entry(name).or_insert(0);
+    *entry += 1;
+    let count = *entry;
+    drop(counter);
+    tracing::info!("Command used {count} time(s)");
 }
 
-pub async fn post_command(_ctx: Context<'_>) {
-    //tracing::info!("Finished command '{}'", ctx.command().qualified_name);
+pub async fn post_command(ctx: Context<'_>) {
+    tracing::info!("Finished command '{}'", ctx.command().qualified_name);
 }
 
 pub async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {

@@ -17,6 +17,10 @@ async fn main() {
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let config = Config::load_default().expect("Failed to load config");
+    let http_client = reqwest::Client::builder()
+        .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
+        .build()
+        .expect("Failed to build HTTP client");
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
@@ -60,8 +64,9 @@ async fn main() {
                 }
 
                 Ok(Data {
-                    command_counter: Default::default(),
+                    command_counter: Mutex::default(),
                     config,
+                    http_client,
                 })
             })
         })

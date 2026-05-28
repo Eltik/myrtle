@@ -1,7 +1,9 @@
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::{GlobalRole, Permission};
-use crate::database::models::tier_list::{TierList, TierListStats, TierListFlair, Tier, TierPlacement};
+use crate::database::models::tier_list::{
+    Tier, TierList, TierListFlair, TierListStats, TierPlacement,
+};
 use crate::database::queries::tier_lists as queries;
 use serde::Serialize;
 use std::str::FromStr;

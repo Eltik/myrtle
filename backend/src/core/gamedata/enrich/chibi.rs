@@ -90,7 +90,9 @@ fn get_or_create_skin<'a>(
         .skins
         .iter()
         .position(|s| s.name.eq_ignore_ascii_case(skin_name));
-    if let Some(i) = idx { &mut character.skins[i] } else {
+    if let Some(i) = idx {
+        &mut character.skins[i]
+    } else {
         character.skins.push(ChibiSkin {
             name: skin_name.to_owned(),
             path: base_path.to_owned(),
@@ -286,7 +288,9 @@ fn resolve_dyn_illust_skins(
 
         let priority = if stem.starts_with("dyn_illust_") {
             2
-        } else { i32::from(stem.starts_with("dyn_portrait_")) };
+        } else {
+            i32::from(stem.starts_with("dyn_portrait_"))
+        };
 
         match by_skin.get(&skin_name) {
             Some((existing, _)) if *existing >= priority => {}

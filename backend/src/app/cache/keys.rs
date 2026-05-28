@@ -75,7 +75,8 @@ impl CacheKey<'_> {
                 offset,
             } => {
                 let srv = server.unwrap_or("all");
-                let mv = movement_interval.map_or_else(|| "none".to_owned(), |s| s.replace(' ', "_"));
+                let mv =
+                    movement_interval.map_or_else(|| "none".to_owned(), |s| s.replace(' ', "_"));
                 let mo = if *movement_only { "only" } else { "all" };
                 let qk = q.unwrap_or("");
                 format!("leaderboard:{sort}:{srv}:{mv}:{mo}:{qk}:{limit}:{offset}")
@@ -116,7 +117,7 @@ impl CacheKey<'_> {
     pub const fn ttl(&self) -> Duration {
         match self {
             CacheKey::User { .. } => Duration::from_mins(10), // 10 min
-            CacheKey::Stats => Duration::from_mins(5),       // 5 min
+            CacheKey::Stats => Duration::from_mins(5),        // 5 min
             CacheKey::StaticData { .. } => Duration::from_mins(30), // 30 min
             CacheKey::Leaderboard { .. } => Duration::from_mins(5), // 5 min
             CacheKey::Search { .. } => Duration::from_mins(2), // 2 min

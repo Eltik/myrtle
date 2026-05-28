@@ -49,22 +49,24 @@ async fn main() {
         .expect("failed to initialize database");
 
     // Cache (Redis or in-memory fallback)
-    let cache = if let Ok(url) = std::env::var("REDIS_URL") { match redis::Client::open(url) {
-        Ok(client) => match redis::aio::ConnectionManager::new(client).await {
-            Ok(conn) => {
-                info!("connected to Redis");
-                CacheStore::new_redis(conn)
-            }
+    let cache = if let Ok(url) = std::env::var("REDIS_URL") {
+        match redis::Client::open(url) {
+            Ok(client) => match redis::aio::ConnectionManager::new(client).await {
+                Ok(conn) => {
+                    info!("connected to Redis");
+                    CacheStore::new_redis(conn)
+                }
+                Err(e) => {
+                    warn!(error = %e, "Redis unavailable, falling back to in-memory cache");
+                    CacheStore::new_memory()
+                }
+            },
             Err(e) => {
-                warn!(error = %e, "Redis unavailable, falling back to in-memory cache");
+                warn!(error = %e, "invalid REDIS_URL, falling back to in-memory cache");
                 CacheStore::new_memory()
             }
-        },
-        Err(e) => {
-            warn!(error = %e, "invalid REDIS_URL, falling back to in-memory cache");
-            CacheStore::new_memory()
         }
-    } } else {
+    } else {
         info!("REDIS_URL not set, using in-memory cache");
         CacheStore::new_memory()
     };

@@ -575,10 +575,15 @@ fn main() -> Result<()> {
             let calculated_at = score
                 .get("grade")
                 .and_then(|g| g.get("calculatedAt"))
-                .and_then(serde_json::Value::as_i64).map_or_else(|| {
-                    obj.get("updated_at")
-                        .and_then(|v| v.as_str()).map_or_else(|| "1970-01-01T00:00:00Z".to_string(), String::from)
-                }, epoch_to_iso);
+                .and_then(serde_json::Value::as_i64)
+                .map_or_else(
+                    || {
+                        obj.get("updated_at")
+                            .and_then(|v| v.as_str())
+                            .map_or_else(|| "1970-01-01T00:00:00Z".to_string(), String::from)
+                    },
+                    epoch_to_iso,
+                );
             tables.get_mut("user_scores").unwrap().write(&json!({
                 "user_id": id,
                 "total_score": score.get("totalScore").and_then(serde_json::Value::as_f64).unwrap_or(0.0),
@@ -767,7 +772,8 @@ fn epoch_to_iso(secs: i64) -> String {
     use chrono::TimeZone;
     chrono::Utc
         .timestamp_opt(secs, 0)
-        .single().map_or_else(|| "1970-01-01T00:00:00Z".to_string(), |dt| dt.to_rfc3339())
+        .single()
+        .map_or_else(|| "1970-01-01T00:00:00Z".to_string(), |dt| dt.to_rfc3339())
 }
 
 /// Read a small/medium JSON-array file fully into memory. For multi-GB files

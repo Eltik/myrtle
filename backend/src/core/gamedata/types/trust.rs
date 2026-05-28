@@ -54,8 +54,6 @@ impl Favor {
 
     /// Maximum trust percent defined by the table (typically 200.0).
     pub fn max_trust_pct(&self) -> f64 {
-        self.favor_frames
-            .last()
-            .map_or(0.0, |f| f.data.percent)
+        self.favor_frames.last().map_or(0.0, |f| f.data.percent)
     }
 }

@@ -28,7 +28,8 @@ where
                         field: field.to_string(),
                         message: err
                             .message
-                            .as_ref().map_or_else(|| err.code.to_string(), std::string::ToString::to_string),
+                            .as_ref()
+                            .map_or_else(|| err.code.to_string(), std::string::ToString::to_string),
                     })
                 })
                 .collect();
