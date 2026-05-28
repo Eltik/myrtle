@@ -3,7 +3,7 @@ use crate::types::{Data, Error};
 pub mod admin;
 pub mod general;
 
-#[must_use] 
+#[must_use]
 pub fn all() -> Vec<poise::Command<Data, Error>> {
     vec![
         general::ping(),
@@ -11,5 +11,6 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         admin::embed(),
         admin::ban_user(),
         admin::unban_user(),
+        admin::kick_user(),
     ]
 }

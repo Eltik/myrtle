@@ -1,9 +1,10 @@
-use std::{env, time::Instant};
+use std::time::Instant;
 
 use reqwest::Client;
 use serde::Serialize;
 
 use crate::api::CONFIG_TIMEOUT;
+use crate::config::EndpointsConfig;
 
 #[derive(Debug, Serialize)]
 pub struct StatusResponse {
@@ -45,23 +46,18 @@ async fn check_endpoint(client: &Client, url: String) -> EndpointStatus {
     }
 }
 
-pub async fn status(client: &Client) -> Result<StatusResponse, env::VarError> {
-    let local_backend = env::var("LOCAL_BACKEND")?;
-    let local_frontend = env::var("LOCAL_FRONTEND")?;
-    let public_backend = env::var("PUBLIC_BACKEND")?;
-    let public_frontend = env::var("PUBLIC_FRONTEND")?;
-
+pub async fn status(client: &Client, endpoints: &EndpointsConfig) -> StatusResponse {
     let (lb, lf, pb, pf) = tokio::join!(
-        check_endpoint(client, local_backend),
-        check_endpoint(client, local_frontend),
-        check_endpoint(client, public_backend),
-        check_endpoint(client, public_frontend),
+        check_endpoint(client, endpoints.local_backend.clone()),
+        check_endpoint(client, endpoints.local_frontend.clone()),
+        check_endpoint(client, endpoints.public_backend.clone()),
+        check_endpoint(client, endpoints.public_frontend.clone()),
     );
 
-    Ok(StatusResponse {
+    StatusResponse {
         local_backend: lb,
         local_frontend: lf,
         public_backend: pb,
         public_frontend: pf,
-    })
+    }
 }

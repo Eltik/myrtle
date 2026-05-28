@@ -354,6 +354,54 @@ pub async fn unban_user(
     Ok(())
 }
 
+/// Kick a user from the guild.
+///
+/// Kicks an user from the guild. Requires the `KICK_MEMBERS`
+/// permission.
+#[poise::command(
+    slash_command,
+    guild_only,
+    default_member_permissions = "KICK_MEMBERS",
+    required_permissions = "KICK_MEMBERS"
+)]
+pub async fn kick_user(
+    ctx: Context<'_>,
+    #[description = "User to kick"] user: User,
+    #[description = "Reason for the kick"] reason: Option<String>,
+) -> Result<(), Error> {
+    let guild = ctx.guild_id().ok_or("This command must be used in a guild.")?;
+
+    if user.id == ctx.author().id {
+        return Err("You can't kick yourself.".into());
+    }
+    if user.id == ctx.framework().bot_id {
+        return Err("I can't kick myself.".into());
+    }
+
+    match reason.as_deref() {
+        Some(r) => guild
+            .kick_with_reason(ctx.http(), user.id, r)
+            .await
+            .map_err(|e| format!("Couldn't kick {}: {e}", user.tag()))?,
+        None => guild
+            .kick(ctx.http(), user.id)
+            .await
+            .map_err(|e| format!("Couldn't kick {}: {e}", user.tag()))?,
+    }
+
+    let suffix = reason
+        .as_deref()
+        .map(|r| format!(" Reason: {r}"))
+        .unwrap_or_default();
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Kicked {} ({}).{suffix}", user.tag(), user.id))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
 /// Optional embed fields collected from a slash command invocation.
 ///
 /// Packaging these as one nominal type keeps `apply_fields` from monomorphizing
