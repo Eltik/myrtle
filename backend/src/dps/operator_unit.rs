@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use crate::core::gamedata::types::{enemy::Enemy, operator::OperatorModule};
 
 use super::operator_data::OperatorData;
@@ -124,30 +126,30 @@ impl OperatorUnit {
 
         // Get conditionals with defaults
         let conditionals = params.conditionals.as_ref();
-        let trait_damage = if !all_cond {
-            false
-        } else {
+        let trait_damage = if all_cond {
             conditionals.and_then(|c| c.trait_damage).unwrap_or(true)
-        };
-        let talent_damage = if !all_cond {
-            false
         } else {
+            false
+        };
+        let talent_damage = if all_cond {
             conditionals.and_then(|c| c.talent_damage).unwrap_or(true)
-        };
-        let talent2_damage = if !all_cond {
-            false
         } else {
+            false
+        };
+        let talent2_damage = if all_cond {
             conditionals.and_then(|c| c.talent2_damage).unwrap_or(true)
-        };
-        let skill_damage = if !all_cond {
-            false
         } else {
+            false
+        };
+        let skill_damage = if all_cond {
             conditionals.and_then(|c| c.skill_damage).unwrap_or(true)
-        };
-        let module_damage = if !all_cond {
-            false
         } else {
+            false
+        };
+        let module_damage = if all_cond {
             conditionals.and_then(|c| c.module_damage).unwrap_or(true)
+        } else {
+            false
         };
 
         // Set attack interval
@@ -205,8 +207,7 @@ impl OperatorUnit {
                 .data
                 .id
                 .as_deref()
-                .map(|id| id == "char_002_amiya")
-                .unwrap_or(false);
+                .is_some_and(|id| id == "char_002_amiya");
 
             // For E1 or < 6-star with S3 selected, limit to S2 max (1-indexed: 3 -> 2)
             if !is_amiya && (elite == 1 || (rarity < 6 && skill_index == 3)) {
@@ -221,7 +222,7 @@ impl OperatorUnit {
 
             // For E0, only S1 available (1-indexed: 1)
             if elite == 0 && skill_index >= 1 {
-                skill_index = if skills_len >= 1 { 1 } else { 0 };
+                skill_index = i32::from(skills_len >= 1);
             }
         }
 
@@ -329,22 +330,22 @@ impl OperatorUnit {
         let mut attack_speed: f64 = 100.0;
 
         // Calculate ATK based on elite level
-        let max_level_for_elite_f64 = MAX_LEVELS[elite as usize][(rarity - 1) as usize] as f64;
+        let max_level_for_elite_f64 = f64::from(MAX_LEVELS[elite as usize][(rarity - 1) as usize]);
         let mut atk = match elite {
             0 => {
-                let min = operator_data.atk.e0.min as f64;
-                let max = operator_data.atk.e0.max as f64;
-                min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
+                let min = f64::from(operator_data.atk.e0.min);
+                let max = f64::from(operator_data.atk.e0.max);
+                min + ((max - min) * (f64::from(level) - 1.0)) / (max_level_for_elite_f64 - 1.0)
             }
             1 => {
-                let min = operator_data.atk.e1.min as f64;
-                let max = operator_data.atk.e1.max as f64;
-                min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
+                let min = f64::from(operator_data.atk.e1.min);
+                let max = f64::from(operator_data.atk.e1.max);
+                min + ((max - min) * (f64::from(level) - 1.0)) / (max_level_for_elite_f64 - 1.0)
             }
             2 => {
-                let min = operator_data.atk.e2.min as f64;
-                let max = operator_data.atk.e2.max as f64;
-                min + ((max - min) * (level as f64 - 1.0)) / (max_level_for_elite_f64 - 1.0)
+                let min = f64::from(operator_data.atk.e2.min);
+                let max = f64::from(operator_data.atk.e2.max);
+                min + ((max - min) * (f64::from(level) - 1.0)) / (max_level_for_elite_f64 - 1.0)
             }
             _ => 0.0,
         };
@@ -355,7 +356,7 @@ impl OperatorUnit {
         }
 
         // Apply trust ATK bonus
-        atk += (operator_data.atk_trust * trust as f64) / 100.0;
+        atk += (operator_data.atk_trust * f64::from(trust)) / 100.0;
 
         // Apply potential ASPD bonus
         if potential >= operator_data.aspd_potential.required_potential {
@@ -363,7 +364,7 @@ impl OperatorUnit {
         }
 
         // Apply trust ASPD bonus
-        attack_speed += (operator_data.aspd_trust * trust as f64) / 100.0;
+        attack_speed += (operator_data.aspd_trust * f64::from(trust)) / 100.0;
 
         // Apply module bonuses
         if elite == 2
@@ -376,15 +377,13 @@ impl OperatorUnit {
                 .atk_module
                 .iter()
                 .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
-                .map(|m| m.value)
-                .unwrap_or(0);
+                .map_or(0, |m| m.value);
 
             let module_aspd = operator_data
                 .aspd_module
                 .iter()
                 .find(|m| m.module_id == module_id && m.level as i32 == operator_module_level)
-                .map(|m| m.value)
-                .unwrap_or(0);
+                .map_or(0, |m| m.value);
 
             atk += module_atk as f64;
             attack_speed += module_aspd as f64;
@@ -430,7 +429,7 @@ impl OperatorUnit {
         // Python resolves: required_module = available_modules[req_module-1]
         // and checks: module == required_module
         // We match this by comparing module_sequential against talent's required_module_id.
-        let op_module_seq = format!("{}", module_sequential);
+        let op_module_seq = format!("{module_sequential}");
         let mut talent1_parameters = operator_data.talent1_defaults.clone();
         if !operator_data.talent1_parameters.is_empty() {
             let mut current_promo = 0;
@@ -568,30 +567,30 @@ impl OperatorUnit {
             if let Some(selected_drone) = operator_data.drone_atk.get(capped_slot) {
                 drone_atk = match elite {
                     0 => {
-                        let min = selected_drone.e0.min as f64;
-                        let max = selected_drone.e0.max as f64;
+                        let min = f64::from(selected_drone.e0.min);
+                        let max = f64::from(selected_drone.e0.max);
                         if max_level_for_elite_f64 > 1.0 {
-                            min + ((max - min) * (level as f64 - 1.0))
+                            min + ((max - min) * (f64::from(level) - 1.0))
                                 / (max_level_for_elite_f64 - 1.0)
                         } else {
                             max
                         }
                     }
                     1 => {
-                        let min = selected_drone.e1.min as f64;
-                        let max = selected_drone.e1.max as f64;
+                        let min = f64::from(selected_drone.e1.min);
+                        let max = f64::from(selected_drone.e1.max);
                         if max_level_for_elite_f64 > 1.0 {
-                            min + ((max - min) * (level as f64 - 1.0))
+                            min + ((max - min) * (f64::from(level) - 1.0))
                                 / (max_level_for_elite_f64 - 1.0)
                         } else {
                             max
                         }
                     }
                     2 => {
-                        let min = selected_drone.e2.min as f64;
-                        let max = selected_drone.e2.max as f64;
+                        let min = f64::from(selected_drone.e2.min);
+                        let max = f64::from(selected_drone.e2.max);
                         if max_level_for_elite_f64 > 1.0 {
-                            min + ((max - min) * (level as f64 - 1.0))
+                            min + ((max - min) * (f64::from(level) - 1.0))
                                 / (max_level_for_elite_f64 - 1.0)
                         } else {
                             max
@@ -603,50 +602,50 @@ impl OperatorUnit {
         }
 
         // Apply base buffs
-        let base_atk = params.base_buffs.atk.unwrap_or(1.0) as f64;
-        let base_atk_flat = params.base_buffs.flat_atk.unwrap_or(0) as f64;
+        let base_atk = f64::from(params.base_buffs.atk.unwrap_or(1.0));
+        let base_atk_flat = f64::from(params.base_buffs.flat_atk.unwrap_or(0));
         atk = atk * base_atk + base_atk_flat;
 
         // Build buff name
         let mut buff_name = String::new();
 
         if base_atk > 1.0 {
-            buff_name += &format!(" bAtk+{:.0}%", 100.0 * base_atk);
+            write!(buff_name, " bAtk+{:.0}%", 100.0 * base_atk).unwrap();
         } else if base_atk < 1.0 {
-            buff_name += &format!(" bAtk{:.0}%", 100.0 * base_atk);
+            write!(buff_name, " bAtk{:.0}%", 100.0 * base_atk).unwrap();
         }
 
-        let buff_atk = params.buffs.atk.unwrap_or(0.0) as f64;
+        let buff_atk = f64::from(params.buffs.atk.unwrap_or(0.0));
         if buff_atk > 1.0 {
-            buff_name += &format!(" atk+{:.0}%", 100.0 * buff_atk);
+            write!(buff_name, " atk+{:.0}%", 100.0 * buff_atk).unwrap();
         } else if buff_atk < 1.0 && buff_atk != 0.0 {
-            buff_name += &format!(" atk{:.0}%", 100.0 * buff_atk);
+            write!(buff_name, " atk{:.0}%", 100.0 * buff_atk).unwrap();
         }
 
-        let buffs_aspd = params.buffs.aspd.unwrap_or(0) as f64;
+        let buffs_aspd = f64::from(params.buffs.aspd.unwrap_or(0));
         attack_speed += buffs_aspd;
         if buffs_aspd > 1.0 {
-            buff_name += &format!(" aspd+{:.0}%", 100.0 * buffs_aspd);
+            write!(buff_name, " aspd+{:.0}%", 100.0 * buffs_aspd).unwrap();
         } else if buffs_aspd < 1.0 && buffs_aspd != 0.0 {
-            buff_name += &format!(" aspd{:.0}%", 100.0 * buffs_aspd);
+            write!(buff_name, " aspd{:.0}%", 100.0 * buffs_aspd).unwrap();
         }
 
-        let buff_atk_flat = params.buffs.flat_atk.unwrap_or(0) as f64;
+        let buff_atk_flat = f64::from(params.buffs.flat_atk.unwrap_or(0));
         if buff_atk_flat > 0.0 {
-            buff_name += &format!(" atk+{buff_atk_flat:.0}");
+            write!(buff_name, " atk+{buff_atk_flat:.0}").unwrap();
         } else if buff_atk_flat < 0.0 {
-            buff_name += &format!(" atk{buff_atk_flat:.0}");
+            write!(buff_name, " atk{buff_atk_flat:.0}").unwrap();
         }
 
-        let buff_fragile = params.buffs.fragile.unwrap_or(0.0) as f64;
+        let buff_fragile = f64::from(params.buffs.fragile.unwrap_or(0.0));
         if buff_fragile > 1.0 {
-            buff_name += &format!(" dmg+{:.0}%", 100.0 * buff_fragile);
+            write!(buff_name, " dmg+{:.0}%", 100.0 * buff_fragile).unwrap();
         } else if buff_fragile < 1.0 && buff_fragile != 0.0 {
-            buff_name += &format!(" dmg{:.0}%", 100.0 * buff_fragile);
+            write!(buff_name, " dmg{:.0}%", 100.0 * buff_fragile).unwrap();
         }
 
         if sp_boost > 0.0 {
-            buff_name += &format!(" +{sp_boost:.0}SP/s");
+            write!(buff_name, " +{sp_boost:.0}SP/s").unwrap();
         }
 
         // Calculate shred values from params
@@ -661,23 +660,23 @@ impl OperatorUnit {
 
                 // Build buff name for display
                 if def_percent != 0 {
-                    buff_name += &format!(" -{def_percent}%def");
+                    write!(buff_name, " -{def_percent}%def").unwrap();
                 }
                 if def_flat != 0 {
-                    buff_name += &format!(" -{def_flat}def");
+                    write!(buff_name, " -{def_flat}def").unwrap();
                 }
                 if res_percent != 0 {
-                    buff_name += &format!(" -{res_percent}%res");
+                    write!(buff_name, " -{res_percent}%res").unwrap();
                 }
                 if res_flat != 0 {
-                    buff_name += &format!(" -{res_flat}res");
+                    write!(buff_name, " -{res_flat}res").unwrap();
                 }
 
                 // Convert percentage to multiplier: 40% shred = 0.6 multiplier
-                let def_mult = 1.0 - (def_percent as f64 / 100.0);
-                let res_mult = 1.0 - (res_percent as f64 / 100.0);
+                let def_mult = 1.0 - (f64::from(def_percent) / 100.0);
+                let res_mult = 1.0 - (f64::from(res_percent) / 100.0);
 
-                (def_mult, def_flat as f64, res_mult, res_flat as f64)
+                (def_mult, f64::from(def_flat), res_mult, f64::from(res_flat))
             } else {
                 // Default: no shred applied (1.0 multiplier, 0 flat)
                 (1.0, 0.0, 1.0, 0.0)
@@ -781,19 +780,19 @@ impl OperatorUnit {
     ) -> f64 {
         let default_buffs = ExtraBuffs::default();
         let extra = extra_buffs.unwrap_or(&default_buffs);
-        let hits = hits.unwrap_or(1) as f64;
-        let aoe = aoe.unwrap_or(1) as f64;
+        let hits = f64::from(hits.unwrap_or(1));
+        let aoe = f64::from(aoe.unwrap_or(1));
 
         let final_atk =
             self.atk * (1.0 + extra.atk + self.buff_atk) + extra.flat_atk + self.buff_atk_flat;
 
-        let hit_dmg = if !self.is_physical {
-            (final_atk * (1.0 - enemy.res / 100.0)).max(final_atk * 0.05)
-        } else {
+        let hit_dmg = if self.is_physical {
             (final_atk - enemy.defense).max(final_atk * 0.05)
+        } else {
+            (final_atk * (1.0 - enemy.res / 100.0)).max(final_atk * 0.05)
         };
 
-        ((hits * hit_dmg) / self.attack_interval as f64)
+        ((hits * hit_dmg) / f64::from(self.attack_interval))
             * ((self.attack_speed + extra.aspd) / 100.0)
             * aoe
     }
@@ -823,10 +822,10 @@ impl OperatorUnit {
             self.skill_index = tmp;
 
             let cycle_dmg = skill_dps * self.skill_duration
-                + (off_skill_dps * self.skill_cost as f64) / (1.0 + self.sp_boost as f64);
+                + (off_skill_dps * f64::from(self.skill_cost)) / (1.0 + f64::from(self.sp_boost));
 
             cycle_dmg
-                / (self.skill_duration + self.skill_cost as f64 / (1.0 + self.sp_boost as f64))
+                / (self.skill_duration + f64::from(self.skill_cost) / (1.0 + f64::from(self.sp_boost)))
         }
     }
 }
@@ -843,10 +842,10 @@ pub trait DpsCalculator {
     /// Calculate DPS against the given enemy stats
     fn skill_dps(&self, enemy: &EnemyStats) -> f64;
 
-    /// Get a reference to the underlying OperatorUnit
+    /// Get a reference to the underlying `OperatorUnit`
     fn unit(&self) -> &OperatorUnit;
 
-    /// Get a mutable reference to the underlying OperatorUnit
+    /// Get a mutable reference to the underlying `OperatorUnit`
     fn unit_mut(&mut self) -> &mut OperatorUnit;
 }
 

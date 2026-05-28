@@ -48,7 +48,7 @@ pub struct GameUser {
 #[serde(rename_all = "camelCase")]
 pub struct Social {
     /// Up to 3 entries (some may be `null` for empty slots) — references
-    /// troop slots by `charInstId`. Resolved to operator_id in
+    /// troop slots by `charInstId`. Resolved to `operator_id` in
     /// `extract_supports`.
     pub assist_char_list: Option<Vec<Option<AssistChar>>>,
 }
@@ -467,7 +467,7 @@ fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
                         "operator_id": form_id,
                         "module_id": module_id,
                         "module_level": entry.level.unwrap_or(0),
-                        "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+                        "locked": entry.locked.is_some_and(|l| l != 0),
                     }));
                 }
             }
@@ -486,7 +486,7 @@ fn extract_modules(troop: &Option<Troop>) -> serde_json::Value {
                 "operator_id": char_id,
                 "module_id": module_id,
                 "module_level": entry.level.unwrap_or(0),
-                "locked": entry.locked.map(|l| l != 0).unwrap_or(false),
+                "locked": entry.locked.is_some_and(|l| l != 0),
             }));
         }
     }
@@ -576,8 +576,8 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
             // Field-by-field so a non-int `val` (multi-condition medals are
             // arrays like [[achieved, required], ...]) doesn't blow up parsing.
             let val = data.get("val").cloned().unwrap_or(serde_json::Value::Null);
-            let fts = data.get("fts").and_then(|v| v.as_i64()).unwrap_or(0);
-            let rts = data.get("rts").and_then(|v| v.as_i64()).unwrap_or(0);
+            let fts = data.get("fts").and_then(serde_json::Value::as_i64).unwrap_or(0);
+            let rts = data.get("rts").and_then(serde_json::Value::as_i64).unwrap_or(0);
 
             if !is_medal_earned(&val, fts, rts) {
                 return None;

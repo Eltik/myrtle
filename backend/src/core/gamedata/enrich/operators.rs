@@ -114,8 +114,7 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
     let handbook_id = ctx
         .tmpl_groups
         .get(id)
-        .map(|info| info.default.as_str())
-        .unwrap_or(id);
+        .map_or(id, |info| info.default.as_str());
     let (handbook_item, profile) = get_handbook_and_profile(handbook_id, ctx.handbook);
     let artists = get_artists(id, ctx.skins);
 

@@ -67,7 +67,7 @@ pub struct AudioSound {
     pub urls: Vec<String>,
 }
 
-/// A single operator-linked SoundFX bank, resolved to playable URLs.
+/// A single operator-linked `SoundFX` bank, resolved to playable URLs.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorAudio {

@@ -13,7 +13,7 @@ pub fn validate_hex_color(value: Option<&str>) -> Result<(), ApiError> {
     let Some(color) = value else { return Ok(()) };
     let bytes = color.as_bytes();
     let valid =
-        bytes.len() == 7 && bytes[0] == b'#' && bytes[1..].iter().all(|b| b.is_ascii_hexdigit());
+        bytes.len() == 7 && bytes[0] == b'#' && bytes[1..].iter().all(u8::is_ascii_hexdigit);
     if valid {
         Ok(())
     } else {

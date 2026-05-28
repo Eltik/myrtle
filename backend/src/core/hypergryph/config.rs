@@ -91,7 +91,7 @@ impl GlobalConfig {
     }
 
     /// Get version info for a server
-    pub fn version(&self, server: Server) -> &VersionInfo {
+    pub const fn version(&self, server: Server) -> &VersionInfo {
         &self.versions[server.index()]
     }
 

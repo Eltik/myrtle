@@ -1,10 +1,10 @@
 //! Roguelike (Integrated Strategies) game data types
 //!
-//! Contains types for parsing roguelike_topic_table.json and storing
+//! Contains types for parsing `roguelike_topic_table.json` and storing
 //! processed data for use in user scoring calculations.
 //!
-//! The FlatBuffer-exported JSON uses PascalCase keys and `[{key, value}]`
-//! arrays for dict types. We parse via serde_json::Value and extract manually.
+//! The FlatBuffer-exported JSON uses `PascalCase` keys and `[{key, value}]`
+//! arrays for dict types. We parse via `serde_json::Value` and extract manually.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ use std::collections::HashMap;
 /// Processed roguelike data for efficient lookups during scoring
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {
-    /// Per-theme data indexed by theme_id (e.g., "rogue_1", "rogue_2", etc.)
+    /// Per-theme data indexed by `theme_id` (e.g., "`rogue_1`", "`rogue_2`", etc.)
     pub themes: HashMap<String, RoguelikeThemeGameData>,
 }
 
@@ -26,7 +26,7 @@ pub struct RoguelikeThemeGameData {
     pub max_endings: i32,
     /// Total relics available
     pub max_relics: i32,
-    /// Total capsules available (only rogue_1 has these)
+    /// Total capsules available (only `rogue_1` has these)
     pub max_capsules: i32,
     /// Total bands available
     pub max_bands: i32,
@@ -47,10 +47,10 @@ pub struct RoguelikeThemeGameData {
     pub max_buffs: i32,
 }
 
-/// Root structure for roguelike_topic_table.json (FlatBuffer export format)
+/// Root structure for `roguelike_topic_table.json` (`FlatBuffer` export format)
 ///
-/// Top-level keys: Topics, Details, Modules, Constant, CustomizeData
-/// Topics and Details are `[{key, value}]` arrays (PascalCase).
+/// Top-level keys: Topics, Details, Modules, Constant, `CustomizeData`
+/// Topics and Details are `[{key, value}]` arrays (`PascalCase`).
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RoguelikeTopicTableFile {
     #[serde(alias = "Topics", alias = "topics", default)]
@@ -60,13 +60,13 @@ pub struct RoguelikeTopicTableFile {
 }
 
 impl RoguelikeGameData {
-    /// Parse from roguelike_topic_table.json.
+    /// Parse from `roguelike_topic_table.json`.
     ///
     /// Handles both formats:
-    /// - FlatBuffer export: PascalCase, `[{key, value}]` arrays
+    /// - `FlatBuffer` export: `PascalCase`, `[{key, value}]` arrays
     /// - CN-gamedata: camelCase, `{key: value}` dicts
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
-        let mut data = RoguelikeGameData::default();
+        let mut data = Self::default();
 
         let topics = kv_to_map(&table.topics);
         let details = kv_to_map(&table.details);
@@ -88,7 +88,7 @@ impl RoguelikeGameData {
                 .filter_map(|d| {
                     d.get("Grade")
                         .or_else(|| d.get("grade"))
-                        .and_then(|v| v.as_i64())
+                        .and_then(serde_json::Value::as_i64)
                 })
                 .max()
                 .unwrap_or(0) as i32;
@@ -148,17 +148,16 @@ impl RoguelikeGameData {
     }
 }
 
-/// Extracts collectible max counts from ArchiveComp.
+/// Extracts collectible max counts from `ArchiveComp`.
 ///
-/// FlatBuffer format: `{ "Relic": { "Relic": [{key, value}, ...] }, ... }`
+/// `FlatBuffer` format: `{ "Relic": { "Relic": [{key, value}, ...] }, ... }`
 /// CN-gamedata format: `{ "relic": { "relic": { id: ... } }, ... }`
 fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
-    let archive = match detail
+    let Some(archive) = detail
         .get("ArchiveComp")
         .or_else(|| detail.get("archiveComp"))
-    {
-        Some(a) => a,
-        None => return (0, 0, 0, 0, 0),
+    else {
+        return (0, 0, 0, 0, 0);
     };
 
     let count_inner = |category_variants: &[&str]| -> i32 {
@@ -214,7 +213,7 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
 
 // ── JSON helpers ───────────────────────────────────────────────
 
-/// Convert a `[{key, value}]` array or `{key: value}` dict to a HashMap.
+/// Convert a `[{key, value}]` array or `{key: value}` dict to a `HashMap`.
 fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
     let mut map = HashMap::new();
     if let Some(arr) = val.as_array() {
@@ -238,7 +237,7 @@ fn get_str(val: &serde_json::Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|k| val.get(*k))
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+        .map(std::string::ToString::to_string)
 }
 
 /// Count elements in a `[{key, value}]` array or `{key: value}` dict.

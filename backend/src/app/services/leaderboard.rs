@@ -50,8 +50,8 @@ pub async fn get_leaderboard(
             movement_interval,
             movement_only,
             q,
-            limit as i64,
-            offset as i64
+            i64::from(limit),
+            i64::from(offset)
         ),
         score::count_leaderboard(&state.db, server, movement_interval, movement_only, q),
         score::get_last_updated(&state.db, server),
@@ -82,7 +82,7 @@ pub async fn get_top_movers(
         return Ok(cached);
     }
     let movers =
-        score::get_top_movers(&state.db, interval, direction, server, limit as i64).await?;
+        score::get_top_movers(&state.db, interval, direction, server, i64::from(limit)).await?;
     state.cache.set(&key, &movers).await;
     Ok(movers)
 }
@@ -92,7 +92,7 @@ pub async fn get_distribution(state: &AppState, top_n: u32) -> Result<Vec<Server
     if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
-    let dist = score::get_server_distribution(&state.db, top_n as i64).await?;
+    let dist = score::get_server_distribution(&state.db, i64::from(top_n)).await?;
     state.cache.set(&key, &dist).await;
     Ok(dist)
 }
@@ -104,7 +104,7 @@ pub async fn get_standing(
     window: u32,
     interval: &str,
 ) -> Result<PlayerStanding, ApiError> {
-    score::get_player_standing(&state.db, uid, server, window as i64, interval)
+    score::get_player_standing(&state.db, uid, server, i64::from(window), interval)
         .await?
         .ok_or(ApiError::NotFound)
 }

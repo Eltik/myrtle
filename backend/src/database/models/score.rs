@@ -4,7 +4,7 @@ use sqlx::types::{
     chrono::{DateTime, Utc},
 };
 
-/// v_leaderboard view
+/// `v_leaderboard` view
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaderboardEntry {
     pub id: Uuid,
@@ -34,7 +34,7 @@ pub struct LeaderboardEntry {
     pub rank_delta: Option<i64>,
 }
 
-/// user_scores table
+/// `user_scores` table
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UserScore {
     pub user_id: Uuid,

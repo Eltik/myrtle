@@ -3,3 +3,4 @@ pub mod cmds;
 pub mod handler;
 pub mod hooks;
 pub mod types;
+pub mod api;

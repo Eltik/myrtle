@@ -73,7 +73,7 @@ pub enum BuffResolutionStrategy {
     },
 
     /// Provides both efficiency AND order limit change.
-    /// e.g. SilverAsh: "+20% efficiency, +4 order limit"
+    /// e.g. `SilverAsh`: "+20% efficiency, +4 order limit"
     /// e.g. Degenbrecher: "+25% efficiency, -6 order limit"
     EfficiencyWithOrderLimit {
         efficiency: f64,
@@ -136,7 +136,7 @@ pub fn build_registry(
     let mut morale_drains = HashMap::new();
 
     for (buff_id, buff) in buffs {
-        let prefix = buff_id.split("[").next().unwrap_or(buff_id);
+        let prefix = buff_id.split('[').next().unwrap_or(buff_id);
         // "manu_prod_spd&power[000]" → "manu_prod_spd&power"
         // Then check: prefix.contains("&power"), prefix.contains("_variable"), etc.
         let strategy = match buff.room_type.as_str() {
@@ -145,7 +145,7 @@ pub fn build_registry(
                     // parse from description
                     0.0
                 } else {
-                    buff.efficiency as f64
+                    f64::from(buff.efficiency)
                 };
                 BuffResolutionStrategy::NonProduction { value: effiency }
             }
@@ -229,7 +229,7 @@ pub fn build_registry(
                     // Peak is in Efficiency field. Penalty: parse from description.
                     // Over a full shift, avg morale difference = 12
                     // (morale goes from 24 to 0, difference goes from 0 to 24, avg = 12)
-                    let peak = buff.efficiency as f64;
+                    let peak = f64::from(buff.efficiency);
                     // Parse: "every <@cc.kw>4</> points" → 4, and "-5%" → 5
                     let interval = parse_kw_number(&buff.description).unwrap_or(4.0);
                     let penalty_pct = parse_first_vdown_pct(&buff.description).unwrap_or(5.0);
@@ -254,7 +254,7 @@ pub fn build_registry(
                 // Time-ramp: efficiency increases per hour, capped
                 else if prefix.contains("_addition") && buff.description.contains("per hour") {
                     // Pattern: "+X% base, +Y% per hour, up to +Z%"
-                    let base = buff.efficiency as f64; // starting value (may be 0)
+                    let base = f64::from(buff.efficiency); // starting value (may be 0)
                     // let per_hour = parse_first_pct(&buff.description).unwrap_or(0.0);
                     // Note: parse_first_pct will grab the first %, which for [030] is "20%"
                     // We need the "per hour" value specifically. Use a targeted regex.
@@ -279,7 +279,7 @@ pub fn build_registry(
                 // Efficiency + order limit (e.g. "efficiency +25% and order limit -6")
                 // Must come BEFORE the generic buff.efficiency > 0 check
                 else if prefix.starts_with("trade_ord_spd&limit") {
-                    let efficiency = buff.efficiency as f64;
+                    let efficiency = f64::from(buff.efficiency);
                     let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
                     BuffResolutionStrategy::EfficiencyWithOrderLimit {
                         efficiency,
@@ -309,7 +309,7 @@ pub fn build_registry(
                 // Direct efficiency
                 else if buff.efficiency > 0 {
                     BuffResolutionStrategy::DirectEfficiency {
-                        value: buff.efficiency as f64,
+                        value: f64::from(buff.efficiency),
                     }
                 }
                 // Automation, scales with power plant count

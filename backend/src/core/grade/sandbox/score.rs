@@ -93,8 +93,7 @@ fn score_achievements(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usiz
         .and_then(|c| c.get("complete"))
         .and_then(|c| c.get("achievement"))
         .and_then(|a| a.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     (ratio(completed, universe.max_achievements), completed)
 }
@@ -105,23 +104,21 @@ fn score_exploration(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize
         .and_then(|m| m.get("map"))
         .and_then(|m| m.get("node"))
         .and_then(|n| n.as_object())
-        .map(|obj| {
+        .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
                 .count()
-        })
-        .unwrap_or(0);
+        });
 
     let zones_unlocked = sandbox
         .get("main")
         .and_then(|m| m.get("zone"))
         .and_then(|z| z.as_object())
-        .map(|obj| {
+        .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(|s| s.as_i64()).unwrap_or(0) >= 1)
+                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
                 .count()
-        })
-        .unwrap_or(0);
+        });
 
     let score = (ratio(nodes_explored, universe.max_nodes)
         + ratio(zones_unlocked, universe.max_zones))
@@ -135,8 +132,7 @@ fn score_tech(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize) {
         .get("tech")
         .and_then(|t| t.get("unlock"))
         .and_then(|u| u.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     (ratio(unlocked, universe.max_tech_nodes), unlocked)
 }
@@ -147,8 +143,7 @@ fn score_quests(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize) {
         .and_then(|c| c.get("complete"))
         .and_then(|c| c.get("quest"))
         .and_then(|q| q.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     (ratio(completed, universe.max_quests), completed)
 }
@@ -157,15 +152,14 @@ fn score_base_building(sandbox: &Value, universe: &SandboxUniverse) -> f64 {
     let base_lv = sandbox
         .get("base")
         .and_then(|b| b.get("baseLv"))
-        .and_then(|v| v.as_i64())
+        .and_then(serde_json::Value::as_i64)
         .unwrap_or(0) as usize;
 
     let blueprints = sandbox
         .get("build")
         .and_then(|b| b.get("book"))
         .and_then(|b| b.as_object())
-        .map(|o| o.len())
-        .unwrap_or(0);
+        .map_or(0, serde_json::Map::len);
 
     let base_score = ratio(base_lv, universe.max_base_level);
     let blueprint_score = ratio(blueprints, universe.max_blueprints);
@@ -178,30 +172,27 @@ fn score_content_depth(sandbox: &Value, universe: &SandboxUniverse) -> f64 {
         .get("cook")
         .and_then(|c| c.get("book"))
         .and_then(|b| b.as_object())
-        .map(|o| o.len())
-        .unwrap_or(0);
+        .map_or(0, serde_json::Map::len);
 
     let music = sandbox
         .get("collect")
         .and_then(|c| c.get("complete"))
         .and_then(|c| c.get("music"))
         .and_then(|m| m.as_array())
-        .map(|a| a.len())
-        .unwrap_or(0);
+        .map_or(0, std::vec::Vec::len);
 
     let rift_max = sandbox
         .get("riftInfo")
         .and_then(|r| r.get("difficultyLvMax"))
         .and_then(|d| d.as_object())
-        .map(|obj| {
+        .map_or(0.0, |obj| {
             if obj.is_empty() {
                 return 0.0;
             }
-            let total: i64 = obj.values().filter_map(|v| v.as_i64()).sum();
+            let total: i64 = obj.values().filter_map(serde_json::Value::as_i64).sum();
             let max_possible = obj.len() as f64 * 16.0;
             (total as f64 / max_possible).min(1.0)
-        })
-        .unwrap_or(0.0);
+        });
 
     let recipe_score = ratio(recipes, universe.max_recipes);
     let music_score = ratio(music, universe.max_music);

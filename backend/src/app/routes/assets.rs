@@ -183,8 +183,7 @@ async fn serve_file(
         .modified()
         .ok()
         .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_secs());
 
     let size = metadata.len();
     let etag = format!("\"{size}-{mtime}\"");

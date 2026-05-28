@@ -18,7 +18,7 @@ pub struct GachaRecord {
     pub created_at: DateTime<Utc>,
 }
 
-/// v_gacha_stats view
+/// `v_gacha_stats` view
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GachaStats {
     pub user_id: Uuid,

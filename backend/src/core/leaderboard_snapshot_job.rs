@@ -3,7 +3,7 @@ use crate::database::queries::score as queries;
 use chrono::Utc;
 use std::time::Duration;
 
-const DAY: Duration = Duration::from_secs(86_400);
+const DAY: Duration = Duration::from_hours(24);
 
 async fn delay_until_due(state: &AppState) -> Duration {
     match queries::latest_leaderboard_snapshot_at(&state.db).await {
@@ -15,7 +15,7 @@ async fn delay_until_due(state: &AppState) -> Duration {
         Ok(None) => Duration::ZERO,
         Err(e) => {
             tracing::warn!(error = %e, "could not read last snapshot time; retrying in 1h");
-            Duration::from_secs(3600)
+            Duration::from_hours(1)
         }
     }
 }
@@ -30,7 +30,7 @@ async fn run_loop(state: AppState) {
             Ok(id) => tracing::info!(snapshot_id = id, "leaderboard snapshot taken"),
             Err(e) => {
                 tracing::warn!(error = %e, "leaderboard snapshot failed; retrying in 1h");
-                tokio::time::sleep(Duration::from_secs(3600)).await;
+                tokio::time::sleep(Duration::from_hours(1)).await;
             }
         }
     }

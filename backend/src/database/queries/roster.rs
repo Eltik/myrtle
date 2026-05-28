@@ -89,7 +89,7 @@ pub async fn get_supports(
     user_id: Uuid,
 ) -> Result<Vec<crate::database::models::roster::SupportUnit>, sqlx::Error> {
     sqlx::query_as::<_, crate::database::models::roster::SupportUnit>(
-        r#"
+        r"
         SELECT
             su.slot,
             su.operator_id,
@@ -111,7 +111,7 @@ pub async fn get_supports(
          AND s.skill_index = su.skill_index
         WHERE su.user_id = $1
         ORDER BY su.slot
-        "#,
+        ",
     )
     .bind(user_id)
     .fetch_all(pool)

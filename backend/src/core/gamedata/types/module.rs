@@ -336,7 +336,7 @@ pub struct RawModules {
     pub equip_track_dict: Vec<serde_json::Value>,
 }
 
-/// BattleEquip is a map of module IDs to their battle data
+/// `BattleEquip` is a map of module IDs to their battle data
 pub type BattleEquip = HashMap<String, ModuleData>;
 
 // ============================================================================

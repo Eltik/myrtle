@@ -22,28 +22,25 @@ async fn resolve_user_id(
     auth: &MaybeAuthUser,
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
-    match uid_param {
-        Some(uid) => {
-            let profile = users::find_by_uid(&state.db, uid)
-                .await?
-                .ok_or(ApiError::NotFound)?;
+    if let Some(uid) = uid_param {
+        let profile = users::find_by_uid(&state.db, uid)
+            .await?
+            .ok_or(ApiError::NotFound)?;
 
-            let is_own = auth
-                .0
-                .as_ref()
-                .and_then(|a| a.user_id.parse::<Uuid>().ok())
-                .is_some_and(|id| id == profile.id);
+        let is_own = auth
+            .0
+            .as_ref()
+            .and_then(|a| a.user_id.parse::<Uuid>().ok())
+            .is_some_and(|id| id == profile.id);
 
-            if !is_own && profile.public_profile != Some(true) {
-                return Err(ApiError::Forbidden);
-            }
-
-            Ok(profile.id)
+        if !is_own && profile.public_profile != Some(true) {
+            return Err(ApiError::Forbidden);
         }
-        None => {
-            let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-            auth.user_id.parse().map_err(|_| ApiError::Unauthorized)
-        }
+
+        Ok(profile.id)
+    } else {
+        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+        auth.user_id.parse().map_err(|_| ApiError::Unauthorized)
     }
 }
 
@@ -63,7 +60,7 @@ pub struct SkinPopularityResponse {
     /// Number of users counted in the denominator — every user that has any
     /// skin record (i.e. has imported their data at least once).
     pub total_users: i64,
-    /// Map of skin_id → number of owners. Only non-default skins (skin_id
+    /// Map of `skin_id` → number of owners. Only non-default skins (`skin_id`
     /// containing `@`) are included; absent IDs imply zero owners.
     pub counts: HashMap<String, i64>,
     pub computed_at: String,

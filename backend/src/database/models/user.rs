@@ -4,7 +4,7 @@ use sqlx::types::{
     chrono::{DateTime, Utc},
 };
 
-/// v_user_profile view
+/// `v_user_profile` view
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserProfile {
     pub id: Uuid,
@@ -63,7 +63,7 @@ pub struct User {
     pub updated_at: DateTime<Utc>,
 }
 
-/// user_settings table
+/// `user_settings` table
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UserSettings {
     pub user_id: Uuid,

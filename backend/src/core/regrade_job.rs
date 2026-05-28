@@ -26,7 +26,7 @@ const DEFAULT_INTERVAL_SECS: u64 = 86_400; // 24h
 const DEFAULT_CONCURRENCY: usize = 4;
 const DEFAULT_PAGE_SIZE: i64 = 500;
 const DEFAULT_STATE_FILE: &str = "regrade_state.json";
-const RETRY_AFTER_ERROR: Duration = Duration::from_secs(3600);
+const RETRY_AFTER_ERROR: Duration = Duration::from_hours(1);
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct State {
@@ -182,9 +182,8 @@ async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
 
         for (user_id, uid) in page {
             // Wait for an available slot before spawning. Bounds memory + DB usage.
-            let permit = match sem.clone().acquire_owned().await {
-                Ok(p) => p,
-                Err(_) => break,
+            let Ok(permit) = sem.clone().acquire_owned().await else {
+                break;
             };
             let pool = pool.clone();
             let game_data = game_data.clone();

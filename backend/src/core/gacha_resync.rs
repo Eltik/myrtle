@@ -2,7 +2,7 @@
 //!
 //! When a gacha record is fetched from Yostar's API, the canonical rarity is
 //! read from `character_table` (via `rarity_from_gamedata`). If game data is
-//! missing the char_id at fetch time — typically because the operator is
+//! missing the `char_id` at fetch time — typically because the operator is
 //! brand-new and the asset pipeline hasn't caught up yet — the code falls
 //! back to the API's `star` field, which has historically been wrong/stale.
 //!
@@ -19,9 +19,9 @@ use crate::core::gamedata::types::GameData;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ResyncStats {
-    /// Distinct (char_id, rarity) pairs observed in `gacha_records`.
+    /// Distinct (`char_id`, rarity) pairs observed in `gacha_records`.
     pub distinct_pairs: usize,
-    /// char_ids whose canonical rarity disagreed with at least one stored row.
+    /// `char_ids` whose canonical rarity disagreed with at least one stored row.
     pub fixed_char_ids: usize,
     /// Total `gacha_records` rows mutated by the UPDATE.
     pub rows_updated: u64,

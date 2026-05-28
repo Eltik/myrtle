@@ -114,7 +114,7 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
 
 async fn fetch_user_stats(db: &PgPool) -> Result<UserStats, sqlx::Error> {
     let row = sqlx::query_as::<_, UserStatsRow>(
-        r#"
+        r"
         SELECT
             COUNT(*) AS total,
             COUNT(*) FILTER (WHERE server_id = 0) AS en,
@@ -127,7 +127,7 @@ async fn fetch_user_stats(db: &PgPool) -> Result<UserStats, sqlx::Error> {
             COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') AS signups_30d,
             (SELECT COUNT(*) FROM user_settings WHERE public_profile = true) AS public_profiles
         FROM users
-        "#,
+        ",
     )
     .fetch_one(db)
     .await?;
@@ -164,7 +164,7 @@ struct UserStatsRow {
 
 async fn fetch_gacha_stats(db: &PgPool) -> Result<GachaPublicStats, sqlx::Error> {
     let row = sqlx::query_as::<_, GachaStatsRow>(
-        r#"
+        r"
         SELECT
             COUNT(*) AS total_pulls,
             COUNT(DISTINCT gr.user_id) AS contributing_users,
@@ -174,7 +174,7 @@ async fn fetch_gacha_stats(db: &PgPool) -> Result<GachaPublicStats, sqlx::Error>
         FROM gacha_records gr
         JOIN user_settings us ON us.user_id = gr.user_id
         WHERE us.share_stats = true
-        "#,
+        ",
     )
     .fetch_one(db)
     .await?;
@@ -199,13 +199,13 @@ struct GachaStatsRow {
 
 async fn fetch_tier_list_stats(db: &PgPool) -> Result<TierListStats, sqlx::Error> {
     let row = sqlx::query_as::<_, TierListStatsRow>(
-        r#"
+        r"
         SELECT
             (SELECT COUNT(*) FROM tier_lists) AS total,
             (SELECT COUNT(*) FROM tier_lists WHERE is_active = true) AS active,
             (SELECT COUNT(*) FROM tier_list_versions) AS total_versions,
             (SELECT COUNT(*) FROM tier_placements) AS total_placements
-        "#,
+        ",
     )
     .fetch_one(db)
     .await?;
@@ -271,14 +271,14 @@ pub async fn get_admin_stats(state: &AppState) -> Result<AdminStatsResponse, Api
 
 async fn fetch_role_breakdown(db: &PgPool) -> Result<RoleBreakdown, sqlx::Error> {
     let row = sqlx::query_as::<_, RoleBreakdownRow>(
-        r#"
+        r"
         SELECT
             COUNT(*) FILTER (WHERE role = 'user') AS user_count,
             COUNT(*) FILTER (WHERE role = 'tier_list_editor') AS editor_count,
             COUNT(*) FILTER (WHERE role = 'tier_list_admin') AS admin_count,
             COUNT(*) FILTER (WHERE role = 'super_admin') AS super_count
         FROM users
-        "#,
+        ",
     )
     .fetch_one(db)
     .await?;

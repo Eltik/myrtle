@@ -4,7 +4,7 @@ use crate::{core::gamedata::types::building::BuildingChar, database::models::ros
 
 pub struct UserBuilding {
     /// How many factories, trading posts, power plants, and their levels.
-    /// Key = slot_id (e.g. "slot_1"), Value = room info.
+    /// Key = `slot_id` (e.g. "`slot_1`"), Value = room info.
     pub rooms: Vec<UserRoom>,
 }
 
@@ -23,8 +23,8 @@ impl UserBuilding {
                     .get("roomId")
                     .and_then(|v| v.as_str())
                     .unwrap_or_default();
-                let level = slot.get("level").and_then(|v| v.as_i64()).unwrap_or(0) as i32;
-                let state = slot.get("state").and_then(|v| v.as_i64()).unwrap_or(0);
+                let level = slot.get("level").and_then(serde_json::Value::as_i64).unwrap_or(0) as i32;
+                let state = slot.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0);
                 if state > 0 && level > 0 {
                     rooms.push(UserRoom {
                         slot_id: slot_id.clone(),
@@ -47,15 +47,15 @@ impl UserBuilding {
     }
 
     /// Is the building data present/non-empty?
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.rooms.is_empty()
     }
 }
 
 pub struct OperatorBaseProfile {
     pub char_id: String,
-    /// Which buff_ids this operator has unlocked (based on their elite/level
-    /// meeting the Cond requirements from BuildingChar.buff_char)
+    /// Which `buff_ids` this operator has unlocked (based on their elite/level
+    /// meeting the Cond requirements from `BuildingChar.buff_char`)
     pub available_buffs: Vec<String>,
 }
 
@@ -66,8 +66,8 @@ impl OperatorBaseProfile {
         for slot in &building_char.buff_char {
             let mut best: Option<&str> = None;
             for entry in &slot.buff_data {
-                if roster.elite as i32 >= entry.cond.elite()
-                    && roster.level as i32 >= entry.cond.level
+                if i32::from(roster.elite) >= entry.cond.elite()
+                    && i32::from(roster.level) >= entry.cond.level
                 {
                     best = Some(&entry.buff_id);
                 }
@@ -96,7 +96,7 @@ pub struct EvalContext<'a> {
 #[derive(Clone)]
 pub struct TeammateInfo {
     pub buff_ids: Vec<String>,
-    /// Sum of DirectEfficiency values from this teammate's buffs
+    /// Sum of `DirectEfficiency` values from this teammate's buffs
     pub direct_efficiency: f64,
     pub order_limit_contribution: i32,
 }

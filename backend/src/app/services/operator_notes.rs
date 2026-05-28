@@ -34,7 +34,7 @@ pub struct GlobalAuditLogResponse {
 }
 
 pub async fn get_all(state: &AppState) -> Result<Vec<OperatorNote>, ApiError> {
-    queries::get_all(&state.db).await.map_err(|e| e.into())
+    queries::get_all(&state.db).await.map_err(std::convert::Into::into)
 }
 
 pub async fn get_by_operator(
@@ -52,7 +52,7 @@ pub async fn get_audit_log(
 ) -> Result<Vec<OperatorNoteAuditEntry>, ApiError> {
     queries::get_audit_log(&state.db, operator_id)
         .await
-        .map_err(|e| e.into())
+        .map_err(std::convert::Into::into)
 }
 
 pub async fn get_global_audit_log(

@@ -109,7 +109,7 @@ pub struct AbilityInfo {
 // Enemy Stats (from enemy_database.json)
 // ============================================================================
 
-/// Wrapper for optional values in enemy_database.json
+/// Wrapper for optional values in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MaybeValue<T: Default> {
@@ -120,7 +120,7 @@ pub struct MaybeValue<T: Default> {
 }
 
 impl<T: Default> MaybeValue<T> {
-    pub fn get(&self) -> Option<&T> {
+    pub const fn get(&self) -> Option<&T> {
         if self.defined {
             Some(&self.value)
         } else {
@@ -133,7 +133,7 @@ impl<T: Default> MaybeValue<T> {
     }
 }
 
-/// Enemy attributes from enemy_database.json
+/// Enemy attributes from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyAttributes {
@@ -169,7 +169,7 @@ pub struct SkillBlackboardEntry {
     pub value_str: Option<String>,
 }
 
-/// Enemy skill from enemy_database.json
+/// Enemy skill from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemySkill {
@@ -182,7 +182,7 @@ pub struct RawEnemySkill {
     pub blackboard: Vec<SkillBlackboardEntry>,
 }
 
-/// Enemy data entry from enemy_database.json
+/// Enemy data entry from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyData {
@@ -200,7 +200,7 @@ pub struct RawEnemyData {
     pub skills: Vec<RawEnemySkill>,
 }
 
-/// Level entry in enemy_database.json
+/// Level entry in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyLevelEntry {
@@ -208,7 +208,7 @@ pub struct RawEnemyLevelEntry {
     pub enemy_data: RawEnemyData,
 }
 
-/// Enemy entry in enemy_database.json
+/// Enemy entry in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyDatabaseEntry {
@@ -216,7 +216,7 @@ pub struct RawEnemyDatabaseEntry {
     pub value: Vec<RawEnemyLevelEntry>,
 }
 
-/// Root structure for enemy_database.json
+/// Root structure for `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct EnemyDatabaseFile {
@@ -320,7 +320,7 @@ pub struct Enemy {
     pub damage_type: Vec<DamageType>,
     #[serde(alias = "InvisibleDetail")]
     pub invisible_detail: bool,
-    /// Enriched stats from enemy_database.json
+    /// Enriched stats from `enemy_database.json`
     #[serde(default, skip_deserializing)]
     pub stats: Option<EnemyStats>,
     /// Enemy portrait/icon path

@@ -90,26 +90,23 @@ fn get_or_create_skin<'a>(
         .skins
         .iter()
         .position(|s| s.name.eq_ignore_ascii_case(skin_name));
-    match idx {
-        Some(i) => &mut character.skins[i],
-        None => {
-            character.skins.push(ChibiSkin {
-                name: skin_name.to_owned(),
-                path: base_path.to_owned(),
-                has_spine_data: true,
-                animation_types: HashMap::new(),
-            });
-            character.skins.last_mut().unwrap()
-        }
+    if let Some(i) = idx { &mut character.skins[i] } else {
+        character.skins.push(ChibiSkin {
+            name: skin_name.to_owned(),
+            path: base_path.to_owned(),
+            has_spine_data: true,
+            animation_types: HashMap::new(),
+        });
+        character.skins.last_mut().unwrap()
     }
 }
 
-/// Extract char_id and skin name from a directory name.
-/// "char_002_amiya" → ("char_002_amiya", "default")
-/// "char_002_amiya_epoque#4" → ("char_002_amiya", "epoque#4")
-/// "char_003_kalts_sale#14" → ("char_003_kalts", "sale#14")
+/// Extract `char_id` and skin name from a directory name.
+/// "`char_002_amiya`" → ("`char_002_amiya`", "default")
+/// "`char_002_amiya_epoque#4`" → ("`char_002_amiya`", "epoque#4")
+/// "`char_003_kalts_sale#14`" → ("`char_003_kalts`", "sale#14")
 /// Names that don't begin with "char_" (e.g. "token_*") are treated as a
-/// single opaque char_id with a "default" skin.
+/// single opaque `char_id` with a "default" skin.
 fn parse_skin_identity(dir_name: &str) -> (String, String) {
     let parts: Vec<&str> = dir_name.splitn(4, '_').collect();
     if parts.len() >= 3 && parts[0] == "char" {
@@ -128,6 +125,10 @@ fn parse_skin_identity(dir_name: &str) -> (String, String) {
 /// Collect .atlas, .skel, .png from a directory, returning each spine set
 /// keyed by its file stem. [alpha]/[mask] companion textures are excluded
 /// and any stem missing both atlas+skel is dropped (incomplete set).
+//
+// `name` is lowercased into `lower` before the extension checks below, so those
+// `ends_with` comparisons are already case-insensitive (the lint's concern is moot).
+#[allow(clippy::case_sensitive_file_extension_comparisons)]
 fn collect_all_spine_sets(dir: &Path, base_url: &str) -> Vec<(String, SpineFiles)> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Vec::new();
@@ -184,7 +185,7 @@ fn strip_known_prefix(stem: &str) -> &str {
 
 /// Derive a skin name for a non-DynIllust spine stem.
 /// Returns `(skin_name, is_conventional)`. `is_conventional` is true when
-/// the stem matched the directory's char_id (either as the default or as a
+/// the stem matched the directory's `char_id` (either as the default or as a
 /// `{char_id}_{suffix}` variant). Non-conventional stems mean the file
 /// inside this character's folder has an unrelated name (e.g.
 /// `BattleFront/char_008_owl/char_502_nblade.atlas` — owl reuses Blade's
@@ -238,9 +239,9 @@ fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(Str
     tagged.into_iter().map(|(s, _, f)| (s, f)).collect()
 }
 
-/// Resolve DynIllust directory contents.
+/// Resolve `DynIllust` directory contents.
 ///
-/// One DynIllust folder corresponds to exactly one skin variant, so the
+/// One `DynIllust` folder corresponds to exactly one skin variant, so the
 /// folder name is the canonical skin identifier (e.g. dir
 /// `char_4087_ines_ambiencesynesthesia#5/` is the `ambiencesynesthesia#5`
 /// skin's dynamic — even when the file inside drops the `#5` and case).
@@ -250,7 +251,7 @@ fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(Str
 /// (no `_2` suffix in the file name). The trailing `_2` is a disambiguator,
 /// not a skin variant, and the spine actually belongs to the default skin —
 /// we detect this by checking whether the file's stripped stem matches the
-/// dir's char_id with no skin suffix at all.
+/// dir's `char_id` with no skin suffix at all.
 ///
 /// Across files within one folder we prefer `dyn_illust_` over
 /// `dyn_portrait_` and skip `_Start` intro-animation companions.
@@ -285,11 +286,7 @@ fn resolve_dyn_illust_skins(
 
         let priority = if stem.starts_with("dyn_illust_") {
             2
-        } else if stem.starts_with("dyn_portrait_") {
-            1
-        } else {
-            0
-        };
+        } else { i32::from(stem.starts_with("dyn_portrait_")) };
 
         match by_skin.get(&skin_name) {
             Some((existing, _)) if *existing >= priority => {}

@@ -16,7 +16,7 @@ pub struct UserStageData {
 /// `user_id` has appearing in their dungeon JSON.
 ///
 /// The gamedata bundled with the backend can be ahead of the user's actual
-/// server (e.g. EN players grading against CN-era stage_table), which leaves
+/// server (e.g. EN players grading against CN-era `stage_table`), which leaves
 /// the universe full of stages no one on that server can possibly clear.
 /// Filtering the universe by this set caps each server's universe at content
 /// that's actually live there.
@@ -25,13 +25,13 @@ pub async fn get_known_stage_ids_for_server(
     user_id: Uuid,
 ) -> Result<HashSet<String>, sqlx::Error> {
     let rows: Vec<(String,)> = sqlx::query_as(
-        r#"
+        r"
         SELECT DISTINCT key
         FROM users u
         JOIN user_stage_progress usp ON usp.user_id = u.id
         CROSS JOIN LATERAL jsonb_object_keys(usp.stages) AS key
         WHERE u.server_id = (SELECT server_id FROM users WHERE id = $1)
-        "#,
+        ",
     )
     .bind(user_id)
     .fetch_all(pool)
@@ -44,12 +44,12 @@ pub async fn get_user_stage_clears(
     user_id: Uuid,
 ) -> Result<UserStageData, sqlx::Error> {
     let row: Option<(serde_json::Value, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
-        r#"
+        r"
         SELECT usp.stages, u.updated_at
         FROM user_stage_progress usp
         JOIN users u ON u.id = usp.user_id
         WHERE usp.user_id = $1
-        "#,
+        ",
     )
     .bind(user_id)
     .fetch_optional(pool)
@@ -73,14 +73,14 @@ pub async fn get_user_stage_clears(
 
     let mut clears = HashMap::with_capacity(obj.len());
     for (stage_id, entry) in obj {
-        let state = entry.get("state").and_then(|v| v.as_i64()).unwrap_or(0) as i16;
+        let state = entry.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) as i16;
         let complete_times = entry
             .get("completeTimes")
-            .and_then(|v| v.as_i64())
+            .and_then(serde_json::Value::as_i64)
             .unwrap_or(0) as i32;
         let practice_times = entry
             .get("practiceTimes")
-            .and_then(|v| v.as_i64())
+            .and_then(serde_json::Value::as_i64)
             .unwrap_or(0) as i32;
 
         clears.insert(

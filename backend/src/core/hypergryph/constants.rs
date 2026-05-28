@@ -23,14 +23,14 @@ pub enum Server {
 
 impl Server {
     /// Returns all server variants for iteration
-    pub fn all() -> &'static [Server] {
+    pub const fn all() -> &'static [Self] {
         &[
-            Server::EN,
-            Server::JP,
-            Server::KR,
-            Server::CN,
-            Server::Bilibili,
-            Server::TW,
+            Self::EN,
+            Self::JP,
+            Self::KR,
+            Self::CN,
+            Self::Bilibili,
+            Self::TW,
         ]
     }
 }
@@ -38,57 +38,57 @@ impl Server {
 impl Server {
     pub const fn index(self) -> usize {
         match self {
-            Server::EN => 0,
-            Server::JP => 1,
-            Server::KR => 2,
-            Server::CN => 3,
-            Server::Bilibili => 4,
-            Server::TW => 5,
+            Self::EN => 0,
+            Self::JP => 1,
+            Self::KR => 2,
+            Self::CN => 3,
+            Self::Bilibili => 4,
+            Self::TW => 5,
         }
     }
 
     pub const fn display_name(&self) -> &'static str {
         match self {
-            Server::EN => "English",
-            Server::JP => "Japanese",
-            Server::KR => "Korean",
-            Server::CN => "Chinese",
-            Server::Bilibili => "Bilibili",
-            Server::TW => "Taiwanese",
+            Self::EN => "English",
+            Self::JP => "Japanese",
+            Self::KR => "Korean",
+            Self::CN => "Chinese",
+            Self::Bilibili => "Bilibili",
+            Self::TW => "Taiwanese",
         }
     }
 
     pub const fn as_str(&self) -> &'static str {
         match self {
-            Server::EN => "en",
-            Server::JP => "jp",
-            Server::KR => "kr",
-            Server::CN => "cn",
-            Server::Bilibili => "bili",
-            Server::TW => "tw",
+            Self::EN => "en",
+            Self::JP => "jp",
+            Self::KR => "kr",
+            Self::CN => "cn",
+            Self::Bilibili => "bili",
+            Self::TW => "tw",
         }
     }
 
     pub const fn yostar_domain(&self) -> Option<&'static str> {
         match self {
-            Server::EN => Some("https://en-sdk-api.yostarplat.com"),
-            Server::JP | Server::KR => Some("https://jp-sdk-api.yostarplat.com"),
-            Server::CN | Server::Bilibili | Server::TW => None, // Not supported yet
+            Self::EN => Some("https://en-sdk-api.yostarplat.com"),
+            Self::JP | Self::KR => Some("https://jp-sdk-api.yostarplat.com"),
+            Self::CN | Self::Bilibili | Self::TW => None, // Not supported yet
         }
     }
 
     pub const fn network_route(&self) -> Option<&'static str> {
         match self {
-            Server::EN => {
+            Self::EN => {
                 Some("https://ak-conf.arknights.global/config/prod/official/network_config")
             }
-            Server::JP => Some("https://ak-conf.arknights.jp/config/prod/official/network_config"),
-            Server::KR => Some("https://ak-conf.arknights.kr/config/prod/official/network_config"),
-            Server::CN => {
+            Self::JP => Some("https://ak-conf.arknights.jp/config/prod/official/network_config"),
+            Self::KR => Some("https://ak-conf.arknights.kr/config/prod/official/network_config"),
+            Self::CN => {
                 Some("https://ak-conf.hypergryph.com/config/prod/official/network_config")
             }
-            Server::Bilibili => Some("https://ak-conf.hypergryph.com/config/prod/b/network_config"),
-            Server::TW => {
+            Self::Bilibili => Some("https://ak-conf.hypergryph.com/config/prod/b/network_config"),
+            Self::TW => {
                 Some("https://ak-conf-tw.gryphline.com/config/prod/official/network_config")
             }
         }
@@ -117,18 +117,18 @@ pub enum Domain {
 impl Domain {
     pub const fn index(self) -> usize {
         match self {
-            Domain::GS => 0,
-            Domain::AS => 1,
-            Domain::U8 => 2,
-            Domain::HU => 3,
-            Domain::HV => 4,
-            Domain::RC => 5,
-            Domain::AN => 6,
-            Domain::PREAN => 7,
-            Domain::SL => 8,
-            Domain::OF => 9,
-            Domain::PkgAd => 10,
-            Domain::PkgIos => 11,
+            Self::GS => 0,
+            Self::AS => 1,
+            Self::U8 => 2,
+            Self::HU => 3,
+            Self::HV => 4,
+            Self::RC => 5,
+            Self::AN => 6,
+            Self::PREAN => 7,
+            Self::SL => 8,
+            Self::OF => 9,
+            Self::PkgAd => 10,
+            Self::PkgIos => 11,
         }
     }
 }
@@ -180,10 +180,10 @@ pub enum Pid {
 impl From<Server> for Pid {
     fn from(server: Server) -> Self {
         match server {
-            Server::EN => Pid::UsArknights,
-            Server::JP => Pid::JpAk,
-            Server::KR => Pid::KrArknights,
-            _ => Pid::UsArknights,
+            Server::EN => Self::UsArknights,
+            Server::JP => Self::JpAk,
+            Server::KR => Self::KrArknights,
+            _ => Self::UsArknights,
         }
     }
 }

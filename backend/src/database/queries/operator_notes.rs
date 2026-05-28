@@ -33,7 +33,7 @@ pub async fn upsert(
     tags: Option<&serde_json::Value>,
 ) -> Result<OperatorNote, sqlx::Error> {
     sqlx::query_as::<_, OperatorNote>(
-        r#"
+        r"
         INSERT INTO operator_notes (operator_id, pros, cons, notes, trivia, summary, tags)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (operator_id) DO UPDATE SET
@@ -45,7 +45,7 @@ pub async fn upsert(
             tags = COALESCE(EXCLUDED.tags, operator_notes.tags),
             updated_at = NOW()
         RETURNING *
-        "#,
+        ",
     )
     .bind(operator_id)
     .bind(pros)
@@ -84,12 +84,12 @@ pub async fn get_audit_log(
     operator_id: &str,
 ) -> Result<Vec<OperatorNoteAuditEntry>, sqlx::Error> {
     sqlx::query_as::<_, OperatorNoteAuditEntry>(
-        r#"
+        r"
         SELECT a.* FROM operator_notes_audit_log a
         JOIN operator_notes n ON n.id = a.note_id
         WHERE n.operator_id = $1
         ORDER BY a.changed_at DESC
-        "#,
+        ",
     )
     .bind(operator_id)
     .fetch_all(pool)
@@ -104,7 +104,7 @@ pub async fn get_audit_log_global(
     // Single query: join operator_notes (for operator_id) and users (for
     // display info). LEFT JOIN on users so audit rows survive even if the
     // referenced user is hard-deleted some day.
-    const SELECT: &str = r#"
+    const SELECT: &str = r"
         SELECT
             a.id,
             a.note_id,
@@ -121,7 +121,7 @@ pub async fn get_audit_log_global(
         FROM operator_notes_audit_log a
         JOIN operator_notes n ON n.id = a.note_id
         LEFT JOIN users u ON u.id = a.changed_by
-    "#;
+    ";
 
     if let Some(before) = before {
         sqlx::query_as::<_, OperatorNoteAuditEntryWithContext>(&format!(

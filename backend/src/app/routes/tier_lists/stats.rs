@@ -34,7 +34,7 @@ fn hash_session_id(secret: &str, session_id: &str) -> String {
 
 const SESSION_COOKIE: &str = "mtl_sid";
 const SESSION_ID_LEN: usize = 64;
-const VIEW_RATE_WINDOW: Duration = Duration::from_secs(60);
+const VIEW_RATE_WINDOW: Duration = Duration::from_mins(1);
 const VIEW_RATE_LIMIT: u32 = 10;
 
 fn valid_session_id(value: &str) -> bool {

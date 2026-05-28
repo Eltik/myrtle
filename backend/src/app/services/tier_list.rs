@@ -1,7 +1,7 @@
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::{GlobalRole, Permission};
-use crate::database::models::tier_list::*;
+use crate::database::models::tier_list::{TierList, TierListStats, TierListFlair, Tier, TierPlacement};
 use crate::database::queries::tier_lists as queries;
 use serde::Serialize;
 use std::str::FromStr;
@@ -147,7 +147,7 @@ pub async fn update_list(
     check_permission(state, &list, user_id, role, Permission::Edit).await?;
     queries::update(&state.db, list.id, name, description)
         .await
-        .map_err(|e| e.into())
+        .map_err(std::convert::Into::into)
 }
 
 fn generate_slug(name: &str) -> String {

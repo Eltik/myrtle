@@ -52,22 +52,22 @@ struct ErrorDetail {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, code, details) = match &self {
-            ApiError::BadRequest(_) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", None),
-            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", None),
-            ApiError::Forbidden => (StatusCode::FORBIDDEN, "FORBIDDEN", None),
-            ApiError::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND", None),
-            ApiError::RateLimited => (StatusCode::TOO_MANY_REQUESTS, "RATE_LIMITED", None),
-            ApiError::Conflict(_) => (StatusCode::CONFLICT, "CONFLICT", None),
-            ApiError::ValidationFailed(errors) => (
+            Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", None),
+            Self::Unauthorized => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", None),
+            Self::Forbidden => (StatusCode::FORBIDDEN, "FORBIDDEN", None),
+            Self::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND", None),
+            Self::RateLimited => (StatusCode::TOO_MANY_REQUESTS, "RATE_LIMITED", None),
+            Self::Conflict(_) => (StatusCode::CONFLICT, "CONFLICT", None),
+            Self::ValidationFailed(errors) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
                 "VALIDATION_FAILED",
                 Some(errors.clone()),
             ),
-            ApiError::Internal(e) => {
+            Self::Internal(e) => {
                 tracing::error!(error = %e, "internal server error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", None)
             }
-            ApiError::ServiceUnavailable => {
+            Self::ServiceUnavailable => {
                 (StatusCode::SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", None)
             }
         };
@@ -87,13 +87,13 @@ impl IntoResponse for ApiError {
 impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
         match &e {
-            sqlx::Error::RowNotFound => ApiError::NotFound,
+            sqlx::Error::RowNotFound => Self::NotFound,
             sqlx::Error::Database(db) => match db.code().as_deref() {
-                Some("23505") => ApiError::Conflict("resource already exists".into()),
-                Some("22001") => ApiError::BadRequest("value too long".into()),
-                _ => ApiError::Internal(e.into()),
+                Some("23505") => Self::Conflict("resource already exists".into()),
+                Some("22001") => Self::BadRequest("value too long".into()),
+                _ => Self::Internal(e.into()),
             },
-            _ => ApiError::Internal(e.into()),
+            _ => Self::Internal(e.into()),
         }
     }
 }
@@ -101,24 +101,24 @@ impl From<sqlx::Error> for ApiError {
 impl From<redis::RedisError> for ApiError {
     fn from(e: redis::RedisError) -> Self {
         tracing::error!(error = %e, "redis error");
-        ApiError::ServiceUnavailable
+        Self::ServiceUnavailable
     }
 }
 
 impl From<jsonwebtoken::errors::Error> for ApiError {
     fn from(_: jsonwebtoken::errors::Error) -> Self {
-        ApiError::Unauthorized
+        Self::Unauthorized
     }
 }
 
 impl From<FetchError> for ApiError {
     fn from(e: FetchError) -> Self {
         match e {
-            FetchError::NotLoggedIn => ApiError::Unauthorized,
-            FetchError::DomainNotFound(_, _) => ApiError::BadRequest("unsupported server".into()),
-            FetchError::RequestFailed(e) => ApiError::Internal(e.into()),
-            FetchError::ParseError(msg) => ApiError::BadRequest(msg),
-            FetchError::Upstream(err) => ApiError::BadRequest(format!(
+            FetchError::NotLoggedIn => Self::Unauthorized,
+            FetchError::DomainNotFound(_, _) => Self::BadRequest("unsupported server".into()),
+            FetchError::RequestFailed(e) => Self::Internal(e.into()),
+            FetchError::ParseError(msg) => Self::BadRequest(msg),
+            FetchError::Upstream(err) => Self::BadRequest(format!(
                 "{} ({})",
                 if err.msg.is_empty() {
                     &err.message

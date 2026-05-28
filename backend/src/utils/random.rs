@@ -6,7 +6,7 @@ pub fn random_digits(count: usize) -> String {
     fill_random(&mut buf);
     let mut out = String::with_capacity(count);
     for b in buf {
-        out.push(char::from_digit((b % 10) as u32, 10).unwrap());
+        out.push(char::from_digit(u32::from(b % 10), 10).unwrap());
     }
     out
 }

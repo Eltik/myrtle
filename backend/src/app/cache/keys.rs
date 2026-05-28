@@ -75,9 +75,7 @@ impl CacheKey<'_> {
                 offset,
             } => {
                 let srv = server.unwrap_or("all");
-                let mv = movement_interval
-                    .map(|s| s.replace(' ', "_"))
-                    .unwrap_or_else(|| "none".to_owned());
+                let mv = movement_interval.map_or_else(|| "none".to_owned(), |s| s.replace(' ', "_"));
                 let mo = if *movement_only { "only" } else { "all" };
                 let qk = q.unwrap_or("");
                 format!("leaderboard:{sort}:{srv}:{mv}:{mo}:{qk}:{limit}:{offset}")
@@ -115,23 +113,23 @@ impl CacheKey<'_> {
         }
     }
 
-    pub fn ttl(&self) -> Duration {
+    pub const fn ttl(&self) -> Duration {
         match self {
-            CacheKey::User { .. } => Duration::from_secs(600), // 10 min
-            CacheKey::Stats => Duration::from_secs(300),       // 5 min
-            CacheKey::StaticData { .. } => Duration::from_secs(1800), // 30 min
-            CacheKey::Leaderboard { .. } => Duration::from_secs(300), // 5 min
-            CacheKey::Search { .. } => Duration::from_secs(120), // 2 min
-            CacheKey::TierList { .. } => Duration::from_secs(600), // 10 min
-            CacheKey::GameSession { .. } => Duration::from_secs(3600), // 1 hour
-            CacheKey::PortalSession { .. } => Duration::from_secs(604800), // 1 week
-            CacheKey::GachaGlobalStats => Duration::from_secs(300), // 5 min
-            CacheKey::GachaEnhancedStats { .. } => Duration::from_secs(600), // 10 min
-            CacheKey::GachaPerBannerStats => Duration::from_secs(600), // 10 min
-            CacheKey::LeaderboardMovers { .. } => Duration::from_secs(900), // 15 min
-            CacheKey::LeaderboardDistribution { .. } => Duration::from_secs(600), // 10 min
-            CacheKey::LeaderboardStanding { .. } => Duration::from_secs(60), // 1 min
-            CacheKey::SkinPopularity => Duration::from_secs(3600), // 1 hour
+            CacheKey::User { .. } => Duration::from_mins(10), // 10 min
+            CacheKey::Stats => Duration::from_mins(5),       // 5 min
+            CacheKey::StaticData { .. } => Duration::from_mins(30), // 30 min
+            CacheKey::Leaderboard { .. } => Duration::from_mins(5), // 5 min
+            CacheKey::Search { .. } => Duration::from_mins(2), // 2 min
+            CacheKey::TierList { .. } => Duration::from_mins(10), // 10 min
+            CacheKey::GameSession { .. } => Duration::from_hours(1), // 1 hour
+            CacheKey::PortalSession { .. } => Duration::from_hours(168), // 1 week
+            CacheKey::GachaGlobalStats => Duration::from_mins(5), // 5 min
+            CacheKey::GachaEnhancedStats { .. } => Duration::from_mins(10), // 10 min
+            CacheKey::GachaPerBannerStats => Duration::from_mins(10), // 10 min
+            CacheKey::LeaderboardMovers { .. } => Duration::from_mins(15), // 15 min
+            CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10), // 10 min
+            CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1), // 1 min
+            CacheKey::SkinPopularity => Duration::from_hours(1), // 1 hour
         }
     }
 }

@@ -12,12 +12,9 @@ const DEBOUNCE_SECS: u64 = 5;
 const MAX_BACKOFF: Duration = Duration::from_secs(30);
 
 pub fn spawn(state: AppState) {
-    let url = match &state.config.asset_ws_url {
-        Some(url) => url.clone(),
-        None => {
-            tracing::info!("ASSET_WS_URL not set, asset hot-reload disabled");
-            return;
-        }
+    let url = if let Some(url) = &state.config.asset_ws_url { url.clone() } else {
+        tracing::info!("ASSET_WS_URL not set, asset hot-reload disabled");
+        return;
     };
 
     tokio::spawn(async move {

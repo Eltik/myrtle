@@ -10,19 +10,19 @@ use crate::database::models::score::{
 /// Returns `None` if the user has never been scored.
 pub async fn get_score_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserScore>, sqlx::Error> {
     sqlx::query_as::<_, UserScore>(
-        r#"
+        r"
         SELECT sc.*
         FROM user_scores sc
         JOIN users u ON u.id = sc.user_id
         WHERE u.uid = $1
-        "#,
+        ",
     )
     .bind(uid)
     .fetch_optional(pool)
     .await
 }
 
-/// Fetch the full score row for one user by internal user_id (Uuid).
+/// Fetch the full score row for one user by internal `user_id` (Uuid).
 #[allow(dead_code)]
 pub async fn get_score_by_user_id(
     pool: &PgPool,
@@ -133,7 +133,7 @@ pub async fn get_leaderboard(
     };
 
     let sql = format!(
-        r#"
+        r"
         WITH baseline AS (
             SELECT DISTINCT ON (e.user_id)
                 e.user_id, e.rank_global
@@ -151,7 +151,7 @@ pub async fn get_leaderboard(
           {movement_filter}
         ORDER BY v.{sort_col} DESC NULLS LAST
         LIMIT ${limit_idx} OFFSET ${offset_idx}
-        "#
+        "
     );
 
     let mut qry = sqlx::query_as::<_, LeaderboardEntry>(&sql).bind(interval);
@@ -219,7 +219,7 @@ pub async fn count_leaderboard(
     let extra_sql = extra_clauses.join("\n          ");
 
     let sql = format!(
-        r#"
+        r"
         WITH baseline AS (
             SELECT DISTINCT ON (e.user_id)
                 e.user_id, e.rank_global
@@ -234,7 +234,7 @@ pub async fn count_leaderboard(
         WHERE v.rank_global IS NOT NULL
           AND b.rank_global <> v.rank_global
           {extra_sql}
-        "#
+        "
     );
 
     let mut qry = sqlx::query_scalar::<_, i64>(&sql).bind(interval);
@@ -250,7 +250,7 @@ pub async fn count_leaderboard(
 /// Upsert a user's score
 pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::Error> {
     sqlx::query(
-        r#"
+        r"
         INSERT INTO user_scores (user_id, total_score, operator_score, stage_score,
             roguelike_score, sandbox_score, medal_score, base_score, skin_score,
             grade)
@@ -262,7 +262,7 @@ pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::
             base_score = EXCLUDED.base_score, skin_score = EXCLUDED.skin_score,
             grade = EXCLUDED.grade,
             calculated_at = NOW()
-    "#,
+    ",
     )
     .bind(score.user_id)
     .bind(score.total_score)
@@ -297,14 +297,14 @@ pub async fn take_leaderboard_snapshot(pool: &PgPool) -> Result<i64, sqlx::Error
             .await?;
 
     sqlx::query(
-        r#"
+        r"
         INSERT INTO leaderboard_snapshot_entries
             (snapshot_id, user_id, server_id, rank_global, rank_server, total_score)
         SELECT $1, v.id, srv.id, v.rank_global, v.rank_server, v.total_score
         FROM v_leaderboard v
         JOIN servers srv ON srv.code = v.server
         WHERE v.rank_global IS NOT NULL
-        "#,
+        ",
     )
     .bind(snapshot_id)
     .execute(&mut *tx)
@@ -330,7 +330,7 @@ pub async fn get_top_movers(
     };
 
     let sql = format!(
-        r#"
+        r"
         WITH baseline AS (
             SELECT DISTINCT ON (e.user_id)
                 e.user_id, e.rank_global, e.total_score
@@ -353,7 +353,7 @@ pub async fn get_top_movers(
         {server_clause}
         ORDER BY rank_delta {order}
         LIMIT $2
-        "#
+        "
     );
 
     let mut q = sqlx::query_as::<_, LeaderboardMover>(&sql)
@@ -370,7 +370,7 @@ pub async fn get_server_distribution(
     top_n: i64,
 ) -> Result<Vec<ServerShare>, sqlx::Error> {
     sqlx::query_as::<_, ServerShare>(
-        r#"
+        r"
         SELECT server, COUNT(*) AS players
         FROM (
             SELECT server FROM v_leaderboard
@@ -380,7 +380,7 @@ pub async fn get_server_distribution(
         ) t
         GROUP BY server
         ORDER BY players DESC
-        "#,
+        ",
     )
     .bind(top_n)
     .fetch_all(pool)
@@ -393,13 +393,13 @@ pub async fn get_last_updated(
 ) -> Result<Option<DateTime<Utc>>, sqlx::Error> {
     if let Some(srv) = server {
         sqlx::query_scalar(
-            r#"
+            r"
             SELECT MAX(sc.calculated_at)
             FROM user_scores sc
             JOIN users u ON u.id = sc.user_id
             JOIN servers s ON s.id = u.server_id
             WHERE s.code = $1
-            "#,
+            ",
         )
         .bind(srv)
         .fetch_one(pool)
@@ -435,11 +435,11 @@ pub async fn get_player_standing(
 
     let (neighbors, total, prev_rank) = tokio::try_join!(
         sqlx::query_as::<_, LeaderboardEntry>(
-            r#"
+            r"
             SELECT * FROM v_leaderboard
             WHERE rank_global BETWEEN $1 AND $2 AND uid <> $3
             ORDER BY rank_global ASC
-            "#,
+            ",
         )
         .bind((rank - window).max(1))
         .bind(rank + window)
@@ -450,14 +450,14 @@ pub async fn get_player_standing(
         )
         .fetch_one(pool),
         sqlx::query_scalar::<_, Option<i32>>(
-            r#"
+            r"
             SELECT e.rank_global
             FROM leaderboard_snapshot_entries e
             JOIN leaderboard_snapshots s ON s.id = e.snapshot_id
             WHERE e.user_id = $1 AND s.taken_at <= NOW() - $2::interval
             ORDER BY s.taken_at DESC
             LIMIT 1
-            "#,
+            ",
         )
         .bind(player.id)
         .bind(interval)
@@ -469,7 +469,7 @@ pub async fn get_player_standing(
     } else {
         0.0
     };
-    let rank_delta = prev_rank.flatten().map(|p| p as i64 - rank);
+    let rank_delta = prev_rank.flatten().map(|p| i64::from(p) - rank);
 
     Ok(Some(PlayerStanding {
         player,

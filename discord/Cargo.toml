@@ -4,9 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dotenv = "0.15.0"
-poise = "0.6.2"
-serenity = { version = "0.12", features = ["utils", "framework", "standard_framework"] }
+poise = { version = "0.6.2", default-features = false }
+reqwest = { version = "0.13", default-features = false, features = ["json", "native-tls"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0"
 tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+dotenvy = "0.15"
+
+serenity = { version = "0.12", default-features = false, features = [
+  "builder", "client", "gateway", "http", "model", "utils",
+  "native_tls_backend"
+] }
+
+[profile.dev]
+debug = 0
+incremental = false
+opt-level = 0

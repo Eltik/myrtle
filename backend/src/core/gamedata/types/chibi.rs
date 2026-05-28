@@ -17,12 +17,12 @@ pub enum AnimationType {
 }
 
 impl AnimationType {
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(&self) -> &'static str {
         match self {
-            AnimationType::Front => "front",
-            AnimationType::Back => "back",
-            AnimationType::Dorm => "dorm",
-            AnimationType::Dynamic => "dynamic",
+            Self::Front => "front",
+            Self::Back => "back",
+            Self::Dorm => "dorm",
+            Self::Dynamic => "dynamic",
         }
     }
 }
@@ -37,7 +37,7 @@ pub struct SpineFiles {
 }
 
 impl SpineFiles {
-    pub fn has_data(&self) -> bool {
+    pub const fn has_data(&self) -> bool {
         self.atlas.is_some() || self.skel.is_some() || self.png.is_some()
     }
 }
@@ -82,7 +82,7 @@ pub struct RepoItem {
     pub path: String,
     pub content_type: ContentType,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub children: Option<Vec<RepoItem>>,
+    pub children: Option<Vec<Self>>,
 }
 
 impl RepoItem {
@@ -118,7 +118,7 @@ pub struct CachedChibiData {
 // ============================================================================
 
 /// All chibi data
-/// Uses Arc<ChibiCharacter> to share data between Vec and HashMap without cloning
+/// Uses Arc<ChibiCharacter> to share data between Vec and `HashMap` without cloning
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChibiData {
@@ -152,10 +152,10 @@ impl ChibiData {
     }
 
     pub fn get_by_operator(&self, operator_code: &str) -> Option<&ChibiCharacter> {
-        self.by_operator.get(operator_code).map(|arc| arc.as_ref())
+        self.by_operator.get(operator_code).map(std::convert::AsRef::as_ref)
     }
 
-    pub fn is_loaded(&self) -> bool {
+    pub const fn is_loaded(&self) -> bool {
         !self.characters.is_empty()
     }
 }

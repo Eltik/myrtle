@@ -28,15 +28,13 @@ where
                         field: field.to_string(),
                         message: err
                             .message
-                            .as_ref()
-                            .map(|m| m.to_string())
-                            .unwrap_or_else(|| err.code.to_string()),
+                            .as_ref().map_or_else(|| err.code.to_string(), std::string::ToString::to_string),
                     })
                 })
                 .collect();
             ApiError::ValidationFailed(errors)
         })?;
 
-        Ok(Validated(value))
+        Ok(Self(value))
     }
 }

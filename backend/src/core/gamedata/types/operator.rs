@@ -341,7 +341,7 @@ pub struct AllSkillLevelUp {
     pub lvl_up_cost: Vec<LevelUpCostItem>,
 }
 
-/// Wrapper for character_table.json
+/// Wrapper for `character_table.json`
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharacterTable {
@@ -349,9 +349,9 @@ pub struct CharacterTable {
     pub characters: HashMap<String, RawOperator>,
 }
 
-/// Wrapper for char_patch_table.json - Hypergryph stores Amiya's branch forms
+/// Wrapper for `char_patch_table.json` - Hypergryph stores Amiya's branch forms
 /// (Guard `char_1001_amiya2`, Medic `char_1037_amiya3`) here instead of the
-/// main character_table, alongside an `Infos` map that groups the base id
+/// main `character_table`, alongside an `Infos` map that groups the base id
 /// with all its template ids.
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]

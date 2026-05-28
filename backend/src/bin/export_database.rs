@@ -1,4 +1,4 @@
-//! Export the entire PostgreSQL database to a directory of JSONL files.
+//! Export the entire `PostgreSQL` database to a directory of JSONL files.
 //!
 //! Usage:
 //!   cargo run --release --bin export-database -- --out <dir>
@@ -12,7 +12,7 @@
 //!
 //! The export runs inside a single REPEATABLE READ READ ONLY transaction so all
 //! tables come from a consistent snapshot. Rows are streamed (never buffered
-//! into memory in full) and written through a 1 MiB BufWriter per table.
+//! into memory in full) and written through a 1 MiB `BufWriter` per table.
 
 use anyhow::{Context, Result};
 use backend::db_export::{FORMAT_VERSION, MANIFEST_FILE, TABLES};
@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
     let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
 
     fs::create_dir_all(&args.out_dir)
-        .with_context(|| format!("failed to create output dir {:?}", args.out_dir))?;
+        .with_context(|| format!("failed to create output dir {}", args.out_dir.display()))?;
 
     // A single connection is enough — one streaming query at a time inside one
     // transaction. Avoid the shared pool so we don't compete with a running
