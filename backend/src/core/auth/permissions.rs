@@ -25,12 +25,7 @@ impl Permission {
     }
 
     pub const fn all() -> &'static [Self] {
-        &[
-            Self::View,
-            Self::Edit,
-            Self::Publish,
-            Self::Admin,
-        ]
+        &[Self::View, Self::Edit, Self::Publish, Self::Admin]
     }
 
     pub const fn includes(self) -> &'static [Self] {
@@ -38,12 +33,7 @@ impl Permission {
             Self::View => &[Self::View],
             Self::Edit => &[Self::View, Self::Edit],
             Self::Publish => &[Self::View, Self::Edit, Self::Publish],
-            Self::Admin => &[
-                Self::View,
-                Self::Edit,
-                Self::Publish,
-                Self::Admin,
-            ],
+            Self::Admin => &[Self::View, Self::Edit, Self::Publish, Self::Admin],
         }
     }
 }

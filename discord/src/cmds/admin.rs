@@ -1,7 +1,7 @@
 use crate::types::{Context, Error};
-use poise::serenity_prelude as serenity;
-use poise::CreateReply;
 use ::serenity::model::user::User;
+use poise::CreateReply;
+use poise::serenity_prelude as serenity;
 
 /// Manage rich embeds sent by the bot.
 ///
@@ -22,11 +22,7 @@ pub async fn embed(_ctx: Context<'_>) -> Result<(), Error> {
 /// Provide individual fields, or a raw `json` payload (e.g. from `/embed source`) for full
 /// control including multiple fields. Fields are layered on top of `json` when both are given.
 #[allow(clippy::too_many_arguments)]
-#[poise::command(
-    slash_command,
-    guild_only,
-    required_permissions = "MANAGE_MESSAGES"
-)]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
 pub async fn create(
     ctx: Context<'_>,
     #[description = "Channel to send the embed to (defaults to the current channel)"]
@@ -97,16 +93,13 @@ pub async fn create(
 /// Identify the message by link, `channel-message` id pair, or raw message id. Provided fields are
 /// layered on top of the existing embed; pass `json` to replace the embed wholesale.
 #[allow(clippy::too_many_arguments)]
-#[poise::command(
-    slash_command,
-    guild_only,
-    required_permissions = "MANAGE_MESSAGES"
-)]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
 pub async fn edit(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
-    #[description = "Channel the message is in (if not derivable from the link)"]
-    channel: Option<serenity::ChannelId>,
+    #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
+        serenity::ChannelId,
+    >,
     #[description = "Embed title"] title: Option<String>,
     #[description = "Embed description / body"] description: Option<String>,
     #[description = "Hex color, e.g. #5865F2"] color: Option<String>,
@@ -122,9 +115,7 @@ pub async fn edit(
 ) -> Result<(), Error> {
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
-    let target = channel
-        .or(link_channel)
-        .unwrap_or_else(|| ctx.channel_id());
+    let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -160,7 +151,11 @@ pub async fn edit(
     )?;
 
     target
-        .edit_message(ctx.http(), message_id, serenity::EditMessage::new().embed(embed))
+        .edit_message(
+            ctx.http(),
+            message_id,
+            serenity::EditMessage::new().embed(embed),
+        )
         .await
         .map_err(|e| format!("Couldn't edit that message: {e}"))?;
 
@@ -178,22 +173,17 @@ pub async fn edit(
 ///
 /// Identify the message by link, `channel-message` id pair, or raw message id. The output can be
 /// pasted straight back into `/embed create` or `/embed edit` via their `json` field.
-#[poise::command(
-    slash_command,
-    guild_only,
-    required_permissions = "MANAGE_MESSAGES"
-)]
+#[poise::command(slash_command, guild_only, required_permissions = "MANAGE_MESSAGES")]
 pub async fn source(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
-    #[description = "Channel the message is in (if not derivable from the link)"]
-    channel: Option<serenity::ChannelId>,
+    #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
+        serenity::ChannelId,
+    >,
 ) -> Result<(), Error> {
     let (link_channel, message_id) = parse_message_ref(&message)
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
-    let target = channel
-        .or(link_channel)
-        .unwrap_or_else(|| ctx.channel_id());
+    let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
 
     let msg = target
         .message(ctx.http(), message_id)
@@ -242,7 +232,9 @@ pub async fn ban_user(
     #[description = "Reason for the ban"] reason: Option<String>,
     #[description = "Days of messages to delete (0-7)"] delete_message_days: Option<u8>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("This command must be used in a guild.")?;
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
 
     if user.id == ctx.author().id {
         return Err("You can't ban yourself.".into());
@@ -289,7 +281,9 @@ async fn autocomplete_banned_user(
     ctx: Context<'_>,
     partial: &str,
 ) -> Vec<serenity::AutocompleteChoice> {
-    let Some(guild) = ctx.guild_id() else { return Vec::new() };
+    let Some(guild) = ctx.guild_id() else {
+        return Vec::new();
+    };
     let Ok(bans) = guild.bans(ctx.http(), None, None).await else {
         return Vec::new();
     };
@@ -328,13 +322,17 @@ pub async fn unban_user(
     user: String,
     #[description = "Reason for the unban (shown in the audit log)"] reason: Option<String>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("This command must be used in a guild.")?;
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
 
     let user_id = user
         .trim()
         .parse::<u64>()
         .map(serenity::UserId::new)
-        .map_err(|_| format!("'{user}' isn't a valid user ID. Pick from autocomplete or paste a numeric ID."))?;
+        .map_err(|_| {
+            format!("'{user}' isn't a valid user ID. Pick from autocomplete or paste a numeric ID.")
+        })?;
 
     ctx.http()
         .remove_ban(guild, user_id, reason.as_deref())
@@ -369,7 +367,9 @@ pub async fn kick_user(
     #[description = "User to kick"] user: User,
     #[description = "Reason for the kick"] reason: Option<String>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("This command must be used in a guild.")?;
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
 
     if user.id == ctx.author().id {
         return Err("You can't kick yourself.".into());
@@ -516,12 +516,12 @@ fn parse_message_ref(input: &str) -> Option<(Option<serenity::ChannelId>, sereni
     if let Some((channel, message)) = input.split_once('-')
         && let (Ok(channel), Ok(message)) =
             (channel.trim().parse::<u64>(), message.trim().parse::<u64>())
-        {
-            return Some((
-                Some(serenity::ChannelId::new(channel)),
-                serenity::MessageId::new(message),
-            ));
-        }
+    {
+        return Some((
+            Some(serenity::ChannelId::new(channel)),
+            serenity::MessageId::new(message),
+        ));
+    }
 
     input
         .parse::<u64>()

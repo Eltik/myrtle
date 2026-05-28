@@ -825,7 +825,8 @@ impl OperatorUnit {
                 + (off_skill_dps * f64::from(self.skill_cost)) / (1.0 + f64::from(self.sp_boost));
 
             cycle_dmg
-                / (self.skill_duration + f64::from(self.skill_cost) / (1.0 + f64::from(self.sp_boost)))
+                / (self.skill_duration
+                    + f64::from(self.skill_cost) / (1.0 + f64::from(self.sp_boost)))
         }
     }
 }

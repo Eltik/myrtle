@@ -106,7 +106,12 @@ fn score_exploration(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize
         .and_then(|n| n.as_object())
         .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
+                .filter(|v| {
+                    v.get("state")
+                        .and_then(serde_json::Value::as_i64)
+                        .unwrap_or(0)
+                        >= 1
+                })
                 .count()
         });
 
@@ -116,7 +121,12 @@ fn score_exploration(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize
         .and_then(|z| z.as_object())
         .map_or(0, |obj| {
             obj.values()
-                .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
+                .filter(|v| {
+                    v.get("state")
+                        .and_then(serde_json::Value::as_i64)
+                        .unwrap_or(0)
+                        >= 1
+                })
                 .count()
         });
 

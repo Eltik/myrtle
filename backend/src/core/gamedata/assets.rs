@@ -204,7 +204,10 @@ impl AssetIndex {
     }
 
     pub fn path(&self, kind: AssetKind, name: &str) -> Option<&str> {
-        self.map.get(&kind)?.get(name).map(std::string::String::as_str)
+        self.map
+            .get(&kind)?
+            .get(name)
+            .map(std::string::String::as_str)
     }
 
     pub fn portrait_path(&self, char_id: &str) -> Option<&str> {

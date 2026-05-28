@@ -175,10 +175,9 @@ fn score_morale_sustainability(
         .iter()
         .filter(|p| {
             p.available_buffs.iter().any(|b| {
-                building_data
-                    .buffs
-                    .get(b)
-                    .is_some_and(|buff| buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING")
+                building_data.buffs.get(b).is_some_and(|buff| {
+                    buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING"
+                })
             })
         })
         .count();

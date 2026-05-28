@@ -84,9 +84,7 @@ impl Server {
             }
             Self::JP => Some("https://ak-conf.arknights.jp/config/prod/official/network_config"),
             Self::KR => Some("https://ak-conf.arknights.kr/config/prod/official/network_config"),
-            Self::CN => {
-                Some("https://ak-conf.hypergryph.com/config/prod/official/network_config")
-            }
+            Self::CN => Some("https://ak-conf.hypergryph.com/config/prod/official/network_config"),
             Self::Bilibili => Some("https://ak-conf.hypergryph.com/config/prod/b/network_config"),
             Self::TW => {
                 Some("https://ak-conf-tw.gryphline.com/config/prod/official/network_config")

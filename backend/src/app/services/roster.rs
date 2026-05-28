@@ -576,8 +576,14 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
             // Field-by-field so a non-int `val` (multi-condition medals are
             // arrays like [[achieved, required], ...]) doesn't blow up parsing.
             let val = data.get("val").cloned().unwrap_or(serde_json::Value::Null);
-            let fts = data.get("fts").and_then(serde_json::Value::as_i64).unwrap_or(0);
-            let rts = data.get("rts").and_then(serde_json::Value::as_i64).unwrap_or(0);
+            let fts = data
+                .get("fts")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(0);
+            let rts = data
+                .get("rts")
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or(0);
 
             if !is_medal_earned(&val, fts, rts) {
                 return None;

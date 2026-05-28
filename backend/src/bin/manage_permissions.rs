@@ -39,13 +39,15 @@ async fn main() -> Result<()> {
 
     // Optional operator identity - stamped onto grants so audit_log shows who
     // ran the tool. Missing/unknown UID just becomes NULL.
-    let operator = if let Some(uid) = std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) { if let Some(u) = find_user_by_id_or_uid(&pool, &uid).await? {
-        println!("Operating as: {} ({})\n", u.uid, display_name(&u));
-        Some(u.id)
+    let operator = if let Some(uid) = std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) {
+        if let Some(u) = find_user_by_id_or_uid(&pool, &uid).await? {
+            println!("Operating as: {} ({})\n", u.uid, display_name(&u));
+            Some(u.id)
+        } else {
+            println!("ADMIN_UID '{uid}' not found — grants will record NULL.\n");
+            None
+        }
     } else {
-        println!("ADMIN_UID '{uid}' not found — grants will record NULL.\n");
-        None
-    } } else {
         println!("ADMIN_UID not set — grants will record NULL.\n");
         None
     };

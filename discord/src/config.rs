@@ -71,8 +71,8 @@ impl Config {
 
     /// Load from `$DISCORD_CONFIG_PATH` if set, else `config.json` in the working dir.
     pub fn load_default() -> Result<Self, Error> {
-        let path =
-            std::env::var("DISCORD_CONFIG_PATH").unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string());
+        let path = std::env::var("DISCORD_CONFIG_PATH")
+            .unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string());
         Self::load(path)
     }
 
