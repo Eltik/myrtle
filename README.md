@@ -3,6 +3,7 @@
 A comprehensive Arknights companion platform: operator database, player-profile syncing, DPS/HPS calculators, community tier lists, gacha tracking, and a scoring leaderboard. Powered by a high-performance Rust backend, a modern SSR React frontend, and a from-scratch Rust asset pipeline.
 
 [![Backend CI](https://github.com/Eltik/myrtle/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/Eltik/myrtle/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/frontend-ci.yml)
 [![Assets CI](https://github.com/Eltik/myrtle/actions/workflows/assets-ci.yml/badge.svg)](https://github.com/Eltik/myrtle/actions/workflows/assets-ci.yml)
 [![Demo](https://img.shields.io/badge/Demo-myrtle.moe-brightgreen)](https://myrtle.moe)
 [![Backend](https://img.shields.io/badge/Backend-Rust%2FAxum-orange?logo=rust)](backend/)
@@ -69,7 +70,7 @@ myrtle.moe/
 ├── assets/             Rust asset pipeline (downloader + unpacker) + FBS schemas
 │   ├── downloader/     Multi-region CDN downloader with incremental updates
 │   └── unpacker/       UnityFS bundle extractor and FlatBuffer decoder
-├── .github/workflows/  Backend and assets CI pipelines
+├── .github/workflows/  Backend, frontend, and assets CI pipelines
 ├── docker-compose.yml  Full local stack (db, cache, backend, frontend, tools)
 ├── BUILD.md            Manual (non-Docker) build instructions
 └── CONTRIBUTING.md     Full developer setup and workflow
