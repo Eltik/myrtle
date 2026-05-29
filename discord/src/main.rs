@@ -45,7 +45,13 @@ async fn main() {
         tx: assets_tx,
     });
 
-    let intents = GatewayIntents::GUILD_MESSAGES
+    // GUILDS gates channel/role/guild structural events; GUILD_MEMBERS gates member add/update/
+    // remove (privileged — toggle in Developer Portal); GUILD_MODERATION gates ban add/remove and
+    // GuildAuditLogEntryCreate, which is the canonical source of "who did what" for moderation.
+    let intents = GatewayIntents::GUILDS
+        | GatewayIntents::GUILD_MEMBERS
+        | GatewayIntents::GUILD_MODERATION
+        | GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
         | GatewayIntents::GUILD_PRESENCES
@@ -107,6 +113,16 @@ async fn main() {
                     antispam_policies.len()
                 );
 
+                let audit_log_channels: std::collections::HashMap<_, _> =
+                    db::list_audit_log_channels(&pool)
+                        .await?
+                        .into_iter()
+                        .collect();
+                tracing::info!(
+                    "Hydrated audit-log bindings for {} guild(s)",
+                    audit_log_channels.len()
+                );
+
                 let watcher_http = ctx.http.clone();
                 let watcher_pool = pool.clone();
                 let watcher_cfg = config.assets.clone();
@@ -140,6 +156,7 @@ async fn main() {
                     assets: assets_state,
                     ping_history,
                     antispam_policies,
+                    audit_log_channels: Arc::new(RwLock::new(audit_log_channels)),
                 })
             })
         })
