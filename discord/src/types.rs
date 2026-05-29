@@ -1,4 +1,4 @@
-use serenity::model::id::{GuildId, MessageId, UserId};
+use serenity::model::id::{ChannelId, GuildId, MessageId, UserId};
 use sqlx::SqlitePool;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -22,6 +22,12 @@ pub type PingHistory = Arc<RwLock<HashMap<(GuildId, UserId), VecDeque<(Instant, 
 /// stays out of `SQLite`.
 pub type AntiSpamPolicies = Arc<RwLock<HashMap<GuildId, AntiSpamPolicy>>>;
 
+/// Cached `(guild, audit-log-channel)` bindings, mirroring `guild_audit_log`.
+///
+/// Hydrated on startup and kept in sync by `/auditlog set` / `/auditlog clear` so the hot
+/// path (every logged event) doesn't hit `SQLite`.
+pub type AuditLogChannels = Arc<RwLock<HashMap<GuildId, ChannelId>>>;
+
 pub struct Data {
     pub command_counter: Mutex<HashMap<String, u64>>,
     pub config: Config,
@@ -31,6 +37,7 @@ pub struct Data {
     pub assets: Arc<AssetsState>,
     pub ping_history: PingHistory,
     pub antispam_policies: AntiSpamPolicies,
+    pub audit_log_channels: AuditLogChannels,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;

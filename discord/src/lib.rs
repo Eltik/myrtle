@@ -11,6 +11,7 @@
 #![allow(clippy::option_if_let_else)]
 
 pub mod api;
+pub mod audit;
 pub mod checks;
 pub mod cmds;
 pub mod config;

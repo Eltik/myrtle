@@ -228,6 +228,64 @@ pub async fn list_assets_channels(pool: &SqlitePool) -> Result<Vec<(GuildId, Cha
         .collect())
 }
 
+/// Set the audit-log channel for `guild_id`, inserting the row if it doesn't exist.
+pub async fn set_audit_log_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    channel_id: ChannelId,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_audit_log (guild_id, channel_id) VALUES (?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET channel_id = excluded.channel_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(channel_id.get().cast_signed())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove the audit-log binding for `guild_id`.
+pub async fn clear_audit_log_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
+    let result = sqlx::query("DELETE FROM guild_audit_log WHERE guild_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// Look up the audit-log channel for `guild_id`, if any.
+pub async fn get_audit_log_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Option<ChannelId>, Error> {
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT channel_id FROM guild_audit_log WHERE guild_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .fetch_optional(pool)
+            .await?;
+    Ok(row.map(|(id,)| ChannelId::new(id.cast_unsigned())))
+}
+
+/// Every configured `(guild, channel)` pair for audit logs. Used to hydrate the in-memory
+/// cache at startup so the hot path (every logged event) skips a DB roundtrip.
+pub async fn list_audit_log_channels(
+    pool: &SqlitePool,
+) -> Result<Vec<(GuildId, ChannelId)>, Error> {
+    let rows: Vec<(i64, i64)> = sqlx::query_as("SELECT guild_id, channel_id FROM guild_audit_log")
+        .fetch_all(pool)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(g, c)| {
+            (
+                GuildId::new(g.cast_unsigned()),
+                ChannelId::new(c.cast_unsigned()),
+            )
+        })
+        .collect())
+}
+
 /// Moderation action taken when a user trips an antispam check.
 ///
 /// Lives here (not in `cmds/admin.rs`) so the event handler can also pattern-match on it

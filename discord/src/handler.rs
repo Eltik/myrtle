@@ -1,5 +1,6 @@
 use std::time::{Duration, Instant};
 
+use crate::audit;
 use crate::db::{self, AntiSpamAction, AntiSpamPolicy};
 use crate::types::{AntiSpamPolicies, Data, Error, PingHistory};
 use poise::{FrameworkContext, serenity_prelude::FullEvent::Ready};
@@ -10,11 +11,15 @@ use serenity::model::id::{GuildId, UserId};
 use serenity::{
     all::prelude::Context,
     client::FullEvent::{
-        self, GuildDelete, GuildMemberAddition, Message as MessageCreate, MessageDelete,
-        MessageDeleteBulk, ReactionAdd, ReactionRemove,
+        self, GuildAuditLogEntryCreate, GuildBanAddition, GuildBanRemoval, GuildDelete,
+        GuildMemberAddition, GuildMemberRemoval, Message as MessageCreate, MessageDelete,
+        MessageDeleteBulk, MessageUpdate, ReactionAdd, ReactionRemove,
     },
 };
 
+// Dispatcher grows additional event arms over time (reaction roles, antispam, audit log...);
+// splitting it into per-event helpers just scatters the wiring without making any of it clearer.
+#[allow(clippy::too_many_lines)]
 pub async fn event_handler(
     ctx: &Context,
     event: &FullEvent,
@@ -47,6 +52,36 @@ pub async fn event_handler(
                     );
                 }
             }
+            audit::log_member_join(ctx, data, new_member).await;
+        }
+        GuildMemberRemoval {
+            guild_id,
+            user,
+            member_data_if_available,
+        } => {
+            audit::log_member_leave(
+                ctx,
+                data,
+                *guild_id,
+                user,
+                member_data_if_available.as_ref(),
+            )
+            .await;
+        }
+        GuildBanAddition {
+            guild_id,
+            banned_user,
+        } => {
+            audit::log_member_ban(ctx, data, *guild_id, banned_user).await;
+        }
+        GuildBanRemoval {
+            guild_id,
+            unbanned_user,
+        } => {
+            audit::log_member_unban(ctx, data, *guild_id, unbanned_user).await;
+        }
+        GuildAuditLogEntryCreate { entry, guild_id } => {
+            audit::log_audit_entry(ctx, data, *guild_id, entry).await;
         }
         ReactionAdd { add_reaction } => {
             handle_reaction(ctx, data, bot_id, add_reaction, true).await?;
@@ -62,8 +97,18 @@ pub async fn event_handler(
                 );
             }
         }
+        MessageUpdate {
+            old_if_available,
+            new,
+            event,
+        } => {
+            audit::log_message_update(ctx, data, old_if_available.as_ref(), new.as_ref(), event)
+                .await;
+        }
         MessageDelete {
-            deleted_message_id, ..
+            channel_id,
+            deleted_message_id,
+            guild_id,
         } => {
             // Gate DB writes on cache membership - most deleted messages aren't tracked.
             let was_tracked = data
@@ -78,10 +123,12 @@ pub async fn event_handler(
                     "Failed to delete reaction-role rows for message {deleted_message_id}: {e}"
                 );
             }
+            audit::log_message_delete(ctx, data, *channel_id, *deleted_message_id, *guild_id).await;
         }
         MessageDeleteBulk {
+            channel_id,
             multiple_deleted_messages_ids,
-            ..
+            guild_id,
         } => {
             let tracked: Vec<_> = {
                 let mut cache = data.tracked_messages.write().await;
@@ -96,6 +143,14 @@ pub async fn event_handler(
                     tracing::error!("Failed to delete reaction-role rows for message {id}: {e}");
                 }
             }
+            audit::log_message_bulk_delete(
+                ctx,
+                data,
+                *channel_id,
+                multiple_deleted_messages_ids,
+                *guild_id,
+            )
+            .await;
         }
         GuildDelete { incomplete, .. } => {
             // `unavailable` flags a transient outage, not a removal - only purge on real kicks.
