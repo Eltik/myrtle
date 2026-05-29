@@ -8,5 +8,9 @@
     "local_frontend": "http://localhost:5173",
     "public_backend": "https://api.example.com",
     "public_frontend": "https://example.com"
+  },
+  "assets": {
+    "ws_url": "ws://localhost:9160",
+    "reconnect_secs": 5
   }
 }
