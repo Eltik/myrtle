@@ -1,11 +1,21 @@
-use discord::{cmds, config::Config, db, handler, hooks, types::Data};
+use discord::{
+    cmds,
+    config::Config,
+    db, handler, hooks,
+    types::Data,
+    watcher::{self, AssetStatus, AssetsState},
+};
 use dotenvy::dotenv;
 use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
 use serenity::{all::ClientBuilder, prelude::*};
+use tokio::sync::{Mutex as TokioMutex, mpsc};
 
+// Bot bootstrap touches many subsystems (config, db, watcher, framework); splitting it
+// into helpers would just scatter the wiring without making any of it clearer.
+#[allow(clippy::too_many_lines)]
 #[tokio::main]
 async fn main() {
     dotenv().ok();
@@ -28,6 +38,13 @@ async fn main() {
         .user_agent(concat!("myrtle-discord/", env!("CARGO_PKG_VERSION")))
         .build()
         .expect("Failed to build HTTP client");
+    let (assets_tx, assets_rx) = mpsc::unbounded_channel::<String>();
+    let assets_state = Arc::new(AssetsState {
+        status: RwLock::new(AssetStatus::default()),
+        pending_resource_list: TokioMutex::new(None),
+        tx: assets_tx,
+    });
+
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
@@ -49,14 +66,18 @@ async fn main() {
         ..Default::default()
     };
 
+    let setup_state = assets_state.clone();
+    let mut assets_rx_slot = Some(assets_rx);
+
     let framework = poise::Framework::builder()
         .options(options)
-        .setup(|ctx, _ready, framework| {
+        .setup(move |ctx, _ready, framework| {
+            let assets_state = setup_state;
+            let assets_rx = assets_rx_slot.take().expect("framework setup runs once");
             Box::pin(async move {
                 let commands = &framework.options().commands;
 
                 if config.registration.use_guild_commands {
-                    // validate() guarantees guild_id is Some when use_guild_commands is true
                     let guild_id = config
                         .registration
                         .guild_id
@@ -76,12 +97,28 @@ async fn main() {
                     .into_iter()
                     .collect();
 
+                let watcher_http = ctx.http.clone();
+                let watcher_pool = pool.clone();
+                let watcher_cfg = config.assets.clone();
+                let watcher_state = assets_state.clone();
+                tokio::spawn(async move {
+                    watcher::run(
+                        watcher_http,
+                        watcher_pool,
+                        watcher_cfg,
+                        watcher_state,
+                        assets_rx,
+                    )
+                    .await;
+                });
+
                 Ok(Data {
                     command_counter: Mutex::default(),
                     config,
                     http_client,
                     pool,
                     tracked_messages: Arc::new(RwLock::new(tracked)),
+                    assets: assets_state,
                 })
             })
         })

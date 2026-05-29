@@ -18,6 +18,8 @@ pub struct Config {
     pub registration: RegistrationConfig,
     #[serde(default)]
     pub endpoints: EndpointsConfig,
+    #[serde(default)]
+    pub assets: AssetsConfig,
 }
 
 /// Command-registration target.
@@ -44,6 +46,31 @@ pub struct EndpointsConfig {
     pub public_backend: String,
     #[serde(default)]
     pub public_frontend: String,
+}
+
+/// Connection settings for the Arknights asset pipeline WebSocket (`run.mjs ws`).
+///
+/// An empty `ws_url` disables the watcher entirely so the bot can run without the pipeline.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AssetsConfig {
+    #[serde(default)]
+    pub ws_url: String,
+    #[serde(default = "default_reconnect_secs")]
+    pub reconnect_secs: u64,
+}
+
+impl Default for AssetsConfig {
+    fn default() -> Self {
+        Self {
+            ws_url: String::new(),
+            reconnect_secs: default_reconnect_secs(),
+        }
+    }
+}
+
+const fn default_reconnect_secs() -> u64 {
+    5
 }
 
 impl Config {

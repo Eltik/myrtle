@@ -171,6 +171,63 @@ pub async fn list_tracked_message_ids(pool: &SqlitePool) -> Result<Vec<MessageId
         .collect())
 }
 
+/// Set the asset-announcement channel for `guild_id`.
+pub async fn set_assets_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    channel_id: ChannelId,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_asset_channel (guild_id, channel_id) VALUES (?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET channel_id = excluded.channel_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(channel_id.get().cast_signed())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Remove the asset-announcement binding for `guild_id`.
+pub async fn clear_assets_channel(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
+    let result = sqlx::query("DELETE FROM guild_asset_channel WHERE guild_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// Look up the asset-announcement channel for `guild_id`, if any.
+pub async fn get_assets_channel(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Option<ChannelId>, Error> {
+    let row: Option<(i64,)> =
+        sqlx::query_as("SELECT channel_id FROM guild_asset_channel WHERE guild_id = ?")
+            .bind(guild_id.get().cast_signed())
+            .fetch_optional(pool)
+            .await?;
+    Ok(row.map(|(id,)| ChannelId::new(id.cast_unsigned())))
+}
+
+/// Every configured `(guild, channel)` pair for asset announcements. Used by the watcher
+/// to fan an event out to all subscribers in one pass.
+pub async fn list_assets_channels(pool: &SqlitePool) -> Result<Vec<(GuildId, ChannelId)>, Error> {
+    let rows: Vec<(i64, i64)> =
+        sqlx::query_as("SELECT guild_id, channel_id FROM guild_asset_channel")
+            .fetch_all(pool)
+            .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(g, c)| {
+            (
+                GuildId::new(g.cast_unsigned()),
+                ChannelId::new(c.cast_unsigned()),
+            )
+        })
+        .collect())
+}
+
 /// All mappings in `guild_id`, ordered by message then emoji for stable `/reactionrole list` output.
 pub async fn list_reaction_roles_for_guild(
     pool: &SqlitePool,

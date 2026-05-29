@@ -18,3 +18,4 @@ pub mod db;
 pub mod handler;
 pub mod hooks;
 pub mod types;
+pub mod watcher;

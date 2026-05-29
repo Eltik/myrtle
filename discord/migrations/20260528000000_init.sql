@@ -13,3 +13,8 @@ CREATE TABLE IF NOT EXISTS guild_reaction_roles (
 );
 
 CREATE INDEX idx_reaction_roles_guild ON guild_reaction_roles(guild_id);
+
+CREATE TABLE guild_asset_channel (
+    guild_id   INTEGER PRIMARY KEY NOT NULL,
+    channel_id INTEGER NOT NULL
+);

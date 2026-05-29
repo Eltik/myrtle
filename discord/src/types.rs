@@ -7,6 +7,7 @@ use std::{
 use tokio::sync::{Mutex, RwLock};
 
 use crate::config::Config;
+use crate::watcher::AssetsState;
 
 pub struct Data {
     pub command_counter: Mutex<HashMap<String, u64>>,
@@ -14,6 +15,7 @@ pub struct Data {
     pub http_client: reqwest::Client,
     pub pool: SqlitePool,
     pub tracked_messages: Arc<RwLock<HashSet<MessageId>>>,
+    pub assets: Arc<AssetsState>,
 }
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
