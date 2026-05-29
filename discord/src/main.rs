@@ -1,6 +1,8 @@
 use discord::{cmds, config::Config, db, handler, hooks, types::Data};
 use dotenvy::dotenv;
+use std::collections::HashSet;
 use std::env;
+use std::sync::Arc;
 
 use serenity::{all::ClientBuilder, prelude::*};
 
@@ -29,7 +31,8 @@ async fn main() {
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
-        | GatewayIntents::GUILD_PRESENCES;
+        | GatewayIntents::GUILD_PRESENCES
+        | GatewayIntents::GUILD_MESSAGE_REACTIONS;
 
     let options = poise::FrameworkOptions {
         commands: cmds::all(),
@@ -68,11 +71,17 @@ async fn main() {
                     tracing::info!("Registered {} command(s) globally", commands.len());
                 }
 
+                let tracked: HashSet<_> = db::list_tracked_message_ids(&pool)
+                    .await?
+                    .into_iter()
+                    .collect();
+
                 Ok(Data {
                     command_counter: Mutex::default(),
                     config,
                     http_client,
                     pool,
+                    tracked_messages: Arc::new(RwLock::new(tracked)),
                 })
             })
         })

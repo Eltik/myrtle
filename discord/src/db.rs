@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use serenity::all::{GuildId, RoleId};
+use serenity::model::id::{ChannelId, MessageId};
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteConnectOptions;
 
@@ -29,7 +30,7 @@ pub async fn init_pool(url: &str) -> Result<SqlitePool, Error> {
 /// Look up the configured auto-role for `guild_id`, if any.
 pub async fn get_auto_role(pool: &SqlitePool, guild_id: GuildId) -> Result<Option<RoleId>, Error> {
     let row: Option<(Option<i64>,)> =
-        sqlx::query_as("SELECT auto_role_id FROM guild_settings WHERE guild_id = ?")
+        sqlx::query_as("SELECT auto_role_id FROM guild_auto_role WHERE guild_id = ?")
             .bind(guild_id.get().cast_signed())
             .fetch_optional(pool)
             .await?;
@@ -45,7 +46,7 @@ pub async fn set_auto_role(
     role_id: RoleId,
 ) -> Result<(), Error> {
     sqlx::query(
-        "INSERT INTO guild_settings (guild_id, auto_role_id) VALUES (?, ?) \
+        "INSERT INTO guild_auto_role (guild_id, auto_role_id) VALUES (?, ?) \
          ON CONFLICT(guild_id) DO UPDATE SET auto_role_id = excluded.auto_role_id",
     )
     .bind(guild_id.get().cast_signed())
@@ -58,11 +59,138 @@ pub async fn set_auto_role(
 /// Clear the auto-role for `guild_id`, leaving the row in place with a NULL value.
 pub async fn clear_auto_role(pool: &SqlitePool, guild_id: GuildId) -> Result<(), Error> {
     sqlx::query(
-        "INSERT INTO guild_settings (guild_id, auto_role_id) VALUES (?, NULL) \
+        "INSERT INTO guild_auto_role (guild_id, auto_role_id) VALUES (?, NULL) \
          ON CONFLICT(guild_id) DO UPDATE SET auto_role_id = NULL",
     )
     .bind(guild_id.get().cast_signed())
     .execute(pool)
     .await?;
     Ok(())
+}
+
+pub struct ReactionRoleRow {
+    pub guild_id: GuildId,
+    pub channel_id: ChannelId,
+    pub message_id: MessageId,
+    pub emoji: String,
+    pub role_id: RoleId,
+}
+
+/// Insert or replace the role assigned when `emoji` is reacted on `message`.
+///
+/// Re-running with the same `(message, emoji)` swaps the role rather than erroring, so admins
+/// can rebind an emoji without first removing the old mapping.
+pub async fn add_reaction_role(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    channel_id: ChannelId,
+    message_id: MessageId,
+    emoji: &str,
+    role_id: RoleId,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_reaction_roles (guild_id, channel_id, message_id, emoji, role_id) \
+         VALUES (?, ?, ?, ?, ?) \
+         ON CONFLICT(message_id, emoji) DO UPDATE SET role_id = excluded.role_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(channel_id.get().cast_signed())
+    .bind(message_id.get().cast_signed())
+    .bind(emoji)
+    .bind(role_id.get().cast_signed())
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Delete a single `(message, emoji)` mapping. Returns whether a row was removed.
+pub async fn remove_reaction_role(
+    pool: &SqlitePool,
+    message_id: MessageId,
+    emoji: &str,
+) -> Result<bool, Error> {
+    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE message_id = ? AND emoji = ?")
+        .bind(message_id.get().cast_signed())
+        .bind(emoji)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Delete every mapping attached to `message_id`. Used for `/reactionrole delete <message>`
+/// and as the response to a `MessageDelete` event for a tracked message.
+pub async fn remove_reaction_message(
+    pool: &SqlitePool,
+    message_id: MessageId,
+) -> Result<u64, Error> {
+    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE message_id = ?")
+        .bind(message_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// Delete every mapping owned by `guild_id`. Used when the bot is kicked from a guild
+/// (`GuildDelete`)
+pub async fn remove_reaction_roles_for_guild(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<u64, Error> {
+    let result = sqlx::query("DELETE FROM guild_reaction_roles WHERE guild_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
+/// Resolve a single `(message, emoji)` to the role it grants, if any.
+pub async fn get_role_for_reaction(
+    pool: &SqlitePool,
+    message_id: MessageId,
+    emoji: &str,
+) -> Result<Option<RoleId>, Error> {
+    let row: Option<(i64,)> = sqlx::query_as(
+        "SELECT role_id FROM guild_reaction_roles WHERE message_id = ? AND emoji = ?",
+    )
+    .bind(message_id.get().cast_signed())
+    .bind(emoji)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|(id,)| RoleId::new(id.cast_unsigned())))
+}
+
+/// All distinct tracked message IDs. Used to hydrate the in-memory `tracked_messages` cache
+/// on startup so the reaction handler can short-circuit untracked messages without a DB hit.
+pub async fn list_tracked_message_ids(pool: &SqlitePool) -> Result<Vec<MessageId>, Error> {
+    let rows: Vec<(i64,)> = sqlx::query_as("SELECT DISTINCT message_id FROM guild_reaction_roles")
+        .fetch_all(pool)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(id,)| MessageId::new(id.cast_unsigned()))
+        .collect())
+}
+
+/// All mappings in `guild_id`, ordered by message then emoji for stable `/reactionrole list` output.
+pub async fn list_reaction_roles_for_guild(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Vec<ReactionRoleRow>, Error> {
+    let rows: Vec<(i64, i64, i64, String, i64)> = sqlx::query_as(
+        "SELECT guild_id, channel_id, message_id, emoji, role_id \
+         FROM guild_reaction_roles WHERE guild_id = ? ORDER BY message_id, emoji",
+    )
+    .bind(guild_id.get().cast_signed())
+    .fetch_all(pool)
+    .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(g, c, m, e, r)| ReactionRoleRow {
+            guild_id: GuildId::new(g.cast_unsigned()),
+            channel_id: ChannelId::new(c.cast_unsigned()),
+            message_id: MessageId::new(m.cast_unsigned()),
+            emoji: e,
+            role_id: RoleId::new(r.cast_unsigned()),
+        })
+        .collect())
 }
