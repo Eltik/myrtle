@@ -11,7 +11,7 @@ use serenity::{
     all::prelude::Context,
     client::FullEvent::{
         self, GuildDelete, GuildMemberAddition, Message as MessageCreate, MessageDelete,
-        ReactionAdd, ReactionRemove,
+        MessageDeleteBulk, ReactionAdd, ReactionRemove,
     },
 };
 
@@ -77,6 +77,24 @@ pub async fn event_handler(
                 tracing::error!(
                     "Failed to delete reaction-role rows for message {deleted_message_id}: {e}"
                 );
+            }
+        }
+        MessageDeleteBulk {
+            multiple_deleted_messages_ids,
+            ..
+        } => {
+            let tracked: Vec<_> = {
+                let mut cache = data.tracked_messages.write().await;
+                multiple_deleted_messages_ids
+                    .iter()
+                    .copied()
+                    .filter(|id| cache.remove(id))
+                    .collect()
+            };
+            for id in tracked {
+                if let Err(e) = db::remove_reaction_message(&data.pool, id).await {
+                    tracing::error!("Failed to delete reaction-role rows for message {id}: {e}");
+                }
             }
         }
         GuildDelete { incomplete, .. } => {

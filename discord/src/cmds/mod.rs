@@ -14,6 +14,7 @@ pub fn all() -> Vec<poise::Command<Data, Error>> {
         admin::ban_user(),
         admin::unban_user(),
         admin::kick_user(),
+        admin::purge(),
         admin::autorole(),
         admin::antispam(),
         admin::reactionrole(),

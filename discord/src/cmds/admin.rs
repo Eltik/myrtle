@@ -2,7 +2,9 @@ use std::fmt::Write as _;
 
 use crate::db;
 use crate::types::{Context, Data, Error};
-use ::serenity::builder::{CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
+use ::serenity::builder::{
+    CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter, GetMessages,
+};
 use ::serenity::model::channel::{Embed, ReactionType};
 use ::serenity::model::guild::Role;
 use ::serenity::model::id::{ChannelId, GuildId, MessageId};
@@ -407,6 +409,197 @@ pub async fn kick_user(
             .ephemeral(true),
     )
     .await?;
+    Ok(())
+}
+
+/// How many recent messages /purge will scan when searching for matches.
+const PURGE_SCAN_BUDGET: usize = 1000;
+/// Page size for /purge's message fetch; 100 is Discord's per-request maximum.
+const PURGE_PAGE_SIZE: u8 = 100;
+/// Cap on single-delete fallbacks (>14-day messages) per /purge invocation, since the
+/// single-delete route is heavily rate-limited.
+const PURGE_OLD_CAP: usize = 50;
+
+/// Delete recent messages in this channel, optionally filtered by user, content, or position.
+///
+/// Scans up to 1000 of the most recent messages and removes the first `amount` that match. Bulk
+/// removal covers messages younger than 14 days; older matches fall back to single-delete and
+/// are capped at 50 per invocation. Pinned messages are skipped by default. Requires the Manage
+/// Messages permission.
+///
+/// `too_many_lines` allowed: the scan / partition / delete / report phases share enough state
+/// (cursor, counters, error tally) that splitting them just scatters the wiring.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+#[poise::command(
+    slash_command,
+    guild_only,
+    default_member_permissions = "MANAGE_MESSAGES",
+    required_permissions = "MANAGE_MESSAGES"
+)]
+pub async fn purge(
+    ctx: Context<'_>,
+    #[description = "How many matching messages to delete (1-1000)"] amount: u32,
+    #[description = "Only delete messages from this user"] user: Option<User>,
+    #[description = "Only delete messages containing this substring (case-insensitive)"]
+    contains: Option<String>,
+    #[description = "Only delete messages sent by bots"] bots_only: Option<bool>,
+    #[description = "Start scanning before this message (link, channel-message id, or message id)"]
+    before: Option<String>,
+    #[description = "Stop scanning once we reach this message (exclusive)"] after: Option<String>,
+    #[description = "Skip pinned messages (default true)"] skip_pinned: Option<bool>,
+) -> Result<(), Error> {
+    if amount == 0 || amount > 1000 {
+        return Err("`amount` must be between 1 and 1000.".into());
+    }
+    ctx.defer_ephemeral().await?;
+
+    let channel = ctx.channel_id();
+    let skip_pinned = skip_pinned.unwrap_or(true);
+    let bots_only = bots_only.unwrap_or(false);
+    let needle = contains.as_deref().map(str::to_lowercase);
+
+    let before_id = match before.as_deref() {
+        Some(s) => Some(
+            parse_message_ref(s)
+                .ok_or("Couldn't parse `before` as a message reference.")?
+                .1,
+        ),
+        None => None,
+    };
+    let after_id = match after.as_deref() {
+        Some(s) => Some(
+            parse_message_ref(s)
+                .ok_or("Couldn't parse `after` as a message reference.")?
+                .1,
+        ),
+        None => None,
+    };
+    if let (Some(b), Some(a)) = (before_id, after_id)
+        && b <= a
+    {
+        return Err("`before` must be newer than `after`.".into());
+    }
+
+    let needed = amount as usize;
+
+    let mut matched: Vec<MessageId> = Vec::new();
+    let mut scanned: usize = 0;
+    let mut skipped_pinned: usize = 0;
+    let mut cursor: Option<MessageId> = before_id;
+
+    'outer: while scanned < PURGE_SCAN_BUDGET && matched.len() < needed {
+        let mut req = GetMessages::new().limit(PURGE_PAGE_SIZE);
+        if let Some(c) = cursor {
+            req = req.before(c);
+        }
+        let page = channel
+            .messages(ctx.http(), req)
+            .await
+            .map_err(|e| format!("Couldn't fetch messages: {e}"))?;
+        if page.is_empty() {
+            break;
+        }
+        let next_cursor = page.last().map(|m| m.id);
+
+        for msg in page {
+            scanned += 1;
+            if let Some(a) = after_id
+                && msg.id <= a
+            {
+                break 'outer;
+            }
+            if skip_pinned && msg.pinned {
+                skipped_pinned += 1;
+                continue;
+            }
+            if let Some(u) = user.as_ref()
+                && msg.author.id != u.id
+            {
+                continue;
+            }
+            if bots_only && !msg.author.bot {
+                continue;
+            }
+            if let Some(n) = needle.as_deref()
+                && !msg.content.to_lowercase().contains(n)
+            {
+                continue;
+            }
+            matched.push(msg.id);
+            if matched.len() >= needed {
+                break 'outer;
+            }
+        }
+        cursor = next_cursor;
+    }
+
+    if matched.is_empty() {
+        let mut content = format!("No matching messages found (scanned {scanned})");
+        if skipped_pinned > 0 {
+            let _ = write!(content, ", skipped {skipped_pinned} pinned");
+        }
+        content.push('.');
+        ctx.send(CreateReply::default().content(content).ephemeral(true))
+            .await?;
+        return Ok(());
+    }
+
+    let cutoff = Timestamp::now().unix_timestamp() - 14 * 24 * 60 * 60;
+    let (young, old): (Vec<MessageId>, Vec<MessageId>) = matched
+        .into_iter()
+        .partition(|id| id.created_at().unix_timestamp() > cutoff);
+
+    let mut deleted = 0usize;
+    let mut errors: usize = 0;
+
+    for chunk in young.chunks(100) {
+        let result = match chunk {
+            [only] => channel.delete_message(ctx.http(), *only).await,
+            many => channel.delete_messages(ctx.http(), many).await,
+        };
+        match result {
+            Ok(()) => deleted += chunk.len(),
+            Err(e) => {
+                errors += 1;
+                tracing::warn!("Purge bulk-delete failed in {channel}: {e}");
+            }
+        }
+    }
+
+    let old_total = old.len();
+    let mut old_deleted = 0usize;
+    for id in old.into_iter().take(PURGE_OLD_CAP) {
+        match channel.delete_message(ctx.http(), id).await {
+            Ok(()) => {
+                old_deleted += 1;
+                deleted += 1;
+            }
+            Err(e) => {
+                errors += 1;
+                tracing::warn!("Purge single-delete failed in {channel} for {id}: {e}");
+            }
+        }
+    }
+
+    let mut report = format!("Removed {deleted} message(s).");
+    if old_total > 0 {
+        let _ = write!(
+            report,
+            "\n• older than 14 days: {old_deleted}/{old_total} via single-delete"
+        );
+        if old_total > PURGE_OLD_CAP {
+            let _ = write!(report, " (capped at {PURGE_OLD_CAP})");
+        }
+    }
+    if skipped_pinned > 0 {
+        let _ = write!(report, "\n• skipped {skipped_pinned} pinned");
+    }
+    if errors > 0 {
+        let _ = write!(report, "\n• {errors} delete error(s); see logs");
+    }
+
+    ctx.send(CreateReply::default().content(report).ephemeral(true))
+        .await?;
     Ok(())
 }
 
