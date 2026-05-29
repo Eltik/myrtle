@@ -1,5 +1,7 @@
+use std::fmt::Write as _;
+
 use crate::db;
-use crate::types::{Context, Error};
+use crate::types::{Context, Data, Error};
 use ::serenity::model::user::User;
 use poise::CreateReply;
 use poise::serenity_prelude as serenity;
@@ -490,10 +492,244 @@ pub async fn autorole_show(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Manage reaction-role bindings on existing messages.
+///
+/// Subcommands: `add`, `remove`, `list`, `delete`. Use `/embed create` first to send the message
+/// users will react on, then bind one or more `(emoji -> role)` mappings with `/reactionrole add`.
+/// Requires the Manage Roles permission.
+#[poise::command(
+    slash_command,
+    guild_only,
+    default_member_permissions = "MANAGE_ROLES",
+    subcommands(
+        "reactionrole_add",
+        "reactionrole_remove",
+        "reactionrole_list",
+        "reactionrole_delete"
+    ),
+    subcommand_required
+)]
+pub async fn reactionrole(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Bind an emoji on a message to a role. Re-running on the same `(message, emoji)` swaps the role.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "add",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn reactionrole_add(
+    ctx: Context<'_>,
+    #[description = "Message link, channel-message id, or message id"] message: String,
+    #[description = "Emoji to react with (unicode or <:name:id>)"] emoji: String,
+    #[description = "Role to grant on react"] role: serenity::Role,
+    #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
+        serenity::ChannelId,
+    >,
+) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let (link_channel, message_id) = parse_message_ref(&message)
+        .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
+    let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+
+    target
+        .message(ctx.http(), message_id)
+        .await
+        .map_err(|_| format!("Couldn't find message {message_id} in <#{target}>."))?;
+
+    let reaction: serenity::ReactionType = emoji
+        .trim()
+        .parse()
+        .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
+    let key = reaction.to_string();
+
+    db::add_reaction_role(&ctx.data().pool, guild, target, message_id, &key, role.id)
+        .await
+        .map_err(|e| format!("Couldn't save reaction-role: {e}"))?;
+    ctx.data().tracked_messages.write().await.insert(message_id);
+
+    let warning = match target
+        .create_reaction(ctx.http(), message_id, reaction)
+        .await
+    {
+        Ok(()) => String::new(),
+        Err(e) => {
+            tracing::warn!("Couldn't seed reaction on {message_id}: {e}");
+            format!(" (couldn't react myself: {e})")
+        }
+    };
+
+    let link = message_link(ctx.guild_id(), target, message_id);
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Bound {key} → <@&{}> on {link}.{warning}", role.id))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Remove a single `(message, emoji)` binding.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "remove",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn reactionrole_remove(
+    ctx: Context<'_>,
+    #[description = "Message link, channel-message id, or message id"] message: String,
+    #[description = "Emoji to unbind"] emoji: String,
+    #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
+        serenity::ChannelId,
+    >,
+) -> Result<(), Error> {
+    ctx.guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let (link_channel, message_id) = parse_message_ref(&message)
+        .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
+    let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+
+    let reaction: serenity::ReactionType = emoji
+        .trim()
+        .parse()
+        .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
+    let key = reaction.to_string();
+
+    let removed = db::remove_reaction_role(&ctx.data().pool, message_id, &key)
+        .await
+        .map_err(|e| format!("Couldn't remove reaction-role: {e}"))?;
+    if !removed {
+        return Err(format!("No binding found for {key} on that message.").into());
+    }
+
+    sync_tracked_cache(ctx.data()).await?;
+
+    let link = message_link(ctx.guild_id(), target, message_id);
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Unbound {key} on {link}."))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// List every reaction-role binding in this guild, grouped by message.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "list",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn reactionrole_list(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let rows = db::list_reaction_roles_for_guild(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't read reaction-roles: {e}"))?;
+
+    if rows.is_empty() {
+        ctx.send(
+            CreateReply::default()
+                .content("No reaction-roles set in this guild.")
+                .ephemeral(true),
+        )
+        .await?;
+        return Ok(());
+    }
+
+    let mut body = String::new();
+    let mut last: Option<serenity::MessageId> = None;
+    for row in &rows {
+        if last != Some(row.message_id) {
+            if last.is_some() {
+                body.push('\n');
+            }
+            let link = message_link(Some(row.guild_id), row.channel_id, row.message_id);
+            let _ = writeln!(body, "**{link}**");
+            last = Some(row.message_id);
+        }
+        let _ = writeln!(body, "• {} → <@&{}>", row.emoji, row.role_id);
+    }
+
+    let reply = if body.len() <= 2000 {
+        CreateReply::default().content(body)
+    } else {
+        CreateReply::default().attachment(serenity::CreateAttachment::bytes(
+            body.into_bytes(),
+            "reaction_roles.txt",
+        ))
+    };
+    ctx.send(reply.ephemeral(true)).await?;
+    Ok(())
+}
+
+/// Drop every binding attached to a message in one shot.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "delete",
+    required_permissions = "MANAGE_ROLES"
+)]
+pub async fn reactionrole_delete(
+    ctx: Context<'_>,
+    #[description = "Message link, channel-message id, or message id"] message: String,
+    #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
+        serenity::ChannelId,
+    >,
+) -> Result<(), Error> {
+    ctx.guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let (link_channel, message_id) = parse_message_ref(&message)
+        .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
+    let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
+
+    let n = db::remove_reaction_message(&ctx.data().pool, message_id)
+        .await
+        .map_err(|e| format!("Couldn't delete reaction-roles: {e}"))?;
+    if n == 0 {
+        return Err("That message has no reaction-role bindings.".into());
+    }
+    ctx.data()
+        .tracked_messages
+        .write()
+        .await
+        .remove(&message_id);
+
+    let link = message_link(ctx.guild_id(), target, message_id);
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Deleted {n} binding(s) on {link}."))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Rebuild the in-memory tracked-message cache from `SQLite`.
+///
+/// Called after operations that may have removed the last binding on a message — cheaper than
+/// threading "does any binding remain for this `message_id`?" through the call sites.
+async fn sync_tracked_cache(data: &Data) -> Result<(), Error> {
+    let ids = db::list_tracked_message_ids(&data.pool).await?;
+    {
+        let mut cache = data.tracked_messages.write().await;
+        cache.clear();
+        cache.extend(ids);
+    }
+    Ok(())
+}
+
 /// Optional embed fields collected from a slash command invocation.
 ///
 /// Packaging these as one nominal type keeps `apply_fields` from monomorphizing
-/// across many generic positions — rustc treats this as one struct instead of
+/// across many generic positions - rustc treats this as one struct instead of
 /// 12 separate `Option<T>` parameter slots.
 #[derive(Default)]
 struct EmbedFields {
