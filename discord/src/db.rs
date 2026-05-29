@@ -228,6 +228,161 @@ pub async fn list_assets_channels(pool: &SqlitePool) -> Result<Vec<(GuildId, Cha
         .collect())
 }
 
+/// Moderation action taken when a user trips an antispam check.
+///
+/// Lives here (not in `cmds/admin.rs`) so the event handler can also pattern-match on it
+/// without taking a dependency on the command module.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, poise::ChoiceParameter)]
+pub enum AntiSpamAction {
+    #[name = "Delete message"]
+    Delete,
+    #[name = "Warn user"]
+    Warn,
+    #[name = "Timeout user"]
+    Timeout,
+    #[name = "Kick user"]
+    Kick,
+    #[name = "Ban user"]
+    Ban,
+}
+
+impl AntiSpamAction {
+    /// Serialized form stored in `guild_max_ping.action`
+    #[must_use]
+    pub const fn as_db_str(self) -> &'static str {
+        match self {
+            Self::Delete => "delete",
+            Self::Warn => "warn",
+            Self::Timeout => "timeout",
+            Self::Kick => "kick",
+            Self::Ban => "ban",
+        }
+    }
+    fn from_db_str(s: &str) -> Option<Self> {
+        match s {
+            "delete" => Some(Self::Delete),
+            "warn" => Some(Self::Warn),
+            "timeout" => Some(Self::Timeout),
+            "kick" => Some(Self::Kick),
+            "ban" => Some(Self::Ban),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AntiSpamPolicy {
+    pub max_per_message: u32,
+    /// Rolling-window length; `None` disables the window check.
+    pub window_secs: Option<u32>,
+    /// Max pings allowed inside the rolling window; paired with `window_secs`.
+    pub window_max_pings: Option<u32>,
+    pub action: AntiSpamAction,
+    /// Used only when `action == Timeout`.
+    pub timeout_secs: Option<u32>,
+    /// Members holding this role bypass antispam entirely.
+    pub exempt_role_id: Option<RoleId>,
+}
+
+type AntiSpamRow = (
+    i64,
+    Option<i64>,
+    Option<i64>,
+    String,
+    Option<i64>,
+    Option<i64>,
+);
+
+fn row_to_policy(guild_id: GuildId, row: AntiSpamRow) -> Result<AntiSpamPolicy, Error> {
+    let (max_per_message, window_secs, window_max_pings, action_str, timeout_secs, exempt_role_id) =
+        row;
+    let action = AntiSpamAction::from_db_str(&action_str)
+        .ok_or_else(|| format!("Invalid action '{action_str}' for guild {guild_id}"))?;
+    Ok(AntiSpamPolicy {
+        max_per_message: max_per_message.try_into().unwrap_or(u32::MAX),
+        window_secs: window_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        window_max_pings: window_max_pings.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        action,
+        timeout_secs: timeout_secs.map(|v| v.try_into().unwrap_or(u32::MAX)),
+        exempt_role_id: exempt_role_id.map(|id| RoleId::new(id.cast_unsigned())),
+    })
+}
+
+/// Insert or replace the antispam policy for `guild_id`.
+pub async fn set_antispam_policy(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+    policy: &AntiSpamPolicy,
+) -> Result<(), Error> {
+    sqlx::query(
+        "INSERT INTO guild_max_ping (guild_id, max_ping_per_message, window_secs, window_max_pings, action, timeout_secs, exempt_role_id) \
+         VALUES (?, ?, ?, ?, ?, ?, ?) \
+         ON CONFLICT(guild_id) DO UPDATE SET \
+            max_ping_per_message = excluded.max_ping_per_message, \
+            window_secs = excluded.window_secs, \
+            window_max_pings = excluded.window_max_pings, \
+            action = excluded.action, \
+            timeout_secs = excluded.timeout_secs, \
+            exempt_role_id = excluded.exempt_role_id",
+    )
+    .bind(guild_id.get().cast_signed())
+    .bind(i64::from(policy.max_per_message))
+    .bind(policy.window_secs.map(i64::from))
+    .bind(policy.window_max_pings.map(i64::from))
+    .bind(policy.action.as_db_str())
+    .bind(policy.timeout_secs.map(i64::from))
+    .bind(policy.exempt_role_id.map(|r| r.get().cast_signed()))
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// Drop the antispam policy for `guild_id`. Returns the number of rows removed.
+pub async fn clear_antispam_policy(pool: &SqlitePool, guild_id: GuildId) -> Result<u64, Error> {
+    let res = sqlx::query("DELETE FROM guild_max_ping WHERE guild_id = ?")
+        .bind(guild_id.get().cast_signed())
+        .execute(pool)
+        .await?;
+    Ok(res.rows_affected())
+}
+
+/// Look up the antispam policy for `guild_id`, if one is configured.
+pub async fn get_antispam_policy(
+    pool: &SqlitePool,
+    guild_id: GuildId,
+) -> Result<Option<AntiSpamPolicy>, Error> {
+    let row: Option<AntiSpamRow> = sqlx::query_as(
+        "SELECT max_ping_per_message, window_secs, window_max_pings, action, timeout_secs, exempt_role_id \
+         FROM guild_max_ping WHERE guild_id = ?",
+    )
+    .bind(guild_id.get().cast_signed())
+    .fetch_optional(pool)
+    .await?;
+    row.map(|r| row_to_policy(guild_id, r)).transpose()
+}
+
+/// Every configured antispam policy, used to hydrate the in-memory cache on startup.
+pub async fn list_antispam_policies(
+    pool: &SqlitePool,
+) -> Result<Vec<(GuildId, AntiSpamPolicy)>, Error> {
+    // sqlx::FromRow doesn't auto-flatten a `(i64, AntiSpamRow)` nesting, so the row tuple
+    // has to spell out every column. The complexity warning is unavoidable here.
+    #[allow(clippy::type_complexity)]
+    let rows: Vec<(i64, i64, Option<i64>, Option<i64>, String, Option<i64>, Option<i64>)> =
+        sqlx::query_as(
+            "SELECT guild_id, max_ping_per_message, window_secs, window_max_pings, action, timeout_secs, exempt_role_id \
+             FROM guild_max_ping",
+        )
+        .fetch_all(pool)
+        .await?;
+    rows.into_iter()
+        .map(|(g, max, ws, wmax, act, ts, exempt)| {
+            let guild = GuildId::new(g.cast_unsigned());
+            row_to_policy(guild, (max, ws, wmax, act, ts, exempt)).map(|p| (guild, p))
+        })
+        .collect()
+}
+
 /// All mappings in `guild_id`, ordered by message then emoji for stable `/reactionrole list` output.
 pub async fn list_reaction_roles_for_guild(
     pool: &SqlitePool,

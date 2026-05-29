@@ -2,7 +2,12 @@ use std::fmt::Write as _;
 
 use crate::db;
 use crate::types::{Context, Data, Error};
+use ::serenity::builder::{CreateAttachment, CreateEmbed, CreateEmbedAuthor, CreateEmbedFooter};
+use ::serenity::model::channel::{Embed, ReactionType};
+use ::serenity::model::guild::Role;
+use ::serenity::model::id::{ChannelId, GuildId, MessageId};
 use ::serenity::model::user::User;
+use ::serenity::model::{Colour, Timestamp};
 use poise::CreateReply;
 use poise::serenity_prelude as serenity;
 
@@ -492,6 +497,148 @@ pub async fn autorole_show(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Manage antispam bindings.
+///
+/// Subcommands: `set`, `clear`, `show`.
+/// Requires the Manage Messages permission.
+#[poise::command(
+    slash_command,
+    guild_only,
+    default_member_permissions = "MANAGE_MESSAGES",
+    subcommands("antispam_set", "antispam_clear", "antispam_show"),
+    subcommand_required
+)]
+pub async fn antispam(_ctx: Context<'_>) -> Result<(), Error> {
+    Ok(())
+}
+
+/// Set the antispam policy for this guild.
+///
+/// `max_per_message` triggers when a single message contains more than that many user + role
+/// mentions. The optional `window_*` pair adds a rolling-window check (combined ping count
+/// across a user's recent messages). `timeout_secs` is required when `action` is `Timeout`.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "set",
+    required_permissions = "MANAGE_MESSAGES"
+)]
+pub async fn antispam_set(
+    ctx: Context<'_>,
+    #[description = "Max pings allowed in a single message"] max_per_message: u32,
+    #[description = "Action to take when a user exceeds the limit"] action: db::AntiSpamAction,
+    #[description = "Rolling-window length in seconds (pair with window_max_pings)"]
+    window_secs: Option<u32>,
+    #[description = "Max pings allowed inside the rolling window"] window_max_pings: Option<u32>,
+    #[description = "Timeout duration in seconds (required when action=Timeout)"]
+    timeout_secs: Option<u32>,
+    #[description = "Members with this role bypass antispam (typically your mod role)"]
+    exempt_role: Option<Role>,
+) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+
+    if window_secs.is_some() != window_max_pings.is_some() {
+        return Err(
+            "`window_secs` and `window_max_pings` must be provided together (or neither).".into(),
+        );
+    }
+    if matches!(action, db::AntiSpamAction::Timeout) && timeout_secs.is_none() {
+        return Err("`timeout_secs` is required when action is `Timeout user`.".into());
+    }
+    if max_per_message == 0 {
+        return Err("`max_per_message` must be at least 1.".into());
+    }
+
+    let policy = db::AntiSpamPolicy {
+        max_per_message,
+        window_secs,
+        window_max_pings,
+        action,
+        timeout_secs,
+        exempt_role_id: exempt_role.as_ref().map(|r| r.id),
+    };
+    db::set_antispam_policy(&ctx.data().pool, guild, &policy)
+        .await
+        .map_err(|e| format!("Couldn't save antispam policy: {e}"))?;
+    ctx.data()
+        .antispam_policies
+        .write()
+        .await
+        .insert(guild, policy.clone());
+
+    ctx.send(
+        CreateReply::default()
+            .content(format!("Antispam policy set.\n{}", format_policy(&policy)))
+            .ephemeral(true),
+    )
+    .await?;
+    Ok(())
+}
+
+/// Remove the antispam policy for this guild.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "clear",
+    required_permissions = "MANAGE_MESSAGES"
+)]
+pub async fn antispam_clear(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let n = db::clear_antispam_policy(&ctx.data().pool, guild)
+        .await
+        .map_err(|e| format!("Couldn't clear antispam policy: {e}"))?;
+    ctx.data().antispam_policies.write().await.remove(&guild);
+    let content = if n == 0 {
+        "No antispam policy was configured."
+    } else {
+        "Antispam policy cleared."
+    };
+    ctx.send(CreateReply::default().content(content).ephemeral(true))
+        .await?;
+    Ok(())
+}
+
+/// Show the current antispam policy for this guild.
+#[poise::command(
+    slash_command,
+    guild_only,
+    rename = "show",
+    required_permissions = "MANAGE_MESSAGES"
+)]
+pub async fn antispam_show(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx
+        .guild_id()
+        .ok_or("This command must be used in a guild.")?;
+    let content = match ctx.data().antispam_policies.read().await.get(&guild) {
+        Some(p) => format_policy(p),
+        None => "No antispam policy configured.".to_string(),
+    };
+    ctx.send(CreateReply::default().content(content).ephemeral(true))
+        .await?;
+    Ok(())
+}
+
+fn format_policy(p: &db::AntiSpamPolicy) -> String {
+    let mut s = format!("• Max pings per message: **{}**\n", p.max_per_message);
+    if let (Some(w), Some(m)) = (p.window_secs, p.window_max_pings) {
+        let _ = writeln!(s, "• Rolling window: **{m}** pings per **{w}s**");
+    }
+    let _ = write!(s, "• Action: **{}**", p.action.as_db_str());
+    if matches!(p.action, db::AntiSpamAction::Timeout)
+        && let Some(t) = p.timeout_secs
+    {
+        let _ = write!(s, " ({t}s)");
+    }
+    if let Some(role) = p.exempt_role_id {
+        let _ = write!(s, "\n• Exempt role: <@&{role}>");
+    }
+    s
+}
+
 /// Manage reaction-role bindings on existing messages.
 ///
 /// Subcommands: `add`, `remove`, `list`, `delete`. Use `/embed create` first to send the message
@@ -524,9 +671,9 @@ pub async fn reactionrole_add(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
     #[description = "Emoji to react with (unicode or <:name:id>)"] emoji: String,
-    #[description = "Role to grant on react"] role: serenity::Role,
+    #[description = "Role to grant on react"] role: Role,
     #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
-        serenity::ChannelId,
+        ChannelId,
     >,
 ) -> Result<(), Error> {
     let guild = ctx
@@ -585,7 +732,7 @@ pub async fn reactionrole_remove(
     #[description = "Message link, channel-message id, or message id"] message: String,
     #[description = "Emoji to unbind"] emoji: String,
     #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
-        serenity::ChannelId,
+        ChannelId,
     >,
 ) -> Result<(), Error> {
     ctx.guild_id()
@@ -594,7 +741,7 @@ pub async fn reactionrole_remove(
         .ok_or("Couldn't parse that message reference. Use a message link, `channel-message` id, or message id.")?;
     let target = channel.or(link_channel).unwrap_or_else(|| ctx.channel_id());
 
-    let reaction: serenity::ReactionType = emoji
+    let reaction: ReactionType = emoji
         .trim()
         .parse()
         .map_err(|_| format!("Couldn't parse '{emoji}' as an emoji."))?;
@@ -645,7 +792,7 @@ pub async fn reactionrole_list(ctx: Context<'_>) -> Result<(), Error> {
     }
 
     let mut body = String::new();
-    let mut last: Option<serenity::MessageId> = None;
+    let mut last: Option<MessageId> = None;
     for row in &rows {
         if last != Some(row.message_id) {
             if last.is_some() {
@@ -661,7 +808,7 @@ pub async fn reactionrole_list(ctx: Context<'_>) -> Result<(), Error> {
     let reply = if body.len() <= 2000 {
         CreateReply::default().content(body)
     } else {
-        CreateReply::default().attachment(serenity::CreateAttachment::bytes(
+        CreateReply::default().attachment(CreateAttachment::bytes(
             body.into_bytes(),
             "reaction_roles.txt",
         ))
@@ -681,7 +828,7 @@ pub async fn reactionrole_delete(
     ctx: Context<'_>,
     #[description = "Message link, channel-message id, or message id"] message: String,
     #[description = "Channel the message is in (if not derivable from the link)"] channel: Option<
-        serenity::ChannelId,
+        ChannelId,
     >,
 ) -> Result<(), Error> {
     ctx.guild_id()
@@ -747,10 +894,7 @@ struct EmbedFields {
 }
 
 /// Layer the provided optional fields onto an existing embed builder.
-fn apply_fields(
-    mut embed: serenity::CreateEmbed,
-    fields: EmbedFields,
-) -> Result<serenity::CreateEmbed, Error> {
+fn apply_fields(mut embed: CreateEmbed, fields: EmbedFields) -> Result<CreateEmbed, Error> {
     if let Some(title) = fields.title {
         embed = embed.title(title);
     }
@@ -770,34 +914,34 @@ fn apply_fields(
         embed = embed.thumbnail(thumbnail);
     }
     if let Some(name) = fields.author {
-        let mut a = serenity::CreateEmbedAuthor::new(name);
+        let mut a = CreateEmbedAuthor::new(name);
         if let Some(icon) = fields.author_icon {
             a = a.icon_url(icon);
         }
         embed = embed.author(a);
     }
     if let Some(text) = fields.footer {
-        let mut f = serenity::CreateEmbedFooter::new(text);
+        let mut f = CreateEmbedFooter::new(text);
         if let Some(icon) = fields.footer_icon {
             f = f.icon_url(icon);
         }
         embed = embed.footer(f);
     }
     if fields.timestamp == Some(true) {
-        embed = embed.timestamp(serenity::Timestamp::now());
+        embed = embed.timestamp(Timestamp::now());
     }
     Ok(embed)
 }
 
 /// Parse a raw embed JSON object into a `CreateEmbed`.
-fn parse_embed_json(input: &str) -> Result<serenity::CreateEmbed, Error> {
-    let embed: serenity::Embed =
+fn parse_embed_json(input: &str) -> Result<CreateEmbed, Error> {
+    let embed: Embed =
         serde_json::from_str(input).map_err(|e| format!("Invalid embed JSON: {e}"))?;
-    Ok(serenity::CreateEmbed::from(embed))
+    Ok(CreateEmbed::from(embed))
 }
 
 /// Parse a color string: `#RRGGBB`, `RRGGBB`, `0xRRGGBB`, or a decimal value.
-fn parse_color(input: &str) -> Result<serenity::Colour, Error> {
+fn parse_color(input: &str) -> Result<Colour, Error> {
     let trimmed = input.trim();
     let hex = trimmed
         .strip_prefix('#')
@@ -813,14 +957,14 @@ fn parse_color(input: &str) -> Result<serenity::Colour, Error> {
     }
     .map_err(|_| format!("Invalid color '{input}'. Use a hex code like #5865F2."))?;
 
-    Ok(serenity::Colour::new(value))
+    Ok(Colour::new(value))
 }
 
 /// Resolve a message reference into an optional channel and a message id.
 ///
 /// Accepts a full message URL (`.../channels/<guild>/<channel>/<message>`), a `channel-message`
 /// id pair, or a bare message id (channel inferred by the caller).
-fn parse_message_ref(input: &str) -> Option<(Option<serenity::ChannelId>, serenity::MessageId)> {
+fn parse_message_ref(input: &str) -> Option<(Option<ChannelId>, MessageId)> {
     let input = input.trim();
 
     if let Some(idx) = input.find("/channels/") {
@@ -829,10 +973,7 @@ fn parse_message_ref(input: &str) -> Option<(Option<serenity::ChannelId>, sereni
         if segments.len() >= 3 {
             let channel = segments[1].parse::<u64>().ok()?;
             let message = segments[2].parse::<u64>().ok()?;
-            return Some((
-                Some(serenity::ChannelId::new(channel)),
-                serenity::MessageId::new(message),
-            ));
+            return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
         }
         return None;
     }
@@ -841,24 +982,17 @@ fn parse_message_ref(input: &str) -> Option<(Option<serenity::ChannelId>, sereni
         && let (Ok(channel), Ok(message)) =
             (channel.trim().parse::<u64>(), message.trim().parse::<u64>())
     {
-        return Some((
-            Some(serenity::ChannelId::new(channel)),
-            serenity::MessageId::new(message),
-        ));
+        return Some((Some(ChannelId::new(channel)), MessageId::new(message)));
     }
 
     input
         .parse::<u64>()
         .ok()
-        .map(|id| (None, serenity::MessageId::new(id)))
+        .map(|id| (None, MessageId::new(id)))
 }
 
 /// Build a clickable jump link to a message.
-fn message_link(
-    guild: Option<serenity::GuildId>,
-    channel: serenity::ChannelId,
-    message: serenity::MessageId,
-) -> String {
+fn message_link(guild: Option<GuildId>, channel: ChannelId, message: MessageId) -> String {
     match guild {
         Some(g) => format!("https://discord.com/channels/{g}/{channel}/{message}"),
         None => format!("https://discord.com/channels/@me/{channel}/{message}"),

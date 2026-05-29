@@ -97,6 +97,16 @@ async fn main() {
                     .into_iter()
                     .collect();
 
+                let antispam_policies: std::collections::HashMap<_, _> =
+                    db::list_antispam_policies(&pool)
+                        .await?
+                        .into_iter()
+                        .collect();
+                tracing::info!(
+                    "Hydrated antispam policies for {} guild(s)",
+                    antispam_policies.len()
+                );
+
                 let watcher_http = ctx.http.clone();
                 let watcher_pool = pool.clone();
                 let watcher_cfg = config.assets.clone();
@@ -112,6 +122,15 @@ async fn main() {
                     .await;
                 });
 
+                let ping_history = Arc::new(RwLock::new(std::collections::HashMap::new()));
+                let antispam_policies = Arc::new(RwLock::new(antispam_policies));
+
+                let sweep_history = ping_history.clone();
+                let sweep_policies = antispam_policies.clone();
+                tokio::spawn(async move {
+                    handler::run_ping_history_sweep(sweep_history, sweep_policies).await;
+                });
+
                 Ok(Data {
                     command_counter: Mutex::default(),
                     config,
@@ -119,6 +138,8 @@ async fn main() {
                     pool,
                     tracked_messages: Arc::new(RwLock::new(tracked)),
                     assets: assets_state,
+                    ping_history,
+                    antispam_policies,
                 })
             })
         })
