@@ -285,12 +285,12 @@ function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadL
                         <TooltipTrigger
                             render={(props) => (
                                 <button
+                                    {...props}
                                     type="button"
                                     onClick={onDownload}
                                     disabled={isUnavailable || isDownloading}
                                     aria-label={downloadLabel}
                                     className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                                    {...props}
                                 >
                                     {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                                 </button>
