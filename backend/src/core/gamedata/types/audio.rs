@@ -42,7 +42,7 @@ pub struct RawSound {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AudioCategory {
-    /// `ON_UNIT_BORN` — deployment / spawn sound.
+    /// `ON_UNIT_BORN` - deployment / spawn sound.
     Deploy,
     /// Basic-attack sounds (`.attack` sub-part).
     Attack,

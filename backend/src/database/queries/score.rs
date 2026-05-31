@@ -52,7 +52,7 @@ fn sort_column(sort_by: &str) -> &'static str {
 /// When `movement_interval` is provided, each row is enriched with `rank_delta`
 /// computed against the most recent snapshot taken before that interval.
 /// When `movement_only` is also true, rows whose rank hasn't changed (or which
-/// have no baseline yet) are excluded — count and pagination both reflect the
+/// have no baseline yet) are excluded - count and pagination both reflect the
 /// filtered population, so the caller can paginate normally.
 #[allow(clippy::too_many_arguments)]
 pub async fn get_leaderboard(
@@ -166,7 +166,7 @@ pub async fn get_leaderboard(
 
 /// Count leaderboard entries. When `movement_interval` is provided and
 /// `movement_only` is true, the count is restricted to users with non-zero
-/// movement since the baseline — so it matches the paginated rows.
+/// movement since the baseline - so it matches the paginated rows.
 pub async fn count_leaderboard(
     pool: &PgPool,
     server: Option<&str>,

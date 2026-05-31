@@ -321,7 +321,7 @@ fn score_production_flexibility(
         }
     }
 
-    // Score based on balance — penalize if heavily skewed to one type
+    // Score based on balance - penalize if heavily skewed to one type
     let gold_total = gold_ops + general_ops;
     let exp_total = exp_ops + general_ops;
 

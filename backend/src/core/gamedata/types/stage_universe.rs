@@ -87,7 +87,7 @@ impl StageUniverse {
                 // Drop one-time competitive event types (CC, Boss Rush, Vector
                 // Breakthrough, etc.). These can't be cleared after they end
                 // and aren't rebroadcast, so users who join after them - or who
-                // skip them for competitive reasons — would be permanently
+                // skip them for competitive reasons - would be permanently
                 // penalized.
                 if let Some(act) = activity
                     && is_excluded_activity_type(&act.activity_type)

@@ -1,7 +1,7 @@
 //! Reconcile every `gacha_records.rarity` against the current game data.
 //!
 //! Same logic as the post-hot-reload background task in `core::asset_watcher`,
-//! but invokable directly. Useful for one-shots — e.g. after restoring from a
+//! but invokable directly. Useful for one-shots - e.g. after restoring from a
 //! backup, after a manual gamedata patch, or to verify the resync logic on a
 //! given snapshot.
 //!
@@ -104,7 +104,7 @@ async fn main() -> Result<()> {
         for (char_id, from, to) in &would_fix {
             println!("  {char_id}: {from} -> {to}");
         }
-        println!("(dry run — no rows updated)");
+        println!("(dry run - no rows updated)");
         return Ok(());
     }
 

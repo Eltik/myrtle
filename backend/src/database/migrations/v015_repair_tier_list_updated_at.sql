@@ -5,14 +5,14 @@
 -- unconditionally forces NEW.updated_at = NOW() on every UPDATE. Result:
 -- every tier list whose child activity was newer than its own updated_at got
 -- stamped with v014's transaction timestamp instead of the intended
--- child-activity time — the UI now shows "just now updated" for those rows.
+-- child-activity time - the UI now shows "just now updated" for those rows.
 --
 -- Fix:
 --   1. Relax fn_update_timestamp so it only auto-bumps when the caller did
 --      NOT explicitly set updated_at. Explicit SETs win; callers that forget
 --      still get the safety net.
 --   2. Re-run the backfill, scoped strictly to rows whose updated_at exactly
---      matches v014's applied_at — those are the rows v014 clobbered, and
+--      matches v014's applied_at - those are the rows v014 clobbered, and
 --      only those. NOW() / transaction_timestamp() is constant within a
 --      transaction, so the equality match is exact, not heuristic.
 

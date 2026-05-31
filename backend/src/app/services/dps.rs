@@ -33,7 +33,7 @@ pub struct OperatorListEntry {
 
 type OperatorModuleRef<'a> = &'a crate::core::gamedata::types::operator::OperatorModule;
 
-/// The operator's ADVANCED modules, sorted by uniequip number — the same order
+/// The operator's ADVANCED modules, sorted by uniequip number - the same order
 /// `OperatorData` uses, so a formula module's position indexes into it.
 fn advanced_modules_sorted(operator: &Operator) -> Vec<OperatorModuleRef<'_>> {
     let mut mods: Vec<_> = operator
@@ -82,7 +82,7 @@ fn build_list_entries(
                         .map(|(_, m)| m)
                         .collect()
                 }
-                // Operator absent from game data entirely — advertise nothing.
+                // Operator absent from game data entirely - advertise nothing.
                 None => Vec::new(),
             };
             // Keep default_module consistent: if it's been filtered out, drop it.

@@ -44,11 +44,11 @@ async fn main() -> Result<()> {
             println!("Operating as: {} ({})\n", u.uid, display_name(&u));
             Some(u.id)
         } else {
-            println!("ADMIN_UID '{uid}' not found — grants will record NULL.\n");
+            println!("ADMIN_UID '{uid}' not found - grants will record NULL.\n");
             None
         }
     } else {
-        println!("ADMIN_UID not set — grants will record NULL.\n");
+        println!("ADMIN_UID not set - grants will record NULL.\n");
         None
     };
 
@@ -384,7 +384,7 @@ async fn toggle_visibility(pool: &PgPool) -> Result<()> {
 
 /// Resolves either a UUID or an Arknights UID to a single `UserRow`. When the
 /// same Arknights UID exists on multiple servers we return the first match by
-/// `created_at` — collisions are rare and the operator can re-search by UUID
+/// `created_at` - collisions are rare and the operator can re-search by UUID
 /// if they need a specific one.
 async fn find_user_by_id_or_uid(pool: &PgPool, input: &str) -> Result<Option<UserRow>> {
     if let Ok(uuid) = Uuid::parse_str(input) {

@@ -190,7 +190,7 @@ fn strip_known_prefix(stem: &str) -> &str {
 /// the stem matched the directory's `char_id` (either as the default or as a
 /// `{char_id}_{suffix}` variant). Non-conventional stems mean the file
 /// inside this character's folder has an unrelated name (e.g.
-/// `BattleFront/char_008_owl/char_502_nblade.atlas` — owl reuses Blade's
+/// `BattleFront/char_008_owl/char_502_nblade.atlas` - owl reuses Blade's
 /// chibi); the caller may decide to promote them to "default".
 fn derive_skin_name_for_dir(stem: &str, char_id: &str) -> (String, bool) {
     let cleaned = strip_known_prefix(stem);
@@ -212,7 +212,7 @@ fn derive_skin_name_for_dir(stem: &str, char_id: &str) -> (String, bool) {
 /// Resolve all spine sets in a non-DynIllust directory into (skin, files)
 /// pairs. When a directory contains exactly one stem that does not follow
 /// the `{char_id}` / `{char_id}_{suffix}` convention and no conventional
-/// default exists, that stem is promoted to "default" — which covers cases
+/// default exists, that stem is promoted to "default" - which covers cases
 /// like Owl reusing Blade's chibi or Liskarm-the-typo files living under
 /// `char_107_liskam/`.
 fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(String, SpineFiles)> {
@@ -246,12 +246,12 @@ fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(Str
 /// One `DynIllust` folder corresponds to exactly one skin variant, so the
 /// folder name is the canonical skin identifier (e.g. dir
 /// `char_4087_ines_ambiencesynesthesia#5/` is the `ambiencesynesthesia#5`
-/// skin's dynamic — even when the file inside drops the `#5` and case).
+/// skin's dynamic - even when the file inside drops the `#5` and case).
 ///
 /// The one exception is "duplicate-of-default" folders such as
 /// `char_1012_skadi2_2/` whose file is just `dyn_illust_char_1012_skadi2.atlas`
 /// (no `_2` suffix in the file name). The trailing `_2` is a disambiguator,
-/// not a skin variant, and the spine actually belongs to the default skin —
+/// not a skin variant, and the spine actually belongs to the default skin -
 /// we detect this by checking whether the file's stripped stem matches the
 /// dir's `char_id` with no skin suffix at all.
 ///
@@ -266,7 +266,7 @@ fn resolve_dyn_illust_skins(
     let char_lower = char_id.to_lowercase();
 
     // Pure numeric dir suffixes (`_2`, `_3`, …) are duplicate-of-default
-    // counters, not real skin variants — Arknights' real skin IDs always
+    // counters, not real skin variants - Arknights' real skin IDs always
     // use named tags like `sale#X` / `boc#X` / `iteration#N`. Folders such
     // as `char_2014_nian_2/` whose file is `dyn_illust_char_2014_nian2.atlas`
     // (concatenated, not the bare char_id) only fall through to this check.

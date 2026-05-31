@@ -1,5 +1,5 @@
 //! Auto-generated dispatch table. DO NOT EDIT MANUALLY.
-//! Sibling of `generated.rs` — both are declared by the hand-written `mod.rs`.
+//! Sibling of `generated.rs` - both are declared by the hand-written `mod.rs`.
 
 #![allow(clippy::all, clippy::pedantic, clippy::nursery)]
 

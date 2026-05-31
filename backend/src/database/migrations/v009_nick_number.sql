@@ -2,7 +2,7 @@
 -- NICK NUMBER
 --
 -- Arknights identifies each Doctor by `nickName` plus a numeric
--- discriminator (`nickNumber`) — e.g. `Amiya#1234`. The syncData
+-- discriminator (`nickNumber`) - e.g. `Amiya#1234`. The syncData
 -- payload exposes it as `status.nickNumber` (string of digits, may
 -- have leading zeros so we store as VARCHAR).
 -- ═══════════════════════════════════════════════════════════════

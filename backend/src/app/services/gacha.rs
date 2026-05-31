@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// Look up a `char_id`'s canonical rarity from game data. The Yostar API echoes a
 /// `star` value with each pull, but it has been wrong/stale in the past, so we
 /// always prefer the value from `character_table`. Returns `None` if the char
-/// isn't in game data — callers may fall back to whatever the API reported.
+/// isn't in game data - callers may fall back to whatever the API reported.
 pub fn rarity_from_gamedata(gd: &GameData, char_id: &str) -> Option<i16> {
     gd.operators.get(char_id).map(|op| op.rarity.to_star_int())
 }
@@ -68,7 +68,7 @@ impl GachaApiItem {
     /// `missing` collects `char_ids` that fell back, so the caller can emit a
     /// single deduped warning instead of one line per record.
     /// `batch_index` is the row's position within its (`pull_timestamp`, `pool_id`)
-    /// batch — it distinguishes duplicate operators in the same 10-pull (e.g.
+    /// batch - it distinguishes duplicate operators in the same 10-pull (e.g.
     /// two of the same 6★) so the DB unique constraint doesn't drop them.
     fn to_record_json(
         &self,
@@ -120,7 +120,7 @@ pub async fn fetch_and_store(
     let portal_json: Option<String> = state.cache.get(&CacheKey::PortalSession { uid }).await;
 
     let portal_json = portal_json.ok_or(ApiError::BadRequest(
-        "no portal session — login again".into(),
+        "no portal session - login again".into(),
     ))?;
 
     let portal: AccountPortalSession = serde_json::from_str(&portal_json)
@@ -181,7 +181,7 @@ pub async fn fetch_and_store(
     // Yostar returns every row in a 10-pull with the same `at` (batch
     // timestamp), so we assign a per-batch positional index to keep duplicates
     // unique. Iteration order matches the API response, which is stable for a
-    // given batch — what matters is that the (ts, pool, char, index) tuple is
+    // given batch - what matters is that the (ts, pool, char, index) tuple is
     // distinct, not that the index has any particular meaning.
     let mut batch_counters: std::collections::HashMap<(i64, String), i16> =
         std::collections::HashMap::new();
@@ -202,7 +202,7 @@ pub async fn fetch_and_store(
         tracing::warn!(
             count = missing.len(),
             char_ids = ?ids,
-            "char_id(s) missing from game data; rarity falling back to API star value — will reconcile on next hot-reload",
+            "char_id(s) missing from game data; rarity falling back to API star value - will reconcile on next hot-reload",
         );
     }
 

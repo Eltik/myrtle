@@ -87,7 +87,7 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
         fetch_rosters_stats(&state.db),
     )?;
 
-    // Game data stats are free — just read from memory
+    // Game data stats are free - just read from memory
     let gd = state.game_data.load();
     let game_data = GameDataStats {
         operators: gd.operators.len(),

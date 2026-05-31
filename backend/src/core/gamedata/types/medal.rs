@@ -115,7 +115,7 @@ pub struct MedalData {
 /// tied to retired Crisis Contract / multiplayer / collab events.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Obtainability {
-    /// Earnable at any time — counts toward the permanent pool.
+    /// Earnable at any time - counts toward the permanent pool.
     Permanent,
     /// Time-bound event medal. `proxy_close_ts` is used for both in-window checks
     /// and recency decay:
@@ -182,18 +182,18 @@ impl MedalData {
 
     /// Classify a medal's current obtainability. See [`Obtainability`].
     ///
-    /// Group-level `SharedExpireTimes` (when present) is authoritative — the
+    /// Group-level `SharedExpireTimes` (when present) is authoritative - the
     /// data field on the medal itself can lie about availability (e.g. dead
     /// Crisis Contract groups whose individual medals are stamped `PERM/-1`).
     ///
-    /// Upgrade-variant medals (`medal_*_035`, `medal_*_105` — the
+    /// Upgrade-variant medals (`medal_*_035`, `medal_*_105` - the
     /// "Commemorative Contract Medal II" tier) aren't enrolled in their parent
     /// group directly. We walk the `origin_medal` chain so they inherit their
     /// base medal's group classification; otherwise Pyrite II / Cinder II etc.
     /// would score as permanent even though their event groups are dead.
     pub fn obtainability(&self, medal_id: &str, now: i64) -> Obtainability {
         let Some(medal) = self.medals.get(medal_id) else {
-            // Unknown medal — treat as a closed event so it doesn't pollute the
+            // Unknown medal - treat as a closed event so it doesn't pollute the
             // permanent pool. End-ts in the deep past forces full decay.
             return Obtainability::Event { proxy_close_ts: 0 };
         };
@@ -261,7 +261,7 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
         };
     }
 
-    // Future TEMP (not yet started) — treat as currently earnable from start onwards.
+    // Future TEMP (not yet started) - treat as currently earnable from start onwards.
     if let Some(future) = times
         .iter()
         .filter(|e| e.expire_type == "TEMP" && e.start > now)
@@ -283,7 +283,7 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
         }
         // PERM-only: ungrouped medals (player level, story, tower, etc.) are
         // genuinely permanent. Grouped activity medals with this pattern are
-        // dead Crisis Contract / multiplayer events — earnable only during
+        // dead Crisis Contract / multiplayer events - earnable only during
         // their original season and never re-runnable. Route them to the event
         // pool using the group's PERM start as the close-ts proxy so recency
         // decay applies.

@@ -57,7 +57,7 @@ pub async fn get_owned_skins(
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SkinPopularityResponse {
-    /// Number of users counted in the denominator — every user that has any
+    /// Number of users counted in the denominator - every user that has any
     /// skin record (i.e. has imported their data at least once).
     pub total_users: i64,
     /// Map of `skin_id` → number of owners. Only non-default skins (`skin_id`

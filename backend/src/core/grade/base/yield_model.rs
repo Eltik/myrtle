@@ -16,7 +16,7 @@
 //!     1 LMD**. Used to put EXP and LMD on one scale.
 //!
 //! The LMD yield of the gold→trade loop is `min(gold produced, gold sellable) ×
-//! 500` — counting it once and letting the optimizer balance gold factories
+//! 500` - counting it once and letting the optimizer balance gold factories
 //! against trading-post throughput (excess gold factories are better as EXP).
 
 /// LMD per Pure Gold bar (fixed by the game).
@@ -113,7 +113,10 @@ pub fn room_yield(
     let mult = productivity_mult(speed_pct);
     match (room_type, formula) {
         ("TRADING", _) => RoomYield {
-            lmd_per_day: TRADING_GOLD_SOLD_PER_DAY_BASE * mult * productivity_mult(value_pct) * GOLD_BAR_LMD,
+            lmd_per_day: TRADING_GOLD_SOLD_PER_DAY_BASE
+                * mult
+                * productivity_mult(value_pct)
+                * GOLD_BAR_LMD,
             ..Default::default()
         },
         ("MANUFACTURE", Some("F_GOLD")) => RoomYield {

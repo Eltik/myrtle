@@ -33,7 +33,7 @@ pub async fn avatar(
 ) -> Result<Response, ApiError> {
     let idx = state.asset_index.load();
     // A handful of operators (e.g. Medic Amiya `char_1037_amiya3`, Closure)
-    // ship only the `_2` avatar variant — no bare-id file exists. Fall back
+    // ship only the `_2` avatar variant - no bare-id file exists. Fall back
     // to the E2 then E1 suffix so plain char-id lookups still resolve.
     let rel_path = idx
         .path(AssetKind::Avatar, &avatar_id)

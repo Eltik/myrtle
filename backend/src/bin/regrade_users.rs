@@ -148,7 +148,7 @@ async fn main() -> Result<()> {
 
     let args = parse_args()?;
 
-    // Game data (expensive — load once, share).
+    // Game data (expensive - load once, share).
     let data_dir =
         std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
     let assets_dir = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
@@ -177,7 +177,7 @@ async fn main() -> Result<()> {
         .context("failed to connect to database")?;
     tracing::info!(max_conns, "connected to database");
 
-    // Total count (for ETA) — best-effort; skipped on error.
+    // Total count (for ETA) - best-effort; skipped on error.
     let total = count_targets(&pool, &args).await.unwrap_or(0);
     tracing::info!(total, "users to regrade");
 
