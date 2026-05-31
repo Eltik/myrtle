@@ -1,7 +1,7 @@
-//! End-to-end checks for the infrastructure (base) optimizer against real
-//! game data. Focus: named-teammate conditional synergies (Penguin Logistics),
-//! Control Center surfacing, and a smoke test against a real user (UID
-//! 09525371) loaded from `tests/fixtures/user_09525371.json`.
+//! End-to-end checks for the infrastructure (base) optimizer against real game
+//! data, using generic constructed bases and rosters (no captured user). Focus:
+//! named-teammate conditional synergies, Control Center stacking and faction
+//! buffs, the staggered rotation, and the high-level grade.
 
 mod common;
 
@@ -12,7 +12,61 @@ use backend::core::grade::base::assignment::{
 use backend::core::grade::base::buff_registry::{build_name_to_char, build_registry};
 use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding, UserRoom};
-use common::{build_profiles, load_game_data, load_user_fixture, max_stationed};
+use backend::database::models::roster::RosterEntry;
+use common::{load_game_data, max_stationed};
+
+/// A `UserRoom` of `room_type` at `level` with a stable slot id.
+fn room(slot: &str, room_type: &str, level: i32) -> UserRoom {
+    UserRoom {
+        slot_id: slot.into(),
+        room_type: room_type.into(),
+        level,
+        ..Default::default()
+    }
+}
+
+/// A realistic base layout (Control Center + 2 trading posts + 4 factories + 4
+/// dormitories) - used instead of any specific captured user.
+fn generic_base() -> UserBuilding {
+    let mut rooms = vec![room("cc", "CONTROL", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    UserBuilding { rooms }
+}
+
+/// Every operator with base skills, at E2-max - a deep, user-independent roster
+/// (mirrors the "best possible" baseline the grader builds).
+fn full_roster(gd: &GameData) -> Vec<OperatorBaseProfile> {
+    gd.building
+        .chars
+        .keys()
+        .filter(|id| id.starts_with("char_"))
+        .map(|id| profile(gd, id))
+        .collect()
+}
+
+/// A minimal E2-max `RosterEntry` for an operator (for the high-level `grade_base`).
+fn roster_entry(operator_id: &str) -> RosterEntry {
+    RosterEntry {
+        user_id: uuid::Uuid::nil(),
+        operator_id: operator_id.into(),
+        elite: 2,
+        level: 90,
+        exp: 0,
+        potential: 0,
+        skill_level: 7,
+        favor_point: 0,
+        skin_id: None,
+        default_skill: None,
+        voice_lan: None,
+        current_equip: None,
+        current_tmpl: None,
+        obtained_at: None,
+        masteries: serde_json::json!([]),
+        modules: serde_json::json!([]),
+    }
+}
 
 /// Build a fully-elited (E2-max) base profile for an operator by taking the
 /// highest-unlock buff in every skill slot.
@@ -354,35 +408,53 @@ fn highmore_converts_rhine_skills_for_standardization_scaler() {
 }
 
 #[test]
-fn control_center_rotates_between_shifts() {
-    // A sustained 24/7 plan rotates the Control Center: the operators stationed
-    // there in Shift A should differ from those in Shift B.
+fn rotation_plan_orders_members_by_when_to_swap_and_names_a_backup() {
+    // The rotation plan: per production room, the main operators ordered by who
+    // needs swapping FIRST (shortest hours), plus an idle backup to rotate in.
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let building = generic_base();
+    let profiles = full_roster(&gd);
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     let rotation =
         compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
 
-    let cc_ops = |asn: &backend::core::grade::base::types::BaseAssignment| {
-        asn.rooms
-            .iter()
-            .find(|r| r.room_type == "CONTROL")
-            .map(|r| r.operators.clone())
-            .unwrap_or_default()
-    };
-    let a = cc_ops(&rotation.shift_a);
-    let b = cc_ops(&rotation.shift_b);
-
-    assert!(!a.is_empty() && !b.is_empty(), "both shifts staff the CC");
-    let overlap = a.iter().filter(|id| b.contains(id)).count();
-    assert_eq!(
-        overlap, 0,
-        "Control Center operators must rotate - no operator should work both shifts.\nA: {a:?}\nB: {b:?}"
+    assert!(
+        rotation.main.rooms.iter().any(|r| r.room_type == "CONTROL"),
+        "the main staffing surfaces the Control Center"
     );
+    assert!(
+        !rotation.rooms.is_empty(),
+        "a deep roster has a rotation plan"
+    );
+
+    let mains: std::collections::HashSet<&String> = rotation
+        .main
+        .rooms
+        .iter()
+        .flat_map(|r| r.operators.iter())
+        .collect();
+    for room in &rotation.rooms {
+        // Members are sorted soonest-to-swap first.
+        let hours: Vec<f64> = room.members.iter().map(|m| m.lasts_hours).collect();
+        assert!(
+            hours.windows(2).all(|w| w[0] <= w[1] + 1e-6),
+            "members in {} must be ordered by swap urgency (got {hours:?})",
+            room.slot_id
+        );
+        assert!(
+            room.members.iter().all(|m| m.lasts_hours > 0.0),
+            "every member has a positive rotation interval"
+        );
+        // The backup isn't already a main.
+        if let Some(b) = &room.backup {
+            assert!(
+                !mains.contains(b),
+                "backup {b} is already working in the main staffing"
+            );
+        }
+    }
 }
 
 #[test]
@@ -724,6 +796,268 @@ fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
 }
 
 #[test]
+fn control_center_same_type_buffs_do_not_stack() {
+    // Amiya and Swire both grant the clause-bearing "+X% to all Trading Posts" CC
+    // buff ("only the most effective one will take effect... same skill effect"),
+    // so two of them must NOT stack - only the strongest applies.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // The global buff a CC team grants, read off an empty trading post.
+    let trading_global = |cc: &[&str]| -> f64 {
+        let building = UserBuilding {
+            rooms: vec![
+                UserRoom {
+                    slot_id: "cc".into(),
+                    room_type: "CONTROL".into(),
+                    level: 5,
+                    current_operators: cc.iter().map(|s| (*s).to_string()).collect(),
+                    ..Default::default()
+                },
+                UserRoom {
+                    slot_id: "tp".into(),
+                    room_type: "TRADING".into(),
+                    level: 3,
+                    ..Default::default()
+                },
+            ],
+        };
+        let roster: Vec<_> = cc.iter().map(|s| profile(&gd, s)).collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.room_type == "TRADING")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    const AMIYA: &str = "char_002_amiya";
+    const SWIRE: &str = "char_308_swire";
+    let amiya = trading_global(&[AMIYA]);
+    let swire = trading_global(&[SWIRE]);
+    let both = trading_global(&[AMIYA, SWIRE]);
+    assert!(amiya > 0.0 && swire > 0.0, "each grants a trading CC buff");
+    assert!(
+        (both - amiya.max(swire)).abs() < 0.01,
+        "same-type CC buffs must not stack: both={both} should equal max({amiya}, {swire})"
+    );
+    assert!(both < amiya + swire - 0.01, "...and stay below the sum");
+}
+
+#[test]
+fn control_center_clauseless_buffs_stack() {
+    // Mon3tr's "+2% all Factories" carries the non-stacking clause, but Sakiko's
+    // Precious-Metal productivity does NOT - so Sakiko stacks on top of Mon3tr.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let manu_global = |cc: &[&str]| -> f64 {
+        let building = UserBuilding {
+            rooms: vec![
+                UserRoom {
+                    slot_id: "cc".into(),
+                    room_type: "CONTROL".into(),
+                    level: 5,
+                    current_operators: cc.iter().map(|s| (*s).to_string()).collect(),
+                    ..Default::default()
+                },
+                UserRoom {
+                    slot_id: "mf".into(),
+                    room_type: "MANUFACTURE".into(),
+                    level: 3,
+                    ..Default::default()
+                },
+            ],
+        };
+        let roster: Vec<_> = cc.iter().map(|s| profile(&gd, s)).collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.room_type == "MANUFACTURE")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    const MON3TR: &str = "char_4179_monstr";
+    const SAKIKO: &str = "char_4182_oblvns";
+    let mon = manu_global(&[MON3TR]);
+    let both = manu_global(&[MON3TR, SAKIKO]);
+    assert!(
+        both > mon + 0.001,
+        "Sakiko's clause-less buff must stack on Mon3tr ({both} vs {mon})"
+    );
+}
+
+#[test]
+fn shamare_money_printer_forms_despite_a_deep_distractor_pool() {
+    // Shamare nullifies teammates' SPEED, so her only useful partners are
+    // order-VALUE operators (Tequila, Bibeak) whose LMD-per-order survives. In a
+    // deep roster (18 candidates > the 16-candidate cut) those low-speed value
+    // operators would normally be dropped; the nullifier value-boost keeps them,
+    // so Shamare + Tequila + Bibeak still forms instead of Shamare + dead bodies.
+    let gd = load_game_data();
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    // 15 flat trading operators - distractors that crowd the candidate set.
+    let distractors = [
+        "char_502_nblade",
+        "char_123_fang",
+        "char_211_adnach",
+        "char_240_wyvern",
+        "char_110_deepcl",
+        "char_141_nights",
+        "char_150_snakek",
+        "char_185_frncat",
+        "char_289_gyuki",
+        "char_101_sora",
+        "char_103_angel",
+        "char_302_glaze",
+        "char_4045_heidi",
+        "char_1033_swire2",
+        "char_4163_rosesa",
+    ];
+    let mut roster = vec![
+        profile(&gd, SHAMARE),
+        profile(&gd, TEQUILA),
+        profile(&gd, BIBEAK),
+    ];
+    roster.extend(distractors.iter().map(|d| profile(&gd, d)));
+
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let asn =
+        compute_optimal_assignment(&roster, &trading_post(3), &gd.building, &registry, &drains);
+    let tp = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("a trading post");
+    let has = |id: &str| tp.operators.iter().any(|o| o == id);
+
+    assert!(
+        has(SHAMARE),
+        "Shamare should anchor the post. Got: {:?}",
+        tp.operators
+    );
+    assert!(
+        has(TEQUILA) && has(BIBEAK),
+        "Shamare's order-value partners (Tequila + Bibeak) must survive the candidate cut. Got: {:?}",
+        tp.operators
+    );
+}
+
+#[test]
+fn fixed_synergy_squads_are_marked_locked_and_flexible_teams_are_not() {
+    // A Shamare/Tequila/Bibeak post is a FIXED squad (they only work together), so
+    // it's flagged `locked`. A post of three independent flat traders is flexible.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let locked_for = |roster: &[OperatorBaseProfile]| -> bool {
+        let asn =
+            compute_optimal_assignment(roster, &trading_post(3), &gd.building, &registry, &drains);
+        asn.rooms
+            .iter()
+            .find(|r| r.room_type == "TRADING")
+            .is_some_and(|r| r.locked)
+    };
+
+    let shamare_team = vec![
+        profile(&gd, "char_254_vodfox"), // Shamare (nullifier)
+        profile(&gd, "char_486_takila"), // Tequila (order value)
+        profile(&gd, "char_252_bibeak"), // Bibeak (order value)
+    ];
+    assert!(
+        locked_for(&shamare_team),
+        "a nullifier synergy squad must be marked locked"
+    );
+
+    let flexible_team = vec![
+        profile(&gd, "char_502_nblade"), // flat +30%
+        profile(&gd, "char_123_fang"),   // flat
+        profile(&gd, "char_211_adnach"), // flat
+    ];
+    assert!(
+        !locked_for(&flexible_team),
+        "a team of independent flat traders must NOT be locked"
+    );
+
+    // Penguin Logistics (Texas needs Lappland) is a fixed synergy -> locked.
+    let penguin = vec![
+        profile(&gd, TEXAS),
+        profile(&gd, LAPPLAND),
+        profile(&gd, EXUSIAI),
+    ];
+    assert!(
+        locked_for(&penguin),
+        "Texas+Lappland (named-teammate synergy) must be marked locked"
+    );
+}
+
+#[test]
+fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
+    // Viviana's CC buff "+7% to all Knight Operators in Factories" must reach Wild
+    // Mane, who is Pinus Sylvestris (the Knightclub) - so the optimizer co-schedules
+    // them. A non-Knight factory operator gets nothing from her.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let factory_eff = |cc: &[&str], factory: &[&str]| -> f64 {
+        let building = UserBuilding {
+            rooms: vec![
+                UserRoom {
+                    slot_id: "cc".into(),
+                    room_type: "CONTROL".into(),
+                    level: 5,
+                    current_operators: cc.iter().map(|s| (*s).to_string()).collect(),
+                    ..Default::default()
+                },
+                UserRoom {
+                    slot_id: "mf".into(),
+                    room_type: "MANUFACTURE".into(),
+                    level: 3,
+                    current_operators: factory.iter().map(|s| (*s).to_string()).collect(),
+                    ..Default::default()
+                },
+            ],
+        };
+        let roster: Vec<_> = cc.iter().chain(factory).map(|s| profile(&gd, s)).collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.room_type == "MANUFACTURE")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    const VIVIANA: &str = "char_4098_vvana";
+    const WILD_MANE: &str = "char_496_wildmn";
+    const VERMEIL: &str = "char_190_clour"; // Siracusa - not a Knight
+
+    let knight_with = factory_eff(&[VIVIANA], &[WILD_MANE]);
+    let knight_without = factory_eff(&[], &[WILD_MANE]);
+    assert!(
+        knight_with > knight_without + 6.0,
+        "Viviana's +7% Knight buff should reach Wild Mane (Pinus): with={knight_with} without={knight_without}"
+    );
+
+    let nonknight_with = factory_eff(&[VIVIANA], &[VERMEIL]);
+    let nonknight_without = factory_eff(&[], &[VERMEIL]);
+    assert!(
+        (nonknight_with - nonknight_without).abs() < 1.0,
+        "a non-Knight must not get Viviana's bonus: with={nonknight_with} without={nonknight_without}"
+    );
+}
+
+#[test]
 fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
     // Regression: a Proviso/Lemuen/Exusiai post under a Control Center staffed by
     // Amiya + SilverAsh + Umiri must read ~87% (Lemuen 45 + Exusiai 35 = 80 speed,
@@ -845,39 +1179,11 @@ fn gold_exp_split_is_yield_based() {
     // factories are wasted (no post to sell their gold) and switches them to EXP,
     // which is worth more than unsold gold.
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let profiles = full_roster(&gd);
 
-    let mut rooms = vec![
-        UserRoom {
-            slot_id: "cc".into(),
-            room_type: "CONTROL".into(),
-            level: 5,
-            ..Default::default()
-        },
-        UserRoom {
-            slot_id: "tp".into(),
-            room_type: "TRADING".into(),
-            level: 3,
-            ..Default::default()
-        },
-    ];
-    for i in 0..4 {
-        rooms.push(UserRoom {
-            slot_id: format!("f{i}"),
-            room_type: "MANUFACTURE".into(),
-            level: 3,
-            ..Default::default()
-        });
-    }
-    for i in 0..3 {
-        rooms.push(UserRoom {
-            slot_id: format!("p{i}"),
-            room_type: "POWER".into(),
-            level: 3,
-            ..Default::default()
-        });
-    }
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
+    rooms.extend((0..4).map(|i| room(&format!("f{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
     let building = UserBuilding { rooms };
 
     let name_to_char = build_name_to_char(&gd.operators);
@@ -908,15 +1214,30 @@ fn current_preset_shifts_are_distinct() {
     // static crew for both.
     use backend::core::grade::base::assignment::{compute_current_assignment, has_preset_shifts};
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let profiles = full_roster(&gd);
+    // A trading post with two distinct planned shifts.
+    let building = UserBuilding {
+        rooms: vec![UserRoom {
+            slot_id: "tp".into(),
+            room_type: "TRADING".into(),
+            level: 3,
+            preset_shifts: vec![
+                vec![TEXAS.into(), LAPPLAND.into(), EXUSIAI.into()],
+                vec![
+                    "char_502_nblade".into(),
+                    "char_123_fang".into(),
+                    "char_211_adnach".into(),
+                ],
+            ],
+            ..Default::default()
+        }],
+    };
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     assert!(
         has_preset_shifts(&building),
-        "fixture should have preset rotation shifts"
+        "building should expose the two planned shifts"
     );
 
     let ops = |shift: Option<usize>| {
@@ -943,35 +1264,75 @@ fn current_preset_shifts_are_distinct() {
 }
 
 #[test]
-fn rotation_shifts_are_distinct() {
-    // Shift A and Shift B must use disjoint production operators (you can't run
-    // the same operator on both shifts of a 24/7 rotation).
+fn staggered_rotation_sustains_near_peak() {
+    // A staggered rotation keeps your best operators working almost all the time
+    // (swap only the lowest-morale one), so sustained 24/7 output is CLOSE to peak
+    // - not a big drop from averaging weaker whole teams.
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let building = generic_base();
+    let profiles = full_roster(&gd);
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     let rot = compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
-
-    let prod_ops = |asn: &backend::core::grade::base::types::BaseAssignment| {
-        asn.rooms
-            .iter()
-            .filter(|r| r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
-            .flat_map(|r| r.operators.iter().cloned())
-            .collect::<std::collections::HashSet<_>>()
-    };
-    let a = prod_ops(&rot.shift_a);
-    let b = prod_ops(&rot.shift_b);
-    let overlap = a.intersection(&b).count();
-    assert_eq!(
-        overlap, 0,
-        "shift A and B share {overlap} production operators - they must be disjoint"
-    );
+    let peak: f64 = rot
+        .main
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
+        .map(|r| r.total_efficiency)
+        .sum();
     assert!(
-        !a.is_empty() && !b.is_empty(),
-        "both shifts must staff production"
+        rot.sustained_efficiency >= peak * 0.85 && rot.sustained_efficiency <= peak,
+        "sustained ({:.1}) should be within ~15% of peak ({:.1})",
+        rot.sustained_efficiency,
+        peak
+    );
+}
+
+#[test]
+fn low_morale_drain_teams_sustain_better_longevity_axis() {
+    // The longevity axis: a low-morale-drain factory team holds closer to peak
+    // under rotation than a higher-drain team, because its operators rest less and
+    // need backups to cover them less often.
+    use backend::core::grade::base::assignment::sustained_efficiency_of;
+
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // Same room peak, different drain: Vermeil (-0.25/hr) is a far lower-drain
+    // factory worker than a neutral/high-drain operator.
+    let sustain_fraction = |op: &str| -> f64 {
+        let roster = vec![profile(&gd, op)];
+        let building = UserBuilding {
+            rooms: vec![UserRoom {
+                slot_id: "mf".into(),
+                room_type: "MANUFACTURE".into(),
+                level: 3,
+                current_operators: vec![op.to_string()],
+                ..Default::default()
+            }],
+        };
+        let cur = backend::core::grade::base::assignment::compute_current_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+        );
+        let peak: f64 = cur.rooms.iter().map(|r| r.total_efficiency).sum();
+        if peak <= 0.0 {
+            return 1.0;
+        }
+        sustained_efficiency_of(&cur, &roster, &drains) / peak
+    };
+    let vermeil = sustain_fraction("char_190_clour"); // -0.25/hr drain
+    let neutral = sustain_fraction("char_496_wildmn"); // Wild Mane, neutral drain
+    assert!(
+        vermeil > neutral,
+        "low-drain Vermeil should hold a higher fraction of peak ({vermeil:.3}) than a neutral-drain op ({neutral:.3})"
     );
 }
 
@@ -981,9 +1342,37 @@ fn current_assignment_reflects_live_base() {
     // operators and be no better than the optimizer's peak (which is the best
     // possible arrangement of the same roster).
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let profiles = full_roster(&gd);
+    // A base where the player has stationed a deliberately mediocre crew (plain
+    // flat traders / factory ops), so the optimizer has room to improve.
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            UserRoom {
+                slot_id: "tp".into(),
+                room_type: "TRADING".into(),
+                level: 3,
+                current_operators: vec![
+                    "char_502_nblade".into(),
+                    "char_123_fang".into(),
+                    "char_211_adnach".into(),
+                ],
+                ..Default::default()
+            },
+            UserRoom {
+                slot_id: "mf".into(),
+                room_type: "MANUFACTURE".into(),
+                level: 3,
+                current_operators: vec![
+                    "char_496_wildmn".into(), // Wild Mane
+                    "char_190_clour".into(),  // Vermeil
+                    "char_500_noirc".into(),  // Noir Corne
+                ],
+                ..Default::default()
+            },
+            room("d", "DORMITORY", 5),
+        ],
+    };
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -1041,9 +1430,8 @@ fn current_assignment_reflects_live_base() {
 fn base_grade_perf() {
     use std::time::Instant;
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let building = generic_base();
+    let profiles = full_roster(&gd);
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
@@ -1063,18 +1451,16 @@ fn base_grade_perf() {
 }
 
 #[test]
-fn optimizes_real_user_base() {
-    // Smoke test against a real captured base (UID 09525371): the optimizer
-    // should surface the Control Center, fully staff every production room
-    // (this roster has hundreds of operators), and produce a sane grade.
+fn optimizes_a_full_base() {
+    // Smoke test on a full base with a deep roster: the optimizer should surface
+    // the Control Center and fully staff every production room.
     let gd = load_game_data();
-    let fixture = load_user_fixture("09525371");
-    let building = UserBuilding::from_json(&fixture.building);
-    let profiles = build_profiles(&fixture.roster, &gd);
+    let building = generic_base();
+    let profiles = full_roster(&gd);
 
     assert!(
         profiles.len() > 50,
-        "fixture should have a deep roster, got {}",
+        "the game has a deep pool of base operators, got {}",
         profiles.len()
     );
 
@@ -1107,7 +1493,51 @@ fn optimizes_real_user_base() {
             );
         }
     }
+}
 
-    let score = grade_base(&fixture.roster, Some(&fixture.building), &gd);
-    assert!((0.0..=1.0).contains(&score), "score in [0,1], got {score}");
+#[test]
+fn grade_base_produces_a_sane_score() {
+    // The high-level scorer: a base with a partial roster should grade in [0, 1]
+    // and strictly above 0 (it has production capacity), and a full roster on the
+    // same base should score at least as high.
+    let gd = load_game_data();
+    let building_json = serde_json::json!({
+        "roomSlots": {
+            "cc": { "roomId": "CONTROL", "level": 5, "state": 2 },
+            "tp0": { "roomId": "TRADING", "level": 3, "state": 2 },
+            "mf0": { "roomId": "MANUFACTURE", "level": 3, "state": 2 },
+            "mf1": { "roomId": "MANUFACTURE", "level": 3, "state": 2 },
+            "d0": { "roomId": "DORMITORY", "level": 5, "state": 2 },
+        }
+    });
+
+    let partial: Vec<RosterEntry> = [
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_496_wildmn",
+        "char_190_clour",
+        "char_003_kalts",
+    ]
+    .iter()
+    .map(|id| roster_entry(id))
+    .collect();
+    let partial_score = grade_base(&partial, Some(&building_json), &gd);
+    assert!(
+        (0.0..=1.0).contains(&partial_score) && partial_score > 0.0,
+        "partial-roster score should be in (0, 1], got {partial_score}"
+    );
+
+    let full: Vec<RosterEntry> = gd
+        .building
+        .chars
+        .keys()
+        .filter(|id| id.starts_with("char_"))
+        .map(|id| roster_entry(id))
+        .collect();
+    let full_score = grade_base(&full, Some(&building_json), &gd);
+    assert!(
+        (0.0..=1.0).contains(&full_score) && full_score >= partial_score - 1e-6,
+        "full-roster score ({full_score}) should be in [0,1] and >= partial ({partial_score})"
+    );
 }

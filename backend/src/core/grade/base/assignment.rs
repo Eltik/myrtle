@@ -6,8 +6,8 @@ use crate::core::{
         buff_registry::BuffResolutionStrategy,
         evaluate::evaluate_buff,
         types::{
-            BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, ShiftAssignment,
-            TeammateInfo, UserBuilding, UserRoom,
+            BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, RoomRotation,
+            RotationAssignment, RotationMember, TeammateInfo, UserBuilding, UserRoom,
         },
     },
 };
@@ -21,6 +21,11 @@ const CANDIDATE_LIMIT: usize = 16;
 /// Build a `char_id` → profile index for O(1) lookups in the hot inner loops.
 fn build_op_index(operators: &[OperatorBaseProfile]) -> HashMap<&str, &OperatorBaseProfile> {
     operators.iter().map(|o| (o.char_id.as_str(), o)).collect()
+}
+
+/// Trading posts and factories - the yield-producing rooms the optimizer staffs.
+fn is_production_room(room_type: &str) -> bool {
+    matches!(room_type, "MANUFACTURE" | "TRADING")
 }
 
 pub fn compute_optimal_assignment(
@@ -58,7 +63,7 @@ pub fn compute_optimal_assignment(
     let production_rooms: Vec<&UserRoom> = building
         .rooms
         .iter()
-        .filter(|r| r.room_type == "MANUFACTURE" || r.room_type == "TRADING")
+        .filter(|r| is_production_room(&r.room_type))
         .collect();
 
     let room_assignments = assign_production_rooms(
@@ -100,98 +105,178 @@ pub fn compute_optimal_assignment(
     }
 }
 
+// ── Morale / longevity model for staggered rotation ────────────────────────
+// Each working operator burns morale and must occasionally rest. A STAGGERED
+// rotation swaps only the lowest-morale operator at a time, so a room is almost
+// always at full strength and just one backup covers a resting main. The 24/7
+// output is therefore close to peak - lowered only while a backup (weaker)
+// covers, and that coverage time shrinks for low-drain operators.
+//
+// Constants are calibrated estimates (drain modifiers come in ~±0.25/hr units):
+/// Neutral per-hour morale burn for a working operator (before skill modifiers).
+const BASE_MORALE_DRAIN: f64 = 0.5;
+/// Per-hour morale recovery while resting in a dormitory (faster than drain, so
+/// operators spend more time working than resting).
+const MORALE_RECOVERY: f64 = 1.0;
+/// How much of a resting main's output a backup recovers while covering it (a
+/// good rotation piece is close, but not equal, to the operator it replaces).
+const BACKUP_COVERAGE: f64 = 0.8;
+
+/// An operator's total morale drain per hour (base + its skills' modifiers).
+/// Lower = works longer before resting = better for sustained rotation.
+fn op_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+    let modifier: f64 = op
+        .available_buffs
+        .iter()
+        .filter_map(|b| morale_drains.get(b))
+        .sum();
+    (BASE_MORALE_DRAIN + modifier).max(0.05)
+}
+
+/// Fraction of time an operator is working (vs resting) at steady state.
+fn op_uptime(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+    let d = op_morale_drain(op, morale_drains);
+    MORALE_RECOVERY / (d + MORALE_RECOVERY)
+}
+
+/// Hours a neutral-drain operator works before its morale runs low and you swap it
+/// out (~a daily rotation); faster-draining operators last proportionally fewer.
+const ROTATION_BASE_HOURS: f64 = 24.0;
+
+/// Approximate hours an operator works before needing a rotation, rounded to the
+/// hour - inversely proportional to its morale drain.
+fn op_lasts_hours(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+    (ROTATION_BASE_HOURS * BASE_MORALE_DRAIN / op_morale_drain(op, morale_drains)).round()
+}
+
+/// How close a room stays to its peak under a staggered rotation: 1.0 if its
+/// operators never rest, lower as they rest more (then a backup covers, recovering
+/// only `BACKUP_COVERAGE` of the gap). Low-drain teams stay nearer peak.
+fn room_sustain_factor(
+    room_ops: &[String],
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    morale_drains: &HashMap<String, f64>,
+) -> f64 {
+    let uptimes: Vec<f64> = room_ops
+        .iter()
+        .filter_map(|id| op_index.get(id.as_str()))
+        .map(|op| op_uptime(op, morale_drains))
+        .collect();
+    if uptimes.is_empty() {
+        return 1.0;
+    }
+    let avg_uptime = uptimes.iter().sum::<f64>() / uptimes.len() as f64;
+    1.0 - (1.0 - avg_uptime) * (1.0 - BACKUP_COVERAGE)
+}
+
+/// Sustained 24/7 efficiency of a staffing under a staggered rotation: each
+/// production room's efficiency scaled by how well its team holds up to rotation.
+pub fn sustained_efficiency_of(
+    main: &BaseAssignment,
+    operators: &[OperatorBaseProfile],
+    morale_drains: &HashMap<String, f64>,
+) -> f64 {
+    let op_index = build_op_index(operators);
+    main.rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .map(|r| r.total_efficiency * room_sustain_factor(&r.operators, &op_index, morale_drains))
+        .sum()
+}
+
 pub fn compute_sustained_assignment(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
-) -> ShiftAssignment {
+) -> RotationAssignment {
+    // The main staffing is the peak arrangement - in a staggered rotation your
+    // best operators work almost all the time.
+    let main =
+        compute_optimal_assignment(operators, building, building_data, registry, morale_drains);
     let facility_counts = count_facilities(building);
     let total_dorm_levels = building.total_dorm_levels();
 
-    let production_rooms: Vec<&UserRoom> = building
+    // Sustained 24/7 output: each production room's peak efficiency scaled by how
+    // well its team holds up under rotation (low morale drain -> near peak).
+    let sustained_efficiency = sustained_efficiency_of(&main, operators, morale_drains);
+
+    // Per-room rotation plan: who to swap first (fastest-draining), when (hours),
+    // and which still-idle operator to rotate in (only one swap at a time).
+    let op_index = build_op_index(operators);
+    let mut used: HashSet<String> = main
         .rooms
         .iter()
-        .filter(|r| r.room_type == "MANUFACTURE" || r.room_type == "TRADING")
+        .flat_map(|r| r.operators.iter().cloned())
         .collect();
+    let mut rooms = Vec::new();
+    for room in main
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .filter(|r| !r.operators.is_empty())
+    {
+        let formula = room.formula_type.as_deref();
 
-    let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
-    let control_slots = if control_room.is_some() {
-        max_stationed_for_room(building, building_data, "CONTROL")
-    } else {
-        0
-    };
+        // Members ordered by who needs swapping first (shortest hours first).
+        let mut members: Vec<RotationMember> = room
+            .operators
+            .iter()
+            .filter_map(|id| op_index.get(id.as_str()).copied())
+            .map(|op| RotationMember {
+                operator: op.char_id.clone(),
+                lasts_hours: op_lasts_hours(op, morale_drains),
+            })
+            .collect();
+        members.sort_by(|a, b| {
+            a.lasts_hours
+                .partial_cmp(&b.lasts_hours)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
-    // A sustained 24/7 base rotates EVERY occupied seat - including the Control
-    // Center - so its operators recover morale too. Each shift takes a disjoint CC
-    // team (with its own global bonuses) and disjoint production team from the
-    // operators not yet used by the previous shift.
-    let mut assigned: HashSet<String> = HashSet::new();
-    let assign_shift = |assigned: &mut HashSet<String>| {
-        let (cc, global, cond) = assign_control_center(
-            operators,
-            control_room,
-            control_slots,
-            registry,
-            building_data,
-            assigned,
-        );
-        assigned.extend(cc.operators.iter().cloned());
-        let rooms = assign_production_rooms(
-            &production_rooms,
-            operators,
-            assigned,
-            registry,
-            building_data,
-            &facility_counts,
-            total_dorm_levels,
-            &global,
-            &cond,
-            morale_drains,
-        );
-        let total: f64 = rooms.iter().map(|r| r.total_efficiency).sum();
-        (cc, rooms, total)
-    };
+        let backup = operators
+            .iter()
+            .filter(|op| !used.contains(&op.char_id))
+            .filter(|op| {
+                applicable_strategies(op, &room.room_type, formula, registry, building_data)
+                    .next()
+                    .is_some()
+            })
+            .max_by(|a, b| {
+                let bound = |op: &OperatorBaseProfile| {
+                    optimistic_bound(
+                        op,
+                        &room.room_type,
+                        formula,
+                        registry,
+                        building_data,
+                        &facility_counts,
+                        total_dorm_levels,
+                        room.operators.len(),
+                    )
+                };
+                bound(a)
+                    .partial_cmp(&bound(b))
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .map(|op| op.char_id.clone());
+        if let Some(id) = &backup {
+            used.insert(id.clone());
+        }
 
-    let (mut cc_a, mut rooms_a, total_a) = assign_shift(&mut assigned);
-    let (mut cc_b, mut rooms_b, total_b) = assign_shift(&mut assigned);
-
-    // Top up each shift's CC seats with operators still idle in that shift.
-    fill_remaining_slots(
-        &mut cc_a.operators,
-        control_slots,
-        "CONTROL",
-        operators,
-        building_data,
-        &mut assigned,
-    );
-    fill_remaining_slots(
-        &mut cc_b.operators,
-        control_slots,
-        "CONTROL",
-        operators,
-        building_data,
-        &mut assigned,
-    );
-
-    if let Some(cc) = cc_a.into_room() {
-        rooms_a.insert(0, cc);
-    }
-    if let Some(cc) = cc_b.into_room() {
-        rooms_b.insert(0, cc);
+        rooms.push(RoomRotation {
+            slot_id: room.slot_id.clone(),
+            room_type: room.room_type.clone(),
+            members,
+            backup,
+        });
     }
 
-    ShiftAssignment {
-        shift_a: BaseAssignment {
-            rooms: rooms_a,
-            total_production_efficiency: total_a,
-        },
-        shift_b: BaseAssignment {
-            rooms: rooms_b,
-            total_production_efficiency: total_b,
-        },
-        sustained_efficiency: (total_a + total_b) / 2.0,
+    RotationAssignment {
+        main,
+        rooms,
+        sustained_efficiency,
     }
 }
 
@@ -264,7 +349,7 @@ pub fn compute_current_assignment(
     for room in building
         .rooms
         .iter()
-        .filter(|r| r.room_type == "MANUFACTURE" || r.room_type == "TRADING")
+        .filter(|r| is_production_room(&r.room_type))
     {
         // Keep only operators that actually have base profiles (drop tokens etc.).
         let ops: Vec<String> = room_ops_for_shift(room, shift)
@@ -293,6 +378,13 @@ pub fn compute_current_assignment(
         );
         let eff = speed + global;
         total += eff;
+        let locked = team_is_locked(
+            &ops,
+            &room.room_type,
+            formula.as_deref(),
+            registry,
+            building_data,
+        );
         rooms.push(RoomAssignment {
             slot_id: room.slot_id.clone(),
             room_type: room.room_type.clone(),
@@ -301,6 +393,7 @@ pub fn compute_current_assignment(
             operators: ops,
             total_efficiency: eff,
             order_value: value,
+            locked,
         });
     }
 
@@ -418,14 +511,19 @@ fn other_room_skill_count(
 }
 
 /// A single Control Center global bonus: which production room it boosts, the
-/// "skill effect family" (buff id without its `[NNN]` rank suffix), and the
-/// bonus %. Same-family bonuses from different operators do NOT stack - only the
-/// strongest applies ("only the most effective one will take effect when
-/// assigned Operators have the same skill effect") - so we key on the family.
+/// "skill effect family", and the bonus %. The game's non-stacking rule is driven
+/// by an explicit clause in the buff text ("only the most effective one will take
+/// effect when assigned Operators have the same skill effect" / "Only the
+/// strongest effect of this type takes place"): buffs carrying it dedup against
+/// same-room clause-bearing buffs (only the strongest applies), while clause-less
+/// buffs (Sakiko's Precious-Metal productivity, Viviana's faction buff, etc.)
+/// always `stacks` on top.
 struct CcBonus {
     room: String,
     family: String,
     bonus: f64,
+    /// True when the buff has NO non-stacking clause and therefore always adds.
+    stacks: bool,
     /// `Some` when this bonus only applies to production rooms whose team meets a
     /// faction condition - credited per-room, not flat. `bonus` above is then a
     /// discounted *selection* weight, not the value actually granted.
@@ -469,31 +567,43 @@ impl CcCondition {
 /// team-dependent evaluation). Shared by the optimizer and the live-base reader.
 #[derive(Default)]
 struct CcBonusAccumulator {
+    /// Clause-bearing buffs: strongest-per-(room, family) wins (non-stacking).
     best: HashMap<(String, String), f64>,
+    /// Clause-less buffs: summed flat per room (they always stack).
+    stacked: HashMap<String, f64>,
     conditions: HashMap<(String, String), CcCondition>,
     cond_families: HashSet<(String, String)>,
 }
 
 impl CcBonusAccumulator {
-    /// The marginal flat gain from adding `bonuses` - each one only counts for the
-    /// amount it exceeds the strongest already chosen in its family.
+    /// The marginal flat gain from adding `bonuses` - a stacking buff always counts
+    /// fully; a non-stacking one counts only what it exceeds its family's strongest.
     fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
         bonuses
             .iter()
             .map(|b| {
-                let cur = self
-                    .best
-                    .get(&(b.room.clone(), b.family.clone()))
-                    .copied()
-                    .unwrap_or(0.0);
-                (b.bonus - cur).max(0.0)
+                if b.stacks && b.conditional.is_none() {
+                    b.bonus
+                } else {
+                    let cur = self
+                        .best
+                        .get(&(b.room.clone(), b.family.clone()))
+                        .copied()
+                        .unwrap_or(0.0);
+                    (b.bonus - cur).max(0.0)
+                }
             })
             .sum()
     }
 
-    /// Fold one operator's bonuses in, keeping the strongest per family.
+    /// Fold one operator's bonuses in: clause-less buffs add to the room total,
+    /// clause-bearing ones keep only the strongest per family.
     fn add(&mut self, bonuses: &[CcBonus]) {
         for b in bonuses {
+            if b.stacks && b.conditional.is_none() {
+                *self.stacked.entry(b.room.clone()).or_insert(0.0) += b.bonus;
+                continue;
+            }
             let key = (b.room.clone(), b.family.clone());
             let slot = self.best.entry(key.clone()).or_insert(0.0);
             *slot = slot.max(b.bonus);
@@ -514,7 +624,7 @@ impl CcBonusAccumulator {
     /// `(flat per-room totals, faction-gated conditions)`. Conditional families are
     /// kept out of the flat totals - they're applied per room against the team.
     fn finish(self) -> (HashMap<String, f64>, Vec<CcCondition>) {
-        let mut global: HashMap<String, f64> = HashMap::new();
+        let mut global = self.stacked;
         for ((room, family), bonus) in &self.best {
             if !self.cond_families.contains(&(room.clone(), family.clone())) {
                 *global.entry(room.clone()).or_insert(0.0) += bonus;
@@ -532,31 +642,40 @@ fn cc_bonuses(
 ) -> Vec<CcBonus> {
     let mut out = Vec::new();
     for buff_id in &op.available_buffs {
-        if let Some(buff) = building_data.buffs.get(buff_id)
-            && buff.room_type != "CONTROL"
-        {
+        let Some(buff) = building_data.buffs.get(buff_id) else {
+            continue;
+        };
+        if buff.room_type != "CONTROL" {
             continue;
         }
-        let family = buff_id.split('[').next().unwrap_or(buff_id).to_string();
         match registry.get(buff_id) {
             Some(BuffResolutionStrategy::GlobalEffect {
                 target_room,
                 bonus_pct,
-            }) => out.push(CcBonus {
-                room: target_room.clone(),
-                family,
-                bonus: *bonus_pct,
-                conditional: None,
-            }),
+            }) => {
+                // Clause-bearing buffs of the same room+metric don't stack (e.g.
+                // Amiya & Noir Corne Alter both "+7% all Trading Posts"); clause-less
+                // ones (Sakiko's Precious-Metal productivity) always stack.
+                let stacks = cc_buff_stacks(buff);
+                out.push(CcBonus {
+                    room: target_room.clone(),
+                    family: format!("{target_room}#global"),
+                    bonus: *bonus_pct,
+                    stacks,
+                    conditional: None,
+                });
+            }
             Some(BuffResolutionStrategy::TagBased {
                 target_room,
                 bonus_pct,
                 ..
             }) => out.push(CcBonus {
                 room: target_room.clone(),
-                family,
-                // Faction bonuses only reach matching operators - credit half.
+                family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+                // Faction bonuses only reach matching operators - credit half. They
+                // carry no non-stacking clause, so they stack on top of generics.
                 bonus: bonus_pct * 0.5,
+                stacks: true,
                 conditional: None,
             }),
             Some(BuffResolutionStrategy::ConditionalGlobalEffect {
@@ -567,10 +686,11 @@ fn cc_bonuses(
                 bonus_pct,
             }) => out.push(CcBonus {
                 room: target_room.clone(),
-                family,
+                family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
                 // Selection weight: discounted since the gate may not be met. The
                 // real value is granted per-room via `conditional`.
                 bonus: bonus_pct * 0.5,
+                stacks: false,
                 conditional: Some(CcCondition {
                     target_room: target_room.clone(),
                     faction_token: faction_token.clone(),
@@ -583,6 +703,15 @@ fn cc_bonuses(
         }
     }
     out
+}
+
+/// Does this Control Center buff stack with same-type buffs? It does NOT (only the
+/// strongest applies) when it carries the game's non-stacking clause.
+fn cc_buff_stacks(buff: &Buff) -> bool {
+    let d = buff.description.to_lowercase();
+    !(d.contains("only the most effective")
+        || d.contains("strongest effect of this type")
+        || d.contains("only the strongest"))
 }
 
 /// Assign operators to the Control Center to maximize global production bonuses.
@@ -925,6 +1054,13 @@ fn assign_single_room(
         assigned.insert(id.clone());
     }
 
+    let locked = team_is_locked(
+        &room_ops,
+        &room.room_type,
+        formula_type,
+        registry,
+        building_data,
+    );
     RoomAssignment {
         slot_id: room.slot_id.clone(),
         room_type: room.room_type.clone(),
@@ -933,7 +1069,79 @@ fn assign_single_room(
         operators: room_ops,
         total_efficiency: speed + global,
         order_value: value,
+        locked,
     }
+}
+
+/// A FIXED synergy squad: its operators depend on each other, so they can't be
+/// swapped without breaking the combo. True when the team mixes a nullifier
+/// (Shamare) with order-value partners, or any member's buff is gated on a
+/// teammate / faction that the team actually satisfies. A team of independent
+/// operators (each contributing standalone) is NOT locked - it's interchangeable.
+fn team_is_locked(
+    ops: &[String],
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> bool {
+    if ops.len() < 2 {
+        return false;
+    }
+    let present: HashSet<&str> = ops.iter().map(String::as_str).collect();
+
+    // A nullifier in the team locks everyone to it (the only useful partners are
+    // its order-value operators).
+    let has_nullifier = ops.iter().any(|id| {
+        building_data.chars.get(id).is_some_and(|c| {
+            c.buff_char.iter().flat_map(|s| &s.buff_data).any(|e| {
+                matches!(
+                    registry.get(&e.buff_id),
+                    Some(BuffResolutionStrategy::NullifyTeammatesSelfScaling { .. })
+                )
+            })
+        })
+    });
+    if has_nullifier {
+        return true;
+    }
+
+    // Any member whose buff is gated on a teammate present in this team.
+    for id in ops {
+        for strategy in profile_strategies(id, room_type, formula_type, registry, building_data) {
+            if let BuffResolutionStrategy::ConditionalOnTeammate {
+                required_char_id: Some(req),
+                ..
+            } = strategy
+                && present.contains(req.as_str())
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Resolved strategies for a `char_id`'s top buffs that apply in this room - the
+/// `char_id` (E2-max) variant of `applicable_strategies`, for when we only have
+/// the id rather than a profile with a specific elite level.
+fn profile_strategies<'a>(
+    char_id: &str,
+    room_type: &'a str,
+    formula_type: Option<&'a str>,
+    registry: &'a HashMap<String, BuffResolutionStrategy>,
+    building_data: &'a BuildingDataFile,
+) -> Vec<&'a BuffResolutionStrategy> {
+    let Some(bc) = building_data.chars.get(char_id) else {
+        return Vec::new();
+    };
+    bc.buff_char
+        .iter()
+        .filter_map(|s| s.buff_data.last())
+        .filter_map(|e| {
+            applicable_strategy(&e.buff_id, room_type, formula_type, registry, building_data)
+        })
+        .collect()
 }
 
 /// Does this buff apply to the given room type and (optional) formula?
@@ -950,9 +1158,22 @@ fn buff_applies(buff: &Buff, room_type: &str, formula_type: Option<&str>) -> boo
     true
 }
 
-/// Resolved strategies for an operator's buffs that apply in the given room -
-/// the shared "look up the buff, gate on room/formula, resolve to a strategy"
-/// skeleton used by the per-operator scoring helpers.
+/// Resolve one `buff_id` to its strategy if the buff applies to this room/formula -
+/// the shared "look up the buff, gate on room/formula, resolve" step.
+fn applicable_strategy<'a>(
+    buff_id: &str,
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &'a HashMap<String, BuffResolutionStrategy>,
+    building_data: &'a BuildingDataFile,
+) -> Option<&'a BuffResolutionStrategy> {
+    let buff = building_data.buffs.get(buff_id)?;
+    buff_applies(buff, room_type, formula_type)
+        .then(|| registry.get(buff_id))
+        .flatten()
+}
+
+/// Resolved strategies for an operator's buffs that apply in the given room.
 fn applicable_strategies<'a>(
     op: &'a OperatorBaseProfile,
     room_type: &'a str,
@@ -960,12 +1181,25 @@ fn applicable_strategies<'a>(
     registry: &'a HashMap<String, BuffResolutionStrategy>,
     building_data: &'a BuildingDataFile,
 ) -> impl Iterator<Item = &'a BuffResolutionStrategy> {
-    op.available_buffs.iter().filter_map(move |buff_id| {
-        let buff = building_data.buffs.get(buff_id)?;
-        buff_applies(buff, room_type, formula_type)
-            .then(|| registry.get(buff_id))
-            .flatten()
+    op.available_buffs.iter().filter_map(move |b| {
+        applicable_strategy(b, room_type, formula_type, registry, building_data)
     })
+}
+
+/// Sum of an operator's order-VALUE contributions (LMD per order) in this room.
+fn op_order_value(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    applicable_strategies(op, room_type, formula_type, registry, building_data)
+        .map(|s| match s {
+            BuffResolutionStrategy::OrderValue { estimated_pct } => *estimated_pct,
+            _ => 0.0,
+        })
+        .sum()
 }
 
 /// Find the best NORMAL-mode team for a room by exhaustively evaluating
@@ -1033,9 +1267,23 @@ fn best_team_for_room(
         }
     }
 
+    // A nullifier (Shamare) zeroes teammates' SPEED, so its only useful partners
+    // are order-VALUE operators (Proviso, Tequila, Bibeak) - whose LMD-per-order
+    // survives the nullify. Those score ~0 on speed and would be cut, so when a
+    // nullifier is in the pool, fold their order value into the ranking so the
+    // Shamare money-printer combos can form.
+    let has_nullifier = candidates
+        .iter()
+        .any(|op| op_is_nullifier(op, &room.room_type, formula_type, registry, building_data));
+
     let mut ranked: Vec<(&OperatorBaseProfile, f64)> = candidates
         .iter()
         .map(|op| {
+            let value_boost = if has_nullifier {
+                op_order_value(op, &room.room_type, formula_type, registry, building_data) * 5.0
+            } else {
+                0.0
+            };
             let bound = optimistic_bound(
                 op,
                 &room.room_type,
@@ -1045,7 +1293,8 @@ fn best_team_for_room(
                 facility_counts,
                 total_dorm_levels,
                 max_slots,
-            ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0);
+            ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
+                + value_boost;
             (*op, bound)
         })
         .collect();

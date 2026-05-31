@@ -221,8 +221,21 @@ pub fn compute_match_tags(
             }
         }
     }
+    // Base-skill tag aliases: some Control Center buffs target a curated base tag
+    // ("all Knight Operators") rather than a single faction id. Pinus Sylvestris
+    // is literally the "Knightclub", so its members count as Knights (e.g. Wild
+    // Mane benefits from Viviana's "+7% Knights in Factories").
+    for (faction, alias) in FACTION_BASE_TAG_ALIASES {
+        if tags.iter().any(|t| t == faction) && !tags.iter().any(|t| t == alias) {
+            tags.push((*alias).to_string());
+        }
+    }
     tags
 }
+
+/// Maps a faction id to the curated base tag its members carry, for Control
+/// Center buffs that target base tags rather than factions.
+const FACTION_BASE_TAG_ALIASES: &[(&str, &str)] = &[("pinus", "knight")];
 
 pub struct EvalContext<'a> {
     /// How many of each room type exist in the base
@@ -260,15 +273,46 @@ pub struct RoomAssignment {
     /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield, kept
     /// separate from speed so it doesn't inflate the displayed efficiency.
     pub order_value: f64,
+    /// True when this is a FIXED synergy squad - its operators depend on each
+    /// other (e.g. Shamare + Tequila + Bibeak, or Texas + Lappland) and can't be
+    /// swapped without breaking the combo. False = a flexible team of independent
+    /// operators that are interchangeable with similar ones.
+    pub locked: bool,
 }
 
+#[derive(Clone)]
 pub struct BaseAssignment {
     pub rooms: Vec<RoomAssignment>,
     pub total_production_efficiency: f64, // sum across all production rooms
 }
 
-pub struct ShiftAssignment {
-    pub shift_a: BaseAssignment,
-    pub shift_b: BaseAssignment,
-    pub sustained_efficiency: f64, // average of both shifts
+/// A STAGGERED rotation: your best operators staff the base (the `main`), and you
+/// swap only the lowest-morale operator in a room for its backup, so the base runs
+/// at near-peak almost always and few operators sit in the dorms at once.
+/// `rooms` gives the per-room rotation plan (swap order + timing + backup).
+/// `sustained_efficiency` is the 24/7 output: close to `main`'s peak, reduced only
+/// by the time a backup covers a resting operator (low-drain teams rest less).
+pub struct RotationAssignment {
+    pub main: BaseAssignment,
+    pub rooms: Vec<RoomRotation>,
+    pub sustained_efficiency: f64,
+}
+
+/// The rotation plan for one production room: who to swap first and when.
+pub struct RoomRotation {
+    pub slot_id: String,
+    pub room_type: String,
+    /// The room's main operators, ordered by who needs swapping FIRST (the
+    /// fastest-draining operator hits low morale soonest).
+    pub members: Vec<RotationMember>,
+    /// The backup operator to rotate in (`char_id`), if one is available.
+    pub backup: Option<String>,
+}
+
+/// A main operator in a room's rotation, with how long it works before a swap.
+pub struct RotationMember {
+    pub operator: String,
+    /// Approximate hours this operator works before its morale runs low and you
+    /// rotate it out (fast-draining skills last fewer hours).
+    pub lasts_hours: f64,
 }

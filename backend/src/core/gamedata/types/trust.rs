@@ -38,7 +38,7 @@ pub struct Favor {
 }
 
 impl Favor {
-    /// Resolves a raw favor-point count to its trust percent (0–200) using the
+    /// Resolves a raw favor-point count to its trust percent (0-200) using the
     /// frame thresholds shipped with the game. Returns 0.0 if the table is
     /// empty (e.g. game data not loaded).
     ///

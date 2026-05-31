@@ -34,7 +34,7 @@ const PARTIAL_CAP: f64 = 0.30;
 /// Bonus partial credit from non-maxed entries when at least one milestone exists.
 const PARTIAL_BONUS: f64 = 0.10;
 
-/// A scoring dimension: `(weight, score)` where score is 0.0–1.0.
+/// A scoring dimension: `(weight, score)` where score is 0.0-1.0.
 type Dimension = (f64, f64);
 
 #[derive(Deserialize)]
@@ -213,7 +213,7 @@ const fn level_weight(rarity: &OperatorRarity) -> f64 {
 }
 
 /// Calculates cumulative level progress across all elite phases.
-/// Returns 0.0–1.0 with logarithmic compression.
+/// Returns 0.0-1.0 with logarithmic compression.
 ///
 /// Example for a 6-star at E2 L60:
 ///   completed: E0 (50 levels) + E1 (80 levels) + 60 of E2
@@ -263,7 +263,7 @@ fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) ->
     log_curve_ratio(progress / total)
 }
 
-/// Returns 0.0–1.0 based on mastery milestones.
+/// Returns 0.0-1.0 based on mastery milestones.
 ///
 /// Without any M3, partial credit is capped at `PARTIAL_CAP` (0.30).
 /// With M3 skills: 1 → 0.50, 2 → 0.75, all → 1.00, plus partial bonus.
@@ -309,7 +309,7 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
     }
 }
 
-/// Returns 0.0–1.0 based on module milestones.
+/// Returns 0.0-1.0 based on module milestones.
 ///
 /// Without any Mod3, partial credit is capped at `PARTIAL_CAP` (0.30).
 /// With Mod3: first → 0.50, second → 0.80, all → 1.00, plus partial bonus.
@@ -359,7 +359,7 @@ fn module_milestone_from_levels(user_advanced: &[i16], num_available: usize) -> 
     }
 }
 
-/// Returns 0.0–1.0 based on trust progress.
+/// Returns 0.0-1.0 based on trust progress.
 ///
 /// The target trust depends on whether the operator is currently published as
 /// a support unit:
@@ -413,7 +413,7 @@ pub const fn has_investment(roster: &RosterEntry) -> bool {
     roster.elite > 0 || roster.level > 1
 }
 
-/// Log compression on a 0–1 ratio.
+/// Log compression on a 0-1 ratio.
 fn log_curve_ratio(t: f64) -> f64 {
     (1.0 + t).ln() / 2.0_f64.ln()
 }
@@ -427,14 +427,14 @@ fn log_curve_ratio(t: f64) -> f64 {
 pub struct UpgradeDelta {
     /// Tag from `OperatorGap.missing`, e.g. "ELITE", "M3", "MOD3", "TRUST".
     pub tag: &'static str,
-    /// Δ in this operator's score (0.0–1.0). The change in `grade_operator(...)`
+    /// Δ in this operator's score (0.0-1.0). The change in `grade_operator(...)`
     /// before any rarity weighting.
     pub operator_score_delta: f64,
-    /// Δ contribution to the user's `operator_grade` subscore (0.0–1.0).
+    /// Δ contribution to the user's `operator_grade` subscore (0.0-1.0).
     /// Already accounts for this operator's rarity weight and the total
     /// roster weight.
     pub operator_grade_delta: f64,
-    /// Δ contribution to the user's `total_score` (0.0–1.0). Accounts for
+    /// Δ contribution to the user's `total_score` (0.0-1.0). Accounts for
     /// the Operators subscore's share of the overall grade (1.0 / 2.6).
     pub total_score_delta: f64,
 }
