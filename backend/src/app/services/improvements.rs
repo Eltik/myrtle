@@ -14,9 +14,12 @@ use crate::core::gamedata::types::operator::{
 };
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
-    compute_optimal_assignment, compute_sustained_assignment,
+    compute_current_assignment, compute_optimal_assignment, compute_sustained_assignment,
+    has_preset_shifts,
 };
-use crate::core::grade::base::buff_registry::build_registry;
+use crate::core::grade::base::buff_registry::{
+    build_name_to_char, build_registry, faction_tags_of,
+};
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, ShiftAssignment, UserBuilding,
 };
@@ -175,6 +178,13 @@ pub struct OperatorGap {
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
+    /// The player's CURRENT base exactly as stationed right now — for comparing
+    /// against the optimized assignments.
+    pub current: Option<BaseAssignmentDto>,
+    /// The player's planned rotation (their in-game preset shifts), if they've
+    /// set one up — so the comparison can line up their Shift A/B against the
+    /// optimizer's Shift A/B. None when no preset rotation exists.
+    pub current_rotation: Option<RotationDto>,
     /// Single-shift peak assignment - the highest-efficiency arrangement of
     /// the user's roster across their existing rooms. Useful as a "what's
     /// possible right now" view.
@@ -190,6 +200,13 @@ pub struct BaseImprovements {
 pub struct BaseAssignmentDto {
     pub rooms: Vec<RoomAssignmentDto>,
     pub total_production_efficiency: f64,
+    /// Realized daily output (the gold→trade loop is coupled: LMD = min(gold
+    /// made, gold sold) × 500). This is the value the optimizer maximizes — the
+    /// per-room efficiency %s are just for display.
+    pub yield_lmd_per_day: f64,
+    pub yield_exp_per_day: f64,
+    /// LMD-equivalent of everything combined (LMD + EXP at 1:1).
+    pub yield_total_value: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -205,8 +222,16 @@ pub struct RoomAssignmentDto {
     pub room_type: String,
     pub level: i32,
     pub formula_type: Option<String>,
+    /// Order-acquisition SPEED % (the productivity bonus the game shows).
     pub total_efficiency: f64,
+    /// Order-VALUE % (LMD per order, e.g. Proviso) — multiplies LMD yield without
+    /// inflating the speed %.
+    pub order_value: f64,
     pub operators: Vec<AssignedOperator>,
+    /// Per-room natural yield (trading posts show potential LMD if gold-supplied).
+    pub yield_lmd_per_day: f64,
+    pub yield_gold_per_day: f64,
+    pub yield_exp_per_day: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -885,12 +910,63 @@ async fn build_base_improvements(
         .iter()
         .filter_map(|entry| {
             let bc = game_data.building.chars.get(&entry.operator_id)?;
-            Some(OperatorBaseProfile::build(entry, bc))
+            let faction_tags = game_data
+                .operators
+                .get(&entry.operator_id)
+                .map(faction_tags_of)
+                .unwrap_or_default();
+            Some(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                &game_data.building,
+            ))
         })
         .collect();
 
-    let (registry, morale_drains) = build_registry(&game_data.building.buffs);
+    let name_to_char = build_name_to_char(&game_data.operators);
+    let (registry, morale_drains) = build_registry(&game_data.building.buffs, &name_to_char);
 
+    let current = compute_current_assignment(
+        &profiles,
+        &user_building,
+        &game_data.building,
+        &registry,
+        &morale_drains,
+        None,
+    );
+    // The player's own planned rotation (preset shifts), to line up against the
+    // optimizer's shifts in the comparison.
+    let current_rotation = if has_preset_shifts(&user_building) {
+        let a = compute_current_assignment(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &registry,
+            &morale_drains,
+            Some(0),
+        );
+        let b = compute_current_assignment(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &registry,
+            &morale_drains,
+            Some(1),
+        );
+        let total_a: f64 = a.total_production_efficiency;
+        let total_b: f64 = b.total_production_efficiency;
+        Some(shift_assignment_to_dto(
+            &ShiftAssignment {
+                shift_a: a,
+                shift_b: b,
+                sustained_efficiency: (total_a + total_b) / 2.0,
+            },
+            game_data,
+        ))
+    } else {
+        None
+    };
     let optimal = compute_optimal_assignment(
         &profiles,
         &user_building,
@@ -906,11 +982,14 @@ async fn build_base_improvements(
         &morale_drains,
     );
 
+    let current_dto = base_assignment_to_dto(&current, game_data);
     let optimal_dto = base_assignment_to_dto(&optimal, game_data);
     let rotation_dto = shift_assignment_to_dto(&sustained, game_data);
     let layout = build_layout_summary(&user_building);
 
     Ok(BaseImprovements {
+        current: Some(current_dto),
+        current_rotation,
         optimal: Some(optimal_dto),
         rotation: Some(rotation_dto),
         layout,
@@ -918,6 +997,14 @@ async fn build_base_improvements(
 }
 
 fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {
+    use crate::core::grade::base::yield_model::BaseFlows;
+
+    // Realized output with the gold→trade coupling (LMD = min(made, sold) × 500).
+    let mut flows = BaseFlows::default();
+    for r in &asn.rooms {
+        flows.add_room(&r.room_type, r.formula_type.as_deref(), r.level, r.total_efficiency, r.order_value);
+    }
+
     BaseAssignmentDto {
         rooms: asn
             .rooms
@@ -925,6 +1012,9 @@ fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAss
             .map(|r| room_assignment_to_dto(r, game_data))
             .collect(),
         total_production_efficiency: asn.total_production_efficiency,
+        yield_lmd_per_day: flows.realized_lmd(),
+        yield_exp_per_day: flows.exp,
+        yield_total_value: flows.total_value(),
     }
 }
 
@@ -937,12 +1027,20 @@ fn shift_assignment_to_dto(asn: &ShiftAssignment, game_data: &GameData) -> Rotat
 }
 
 fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAssignmentDto {
+    let y = crate::core::grade::base::yield_model::room_yield(
+        &room.room_type,
+        room.formula_type.as_deref(),
+        room.level,
+        room.total_efficiency,
+        room.order_value,
+    );
     RoomAssignmentDto {
         slot_id: room.slot_id.clone(),
         room_type: room.room_type.clone(),
         level: room.level,
         formula_type: room.formula_type.clone(),
         total_efficiency: room.total_efficiency,
+        order_value: room.order_value,
         operators: room
             .operators
             .iter()
@@ -954,6 +1052,9 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
                     .map_or_else(|| id.clone(), |o| o.name.clone()),
             })
             .collect(),
+        yield_lmd_per_day: y.lmd_per_day,
+        yield_gold_per_day: y.gold_per_day,
+        yield_exp_per_day: y.exp_per_day,
     }
 }
 

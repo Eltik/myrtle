@@ -83,6 +83,12 @@ async fn main() {
             Box::pin(async move {
                 let commands = &framework.options().commands;
 
+                // "Playing Arknights"
+                ctx.set_presence(
+                    Some(serenity::all::ActivityData::playing("Arknights")),
+                    serenity::all::OnlineStatus::Online,
+                );
+
                 if config.registration.use_guild_commands {
                     let guild_id = config
                         .registration

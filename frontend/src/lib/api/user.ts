@@ -273,13 +273,25 @@ export interface IRoomAssignment {
     room_type: string;
     level: number;
     formula_type: string | null;
+    /** Order-acquisition speed % (the productivity bonus the game shows). */
     total_efficiency: number;
+    /** Order-value % (LMD per order, e.g. Proviso) — lifts LMD, not speed. */
+    order_value: number;
     operators: IAssignedOperator[];
+    /** Per-room natural yield (trading posts show potential LMD if gold-supplied). */
+    yield_lmd_per_day: number;
+    yield_gold_per_day: number;
+    yield_exp_per_day: number;
 }
 
 export interface IBaseAssignment {
     rooms: IRoomAssignment[];
     total_production_efficiency: number;
+    /** Realized daily output (gold→trade loop coupled: LMD = min(made, sold) × 500). */
+    yield_lmd_per_day: number;
+    yield_exp_per_day: number;
+    /** LMD-equivalent of everything combined (LMD + EXP at 1:1). */
+    yield_total_value: number;
 }
 
 export interface IRotation {
@@ -295,6 +307,10 @@ export interface IRoomLayoutEntry {
 }
 
 export interface IBaseImprovements {
+    /** The player's current base exactly as stationed right now. */
+    current: IBaseAssignment | null;
+    /** The player's planned rotation (their in-game preset shifts), if any. */
+    current_rotation: IRotation | null;
     optimal: IBaseAssignment | null;
     rotation: IRotation | null;
     layout: IRoomLayoutEntry[];

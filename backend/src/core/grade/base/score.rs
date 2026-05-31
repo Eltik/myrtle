@@ -5,8 +5,11 @@ use crate::core::grade::base::assignment::compute_sustained_assignment;
 use crate::database::models::roster::RosterEntry;
 
 use super::{
-    buff_registry::{BuffResolutionStrategy, build_registry},
-    types::{OperatorBaseProfile, UserBuilding},
+    buff_registry::{
+        BuffResolutionStrategy, build_faction_map, build_name_to_char, build_registry,
+        faction_tags_of,
+    },
+    types::{OperatorBaseProfile, UserBuilding, compute_match_tags},
 };
 
 pub fn grade_base(
@@ -21,8 +24,11 @@ pub fn grade_base(
         return 0.0;
     }
 
-    // Build the buff registry
-    let (registry, morale_drains) = build_registry(&building_data.buffs);
+    // Build the buff registry (with name→char_id resolution for named-teammate
+    // conditional buffs, e.g. Texas's "+65% only with Lappland").
+    let name_to_char = build_name_to_char(&game_data.operators);
+    let faction_map = build_faction_map(&game_data.operators);
+    let (registry, morale_drains) = build_registry(&building_data.buffs, &name_to_char);
 
     // Parse user building layout from JSONB
     let user_building = match building_json {
@@ -43,6 +49,7 @@ pub fn grade_base(
         building_data,
         &registry,
         &morale_drains,
+        &faction_map,
     );
 
     // Dimension 2: Base Infrastructure (25%)
@@ -69,7 +76,17 @@ fn build_operator_profiles(
         let building_char = game_data.building.chars.get(&entry.operator_id);
 
         if let Some(bc) = building_char {
-            profiles.push(OperatorBaseProfile::build(entry, bc));
+            let faction_tags = game_data
+                .operators
+                .get(&entry.operator_id)
+                .map(faction_tags_of)
+                .unwrap_or_default();
+            profiles.push(OperatorBaseProfile::build(
+                entry,
+                bc,
+                faction_tags,
+                &game_data.building,
+            ));
         }
     }
     profiles
@@ -81,12 +98,13 @@ fn score_production_potential(
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
+    faction_map: &HashMap<String, Vec<String>>,
 ) -> f64 {
     let user =
         compute_sustained_assignment(profiles, building, building_data, registry, morale_drains);
     let user_efficiency = user.sustained_efficiency;
 
-    let all_ops = build_max_profiles(building_data);
+    let all_ops = build_max_profiles(building_data, faction_map);
     let max =
         compute_sustained_assignment(&all_ops, building, building_data, registry, morale_drains);
     let max_efficiency = max.sustained_efficiency;
@@ -99,7 +117,10 @@ fn score_production_potential(
     log_curve_ratio(raw.clamp(0.0, 1.0))
 }
 
-fn build_max_profiles(building_data: &BuildingDataFile) -> Vec<OperatorBaseProfile> {
+fn build_max_profiles(
+    building_data: &BuildingDataFile,
+    faction_map: &HashMap<String, Vec<String>>,
+) -> Vec<OperatorBaseProfile> {
     building_data
         .chars
         .values()
@@ -110,9 +131,13 @@ fn build_max_profiles(building_data: &BuildingDataFile) -> Vec<OperatorBaseProfi
                 .filter_map(|slot| slot.buff_data.last().map(|entry| entry.buff_id.clone()))
                 .collect();
 
+            let faction_tags = faction_map.get(&bc.char_id).cloned().unwrap_or_default();
+            let match_tags = compute_match_tags(&faction_tags, &available_buffs, building_data);
             OperatorBaseProfile {
                 char_id: bc.char_id.clone(),
                 available_buffs,
+                faction_tags,
+                match_tags,
             }
         })
         .collect()
