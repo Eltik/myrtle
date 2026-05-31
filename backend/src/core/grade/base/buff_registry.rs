@@ -4,6 +4,44 @@ use std::sync::LazyLock;
 use regex::Regex;
 
 use crate::core::gamedata::types::building::Buff;
+use crate::core::gamedata::types::operator::Operator;
+
+/// Build a lowercased operator-name → `char_id` lookup, used to resolve
+/// named-teammate conditional buffs (the buff text references operators by
+/// display name, e.g. "...the same Trading Post as Lappland").
+pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<String, String> {
+    operators
+        .iter()
+        .map(|(char_id, op)| (op.name.to_lowercase(), char_id.clone()))
+        .collect()
+}
+
+/// Lowercased faction identifiers (group/nation/team id) for one operator, used
+/// as match tags for count-scaling synergies.
+pub fn faction_tags_of(op: &Operator) -> Vec<String> {
+    let mut tags = Vec::new();
+    let mut push = |s: &str| {
+        if !s.is_empty() {
+            tags.push(s.to_lowercase());
+        }
+    };
+    push(&op.nation_id);
+    if let Some(g) = &op.group_id {
+        push(g);
+    }
+    if let Some(t) = &op.team_id {
+        push(t);
+    }
+    tags
+}
+
+/// `char_id` -> faction tags, for operators built without per-op game data.
+pub fn build_faction_map(operators: &HashMap<String, Operator>) -> HashMap<String, Vec<String>> {
+    operators
+        .iter()
+        .map(|(char_id, op)| (char_id.clone(), faction_tags_of(op)))
+        .collect()
+}
 
 static RE_FIRST_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
@@ -39,11 +77,41 @@ static RE_NTH_PCT: LazyLock<Regex> =
 static RE_VUP_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>(\d+)</>").unwrap());
 
-static RE_MORALE_INCREASE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"Morale consumed per hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap());
+// Buff text uses both "Morale consumed per hour" and "Morale consumed each
+// hour" (the latter covers the Penguin Logistics trio — Texas/Lappland/Exusiai
+// — among others). Accept either wording so those drains aren't silently lost.
+// First keyword after "for each/every" — the thing a count-scaling buff counts.
+static RE_COUNT_KEYWORD: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"for (?:each|every).*?<@cc\.kw>([^<]+)</>").unwrap());
 
-static RE_MORALE_DECREASE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"Morale consumed per hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap());
+// Any <@cc.kw>…</> keyword (multi-word capable), used to parse converter skills.
+static RE_KW_ANY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>([^<]+)</>").unwrap());
+
+// A <@cc.kw>…</> keyword block whose contents may carry nested markup wrappers,
+// e.g. Lemuen's "<@cc.kw><$cc.angel>Exusiai</></>". Non-greedy so it stops at
+// the first closing tag; inner tags are stripped with RE_INNER_TAG afterward.
+static RE_KW_BLOCK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>(.*?)</>").unwrap());
+static RE_INNER_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
+
+// A faction marker like "<$cc.g.glasgow>" (group), "<$cc.n.…>" (nation), or
+// "<$cc.t.…>" (team) — captures the faction token used by match-tag scaling.
+static RE_FACTION_TOKEN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<\$cc\.[gnt]\.(\w+)>").unwrap());
+
+// Shamare-type self-scaling: "...each Operator increases … by +X%". Requires the
+// per-Operator unit AND a percentage, so it won't match factory automation ops
+// that scale "per Power Plant" (Weedy) or grant "+N Capacity" (Snegurochka).
+static RE_NULLIFY_SELF_PCT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap()
+});
+
+static RE_MORALE_INCREASE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap()
+});
+
+static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap()
+});
 
 pub enum BuffResolutionStrategy {
     /// Efficiency field is the bonus %. Value = efficiency as f64.
@@ -51,11 +119,14 @@ pub enum BuffResolutionStrategy {
 
     /// Bonus scales with count of a facility type.
     /// e.g. Automation: +X% per Power Plant, nullifies other ops' productivity.
+    /// e.g. Quartz: base +30% trading, plus +2% per recipe type at Factories
+    ///      (approximated by the Factory count via `base_pct` + per-facility scaling).
     FacilityCountScaling {
-        target_room: String,    // "POWER", "TRADING", "DORMITORY", etc.
+        target_room: String,    // "POWER", "TRADING", "DORMITORY", "MANUFACTURE", etc.
         per_unit_pct: f64,      // e.g. 5.0, 10.0, 15.0
         per_level: bool,        // true for dorm-level scaling ("per level of each Dormitory")
         nullifies_others: bool, // true for Automation buffs
+        base_pct: f64,          // always-on efficiency added on top of the scaling part
     },
 
     /// Bonus scales with teammates' skills matching a pattern.
@@ -80,6 +151,22 @@ pub enum BuffResolutionStrategy {
         order_limit: i32, // positive = adds CAP, negative = removes CAP
     },
 
+    /// A base efficiency that's always applied, plus a bonus efficiency / order
+    /// limit that ONLY applies when a specific named operator shares the room.
+    /// e.g. Texas "Feud": base 0, +65% only with Lappland.
+    /// e.g. Lemuen: base +20%, +25% more only with Exusiai.
+    /// e.g. Lappland "Hidden Purpose β": +4 order limit only with Texas.
+    ///
+    /// `required_char_id` is the resolved `char_id` of the gating teammate, or
+    /// None when the named operator couldn't be resolved (the conditional part
+    /// then contributes nothing rather than being over-credited).
+    ConditionalOnTeammate {
+        required_char_id: Option<String>,
+        base_efficiency: f64,
+        efficiency: f64,
+        order_limit: i32,
+    },
+
     /// Scales with total order limit contributions from teammates.
     /// e.g. Degenbrecher E2: "+25% per 5 CAP from teammates, max +100%"
     /// e.g. Jaye E0+1: "+4% per 1 order limit increase from others"
@@ -89,10 +176,88 @@ pub enum BuffResolutionStrategy {
         cap_pct: f64,             // max bonus
     },
 
+
+    /// Efficiency scales with the number of teammates that match a keyword the
+    /// buff names for itself. The keyword is parsed straight from the buff text
+    /// ("for each <kw>…"), so this one strategy covers every faction- and
+    /// skill-type synergy without hardcoding any faction or operator name:
+    ///   - Dorothy: "+5% per Rhine Tech-type skill"      → token "rhine"
+    ///   - Mizuki:  "+5% per Standardization Skill"       → token "standardization"
+    ///   - Bryophyta:"+5% per Metalwork-type skill"       → token "metalwork"
+    ///   - Morgan:  "+20% per Glasgow Gang Operator"      → token "glasgow"
+    ///
+    /// A teammate matches when the token equals one of its faction ids
+    /// (group/nation/team) or the leading word of one of its skill names.
+    ///
+    /// `bonus_char_id` / `bonus_pct` carry an OPTIONAL named-teammate rider that
+    /// some count-scalers tack on (Morgan "Gang Compass": +20% per Glasgow Gang
+    /// op, AND +35% more when Siege shares the room). `bonus_pct` is credited only
+    /// when that named operator is present; `None` means no rider.
+    MatchCountScaling {
+        token: String,
+        per_match_pct: f64,
+        cap_pct: Option<f64>,
+        bonus_char_id: Option<String>,
+        bonus_pct: f64,
+    },
+
+    /// A base efficiency that's always applied, plus a bonus that applies when ANY
+    /// operator of a given faction shares the room — the faction analogue of
+    /// `ConditionalOnTeammate`. e.g. Morgan "Resolution on Foreign Trade β": base
+    /// +30%, +10% more if any Glasgow Gang operator is in the same Trading Post.
+    /// `faction_token` is matched against teammates' `match_tags` (e.g. "glasgow").
+    ConditionalOnFaction {
+        faction_token: String,
+        base_efficiency: f64,
+        efficiency: f64,
+    },
+
+    /// Reclassifies certain skill types as another (Highmore: "all Rhine Lab and
+    /// Pinus Sylvestris skills are considered Standardization skills"). While
+    /// this operator is in the room, any teammate matching a `from_tokens` tag
+    /// also gains the `to_token` tag — so e.g. Rhine operators start counting
+    /// for a Standardization scaler. Carries no efficiency of its own.
+    SkillTypeConversion {
+        from_tokens: Vec<String>,
+        to_token: String,
+    },
+
+    /// Nullifies every teammate's output, but this operator's own efficiency
+    /// scales with the number of teammates present.
+    /// e.g. Shamare: "all other Operators' efficiency becomes 0, but each
+    /// Operator increases this Operator's efficiency by +45%".
+    NullifyTeammatesSelfScaling { per_teammate_pct: f64 },
+
+    /// Boosts LMD *per order* (order value) rather than order speed. Because the
+    /// trade rate is a fixed 500 LMD per Pure Gold bar, an LMD-per-order boost is
+    /// an LMD-per-hour boost of the same proportion (gold-supply permitting).
+    /// Crucially this is NOT "order acquisition efficiency", so a Shamare-style
+    /// nullifier does NOT zero it — which is exactly why Shamare + Proviso +
+    /// Tequila is the top LMD team. `estimated_pct` is the LMD-equivalent value.
+    OrderValue { estimated_pct: f64 },
+
     /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
     GlobalEffect {
         target_room: String, // "MANUFACTURE", "TRADING"
+        bonus_pct: f64,
+    },
+
+    /// Control Center buff that boosts a production room ONLY when its team
+    /// matches a faction condition — so it is NOT credited flat to every room.
+    ///   - per-operator (Umiri): "all <Siracusa> Operators in Trading Posts gain
+    ///     +5%" → each matching op adds `bonus_pct` (`faction_token` "siracusa",
+    ///     `per_operator` = true, `required_count` = 1).
+    ///   - count-gated (SilverAsh): "all Trading Posts with 3 <Kjerag> Operators
+    ///     gain +10%" → the whole post gains `bonus_pct` once it holds
+    ///     `required_count` of that faction (`per_operator` = false, required 3).
+    ///
+    /// `faction_token` is matched against teammates' `match_tags`.
+    ConditionalGlobalEffect {
+        target_room: String,
+        faction_token: String,
+        required_count: usize,
+        per_operator: bool,
         bonus_pct: f64,
     },
 
@@ -128,6 +293,9 @@ pub enum BuffResolutionStrategy {
 
 pub fn build_registry(
     buffs: &HashMap<String, Buff>,
+    // Lowercased operator display name -> char_id, used to resolve named-teammate
+    // conditional buffs (e.g. Texas's "...same Trading Post as Lappland").
+    name_to_char: &HashMap<String, String>,
 ) -> (
     HashMap<String, BuffResolutionStrategy>,
     HashMap<String, f64>, // buff_id -> morale drain modifier
@@ -194,16 +362,43 @@ pub fn build_registry(
                     || prefix.contains("_tra_")
                     || prefix.contains("_trade_")
                 {
-                    // Global production bonus
                     let target_room = if prefix.contains("_prod_") {
                         "MANUFACTURE"
                     } else {
                         "TRADING"
                     };
                     let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
-                    BuffResolutionStrategy::GlobalEffect {
-                        target_room: target_room.to_string(),
-                        bonus_pct: bonus,
+                    // Faction-gated global bonuses ("all <Siracusa> Operators…",
+                    // "all Trading Posts with 3 <Kjerag> Operators…") must NOT be
+                    // credited flat to every room — they depend on each room's team.
+                    // The faction token comes from the displayed keyword (Kjerag →
+                    // "kjerag", matching operators' nation tag), not the internal
+                    // group marker. A "with <N>" clause means the WHOLE post is
+                    // gated on holding N of that faction; otherwise it's a per-
+                    // operator bonus that each matching operator earns.
+                    if let Some(faction_token) = parse_tag_keyword(&buff.description)
+                        && !faction_token
+                            .chars()
+                            .next()
+                            .is_some_and(|c| c.is_ascii_digit())
+                        && buff.description.contains("Operators")
+                    {
+                        let required_count = RE_VUP_NUMBER
+                            .captures(&buff.description)
+                            .and_then(|c| c[1].parse::<usize>().ok());
+                        BuffResolutionStrategy::ConditionalGlobalEffect {
+                            target_room: target_room.to_string(),
+                            faction_token,
+                            required_count: required_count.unwrap_or(1),
+                            per_operator: required_count.is_none(),
+                            bonus_pct: bonus,
+                        }
+                    } else {
+                        // Unconditional global ("all Trading Posts +7%").
+                        BuffResolutionStrategy::GlobalEffect {
+                            target_room: target_room.to_string(),
+                            bonus_pct: bonus,
+                        }
                     }
                 } else {
                     // Other buffs
@@ -214,8 +409,145 @@ pub fn build_registry(
                 }
             }
             "MANUFACTURE" | "TRADING" | "POWER" => {
-                // Capacity-only
-                if (prefix.contains("_limit") || prefix.contains("limit&"))
+                // Named-teammate conditional. Handles both phrasings:
+                //   "...same Trading Post as <@cc.kw>Lappland</> … +65%"   (Texas)
+                //   "+20%; if <@cc.kw>Exusiai</> … same Trading Post … +25%" (Lemuen)
+                // The base efficiency (always applied) is the Efficiency field; the
+                // bonus is the % stated alongside the named operator. Faction-count
+                // buffs ("for every Glasgow Gang operator…") are excluded.
+                if buff.description.contains("same")
+                    && !buff.description.contains("for every")
+                    && let Some((req_name, name_end)) =
+                        find_operator_keyword(&buff.description, name_to_char)
+                {
+                    let required_char_id = name_to_char.get(&req_name).cloned();
+                    let base_efficiency = f64::from(buff.efficiency);
+                    // The conditional bonus is the efficiency % stated after the
+                    // named operator; for pure-conditional buffs (base 0) fall back
+                    // to the first % in the text.
+                    let efficiency = parse_first_pct_from(&buff.description, name_end)
+                        .or_else(|| (base_efficiency == 0.0).then(|| parse_first_pct(&buff.description)).flatten())
+                        .unwrap_or(0.0);
+                    let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
+                    BuffResolutionStrategy::ConditionalOnTeammate {
+                        required_char_id,
+                        base_efficiency,
+                        efficiency,
+                        order_limit,
+                    }
+                }
+                // Faction-gated conditional (Morgan "Resolution on Foreign Trade β":
+                // base +30%, +10% more if ANY Glasgow Gang op shares the post). The
+                // faction analogue of the named-teammate conditional above: it names
+                // a faction ("if a <Glasgow Gang> Operator…same…") rather than one
+                // operator. Count-scalers ("for every <faction>…") are excluded —
+                // those are handled by MatchCountScaling below.
+                else if buff.description.contains("same")
+                    && !buff.description.contains("for every")
+                    && !buff.description.contains("for each")
+                    && let Some((faction_token, token_end)) = find_faction_token(&buff.description)
+                {
+                    let base_efficiency = f64::from(buff.efficiency);
+                    let efficiency = parse_first_pct_from(&buff.description, token_end)
+                        .or_else(|| (base_efficiency == 0.0).then(|| parse_first_pct(&buff.description)).flatten())
+                        .unwrap_or(0.0);
+                    BuffResolutionStrategy::ConditionalOnFaction {
+                        faction_token,
+                        base_efficiency,
+                        efficiency,
+                    }
+                }
+                // Shamare-type: nullifies every teammate's output, but self-scales
+                // per teammate ("...all other Operators' efficiency becomes 0, but
+                // each Operator increases this Operator's efficiency by +45%").
+                // The regex requires the per-Operator % so factory automation ops
+                // (Weedy "per Power Plant", Snegurochka "+N Capacity") fall through
+                // to their facility-scaling handling below.
+                else if let Some(cap) = RE_NULLIFY_SELF_PCT.captures(&buff.description) {
+                    BuffResolutionStrategy::NullifyTeammatesSelfScaling {
+                        per_teammate_pct: cap[1].parse().unwrap_or(0.0),
+                    }
+                }
+                // Skill-type converter (Highmore): "all <X> and <Y> skills are
+                // considered <Z> skills". Parsed generically from the keywords.
+                else if let Some((from_tokens, to_token)) =
+                    parse_skill_conversion(&buff.description)
+                {
+                    BuffResolutionStrategy::SkillTypeConversion {
+                        from_tokens,
+                        to_token,
+                    }
+                }
+                // Match-count scaling: "+X% for each <keyword>" where the keyword
+                // is a faction or skill type (NOT a number — those are resource
+                // mechanics, handled elsewhere). One data-driven strategy for every
+                // faction/skill synergy; the token comes straight from the text.
+                else if let Some(token) = parse_count_keyword(&buff.description) {
+                    let per_match_pct = parse_first_pct(&buff.description).unwrap_or(5.0);
+                    let cap_pct = parse_scaling_cap(&buff.description);
+                    // Optional named-teammate rider (Morgan "Gang Compass": +35%
+                    // more "when in the same Trading Post as Siege"). Credited only
+                    // when that operator is present; absent → (None, 0).
+                    let (bonus_char_id, bonus_pct) = buff
+                        .description
+                        .contains("same")
+                        .then(|| find_operator_keyword(&buff.description, name_to_char))
+                        .flatten()
+                        .map_or((None, 0.0), |(name, name_end)| {
+                            (
+                                name_to_char.get(&name).cloned(),
+                                parse_first_pct_from(&buff.description, name_end).unwrap_or(0.0),
+                            )
+                        });
+                    BuffResolutionStrategy::MatchCountScaling {
+                        token,
+                        per_match_pct,
+                        cap_pct,
+                        bonus_char_id,
+                        bonus_pct,
+                    }
+                }
+                // Order-VALUE trading skills: raise LMD *per order* rather than
+                // order speed. Calibrated against the trading-post economy (Pure
+                // Gold = 500 LMD/bar, L3 order mix 30/50/20 low/med/high):
+                //   - Proviso "Damages for Breach" (+2 Pure Gold to defaulted
+                //     low/med orders, same completion time): avg order 1450→2250
+                //     LMD ⇒ ×1.55, i.e. +55% LMD/hour.
+                //   - Tequila "+N LMD on non-defaulted high orders": ~+10% over a
+                //     realistic order mix.
+                //   - Precious-Metal "higher-yield chance" (Tailoring): shifts the
+                //     order mix up; gold/hour ≈ flat, value realised via the order
+                //     cap ⇒ ~+10%.
+                //   - A bare enabler with no payoff (Proviso "Contract Law") ⇒ 0.
+                else if buff.room_type == "TRADING"
+                    && let Some(est) = order_value_estimate(&buff.description)
+                {
+                    BuffResolutionStrategy::OrderValue { estimated_pct: est }
+                }
+                // Jaye-style: efficiency scales with the order-limit difference
+                // that teammates' efficiency creates ("increases order acquisition
+                // efficiency by +X% for every difference of 1 order"). Teammates'
+                // efficiency drives the order limit down, so model it as mirroring
+                // their output — Texas's +65% pushes Jaye to ~+50%. (This buff has
+                // "_limit" in its id but is an EFFICIENCY skill, so it must be
+                // caught before the capacity-only check below.)
+                else if prefix.contains("_limit_diff")
+                    || (buff.room_type == "TRADING"
+                        && buff.description.contains("order acquisition efficiency")
+                        && buff.description.contains("difference"))
+                {
+                    let per = parse_first_pct(&buff.description).unwrap_or(4.0);
+                    // Cap calibrated to the order-limit reality: the "difference"
+                    // this skill scales on is bounded by the post's order limit, so
+                    // even with very-high-efficiency teammates (who add no order
+                    // limit) Jaye tops out around +40%, not +60%.
+                    BuffResolutionStrategy::TeammateOutputMirroring {
+                        ratio: per / 5.0,
+                        cap_pct: 40.0,
+                    }
+                }
+                // Capacity-only: true order-limit skills with no speed component.
+                else if (prefix.contains("_limit") || prefix.contains("limit&"))
                     && !prefix.contains("_spd")
                     && buff.efficiency == 0
                 {
@@ -306,6 +638,20 @@ pub fn build_registry(
                         cap_pct: f64::MAX,
                     }
                 }
+                // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
+                // efficiency PLUS "+N% per recipe type being processed at Factories".
+                // Distinct recipe types are approximated by the Factory count — the
+                // base % is the Efficiency field, the per-unit % is the trailing %.
+                else if prefix.contains("&formula") && buff.description.contains("recipe type") {
+                    let per_unit = parse_last_pct(&buff.description).unwrap_or(2.0);
+                    BuffResolutionStrategy::FacilityCountScaling {
+                        target_room: "MANUFACTURE".to_string(),
+                        per_unit_pct: per_unit,
+                        per_level: false,
+                        nullifies_others: false,
+                        base_pct: f64::from(buff.efficiency),
+                    }
+                }
                 // Direct efficiency
                 else if buff.efficiency > 0 {
                     BuffResolutionStrategy::DirectEfficiency {
@@ -320,6 +666,19 @@ pub fn build_registry(
                         per_unit_pct: per_unit,
                         per_level: false,
                         nullifies_others: true,
+                        base_pct: 0.0,
+                    }
+                }
+                // Snegurochka-type: nullifies teammates but only grants Capacity
+                // (no speed), so it contributes 0 productivity. Modeled as a
+                // zero-value automation op so it's never picked for output.
+                else if prefix.contains("&manu") {
+                    BuffResolutionStrategy::FacilityCountScaling {
+                        target_room: "MANUFACTURE".to_string(),
+                        per_unit_pct: 0.0,
+                        per_level: false,
+                        nullifies_others: true,
+                        base_pct: 0.0,
                     }
                 }
                 // Dormitory scaling
@@ -330,6 +689,7 @@ pub fn build_registry(
                         per_unit_pct: per_unit,
                         per_level: true,
                         nullifies_others: false,
+                        base_pct: 0.0,
                     }
                 }
                 // Teammate skill scaling (eg. +5% per Standardization skill)
@@ -370,6 +730,7 @@ pub fn build_registry(
                         per_unit_pct: per_unit,
                         per_level: false,
                         nullifies_others: false,
+                        base_pct: 0.0,
                     }
                 }
                 // Fallback
@@ -399,9 +760,115 @@ pub fn build_registry(
     (registry, morale_drains)
 }
 
+/// The match token of a "for each/every <keyword>" count-scaling buff, or `None`
+/// if the buff doesn't scale per teammate. The token is the leading word of the
+/// keyword, lowercased (e.g. "Rhine Tech-type skill" → "rhine", "Glasgow Gang
+/// Operator" → "glasgow"). Numeric keywords ("for each 4 gold bars") are
+/// resource mechanics, not teammate counts, and return `None`.
+fn parse_count_keyword(desc: &str) -> Option<String> {
+    let cap = RE_COUNT_KEYWORD.captures(desc)?;
+    let token = first_token(&cap[1]);
+    (!token.is_empty() && !token.chars().next().is_some_and(|c| c.is_ascii_digit()))
+        .then_some(token)
+}
+
+/// Parse a skill-type converter: "all <X> and <Y> skills are considered <Z>
+/// skills" → (from = [x, y], to = z). The last keyword is the target type; the
+/// earlier ones are the source types. Returns `None` if not a converter.
+fn parse_skill_conversion(desc: &str) -> Option<(Vec<String>, String)> {
+    if !(desc.contains("considered") && desc.contains("skill")) {
+        return None;
+    }
+    let kws: Vec<String> = RE_KW_ANY
+        .captures_iter(desc)
+        .map(|c| first_token(&c[1]))
+        .filter(|t| !t.is_empty())
+        .collect();
+    if kws.len() < 2 {
+        return None;
+    }
+    let (to_token, from) = kws.split_last()?;
+    Some((from.to_vec(), to_token.clone()))
+}
+
+/// Optional "max +X%" cap on a scaling buff.
+fn parse_scaling_cap(desc: &str) -> Option<f64> {
+    let lower = desc.to_lowercase();
+    let idx = lower.find("max")?;
+    RE_LAST_PCT
+        .find_iter(&desc[idx..])
+        .next()
+        .and_then(|m| RE_LAST_PCT_INNER.captures(m.as_str()))
+        .and_then(|c| c[1].parse().ok())
+}
+
+/// LMD-equivalent value of an order-VALUE trading skill, or `None` if the buff
+/// isn't one. Calibrated from the trading-post economy (500 LMD per Pure Gold
+/// bar; L3 order mix 30/50/20). See the call site for the derivations.
+fn order_value_estimate(desc: &str) -> Option<f64> {
+    if desc.contains("increase the LMD") {
+        Some(10.0) // Tequila-type: flat +N LMD on non-defaulted high orders
+    } else if desc.contains("Pure Gold") && desc.contains("traded <@cc.vup>") {
+        Some(55.0) // Proviso payoff: +2 Pure Gold per defaulted order
+    } else if desc.contains("Precious Metal") || desc.contains("higher-yield") {
+        Some(10.0) // higher-yield order chance (Tailoring etc.)
+    } else if desc.contains("Pure Gold") || desc.contains("Defaulted trade") {
+        Some(0.0) // enabler with no direct payoff (Proviso "Contract Law")
+    } else {
+        None
+    }
+}
+
+/// Leading word of a keyword phrase, lowercased ("Rhine Tech-type" → "rhine").
+fn first_token(s: &str) -> String {
+    s.trim()
+        .split([' ', '-'])
+        .next()
+        .unwrap_or("")
+        .to_lowercase()
+}
+
 /// Extract first percentage like "+25%" from description markup
 fn parse_first_pct(desc: &str) -> Option<f64> {
     RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
+}
+
+/// First `<@cc.vup>+N%` efficiency at or after byte offset `start` — used to
+/// pick out the conditional bonus that follows a named operator keyword.
+fn parse_first_pct_from(desc: &str, start: usize) -> Option<f64> {
+    desc.get(start..).and_then(parse_first_pct)
+}
+
+/// First `<@cc.kw>…</>` keyword that resolves to a known operator name
+/// (stripping nested `<$cc.x>` wrappers). Returns the lowercased name and the
+/// byte offset just past that keyword block, so the caller can scan for the
+/// conditional bonus % that appears after it. Handles both word orders:
+/// "...same Trading Post as <@cc.kw>Lappland</>" and
+/// "if <@cc.kw>Exusiai</> is assigned to the same Trading Post".
+fn find_operator_keyword(
+    desc: &str,
+    name_to_char: &HashMap<String, String>,
+) -> Option<(String, usize)> {
+    for cap in RE_KW_BLOCK.captures_iter(desc) {
+        let block = cap.get(0)?;
+        let name = RE_INNER_TAG
+            .replace_all(&cap[1], "")
+            .trim()
+            .to_lowercase();
+        if name_to_char.contains_key(&name) {
+            return Some((name, block.end()));
+        }
+    }
+    None
+}
+
+/// First faction marker (`<$cc.g.glasgow>` etc.) in the text. Returns the token
+/// and the byte offset just past it, so the caller can read the bonus % that
+/// follows the faction mention.
+fn find_faction_token(desc: &str) -> Option<(String, usize)> {
+    let m = RE_FACTION_TOKEN.captures(desc)?;
+    let token = m[1].to_lowercase();
+    Some((token, m.get(0)?.end()))
 }
 
 /// Extract first float like "+0.7" from description markup (for morale values)

@@ -35,6 +35,10 @@ path = "src/bin/resync_gacha.rs"
 name = "export-gacha"
 path = "src/bin/export_gacha.rs"
 
+[[bin]]
+name = "dump-user-fixture"
+path = "src/bin/dump_user_fixture.rs"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"

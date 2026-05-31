@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 
 /// One entry in a Doctor's published support roster (slot 0..2).
@@ -21,7 +21,7 @@ pub struct SupportUnit {
 }
 
 /// `v_user_roster` view
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct RosterEntry {
     pub user_id: Uuid,
     pub operator_id: String,
