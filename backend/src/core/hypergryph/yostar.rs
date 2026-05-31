@@ -504,7 +504,7 @@ pub async fn get_battle_replay(
 
 /// Pacing for [`harvest_replays`].
 ///
-/// A single session must call `getBattleReplay` sequentially — the auth `seqnum`
+/// A single session must call `getBattleReplay` sequentially - the auth `seqnum`
 /// is a monotonic counter, so concurrent calls on the same `AuthSession` would
 /// race and invalidate it. Different sessions are independent rate-limit
 /// buckets on the server side, so for many-players-at-once throughput, spawn
@@ -661,7 +661,7 @@ fn collect_replay_flags(
 }
 
 /// One per-player pipeline: discover via syncData → harvest only the stages
-/// that actually have a saved replay. This is the safe-by-construction path —
+/// that actually have a saved replay. This is the safe-by-construction path -
 /// no 5516 misses, traffic shape matches the live client.
 ///
 /// Scale across players by spawning one task per session:

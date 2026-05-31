@@ -279,7 +279,7 @@ fn test_engine_vs_python_expected() {
 /// (default/no-module) result.
 ///
 /// "Missing" is derived from the operator's actual advanced modules (sorted by
-/// uniequip number) — a formula module at position `pos` is unavailable when the
+/// uniequip number) - a formula module at position `pos` is unavailable when the
 /// operator has fewer than `pos + 1` advanced modules. No hardcoded uniequip IDs.
 #[test]
 fn test_unavailable_module_returns_none() {

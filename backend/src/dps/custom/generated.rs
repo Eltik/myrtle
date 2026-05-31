@@ -18,7 +18,7 @@
 
 use super::super::operator_unit::{EnemyStats, OperatorUnit};
 
-/// Aak — auto-transpiled from Python
+/// Aak - auto-transpiled from Python
 pub fn aak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -66,7 +66,7 @@ pub fn aak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Absinthe — auto-transpiled from Python
+/// Absinthe - auto-transpiled from Python
 pub fn absinthe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -108,7 +108,7 @@ pub fn absinthe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Aciddrop — auto-transpiled from Python
+/// Aciddrop - auto-transpiled from Python
 pub fn aciddrop(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -146,7 +146,7 @@ pub fn aciddrop(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Adnachiel — auto-transpiled from Python
+/// Adnachiel - auto-transpiled from Python
 pub fn adnachiel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -168,7 +168,7 @@ pub fn adnachiel(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Amiya — auto-transpiled from Python
+/// Amiya - auto-transpiled from Python
 pub fn amiya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -206,7 +206,7 @@ pub fn amiya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// AmiyaGuard — auto-transpiled from Python
+/// AmiyaGuard - auto-transpiled from Python
 pub fn amiya_guard(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -244,7 +244,7 @@ pub fn amiya_guard(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// AmiyaMedic — auto-transpiled from Python
+/// AmiyaMedic - auto-transpiled from Python
 pub fn amiya_medic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -278,7 +278,7 @@ pub fn amiya_medic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Andreana — auto-transpiled from Python
+/// Andreana - auto-transpiled from Python
 pub fn andreana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -308,7 +308,7 @@ pub fn andreana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Angelina — auto-transpiled from Python
+/// Angelina - auto-transpiled from Python
 pub fn angelina(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -359,7 +359,7 @@ pub fn angelina(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Aosta — auto-transpiled from Python
+/// Aosta - auto-transpiled from Python
 pub fn aosta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -417,7 +417,7 @@ pub fn aosta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// April — auto-transpiled from Python
+/// April - auto-transpiled from Python
 pub fn april(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -458,7 +458,7 @@ pub fn april(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Archetto — auto-transpiled from Python
+/// Archetto - auto-transpiled from Python
 pub fn archetto(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -562,7 +562,7 @@ pub fn archetto(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Arene — auto-transpiled from Python
+/// Arene - auto-transpiled from Python
 pub fn arene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -617,7 +617,7 @@ pub fn arene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Asbestos — auto-transpiled from Python
+/// Asbestos - auto-transpiled from Python
 pub fn asbestos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -653,7 +653,7 @@ pub fn asbestos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ascalon — auto-transpiled from Python
+/// Ascalon - auto-transpiled from Python
 pub fn ascalon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -720,7 +720,7 @@ pub fn ascalon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ash — auto-transpiled from Python
+/// Ash - auto-transpiled from Python
 pub fn ash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -768,7 +768,7 @@ pub fn ash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ashlock — auto-transpiled from Python
+/// Ashlock - auto-transpiled from Python
 pub fn ashlock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -808,7 +808,7 @@ pub fn ashlock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Astesia — auto-transpiled from Python
+/// Astesia - auto-transpiled from Python
 pub fn astesia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -848,7 +848,7 @@ pub fn astesia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Astgenne — auto-transpiled from Python
+/// Astgenne - auto-transpiled from Python
 pub fn astgenne(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -950,7 +950,7 @@ pub fn astgenne(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Aurora — auto-transpiled from Python
+/// Aurora - auto-transpiled from Python
 pub fn aurora(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -984,7 +984,7 @@ pub fn aurora(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ayerscarpe — auto-transpiled from Python
+/// Ayerscarpe - auto-transpiled from Python
 pub fn ayerscarpe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1051,7 +1051,7 @@ pub fn ayerscarpe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Bagpipe — auto-transpiled from Python
+/// Bagpipe - auto-transpiled from Python
 pub fn bagpipe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1145,7 +1145,7 @@ pub fn bagpipe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Beehunter — auto-transpiled from Python
+/// Beehunter - auto-transpiled from Python
 pub fn beehunter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1181,7 +1181,7 @@ pub fn beehunter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Beeswax — auto-transpiled from Python
+/// Beeswax - auto-transpiled from Python
 pub fn beeswax(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1208,7 +1208,7 @@ pub fn beeswax(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Bibeak — auto-transpiled from Python
+/// Bibeak - auto-transpiled from Python
 pub fn bibeak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1279,7 +1279,7 @@ pub fn bibeak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Blaze — auto-transpiled from Python
+/// Blaze - auto-transpiled from Python
 pub fn blaze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1337,7 +1337,7 @@ pub fn blaze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// BlazeAlter — auto-transpiled from Python
+/// BlazeAlter - auto-transpiled from Python
 pub fn blaze_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1459,7 +1459,7 @@ pub fn blaze_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Blemishine — auto-transpiled from Python
+/// Blemishine - auto-transpiled from Python
 pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1533,7 +1533,7 @@ pub fn blemishine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Blitz — auto-transpiled from Python
+/// Blitz - auto-transpiled from Python
 pub fn blitz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1567,7 +1567,7 @@ pub fn blitz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// BluePoison — auto-transpiled from Python
+/// BluePoison - auto-transpiled from Python
 pub fn blue_poison(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1625,7 +1625,7 @@ pub fn blue_poison(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Broca — auto-transpiled from Python
+/// Broca - auto-transpiled from Python
 pub fn broca(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1666,7 +1666,7 @@ pub fn broca(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Bryophyta — auto-transpiled from Python
+/// Bryophyta - auto-transpiled from Python
 pub fn bryophyta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1708,7 +1708,7 @@ pub fn bryophyta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Cantabile — auto-transpiled from Python
+/// Cantabile - auto-transpiled from Python
 pub fn cantabile(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1742,7 +1742,7 @@ pub fn cantabile(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Caper — auto-transpiled from Python
+/// Caper - auto-transpiled from Python
 pub fn caper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1819,7 +1819,7 @@ pub fn caper(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Carnelian — auto-transpiled from Python
+/// Carnelian - auto-transpiled from Python
 pub fn carnelian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1888,7 +1888,7 @@ pub fn carnelian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Castle3 — auto-transpiled from Python
+/// Castle3 - auto-transpiled from Python
 pub fn castle3(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1912,7 +1912,7 @@ pub fn castle3(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Catapult — auto-transpiled from Python
+/// Catapult - auto-transpiled from Python
 pub fn catapult(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -1930,7 +1930,7 @@ pub fn catapult(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ceobe — auto-transpiled from Python
+/// Ceobe - auto-transpiled from Python
 pub fn ceobe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2027,7 +2027,7 @@ pub fn ceobe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Chen — auto-transpiled from Python
+/// Chen - auto-transpiled from Python
 pub fn chen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2103,7 +2103,7 @@ pub fn chen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ChenAlter — auto-transpiled from Python
+/// ChenAlter - auto-transpiled from Python
 pub fn chen_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2161,7 +2161,7 @@ pub fn chen_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Chongyue — auto-transpiled from Python
+/// Chongyue - auto-transpiled from Python
 pub fn chongyue(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2233,7 +2233,7 @@ pub fn chongyue(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// CivilightEterna — auto-transpiled from Python
+/// CivilightEterna - auto-transpiled from Python
 pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2263,7 +2263,7 @@ pub fn civilight_eterna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> 
     Some(dps)
 }
 
-/// Click — auto-transpiled from Python
+/// Click - auto-transpiled from Python
 pub fn click(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2296,7 +2296,7 @@ pub fn click(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Coldshot — auto-transpiled from Python
+/// Coldshot - auto-transpiled from Python
 pub fn coldshot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2357,7 +2357,7 @@ pub fn coldshot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Contrail — auto-transpiled from Python
+/// Contrail - auto-transpiled from Python
 pub fn contrail(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2389,7 +2389,7 @@ pub fn contrail(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Conviction — auto-transpiled from Python
+/// Conviction - auto-transpiled from Python
 pub fn conviction(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2454,7 +2454,7 @@ pub fn conviction(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Crownslayer — auto-transpiled from Python
+/// Crownslayer - auto-transpiled from Python
 pub fn crownslayer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2502,7 +2502,7 @@ pub fn crownslayer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Dagda — auto-transpiled from Python
+/// Dagda - auto-transpiled from Python
 pub fn dagda(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2552,7 +2552,7 @@ pub fn dagda(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Degenbrecher — auto-transpiled from Python
+/// Degenbrecher - auto-transpiled from Python
 pub fn degenbrecher(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2645,7 +2645,7 @@ pub fn degenbrecher(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Diamante — auto-transpiled from Python
+/// Diamante - auto-transpiled from Python
 pub fn diamante(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2733,7 +2733,7 @@ pub fn diamante(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Dobermann — auto-transpiled from Python
+/// Dobermann - auto-transpiled from Python
 pub fn dobermann(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2779,7 +2779,7 @@ pub fn dobermann(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Doc — auto-transpiled from Python
+/// Doc - auto-transpiled from Python
 pub fn doc(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2806,7 +2806,7 @@ pub fn doc(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Dorothy — auto-transpiled from Python
+/// Dorothy - auto-transpiled from Python
 pub fn dorothy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2872,7 +2872,7 @@ pub fn dorothy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Durin — auto-transpiled from Python
+/// Durin - auto-transpiled from Python
 pub fn durin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2890,7 +2890,7 @@ pub fn durin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Durnar — auto-transpiled from Python
+/// Durnar - auto-transpiled from Python
 pub fn durnar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -2923,7 +2923,7 @@ pub fn durnar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Dusk — auto-transpiled from Python
+/// Dusk - auto-transpiled from Python
 pub fn dusk(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3002,7 +3002,7 @@ pub fn dusk(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps + freedps)
 }
 
-/// Ebenholz — auto-transpiled from Python
+/// Ebenholz - auto-transpiled from Python
 pub fn ebenholz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3129,7 +3129,7 @@ pub fn ebenholz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ela — auto-transpiled from Python
+/// Ela - auto-transpiled from Python
 pub fn ela(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3196,7 +3196,7 @@ pub fn ela(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Entelechia — auto-transpiled from Python
+/// Entelechia - auto-transpiled from Python
 pub fn entelechia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3268,7 +3268,7 @@ pub fn entelechia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps + arts_dps)
 }
 
-/// Erato — auto-transpiled from Python
+/// Erato - auto-transpiled from Python
 pub fn erato(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3338,7 +3338,7 @@ pub fn erato(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Estelle — auto-transpiled from Python
+/// Estelle - auto-transpiled from Python
 pub fn estelle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3362,7 +3362,7 @@ pub fn estelle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ethan — auto-transpiled from Python
+/// Ethan - auto-transpiled from Python
 pub fn ethan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3400,7 +3400,7 @@ pub fn ethan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Eunectes — auto-transpiled from Python
+/// Eunectes - auto-transpiled from Python
 pub fn eunectes(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3442,7 +3442,7 @@ pub fn eunectes(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ExecutorAlter — auto-transpiled from Python
+/// ExecutorAlter - auto-transpiled from Python
 pub fn executor_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3534,7 +3534,7 @@ pub fn executor_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Exusiai — auto-transpiled from Python
+/// Exusiai - auto-transpiled from Python
 pub fn exusiai(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3605,7 +3605,7 @@ pub fn exusiai(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ExusiaiAlter — auto-transpiled from Python
+/// ExusiaiAlter - auto-transpiled from Python
 pub fn exusiai_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3678,7 +3678,7 @@ pub fn exusiai_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Eyjafjalla — auto-transpiled from Python
+/// Eyjafjalla - auto-transpiled from Python
 pub fn eyjafjalla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3782,7 +3782,7 @@ pub fn eyjafjalla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// FangAlter — auto-transpiled from Python
+/// FangAlter - auto-transpiled from Python
 pub fn fang_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3833,7 +3833,7 @@ pub fn fang_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Fartooth — auto-transpiled from Python
+/// Fartooth - auto-transpiled from Python
 pub fn fartooth(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3890,7 +3890,7 @@ pub fn fartooth(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Fiammetta — auto-transpiled from Python
+/// Fiammetta - auto-transpiled from Python
 pub fn fiammetta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3951,7 +3951,7 @@ pub fn fiammetta(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Figurino — auto-transpiled from Python
+/// Figurino - auto-transpiled from Python
 pub fn figurino(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -3988,7 +3988,7 @@ pub fn figurino(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Firewhistle — auto-transpiled from Python
+/// Firewhistle - auto-transpiled from Python
 pub fn firewhistle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4046,7 +4046,7 @@ pub fn firewhistle(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Flamebringer — auto-transpiled from Python
+/// Flamebringer - auto-transpiled from Python
 pub fn flamebringer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4090,7 +4090,7 @@ pub fn flamebringer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Flametail — auto-transpiled from Python
+/// Flametail - auto-transpiled from Python
 pub fn flametail(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4157,7 +4157,7 @@ pub fn flametail(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Flint — auto-transpiled from Python
+/// Flint - auto-transpiled from Python
 pub fn flint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4207,7 +4207,7 @@ pub fn flint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * dmgscale)
 }
 
-/// Folinic — auto-transpiled from Python
+/// Folinic - auto-transpiled from Python
 pub fn folinic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4232,7 +4232,7 @@ pub fn folinic(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Franka — auto-transpiled from Python
+/// Franka - auto-transpiled from Python
 pub fn franka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4277,7 +4277,7 @@ pub fn franka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Frost — auto-transpiled from Python
+/// Frost - auto-transpiled from Python
 pub fn frost(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4327,7 +4327,7 @@ pub fn frost(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Frostleaf — auto-transpiled from Python
+/// Frostleaf - auto-transpiled from Python
 pub fn frostleaf(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4381,7 +4381,7 @@ pub fn frostleaf(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Fuze — auto-transpiled from Python
+/// Fuze - auto-transpiled from Python
 pub fn fuze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4414,7 +4414,7 @@ pub fn fuze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// GavialAlter — auto-transpiled from Python
+/// GavialAlter - auto-transpiled from Python
 pub fn gavial_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4463,7 +4463,7 @@ pub fn gavial_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * dmg)
 }
 
-/// Gladiia — auto-transpiled from Python
+/// Gladiia - auto-transpiled from Python
 pub fn gladiia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4526,7 +4526,7 @@ pub fn gladiia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Gnosis — auto-transpiled from Python
+/// Gnosis - auto-transpiled from Python
 pub fn gnosis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4619,7 +4619,7 @@ pub fn gnosis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Goldenglow — auto-transpiled from Python
+/// Goldenglow - auto-transpiled from Python
 pub fn goldenglow(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4674,7 +4674,7 @@ pub fn goldenglow(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Gracebearer — auto-transpiled from Python
+/// Gracebearer - auto-transpiled from Python
 pub fn gracebearer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4731,7 +4731,7 @@ pub fn gracebearer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Grani — auto-transpiled from Python
+/// Grani - auto-transpiled from Python
 pub fn grani(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4757,7 +4757,7 @@ pub fn grani(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// GreyThroat — auto-transpiled from Python
+/// GreyThroat - auto-transpiled from Python
 pub fn grey_throat(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4834,7 +4834,7 @@ pub fn grey_throat(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// GreyyAlter — auto-transpiled from Python
+/// GreyyAlter - auto-transpiled from Python
 pub fn greyy_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4883,7 +4883,7 @@ pub fn greyy_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Guide — auto-transpiled from Python
+/// Guide - auto-transpiled from Python
 pub fn guide(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4921,7 +4921,7 @@ pub fn guide(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hadiya — auto-transpiled from Python
+/// Hadiya - auto-transpiled from Python
 pub fn hadiya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -4958,7 +4958,7 @@ pub fn hadiya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Harmonie — auto-transpiled from Python
+/// Harmonie - auto-transpiled from Python
 pub fn harmonie(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5006,7 +5006,7 @@ pub fn harmonie(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Haze — auto-transpiled from Python
+/// Haze - auto-transpiled from Python
 pub fn haze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5041,7 +5041,7 @@ pub fn haze(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hellagur — auto-transpiled from Python
+/// Hellagur - auto-transpiled from Python
 pub fn hellagur(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5093,7 +5093,7 @@ pub fn hellagur(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hibiscus — auto-transpiled from Python
+/// Hibiscus - auto-transpiled from Python
 pub fn hibiscus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5128,7 +5128,7 @@ pub fn hibiscus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Highmore — auto-transpiled from Python
+/// Highmore - auto-transpiled from Python
 pub fn highmore(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5173,7 +5173,7 @@ pub fn highmore(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hoederer — auto-transpiled from Python
+/// Hoederer - auto-transpiled from Python
 pub fn hoederer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5276,7 +5276,7 @@ pub fn hoederer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hoolheyak — auto-transpiled from Python
+/// Hoolheyak - auto-transpiled from Python
 pub fn hoolheyak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5367,7 +5367,7 @@ pub fn hoolheyak(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Horn — auto-transpiled from Python
+/// Horn - auto-transpiled from Python
 pub fn horn(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5465,7 +5465,7 @@ pub fn horn(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Hoshiguma — auto-transpiled from Python
+/// Hoshiguma - auto-transpiled from Python
 pub fn hoshiguma(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5505,7 +5505,7 @@ pub fn hoshiguma(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// HoshigumaAlter — auto-transpiled from Python
+/// HoshigumaAlter - auto-transpiled from Python
 pub fn hoshiguma_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5566,7 +5566,7 @@ pub fn hoshiguma_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Humus — auto-transpiled from Python
+/// Humus - auto-transpiled from Python
 pub fn humus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5609,7 +5609,7 @@ pub fn humus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Iana — auto-transpiled from Python
+/// Iana - auto-transpiled from Python
 pub fn iana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5638,7 +5638,7 @@ pub fn iana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ifrit — auto-transpiled from Python
+/// Ifrit - auto-transpiled from Python
 pub fn ifrit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5816,7 +5816,7 @@ pub fn ifrit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Indra — auto-transpiled from Python
+/// Indra - auto-transpiled from Python
 pub fn indra(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5858,7 +5858,7 @@ pub fn indra(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ines — auto-transpiled from Python
+/// Ines - auto-transpiled from Python
 pub fn ines(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5916,7 +5916,7 @@ pub fn ines(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Insider — auto-transpiled from Python
+/// Insider - auto-transpiled from Python
 pub fn insider(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -5956,7 +5956,7 @@ pub fn insider(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Irene — auto-transpiled from Python
+/// Irene - auto-transpiled from Python
 pub fn irene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6047,7 +6047,7 @@ pub fn irene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Jackie — auto-transpiled from Python
+/// Jackie - auto-transpiled from Python
 pub fn jackie(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6080,7 +6080,7 @@ pub fn jackie(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Jaye — auto-transpiled from Python
+/// Jaye - auto-transpiled from Python
 pub fn jaye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6108,7 +6108,7 @@ pub fn jaye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Jessica — auto-transpiled from Python
+/// Jessica - auto-transpiled from Python
 pub fn jessica(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6166,7 +6166,7 @@ pub fn jessica(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// JessicaAlter — auto-transpiled from Python
+/// JessicaAlter - auto-transpiled from Python
 pub fn jessica_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6210,7 +6210,7 @@ pub fn jessica_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// JusticeKnight — auto-transpiled from Python
+/// JusticeKnight - auto-transpiled from Python
 pub fn justice_knight(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6234,7 +6234,7 @@ pub fn justice_knight(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kafka — auto-transpiled from Python
+/// Kafka - auto-transpiled from Python
 pub fn kafka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6278,7 +6278,7 @@ pub fn kafka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kaltsit — auto-transpiled from Python
+/// Kaltsit - auto-transpiled from Python
 pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6335,7 +6335,7 @@ pub fn kaltsit(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kazemaru — auto-transpiled from Python
+/// Kazemaru - auto-transpiled from Python
 pub fn kazemaru(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6383,7 +6383,7 @@ pub fn kazemaru(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kirara — auto-transpiled from Python
+/// Kirara - auto-transpiled from Python
 pub fn kirara(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6422,7 +6422,7 @@ pub fn kirara(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kjera — auto-transpiled from Python
+/// Kjera - auto-transpiled from Python
 pub fn kjera(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6475,7 +6475,7 @@ pub fn kjera(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Kroos — auto-transpiled from Python
+/// Kroos - auto-transpiled from Python
 pub fn kroos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6516,7 +6516,7 @@ pub fn kroos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// KroosAlter — auto-transpiled from Python
+/// KroosAlter - auto-transpiled from Python
 pub fn kroos_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6569,7 +6569,7 @@ pub fn kroos_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// LaPluma — auto-transpiled from Python
+/// LaPluma - auto-transpiled from Python
 pub fn la_pluma(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6623,7 +6623,7 @@ pub fn la_pluma(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Laios — auto-transpiled from Python
+/// Laios - auto-transpiled from Python
 pub fn laios(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6674,7 +6674,7 @@ pub fn laios(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lappland — auto-transpiled from Python
+/// Lappland - auto-transpiled from Python
 pub fn lappland(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6721,7 +6721,7 @@ pub fn lappland(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + fragile) / (1.0 + unit.buff_fragile))
 }
 
-/// LapplandAlter — auto-transpiled from Python
+/// LapplandAlter - auto-transpiled from Python
 pub fn lappland_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6772,7 +6772,7 @@ pub fn lappland_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lava3star — auto-transpiled from Python
+/// Lava3star - auto-transpiled from Python
 pub fn lava3star(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6793,7 +6793,7 @@ pub fn lava3star(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lavaalt — auto-transpiled from Python
+/// Lavaalt - auto-transpiled from Python
 pub fn lavaalt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6829,7 +6829,7 @@ pub fn lavaalt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lee — auto-transpiled from Python
+/// Lee - auto-transpiled from Python
 pub fn lee(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6867,7 +6867,7 @@ pub fn lee(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// LeiziAlter — auto-transpiled from Python
+/// LeiziAlter - auto-transpiled from Python
 pub fn leizi_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -6971,7 +6971,7 @@ pub fn leizi_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lemuen — auto-transpiled from Python
+/// Lemuen - auto-transpiled from Python
 pub fn lemuen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7048,7 +7048,7 @@ pub fn lemuen(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lessing — auto-transpiled from Python
+/// Lessing - auto-transpiled from Python
 pub fn lessing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7129,7 +7129,7 @@ pub fn lessing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Leto — auto-transpiled from Python
+/// Leto - auto-transpiled from Python
 pub fn leto(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7170,7 +7170,7 @@ pub fn leto(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lin — auto-transpiled from Python
+/// Lin - auto-transpiled from Python
 pub fn lin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7208,7 +7208,7 @@ pub fn lin(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ling — auto-transpiled from Python
+/// Ling - auto-transpiled from Python
 pub fn ling(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7312,7 +7312,7 @@ pub fn ling(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Logos — auto-transpiled from Python
+/// Logos - auto-transpiled from Python
 pub fn logos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7455,7 +7455,7 @@ pub fn logos(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lucilla — auto-transpiled from Python
+/// Lucilla - auto-transpiled from Python
 pub fn lucilla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7505,7 +7505,7 @@ pub fn lucilla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + fragile) / (1.0 + unit.buff_fragile))
 }
 
-/// Lunacub — auto-transpiled from Python
+/// Lunacub - auto-transpiled from Python
 pub fn lunacub(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7544,7 +7544,7 @@ pub fn lunacub(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// LuoXiaohei — auto-transpiled from Python
+/// LuoXiaohei - auto-transpiled from Python
 pub fn luo_xiaohei(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7600,7 +7600,7 @@ pub fn luo_xiaohei(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Lutonada — auto-transpiled from Python
+/// Lutonada - auto-transpiled from Python
 pub fn lutonada(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7638,7 +7638,7 @@ pub fn lutonada(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Magallan — auto-transpiled from Python
+/// Magallan - auto-transpiled from Python
 pub fn magallan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7716,7 +7716,7 @@ pub fn magallan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Manticore — auto-transpiled from Python
+/// Manticore - auto-transpiled from Python
 pub fn manticore(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7757,7 +7757,7 @@ pub fn manticore(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Marcille — auto-transpiled from Python
+/// Marcille - auto-transpiled from Python
 pub fn marcille(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7820,7 +7820,7 @@ pub fn marcille(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Matoimaru — auto-transpiled from Python
+/// Matoimaru - auto-transpiled from Python
 pub fn matoimaru(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7850,7 +7850,7 @@ pub fn matoimaru(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// May — auto-transpiled from Python
+/// May - auto-transpiled from Python
 pub fn may(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7911,7 +7911,7 @@ pub fn may(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Melantha — auto-transpiled from Python
+/// Melantha - auto-transpiled from Python
 pub fn melantha(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7934,7 +7934,7 @@ pub fn melantha(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Meteor — auto-transpiled from Python
+/// Meteor - auto-transpiled from Python
 pub fn meteor(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -7995,7 +7995,7 @@ pub fn meteor(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Meteorite — auto-transpiled from Python
+/// Meteorite - auto-transpiled from Python
 pub fn meteorite(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8050,7 +8050,7 @@ pub fn meteorite(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Midnight — auto-transpiled from Python
+/// Midnight - auto-transpiled from Python
 pub fn midnight(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8090,7 +8090,7 @@ pub fn midnight(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Minimalist — auto-transpiled from Python
+/// Minimalist - auto-transpiled from Python
 pub fn minimalist(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8162,7 +8162,7 @@ pub fn minimalist(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mint — auto-transpiled from Python
+/// Mint - auto-transpiled from Python
 pub fn mint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8185,7 +8185,7 @@ pub fn mint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// MissChristine — auto-transpiled from Python
+/// MissChristine - auto-transpiled from Python
 pub fn miss_christine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8245,7 +8245,7 @@ pub fn miss_christine(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// MisumiUika — auto-transpiled from Python
+/// MisumiUika - auto-transpiled from Python
 pub fn misumi_uika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8271,7 +8271,7 @@ pub fn misumi_uika(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mizuki — auto-transpiled from Python
+/// Mizuki - auto-transpiled from Python
 pub fn mizuki(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8387,7 +8387,7 @@ pub fn mizuki(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mlynar — auto-transpiled from Python
+/// Mlynar - auto-transpiled from Python
 pub fn mlynar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8452,7 +8452,7 @@ pub fn mlynar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mon3tr — auto-transpiled from Python
+/// Mon3tr - auto-transpiled from Python
 pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8493,7 +8493,7 @@ pub fn mon3tr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Morgan — auto-transpiled from Python
+/// Morgan - auto-transpiled from Python
 pub fn morgan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8533,7 +8533,7 @@ pub fn morgan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mostima — auto-transpiled from Python
+/// Mostima - auto-transpiled from Python
 pub fn mostima(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8563,7 +8563,7 @@ pub fn mostima(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * f64::from(unit.targets))
 }
 
-/// Mountain — auto-transpiled from Python
+/// Mountain - auto-transpiled from Python
 pub fn mountain(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8637,7 +8637,7 @@ pub fn mountain(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mousse — auto-transpiled from Python
+/// Mousse - auto-transpiled from Python
 pub fn mousse(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8680,7 +8680,7 @@ pub fn mousse(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// MrNothing — auto-transpiled from Python
+/// MrNothing - auto-transpiled from Python
 pub fn mr_nothing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8728,7 +8728,7 @@ pub fn mr_nothing(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Mudrock — auto-transpiled from Python
+/// Mudrock - auto-transpiled from Python
 pub fn mudrock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8792,7 +8792,7 @@ pub fn mudrock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Muelsyse — auto-transpiled from Python
+/// Muelsyse - auto-transpiled from Python
 pub fn muelsyse(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8877,7 +8877,7 @@ pub fn muelsyse(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Narantuya — auto-transpiled from Python
+/// Narantuya - auto-transpiled from Python
 pub fn narantuya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -8961,7 +8961,7 @@ pub fn narantuya(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// NearlAlter — auto-transpiled from Python
+/// NearlAlter - auto-transpiled from Python
 pub fn nearl_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9005,7 +9005,7 @@ pub fn nearl_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Necrass — auto-transpiled from Python
+/// Necrass - auto-transpiled from Python
 pub fn necrass(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9137,7 +9137,7 @@ pub fn necrass(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// NewBlueprint — auto-transpiled from Python
+/// NewBlueprint - auto-transpiled from Python
 pub fn new_blueprint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9174,7 +9174,7 @@ pub fn new_blueprint(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Nian — auto-transpiled from Python
+/// Nian - auto-transpiled from Python
 pub fn nian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9221,7 +9221,7 @@ pub fn nian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Nymph — auto-transpiled from Python
+/// Nymph - auto-transpiled from Python
 pub fn nymph(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9316,7 +9316,7 @@ pub fn nymph(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps + extra_dmg)
 }
 
-/// Odda — auto-transpiled from Python
+/// Odda - auto-transpiled from Python
 pub fn odda(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9385,7 +9385,7 @@ pub fn odda(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pallas — auto-transpiled from Python
+/// Pallas - auto-transpiled from Python
 pub fn pallas(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9456,7 +9456,7 @@ pub fn pallas(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Passenger — auto-transpiled from Python
+/// Passenger - auto-transpiled from Python
 pub fn passenger(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9568,7 +9568,7 @@ pub fn passenger(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * dmg_scale)
 }
 
-/// Penance — auto-transpiled from Python
+/// Penance - auto-transpiled from Python
 pub fn penance(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9635,7 +9635,7 @@ pub fn penance(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pepe — auto-transpiled from Python
+/// Pepe - auto-transpiled from Python
 pub fn pepe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9722,7 +9722,7 @@ pub fn pepe(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Phantom — auto-transpiled from Python
+/// Phantom - auto-transpiled from Python
 pub fn phantom(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9801,7 +9801,7 @@ pub fn phantom(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pinecone — auto-transpiled from Python
+/// Pinecone - auto-transpiled from Python
 pub fn pinecone(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9855,7 +9855,7 @@ pub fn pinecone(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pith — auto-transpiled from Python
+/// Pith - auto-transpiled from Python
 pub fn pith(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9879,7 +9879,7 @@ pub fn pith(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * f64::from(unit.targets))
 }
 
-/// Platinum — auto-transpiled from Python
+/// Platinum - auto-transpiled from Python
 pub fn platinum(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9925,7 +9925,7 @@ pub fn platinum(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Plume — auto-transpiled from Python
+/// Plume - auto-transpiled from Python
 pub fn plume(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9952,7 +9952,7 @@ pub fn plume(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Popukar — auto-transpiled from Python
+/// Popukar - auto-transpiled from Python
 pub fn popukar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -9977,7 +9977,7 @@ pub fn popukar(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pozemka — auto-transpiled from Python
+/// Pozemka - auto-transpiled from Python
 pub fn pozemka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10072,7 +10072,7 @@ pub fn pozemka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// PramanixAlter — auto-transpiled from Python
+/// PramanixAlter - auto-transpiled from Python
 pub fn pramanix_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10132,7 +10132,7 @@ pub fn pramanix_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ProjektRed — auto-transpiled from Python
+/// ProjektRed - auto-transpiled from Python
 pub fn projekt_red(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10167,7 +10167,7 @@ pub fn projekt_red(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Provence — auto-transpiled from Python
+/// Provence - auto-transpiled from Python
 pub fn provence(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10216,7 +10216,7 @@ pub fn provence(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Pudding — auto-transpiled from Python
+/// Pudding - auto-transpiled from Python
 pub fn pudding(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10271,7 +10271,7 @@ pub fn pudding(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Qiubai — auto-transpiled from Python
+/// Qiubai - auto-transpiled from Python
 pub fn qiubai(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10370,7 +10370,7 @@ pub fn qiubai(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Quartz — auto-transpiled from Python
+/// Quartz - auto-transpiled from Python
 pub fn quartz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10402,7 +10402,7 @@ pub fn quartz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * f64::from(unit.targets).min(2.0_f64))
 }
 
-/// Raidian — auto-transpiled from Python
+/// Raidian - auto-transpiled from Python
 pub fn raidian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10452,7 +10452,7 @@ pub fn raidian(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Rangers — auto-transpiled from Python
+/// Rangers - auto-transpiled from Python
 pub fn rangers(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10485,7 +10485,7 @@ pub fn rangers(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ray — auto-transpiled from Python
+/// Ray - auto-transpiled from Python
 pub fn ray(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10557,7 +10557,7 @@ pub fn ray(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ReedAlter — auto-transpiled from Python
+/// ReedAlter - auto-transpiled from Python
 pub fn reed_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10612,7 +10612,7 @@ pub fn reed_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Rockrock — auto-transpiled from Python
+/// Rockrock - auto-transpiled from Python
 pub fn rockrock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10661,7 +10661,7 @@ pub fn rockrock(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Rosa — auto-transpiled from Python
+/// Rosa - auto-transpiled from Python
 pub fn rosa(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10738,7 +10738,7 @@ pub fn rosa(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Rosmontis — auto-transpiled from Python
+/// Rosmontis - auto-transpiled from Python
 pub fn rosmontis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10826,7 +10826,7 @@ pub fn rosmontis(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Saga — auto-transpiled from Python
+/// Saga - auto-transpiled from Python
 pub fn saga(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10882,7 +10882,7 @@ pub fn saga(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + dmg))
 }
 
-/// SandReckoner — auto-transpiled from Python
+/// SandReckoner - auto-transpiled from Python
 pub fn sand_reckoner(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10937,7 +10937,7 @@ pub fn sand_reckoner(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// SanktaMiksaparato — auto-transpiled from Python
+/// SanktaMiksaparato - auto-transpiled from Python
 pub fn sankta_miksaparato(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -10991,7 +10991,7 @@ pub fn sankta_miksaparato(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64
     Some(dps)
 }
 
-/// Savage — auto-transpiled from Python
+/// Savage - auto-transpiled from Python
 pub fn savage(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11038,7 +11038,7 @@ pub fn savage(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Scavenger — auto-transpiled from Python
+/// Scavenger - auto-transpiled from Python
 pub fn scavenger(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11072,7 +11072,7 @@ pub fn scavenger(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Scene — auto-transpiled from Python
+/// Scene - auto-transpiled from Python
 pub fn scene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11104,7 +11104,7 @@ pub fn scene(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Schwarz — auto-transpiled from Python
+/// Schwarz - auto-transpiled from Python
 pub fn schwarz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11210,7 +11210,7 @@ pub fn schwarz(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Shalem — auto-transpiled from Python
+/// Shalem - auto-transpiled from Python
 pub fn shalem(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11297,7 +11297,7 @@ pub fn shalem(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Sharp — auto-transpiled from Python
+/// Sharp - auto-transpiled from Python
 pub fn sharp(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11323,7 +11323,7 @@ pub fn sharp(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Sideroca — auto-transpiled from Python
+/// Sideroca - auto-transpiled from Python
 pub fn sideroca(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11359,7 +11359,7 @@ pub fn sideroca(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Siege — auto-transpiled from Python
+/// Siege - auto-transpiled from Python
 pub fn siege(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11421,7 +11421,7 @@ pub fn siege(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// SilverAsh — auto-transpiled from Python
+/// SilverAsh - auto-transpiled from Python
 pub fn silver_ash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11497,7 +11497,7 @@ pub fn silver_ash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Skadi — auto-transpiled from Python
+/// Skadi - auto-transpiled from Python
 pub fn skadi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11542,7 +11542,7 @@ pub fn skadi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Skalter — auto-transpiled from Python
+/// Skalter - auto-transpiled from Python
 pub fn skalter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11575,7 +11575,7 @@ pub fn skalter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Snegurochka — auto-transpiled from Python
+/// Snegurochka - auto-transpiled from Python
 pub fn snegurochka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11616,7 +11616,7 @@ pub fn snegurochka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Specter — auto-transpiled from Python
+/// Specter - auto-transpiled from Python
 pub fn specter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11651,7 +11651,7 @@ pub fn specter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// SpecterAlter — auto-transpiled from Python
+/// SpecterAlter - auto-transpiled from Python
 pub fn specter_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11704,7 +11704,7 @@ pub fn specter_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Stainless — auto-transpiled from Python
+/// Stainless - auto-transpiled from Python
 pub fn stainless(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11760,7 +11760,7 @@ pub fn stainless(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Steward — auto-transpiled from Python
+/// Steward - auto-transpiled from Python
 pub fn steward(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11787,7 +11787,7 @@ pub fn steward(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Stormeye — auto-transpiled from Python
+/// Stormeye - auto-transpiled from Python
 pub fn stormeye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11811,7 +11811,7 @@ pub fn stormeye(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + skillf).min(f64::from(unit.targets)))
 }
 
-/// Surfer — auto-transpiled from Python
+/// Surfer - auto-transpiled from Python
 pub fn surfer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11841,7 +11841,7 @@ pub fn surfer(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Surtr — auto-transpiled from Python
+/// Surtr - auto-transpiled from Python
 pub fn surtr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11912,7 +11912,7 @@ pub fn surtr(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Suzuran — auto-transpiled from Python
+/// Suzuran - auto-transpiled from Python
 pub fn suzuran(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -11952,7 +11952,7 @@ pub fn suzuran(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + fragile) / (1.0 + unit.buff_fragile))
 }
 
-/// SwireAlt — auto-transpiled from Python
+/// SwireAlt - auto-transpiled from Python
 pub fn swire_alt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12000,7 +12000,7 @@ pub fn swire_alt(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tachanka — auto-transpiled from Python
+/// Tachanka - auto-transpiled from Python
 pub fn tachanka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12063,7 +12063,7 @@ pub fn tachanka(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tecno — auto-transpiled from Python
+/// Tecno - auto-transpiled from Python
 pub fn tecno(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12119,7 +12119,7 @@ pub fn tecno(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tequila — auto-transpiled from Python
+/// Tequila - auto-transpiled from Python
 pub fn tequila(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12163,7 +12163,7 @@ pub fn tequila(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// TerraResearchCommission — auto-transpiled from Python
+/// TerraResearchCommission - auto-transpiled from Python
 pub fn terra_research_commission(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12195,7 +12195,7 @@ pub fn terra_research_commission(unit: &OperatorUnit, enemy: &EnemyStats) -> Opt
     Some(dps)
 }
 
-/// TexasAlter — auto-transpiled from Python
+/// TexasAlter - auto-transpiled from Python
 pub fn texas_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12261,7 +12261,7 @@ pub fn texas_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Thorns — auto-transpiled from Python
+/// Thorns - auto-transpiled from Python
 pub fn thorns(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12404,7 +12404,7 @@ pub fn thorns(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// ThornsAlter — auto-transpiled from Python
+/// ThornsAlter - auto-transpiled from Python
 pub fn thorns_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12481,7 +12481,7 @@ pub fn thorns_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// TinMan — auto-transpiled from Python
+/// TinMan - auto-transpiled from Python
 pub fn tin_man(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12525,7 +12525,7 @@ pub fn tin_man(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tippi — auto-transpiled from Python
+/// Tippi - auto-transpiled from Python
 pub fn tippi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12551,7 +12551,7 @@ pub fn tippi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Titi — auto-transpiled from Python
+/// Titi - auto-transpiled from Python
 pub fn titi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12630,7 +12630,7 @@ pub fn titi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Toddifons — auto-transpiled from Python
+/// Toddifons - auto-transpiled from Python
 pub fn toddifons(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12680,7 +12680,7 @@ pub fn toddifons(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// TogawaSakiko — auto-transpiled from Python
+/// TogawaSakiko - auto-transpiled from Python
 pub fn togawa_sakiko(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12786,7 +12786,7 @@ pub fn togawa_sakiko(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tomimi — auto-transpiled from Python
+/// Tomimi - auto-transpiled from Python
 pub fn tomimi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12835,7 +12835,7 @@ pub fn tomimi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Totter — auto-transpiled from Python
+/// Totter - auto-transpiled from Python
 pub fn totter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12893,7 +12893,7 @@ pub fn totter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Tragodia — auto-transpiled from Python
+/// Tragodia - auto-transpiled from Python
 pub fn tragodia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -12999,7 +12999,7 @@ pub fn tragodia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Typhon — auto-transpiled from Python
+/// Typhon - auto-transpiled from Python
 pub fn typhon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13079,7 +13079,7 @@ pub fn typhon(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Ulpianus — auto-transpiled from Python
+/// Ulpianus - auto-transpiled from Python
 pub fn ulpianus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13143,7 +13143,7 @@ pub fn ulpianus(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Underflow — auto-transpiled from Python
+/// Underflow - auto-transpiled from Python
 pub fn underflow(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13191,7 +13191,7 @@ pub fn underflow(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Utage — auto-transpiled from Python
+/// Utage - auto-transpiled from Python
 pub fn utage(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13236,7 +13236,7 @@ pub fn utage(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vanilla — auto-transpiled from Python
+/// Vanilla - auto-transpiled from Python
 pub fn vanilla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13257,7 +13257,7 @@ pub fn vanilla(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vendela — auto-transpiled from Python
+/// Vendela - auto-transpiled from Python
 pub fn vendela(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13294,7 +13294,7 @@ pub fn vendela(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vermeil — auto-transpiled from Python
+/// Vermeil - auto-transpiled from Python
 pub fn vermeil(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13325,7 +13325,7 @@ pub fn vermeil(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vetochki — auto-transpiled from Python
+/// Vetochki - auto-transpiled from Python
 pub fn vetochki(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13352,7 +13352,7 @@ pub fn vetochki(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vigil — auto-transpiled from Python
+/// Vigil - auto-transpiled from Python
 pub fn vigil(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13452,7 +13452,7 @@ pub fn vigil(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vigna — auto-transpiled from Python
+/// Vigna - auto-transpiled from Python
 pub fn vigna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13496,7 +13496,7 @@ pub fn vigna(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vina — auto-transpiled from Python
+/// Vina - auto-transpiled from Python
 pub fn vina(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13582,7 +13582,7 @@ pub fn vina(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * dmg_scale * (1.0 + fragile) / (1.0 + unit.buff_fragile))
 }
 
-/// Virtuosa — auto-transpiled from Python
+/// Virtuosa - auto-transpiled from Python
 pub fn virtuosa(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13723,7 +13723,7 @@ pub fn virtuosa(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Viviana — auto-transpiled from Python
+/// Viviana - auto-transpiled from Python
 pub fn viviana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13884,7 +13884,7 @@ pub fn viviana(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * (1.0 + fragile) / (1.0 + unit.buff_fragile))
 }
 
-/// Vulcan — auto-transpiled from Python
+/// Vulcan - auto-transpiled from Python
 pub fn vulcan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13911,7 +13911,7 @@ pub fn vulcan(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Vulpisfoglia — auto-transpiled from Python
+/// Vulpisfoglia - auto-transpiled from Python
 pub fn vulpisfoglia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -13983,7 +13983,7 @@ pub fn vulpisfoglia(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// W — auto-transpiled from Python
+/// W - auto-transpiled from Python
 pub fn w(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14068,7 +14068,7 @@ pub fn w(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// WakabaMutsumi — auto-transpiled from Python
+/// WakabaMutsumi - auto-transpiled from Python
 pub fn wakaba_mutsumi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14096,7 +14096,7 @@ pub fn wakaba_mutsumi(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Walter — auto-transpiled from Python
+/// Walter - auto-transpiled from Python
 pub fn walter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14230,7 +14230,7 @@ pub fn walter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Warmy — auto-transpiled from Python
+/// Warmy - auto-transpiled from Python
 pub fn warmy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14303,7 +14303,7 @@ pub fn warmy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Weedy — auto-transpiled from Python
+/// Weedy - auto-transpiled from Python
 pub fn weedy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14364,7 +14364,7 @@ pub fn weedy(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Whislash — auto-transpiled from Python
+/// Whislash - auto-transpiled from Python
 pub fn whislash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14404,7 +14404,7 @@ pub fn whislash(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Wildmane — auto-transpiled from Python
+/// Wildmane - auto-transpiled from Python
 pub fn wildmane(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14434,7 +14434,7 @@ pub fn wildmane(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Windscoot — auto-transpiled from Python
+/// Windscoot - auto-transpiled from Python
 pub fn windscoot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14475,7 +14475,7 @@ pub fn windscoot(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// YahataUmiri — auto-transpiled from Python
+/// YahataUmiri - auto-transpiled from Python
 pub fn yahata_umiri(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14528,7 +14528,7 @@ pub fn yahata_umiri(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * dmg)
 }
 
-/// YatoAlter — auto-transpiled from Python
+/// YatoAlter - auto-transpiled from Python
 pub fn yato_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14582,7 +14582,7 @@ pub fn yato_alter(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// Yu — auto-transpiled from Python
+/// Yu - auto-transpiled from Python
 pub fn yu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14645,7 +14645,7 @@ pub fn yu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// YutenjiNyamu — auto-transpiled from Python
+/// YutenjiNyamu - auto-transpiled from Python
 pub fn yutenji_nyamu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14734,7 +14734,7 @@ pub fn yutenji_nyamu(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps * fragile / (1.0 + unit.buff_fragile))
 }
 
-/// ZuoLe — auto-transpiled from Python
+/// ZuoLe - auto-transpiled from Python
 pub fn zuo_le(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);
@@ -14851,7 +14851,7 @@ pub fn zuo_le(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     Some(dps)
 }
 
-/// twelveF — auto-transpiled from Python
+/// twelveF - auto-transpiled from Python
 pub fn twelve_f(unit: &OperatorUnit, enemy: &EnemyStats) -> Option<f64> {
     let skill = unit.skill_index;
     let skillf = f64::from(unit.skill_index);

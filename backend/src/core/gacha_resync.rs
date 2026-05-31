@@ -2,8 +2,8 @@
 //!
 //! When a gacha record is fetched from Yostar's API, the canonical rarity is
 //! read from `character_table` (via `rarity_from_gamedata`). If game data is
-//! missing the `char_id` at fetch time — typically because the operator is
-//! brand-new and the asset pipeline hasn't caught up yet — the code falls
+//! missing the `char_id` at fetch time - typically because the operator is
+//! brand-new and the asset pipeline hasn't caught up yet - the code falls
 //! back to the API's `star` field, which has historically been wrong/stale.
 //!
 //! Once game data catches up (post hot-reload), those fallback rows can carry
@@ -36,7 +36,7 @@ pub async fn reconcile_rarities(db: &PgPool, gd: &GameData) -> Result<ResyncStat
     let distinct_pairs = pairs.len();
 
     // One canonical rarity per char_id. Multiple stored rarities for the same
-    // char only need a single fix entry — the UPDATE rewrites every row whose
+    // char only need a single fix entry - the UPDATE rewrites every row whose
     // rarity disagrees.
     let mut seen: HashSet<String> = HashSet::new();
     let mut char_ids: Vec<String> = Vec::new();

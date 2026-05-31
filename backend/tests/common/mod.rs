@@ -18,8 +18,8 @@ pub fn load_game_data() -> GameData {
         .expect("Failed to load game data")
 }
 
-/// A real user's base + roster, captured from the database via the
-/// `dump-user-fixture` bin into `tests/fixtures/user_<uid>.json`.
+/// A real user's base + roster, captured from the database into the committed
+/// fixture `tests/fixtures/user_<uid>.json`.
 pub struct UserFixture {
     pub uid: String,
     pub building: serde_json::Value,

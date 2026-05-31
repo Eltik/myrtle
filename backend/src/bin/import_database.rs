@@ -6,13 +6,13 @@
 //! Reads `DATABASE_URL` from the environment (or `.env`).
 //!
 //! Strategy:
-//!   - Wraps the entire import in ONE transaction — all or nothing.
+//!   - Wraps the entire import in ONE transaction - all or nothing.
 //!   - Sets `session_replication_role = replica` so audit triggers and FK
 //!     constraints are not re-fired while restoring (the export is already a
 //!     consistent snapshot; FKs are re-validated implicitly by the ordering).
 //!   - Each batch is shipped as a single JSONB array parameter, then unpacked
 //!     server-side with `jsonb_populate_recordset(null::<table>, $1)`. This lets
-//!     Postgres infer every column type from the live table schema — no code
+//!     Postgres infer every column type from the live table schema - no code
 //!     changes needed when a new column is added, as long as the JSON keys match.
 //!   - After loading, `setval(pg_get_serial_sequence(...))` advances each
 //!     BIGSERIAL sequence past the largest imported id.

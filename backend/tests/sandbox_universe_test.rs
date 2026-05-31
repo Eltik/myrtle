@@ -16,7 +16,7 @@ fn sandbox_node_count_reflects_one_playthrough() {
 
     let universe = SandboxUniverse::build(&raw);
 
-    // The persistent overworld (sandbox_1_main) has ~127 nodes — "over 100",
+    // The persistent overworld (sandbox_1_main) has ~127 nodes - "over 100",
     // matching what a player actually explores. The old bug produced 1032.
     assert!(
         universe.max_nodes > 100 && universe.max_nodes < 400,

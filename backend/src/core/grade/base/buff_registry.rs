@@ -78,9 +78,9 @@ static RE_VUP_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>(\d+)</>").unwrap());
 
 // Buff text uses both "Morale consumed per hour" and "Morale consumed each
-// hour" (the latter covers the Penguin Logistics trio — Texas/Lappland/Exusiai
-// — among others). Accept either wording so those drains aren't silently lost.
-// First keyword after "for each/every" — the thing a count-scaling buff counts.
+// hour" (the latter covers the Penguin Logistics trio - Texas/Lappland/Exusiai
+// - among others). Accept either wording so those drains aren't silently lost.
+// First keyword after "for each/every" - the thing a count-scaling buff counts.
 static RE_COUNT_KEYWORD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"for (?:each|every).*?<@cc\.kw>([^<]+)</>").unwrap());
 
@@ -94,16 +94,15 @@ static RE_KW_BLOCK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>(.*
 static RE_INNER_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
 
 // A faction marker like "<$cc.g.glasgow>" (group), "<$cc.n.…>" (nation), or
-// "<$cc.t.…>" (team) — captures the faction token used by match-tag scaling.
+// "<$cc.t.…>" (team) - captures the faction token used by match-tag scaling.
 static RE_FACTION_TOKEN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<\$cc\.[gnt]\.(\w+)>").unwrap());
 
 // Shamare-type self-scaling: "...each Operator increases … by +X%". Requires the
 // per-Operator unit AND a percentage, so it won't match factory automation ops
 // that scale "per Power Plant" (Weedy) or grant "+N Capacity" (Snegurochka).
-static RE_NULLIFY_SELF_PCT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap()
-});
+static RE_NULLIFY_SELF_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap());
 
 static RE_MORALE_INCREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vdown>\+?([\d.]+)</>").unwrap()
@@ -176,7 +175,6 @@ pub enum BuffResolutionStrategy {
         cap_pct: f64,             // max bonus
     },
 
-
     /// Efficiency scales with the number of teammates that match a keyword the
     /// buff names for itself. The keyword is parsed straight from the buff text
     /// ("for each <kw>…"), so this one strategy covers every faction- and
@@ -202,7 +200,7 @@ pub enum BuffResolutionStrategy {
     },
 
     /// A base efficiency that's always applied, plus a bonus that applies when ANY
-    /// operator of a given faction shares the room — the faction analogue of
+    /// operator of a given faction shares the room - the faction analogue of
     /// `ConditionalOnTeammate`. e.g. Morgan "Resolution on Foreign Trade β": base
     /// +30%, +10% more if any Glasgow Gang operator is in the same Trading Post.
     /// `faction_token` is matched against teammates' `match_tags` (e.g. "glasgow").
@@ -215,7 +213,7 @@ pub enum BuffResolutionStrategy {
     /// Reclassifies certain skill types as another (Highmore: "all Rhine Lab and
     /// Pinus Sylvestris skills are considered Standardization skills"). While
     /// this operator is in the room, any teammate matching a `from_tokens` tag
-    /// also gains the `to_token` tag — so e.g. Rhine operators start counting
+    /// also gains the `to_token` tag - so e.g. Rhine operators start counting
     /// for a Standardization scaler. Carries no efficiency of its own.
     SkillTypeConversion {
         from_tokens: Vec<String>,
@@ -232,7 +230,7 @@ pub enum BuffResolutionStrategy {
     /// trade rate is a fixed 500 LMD per Pure Gold bar, an LMD-per-order boost is
     /// an LMD-per-hour boost of the same proportion (gold-supply permitting).
     /// Crucially this is NOT "order acquisition efficiency", so a Shamare-style
-    /// nullifier does NOT zero it — which is exactly why Shamare + Proviso +
+    /// nullifier does NOT zero it - which is exactly why Shamare + Proviso +
     /// Tequila is the top LMD team. `estimated_pct` is the LMD-equivalent value.
     OrderValue { estimated_pct: f64 },
 
@@ -244,7 +242,7 @@ pub enum BuffResolutionStrategy {
     },
 
     /// Control Center buff that boosts a production room ONLY when its team
-    /// matches a faction condition — so it is NOT credited flat to every room.
+    /// matches a faction condition - so it is NOT credited flat to every room.
     ///   - per-operator (Umiri): "all <Siracusa> Operators in Trading Posts gain
     ///     +5%" → each matching op adds `bonus_pct` (`faction_token` "siracusa",
     ///     `per_operator` = true, `required_count` = 1).
@@ -370,7 +368,7 @@ pub fn build_registry(
                     let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
                     // Faction-gated global bonuses ("all <Siracusa> Operators…",
                     // "all Trading Posts with 3 <Kjerag> Operators…") must NOT be
-                    // credited flat to every room — they depend on each room's team.
+                    // credited flat to every room - they depend on each room's team.
                     // The faction token comes from the displayed keyword (Kjerag →
                     // "kjerag", matching operators' nation tag), not the internal
                     // group marker. A "with <N>" clause means the WHOLE post is
@@ -426,7 +424,11 @@ pub fn build_registry(
                     // named operator; for pure-conditional buffs (base 0) fall back
                     // to the first % in the text.
                     let efficiency = parse_first_pct_from(&buff.description, name_end)
-                        .or_else(|| (base_efficiency == 0.0).then(|| parse_first_pct(&buff.description)).flatten())
+                        .or_else(|| {
+                            (base_efficiency == 0.0)
+                                .then(|| parse_first_pct(&buff.description))
+                                .flatten()
+                        })
                         .unwrap_or(0.0);
                     let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
                     BuffResolutionStrategy::ConditionalOnTeammate {
@@ -440,7 +442,7 @@ pub fn build_registry(
                 // base +30%, +10% more if ANY Glasgow Gang op shares the post). The
                 // faction analogue of the named-teammate conditional above: it names
                 // a faction ("if a <Glasgow Gang> Operator…same…") rather than one
-                // operator. Count-scalers ("for every <faction>…") are excluded —
+                // operator. Count-scalers ("for every <faction>…") are excluded -
                 // those are handled by MatchCountScaling below.
                 else if buff.description.contains("same")
                     && !buff.description.contains("for every")
@@ -449,7 +451,11 @@ pub fn build_registry(
                 {
                     let base_efficiency = f64::from(buff.efficiency);
                     let efficiency = parse_first_pct_from(&buff.description, token_end)
-                        .or_else(|| (base_efficiency == 0.0).then(|| parse_first_pct(&buff.description)).flatten())
+                        .or_else(|| {
+                            (base_efficiency == 0.0)
+                                .then(|| parse_first_pct(&buff.description))
+                                .flatten()
+                        })
                         .unwrap_or(0.0);
                     BuffResolutionStrategy::ConditionalOnFaction {
                         faction_token,
@@ -479,7 +485,7 @@ pub fn build_registry(
                     }
                 }
                 // Match-count scaling: "+X% for each <keyword>" where the keyword
-                // is a faction or skill type (NOT a number — those are resource
+                // is a faction or skill type (NOT a number - those are resource
                 // mechanics, handled elsewhere). One data-driven strategy for every
                 // faction/skill synergy; the token comes straight from the text.
                 else if let Some(token) = parse_count_keyword(&buff.description) {
@@ -528,7 +534,7 @@ pub fn build_registry(
                 // that teammates' efficiency creates ("increases order acquisition
                 // efficiency by +X% for every difference of 1 order"). Teammates'
                 // efficiency drives the order limit down, so model it as mirroring
-                // their output — Texas's +65% pushes Jaye to ~+50%. (This buff has
+                // their output - Texas's +65% pushes Jaye to ~+50%. (This buff has
                 // "_limit" in its id but is an EFFICIENCY skill, so it must be
                 // caught before the capacity-only check below.)
                 else if prefix.contains("_limit_diff")
@@ -640,7 +646,7 @@ pub fn build_registry(
                 }
                 // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
                 // efficiency PLUS "+N% per recipe type being processed at Factories".
-                // Distinct recipe types are approximated by the Factory count — the
+                // Distinct recipe types are approximated by the Factory count - the
                 // base % is the Efficiency field, the per-unit % is the trailing %.
                 else if prefix.contains("&formula") && buff.description.contains("recipe type") {
                     let per_unit = parse_last_pct(&buff.description).unwrap_or(2.0);
@@ -833,7 +839,7 @@ fn parse_first_pct(desc: &str) -> Option<f64> {
     RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
-/// First `<@cc.vup>+N%` efficiency at or after byte offset `start` — used to
+/// First `<@cc.vup>+N%` efficiency at or after byte offset `start` - used to
 /// pick out the conditional bonus that follows a named operator keyword.
 fn parse_first_pct_from(desc: &str, start: usize) -> Option<f64> {
     desc.get(start..).and_then(parse_first_pct)
@@ -851,10 +857,7 @@ fn find_operator_keyword(
 ) -> Option<(String, usize)> {
     for cap in RE_KW_BLOCK.captures_iter(desc) {
         let block = cap.get(0)?;
-        let name = RE_INNER_TAG
-            .replace_all(&cap[1], "")
-            .trim()
-            .to_lowercase();
+        let name = RE_INNER_TAG.replace_all(&cap[1], "").trim().to_lowercase();
         if name_to_char.contains_key(&name) {
             return Some((name, block.end()));
         }

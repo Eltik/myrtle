@@ -112,7 +112,7 @@ CREATE TABLE user_items (
 );
 
 -- ═══════════════════════════════════════════════════════════════
--- SKIN OWNERSHIP (Sparse — only owned skins)
+-- SKIN OWNERSHIP (Sparse - only owned skins)
 -- ═══════════════════════════════════════════════════════════════
 
 CREATE TABLE user_skins (
@@ -123,7 +123,7 @@ CREATE TABLE user_skins (
 );
 
 -- ═══════════════════════════════════════════════════════════════
--- GAME STATE — JSONB for read-only data consumed by score calc
+-- GAME STATE - JSONB for read-only data consumed by score calc
 -- (Not queryable individually, just bulk-read per user)
 -- ═══════════════════════════════════════════════════════════════
 

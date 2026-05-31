@@ -8,7 +8,7 @@ use crate::core::gamedata::types::operator::{
 };
 
 /// Compact operator record for client-side search palettes and autocompletes.
-/// Order of fields matches the JSON contract — keep stable.
+/// Order of fields matches the JSON contract - keep stable.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorIndexEntry {

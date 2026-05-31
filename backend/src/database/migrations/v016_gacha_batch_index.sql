@@ -9,7 +9,7 @@ ALTER TABLE gacha_records
 
 -- Backfill existing rows with sequential indexes within each batch, ordered by
 -- the row's insertion id. Only batches Yostar no longer returns will keep
--- these values long-term — batches still in the API window get rebuilt on the
+-- these values long-term - batches still in the API window get rebuilt on the
 -- next sync (see sp_insert_gacha_batch below).
 WITH numbered AS (
     SELECT id,
@@ -25,7 +25,7 @@ FROM numbered n
 WHERE gr.id = n.id;
 
 -- Replace the old UNIQUE constraint. Auto-named, but the name can vary across
--- environments — look it up by columns rather than guessing.
+-- environments - look it up by columns rather than guessing.
 DO $$
 DECLARE
     v_conname TEXT;
@@ -51,7 +51,7 @@ ALTER TABLE gacha_records
     UNIQUE (user_id, pull_timestamp, char_id, pool_id, batch_index);
 
 -- Replace the insert procedure. The old version used ON CONFLICT DO NOTHING,
--- which can't recover from the dropped-duplicate bug — a re-sync would just
+-- which can't recover from the dropped-duplicate bug - a re-sync would just
 -- re-collide on the same key. Instead, for every (pull_timestamp, pool_id)
 -- present in the incoming data, delete the existing rows and re-insert from
 -- the API payload. Yostar is authoritative for any batch it still returns,

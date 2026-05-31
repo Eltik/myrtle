@@ -20,10 +20,7 @@ const CANDIDATE_LIMIT: usize = 16;
 
 /// Build a `char_id` → profile index for O(1) lookups in the hot inner loops.
 fn build_op_index(operators: &[OperatorBaseProfile]) -> HashMap<&str, &OperatorBaseProfile> {
-    operators
-        .iter()
-        .map(|o| (o.char_id.as_str(), o))
-        .collect()
+    operators.iter().map(|o| (o.char_id.as_str(), o)).collect()
 }
 
 pub fn compute_optimal_assignment(
@@ -39,7 +36,7 @@ pub fn compute_optimal_assignment(
     let mut assigned: HashSet<String> = HashSet::new();
 
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
-    // Only staff the Control Center if one is actually built — otherwise we'd
+    // Only staff the Control Center if one is actually built - otherwise we'd
     // strip CC operators out of the production pool for a room that doesn't exist.
     let control_slots = if control_room.is_some() {
         max_stationed_for_room(building, building_data, "CONTROL")
@@ -82,7 +79,7 @@ pub fn compute_optimal_assignment(
     let mut rooms = room_assignments;
     // Surface the Control Center so its operators (and the global bonuses they
     // provide to every production room) are visible in the recommendation.
-    // Fill any remaining CC slots with leftover operators — production has
+    // Fill any remaining CC slots with leftover operators - production has
     // already claimed everyone it benefits from, so these are true spares.
     let mut cc_room = cc_room;
     fill_remaining_slots(
@@ -126,60 +123,39 @@ pub fn compute_sustained_assignment(
         0
     };
 
-    // A sustained 24/7 base rotates EVERY occupied seat — including the Control
-    // Center — so its operators recover morale too. Shift A and Shift B get
-    // disjoint CC teams (each with its own global bonuses) and disjoint
-    // production teams.
+    // A sustained 24/7 base rotates EVERY occupied seat - including the Control
+    // Center - so its operators recover morale too. Each shift takes a disjoint CC
+    // team (with its own global bonuses) and disjoint production team from the
+    // operators not yet used by the previous shift.
     let mut assigned: HashSet<String> = HashSet::new();
+    let assign_shift = |assigned: &mut HashSet<String>| {
+        let (cc, global, cond) = assign_control_center(
+            operators,
+            control_room,
+            control_slots,
+            registry,
+            building_data,
+            assigned,
+        );
+        assigned.extend(cc.operators.iter().cloned());
+        let rooms = assign_production_rooms(
+            &production_rooms,
+            operators,
+            assigned,
+            registry,
+            building_data,
+            &facility_counts,
+            total_dorm_levels,
+            &global,
+            &cond,
+            morale_drains,
+        );
+        let total: f64 = rooms.iter().map(|r| r.total_efficiency).sum();
+        (cc, rooms, total)
+    };
 
-    // --- Shift A ---
-    let (mut cc_a, global_a, cond_a) = assign_control_center(
-        operators,
-        control_room,
-        control_slots,
-        registry,
-        building_data,
-        &assigned,
-    );
-    assigned.extend(cc_a.operators.iter().cloned());
-    let mut rooms_a = assign_production_rooms(
-        &production_rooms,
-        operators,
-        &mut assigned,
-        registry,
-        building_data,
-        &facility_counts,
-        total_dorm_levels,
-        &global_a,
-        &cond_a,
-        morale_drains,
-    );
-
-    // --- Shift B: distinct CC + production teams from the remaining operators ---
-    let (mut cc_b, global_b, cond_b) = assign_control_center(
-        operators,
-        control_room,
-        control_slots,
-        registry,
-        building_data,
-        &assigned,
-    );
-    assigned.extend(cc_b.operators.iter().cloned());
-    let mut rooms_b = assign_production_rooms(
-        &production_rooms,
-        operators,
-        &mut assigned,
-        registry,
-        building_data,
-        &facility_counts,
-        total_dorm_levels,
-        &global_b,
-        &cond_b,
-        morale_drains,
-    );
-
-    let total_a: f64 = rooms_a.iter().map(|r| r.total_efficiency).sum();
-    let total_b: f64 = rooms_b.iter().map(|r| r.total_efficiency).sum();
+    let (mut cc_a, mut rooms_a, total_a) = assign_shift(&mut assigned);
+    let (mut cc_b, mut rooms_b, total_b) = assign_shift(&mut assigned);
 
     // Top up each shift's CC seats with operators still idle in that shift.
     fill_remaining_slots(
@@ -255,38 +231,17 @@ pub fn compute_current_assignment(
     // Global bonuses from whoever the player has in the Control Center for this
     // shift (same non-stacking rule as the optimizer).
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
-    let cc_ops = control_room.map(|cc| room_ops_for_shift(cc, shift)).unwrap_or_default();
-    let mut global_bonuses: HashMap<String, f64> = HashMap::new();
-    let mut best: HashMap<(String, String), f64> = HashMap::new();
-    let mut cc_conditions_map: HashMap<(String, String), CcCondition> = HashMap::new();
-    let mut cond_families: HashSet<(String, String)> = HashSet::new();
+    let cc_ops = control_room
+        .map(|cc| room_ops_for_shift(cc, shift))
+        .unwrap_or_default();
+    let mut acc = CcBonusAccumulator::default();
     for op in cc_ops
         .iter()
         .filter_map(|id| op_index.get(id.as_str()).copied())
     {
-        for b in cc_bonuses(op, registry, building_data) {
-            let slot = best.entry((b.room.clone(), b.family.clone())).or_insert(0.0);
-            *slot = slot.max(b.bonus);
-            if let Some(cond) = &b.conditional {
-                cond_families.insert((b.room.clone(), b.family.clone()));
-                cc_conditions_map
-                    .entry((b.room.clone(), b.family.clone()))
-                    .and_modify(|c: &mut CcCondition| {
-                        if cond.bonus_pct > c.bonus_pct {
-                            *c = cond.clone();
-                        }
-                    })
-                    .or_insert_with(|| cond.clone());
-            }
-        }
+        acc.add(&cc_bonuses(op, registry, building_data));
     }
-    for ((room, family), bonus) in &best {
-        if cond_families.contains(&(room.clone(), family.clone())) {
-            continue;
-        }
-        *global_bonuses.entry(room.clone()).or_insert(0.0) += bonus;
-    }
-    let cc_conditions: Vec<CcCondition> = cc_conditions_map.into_values().collect();
+    let (global_bonuses, cc_conditions) = acc.finish();
 
     let mut rooms: Vec<RoomAssignment> = Vec::new();
 
@@ -317,7 +272,9 @@ pub fn compute_current_assignment(
             .filter(|id| op_index.contains_key(id.as_str()))
             .collect();
         let formula = if room.room_type == "MANUFACTURE" {
-            room.current_formula.clone().or_else(|| Some("F_GOLD".to_string()))
+            room.current_formula
+                .clone()
+                .or_else(|| Some("F_GOLD".to_string()))
         } else {
             None
         };
@@ -363,12 +320,21 @@ fn count_facilities(building: &UserBuilding) -> HashMap<String, usize> {
 
 /// Get the max operator slots for the first room of a given type in the user's base.
 /// Falls back to 1 if not found.
+/// Max operators stationable in a room of `room_type` at a given `level`.
+fn max_stationed_at_level(building_data: &BuildingDataFile, room_type: &str, level: i32) -> i32 {
+    building_data
+        .rooms
+        .get(room_type)
+        .and_then(|def| def.phases.get((level - 1).max(0) as usize))
+        .map_or(1, |phase| phase.max_stationed_num)
+}
+
+/// Max stationed for the user's highest-level room of `room_type` (e.g. their CC).
 fn max_stationed_for_room(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     room_type: &str,
 ) -> i32 {
-    // Find the user's room of this type (take highest level one for CC)
     let level = building
         .rooms
         .iter()
@@ -376,22 +342,7 @@ fn max_stationed_for_room(
         .map(|r| r.level)
         .max()
         .unwrap_or(1);
-
-    // Look up in static data
-    building_data
-        .rooms
-        .get(room_type)
-        .and_then(|def| def.phases.get((level - 1) as usize))
-        .map_or(1, |phase| phase.max_stationed_num)
-}
-
-/// Get max stationed for a specific room at a specific level
-fn max_stationed_at_level(building_data: &BuildingDataFile, room_type: &str, level: i32) -> i32 {
-    building_data
-        .rooms
-        .get(room_type)
-        .and_then(|def| def.phases.get((level - 1) as usize))
-        .map_or(1, |phase| phase.max_stationed_num)
+    max_stationed_at_level(building_data, room_type, level)
 }
 
 /// A Control Center assignment plus the global production bonuses it grants.
@@ -400,7 +351,7 @@ struct ControlCenter {
     /// The user's CONTROL room (slot/level), if they have one built.
     slot_id: Option<String>,
     level: i32,
-    /// Total global bonus % across all targeted production room types — shown
+    /// Total global bonus % across all targeted production room types - shown
     /// as the CC room's "efficiency" so its impact is visible.
     total_global_pct: f64,
 }
@@ -425,8 +376,8 @@ impl ControlCenter {
 
 /// Append unused operators to `slots` until it reaches `max_slots`, marking each
 /// as `assigned`. Fillers occupy seats but add no value, so we pick the operators
-/// with the lowest *opportunity cost* — those with the fewest base skills for
-/// OTHER rooms — keeping operators with useful Dormitory/Training/etc. skills
+/// with the lowest *opportunity cost* - those with the fewest base skills for
+/// OTHER rooms - keeping operators with useful Dormitory/Training/etc. skills
 /// (e.g. Schwarz) available for the rooms where they actually help.
 fn fill_remaining_slots(
     slots: &mut Vec<String>,
@@ -468,15 +419,15 @@ fn other_room_skill_count(
 
 /// A single Control Center global bonus: which production room it boosts, the
 /// "skill effect family" (buff id without its `[NNN]` rank suffix), and the
-/// bonus %. Same-family bonuses from different operators do NOT stack — only the
+/// bonus %. Same-family bonuses from different operators do NOT stack - only the
 /// strongest applies ("only the most effective one will take effect when
-/// assigned Operators have the same skill effect") — so we key on the family.
+/// assigned Operators have the same skill effect") - so we key on the family.
 struct CcBonus {
     room: String,
     family: String,
     bonus: f64,
     /// `Some` when this bonus only applies to production rooms whose team meets a
-    /// faction condition — credited per-room, not flat. `bonus` above is then a
+    /// faction condition - credited per-room, not flat. `bonus` above is then a
     /// discounted *selection* weight, not the value actually granted.
     conditional: Option<CcCondition>,
 }
@@ -512,6 +463,67 @@ impl CcCondition {
     }
 }
 
+/// Folds Control Center bonuses together under the non-stacking rule (only the
+/// strongest per skill-effect family applies), separating unconditional bonuses
+/// (summed flat per room) from faction-gated ones (returned for per-room,
+/// team-dependent evaluation). Shared by the optimizer and the live-base reader.
+#[derive(Default)]
+struct CcBonusAccumulator {
+    best: HashMap<(String, String), f64>,
+    conditions: HashMap<(String, String), CcCondition>,
+    cond_families: HashSet<(String, String)>,
+}
+
+impl CcBonusAccumulator {
+    /// The marginal flat gain from adding `bonuses` - each one only counts for the
+    /// amount it exceeds the strongest already chosen in its family.
+    fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
+        bonuses
+            .iter()
+            .map(|b| {
+                let cur = self
+                    .best
+                    .get(&(b.room.clone(), b.family.clone()))
+                    .copied()
+                    .unwrap_or(0.0);
+                (b.bonus - cur).max(0.0)
+            })
+            .sum()
+    }
+
+    /// Fold one operator's bonuses in, keeping the strongest per family.
+    fn add(&mut self, bonuses: &[CcBonus]) {
+        for b in bonuses {
+            let key = (b.room.clone(), b.family.clone());
+            let slot = self.best.entry(key.clone()).or_insert(0.0);
+            *slot = slot.max(b.bonus);
+            if let Some(cond) = &b.conditional {
+                self.cond_families.insert(key.clone());
+                self.conditions
+                    .entry(key)
+                    .and_modify(|c| {
+                        if cond.bonus_pct > c.bonus_pct {
+                            *c = cond.clone();
+                        }
+                    })
+                    .or_insert_with(|| cond.clone());
+            }
+        }
+    }
+
+    /// `(flat per-room totals, faction-gated conditions)`. Conditional families are
+    /// kept out of the flat totals - they're applied per room against the team.
+    fn finish(self) -> (HashMap<String, f64>, Vec<CcCondition>) {
+        let mut global: HashMap<String, f64> = HashMap::new();
+        for ((room, family), bonus) in &self.best {
+            if !self.cond_families.contains(&(room.clone(), family.clone())) {
+                *global.entry(room.clone()).or_insert(0.0) += bonus;
+            }
+        }
+        (global, self.conditions.into_values().collect())
+    }
+}
+
 /// Collect an operator's Control Center global production bonuses.
 fn cc_bonuses(
     op: &OperatorBaseProfile,
@@ -543,7 +555,7 @@ fn cc_bonuses(
             }) => out.push(CcBonus {
                 room: target_room.clone(),
                 family,
-                // Faction bonuses only reach matching operators — credit half.
+                // Faction bonuses only reach matching operators - credit half.
                 bonus: bonus_pct * 0.5,
                 conditional: None,
             }),
@@ -595,27 +607,11 @@ fn assign_control_center(
         .filter(|(_, b)| !b.is_empty())
         .collect();
 
-    // best[(room, family)] = strongest bonus selected so far for that effect.
-    let mut best: HashMap<(String, String), f64> = HashMap::new();
+    // Marginal-greedy selection: each slot takes the operator adding the most flat
+    // gain over what's already chosen (the non-stacking rule lives in the accumulator).
+    let mut acc = CcBonusAccumulator::default();
     let mut chosen: HashSet<String> = HashSet::new();
     let mut cc_assigned: Vec<String> = Vec::new();
-    // Faction-gated bonuses (kept out of the flat per-room total) and the
-    // families they occupy, so those families aren't summed flat.
-    let mut chosen_conditions: HashMap<(String, String), CcCondition> = HashMap::new();
-    let mut cond_families: HashSet<(String, String)> = HashSet::new();
-
-    let marginal = |bonuses: &[CcBonus], best: &HashMap<(String, String), f64>| -> f64 {
-        bonuses
-            .iter()
-            .map(|b| {
-                let cur = best
-                    .get(&(b.room.clone(), b.family.clone()))
-                    .copied()
-                    .unwrap_or(0.0);
-                (b.bonus - cur).max(0.0)
-            })
-            .sum()
-    };
 
     for _ in 0..max_slots.max(0) {
         let mut best_op: Option<&OperatorBaseProfile> = None;
@@ -625,7 +621,7 @@ fn assign_control_center(
             if chosen.contains(&op.char_id) {
                 continue;
             }
-            let gain = marginal(bonuses, &best);
+            let gain = acc.marginal(bonuses);
             if gain > best_gain {
                 best_gain = gain;
                 best_op = Some(op);
@@ -635,44 +631,17 @@ fn assign_control_center(
         let Some(op) = best_op else { break };
         chosen.insert(op.char_id.clone());
         cc_assigned.push(op.char_id.clone());
-        for b in best_bonuses {
-            let slot = best.entry((b.room.clone(), b.family.clone())).or_insert(0.0);
-            *slot = slot.max(b.bonus);
-            if let Some(cond) = &b.conditional {
-                // Faction-gated: don't fold into the flat per-room total; keep it
-                // (strongest per family) for per-room evaluation against the team.
-                cond_families.insert((b.room.clone(), b.family.clone()));
-                chosen_conditions
-                    .entry((b.room.clone(), b.family.clone()))
-                    .and_modify(|c: &mut CcCondition| {
-                        if cond.bonus_pct > c.bonus_pct {
-                            *c = cond.clone();
-                        }
-                    })
-                    .or_insert_with(|| cond.clone());
-            }
-        }
+        acc.add(best_bonuses);
     }
 
-    // Sum the surviving (max-per-family) UNCONDITIONAL bonuses into a per-room
-    // total; conditional ones are returned separately and applied per room.
-    let mut global_bonuses: HashMap<String, f64> = HashMap::new();
-    for ((room, family), bonus) in &best {
-        if cond_families.contains(&(room.clone(), family.clone())) {
-            continue;
-        }
-        *global_bonuses.entry(room.clone()).or_insert(0.0) += bonus;
-    }
-
-    let total_global_pct = global_bonuses.values().sum();
-
+    let (global_bonuses, conditions) = acc.finish();
     let cc = ControlCenter {
         operators: cc_assigned,
         slot_id: control_room.map(|r| r.slot_id.clone()),
         level: control_room.map_or(1, |r| r.level),
-        total_global_pct,
+        total_global_pct: global_bonuses.values().sum(),
     };
-    (cc, global_bonuses, chosen_conditions.into_values().collect())
+    (cc, global_bonuses, conditions)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -706,7 +675,7 @@ fn assign_production_rooms(
     let min_gold = trading_rooms.len().min(num_factories);
     // The yield-coupled optimum is "just enough gold to feed the trading posts"
     // (excess gold is unsold and worth less than EXP), so only the splits at and
-    // just above min_gold are ever competitive — no need to scan all the way up.
+    // just above min_gold are ever competitive - no need to scan all the way up.
     let max_gold = (min_gold + 1).min(num_factories);
 
     for num_gold in min_gold..=max_gold {
@@ -780,7 +749,7 @@ fn assign_production_rooms(
     // Apply the winning assignment's used operators to the real assigned set
     *assigned = best_assigned_snapshot;
 
-    // Now that every room has its best *beneficial* team (and only now — so a
+    // Now that every room has its best *beneficial* team (and only now - so a
     // valuable operator is never wasted as a filler in a room where they do
     // nothing), top each room up to a full crew with leftover operators.
     pad_production_rooms(
@@ -828,7 +797,7 @@ fn pad_production_rooms(
             .any(|op| has_automation_buff(op, registry));
 
         if is_auto {
-            // Extra operators are nullified — occupy the seats with the lowest
+            // Extra operators are nullified - occupy the seats with the lowest
             // opportunity-cost benchwarmers available.
             fill_remaining_slots(
                 &mut room.operators,
@@ -925,7 +894,7 @@ fn assign_single_room(
         morale_drains,
     );
 
-    // Mode 2: automation (factories only) — a single op's facility-count buff
+    // Mode 2: automation (factories only) - a single op's facility-count buff
     // nullifies teammates, so this team is scored independently. No order value.
     let (auto_ops, auto_speed) = if room.room_type == "MANUFACTURE" {
         best_automation_team(
@@ -981,12 +950,30 @@ fn buff_applies(buff: &Buff, room_type: &str, formula_type: Option<&str>) -> boo
     true
 }
 
+/// Resolved strategies for an operator's buffs that apply in the given room -
+/// the shared "look up the buff, gate on room/formula, resolve to a strategy"
+/// skeleton used by the per-operator scoring helpers.
+fn applicable_strategies<'a>(
+    op: &'a OperatorBaseProfile,
+    room_type: &'a str,
+    formula_type: Option<&'a str>,
+    registry: &'a HashMap<String, BuffResolutionStrategy>,
+    building_data: &'a BuildingDataFile,
+) -> impl Iterator<Item = &'a BuffResolutionStrategy> {
+    op.available_buffs.iter().filter_map(move |buff_id| {
+        let buff = building_data.buffs.get(buff_id)?;
+        buff_applies(buff, room_type, formula_type)
+            .then(|| registry.get(buff_id))
+            .flatten()
+    })
+}
+
 /// Find the best NORMAL-mode team for a room by exhaustively evaluating
 /// combinations of the top candidate operators.
 ///
 /// Greedy slot-by-slot filling can't discover synergies that require *both*
 /// members present (e.g. Texas's +65% only triggers with Lappland, and Lappland
-/// alone scores ~0) — neither operator bootstraps the pair. Searching whole-team
+/// alone scores ~0) - neither operator bootstraps the pair. Searching whole-team
 /// combinations evaluates the pair together, so the true optimum is found.
 #[allow(clippy::too_many_arguments)]
 fn best_team_for_room(
@@ -1164,15 +1151,11 @@ fn op_is_nullifier(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> bool {
-    op.available_buffs.iter().any(|b| {
-        building_data
-            .buffs
-            .get(b)
-            .is_some_and(|buff| buff_applies(buff, room_type, formula_type))
-            && matches!(
-                registry.get(b),
-                Some(BuffResolutionStrategy::NullifyTeammatesSelfScaling { .. })
-            )
+    applicable_strategies(op, room_type, formula_type, registry, building_data).any(|s| {
+        matches!(
+            s,
+            BuffResolutionStrategy::NullifyTeammatesSelfScaling { .. }
+        )
     })
 }
 
@@ -1192,56 +1175,54 @@ fn optimistic_bound(
 ) -> f64 {
     let mut total = 0.0;
     let teammates_assumed = max_slots.saturating_sub(1) as f64;
-    for buff_id in &op.available_buffs {
-        let Some(buff) = building_data.buffs.get(buff_id) else {
-            continue;
-        };
-        if !buff_applies(buff, room_type, formula_type) {
-            continue;
-        }
-        match registry.get(buff_id) {
-            Some(BuffResolutionStrategy::DirectEfficiency { value } |
-BuffResolutionStrategy::Complex { estimated_pct: value } |
-BuffResolutionStrategy::OrderValue { estimated_pct: value } |
-BuffResolutionStrategy::MoraleDecayEfficiency { time_averaged_value: value }) => total += value,
-            Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, .. }) => {
+    for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data) {
+        match strategy {
+            BuffResolutionStrategy::DirectEfficiency { value }
+            | BuffResolutionStrategy::Complex {
+                estimated_pct: value,
+            }
+            | BuffResolutionStrategy::OrderValue {
+                estimated_pct: value,
+            }
+            | BuffResolutionStrategy::MoraleDecayEfficiency {
+                time_averaged_value: value,
+            } => {
+                total += value;
+            }
+            BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, .. } => {
                 total += efficiency;
             }
-            // Optimistic: assume the gating teammate is present, so base + bonus.
-            Some(BuffResolutionStrategy::ConditionalOnTeammate {
+            // Optimistic: assume every gating teammate / faction is present.
+            BuffResolutionStrategy::ConditionalOnTeammate {
                 base_efficiency,
                 efficiency,
                 ..
-            }) => {
+            }
+            | BuffResolutionStrategy::ConditionalOnFaction {
+                base_efficiency,
+                efficiency,
+                ..
+            } => {
                 total += base_efficiency + efficiency;
             }
-            Some(BuffResolutionStrategy::TeammateSkillScaling { per_match_pct, .. }) => {
+            BuffResolutionStrategy::TeammateSkillScaling { per_match_pct, .. } => {
                 total += per_match_pct * teammates_assumed;
             }
-            Some(BuffResolutionStrategy::MatchCountScaling {
+            BuffResolutionStrategy::MatchCountScaling {
                 per_match_pct,
                 cap_pct,
                 bonus_pct,
                 ..
-            }) => {
+            } => {
                 let v = per_match_pct * teammates_assumed;
-                // Optimistic: also assume the named rider's operator is present.
                 total += cap_pct.map_or(v, |c| v.min(c)) + bonus_pct;
             }
-            // Optimistic: assume a matching faction operator shares the room.
-            Some(BuffResolutionStrategy::ConditionalOnFaction {
-                base_efficiency,
-                efficiency,
-                ..
-            }) => {
-                total += base_efficiency + efficiency;
-            }
-            Some(BuffResolutionStrategy::NullifyTeammatesSelfScaling { per_teammate_pct }) => {
+            BuffResolutionStrategy::NullifyTeammatesSelfScaling { per_teammate_pct } => {
                 total += per_teammate_pct * teammates_assumed;
             }
-            Some(BuffResolutionStrategy::TeammateOutputMirroring { cap_pct, .. } |
-BuffResolutionStrategy::OrderLimitScaling { cap_pct, .. }) => total += cap_pct,
-            Some(strategy @ BuffResolutionStrategy::FacilityCountScaling { .. }) => {
+            BuffResolutionStrategy::TeammateOutputMirroring { cap_pct, .. }
+            | BuffResolutionStrategy::OrderLimitScaling { cap_pct, .. } => total += cap_pct,
+            strategy @ BuffResolutionStrategy::FacilityCountScaling { .. } => {
                 let ctx = EvalContext {
                     facility_counts,
                     total_dorm_levels,
@@ -1306,16 +1287,11 @@ fn score_operator_facility_only(
     };
 
     let mut total = 0.0;
-    for buff_id in &op.available_buffs {
-        let Some(buff) = building_data.buffs.get(buff_id) else {
-            continue;
-        };
-        if !buff_applies(buff, room_type, formula_type) {
-            continue;
-        }
-        if let Some(strategy @ BuffResolutionStrategy::FacilityCountScaling { .. }) =
-            registry.get(buff_id)
-        {
+    for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data) {
+        if matches!(
+            strategy,
+            BuffResolutionStrategy::FacilityCountScaling { .. }
+        ) {
             total += evaluate_buff(strategy, &ctx);
         }
     }
@@ -1334,24 +1310,18 @@ fn compute_direct_efficiency(
     present: &HashSet<String>,
 ) -> f64 {
     let mut total = 0.0;
-    for buff_id in &op.available_buffs {
-        let Some(buff) = building_data.buffs.get(buff_id) else {
-            continue;
-        };
-        if !buff_applies(buff, room_type, formula_type) {
-            continue;
-        }
-        match registry.get(buff_id) {
-            Some(BuffResolutionStrategy::DirectEfficiency { value }) => total += value,
-            Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, .. }) => {
+    for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data) {
+        match strategy {
+            BuffResolutionStrategy::DirectEfficiency { value } => total += value,
+            BuffResolutionStrategy::EfficiencyWithOrderLimit { efficiency, .. } => {
                 total += efficiency;
             }
-            Some(BuffResolutionStrategy::ConditionalOnTeammate {
+            BuffResolutionStrategy::ConditionalOnTeammate {
                 required_char_id,
                 base_efficiency,
                 efficiency,
                 ..
-            }) => {
+            } => {
                 total += base_efficiency;
                 if let Some(req) = required_char_id
                     && present.contains(req)
@@ -1359,10 +1329,11 @@ fn compute_direct_efficiency(
                     total += efficiency;
                 }
             }
-            // Faction-conditional: credit the always-on base as direct efficiency.
-            // (The faction-gated bonus needs teammate faction tags, which this
-            // mirroring-source helper doesn't resolve, so only the base counts.)
-            Some(BuffResolutionStrategy::ConditionalOnFaction { base_efficiency, .. }) => {
+            // Faction-conditional: only the always-on base counts here - the gated
+            // bonus needs teammate faction tags this mirroring source doesn't resolve.
+            BuffResolutionStrategy::ConditionalOnFaction {
+                base_efficiency, ..
+            } => {
                 total += base_efficiency;
             }
             _ => {}
@@ -1382,35 +1353,28 @@ fn compute_order_limit(
     present: &HashSet<String>,
 ) -> i32 {
     let mut total: i32 = 0;
-    for buff_id in &op.available_buffs {
-        let Some(buff) = building_data.buffs.get(buff_id) else {
-            continue;
-        };
-        if !buff_applies(buff, room_type, formula_type) {
-            continue;
-        }
-        match registry.get(buff_id) {
-            Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { order_limit, .. }) => {
+    for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data) {
+        match strategy {
+            BuffResolutionStrategy::EfficiencyWithOrderLimit { order_limit, .. } => {
                 total += order_limit;
             }
-            Some(BuffResolutionStrategy::ConditionalOnTeammate {
+            BuffResolutionStrategy::ConditionalOnTeammate {
                 required_char_id: Some(req),
                 order_limit,
                 ..
-            }) if present.contains(req) => total += order_limit,
+            } if present.contains(req) => total += order_limit,
             _ => {}
         }
     }
     total
 }
 
-/// Re-evaluate total room efficiency with complete team context (conditionals,
-/// teammate-scaling, output mirroring, order-limit scaling, and morale duration
-/// all resolved against the full team).
+/// Room efficiency resolved against the full team (conditionals, teammate- and
+/// faction-scaling, output mirroring, order-limit scaling). Returns
+/// `(speed_pct, value_pct)`: order-acquisition SPEED (the productivity % the game
+/// shows) and order VALUE (LMD per order, Proviso etc.), kept separate so value
+/// doesn't inflate the displayed efficiency.
 #[allow(clippy::too_many_arguments)]
-/// Returns `(speed_pct, value_pct)` for a room's team: order-acquisition SPEED
-/// (the productivity % the game shows) and order VALUE (LMD per order, Proviso
-/// etc.) — kept separate so value doesn't inflate the displayed efficiency.
 fn compute_team_efficiency(
     member_ids: &[String],
     room_type: &str,
@@ -1436,19 +1400,15 @@ fn compute_team_efficiency(
     let converters: Vec<(&[String], &str)> = members
         .iter()
         .flat_map(|op| {
-            op.available_buffs.iter().filter_map(|b| {
-                let applies = building_data
-                    .buffs
-                    .get(b)
-                    .is_some_and(|buff| buff_applies(buff, room_type, formula_type));
-                match registry.get(b) {
-                    Some(BuffResolutionStrategy::SkillTypeConversion {
+            applicable_strategies(op, room_type, formula_type, registry, building_data).filter_map(
+                |s| match s {
+                    BuffResolutionStrategy::SkillTypeConversion {
                         from_tokens,
                         to_token,
-                    }) if applies => Some((from_tokens.as_slice(), to_token.as_str())),
+                    } => Some((from_tokens.as_slice(), to_token.as_str())),
                     _ => None,
-                }
-            })
+                },
+            )
         })
         .collect();
 
@@ -1500,10 +1460,10 @@ fn compute_team_efficiency(
 
     for (i, op) in members.iter().enumerate() {
         // A nullifier (Shamare) zeroes teammates' *speed/efficiency*, but their
-        // *order-value* buffs survive — this is the Shamare + Proviso + Tequila
+        // *order-value* buffs survive - this is the Shamare + Proviso + Tequila
         // synergy. So a nullified teammate still contributes its OrderValue.
-        let nullified = has_nullifier
-            && !op_is_nullifier(op, room_type, formula_type, registry, building_data);
+        let nullified =
+            has_nullifier && !op_is_nullifier(op, room_type, formula_type, registry, building_data);
 
         let others: Vec<&TeammateInfo> = teammates
             .iter()
@@ -1518,32 +1478,23 @@ fn compute_team_efficiency(
             room_teammates: others,
         };
 
-        for buff_id in &op.available_buffs {
-            let Some(buff) = building_data.buffs.get(buff_id) else {
-                continue;
-            };
-            if !buff_applies(buff, room_type, formula_type) {
-                continue;
-            }
-            if let Some(strategy) = registry.get(buff_id) {
-                // Order VALUE (LMD/order) is tracked separately and survives a
-                // nullifier; everything else is order SPEED, which the nullifier
-                // zeroes for its teammates.
-                if let BuffResolutionStrategy::OrderValue { estimated_pct } = strategy {
-                    value += estimated_pct;
-                } else if !nullified {
-                    speed += evaluate_buff(strategy, &ctx);
-                }
+        for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data)
+        {
+            // Order VALUE (LMD/order) is tracked separately and survives a
+            // nullifier; everything else is order SPEED, which the nullifier zeroes.
+            if let BuffResolutionStrategy::OrderValue { estimated_pct } = strategy {
+                value += estimated_pct;
+            } else if !nullified {
+                speed += evaluate_buff(strategy, &ctx);
             }
         }
     }
-    // Faction-gated Control Center bonuses: credited as order SPEED, but only for
-    // the operators / posts whose team actually satisfies the faction condition.
-    let cc_speed: f64 = cc_conditions
+    // Faction-gated Control Center bonuses: order SPEED, but only for the posts
+    // whose team actually satisfies the faction condition.
+    speed += cc_conditions
         .iter()
         .map(|c| c.contribution(room_type, &members))
-        .sum();
-    speed += cc_speed;
+        .sum::<f64>();
 
     let _ = morale_drains;
     (speed, value)
@@ -1569,7 +1520,13 @@ fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
     let mut flows = crate::core::grade::base::yield_model::BaseFlows::default();
     for r in rooms {
         let speed = room_value(r.total_efficiency, &r.room_type);
-        flows.add_room(&r.room_type, r.formula_type.as_deref(), r.level, speed, r.order_value);
+        flows.add_room(
+            &r.room_type,
+            r.formula_type.as_deref(),
+            r.level,
+            speed,
+            r.order_value,
+        );
     }
     flows.total_value()
 }
@@ -1624,7 +1581,10 @@ fn rebalance_rooms(
             morale_drains,
             cc_conditions,
         );
-        (speed + *global_bonuses.get(room_type).unwrap_or(&0.0), value)
+        (
+            speed + *global_bonuses.get(room_type).unwrap_or(&0.0),
+            value,
+        )
     };
     // Balancing objective: soft-capped speed (diminishing returns) × order value.
     let obj = |room_type: &str, speed: f64, value: f64| -> f64 {
@@ -1641,8 +1601,15 @@ fn rebalance_rooms(
                 {
                     continue;
                 }
-                let base_obj = obj(&rooms[a].room_type, rooms[a].total_efficiency, rooms[a].order_value)
-                    + obj(&rooms[b].room_type, rooms[b].total_efficiency, rooms[b].order_value);
+                let base_obj = obj(
+                    &rooms[a].room_type,
+                    rooms[a].total_efficiency,
+                    rooms[a].order_value,
+                ) + obj(
+                    &rooms[b].room_type,
+                    rooms[b].total_efficiency,
+                    rooms[b].order_value,
+                );
 
                 let mut best_delta = 0.0;
                 let mut best_swap: Option<(usize, usize)> = None;
@@ -1653,9 +1620,18 @@ fn rebalance_rooms(
                         let mut ops_b = rooms[b].operators.clone();
                         std::mem::swap(&mut ops_a[ia], &mut ops_b[ib]);
 
-                        let (sa, va) = recompute(&rooms[a].room_type, rooms[a].formula_type.as_deref(), &ops_a);
-                        let (sb, vb) = recompute(&rooms[b].room_type, rooms[b].formula_type.as_deref(), &ops_b);
-                        let new_obj = obj(&rooms[a].room_type, sa, va) + obj(&rooms[b].room_type, sb, vb);
+                        let (sa, va) = recompute(
+                            &rooms[a].room_type,
+                            rooms[a].formula_type.as_deref(),
+                            &ops_a,
+                        );
+                        let (sb, vb) = recompute(
+                            &rooms[b].room_type,
+                            rooms[b].formula_type.as_deref(),
+                            &ops_b,
+                        );
+                        let new_obj =
+                            obj(&rooms[a].room_type, sa, va) + obj(&rooms[b].room_type, sb, vb);
                         let delta = new_obj - base_obj;
                         if delta > best_delta + f64::EPSILON {
                             best_delta = delta;
@@ -1668,8 +1644,16 @@ fn rebalance_rooms(
                     let tmp = rooms[a].operators[ia].clone();
                     rooms[a].operators[ia] = rooms[b].operators[ib].clone();
                     rooms[b].operators[ib] = tmp;
-                    let (sa, va) = recompute(&rooms[a].room_type, rooms[a].formula_type.as_deref(), &rooms[a].operators);
-                    let (sb, vb) = recompute(&rooms[b].room_type, rooms[b].formula_type.as_deref(), &rooms[b].operators);
+                    let (sa, va) = recompute(
+                        &rooms[a].room_type,
+                        rooms[a].formula_type.as_deref(),
+                        &rooms[a].operators,
+                    );
+                    let (sb, vb) = recompute(
+                        &rooms[b].room_type,
+                        rooms[b].formula_type.as_deref(),
+                        &rooms[b].operators,
+                    );
                     rooms[a].total_efficiency = sa;
                     rooms[a].order_value = va;
                     rooms[b].total_efficiency = sb;

@@ -144,7 +144,7 @@ async fn perform_reload(state: &AppState) {
             tracing::info!(operators = op_count, "hot-reload complete");
 
             // Reconcile gacha_records.rarity against the new game data, in the
-            // background — don't block the watcher loop. New operators that
+            // background - don't block the watcher loop. New operators that
             // were previously API-fallback can now be looked up canonically,
             // and any historically-incorrect rarities get fixed.
             let state = state.clone();

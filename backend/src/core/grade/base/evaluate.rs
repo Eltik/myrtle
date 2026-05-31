@@ -25,7 +25,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
                 per_unit_pct * count as f64
             };
             *base_pct + scaled
-            // Note: nullifies_others is not handled here — the assignment
+            // Note: nullifies_others is not handled here - the assignment
             // algorithm handles it by zeroing teammates' contributions
         }
 
@@ -90,21 +90,21 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
         BuffResolutionStrategy::OrderValue { estimated_pct } => *estimated_pct,
 
         BuffResolutionStrategy::GlobalEffect { bonus_pct, .. } => {
-            // Global effects are not evaluated per-room — they're summed
+            // Global effects are not evaluated per-room - they're summed
             // separately by the assignment algorithm and added to each
             // target room. Return the raw value here.
             *bonus_pct
         }
 
         BuffResolutionStrategy::TagBased { bonus_pct, .. } => {
-            // Similar to GlobalEffect — evaluated at the assignment level
+            // Similar to GlobalEffect - evaluated at the assignment level
             // where we know which operators are in which rooms.
             *bonus_pct
         }
 
         // Control Center faction-gated globals are applied per production room
         // against that room's actual team (see `compute_team_efficiency`), not as
-        // an in-room operator buff — so they contribute nothing here.
+        // an in-room operator buff - so they contribute nothing here.
         BuffResolutionStrategy::ConditionalGlobalEffect { .. } => 0.0,
 
         BuffResolutionStrategy::MoraleModifier {
@@ -138,14 +138,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
             // tracked separately via TeammateInfo. An unresolved requirement
             // (None) never matches → only the base contributes.
             let bonus = match required_char_id {
-                Some(req)
-                    if ctx
-                        .room_teammates
-                        .iter()
-                        .any(|t| t.char_id == *req) =>
-                {
-                    *efficiency
-                }
+                Some(req) if ctx.room_teammates.iter().any(|t| t.char_id == *req) => *efficiency,
                 _ => 0.0,
             };
             *base_efficiency + bonus

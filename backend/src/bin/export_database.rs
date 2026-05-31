@@ -7,8 +7,8 @@
 //!
 //! Output layout:
 //!   <dir>/
-//!     manifest.json     — format version, timestamp, table list with row counts
-//!     <table>.jsonl     — one JSON object per row (from `row_to_json(t)`)
+//!     manifest.json     - format version, timestamp, table list with row counts
+//!     <table>.jsonl     - one JSON object per row (from `row_to_json(t)`)
 //!
 //! The export runs inside a single REPEATABLE READ READ ONLY transaction so all
 //! tables come from a consistent snapshot. Rows are streamed (never buffered
@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
     fs::create_dir_all(&args.out_dir)
         .with_context(|| format!("failed to create output dir {}", args.out_dir.display()))?;
 
-    // A single connection is enough — one streaming query at a time inside one
+    // A single connection is enough - one streaming query at a time inside one
     // transaction. Avoid the shared pool so we don't compete with a running
     // server (this binary is intended for offline use, but be polite anyway).
     let pool = PgPoolOptions::new()

@@ -127,7 +127,7 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang: Option<&VoiceLang>) -> Voi
 fn build_voice_url(voice_asset: &str, lang: &LangType) -> String {
     // Files on disk are Vorbis-in-Ogg (`.ogg`). Percent-encode `#` (present in
     // skin folder names like `char_245_cello_sale#12`) so the browser doesn't
-    // treat it as a URL fragment and truncate the path — matching `audio_url`
+    // treat it as a URL fragment and truncate the path - matching `audio_url`
     // in `gamedata::assets`.
     let info = lang_info(lang);
     let Some((original_dir, file)) = voice_asset.split_once('/') else {

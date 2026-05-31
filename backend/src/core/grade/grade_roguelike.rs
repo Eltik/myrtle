@@ -80,7 +80,7 @@ struct Challenge {
 /// progress.bp
 #[derive(Debug, Deserialize, Default)]
 struct Bp {
-    /// {`bp_level_N`: 1} — count of keys = BP level reached
+    /// {`bp_level_N`: 1} - count of keys = BP level reached
     #[serde(default)]
     reward: Option<HashMap<String, serde_json::Value>>,
 }

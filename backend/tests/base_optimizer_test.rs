@@ -32,7 +32,11 @@ fn profile(gd: &GameData, char_id: &str) -> OperatorBaseProfile {
         .get(char_id)
         .map(backend::core::grade::base::buff_registry::faction_tags_of)
         .unwrap_or_default();
-    let match_tags = backend::core::grade::base::types::compute_match_tags(&faction_tags, &available_buffs, &gd.building);
+    let match_tags = backend::core::grade::base::types::compute_match_tags(
+        &faction_tags,
+        &available_buffs,
+        &gd.building,
+    );
     OperatorBaseProfile {
         char_id: char_id.to_string(),
         available_buffs,
@@ -59,19 +63,21 @@ fn single_room(room_type: &str, level: i32) -> UserBuilding {
 fn trading_efficiency(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let asn = compute_optimal_assignment(roster, &trading_post(3), &gd.building, &registry, &drains);
+    let asn =
+        compute_optimal_assignment(roster, &trading_post(3), &gd.building, &registry, &drains);
     asn.rooms
         .iter()
         .find(|r| r.room_type == "TRADING")
         .map_or(0.0, |r| r.total_efficiency)
 }
 
-/// The trading post's potential LMD/day — reflects BOTH order speed and order
+/// The trading post's potential LMD/day - reflects BOTH order speed and order
 /// value (so Proviso, who adds value not speed, shows up here).
 fn trading_lmd(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let asn = compute_optimal_assignment(roster, &trading_post(3), &gd.building, &registry, &drains);
+    let asn =
+        compute_optimal_assignment(roster, &trading_post(3), &gd.building, &registry, &drains);
     asn.rooms
         .iter()
         .find(|r| r.room_type == "TRADING")
@@ -127,7 +133,8 @@ fn trading_post_finds_penguin_logistics_synergy() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    let asn = compute_optimal_assignment(&roster, &trading_post(3), &gd.building, &registry, &drains);
+    let asn =
+        compute_optimal_assignment(&roster, &trading_post(3), &gd.building, &registry, &drains);
 
     let tp = asn
         .rooms
@@ -137,7 +144,11 @@ fn trading_post_finds_penguin_logistics_synergy() {
 
     let has = |id: &str| tp.operators.iter().any(|o| o == id);
 
-    assert!(has(TEXAS), "Texas should be selected. Got: {:?}", tp.operators);
+    assert!(
+        has(TEXAS),
+        "Texas should be selected. Got: {:?}",
+        tp.operators
+    );
     assert!(
         has(LAPPLAND),
         "Lappland MUST be selected to enable Texas's +65% (this is the synergy fix). Got: {:?}",
@@ -201,7 +212,7 @@ fn texas_without_lappland_is_not_overcredited() {
 
     // Roster has Texas but NOT Lappland, plus two flat +30% operators. Since
     // Texas's +65% is conditional on Lappland (absent here), her Feud buff must
-    // contribute 0 — so the two +30% operators should both beat her.
+    // contribute 0 - so the two +30% operators should both beat her.
     let roster = vec![
         profile(&gd, TEXAS),
         profile(&gd, "char_502_nblade"),
@@ -213,7 +224,8 @@ fn texas_without_lappland_is_not_overcredited() {
 
     // Single-slot trading post (level 1) forces a choice; Texas (0 without
     // Lappland) must lose to a +30% operator.
-    let asn = compute_optimal_assignment(&roster, &trading_post(1), &gd.building, &registry, &drains);
+    let asn =
+        compute_optimal_assignment(&roster, &trading_post(1), &gd.building, &registry, &drains);
     let tp = asn
         .rooms
         .iter()
@@ -230,14 +242,14 @@ fn texas_without_lappland_is_not_overcredited() {
 #[test]
 fn shamare_nullifies_teammate_output() {
     // Shamare zeroes every teammate's efficiency, so a Shamare room's output
-    // depends only on how many bodies fill it — NOT on who those bodies are.
+    // depends only on how many bodies fill it - NOT on who those bodies are.
     let gd = load_game_data();
     const SHAMARE: &str = "char_254_vodfox";
 
     // Strong trading teammates …
     let with_strong = vec![
         profile(&gd, SHAMARE),
-        profile(&gd, EXUSIAI),          // +35%
+        profile(&gd, EXUSIAI),           // +35%
         profile(&gd, "char_4045_heidi"), // +35%
     ];
     // … vs operators with no trading skill at all (pure bodies).
@@ -315,7 +327,7 @@ fn rhine_lab_faction_synergy_boosts_dorothy() {
 #[test]
 fn highmore_converts_rhine_skills_for_standardization_scaler() {
     // Mizuki scales +5% per Standardization skill. A Rhine operator (Silence)
-    // is NOT a Standardization skill on its own — but Highmore converts Rhine
+    // is NOT a Standardization skill on its own - but Highmore converts Rhine
     // skills into Standardization, so Mizuki should then count Silence.
     let gd = load_game_data();
     const MIZUKI: &str = "char_437_mizuki"; // +5% per Standardization skill
@@ -323,7 +335,10 @@ fn highmore_converts_rhine_skills_for_standardization_scaler() {
     const SILENCE: &str = "char_108_silent"; // Rhine Tech skill
 
     let fac = |ids: &[&str]| {
-        factory_efficiency(&gd, &ids.iter().map(|id| profile(&gd, id)).collect::<Vec<_>>())
+        factory_efficiency(
+            &gd,
+            &ids.iter().map(|id| profile(&gd, id)).collect::<Vec<_>>(),
+        )
     };
 
     // Marginal value of adding the Rhine operator to a Mizuki room…
@@ -366,13 +381,13 @@ fn control_center_rotates_between_shifts() {
     let overlap = a.iter().filter(|id| b.contains(id)).count();
     assert_eq!(
         overlap, 0,
-        "Control Center operators must rotate — no operator should work both shifts.\nA: {a:?}\nB: {b:?}"
+        "Control Center operators must rotate - no operator should work both shifts.\nA: {a:?}\nB: {b:?}"
     );
 }
 
 #[test]
 fn proviso_is_credited_as_a_strong_gold_trader() {
-    // Proviso's Pure-Gold payoff raises LMD per ORDER (value), not order speed —
+    // Proviso's Pure-Gold payoff raises LMD per ORDER (value), not order speed -
     // so it shows up in the LMD yield, not the efficiency %. By LMD she should
     // rival or beat a strong flat (speed) trader.
     let gd = load_game_data();
@@ -393,7 +408,7 @@ fn proviso_is_credited_as_a_strong_gold_trader() {
 #[test]
 fn shamare_proviso_tequila_is_the_money_printer() {
     // Shamare zeroes teammates' SPEED, but order-VALUE buffs (Proviso's Pure Gold,
-    // Tequila's LMD bonus) survive — that's why the trio is the top LMD team. A
+    // Tequila's LMD bonus) survive - that's why the trio is the top LMD team. A
     // Shamare post with Proviso + Tequila must beat a Shamare post with two
     // value-less bodies by roughly their surviving order value.
     let gd = load_game_data();
@@ -403,7 +418,11 @@ fn shamare_proviso_tequila_is_the_money_printer() {
 
     let printer = trading_lmd(
         &gd,
-        &[profile(&gd, SHAMARE), profile(&gd, PROVISO), profile(&gd, TEQUILA)],
+        &[
+            profile(&gd, SHAMARE),
+            profile(&gd, PROVISO),
+            profile(&gd, TEQUILA),
+        ],
     );
     let bodies = trading_lmd(
         &gd,
@@ -425,7 +444,7 @@ fn jaye_order_limit_efficiency_is_counted() {
     // Jaye's "+X% per order-limit difference" is an EFFICIENCY skill (its id
     // contains "_limit", but it must not be treated as capacity-only). It still
     // lifts the Texas+Lappland+Jaye team meaningfully above Texas's +65% alone
-    // (~+101% at E2, where Basic Needs throttles his diff-scaling — see below).
+    // (~+101% at E2, where Basic Needs throttles his diff-scaling - see below).
     let gd = load_game_data();
     let team = vec![
         profile(&gd, TEXAS),
@@ -462,7 +481,7 @@ fn jaye_diff_skill_is_bounded_by_the_order_limit() {
 #[test]
 fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // Lemuen's "Amicus": base +20% order efficiency, PLUS +25% more when Exusiai
-    // shares the post — phrased "if <Exusiai> is assigned to the same Trading
+    // shares the post - phrased "if <Exusiai> is assigned to the same Trading
     // Post" (name BEFORE "same"), unlike Texas's "...same Post as <Lappland>".
     // The +25% bonus was previously dropped, leaving the team at ~+85% (which the
     // user saw as ~92%). With it counted: Lemuen 45 + Exusiai 35 + Quartz 30 = 110.
@@ -482,7 +501,10 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // base +20%, so the same two-trader pairing must read materially lower.
     let no_exu = trading_efficiency(
         &gd,
-        &[profile(&gd, "char_4193_lemuen"), profile(&gd, "char_4063_quartz")],
+        &[
+            profile(&gd, "char_4193_lemuen"),
+            profile(&gd, "char_4063_quartz"),
+        ],
     );
     assert!(
         eff > no_exu + 20.0,
@@ -495,7 +517,7 @@ fn quartz_recipe_scaling_is_modeled_as_base_plus_factory_count() {
     // Quartz "Precise Scheduling" (trade_ord_spd&formula[000]): base +30% trading,
     // plus +2% per recipe type being processed at Factories. We approximate recipe
     // types by the Factory count, so her buff must resolve to a FacilityCountScaling
-    // targeting MANUFACTURE with a +30% base — not a flat DirectEfficiency that
+    // targeting MANUFACTURE with a +30% base - not a flat DirectEfficiency that
     // drops the recipe term. In a 5-factory base she then reads +40% (30 + 5×2).
     use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
@@ -515,10 +537,19 @@ fn quartz_recipe_scaling_is_modeled_as_base_plus_factory_count() {
             per_level,
             ..
         } => {
-            assert_eq!(target_room, "MANUFACTURE", "recipe types scale off Factories");
+            assert_eq!(
+                target_room, "MANUFACTURE",
+                "recipe types scale off Factories"
+            );
             assert!(!per_level, "scaling is per-facility, not per-level");
-            assert!((*base_pct - 30.0).abs() < 0.01, "base should be +30%, got {base_pct}");
-            assert!((*per_unit_pct - 2.0).abs() < 0.01, "per-recipe should be +2%, got {per_unit_pct}");
+            assert!(
+                (*base_pct - 30.0).abs() < 0.01,
+                "base should be +30%, got {base_pct}"
+            );
+            assert!(
+                (*per_unit_pct - 2.0).abs() < 0.01,
+                "per-recipe should be +2%, got {per_unit_pct}"
+            );
         }
         _ => panic!("Quartz should be FacilityCountScaling (base + recipe-type scaling)"),
     }
@@ -545,9 +576,19 @@ fn morgan_glasgow_count_carries_a_siege_rider() {
             ..
         }) => {
             assert_eq!(token, "glasgow", "counts Glasgow Gang operators");
-            assert!((*per_match_pct - 20.0).abs() < 0.01, "per Glasgow op +20%, got {per_match_pct}");
-            assert_eq!(bonus_char_id.as_deref(), siege_id.as_deref(), "rider gated on Siege");
-            assert!((*bonus_pct - 35.0).abs() < 0.01, "Siege rider +35%, got {bonus_pct}");
+            assert!(
+                (*per_match_pct - 20.0).abs() < 0.01,
+                "per Glasgow op +20%, got {per_match_pct}"
+            );
+            assert_eq!(
+                bonus_char_id.as_deref(),
+                siege_id.as_deref(),
+                "rider gated on Siege"
+            );
+            assert!(
+                (*bonus_pct - 35.0).abs() < 0.01,
+                "Siege rider +35%, got {bonus_pct}"
+            );
         }
         _ => panic!("Morgan's Gang Compass should be MatchCountScaling with a Siege rider"),
     }
@@ -557,7 +598,7 @@ fn morgan_glasgow_count_carries_a_siege_rider() {
 fn faction_conditional_credits_base_plus_glasgow_bonus() {
     // Vina Victoria "Resolution on Foreign Trade β": base +30% trading, plus +10%
     // more "if a Glasgow Gang Operator is assigned to the same Trading Post". The
-    // faction analogue of a named-teammate conditional — base always on, bonus
+    // faction analogue of a named-teammate conditional - base always on, bonus
     // gated on a faction tag rather than one operator.
     use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
 
@@ -571,9 +612,18 @@ fn faction_conditional_credits_base_plus_glasgow_bonus() {
             base_efficiency,
             efficiency,
         }) => {
-            assert_eq!(faction_token, "glasgow", "bonus gated on Glasgow Gang presence");
-            assert!((*base_efficiency - 30.0).abs() < 0.01, "base +30%, got {base_efficiency}");
-            assert!((*efficiency - 10.0).abs() < 0.01, "Glasgow bonus +10%, got {efficiency}");
+            assert_eq!(
+                faction_token, "glasgow",
+                "bonus gated on Glasgow Gang presence"
+            );
+            assert!(
+                (*base_efficiency - 30.0).abs() < 0.01,
+                "base +30%, got {base_efficiency}"
+            );
+            assert!(
+                (*efficiency - 10.0).abs() < 0.01,
+                "Glasgow bonus +10%, got {efficiency}"
+            );
         }
         _ => panic!("Resolution β should be a ConditionalOnFaction (base + Glasgow bonus)"),
     }
@@ -592,11 +642,19 @@ fn morgan_reads_higher_with_siege_in_the_post() {
 
     let with_siege = trading_efficiency(
         &gd,
-        &[profile(&gd, MORGAN), profile(&gd, SIEGE), profile(&gd, INDRA)],
+        &[
+            profile(&gd, MORGAN),
+            profile(&gd, SIEGE),
+            profile(&gd, INDRA),
+        ],
     );
     let without_siege = trading_efficiency(
         &gd,
-        &[profile(&gd, MORGAN), profile(&gd, MATTERHORN), profile(&gd, INDRA)],
+        &[
+            profile(&gd, MORGAN),
+            profile(&gd, MATTERHORN),
+            profile(&gd, INDRA),
+        ],
     );
     assert!(
         with_siege > without_siege,
@@ -618,15 +676,25 @@ fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
     let (registry, _drains) = build_registry(&gd.building.buffs, &name_to_char);
 
     match registry.get("control_tra_spd[000]") {
-        Some(BuffResolutionStrategy::GlobalEffect { target_room, bonus_pct }) => {
+        Some(BuffResolutionStrategy::GlobalEffect {
+            target_room,
+            bonus_pct,
+        }) => {
             assert_eq!(target_room, "TRADING");
-            assert!((*bonus_pct - 7.0).abs() < 0.01, "Amiya +7%, got {bonus_pct}");
+            assert!(
+                (*bonus_pct - 7.0).abs() < 0.01,
+                "Amiya +7%, got {bonus_pct}"
+            );
         }
         _ => panic!("Amiya's CC buff should stay an unconditional GlobalEffect"),
     }
     match registry.get("control_tra_limit&spd2[000]") {
         Some(BuffResolutionStrategy::ConditionalGlobalEffect {
-            target_room, faction_token, per_operator, bonus_pct, ..
+            target_room,
+            faction_token,
+            per_operator,
+            bonus_pct,
+            ..
         }) => {
             assert_eq!(target_room, "TRADING");
             assert_eq!(faction_token, "siracusa");
@@ -637,11 +705,18 @@ fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
     }
     match registry.get("control_tra_limit&spd3[000]") {
         Some(BuffResolutionStrategy::ConditionalGlobalEffect {
-            faction_token, required_count, per_operator, bonus_pct, ..
+            faction_token,
+            required_count,
+            per_operator,
+            bonus_pct,
+            ..
         }) => {
             assert_eq!(faction_token, "kjerag");
             assert_eq!(*required_count, 3, "post needs 3 Kjerag operators");
-            assert!(!*per_operator, "SilverAsh's bonus is whole-post, count-gated");
+            assert!(
+                !*per_operator,
+                "SilverAsh's bonus is whole-post, count-gated"
+            );
             assert!((*bonus_pct - 10.0).abs() < 0.01, "+10%, got {bonus_pct}");
         }
         _ => panic!("SilverAsh's Kjerag CC buff should be a count-gated ConditionalGlobalEffect"),
@@ -653,8 +728,8 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
     // Regression: a Proviso/Lemuen/Exusiai post under a Control Center staffed by
     // Amiya + SilverAsh + Umiri must read ~87% (Lemuen 45 + Exusiai 35 = 80 speed,
     // plus ONLY Amiya's unconditional +7% global). SilverAsh's "3 Kjerag" +10% and
-    // Umiri's "Siracusa" +5% must NOT apply — this team is Kazimierz/Laterano/
-    // Lungmen — so it must NOT read the old, inflated 102%.
+    // Umiri's "Siracusa" +5% must NOT apply - this team is Kazimierz/Laterano/
+    // Lungmen - so it must NOT read the old, inflated 102%.
     use backend::core::grade::base::assignment::compute_current_assignment;
 
     let gd = load_game_data();
@@ -700,7 +775,8 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
         ],
     };
 
-    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
     let tp = asn
         .rooms
         .iter()
@@ -722,7 +798,7 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
 #[test]
 fn weedy_is_treated_as_power_scaling_automation() {
     // Weedy nullifies teammates and scales with POWER PLANTS, not teammates. In a
-    // base with more power plants she must produce more — proving she's modeled as
+    // base with more power plants she must produce more - proving she's modeled as
     // facility-scaling automation, not as a Shamare-style per-teammate nullifier.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -773,8 +849,18 @@ fn gold_exp_split_is_yield_based() {
     let profiles = build_profiles(&fixture.roster, &gd);
 
     let mut rooms = vec![
-        UserRoom { slot_id: "cc".into(), room_type: "CONTROL".into(), level: 5, ..Default::default() },
-        UserRoom { slot_id: "tp".into(), room_type: "TRADING".into(), level: 3, ..Default::default() },
+        UserRoom {
+            slot_id: "cc".into(),
+            room_type: "CONTROL".into(),
+            level: 5,
+            ..Default::default()
+        },
+        UserRoom {
+            slot_id: "tp".into(),
+            room_type: "TRADING".into(),
+            level: 3,
+            ..Default::default()
+        },
     ];
     for i in 0..4 {
         rooms.push(UserRoom {
@@ -796,7 +882,8 @@ fn gold_exp_split_is_yield_based() {
 
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let optimal = compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
+    let optimal =
+        compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
 
     let count = |f: &str| {
         optimal
@@ -817,7 +904,7 @@ fn gold_exp_split_is_yield_based() {
 #[test]
 fn current_preset_shifts_are_distinct() {
     // When the player has a planned rotation (preset shifts), the "current"
-    // Shift A and Shift B must reflect those distinct presets — not the same
+    // Shift A and Shift B must reflect those distinct presets - not the same
     // static crew for both.
     use backend::core::grade::base::assignment::{compute_current_assignment, has_preset_shifts};
     let gd = load_game_data();
@@ -827,19 +914,32 @@ fn current_preset_shifts_are_distinct() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    assert!(has_preset_shifts(&building), "fixture should have preset rotation shifts");
+    assert!(
+        has_preset_shifts(&building),
+        "fixture should have preset rotation shifts"
+    );
 
     let ops = |shift: Option<usize>| {
-        compute_current_assignment(&profiles, &building, &gd.building, &registry, &drains, shift)
-            .rooms
-            .iter()
-            .filter(|r| r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
-            .flat_map(|r| r.operators.iter().cloned())
-            .collect::<Vec<_>>()
+        compute_current_assignment(
+            &profiles,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            shift,
+        )
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
+        .flat_map(|r| r.operators.iter().cloned())
+        .collect::<Vec<_>>()
     };
     let a = ops(Some(0));
     let b = ops(Some(1));
-    assert!(!a.is_empty() && a != b, "current shift A and B presets must differ\nA: {a:?}\nB: {b:?}");
+    assert!(
+        !a.is_empty() && a != b,
+        "current shift A and B presets must differ\nA: {a:?}\nB: {b:?}"
+    );
 }
 
 #[test]
@@ -867,9 +967,12 @@ fn rotation_shifts_are_distinct() {
     let overlap = a.intersection(&b).count();
     assert_eq!(
         overlap, 0,
-        "shift A and B share {overlap} production operators — they must be disjoint"
+        "shift A and B share {overlap} production operators - they must be disjoint"
     );
-    assert!(!a.is_empty() && !b.is_empty(), "both shifts must staff production");
+    assert!(
+        !a.is_empty() && !b.is_empty(),
+        "both shifts must staff production"
+    );
 }
 
 #[test]
@@ -893,7 +996,8 @@ fn current_assignment_reflects_live_base() {
         &drains,
         None,
     );
-    let optimal = compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
+    let optimal =
+        compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
 
     // Current base has production rooms with real operators stationed.
     let staffed = current
@@ -902,10 +1006,13 @@ fn current_assignment_reflects_live_base() {
         .filter(|r| r.room_type == "TRADING" || r.room_type == "MANUFACTURE")
         .filter(|r| !r.operators.is_empty())
         .count();
-    assert!(staffed > 0, "current base should have stationed production operators");
+    assert!(
+        staffed > 0,
+        "current base should have stationed production operators"
+    );
 
     // The optimizer can't do worse than the player's current arrangement. Compare
-    // by realized YIELD (LMD-equivalent/day) — the optimizer's actual objective —
+    // by realized YIELD (LMD-equivalent/day) - the optimizer's actual objective -
     // not the raw efficiency-sum, which ignores the gold/EXP split, order value,
     // and per-room soft caps and so can rank a lower-yield base higher.
     let realized_value = |asn: &backend::core::grade::base::types::BaseAssignment| -> f64 {
@@ -930,7 +1037,7 @@ fn current_assignment_reflects_live_base() {
 }
 
 #[test]
-#[ignore = "benchmark — run with: cargo test base_grade_perf -- --ignored --nocapture"]
+#[ignore = "benchmark - run with: cargo test base_grade_perf -- --ignored --nocapture"]
 fn base_grade_perf() {
     use std::time::Instant;
     let gd = load_game_data();
@@ -945,10 +1052,14 @@ fn base_grade_perf() {
     let t = Instant::now();
     for _ in 0..iters {
         let _ = compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
-        let _ = compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
+        let _ =
+            compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
     }
     let per = t.elapsed().as_secs_f64() * 1000.0 / f64::from(iters);
-    println!("optimizer pipeline: {per:.1} ms/run ({} operators)", profiles.len());
+    println!(
+        "optimizer pipeline: {per:.1} ms/run ({} operators)",
+        profiles.len()
+    );
 }
 
 #[test]
@@ -970,7 +1081,8 @@ fn optimizes_real_user_base() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    let optimal = compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
+    let optimal =
+        compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
     let sustained =
         compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
 

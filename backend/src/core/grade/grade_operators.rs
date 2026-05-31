@@ -24,7 +24,7 @@ const WEIGHT_TRUST: f64 = 5.0;
 
 /// Trust percent at which an ordinary operator is considered fully invested.
 /// Reaching this maps to a perfect trust dimension; trust beyond doesn't help
-/// non-support ops. Support-unit operators are held to `max_favor` instead —
+/// non-support ops. Support-unit operators are held to `max_favor` instead -
 /// publishing an op for others to borrow implies completionist intent.
 const TRUST_MILESTONE_PCT: f64 = 100.0;
 
@@ -101,7 +101,7 @@ pub fn grade_operators(
 }
 
 /// Returns the sum of rarity weights across all roster entries that count
-/// toward `operator_grade` — i.e. the same set that `grade_operators` iterates.
+/// toward `operator_grade` - i.e. the same set that `grade_operators` iterates.
 /// Used by the improvements builder to translate per-operator score deltas
 /// into a contribution against the user's overall Operators subscore.
 pub fn total_roster_weight(roster: &[RosterEntry], game_data: &GameData) -> f64 {
@@ -186,7 +186,7 @@ fn build_dimensions(
         dimensions.push((WEIGHT_POTENTIAL, pot_score));
     }
 
-    // Trust — only meaningful once the favor table is loaded.
+    // Trust - only meaningful once the favor table is loaded.
     if favor.max_trust_pct() > 0.0 {
         let trust_score = trust_milestone_score(roster, favor, is_support);
         dimensions.push((WEIGHT_TRUST, trust_score));
@@ -244,7 +244,7 @@ fn cumulative_level_progress(roster: &RosterEntry, static_op: &Operator) -> f64 
 }
 
 /// Same shape as `cumulative_level_progress` but for an overridden (elite, level)
-/// pair — used by the delta simulator without mutating the `RosterEntry`.
+/// pair - used by the delta simulator without mutating the `RosterEntry`.
 fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) -> f64 {
     let mut progress = 0.0;
     let mut total = 0.0;
@@ -364,7 +364,7 @@ fn module_milestone_from_levels(user_advanced: &[i16], num_available: usize) -> 
 /// The target trust depends on whether the operator is currently published as
 /// a support unit:
 ///   - Ordinary roster ops: full score at `TRUST_MILESTONE_PCT` (100% trust).
-///     Trust beyond doesn't help — 100 is "complete".
+///     Trust beyond doesn't help - 100 is "complete".
 ///   - Support-unit ops: full score only at the favor table's max (typically
 ///     200% trust). Falls linearly below that, so a published op at 100 trust
 ///     scores ~0.5 and drags the dimension down.
@@ -420,7 +420,7 @@ fn log_curve_ratio(t: f64) -> f64 {
 
 /// Score gain from a single upgrade path.
 ///
-/// All deltas are reported as non-negative — if simulating the milestone would
+/// All deltas are reported as non-negative - if simulating the milestone would
 /// somehow not improve the score (shouldn't happen with the current model,
 /// but defensive), the delta is clamped to 0.
 #[derive(Debug, Clone, Serialize)]
@@ -488,7 +488,7 @@ pub fn operator_upgrade_deltas(
 }
 
 /// Rebuild dimensions with one milestone reached, then average. Returns `None`
-/// if the tag isn't applicable to this operator (defensive — caller already
+/// if the tag isn't applicable to this operator (defensive - caller already
 /// filtered, but cheap to recheck).
 fn simulate_score_for_tag(
     roster: &RosterEntry,
@@ -602,7 +602,7 @@ fn simulate_score_for_tag(
                 .filter(|m| advanced_ids.contains(m.id.as_str()))
                 .map(|m| m.level)
                 .collect();
-            // Pad with zeros so the slice length matches the number of slots —
+            // Pad with zeros so the slice length matches the number of slots -
             // module_milestone_from_levels treats absent slots as level 0.
             let mut padded = user_advanced;
             while padded.len() < advanced_mods.len() {
@@ -652,7 +652,7 @@ fn simulate_score_for_tag(
 }
 
 /// Promote the highest entry below `milestone` up to `milestone`. Used to
-/// model "one more M3" / "one more Mod3" — most generous interpretation of
+/// model "one more M3" / "one more Mod3" - most generous interpretation of
 /// which slot the user would push.
 fn promote_to_milestone(levels: &[i16], slots: usize, milestone: i16) -> Vec<i16> {
     let mut padded: Vec<i16> = levels.to_vec();

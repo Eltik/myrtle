@@ -203,7 +203,7 @@ impl OperatorBaseProfile {
     }
 }
 
-/// Faction tags + the leading word of each of the operator's skill names — the
+/// Faction tags + the leading word of each of the operator's skill names - the
 /// set a `MatchCountScaling` buff keys on. Computed once per operator.
 pub fn compute_match_tags(
     faction_tags: &[String],
@@ -235,7 +235,7 @@ pub struct EvalContext<'a> {
 
 #[derive(Clone)]
 pub struct TeammateInfo {
-    /// `char_id` of the teammate — used to resolve named-teammate conditional
+    /// `char_id` of the teammate - used to resolve named-teammate conditional
     /// buffs (e.g. "+65% only when Lappland is in the same room").
     pub char_id: String,
     /// Match tags for count-scaling synergies: faction ids + leading words of
@@ -257,7 +257,7 @@ pub struct RoomAssignment {
     pub operators: Vec<String>, // char_ids assigned to this room
     /// Order-acquisition SPEED %, i.e. the productivity bonus the game shows.
     pub total_efficiency: f64,
-    /// Order-VALUE % (LMD per order, e.g. Proviso) — multiplies LMD yield, kept
+    /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield, kept
     /// separate from speed so it doesn't inflate the displayed efficiency.
     pub order_value: f64,
 }

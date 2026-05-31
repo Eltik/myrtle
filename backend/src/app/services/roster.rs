@@ -47,7 +47,7 @@ pub struct GameUser {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Social {
-    /// Up to 3 entries (some may be `null` for empty slots) — references
+    /// Up to 3 entries (some may be `null` for empty slots) - references
     /// troop slots by `charInstId`. Resolved to `operator_id` in
     /// `extract_supports`.
     pub assist_char_list: Option<Vec<Option<AssistChar>>>,
@@ -190,7 +190,7 @@ pub async fn refresh(
         .await;
 
     let session_json =
-        session_json.ok_or(ApiError::BadRequest("no game session — login again".into()))?;
+        session_json.ok_or(ApiError::BadRequest("no game session - login again".into()))?;
 
     let mut session: AuthSession = serde_json::from_str(&session_json)
         .map_err(|_| ApiError::BadRequest("invalid game session".into()))?;
@@ -604,9 +604,9 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
 /// Returns true when a medal entry from Hypergryph's `user.medal.medals` map
 /// represents an actually earned medal, not in-progress tracking.
 ///
-/// Hypergryph's unearned-default row is `{val: 0, fts: 0, rts: 0}` — those are
+/// Hypergryph's unearned-default row is `{val: 0, fts: 0, rts: 0}` - those are
 /// initialized but never touched by gameplay. Earn signals:
-///   1. `rts > 0` — medal was claimed/awarded; `rts` is the reach timestamp.
+///   1. `rts > 0` - medal was claimed/awarded; `rts` is the reach timestamp.
 ///   2. `rts == -1` with `fts > 0` and `val` being an array:
 ///      - Non-empty: every `[achieved, required]` pair must be met (story
 ///        unlocks, multi-step medals).

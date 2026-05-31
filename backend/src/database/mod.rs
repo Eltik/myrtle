@@ -15,7 +15,7 @@ pub async fn init(database_url: &str) -> Result<PgPool, sqlx::Error> {
     Ok(pool)
 }
 
-/// Seed reference data (idempotent — safe to call on every startup).
+/// Seed reference data (idempotent - safe to call on every startup).
 /// Derives server list from the `Server` enum in `core::hypergryph::constants`.
 async fn seed(pool: &PgPool) -> Result<(), sqlx::Error> {
     use crate::core::hypergryph::constants::Server;

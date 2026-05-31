@@ -156,33 +156,33 @@ pub struct OperatorGap {
     pub current_trust: f64,
     /// True if this operator is currently published as one of the user's
     /// support units. Support ops are held to the favor table's max trust
-    /// (typically 200%) — ordinary ops are "complete" at 100%.
+    /// (typically 200%) - ordinary ops are "complete" at 100%.
     pub is_support: bool,
     /// Short tags for what's still left, e.g. ["E2", "`MAX_LEVEL`", "M3", "MOD3", "TRUST"].
     pub missing: Vec<&'static str>,
     /// Per-tag projected score gain if the user completed that milestone.
     /// One entry per tag in `missing`, in the same order. See `UpgradeDelta`
-    /// for the exact fields — surfaces both the operator-local delta and its
+    /// for the exact fields - surfaces both the operator-local delta and its
     /// contribution to the user's subscore + `total_score`.
     pub deltas: Vec<UpgradeDelta>,
     /// Combined `operator_grade_delta` if the user did every available upgrade
     /// path on this operator. ELITE (promote + max level at new phase) and
-    /// `MAX_LEVEL` (max level at current phase) overlap — only the larger of
+    /// `MAX_LEVEL` (max level at current phase) overlap - only the larger of
     /// the two is counted. All other tags (M3, MOD3, SL7, POT6, TRUST) are
     /// independent and added directly.
     pub subscore_potential_gain: f64,
     /// Same combination as `subscore_potential_gain` but in `total_score`
-    /// units — overall grade points the user could still pull from this op.
+    /// units - overall grade points the user could still pull from this op.
     pub total_potential_gain: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
-    /// The player's CURRENT base exactly as stationed right now — for comparing
+    /// The player's CURRENT base exactly as stationed right now - for comparing
     /// against the optimized assignments.
     pub current: Option<BaseAssignmentDto>,
     /// The player's planned rotation (their in-game preset shifts), if they've
-    /// set one up — so the comparison can line up their Shift A/B against the
+    /// set one up - so the comparison can line up their Shift A/B against the
     /// optimizer's Shift A/B. None when no preset rotation exists.
     pub current_rotation: Option<RotationDto>,
     /// Single-shift peak assignment - the highest-efficiency arrangement of
@@ -201,7 +201,7 @@ pub struct BaseAssignmentDto {
     pub rooms: Vec<RoomAssignmentDto>,
     pub total_production_efficiency: f64,
     /// Realized daily output (the gold→trade loop is coupled: LMD = min(gold
-    /// made, gold sold) × 500). This is the value the optimizer maximizes — the
+    /// made, gold sold) × 500). This is the value the optimizer maximizes - the
     /// per-room efficiency %s are just for display.
     pub yield_lmd_per_day: f64,
     pub yield_exp_per_day: f64,
@@ -224,7 +224,7 @@ pub struct RoomAssignmentDto {
     pub formula_type: Option<String>,
     /// Order-acquisition SPEED % (the productivity bonus the game shows).
     pub total_efficiency: f64,
-    /// Order-VALUE % (LMD per order, e.g. Proviso) — multiplies LMD yield without
+    /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield without
     /// inflating the speed %.
     pub order_value: f64,
     pub operators: Vec<AssignedOperator>,
@@ -689,7 +689,7 @@ fn rarity_weight(rarity: &str) -> f64 {
     }
 }
 
-/// Trust percent at which an ordinary operator is considered "complete" — must
+/// Trust percent at which an ordinary operator is considered "complete" - must
 /// stay in sync with `core::grade::grade_operators::TRUST_MILESTONE_PCT`.
 const TRUST_COMPLETE_PCT: f64 = 100.0;
 
@@ -698,7 +698,7 @@ fn build_operator_improvements(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> OperatorImprovements {
-    // Total weight across all invested operators — used to translate per-op
+    // Total weight across all invested operators - used to translate per-op
     // score deltas into a contribution against operator_grade.
     let total_weight = total_roster_weight(roster, game_data);
     let mut below_milestone: Vec<OperatorGap> = Vec::new();
@@ -791,7 +791,7 @@ fn build_operator_improvements(
         );
         // ELITE simulates "promote + max level at new phase", which also
         // covers the level dimension that MAX_LEVEL targets. When both tags
-        // appear, take whichever delta is larger — additivity would double-
+        // appear, take whichever delta is larger - additivity would double-
         // count the level dimension.
         let (mut subscore_overlap, mut total_overlap) = (0.0_f64, 0.0_f64);
         let (mut subscore_independent, mut total_independent) = (0.0_f64, 0.0_f64);
@@ -1002,7 +1002,13 @@ fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAss
     // Realized output with the gold→trade coupling (LMD = min(made, sold) × 500).
     let mut flows = BaseFlows::default();
     for r in &asn.rooms {
-        flows.add_room(&r.room_type, r.formula_type.as_deref(), r.level, r.total_efficiency, r.order_value);
+        flows.add_room(
+            &r.room_type,
+            r.formula_type.as_deref(),
+            r.level,
+            r.total_efficiency,
+            r.order_value,
+        );
     }
 
     BaseAssignmentDto {

@@ -1,8 +1,6 @@
 //! Human-readable showcase of the base (infrastructure) optimizer, driven by a
-//! real user's data (UID 09525371) captured into a JSON fixture.
-//!
-//! Refresh the fixture from the database with:
-//!     cargo run --bin dump-user-fixture -- 09525371
+//! real user's data (UID 09525371) captured into the committed JSON fixture
+//! `tests/fixtures/user_09525371.json`.
 //!
 //! Watch the optimizer's output with:
 //!     cargo test --test base_optimizer_display_test -- --nocapture
@@ -20,9 +18,7 @@ use backend::core::grade::base::assignment::{
 use backend::core::grade::base::buff_registry::{build_name_to_char, build_registry};
 use backend::core::grade::base::score::grade_base;
 use backend::core::grade::base::types::{BaseAssignment, ShiftAssignment, UserBuilding};
-use common::{
-    build_profiles, load_game_data, load_user_fixture, max_stationed, operator_name,
-};
+use common::{build_profiles, load_game_data, load_user_fixture, max_stationed, operator_name};
 
 const UID: &str = "09525371";
 
@@ -57,7 +53,7 @@ fn print_assignment(assignment: &BaseAssignment, game_data: &GameData) {
             String::new()
         };
         println!(
-            "\n  {} (L{}) {formula_label} — +{:.1}% efficiency{yield_label}",
+            "\n  {} (L{}) {formula_label} - +{:.1}% efficiency{yield_label}",
             room.room_type, room.level, room.total_efficiency
         );
         for id in &room.operators {
@@ -131,7 +127,7 @@ fn display_optimal_base_optimization() {
 
     // ---------- Display ----------
     println!("\n========================================");
-    println!("  BASE OPTIMIZATION REPORT — UID {UID}");
+    println!("  BASE OPTIMIZATION REPORT - UID {UID}");
     println!("========================================");
     println!("\nRoster: {} operators with base skills", profiles.len());
 
@@ -142,7 +138,11 @@ fn display_optimal_base_optimization() {
     }
     for (room_type, levels) in &layout {
         let levels_str: Vec<String> = levels.iter().map(|l| format!("L{l}")).collect();
-        println!("  {room_type}: {} ({})", levels.len(), levels_str.join(", "));
+        println!(
+            "  {room_type}: {} ({})",
+            levels.len(),
+            levels_str.join(", ")
+        );
     }
 
     println!("\n----------------------------------------");
@@ -176,7 +176,7 @@ fn display_optimal_base_optimization() {
     assert!((0.0..=1.0).contains(&base_score), "score in [0,1]");
 
     // With a deep roster (this user has hundreds of operators) every room must
-    // be staffed to its full slot count — no empty or short-handed rooms.
+    // be staffed to its full slot count - no empty or short-handed rooms.
     for room in &optimal.rooms {
         let slots = max_stationed(&game_data, &room.room_type, room.level);
         assert_eq!(

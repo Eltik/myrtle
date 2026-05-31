@@ -1,6 +1,6 @@
 //! Building (RIIC) game data types.
 //!
-//! Contains types for parsing `building_data.json` — the static game data that
+//! Contains types for parsing `building_data.json` - the static game data that
 //! defines base facilities, operator base skills, buff definitions, and
 //! production mechanics.
 

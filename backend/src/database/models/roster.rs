@@ -9,7 +9,7 @@ pub struct SupportUnit {
     pub skin_id: Option<String>,
     pub skill_index: i16,
     pub current_equip: Option<String>,
-    /// Joined from `user_operators` — null if the support refers to an op the
+    /// Joined from `user_operators` - null if the support refers to an op the
     /// player no longer owns (shouldn't happen, but the FK is soft).
     pub elite: Option<i16>,
     pub level: Option<i16>,

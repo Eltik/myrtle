@@ -4,7 +4,7 @@
 // categories below that don't earn their keep here. Genuinely actionable findings
 // have been fixed; these remaining groups are intentional.
 #![allow(
-    // Library-API doc/ergonomics lints — not meaningful for an internal app crate
+    // Library-API doc/ergonomics lints - not meaningful for an internal app crate
     // with no external consumers.
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
@@ -42,6 +42,10 @@
     clippy::suboptimal_flops,
     clippy::imprecise_flops
 )]
+// Every `unsafe` block must carry a `// SAFETY:` comment justifying its soundness.
+// All `unsafe` lives in `utils::random` (the platform CSPRNG FFI); this keeps it
+// documented as the module grows.
+#![warn(clippy::undocumented_unsafe_blocks)]
 
 pub mod app;
 pub mod core;
