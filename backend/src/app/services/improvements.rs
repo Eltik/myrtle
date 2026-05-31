@@ -15,13 +15,13 @@ use crate::core::gamedata::types::operator::{
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment, compute_sustained_assignment,
-    has_preset_shifts,
+    sustained_efficiency_of,
 };
 use crate::core::grade::base::buff_registry::{
     build_name_to_char, build_registry, faction_tags_of,
 };
 use crate::core::grade::base::types::{
-    BaseAssignment, OperatorBaseProfile, RoomAssignment, ShiftAssignment, UserBuilding,
+    BaseAssignment, OperatorBaseProfile, RoomAssignment, RotationAssignment, UserBuilding,
 };
 use crate::core::grade::grade_operators::{
     UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
@@ -151,7 +151,7 @@ pub struct OperatorGap {
     pub max_mastery: i16,
     /// Highest module level the user has on any advanced module (-1 if no module).
     pub max_module_level: i16,
-    /// Current trust percent (0–200), resolved from `favor_point` via the
+    /// Current trust percent (0-200), resolved from `favor_point` via the
     /// favor table. Surfaced so the client can show "Trust 87 / 200".
     pub current_trust: f64,
     /// True if this operator is currently published as one of the user's
@@ -181,16 +181,15 @@ pub struct BaseImprovements {
     /// The player's CURRENT base exactly as stationed right now - for comparing
     /// against the optimized assignments.
     pub current: Option<BaseAssignmentDto>,
-    /// The player's planned rotation (their in-game preset shifts), if they've
-    /// set one up - so the comparison can line up their Shift A/B against the
-    /// optimizer's Shift A/B. None when no preset rotation exists.
+    /// The player's current base expressed as a rotation (main + sustained value),
+    /// so the comparison can line it up against the optimizer's.
     pub current_rotation: Option<RotationDto>,
-    /// Single-shift peak assignment - the highest-efficiency arrangement of
-    /// the user's roster across their existing rooms. Useful as a "what's
-    /// possible right now" view.
+    /// Peak assignment - the highest-efficiency arrangement of the roster across
+    /// the existing rooms. Useful as a "what's possible right now" view.
     pub optimal: Option<BaseAssignmentDto>,
-    /// Two-shift rotation for sustained 24/7 operation. `sustained_efficiency`
-    /// is the average of both shifts and is what the base score uses.
+    /// Staggered rotation for sustained 24/7 operation: a main staffing plus a
+    /// backup pool swapped in one operator at a time. `sustained_efficiency` is
+    /// the 24/7 output (near peak) and is what the base score uses.
     pub rotation: Option<RotationDto>,
     /// User's room layout (counts + levels per room type)
     pub layout: Vec<RoomLayoutEntry>,
@@ -211,9 +210,29 @@ pub struct BaseAssignmentDto {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationDto {
-    pub shift_a: BaseAssignmentDto,
-    pub shift_b: BaseAssignmentDto,
+    /// The main staffing - your best operators, working almost all the time.
+    pub main: BaseAssignmentDto,
+    /// Per-room rotation plan: who to swap first, when, and the backup.
+    pub rooms: Vec<RoomRotationDto>,
+    /// Sustained 24/7 output - near peak, reduced only by backup-coverage time.
     pub sustained_efficiency: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RoomRotationDto {
+    pub slot_id: String,
+    pub room_type: String,
+    /// Main operators ordered by who needs swapping first (fastest-draining).
+    pub members: Vec<RotationMemberDto>,
+    /// The backup to rotate in when a main needs rest.
+    pub backup: Option<AssignedOperator>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationMemberDto {
+    pub operator: AssignedOperator,
+    /// Approximate hours this operator works before you rotate it out.
+    pub lasts_hours: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -227,6 +246,9 @@ pub struct RoomAssignmentDto {
     /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield without
     /// inflating the speed %.
     pub order_value: f64,
+    /// True when this is a FIXED synergy squad (operators depend on each other and
+    /// can't be swapped); false = flexible / interchangeable team.
+    pub locked: bool,
     pub operators: Vec<AssignedOperator>,
     /// Per-room natural yield (trading posts show potential LMD if gold-supplied).
     pub yield_lmd_per_day: f64,
@@ -935,38 +957,6 @@ async fn build_base_improvements(
         &morale_drains,
         None,
     );
-    // The player's own planned rotation (preset shifts), to line up against the
-    // optimizer's shifts in the comparison.
-    let current_rotation = if has_preset_shifts(&user_building) {
-        let a = compute_current_assignment(
-            &profiles,
-            &user_building,
-            &game_data.building,
-            &registry,
-            &morale_drains,
-            Some(0),
-        );
-        let b = compute_current_assignment(
-            &profiles,
-            &user_building,
-            &game_data.building,
-            &registry,
-            &morale_drains,
-            Some(1),
-        );
-        let total_a: f64 = a.total_production_efficiency;
-        let total_b: f64 = b.total_production_efficiency;
-        Some(shift_assignment_to_dto(
-            &ShiftAssignment {
-                shift_a: a,
-                shift_b: b,
-                sustained_efficiency: (total_a + total_b) / 2.0,
-            },
-            game_data,
-        ))
-    } else {
-        None
-    };
     let optimal = compute_optimal_assignment(
         &profiles,
         &user_building,
@@ -982,9 +972,21 @@ async fn build_base_improvements(
         &morale_drains,
     );
 
+    // The player's current base as a rotation main, so the comparison can show
+    // their sustained output against the optimizer's.
+    let current_sustained = sustained_efficiency_of(&current, &profiles, &morale_drains);
+    let current_rotation = Some(rotation_to_dto(
+        &RotationAssignment {
+            main: current.clone(),
+            rooms: Vec::new(),
+            sustained_efficiency: current_sustained,
+        },
+        game_data,
+    ));
+
     let current_dto = base_assignment_to_dto(&current, game_data);
     let optimal_dto = base_assignment_to_dto(&optimal, game_data);
-    let rotation_dto = shift_assignment_to_dto(&sustained, game_data);
+    let rotation_dto = rotation_to_dto(&sustained, game_data);
     let layout = build_layout_summary(&user_building);
 
     Ok(BaseImprovements {
@@ -1024,10 +1026,40 @@ fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAss
     }
 }
 
-fn shift_assignment_to_dto(asn: &ShiftAssignment, game_data: &GameData) -> RotationDto {
+/// Resolve a `char_id` to an `AssignedOperator` (id + display name).
+fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
+    AssignedOperator {
+        operator_id: id.to_string(),
+        name: game_data
+            .operators
+            .get(id)
+            .map_or_else(|| id.to_string(), |o| o.name.clone()),
+    }
+}
+
+fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDto {
     RotationDto {
-        shift_a: base_assignment_to_dto(&asn.shift_a, game_data),
-        shift_b: base_assignment_to_dto(&asn.shift_b, game_data),
+        main: base_assignment_to_dto(&asn.main, game_data),
+        rooms: asn
+            .rooms
+            .iter()
+            .map(|r| RoomRotationDto {
+                slot_id: r.slot_id.clone(),
+                room_type: r.room_type.clone(),
+                members: r
+                    .members
+                    .iter()
+                    .map(|m| RotationMemberDto {
+                        operator: assigned_operator(&m.operator, game_data),
+                        lasts_hours: m.lasts_hours,
+                    })
+                    .collect(),
+                backup: r
+                    .backup
+                    .as_deref()
+                    .map(|id| assigned_operator(id, game_data)),
+            })
+            .collect(),
         sustained_efficiency: asn.sustained_efficiency,
     }
 }
@@ -1047,16 +1079,11 @@ fn room_assignment_to_dto(room: &RoomAssignment, game_data: &GameData) -> RoomAs
         formula_type: room.formula_type.clone(),
         total_efficiency: room.total_efficiency,
         order_value: room.order_value,
+        locked: room.locked,
         operators: room
             .operators
             .iter()
-            .map(|id| AssignedOperator {
-                operator_id: id.clone(),
-                name: game_data
-                    .operators
-                    .get(id)
-                    .map_or_else(|| id.clone(), |o| o.name.clone()),
-            })
+            .map(|id| assigned_operator(id, game_data))
             .collect(),
         yield_lmd_per_day: y.lmd_per_day,
         yield_gold_per_day: y.gold_per_day,

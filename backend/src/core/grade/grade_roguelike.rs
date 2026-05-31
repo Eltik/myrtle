@@ -86,7 +86,7 @@ struct Bp {
 }
 
 /// Grades a user's roguelike progress across all themes.
-/// Returns 0.0–1.0.
+/// Returns 0.0-1.0.
 pub fn grade_roguelike(
     theme_progress: &[(String, serde_json::Value)],
     roguelike_data: &RoguelikeGameData,

@@ -247,7 +247,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
     .fetch_one(&state.db)
     .await?;
 
-    // Rates are fractions (0.0–1.0). The frontend renders them as percentages
+    // Rates are fractions (0.0-1.0). The frontend renders them as percentages
     // by multiplying by 100 at display time.
     let total = stats.total_pulls.max(1) as f64;
     let result = GlobalGachaStats {

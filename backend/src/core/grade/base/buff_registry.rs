@@ -330,21 +330,33 @@ pub fn build_registry(
             "CONTROL" => {
                 let desc_lower = buff.description.to_lowercase();
                 if prefix.contains("_fraction") || prefix.contains("_tag") {
-                    // Tag-based
                     let tag = parse_tag_keyword(&buff.description).unwrap_or_default();
                     let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
-                    let target_room = if desc_lower.contains("factor") {
-                        "MANUFACTURE"
-                    } else if desc_lower.contains("trading") {
-                        "TRADING"
+                    // Production tag buffs (Viviana: "+7% Knights in Factories")
+                    // only reach matching operators, so model them per-operator
+                    // like the faction conditionals - this lets the optimizer
+                    // co-schedule the buffed operators with the CC operator. Tag
+                    // buffs on non-production rooms (e.g. "Elite in Dormitories")
+                    // stay as a flat tag bonus.
+                    if desc_lower.contains("factor") || desc_lower.contains("trading") {
+                        let target_room = if desc_lower.contains("trading") {
+                            "TRADING"
+                        } else {
+                            "MANUFACTURE"
+                        };
+                        BuffResolutionStrategy::ConditionalGlobalEffect {
+                            target_room: target_room.to_string(),
+                            faction_token: tag,
+                            required_count: 1,
+                            per_operator: true,
+                            bonus_pct: bonus,
+                        }
                     } else {
-                        "MANUFACTURE"
-                    };
-
-                    BuffResolutionStrategy::TagBased {
-                        tag,
-                        bonus_pct: bonus,
-                        target_room: target_room.to_string(),
+                        BuffResolutionStrategy::TagBased {
+                            tag,
+                            bonus_pct: bonus,
+                            target_room: "MANUFACTURE".to_string(),
+                        }
                     }
                 } else if prefix.contains("_mp_")
                     || prefix.contains("_cost")

@@ -15,7 +15,7 @@ pub struct OperatorIndexEntry {
     pub id: String,
     pub name: String,
     pub appellation: String,
-    /// 1–6. Converts from the game's `TIER_N` enum so the frontend doesn't have to.
+    /// 1-6. Converts from the game's `TIER_N` enum so the frontend doesn't have to.
     pub rarity: u8,
     pub profession: OperatorProfession,
     pub sub_profession_id: String,

@@ -277,6 +277,8 @@ export interface IRoomAssignment {
     total_efficiency: number;
     /** Order-value % (LMD per order, e.g. Proviso) — lifts LMD, not speed. */
     order_value: number;
+    /** True = fixed synergy squad (operators depend on each other); false = flexible. */
+    locked: boolean;
     operators: IAssignedOperator[];
     /** Per-room natural yield (trading posts show potential LMD if gold-supplied). */
     yield_lmd_per_day: number;
@@ -294,9 +296,27 @@ export interface IBaseAssignment {
     yield_total_value: number;
 }
 
+export interface IRotationMember {
+    operator: IAssignedOperator;
+    /** Approximate hours this operator works before you rotate it out. */
+    lasts_hours: number;
+}
+
+export interface IRoomRotation {
+    slot_id: string;
+    room_type: string;
+    /** Main operators ordered by who needs swapping first (fastest-draining). */
+    members: IRotationMember[];
+    /** The backup to rotate in when a main needs rest. */
+    backup: IAssignedOperator | null;
+}
+
 export interface IRotation {
-    shift_a: IBaseAssignment;
-    shift_b: IBaseAssignment;
+    /** The main staffing — your best operators, working almost all the time. */
+    main: IBaseAssignment;
+    /** Per-room rotation plan: who to swap first, when, and the backup. */
+    rooms: IRoomRotation[];
+    /** Sustained 24/7 output — near peak, reduced only by backup-coverage time. */
     sustained_efficiency: number;
 }
 

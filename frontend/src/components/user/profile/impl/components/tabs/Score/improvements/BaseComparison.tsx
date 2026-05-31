@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IBaseAssignment, IRoomAssignment } from "#/lib/api/user";
@@ -34,42 +33,29 @@ const RESOURCE_GROUPS: { key: string; label: string }[] = [
     { key: "FACTORY", label: "Factories" },
 ];
 
-interface ITarget {
-    key: string;
-    label: string;
-    /** Left side: the player's base for this view. */
-    cur: IBaseAssignment;
-    /** Right side: the optimizer's recommendation for this view. */
-    opt: IBaseAssignment;
-}
-
 interface IProps {
-    /** Static current base (used for the "Peak" comparison). */
+    /** The player's current base. */
     current: IBaseAssignment;
-    /** The player's planned preset Shift A / B (falls back to `current`). */
-    currentShiftA: IBaseAssignment | null;
-    currentShiftB: IBaseAssignment | null;
+    /** The optimizer's peak (main) staffing. */
     optimal: IBaseAssignment | null;
-    shiftA: IBaseAssignment | null;
-    shiftB: IBaseAssignment | null;
     accent: string;
 }
 
 /**
- * Side-by-side comparison of the player's base against the optimizer's output.
- * Each tab pairs the right "current" side with its matching optimized side: the
- * peak vs the live base, and each rotation shift vs the player's own preset
- * shift. Rooms line up by slot.
+ * Side-by-side comparison of the player's current base against the optimizer's
+ * peak staffing — Control Center and room by room. Rooms line up by resource.
  */
-export function BaseComparison({ current, currentShiftA, currentShiftB, optimal, shiftA, shiftB, accent }: IProps) {
-    const targets: ITarget[] = [optimal && { key: "peak", label: "Peak", cur: current, opt: optimal }, shiftA && { key: "a", label: "Shift A", cur: currentShiftA ?? current, opt: shiftA }, shiftB && { key: "b", label: "Shift B", cur: currentShiftB ?? current, opt: shiftB }].filter((t): t is ITarget => Boolean(t));
+export function BaseComparison({ current, optimal, accent }: IProps) {
+    if (!optimal) return null;
 
-    const [tab, setTab] = useState(targets[0]?.key ?? "peak");
-    const target = targets.find((t) => t.key === tab) ?? targets[0];
-    if (!target) return null;
+    const cur = assignmentTotals(current);
+    const opt = assignmentTotals(optimal);
 
-    const cur = assignmentTotals(target.cur);
-    const opt = assignmentTotals(target.opt);
+    // The Control Center has no resource yield of its own, but its operators drive
+    // a global production buff applied to every factory and trading post, so the
+    // swaps belong in the comparison too.
+    const curCC = current.rooms.find((r) => r.room_type === "CONTROL");
+    const optCC = optimal.rooms.find((r) => r.room_type === "CONTROL");
 
     // Group production rooms by RESOURCE (trading / gold / EXP) and pair them up
     // within each group, so the comparison is always like-for-like — gold→gold,
@@ -77,37 +63,16 @@ export function BaseComparison({ current, currentShiftA, currentShiftB, optimal,
     const byEff = (a: IRoomAssignment, b: IRoomAssignment) => b.total_efficiency - a.total_efficiency;
     const groupRooms = (asn: IBaseAssignment, key: string) => asn.rooms.filter((r) => resourceKey(r) === key).sort(byEff);
     const groups = RESOURCE_GROUPS.map((g) => {
-        const cur = groupRooms(target.cur, g.key);
-        const opt = groupRooms(target.opt, g.key);
-        const n = Math.max(cur.length, opt.length);
-        const pairs = Array.from({ length: n }, (_, i) => ({ cur: cur[i], opt: opt[i] }));
+        const curRooms = groupRooms(current, g.key);
+        const optRooms = groupRooms(optimal, g.key);
+        const n = Math.max(curRooms.length, optRooms.length);
+        const pairs = Array.from({ length: n }, (_, i) => ({ cur: curRooms[i], opt: optRooms[i] }));
         return { ...g, pairs };
     }).filter((g) => g.pairs.length > 0);
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className={cn(TEXT_META, "text-muted-foreground")}>Your base vs the optimized plan, room by room. Highlighted operators are the swaps to make.</p>
-                {targets.length > 1 && (
-                    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border/40 bg-muted/20 p-0.5">
-                        {targets.map((t) => {
-                            const active = t.key === tab;
-                            return (
-                                <button
-                                    key={t.key}
-                                    type="button"
-                                    onClick={() => setTab(t.key)}
-                                    aria-pressed={active}
-                                    className={cn("rounded px-2 py-0.5 transition-colors", TEXT_KICKER, active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
-                                    style={active ? { color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` } : undefined}
-                                >
-                                    {t.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+            <p className={cn(TEXT_META, "text-muted-foreground")}>Your base vs the optimized peak, Control Center and room by room. Highlighted operators are the swaps to make.</p>
 
             {/* Headline totals */}
             <div className="grid grid-cols-3 gap-2">
@@ -118,13 +83,19 @@ export function BaseComparison({ current, currentShiftA, currentShiftB, optimal,
 
             {/* Per-resource comparison (gold→gold, EXP→EXP, trading→trading) */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-2 px-2">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>Yours {target.key === "a" ? "(Shift A)" : target.key === "b" ? "(Shift B)" : "(now)"}</span>
+                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>Yours (now)</span>
                 <span className="w-3" />
                 <span className={cn(TEXT_KICKER, "text-right")} style={{ color: `color-mix(in oklch, ${accent} 65%, var(--foreground))` }}>
-                    Optimal {target.label}
+                    Optimal peak
                 </span>
             </div>
             <div className="flex flex-col gap-2.5">
+                {(curCC || optCC) && (
+                    <div className="flex flex-col gap-1.5">
+                        <span className={cn(TEXT_BADGE, "px-1 text-muted-foreground/60")}>Control Center (global buff)</span>
+                        <CompareRow current={curCC} optimal={optCC} accent={accent} />
+                    </div>
+                )}
                 {groups.map((g) => (
                     <div key={g.key} className="flex flex-col gap-1.5">
                         <span className={cn(TEXT_BADGE, "px-1 text-muted-foreground/60")}>{g.label}</span>
@@ -158,31 +129,46 @@ function TotalTile({ label, cur, opt, accent, highlight }: { label: string; cur:
 function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; optimal?: IRoomAssignment; accent: string }) {
     const curIds = new Set((current?.operators ?? []).map((o) => o.operator_id));
 
+    // The Control Center produces no resource yield — its metric is the global
+    // production buff it grants (its `total_efficiency`), labelled accordingly.
+    const isControl = (current ?? optimal)?.room_type === "CONTROL";
+
     // The primary comparison is the per-day YIELD delta in the room's resource
     // (LMD / gold / EXP) — that's what actually matters, not the headline %.
     const curY = current ? roomYield(current) : null;
     const optY = optimal ? roomYield(optimal) : null;
     const unit = optY?.unit ?? curY?.unit ?? null;
     const yieldDelta = (optY?.amount ?? 0) - (curY?.amount ?? 0);
-    // Efficiency % delta is kept as a secondary, smaller readout.
-    const effDelta = current && optimal ? optimal.total_efficiency - current.total_efficiency : null;
+    // % delta (order speed for production rooms, global buff for the CC).
+    const pctDelta = current && optimal ? optimal.total_efficiency - current.total_efficiency : null;
+    const pctLabel = isControl ? "global" : "eff";
+    const pctColor = (d: number) => (d > 0.05 ? "text-emerald-500/90" : d < -0.05 ? "text-rose-500/85" : "text-muted-foreground/60");
 
     return (
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md border border-border/35 bg-muted/10 px-2 py-1.5">
             <RoomSide room={current} accent={accent} muted />
             <div className="flex min-w-[4.5rem] flex-col items-center gap-0.5">
                 {unit ? (
-                    <span className={cn("font-mono font-semibold text-xs tabular-nums", yieldDelta > 0.5 ? "text-emerald-500/90" : yieldDelta < -0.5 ? "text-rose-500/85" : "text-muted-foreground/60")}>
-                        {signedCompact(yieldDelta)} {unit}
+                    // Yield-bearing room: yield delta primary, % delta secondary.
+                    <>
+                        <span className={cn("font-mono font-semibold text-xs tabular-nums", pctColor(yieldDelta))}>
+                            {signedCompact(yieldDelta)} {unit}
+                        </span>
+                        {pctDelta !== null && (
+                            <span className={cn(TEXT_BADGE, "text-muted-foreground/55")}>
+                                {pctDelta >= 0 ? "+" : "−"}
+                                {Math.abs(pctDelta).toFixed(0)}% {pctLabel}
+                            </span>
+                        )}
+                    </>
+                ) : pctDelta !== null ? (
+                    // No yield (Control Center): the % buff delta is the primary metric.
+                    <span className={cn("font-mono font-semibold text-xs tabular-nums", pctColor(pctDelta))}>
+                        {pctDelta >= 0 ? "+" : "−"}
+                        {Math.abs(pctDelta).toFixed(0)}% {pctLabel}
                     </span>
                 ) : (
                     <span className="text-muted-foreground/50 text-xs">→</span>
-                )}
-                {effDelta !== null && (
-                    <span className={cn(TEXT_BADGE, "text-muted-foreground/55")}>
-                        {effDelta >= 0 ? "+" : "−"}
-                        {Math.abs(effDelta).toFixed(0)}% eff
-                    </span>
                 )}
             </div>
             <RoomSide room={optimal} accent={accent} highlightIds={curIds} />
