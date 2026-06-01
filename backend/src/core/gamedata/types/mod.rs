@@ -3,6 +3,7 @@ use std::collections::HashMap;
 pub mod activity;
 pub mod audio;
 pub mod building;
+pub mod campaign;
 pub mod chibi;
 pub mod enemy;
 pub mod gacha;
@@ -26,6 +27,7 @@ pub mod zone;
 
 use activity::ActivityBasicInfo;
 use building::BuildingDataFile;
+use campaign::CampaignRotations;
 use chibi::ChibiData;
 use enemy::EnemyHandbook;
 use gacha::GachaData;
@@ -69,6 +71,7 @@ pub struct GameData {
     pub building: BuildingDataFile,
     pub stage_universe: StageUniverse,
     pub sandbox_universe: SandboxUniverse,
+    pub campaign_rotations: CampaignRotations,
 }
 
 impl GameData {

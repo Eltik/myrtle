@@ -16,17 +16,25 @@ function isAnnihilation(stage: IStageGap): boolean {
 
 export function StagePanel({ improvements, accent }: IProps) {
     const { permanent, event } = improvements.stages;
+    // Annihilation lives in both pools after the rotation-scoring split (the
+    // three permanent maps stay permanent; rotating maps moved to the event
+    // pool so recency decay applies). Gather them into one coherent section
+    // rather than scattering them across the Permanent and Event buckets.
+    const annihilation = [...permanent.missing, ...permanent.not_three_starred, ...event.missing, ...event.not_three_starred].filter(isAnnihilation);
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
             <StageBucket title="Permanent" pool={permanent} accent={accent} />
             <StageBucket title="Event" pool={event} accent={accent} />
+            <AnnihilationSection stages={annihilation} accent={accent} />
         </div>
     );
 }
 
 function StageBucket({ title, pool, accent }: { title: string; pool: IStagePoolImprovements; accent: string }) {
-    const annihilationGaps = pool.not_three_starred.filter(isAnnihilation);
-    const regularGaps = pool.not_three_starred.filter((s) => !isAnnihilation(s));
+    // Annihilation maps are surfaced in their own section (they span both pools
+    // and have rotation rules), so keep them out of the regular stage lists.
+    const regularMissing = pool.missing.filter((s) => !isAnnihilation(s));
+    const regularNotThree = pool.not_three_starred.filter((s) => !isAnnihilation(s));
 
     return (
         <div className="flex flex-col gap-3">
@@ -37,21 +45,35 @@ function StageBucket({ title, pool, accent }: { title: string; pool: IStagePoolI
                 <ProgressLine label="Not 3-starred" current={pool.cleared - pool.three_starred} max={pool.total} accent={accent} />
             </div>
 
-            <StageList title="Missing" stages={pool.missing} accent={accent} emptyLabel="All stages cleared." stateColor="rose" />
-            <StageList
-                title="Cleared, not 3★"
-                subtitle="Run again with a sharper squad to hit 3-star."
-                stages={regularGaps}
-                accent={accent}
-                emptyLabel={annihilationGaps.length > 0 ? `Every regular clear is 3★. ${annihilationGaps.length} Annihilation map${annihilationGaps.length === 1 ? "" : "s"} below still need${annihilationGaps.length === 1 ? "s" : ""} maxing.` : "Every clear is 3★."}
-                stateColor="amber"
-            />
-            {annihilationGaps.length > 0 && <StageList title="Annihilation - not maxed" subtitle="State 2 means cleared but enemy-kill count below the cap. Higher kill counts unlock the Orundum reward tier." stages={annihilationGaps} accent={accent} emptyLabel="All Annihilation maps are maxed." stateColor="amber" />}
+            <StageList title="Missing" stages={regularMissing} accent={accent} emptyLabel="All stages cleared." />
+            <StageList title="Cleared, not 3★" subtitle="Run again with a sharper squad to hit 3-star." stages={regularNotThree} accent={accent} emptyLabel="Every clear is 3★." />
         </div>
     );
 }
 
-function StageList({ title, subtitle, stages, accent, emptyLabel, stateColor }: { title: string; subtitle?: string; stages: IStageGap[]; accent: string; emptyLabel: string; stateColor: "rose" | "amber" }) {
+function AnnihilationSection({ stages, accent }: { stages: IStageGap[]; accent: string }) {
+    if (stages.length === 0) return null;
+    // Permanent maps carry no rotation window; the active rotation is "active".
+    // Anything past/future has rotated out and can't be maxed right now.
+    const available = stages.filter((s) => !s.rotation || s.rotation.status === "active");
+    const locked = stages.filter((s) => s.rotation && s.rotation.status !== "active");
+
+    return (
+        <div className="flex flex-col gap-3">
+            <SectionHeader title="Annihilation" count={`${available.length} to do now`} accent={accent} />
+            {available.length > 0 ? (
+                <StageList title="Available now" subtitle="The three permanent maps and the current weekly rotation. State 2 means cleared but enemy-kill count is below the cap; reaching the cap unlocks the full Orundum reward." stages={available} accent={accent} emptyLabel="" />
+            ) : (
+                <EmptyHint>Every currently-playable Annihilation map is maxed.</EmptyHint>
+            )}
+            {locked.length > 0 && (
+                <StageList title="Not in rotation" subtitle="Rotating maps that aren't playable right now, so they can't be maxed until their rotation returns. These are scored on a recency curve rather than as permanent gaps - shown for reference." stages={locked} accent={accent} emptyLabel="" locked />
+            )}
+        </div>
+    );
+}
+
+function StageList({ title, subtitle, stages, accent, emptyLabel, locked = false }: { title: string; subtitle?: string; stages: IStageGap[]; accent: string; emptyLabel: string; locked?: boolean }) {
     const [showAll, setShowAll] = useState(false);
     if (stages.length === 0) {
         return (
@@ -74,7 +96,7 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, stateColor }: 
             {subtitle && <p className={cn(TEXT_META, "-mt-1 text-muted-foreground/80")}>{subtitle}</p>}
             <div className="flex flex-wrap gap-1.5">
                 {visible.map((s) => (
-                    <StageChip key={s.stage_id} stage={s} accent={accent} stateColor={stateColor} />
+                    <StageChip key={s.stage_id} stage={s} accent={accent} locked={locked} />
                 ))}
             </div>
             {remaining > 0 && <ShowMoreButton onClick={() => setShowAll(true)} label={`Show ${remaining} more`} />}
@@ -83,16 +105,24 @@ function StageList({ title, subtitle, stages, accent, emptyLabel, stateColor }: 
     );
 }
 
-function StageChip({ stage, accent, stateColor }: { stage: IStageGap; accent: string; stateColor: "rose" | "amber" }) {
-    const stateDot = stateColor === "rose" ? "bg-rose-500/65" : "bg-amber-500/75";
+function StageChip({ stage, accent, locked = false }: { stage: IStageGap; accent: string; locked?: boolean }) {
+    // Dot reflects clear state: rose = uncleared (state < 2), amber = cleared
+    // but not 3★ (state 2). Locked (rotated-out) maps are muted regardless.
+    const stateDot = locked ? "bg-muted-foreground/40" : stage.state >= 2 ? "bg-amber-500/75" : "bg-rose-500/65";
     const tooltipLabel = stage.name ? ` - ${stage.name}` : "";
+    // Annihilation maps share a duplicated nation Code (e.g. several maps read
+    // "Yan"), so the distinct map Name is the identifier worth leading with.
+    // Regular stages keep the code (e.g. "1-7") as the primary label.
+    const leadWithName = isAnnihilation(stage) && !!stage.name;
+    const primary = leadWithName ? stage.name : stage.code;
+    const secondary = leadWithName ? stage.code : stage.name;
     return (
-        <span className="group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30" title={`${stage.code}${tooltipLabel}`}>
+        <span className={cn("group flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1 transition-colors hover:border-border/70 hover:bg-muted/30", locked && "opacity-55")} title={`${stage.code}${tooltipLabel}${locked ? " - rotated out, not currently playable" : ""}`}>
             <span className={`size-1.5 shrink-0 rounded-full ${stateDot}`} aria-hidden />
-            <span className={cn(TEXT_BADGE, "font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
-                {stage.code}
+            <span className={cn(TEXT_BADGE, "max-w-[22ch] truncate font-semibold")} style={{ color: `color-mix(in oklch, ${accent} 55%, var(--foreground))` }}>
+                {primary}
             </span>
-            {stage.name && <span className="hidden max-w-[16ch] truncate text-[11px] text-muted-foreground sm:inline">{stage.name}</span>}
+            {secondary && <span className="hidden max-w-[16ch] truncate text-[11px] text-muted-foreground sm:inline">{secondary}</span>}
             {stage.weight !== 1 && <Pill color={accent}>×{stage.weight.toFixed(2)}</Pill>}
         </span>
     );

@@ -157,6 +157,13 @@ export function userScoreQueryOptions(uid: string) {
 
 // ─── User improvements ──────────────────────────────────────────────────────
 
+export interface IStageRotation {
+    /** "active" = playable now, "past" = rotated out, "future" = not yet open. */
+    status: "active" | "past" | "future";
+    startTs: number;
+    endTs: number;
+}
+
 export interface IStageGap {
     stage_id: string;
     code: string;
@@ -164,6 +171,8 @@ export interface IStageGap {
     zone_id: string;
     weight: number;
     state: number;
+    /** Present only for rotating Annihilation maps (`camp_r_*`). */
+    rotation?: IStageRotation | null;
 }
 
 export interface IStagePoolImprovements {
