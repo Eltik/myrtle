@@ -19,6 +19,7 @@ use crate::core::gamedata::{
         audio::RawAudioData,
         building::BuildingDataFile,
         campaign::{CampaignRotations, CampaignTableFile},
+        climb_tower::ClimbTowerTableFile,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
         handbook::HandbookTableFile,
@@ -89,6 +90,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let medal_file: MedalTableFile = load_table_or_warn(data_dir, "medal_table", &mut warnings);
     let campaign_file: CampaignTableFile =
         load_table_or_warn(data_dir, "campaign_table", &mut warnings);
+    let climb_tower_file: ClimbTowerTableFile =
+        load_table_or_warn(data_dir, "climb_tower_table", &mut warnings);
     let voice_file: VoicesTableFile = load_table_or_warn(data_dir, "charword_table", &mut warnings);
     let audio_file: RawAudioData = load_table_or_warn(data_dir, "audio_data", &mut warnings);
     let enemy_file: EnemyHandbookTableFile =
@@ -110,7 +113,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     enrich_banners(&mut gacha.gacha_pool_client);
     let zones = zone_file.zones;
     let stages = stage_file.stages;
-    let medals = MedalData::from_table(medal_file);
+    let mut medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
     let campaign_rotations = CampaignRotations::from_table(campaign_file);
     let stage_universe = StageUniverse::build(
@@ -178,6 +181,12 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         warnings.push("enemy_database: file not found or parse error".into());
         EnemyHandbook::from(enemy_file) // fallback without stats
     };
+
+    medals.link_operator_locks(&operators);
+    // Drive seasonal/event medal availability from the authoritative schedules
+    // (SSS tower seasons + event activity windows) rather than the medal table's
+    // own ExpireTimes, which are empty/placeholder for this content.
+    medals.link_content_windows(&climb_tower_file.tower_windows(), &activity_file.basic_info);
 
     for w in &warnings {
         eprintln!("warning: {w}");

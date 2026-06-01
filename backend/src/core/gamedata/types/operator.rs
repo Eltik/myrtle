@@ -528,6 +528,33 @@ pub struct Operator {
     pub tmpl_default: Option<String>,
 }
 
+/// Collab `team_id`s - operators tied to a third-party IP, only (rarely)
+/// obtainable during a collab rerun, never through standard headhunting. Owning
+/// one is the only way to (re)earn its medals, so collab status is the single
+/// signal we treat as "not reliably obtainable".
+///
+/// Curated because Arknights gamedata has **no** reliable collab flag:
+/// `character_table` has no such field, `handbook_team_table.IsLimited` is
+/// `false` for every team (collabs included), `gacha_table` `LINKAGE` pools
+/// don't map cleanly to char ids, and "operator has no Terra `nation_id`"
+/// false-positives in-game factions like `followers`. Add new collab teams here.
+///
+/// NOTE: deliberately does NOT key off `item_obtain_approach`. Event-reward /
+/// welfare operators (Vigil, Mint, Lava the Purgatory, ...) carry approaches
+/// like "Event Reward" but remain obtainable, so that signal over-excludes.
+const COLLAB_TEAMS: &[&str] = &["rainbow", "mujica", "laios"];
+
+impl Operator {
+    /// True if this is a collab (third-party IP) operator. The one consolidated
+    /// place that answers "is this a collab op" - consumers (medal locks,
+    /// scoring, future roster features) should call this rather than re-derive.
+    pub fn is_collab(&self) -> bool {
+        self.team_id
+            .as_deref()
+            .is_some_and(|t| COLLAB_TEAMS.contains(&t))
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Elite {
     E0,

@@ -9,8 +9,8 @@
 //!       currently empty, so the gameplay stages still live under the activity ID.
 //!     - event: Activity zones (subject to recency decay).
 //!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
-//!       Breakthrough, etc. - see `is_excluded_activity_type`) are dropped entirely because
-//!       they can't be cleared after they end and aren't rebroadcast.
+//!       Breakthrough, etc. - see `ActivityBasicInfo::is_one_time_competitive`) are dropped
+//!       entirely because they can't be cleared after they end and aren't rebroadcast.
 //!       Rotating Annihilation maps (`camp_r_*`) are also routed here using their
 //!       rotation window as the event window, so a map that rotated out long ago
 //!       decays instead of dragging the grade as a permanent gap. The three
@@ -101,7 +101,7 @@ impl StageUniverse {
                 let activity = resolve_activity(&stage.zone_id, &sorted_activities);
 
                 if let Some(act) = activity
-                    && is_excluded_activity_type(&act.activity_type)
+                    && act.is_one_time_competitive()
                 {
                     continue;
                 }
@@ -204,32 +204,5 @@ fn resolve_activity<'a>(
         .copied()
 }
 
-/// Activity `Type_` values for one-time / competitive content that can't be
-/// cleared after the event ends and isn't rebroadcast. Including them in the
-/// universe permanently penalizes anyone who didn't grind them at launch.
-///
-/// Categories represented: Contingency Contract / Multiplayer, Vector
-/// Breakthrough, Boss Rush, Enemy Duel, Half-Idle, Auto-Chess, Arcade,
-/// Float Parade, Team Quest, Collection events, Interlock, and the
-/// Mainline Battle Pass standalone activity.
-fn is_excluded_activity_type(activity_type: &str) -> bool {
-    matches!(
-        activity_type,
-        "MULTIPLAY"
-            | "MULTIPLAY_V3"
-            | "MULTIPLAY_VERIFY2"
-            | "VEC_BREAK"
-            | "VEC_BREAK_V2"
-            | "BOSS_RUSH"
-            | "ENEMY_DUEL"
-            | "HALFIDLE_VERIFY1"
-            | "AUTOCHESS_VERIFY1"
-            | "ARCADE"
-            | "FLOAT_PARADE"
-            | "TEAM_QUEST"
-            | "COLLECTION"
-            | "INTERLOCK"
-            | "MAINLINE_BP"
-            | "FIREWORK"
-    )
-}
+// One-time competitive content is filtered via `ActivityBasicInfo::is_one_time_competitive`
+// (shared with medal scoring) - see `activity.rs`.

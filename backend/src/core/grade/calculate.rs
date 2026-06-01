@@ -49,10 +49,12 @@ pub async fn calculate_user_grade(
     )?;
 
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
+    let owned_operators: HashSet<&str> =
+        user_roster.iter().map(|e| e.operator_id.as_str()).collect();
     let operator_grade = grade_operators(&user_roster, game_data, &support_ids);
     let base_grade = grade_base(&user_roster, building_json.as_ref(), game_data);
     let roguelike_grade = grade_roguelike(&roguelike_data, &game_data.roguelike);
-    let medal_grade = grade_medals(&user_medals, &game_data.medals);
+    let medal_grade = grade_medals(&user_medals, &game_data.medals, &owned_operators);
 
     let scores: Vec<(f64, f64)> = vec![
         (1.0, operator_grade),
