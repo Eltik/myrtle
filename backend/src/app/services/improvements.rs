@@ -8,6 +8,7 @@ use crate::app::error::ApiError;
 use crate::app::services::roster::is_medal_earned;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
+use crate::core::gamedata::types::campaign::RotationStatus;
 use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainability};
 use crate::core::gamedata::types::operator::{
     Operator, OperatorModule, OperatorProfession, OperatorRarity,
@@ -70,6 +71,20 @@ pub struct StageGap {
     pub zone_id: String,
     pub weight: f64,
     pub state: i16,
+    /// Rotation window for rotating Annihilation maps (`camp_r_*`). `None` for
+    /// permanent Annihilation and every non-Annihilation stage. Lets the client
+    /// separate the currently-playable rotation from maps that have rotated out.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rotation: Option<RotationInfo>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RotationInfo {
+    /// "active" (playable now), "past" (rotated out), or "future" (not yet open).
+    pub status: &'static str,
+    pub start_ts: i64,
+    pub end_ts: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -337,6 +352,21 @@ async fn build_stage_improvements(
     let clears = &data.clears;
     let last_synced_ts = data.last_synced_ts;
     let universe = &game_data.stage_universe;
+    let now = chrono::Utc::now().timestamp();
+
+    let rotation_for = |stage_id: &str| -> Option<RotationInfo> {
+        let status = game_data.campaign_rotations.status(stage_id, now)?;
+        let window = game_data.campaign_rotations.window(stage_id)?;
+        Some(RotationInfo {
+            status: match status {
+                RotationStatus::Active => "active",
+                RotationStatus::Past => "past",
+                RotationStatus::Future => "future",
+            },
+            start_ts: window.start_ts,
+            end_ts: window.end_ts,
+        })
+    };
 
     let event_in_window = |e: &EventEntry| -> bool {
         if !known.contains(&e.stage_id) {
@@ -364,6 +394,7 @@ async fn build_stage_improvements(
             zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
             weight: entry.weight,
             state,
+            rotation: rotation_for(&entry.stage_id),
         };
         match state {
             s if s >= 3 => {
@@ -398,6 +429,7 @@ async fn build_stage_improvements(
             zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
             weight: entry.weight,
             state,
+            rotation: rotation_for(&entry.stage_id),
         };
         match state {
             s if s >= 3 => {

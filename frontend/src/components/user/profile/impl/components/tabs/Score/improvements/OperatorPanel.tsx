@@ -89,8 +89,13 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         return [...byRarity.entries()].sort(([a], [b]) => b - a);
     }, [ops, activeFilter]);
 
-    // Total subscore pts available across every owned op, ELITE/MAX_LEVEL deduped (backend handles that).
+    // Two roll-ups across every owned op (ELITE/MAX_LEVEL deduped by the backend):
+    //   - subscore headroom: how far this section's % could climb (sums toward 100%).
+    //   - overall-grade gain: what completing everything adds to the headline score,
+    //     i.e. the subscore headroom already scaled by this section's weight. This is
+    //     the figure tied to the user's actual grade, so it leads the header.
     const totalSubscoreGainPct = useMemo(() => ops.reduce((acc, op) => acc + op.subscore_potential_gain * 100, 0), [ops]);
+    const totalOverallGainPct = useMemo(() => ops.reduce((acc, op) => acc + op.total_potential_gain * 100, 0), [ops]);
 
     if (ops.length === 0) {
         return (
@@ -104,15 +109,15 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
-            <SectionHeader title="Operators below milestone" count={`${ops.length} total · +${totalSubscoreGainPct.toFixed(1)} pts available`} accent={accent} />
+            <SectionHeader title="Operators below milestone" count={`${ops.length} total · +${totalOverallGainPct.toFixed(1)} to overall grade`} accent={accent} />
 
             {/* By upgrade type - also acts as a filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>By upgrade type · subscore pts available</span>
+                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>By upgrade type · % gained in this section</span>
                 <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                     {TAG_ORDER.map((tag) => {
                         const gain = tagGains[tag];
-                        const sub = gain > 0.01 ? `+${gain.toFixed(1)} pts` : TAG_DESC[tag];
+                        const sub = gain > 0.01 ? `+${gain.toFixed(1)}%` : TAG_DESC[tag];
                         return <StatTile key={tag} value={tagCounts[tag]} label={TAG_LABEL[tag]} sub={sub} accent={accent} active={activeFilter === tag} onClick={tagCounts[tag] > 0 ? () => setActiveFilter((cur) => (cur === tag ? null : tag)) : undefined} />;
                     })}
                 </div>
@@ -129,7 +134,8 @@ export function OperatorPanel({ improvements, accent }: IProps) {
             {/* Footnote: explain the units the user is reading so they don't
                 have to hunt down the math. */}
             <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
-                Per-tag gains are in <span className="text-foreground/80">Operators subscore points</span> - what would be added to the score above this section if you completed that upgrade. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
+                The header's <span className="text-foreground/80">+{totalOverallGainPct.toFixed(1)} to overall grade</span> is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are <span className="text-foreground/80">% of this section</span>{" "}
+                (the percentage shown at the top of the card) — there's +{totalSubscoreGainPct.toFixed(1)}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
             </p>
         </div>
     );
@@ -163,8 +169,12 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{ops.length}</span>
                 <span className={cn(TEXT_KICKER, "text-muted-foreground/65")}>to upgrade</span>
                 {bucketGain > 0.01 && (
-                    <span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
-                        +{bucketGain.toFixed(1)} pts
+                    <span
+                        className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")}
+                        style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
+                        title={`Maxing every ${rarity}★ below milestone adds ~${bucketGain.toFixed(1)}% to this section's score.`}
+                    >
+                        +{bucketGain.toFixed(1)}%
                     </span>
                 )}
                 <span className="ml-auto flex items-center gap-2">
@@ -244,7 +254,7 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                         <span
                             className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")}
                             style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
-                            title={`Completing every upgrade on ${op.name} would add ~${subscoreGainPct.toFixed(2)} pts to your Operators subscore (~${totalScoreGainPct.toFixed(2)} pts to your overall grade). ELITE/MAX_LEVEL overlap is deduped.`}
+                            title={`Completing every upgrade on ${op.name} would add ~${subscoreGainPct.toFixed(2)}% to this section (~${totalScoreGainPct.toFixed(2)} to your overall grade). ELITE/MAX_LEVEL overlap is deduped.`}
                         >
                             +{subscoreGainPct.toFixed(2)}
                         </span>
@@ -264,7 +274,7 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                             const d = deltaByTag[tag];
                             const tagDeltaPct = d ? d.operator_grade_delta * 100 : 0;
                             const showNumber = tagDeltaPct >= SHOW_DELTA_THRESHOLD_PCT;
-                            const tooltip = d ? `${TAG_DESC[tag]} - ${TAG_TOOLTIP_DETAIL[tag]}: ${showNumber ? `+${tagDeltaPct.toFixed(2)} pts to Operators score (+${(d.total_score_delta * 100).toFixed(2)} pts overall)` : "less than 0.01 pts - negligible"}` : TAG_DESC[tag];
+                            const tooltip = d ? `${TAG_DESC[tag]} - ${TAG_TOOLTIP_DETAIL[tag]}: ${showNumber ? `+${tagDeltaPct.toFixed(2)}% to this section (+${(d.total_score_delta * 100).toFixed(2)} to overall grade)` : "less than 0.01% - negligible"}` : TAG_DESC[tag];
                             return (
                                 <span key={tag} className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} title={tooltip}>
                                     {TAG_LABEL[tag]}

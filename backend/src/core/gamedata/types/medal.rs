@@ -274,6 +274,11 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
 
     let has_perm_open = times.iter().any(|e| e.expire_type == "PERM" && e.end == -1);
     let has_any_temp = times.iter().any(|e| e.expire_type == "TEMP");
+    let has_any_perm = times.iter().any(|e| e.expire_type == "PERM");
+
+    if !has_any_temp && !has_any_perm {
+        return Obtainability::Permanent;
+    }
 
     if has_perm_open {
         // TEMP → PERM transition (e.g. Wolumonde): once temp, now permanently

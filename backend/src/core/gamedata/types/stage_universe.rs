@@ -11,12 +11,17 @@
 //!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
 //!       Breakthrough, etc. - see `is_excluded_activity_type`) are dropped entirely because
 //!       they can't be cleared after they end and aren't rebroadcast.
+//!       Rotating Annihilation maps (`camp_r_*`) are also routed here using their
+//!       rotation window as the event window, so a map that rotated out long ago
+//!       decays instead of dragging the grade as a permanent gap. The three
+//!       permanent Annihilation maps (`camp_01/02/03`) stay in the permanent pool.
 
 use serde::{Deserialize, Serialize};
 use std::{cmp::Reverse, collections::HashMap};
 
 use super::{
     activity::ActivityBasicInfo,
+    campaign::CampaignRotations,
     stage::{Stage, StageDifficulty, StageType},
     zone::{Zone, ZoneType},
 };
@@ -49,6 +54,7 @@ impl StageUniverse {
         stages: &HashMap<String, Stage>,
         zones: &HashMap<String, Zone>,
         activities: &HashMap<String, ActivityBasicInfo>,
+        campaign: &CampaignRotations,
     ) -> Self {
         let mut sorted_activities: Vec<&ActivityBasicInfo> = activities.values().collect();
         sorted_activities.sort_by_key(|a| Reverse(a.id.len()));
@@ -75,6 +81,16 @@ impl StageUniverse {
 
             let weight = zone_weight * difficulty_multiplier(&stage.difficulty);
 
+            if let Some(window) = campaign.window(&stage.stage_id) {
+                event.push(EventEntry {
+                    stage_id: stage.stage_id.clone(),
+                    weight,
+                    start_time: Some(window.start_ts),
+                    end_time: Some(window.end_ts),
+                });
+                continue;
+            }
+
             if is_permanent(&stage.zone_id, &zone.zone_type) {
                 permanent.push(UniverseEntry {
                     stage_id: stage.stage_id.clone(),
@@ -84,11 +100,6 @@ impl StageUniverse {
                 // Activity zones - event pool
                 let activity = resolve_activity(&stage.zone_id, &sorted_activities);
 
-                // Drop one-time competitive event types (CC, Boss Rush, Vector
-                // Breakthrough, etc.). These can't be cleared after they end
-                // and aren't rebroadcast, so users who join after them - or who
-                // skip them for competitive reasons - would be permanently
-                // penalized.
                 if let Some(act) = activity
                     && is_excluded_activity_type(&act.activity_type)
                 {

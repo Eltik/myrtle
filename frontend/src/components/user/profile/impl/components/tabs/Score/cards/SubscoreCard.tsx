@@ -30,13 +30,13 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading }
                             <TooltipTrigger
                                 render={
                                     <span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground/80 uppercase tabular-nums tracking-wider" style={{ background: `color-mix(in oklch, ${sub.color} 8%, transparent)` }}>
-                                        ×{sub.weight.toFixed(1)}
+                                        {wShare.toFixed(0)}% of grade
                                     </span>
                                 }
                             />
                             <TooltipContent sideOffset={5}>
                                 <p>
-                                    Weight ×{sub.weight.toFixed(1)} · {wShare.toFixed(0)}% of composite
+                                    Counts for {wShare.toFixed(0)}% of your overall score · weight ×{sub.weight.toFixed(1)}
                                 </p>
                             </TooltipContent>
                         </Tooltip>

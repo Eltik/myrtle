@@ -18,6 +18,7 @@ use crate::core::gamedata::{
         activity::ActivityTableFile,
         audio::RawAudioData,
         building::BuildingDataFile,
+        campaign::{CampaignRotations, CampaignTableFile},
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
         handbook::HandbookTableFile,
@@ -86,6 +87,8 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let zone_file: ZoneTableFile = load_table_or_warn(data_dir, "zone_table", &mut warnings);
     let stage_file: StageTableFile = load_table_or_warn(data_dir, "stage_table", &mut warnings);
     let medal_file: MedalTableFile = load_table_or_warn(data_dir, "medal_table", &mut warnings);
+    let campaign_file: CampaignTableFile =
+        load_table_or_warn(data_dir, "campaign_table", &mut warnings);
     let voice_file: VoicesTableFile = load_table_or_warn(data_dir, "charword_table", &mut warnings);
     let audio_file: RawAudioData = load_table_or_warn(data_dir, "audio_data", &mut warnings);
     let enemy_file: EnemyHandbookTableFile =
@@ -109,7 +112,13 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let stages = stage_file.stages;
     let medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
-    let stage_universe = StageUniverse::build(&stages, &zones, &activity_file.basic_info);
+    let campaign_rotations = CampaignRotations::from_table(campaign_file);
+    let stage_universe = StageUniverse::build(
+        &stages,
+        &zones,
+        &activity_file.basic_info,
+        &campaign_rotations,
+    );
 
     let sandbox_perm_raw: serde_json::Value =
         load_table_or_warn(data_dir, "sandbox_perm_table", &mut warnings);
@@ -196,5 +205,6 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         building: building_file,
         stage_universe,
         sandbox_universe,
+        campaign_rotations,
     })
 }
