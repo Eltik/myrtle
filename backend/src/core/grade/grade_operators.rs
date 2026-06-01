@@ -12,6 +12,8 @@ use crate::{
     database::models::roster::RosterEntry,
 };
 
+use super::{Dimension, weighted_average};
+
 /// Dimension weights
 const WEIGHT_ELITE: f64 = 25.0;
 const WEIGHT_MASTERY: f64 = 30.0;
@@ -34,9 +36,6 @@ const PARTIAL_CAP: f64 = 0.30;
 /// Bonus partial credit from non-maxed entries when at least one milestone exists.
 const PARTIAL_BONUS: f64 = 0.10;
 
-/// A scoring dimension: `(weight, score)` where score is 0.0-1.0.
-type Dimension = (f64, f64);
-
 #[derive(Deserialize)]
 struct MasteryEntry {
     mastery: i16,
@@ -56,37 +55,45 @@ fn parse_modules(roster: &RosterEntry) -> Vec<ModuleEntry> {
     serde_json::from_value(roster.modules.clone()).unwrap_or_default()
 }
 
+/// Index a roster by operator id for O(1) lookups.
+fn build_roster_map(roster: &[RosterEntry]) -> HashMap<&str, &RosterEntry> {
+    roster.iter().map(|r| (r.operator_id.as_str(), r)).collect()
+}
+
+/// The operators that count toward `operator_grade`: real, obtainable operators the
+/// roster has invested in, paired with their static data and roster entry. This is
+/// the single source of truth for "gradeable operator" - share it everywhere.
+fn invested_operators<'a>(
+    roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
+    game_data: &'a GameData,
+) -> impl Iterator<Item = (&'a str, &'a Operator, &'a RosterEntry)> {
+    game_data
+        .operators
+        .iter()
+        .filter(|(_, op)| {
+            !matches!(
+                op.profession,
+                OperatorProfession::Token | OperatorProfession::Trap
+            ) && !op.is_not_obtainable
+        })
+        .filter_map(move |(op_id, static_op)| {
+            let entry = *roster_map.get(op_id.as_str())?;
+            has_investment(entry).then_some((op_id.as_str(), static_op, entry))
+        })
+}
+
 pub fn grade_operators(
     roster: &[RosterEntry],
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> f64 {
-    let roster_map: HashMap<&str, &RosterEntry> =
-        roster.iter().map(|r| (r.operator_id.as_str(), r)).collect();
+    let roster_map = build_roster_map(roster);
     let mut weighted_sum = 0.0;
     let mut weight_total = 0.0;
 
-    for (op_id, static_op) in &game_data.operators {
-        if matches!(
-            static_op.profession,
-            OperatorProfession::Token | OperatorProfession::Trap
-        ) {
-            continue;
-        }
-        if static_op.is_not_obtainable {
-            continue;
-        }
-
-        let Some(roster_entry) = roster_map.get(op_id.as_str()) else {
-            continue;
-        };
-
-        if !has_investment(roster_entry) {
-            continue;
-        }
-
+    for (op_id, static_op, roster_entry) in invested_operators(&roster_map, game_data) {
         let rarity_weight = rarity_to_weight(&static_op.rarity);
-        let is_support = support_ids.contains(op_id.as_str());
+        let is_support = support_ids.contains(op_id);
         let op_score = grade_operator(roster_entry, static_op, &game_data.favor, is_support);
 
         weighted_sum += op_score * rarity_weight;
@@ -105,28 +112,10 @@ pub fn grade_operators(
 /// Used by the improvements builder to translate per-operator score deltas
 /// into a contribution against the user's overall Operators subscore.
 pub fn total_roster_weight(roster: &[RosterEntry], game_data: &GameData) -> f64 {
-    let roster_map: HashMap<&str, &RosterEntry> =
-        roster.iter().map(|r| (r.operator_id.as_str(), r)).collect();
-    let mut total = 0.0;
-    for (op_id, static_op) in &game_data.operators {
-        if matches!(
-            static_op.profession,
-            OperatorProfession::Token | OperatorProfession::Trap
-        ) {
-            continue;
-        }
-        if static_op.is_not_obtainable {
-            continue;
-        }
-        let Some(entry) = roster_map.get(op_id.as_str()) else {
-            continue;
-        };
-        if !has_investment(entry) {
-            continue;
-        }
-        total += rarity_to_weight(&static_op.rarity);
-    }
-    total
+    let roster_map = build_roster_map(roster);
+    invested_operators(&roster_map, game_data)
+        .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
+        .sum()
 }
 
 pub fn grade_operator(
@@ -193,14 +182,6 @@ fn build_dimensions(
     }
 
     dimensions
-}
-
-fn weighted_average(dims: &[Dimension]) -> f64 {
-    let total_weight: f64 = dims.iter().map(|(w, _)| w).sum();
-    if total_weight <= 0.0 {
-        return 0.0;
-    }
-    dims.iter().map(|(w, s)| w * s).sum::<f64>() / total_weight
 }
 
 const fn level_weight(rarity: &OperatorRarity) -> f64 {

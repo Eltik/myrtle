@@ -1,7 +1,7 @@
 import { Dialog, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
-import type { IBaseAssignment, IBaseImprovements, IImprovementsResponse, IRoomAssignment, IRoomRotation, IRotation } from "#/lib/api/user";
+import type { IAssignedOperator, IBaseAssignment, IBaseImprovements, IImprovementsResponse, IRoomAssignment, IRoomRotation, IRotation, IRotationSet } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { BaseComparison } from "./BaseComparison";
 import { compactNum, roomYieldLabel, signedCompact } from "./baseYield";
@@ -28,13 +28,26 @@ function roomLabel(t: string): string {
     return ROOM_LABELS[t] ?? t.charAt(0) + t.slice(1).toLowerCase();
 }
 
+/** A "/day" suffix that clarifies the per-day LMD/gold/EXP figures are an AVERAGE
+ *  over the staggered rotation cycle (~36h), not a constant peak rate. */
+function PerDay({ className }: { className?: string }) {
+    return (
+        <Tooltip>
+            <TooltipTrigger render={<span className={cn("cursor-help underline decoration-dotted underline-offset-2", className)}>/day</span>} />
+            <TooltipContent sideOffset={4}>
+                <p className="max-w-xs">Averaged over a ~36h staggered-rotation cycle - real output dips a little while a backup covers a resting operator, so this is the sustained daily average, not a constant peak.</p>
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
 /** "X LMD/day + Y EXP/day" summary for an assignment's realized yield. */
 function YieldSummary({ assignment }: { assignment: IBaseAssignment }) {
     return (
         <span className={cn(TEXT_BADGE, "text-muted-foreground")}>
             {compactNum(assignment.yield_lmd_per_day)} LMD
             {assignment.yield_exp_per_day > 0 && <> · {compactNum(assignment.yield_exp_per_day)} EXP</>}
-            <span className="opacity-60">/day</span>
+            <PerDay className="opacity-60" />
         </span>
     );
 }
@@ -86,12 +99,12 @@ export function BasePanel({ improvements, accent }: IProps) {
                         <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
                             {compactNum(base.optimal.yield_lmd_per_day)} LMD
                             {base.optimal.yield_exp_per_day > 0 && <> · {compactNum(base.optimal.yield_exp_per_day)} EXP</>}
-                            <span className="font-sans text-muted-foreground/60">/day</span>
+                            <PerDay className="font-sans text-muted-foreground/60" />
                         </span>
                         <span className={cn(TEXT_BADGE, "text-muted-foreground")}>({signedCompact(base.optimal.total_production_efficiency - base.current.total_production_efficiency)}% efficiency)</span>
                     </div>
 
-                    {/* The entire base plan in a dialog — available on every screen
+                    {/* The entire base plan in a dialog - available on every screen
                         size, including desktop, for a focused full-screen view. */}
                     <Dialog>
                         <DialogTrigger className={cn("self-start rounded-md border border-border/45 bg-background/60 px-2 py-1 transition-colors hover:border-foreground/25", TEXT_KICKER, "text-muted-foreground hover:text-foreground")}>View full base plan →</DialogTrigger>
@@ -134,7 +147,7 @@ function RotationSection({ rotation, accent }: { rotation: IRotation | null; acc
         <div className="flex flex-col gap-3">
             <SectionHeader title="Sustained 24/7 rotation" count={`+${rotation.sustained_efficiency.toFixed(1)}% sustained`} accent={accent} />
             <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Staggered rotation: keep the main team working, and when you log in swap only the <span className="font-medium">⚡ first operator</span> in each room (the one whose morale runs low soonest) for its backup — never a whole team at once. Times below are roughly how long each operator works before it needs
+                Staggered rotation: keep the main team working, and when you log in swap only the <span className="font-medium">⚡ first operator</span> in each room (the one whose morale runs low soonest) for its backup - never a whole team at once. Times below are roughly how long each operator works before it needs
                 rest.
             </p>
             <div className="flex flex-col gap-2">
@@ -142,7 +155,65 @@ function RotationSection({ rotation, accent }: { rotation: IRotation | null; acc
                     <RotationRoomRow key={room.slot_id} room={room} accent={accent} />
                 ))}
             </div>
+            <RotationSetsSection sets={rotation.sets} accent={accent} />
         </div>
+    );
+}
+
+/** The rotation as a few overlapping staffings to cycle through, so you never swap
+ * the whole base at once. Each set rests one operator per room (covered by a backup)
+ * and consecutive sets share all but one operator. */
+function RotationSetsSection({ sets, accent }: { sets: IRotationSet[] | undefined; accent: string }) {
+    if (!sets || sets.length < 2) return null;
+    return (
+        <div className="mt-1 flex flex-col gap-2 border-border/30 border-t pt-3">
+            <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Overlapping sets to cycle through</span>
+            <p className={cn(TEXT_META, "text-muted-foreground")}>
+                Don't break the whole base at once. Cycle through these {sets.length} sets one swap at a time - each set rests only the operators that actually run low on morale (covered by a backup), while low-drain operators keep working. Consecutive sets share all but one operator per room.
+            </p>
+            <div className="flex flex-col gap-2">
+                {sets.map((set, i) => (
+                    <RotationSetRow key={set.rooms.map((r) => r.resting?.operator_id ?? r.slot_id).join("-")} set={set} index={i} accent={accent} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function RotationSetRow({ set, index, accent }: { set: IRotationSet; index: number; accent: string }) {
+    const resting = set.rooms.map((r) => r.resting?.name).filter((n): n is string => Boolean(n));
+    return (
+        <div className="flex flex-col gap-1.5 rounded-md border border-border/35 bg-muted/15 px-2.5 py-2">
+            <div className="flex items-center justify-between gap-2">
+                <span className={cn(TEXT_KICKER, "font-semibold")} style={{ color: accent }}>
+                    Set {index + 1}
+                </span>
+                {resting.length > 0 && <span className={cn(TEXT_BADGE, "truncate text-muted-foreground/60")}>resting: {resting.join(", ")}</span>}
+            </div>
+            <div className="flex flex-col gap-1">
+                {set.rooms.map((r) => (
+                    <div key={r.slot_id} className="flex items-start gap-2">
+                        <span className={cn("min-w-24 shrink-0 pt-0.5", TEXT_BADGE, "text-muted-foreground/65")}>{roomLabel(r.room_type)}</span>
+                        <div className="flex flex-1 flex-wrap items-center gap-1">
+                            {r.working.map((op) => (
+                                <SetOpChip key={op.operator_id} op={op} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function SetOpChip({ op }: { op: IAssignedOperator }) {
+    return (
+        <span className="flex items-center gap-1 rounded-md border border-border/40 bg-background/55 px-1 py-0.5">
+            <span className="relative size-4 overflow-hidden rounded-sm">
+                <OperatorAvatar charId={op.operator_id} name={op.name} />
+            </span>
+            <span className={cn(TEXT_BADGE, "max-w-[10ch] truncate font-medium")}>{op.name}</span>
+        </span>
     );
 }
 
@@ -190,7 +261,7 @@ function RotationRoomRow({ room, accent }: { room: IRoomRotation; accent: string
                         />
                         <TooltipContent sideOffset={4}>
                             <p>
-                                {i === 0 ? "Swap this one first — " : ""}
+                                {i === 0 ? "Swap this one first - " : ""}
                                 {m.operator.name} works ~{m.lasts_hours.toFixed(0)}h before its morale runs low.
                             </p>
                         </TooltipContent>
@@ -237,7 +308,7 @@ function RoomRow({ room, accent, compact }: { room: IRoomAssignment; accent: str
                         <Tooltip>
                             <TooltipTrigger render={<span className={cn("rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-amber-500/90", TEXT_BADGE)}>🔒 fixed</span>} />
                             <TooltipContent sideOffset={4}>
-                                <p>Fixed synergy squad — these operators depend on each other (e.g. Shamare + Tequila, or Texas + Lappland) and can't be swapped without breaking the combo.</p>
+                                <p>Fixed synergy squad - these operators depend on each other (e.g. Shamare + Tequila, or Texas + Lappland) and can't be swapped without breaking the combo.</p>
                             </TooltipContent>
                         </Tooltip>
                     )}
@@ -290,11 +361,18 @@ function RoomRow({ room, accent, compact }: { room: IRoomAssignment; accent: str
                     <Tooltip>
                         <TooltipTrigger render={<span className={cn(TEXT_BADGE, "text-amber-500/85")}>+{room.order_value.toFixed(0)}% value</span>} />
                         <TooltipContent sideOffset={4}>
-                            <p>Order value (LMD per order, e.g. Proviso) — raises LMD without adding order speed.</p>
+                            <p>Order value (LMD per order, e.g. Proviso) - raises LMD without adding order speed.</p>
                         </TooltipContent>
                     </Tooltip>
                 )}
-                {yieldLabel && <span className={cn(TEXT_BADGE, "text-muted-foreground/70")}>{yieldLabel}</span>}
+                {yieldLabel && (
+                    <Tooltip>
+                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "cursor-help text-muted-foreground/70")}>{yieldLabel}</span>} />
+                        <TooltipContent sideOffset={4}>
+                            <p className="max-w-xs">Averaged over a ~36h staggered-rotation cycle (sustained daily average, not a constant peak).{yieldLabel.includes("*") ? " * Trading-post LMD assumes it's gold-supplied." : ""}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
             </div>
         </div>
     );

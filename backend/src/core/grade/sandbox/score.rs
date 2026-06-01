@@ -98,37 +98,27 @@ fn score_achievements(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usiz
     (ratio(completed, universe.max_achievements), completed)
 }
 
+/// A sandbox map node/zone counts as unlocked once its `state` reaches 1.
+fn is_unlocked(v: &Value) -> bool {
+    v.get("state")
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or(0)
+        >= 1
+}
+
 fn score_exploration(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize) {
     let nodes_explored = sandbox
         .get("main")
         .and_then(|m| m.get("map"))
         .and_then(|m| m.get("node"))
         .and_then(|n| n.as_object())
-        .map_or(0, |obj| {
-            obj.values()
-                .filter(|v| {
-                    v.get("state")
-                        .and_then(serde_json::Value::as_i64)
-                        .unwrap_or(0)
-                        >= 1
-                })
-                .count()
-        });
+        .map_or(0, |obj| obj.values().filter(|v| is_unlocked(v)).count());
 
     let zones_unlocked = sandbox
         .get("main")
         .and_then(|m| m.get("zone"))
         .and_then(|z| z.as_object())
-        .map_or(0, |obj| {
-            obj.values()
-                .filter(|v| {
-                    v.get("state")
-                        .and_then(serde_json::Value::as_i64)
-                        .unwrap_or(0)
-                        >= 1
-                })
-                .count()
-        });
+        .map_or(0, |obj| obj.values().filter(|v| is_unlocked(v)).count());
 
     let score = (ratio(nodes_explored, universe.max_nodes)
         + ratio(zones_unlocked, universe.max_zones))

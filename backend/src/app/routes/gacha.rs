@@ -38,7 +38,7 @@ pub async fn fetch(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<services::gacha::FetchResult>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let result = services::gacha::fetch_and_store(&state, user_id, &auth.uid).await?;
     Ok(Json(result))
 }
@@ -80,7 +80,7 @@ pub async fn history(
     auth: AuthUser,
     Query(params): Query<HistoryParams>,
 ) -> Result<Json<services::gacha::GachaHistoryEnvelopeDto>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let order_desc = !matches!(params.order.as_deref(), Some("asc"));
     let envelope = services::gacha::get_history_envelope(
         &state,
@@ -103,7 +103,7 @@ pub async fn history_by_char(
     auth: AuthUser,
     Path(char_id): Path<String>,
 ) -> Result<Json<Vec<services::gacha::GachaRecordEntryDto>>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let rows = services::gacha::get_history_for_char(&state, user_id, &char_id).await?;
     Ok(Json(rows))
 }
@@ -112,7 +112,7 @@ pub async fn stored_records(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<services::gacha::GachaRecordsDto>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let records = services::gacha::get_stored_records(&state, user_id).await?;
     Ok(Json(records))
 }
@@ -121,7 +121,7 @@ pub async fn stats(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<GachaStats>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let stats = services::gacha::get_stats(&state, user_id).await?;
     Ok(Json(stats))
 }
@@ -130,7 +130,7 @@ pub async fn get_settings(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<services::gacha::GachaSettingsDto>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let settings = services::gacha::get_gacha_settings(&state, user_id).await?;
     Ok(Json(settings))
 }
@@ -147,7 +147,7 @@ pub async fn update_settings(
     auth: AuthUser,
     Json(body): Json<UpdateSettingsBody>,
 ) -> Result<Json<services::gacha::GachaSettingsDto>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let settings = services::gacha::update_gacha_settings(
         &state,
         user_id,

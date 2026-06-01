@@ -181,7 +181,7 @@ export function stepAnchor(scale: CalendarScale, anchor: Date, dir: number): Dat
 }
 
 /**
- * The header label for the visible range, e.g. "October 2026" or "Oct 26 – Nov 1, 2026".
+ * The header label for the visible range, e.g. "October 2026" or "Oct 26 - Nov 1, 2026".
  * `short` drops the weekday and abbreviates months so the title fits on small screens.
  */
 export function formatRangeTitle(scale: CalendarScale, anchor: Date, short = false): string {
@@ -194,10 +194,10 @@ export function formatRangeTitle(scale: CalendarScale, anchor: Date, short = fal
 
     const end = days[days.length - 1];
     if (start.getFullYear() !== end.getFullYear()) {
-        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} – ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} - ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
     }
     if (start.getMonth() !== end.getMonth()) {
-        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()} – ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()} - ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
     }
-    return `${MONTHS[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
+    return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${end.getDate()}, ${end.getFullYear()}`;
 }

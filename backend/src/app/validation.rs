@@ -34,3 +34,8 @@ pub fn validate_opt_length(field: &str, value: Option<&str>, max: usize) -> Resu
         None => Ok(()),
     }
 }
+
+/// Whether a movement/standing interval is one of the supported time windows.
+pub fn is_valid_interval(interval: &str) -> bool {
+    matches!(interval, "1 day" | "7 days" | "30 days")
+}

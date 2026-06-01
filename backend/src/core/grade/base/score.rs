@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use crate::core::gamedata::types::{GameData, building::BuildingDataFile};
-use crate::core::grade::base::assignment::compute_sustained_assignment;
+use crate::core::grade::base::assignment::{
+    compute_sustained_assignment, morale_recovery, op_uptime, shared_bench_size,
+};
 use crate::database::models::roster::RosterEntry;
 
 use super::{
@@ -10,6 +12,7 @@ use super::{
         faction_tags_of,
     },
     types::{OperatorBaseProfile, UserBuilding, compute_match_tags},
+    util::{is_production_room, max_stationed_at_level, room_phase},
 };
 
 pub fn grade_base(
@@ -56,7 +59,13 @@ pub fn grade_base(
     let d2 = score_infrastructure(&user_building, building_data);
 
     // Dimension 3: Morale Sustainability (15%)
-    let d3 = score_morale_sustainability(&profiles, &user_building, building_data, &registry);
+    let d3 = score_morale_sustainability(
+        &profiles,
+        &user_building,
+        building_data,
+        &registry,
+        &morale_drains,
+    );
 
     // Dimension 4: Secondary Facilities (10%)
     let d4 = score_secondary_facilities(&profiles, building_data);
@@ -168,9 +177,7 @@ fn score_infrastructure(building: &UserBuilding, building_data: &BuildingDataFil
     let mut power_consumed: i32 = 0;
 
     for room in &building.rooms {
-        if let Some(def) = building_data.rooms.get(&room.room_type)
-            && let Some(phase) = def.phases.get((room.level - 1) as usize)
-        {
+        if let Some(phase) = room_phase(building_data, &room.room_type, room.level) {
             if phase.electricity > 0 {
                 power_generated += phase.electricity;
             } else {
@@ -194,37 +201,46 @@ fn score_morale_sustainability(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
 ) -> f64 {
-    // Count how many operators have production-relevant buffs
-    let production_ops = profiles
+    // Operators with production-relevant buffs (the candidates for mains + bench).
+    let production_ops: Vec<&OperatorBaseProfile> = profiles
         .iter()
         .filter(|p| {
             p.available_buffs.iter().any(|b| {
-                building_data.buffs.get(b).is_some_and(|buff| {
-                    buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING"
-                })
+                building_data
+                    .buffs
+                    .get(b)
+                    .is_some_and(|buff| is_production_room(&buff.room_type))
             })
         })
-        .count();
+        .collect();
 
-    // Total production slots needed
+    // Total production slots to staff (the mains).
     let production_slots: i32 = building
         .rooms
         .iter()
-        .filter(|r| r.room_type == "MANUFACTURE" || r.room_type == "TRADING")
-        .map(|r| {
-            building_data
-                .rooms
-                .get(&r.room_type)
-                .and_then(|def| def.phases.get((r.level - 1) as usize))
-                .map_or(1, |p| p.max_stationed_num)
-        })
+        .filter(|r| is_production_room(&r.room_type))
+        .map(|r| max_stationed_at_level(building_data, &r.room_type, r.level))
         .sum();
 
-    // Rotation depth: need 2x slots for shift rotation
-    let needed = f64::from(production_slots * 2);
+    // A staggered rotation needs the mains plus a small SHARED bench, sized to how
+    // many mains rest at once - not a doubled roster. Low-drain teams (and well-built
+    // dorms, which recover faster) need fewer.
+    let recovery = morale_recovery(building);
+    let avg_uptime = if production_ops.is_empty() {
+        1.0
+    } else {
+        production_ops
+            .iter()
+            .map(|op| op_uptime(op, morale_drains, recovery))
+            .sum::<f64>()
+            / production_ops.len() as f64
+    };
+    let rest_demand = f64::from(production_slots) * (1.0 - avg_uptime);
+    let needed = f64::from(production_slots) + shared_bench_size(rest_demand) as f64;
     let rotation_score = if needed > 0.0 {
-        (production_ops as f64 / needed).min(1.0)
+        (production_ops.len() as f64 / needed).min(1.0)
     } else {
         0.0
     };
@@ -245,13 +261,7 @@ fn score_morale_sustainability(
         .rooms
         .iter()
         .filter(|r| r.room_type == "DORMITORY")
-        .map(|r| {
-            building_data
-                .rooms
-                .get("DORMITORY")
-                .and_then(|def| def.phases.get((r.level - 1) as usize))
-                .map_or(5, |p| p.max_stationed_num)
-        })
+        .map(|r| max_stationed_at_level(building_data, &r.room_type, r.level))
         .sum();
 
     let recovery_score = if dorm_slots > 0 {

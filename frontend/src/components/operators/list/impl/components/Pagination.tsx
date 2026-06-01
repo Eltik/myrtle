@@ -240,7 +240,7 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
                     <div className="flex flex-col gap-0.5">
                         <span className="font-sans font-semibold text-foreground text-sm leading-none">Jump to page</span>
                         <span className="font-sans text-muted-foreground text-xs tabular-nums leading-none">
-                            Hidden range: {hiddenFrom}–{hiddenTo} · Total {totalPages}
+                            Hidden range: {hiddenFrom}-{hiddenTo} · Total {totalPages}
                         </span>
                     </div>
                     <form

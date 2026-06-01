@@ -132,7 +132,7 @@ pub async fn toggle_favorite(
     auth: crate::app::extractors::auth::AuthUser,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -151,7 +151,7 @@ pub async fn get_favorite(
     auth: crate::app::extractors::auth::AuthUser,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -171,7 +171,7 @@ pub async fn set_flair(
     Json(body): Json<SetFlairRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     use crate::core::auth::permissions::Permission;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -184,7 +184,7 @@ pub async fn set_flair(
     )
     .await?;
     queries::set_flair(&state.db, list.id, body.flair_id).await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 pub async fn list_flairs(
@@ -205,7 +205,7 @@ pub async fn set_visibility(
     Json(body): Json<SetVisibilityRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     use crate::core::auth::permissions::Permission;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;

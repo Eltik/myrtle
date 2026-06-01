@@ -7,8 +7,10 @@ use crate::core::{
         evaluate::evaluate_buff,
         types::{
             BaseAssignment, EvalContext, OperatorBaseProfile, RoomAssignment, RoomRotation,
-            RotationAssignment, RotationMember, TeammateInfo, UserBuilding, UserRoom,
+            RotationAssignment, RotationMember, RotationSet, RotationSetRoom, TeammateInfo,
+            UserBuilding, UserRoom,
         },
+        util::{is_production_room, max_stationed_at_level},
     },
 };
 
@@ -18,14 +20,16 @@ use crate::core::{
 /// so 16 covers realistic optima while keeping C(16,3) combinations cheap.
 const CANDIDATE_LIMIT: usize = 16;
 
+/// A trading post's base order limit (orders it can bank) before operator buffs,
+/// constant across levels. Operators that slash it (Degenbrecher: -6, "minimum 1")
+/// strand the post far below capacity, throttling sustained output. The game
+/// enforces a floor of 1.
+const BASE_TRADING_ORDER_LIMIT: i32 = 6;
+const MIN_TRADING_ORDER_LIMIT: i32 = 1;
+
 /// Build a `char_id` → profile index for O(1) lookups in the hot inner loops.
 fn build_op_index(operators: &[OperatorBaseProfile]) -> HashMap<&str, &OperatorBaseProfile> {
     operators.iter().map(|o| (o.char_id.as_str(), o)).collect()
-}
-
-/// Trading posts and factories - the yield-producing rooms the optimizer staffs.
-fn is_production_room(room_type: &str) -> bool {
-    matches!(room_type, "MANUFACTURE" | "TRADING")
 }
 
 pub fn compute_optimal_assignment(
@@ -38,7 +42,7 @@ pub fn compute_optimal_assignment(
     let facility_counts = count_facilities(building);
     let total_dorm_levels = building.total_dorm_levels();
 
-    let mut assigned: HashSet<String> = HashSet::new();
+    let assigned: HashSet<String> = HashSet::new();
 
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
     // Only staff the Control Center if one is actually built - otherwise we'd
@@ -48,36 +52,75 @@ pub fn compute_optimal_assignment(
     } else {
         0
     };
-    let (cc_room, global_bonuses, cc_conditions) = assign_control_center(
-        operators,
-        control_room,
-        control_slots,
-        registry,
-        building_data,
-        &assigned,
-    );
-    for id in &cc_room.operators {
-        assigned.insert(id.clone());
-    }
-
     let production_rooms: Vec<&UserRoom> = building
         .rooms
         .iter()
         .filter(|r| is_production_room(&r.room_type))
         .collect();
+    let op_index = build_op_index(operators);
 
-    let room_assignments = assign_production_rooms(
-        &production_rooms,
-        operators,
-        &mut assigned,
-        registry,
-        building_data,
-        &facility_counts,
-        total_dorm_levels,
-        &global_bonuses,
-        &cc_conditions,
-        morale_drains,
-    );
+    // Assign the Control Center, then production. If a CC operator turns out to be
+    // dead weight - its only effect is a conditional the optimized teams never
+    // satisfy (SilverAsh's Kjerag gate when no post fields 3 Kjerag) - drop it and
+    // reselect, so its seat goes to an operator that actually contributes.
+    let mut exclude_cc: HashSet<String> = HashSet::new();
+    let (cc_room, room_assignments, assigned) = loop {
+        let mut assigned = assigned.clone();
+        let (mut cc_room, global_bonuses, cc_conditions) = assign_control_center(
+            operators,
+            control_room,
+            control_slots,
+            registry,
+            building_data,
+            &exclude_cc,
+        );
+        for id in &cc_room.operators {
+            assigned.insert(id.clone());
+        }
+        // Reserve spare CC seats for global morale-recovery operators (Chongyue,
+        // Wiš'adel) BEFORE production padding can claim them as zero-value fillers:
+        // unlike a benchwarmer they lift every working operator's sustain.
+        reserve_cc_morale_seats(
+            &mut cc_room,
+            control_slots,
+            operators,
+            &mut assigned,
+            registry,
+            building_data,
+        );
+        let room_assignments = assign_production_rooms(
+            &production_rooms,
+            operators,
+            &mut assigned,
+            registry,
+            building_data,
+            &facility_counts,
+            total_dorm_levels,
+            &global_bonuses,
+            &cc_conditions,
+            morale_drains,
+        );
+        let newly_dead: Vec<String> = cc_room
+            .operators
+            .iter()
+            .filter(|id| !exclude_cc.contains(*id))
+            .filter(|id| {
+                op_index.get(id.as_str()).is_some_and(|op| {
+                    cc_op_is_dead(op, &room_assignments, &op_index, registry, building_data)
+                })
+            })
+            .cloned()
+            .collect();
+        if newly_dead.is_empty() {
+            break (cc_room, room_assignments, assigned);
+        }
+        exclude_cc.extend(newly_dead);
+    };
+    let mut assigned = assigned;
+    // Keep the dropped dead-weight operators benched - otherwise they would be
+    // re-added to the Control Center as zero-value fillers, resurfacing the very
+    // recommendation we just removed.
+    assigned.extend(exclude_cc);
 
     let total_production_efficiency = room_assignments.iter().map(|r| r.total_efficiency).sum();
 
@@ -115,12 +158,137 @@ pub fn compute_optimal_assignment(
 // Constants are calibrated estimates (drain modifiers come in ~±0.25/hr units):
 /// Neutral per-hour morale burn for a working operator (before skill modifiers).
 const BASE_MORALE_DRAIN: f64 = 0.5;
-/// Per-hour morale recovery while resting in a dormitory (faster than drain, so
-/// operators spend more time working than resting).
+/// Per-hour morale recovery while resting in a FULLY-DEVELOPED dormitory (faster
+/// than drain, so operators spend more time working than resting). The realized
+/// rate scales down with dorm level - see `morale_recovery`.
 const MORALE_RECOVERY: f64 = 1.0;
+/// Dorm level at which recovery reaches the modeled maximum.
+const MAX_DORM_LEVEL: f64 = 5.0;
+/// Floor on the recovery factor so a barely-built base still rotates (slowly).
+const MIN_RECOVERY_FACTOR: f64 = 0.3;
 /// How much of a resting main's output a backup recovers while covering it (a
 /// good rotation piece is close, but not equal, to the operator it replaces).
 const BACKUP_COVERAGE: f64 = 0.8;
+
+/// Effective per-hour morale recovery for this base. Operators rest in dormitories,
+/// whose recovery rate rises with dorm level, so a base with low-level dorms (a
+/// typical 252 layout) recovers its workers more slowly: they spend more time
+/// resting and the base sustains further below peak. A fully-developed dorm wing
+/// (L5) recovers at the modeled maximum, matching the original calibration.
+pub fn morale_recovery(building: &UserBuilding) -> f64 {
+    let levels: Vec<i32> = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| r.level)
+        .collect();
+    if levels.is_empty() {
+        return MORALE_RECOVERY * MIN_RECOVERY_FACTOR;
+    }
+    let avg = f64::from(levels.iter().sum::<i32>()) / levels.len() as f64;
+    MORALE_RECOVERY * (avg / MAX_DORM_LEVEL).clamp(MIN_RECOVERY_FACTOR, 1.0)
+}
+
+/// Total operators the base can rest at once: the sum of its dormitory capacities.
+/// A staggered rotation only keeps its workers fresh if the dorms can hold everyone
+/// who needs to rest at a time (the "you can only rest 20, so you run 3 overlapping
+/// sets" reality); when they can't, sustained output is throttled.
+fn total_dorm_capacity(building: &UserBuilding, building_data: &BuildingDataFile) -> i32 {
+    building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .map(|r| max_stationed_at_level(building_data, "DORMITORY", r.level))
+        .sum()
+}
+
+/// How much a base's sustained output is throttled because its dormitories cannot
+/// rest everyone who needs to at once. `rest_demand` is the expected number resting
+/// at a time (summed per-operator rest fractions); if it exceeds capacity, the
+/// rotation falls behind and output scales by `capacity / rest_demand`.
+fn dorm_capacity_factor(rest_demand: f64, capacity: i32) -> f64 {
+    let cap = f64::from(capacity.max(0));
+    if rest_demand <= cap || rest_demand <= 0.0 {
+        1.0
+    } else {
+        cap / rest_demand
+    }
+}
+
+/// Morale per hour this operator restores to workers in OTHER buildings when seated
+/// in the Control Center (Chongyue, Wiš'adel). Unlike the Control-Center-only morale
+/// trickle, this lifts every working operator's recovery, so it is a base-wide
+/// sustain boost - which is what makes a morale operator worth a CC seat over a
+/// production buff whose gate never fires.
+fn cc_global_morale_recovery(
+    op: &OperatorBaseProfile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    op.available_buffs
+        .iter()
+        .filter_map(|b| {
+            let buff = building_data.buffs.get(b)?;
+            if buff.room_type != "CONTROL"
+                || !buff.description.to_lowercase().contains("other building")
+            {
+                return None;
+            }
+            match registry.get(b) {
+                Some(BuffResolutionStrategy::MoraleModifier {
+                    recovery_per_hour, ..
+                }) => Some(*recovery_per_hour),
+                _ => None,
+            }
+        })
+        .sum()
+}
+
+/// Fill the Control Center's spare seats with idle global morale-recovery operators
+/// (strongest first), reserving them from production padding. Each lifts the whole
+/// base's sustain, so it is a better use of a spare seat than a zero-value filler.
+fn reserve_cc_morale_seats(
+    cc_room: &mut ControlCenter,
+    control_slots: i32,
+    operators: &[OperatorBaseProfile],
+    assigned: &mut HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) {
+    let mut morale_ops: Vec<(&OperatorBaseProfile, f64)> = operators
+        .iter()
+        .filter(|op| !assigned.contains(&op.char_id))
+        .filter_map(|op| {
+            let boost = cc_global_morale_recovery(op, registry, building_data);
+            (boost > 0.0).then_some((op, boost))
+        })
+        .collect();
+    morale_ops.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    for (op, _) in morale_ops {
+        if cc_room.operators.len() as i32 >= control_slots {
+            break;
+        }
+        assigned.insert(op.char_id.clone());
+        cc_room.operators.push(op.char_id.clone());
+    }
+}
+
+/// Total base-wide morale recovery the Control Center's operators add on top of the
+/// dormitories' rate.
+fn cc_morale_boost(
+    main: &BaseAssignment,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    main.rooms
+        .iter()
+        .filter(|r| r.room_type == "CONTROL")
+        .flat_map(|r| r.operators.iter())
+        .filter_map(|id| op_index.get(id.as_str()))
+        .map(|op| cc_global_morale_recovery(op, registry, building_data))
+        .sum()
+}
 
 /// An operator's total morale drain per hour (base + its skills' modifiers).
 /// Lower = works longer before resting = better for sustained rotation.
@@ -133,10 +301,24 @@ fn op_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64
     (BASE_MORALE_DRAIN + modifier).max(0.05)
 }
 
-/// Fraction of time an operator is working (vs resting) at steady state.
-fn op_uptime(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
+/// Fraction of time an operator is working (vs resting) at steady state, given the
+/// base's `recovery` rate (slower recovery -> more rest -> lower uptime).
+pub(crate) fn op_uptime(
+    op: &OperatorBaseProfile,
+    morale_drains: &HashMap<String, f64>,
+    recovery: f64,
+) -> f64 {
     let d = op_morale_drain(op, morale_drains);
-    MORALE_RECOVERY / (d + MORALE_RECOVERY)
+    recovery / (d + recovery)
+}
+
+/// Operators a staggered rotation needs on its shared bench. Because only one
+/// operator is swapped out at a time and the same filler can cover any room, the
+/// bench is sized to the expected number resting at once (the summed per-operator
+/// rest fractions across all mains), never fewer than one. Low-drain mains rest
+/// less, so a strong roster needs only a handful of fillers - not a second team.
+pub(crate) fn shared_bench_size(rest_demand: f64) -> usize {
+    (rest_demand.ceil() as usize).max(1)
 }
 
 /// Hours a neutral-drain operator works before its morale runs low and you swap it
@@ -150,23 +332,27 @@ fn op_lasts_hours(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>
 }
 
 /// How close a room stays to its peak under a staggered rotation: 1.0 if its
-/// operators never rest, lower as they rest more (then a backup covers, recovering
-/// only `BACKUP_COVERAGE` of the gap). Low-drain teams stay nearer peak.
+/// operators never rest, lower as they rest more. A flexible room swaps a backup in
+/// to cover a resting main (recovering `BACKUP_COVERAGE` of the gap); a LOCKED team
+/// can't be staggered, so its rest gaps are uncovered (`coverage = 0`) and it falls
+/// further from peak. Low-drain teams stay nearer peak either way.
 fn room_sustain_factor(
     room_ops: &[String],
     op_index: &HashMap<&str, &OperatorBaseProfile>,
     morale_drains: &HashMap<String, f64>,
+    recovery: f64,
+    coverage: f64,
 ) -> f64 {
     let uptimes: Vec<f64> = room_ops
         .iter()
         .filter_map(|id| op_index.get(id.as_str()))
-        .map(|op| op_uptime(op, morale_drains))
+        .map(|op| op_uptime(op, morale_drains, recovery))
         .collect();
     if uptimes.is_empty() {
         return 1.0;
     }
     let avg_uptime = uptimes.iter().sum::<f64>() / uptimes.len() as f64;
-    1.0 - (1.0 - avg_uptime) * (1.0 - BACKUP_COVERAGE)
+    1.0 - (1.0 - avg_uptime) * (1.0 - coverage)
 }
 
 /// Sustained 24/7 efficiency of a staffing under a staggered rotation: each
@@ -175,12 +361,19 @@ pub fn sustained_efficiency_of(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
     morale_drains: &HashMap<String, f64>,
+    recovery: f64,
 ) -> f64 {
     let op_index = build_op_index(operators);
     main.rooms
         .iter()
         .filter(|r| is_production_room(&r.room_type))
-        .map(|r| r.total_efficiency * room_sustain_factor(&r.operators, &op_index, morale_drains))
+        .map(|r| {
+            // A locked synergy team can't be staggered, so a resting member's gap is
+            // uncovered; a flexible room recovers `BACKUP_COVERAGE` of it.
+            let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
+            r.total_efficiency
+                * room_sustain_factor(&r.operators, &op_index, morale_drains, recovery, coverage)
+        })
         .sum()
 }
 
@@ -197,20 +390,90 @@ pub fn compute_sustained_assignment(
         compute_optimal_assignment(operators, building, building_data, registry, morale_drains);
     let facility_counts = count_facilities(building);
     let total_dorm_levels = building.total_dorm_levels();
+    let op_index = build_op_index(operators);
+    // Dormitories set the base recovery rate; a morale operator in the Control Center
+    // (Chongyue, Wiš'adel) lifts it further for the whole base.
+    let recovery =
+        morale_recovery(building) + cc_morale_boost(&main, &op_index, registry, building_data);
 
     // Sustained 24/7 output: each production room's peak efficiency scaled by how
-    // well its team holds up under rotation (low morale drain -> near peak).
-    let sustained_efficiency = sustained_efficiency_of(&main, operators, morale_drains);
+    // well its team holds up under rotation (low morale drain / low-level dorms ->
+    // further below peak).
+    let mut sustained_efficiency =
+        sustained_efficiency_of(&main, operators, morale_drains, recovery);
 
-    // Per-room rotation plan: who to swap first (fastest-draining), when (hours),
-    // and which still-idle operator to rotate in (only one swap at a time).
-    let op_index = build_op_index(operators);
-    let mut used: HashSet<String> = main
+    // Dorm-capacity throttle: a base can only rest as many operators at once as its
+    // dormitories hold. If more than that need to rest, the rotation falls behind and
+    // workers run tired - scale output by how much of the rest demand the dorms cover.
+    let rest_demand: f64 = main
         .rooms
         .iter()
-        .flat_map(|r| r.operators.iter().cloned())
+        .filter(|r| is_production_room(&r.room_type))
+        .flat_map(|r| r.operators.iter())
+        .filter_map(|id| op_index.get(id.as_str()).copied())
+        .map(|op| 1.0 - op_uptime(op, morale_drains, recovery))
+        .sum();
+    sustained_efficiency *=
+        dorm_capacity_factor(rest_demand, total_dorm_capacity(building, building_data));
+
+    let mains: HashSet<&str> = main
+        .rooms
+        .iter()
+        .flat_map(|r| r.operators.iter().map(String::as_str))
         .collect();
+
+    // A staggered rotation swaps one operator at a time and reuses the same fillers
+    // across rooms, so a single SHARED bench covers the whole base: one versatile
+    // filler can back up every room of its kind, never needed in two at once.
+
+    // Best filler for a room, ranked by the REAL value it adds ALONGSIDE the room's
+    // mains - not an optimistic standalone bound. An operator whose buff is gated on
+    // an absent teammate (Texas needs Lappland) adds ~0 and is rejected, since as a
+    // staggered rotation piece it is swapped in to cover one resting main and its
+    // enabler may not be present. Backups are not consumed per room (shared bench).
+    let best_filler = |room_type: &str,
+                       formula: Option<&str>,
+                       room_mains: &[String]|
+     -> Option<&OperatorBaseProfile> {
+        let score = |ops: &[String]| -> f64 {
+            let (s, v) = compute_team_efficiency(
+                ops,
+                room_type,
+                formula,
+                &op_index,
+                registry,
+                building_data,
+                &facility_counts,
+                total_dorm_levels,
+                morale_drains,
+                &[],
+            );
+            room_search_score(room_type, s, v)
+        };
+        let base = score(room_mains);
+        operators
+            .iter()
+            .filter(|op| !mains.contains(op.char_id.as_str()))
+            .filter(|op| {
+                applicable_strategies(op, room_type, formula, registry, building_data)
+                    .next()
+                    .is_some()
+            })
+            .filter_map(|op| {
+                let mut with = room_mains.to_vec();
+                with.push(op.char_id.clone());
+                let marginal = score(&with) - base;
+                (marginal > 1e-6).then_some((op, marginal))
+            })
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(op, _)| op)
+    };
+
+    // Per-room rotation plan: who to swap first (fastest-draining) and the best
+    // filler to rotate in. The same filler may back up several rooms - it is only
+    // ever needed in one at a time - so backups are NOT consumed per room.
     let mut rooms = Vec::new();
+    let mut bench: Vec<String> = Vec::new();
     for room in main
         .rooms
         .iter()
@@ -235,34 +498,20 @@ pub fn compute_sustained_assignment(
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
-        let backup = operators
-            .iter()
-            .filter(|op| !used.contains(&op.char_id))
-            .filter(|op| {
-                applicable_strategies(op, &room.room_type, formula, registry, building_data)
-                    .next()
-                    .is_some()
-            })
-            .max_by(|a, b| {
-                let bound = |op: &OperatorBaseProfile| {
-                    optimistic_bound(
-                        op,
-                        &room.room_type,
-                        formula,
-                        registry,
-                        building_data,
-                        &facility_counts,
-                        total_dorm_levels,
-                        room.operators.len(),
-                    )
-                };
-                bound(a)
-                    .partial_cmp(&bound(b))
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .map(|op| op.char_id.clone());
-        if let Some(id) = &backup {
-            used.insert(id.clone());
+        // A LOCKED synergy team (its operators depend on each other) can't be
+        // staggered one operator at a time without breaking the combo - swapping a
+        // single member collapses the whole team's output. So a locked room gets NO
+        // individual backup: it works as a fixed unit. Only flexible, individually
+        // interchangeable rooms get a rotation backup.
+        let backup = if room.locked {
+            None
+        } else {
+            best_filler(&room.room_type, formula, &room.operators).map(|op| op.char_id.clone())
+        };
+        if let Some(id) = &backup
+            && !bench.contains(id)
+        {
+            bench.push(id.clone());
         }
 
         rooms.push(RoomRotation {
@@ -273,9 +522,64 @@ pub fn compute_sustained_assignment(
         });
     }
 
+    // Express the rotation as a few OVERLAPPING sets: in set k each room rests its
+    // k-th most-urgent main (covered by the backup), so consecutive sets share all
+    // but one operator per room - you never break the whole base at once. Up to three
+    // sets matches the usual 12h-swap / ~36h-recovery cadence.
+    //
+    // A room only rotates the operators that actually run their morale low within one
+    // rotation cycle (~36h). A low-drain operator (Vermeil-type) works it almost
+    // continuously and never needs a rest slot, so a room of them adds no sets - the
+    // set count tracks REAL rest demand, not just seat count.
+    const MAX_ROTATION_SETS: usize = 3;
+    const ROTATION_CYCLE_HOURS: f64 = 36.0;
+    let needs_rest = |m: &RotationMember| m.lasts_hours <= ROTATION_CYCLE_HOURS;
+    // Only rooms with a backup rotate; a locked team (no backup) keeps its full crew
+    // in every set, so it never drives the set count.
+    let num_sets = rooms
+        .iter()
+        .map(|r| {
+            if r.backup.is_some() {
+                r.members.iter().filter(|m| needs_rest(m)).count()
+            } else {
+                0
+            }
+        })
+        .max()
+        .unwrap_or(0)
+        .min(MAX_ROTATION_SETS);
+    let sets: Vec<RotationSet> = (0..num_sets)
+        .map(|k| RotationSet {
+            rooms: rooms
+                .iter()
+                .map(|r| {
+                    let mut working: Vec<String> =
+                        r.members.iter().map(|m| m.operator.clone()).collect();
+                    // Rest the k-th most-urgent main only if it genuinely needs it;
+                    // otherwise this room keeps its full crew working this set.
+                    let resting = match (r.members.get(k), &r.backup) {
+                        (Some(m), Some(b)) if needs_rest(m) => {
+                            working[k] = b.clone();
+                            Some(m.operator.clone())
+                        }
+                        _ => None,
+                    };
+                    RotationSetRoom {
+                        slot_id: r.slot_id.clone(),
+                        room_type: r.room_type.clone(),
+                        working,
+                        resting,
+                    }
+                })
+                .collect(),
+        })
+        .collect();
+
     RotationAssignment {
         main,
         rooms,
+        shared_bench: bench,
+        sets,
         sustained_efficiency,
     }
 }
@@ -409,17 +713,6 @@ fn count_facilities(building: &UserBuilding) -> HashMap<String, usize> {
         *facility_counts.entry(room.room_type.clone()).or_insert(0) += 1;
     }
     facility_counts
-}
-
-/// Get the max operator slots for the first room of a given type in the user's base.
-/// Falls back to 1 if not found.
-/// Max operators stationable in a room of `room_type` at a given `level`.
-fn max_stationed_at_level(building_data: &BuildingDataFile, room_type: &str, level: i32) -> i32 {
-    building_data
-        .rooms
-        .get(room_type)
-        .and_then(|def| def.phases.get((level - 1).max(0) as usize))
-        .map_or(1, |phase| phase.max_stationed_num)
 }
 
 /// Max stationed for the user's highest-level room of `room_type` (e.g. their CC).
@@ -705,6 +998,78 @@ fn cc_bonuses(
     out
 }
 
+/// Can the roster ever satisfy a conditional CC buff's gate? `SilverAsh`'s "+10% to
+/// Trading Posts with 3 Kjerag Operators" is worthless unless the roster actually
+/// holds `required_count` operators of that faction who can staff the target room.
+/// Without this check the optimizer credits a selection weight (and a CC seat) to a
+/// gate that can never trigger.
+fn cc_condition_feasible(
+    cond: &CcCondition,
+    operators: &[OperatorBaseProfile],
+    building_data: &BuildingDataFile,
+) -> bool {
+    let eligible = operators
+        .iter()
+        .filter(|op| op.match_tags.contains(&cond.faction_token))
+        .filter(|op| {
+            op.available_buffs.iter().any(|b| {
+                building_data
+                    .buffs
+                    .get(b)
+                    .is_some_and(|buff| buff.room_type == cond.target_room)
+            })
+        })
+        .count();
+    eligible >= cond.required_count
+}
+
+/// Does a faction-gated CC condition actually fire given the FINAL production
+/// teams? (`SilverAsh`'s "3 Kjerag in a Trading Post" only fires if a post really
+/// ends up holding 3 Kjerag operators.)
+fn cc_condition_fires(
+    cond: &CcCondition,
+    rooms: &[RoomAssignment],
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+) -> bool {
+    rooms
+        .iter()
+        .filter(|r| r.room_type == cond.target_room)
+        .any(|r| {
+            let count = r
+                .operators
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()))
+                .filter(|op| op.match_tags.contains(&cond.faction_token))
+                .count();
+            if cond.per_operator {
+                count >= 1
+            } else {
+                count >= cond.required_count
+            }
+        })
+}
+
+/// Is a CC operator dead weight - i.e. every effect it brings is a conditional that
+/// does NOT fire in the actual production teams? The production optimizer is already
+/// rewarded for satisfying these gates (it credits the bonus per room), so if it
+/// declined to, the gate is genuinely unmet and the operator should yield its seat.
+fn cc_op_is_dead(
+    op: &OperatorBaseProfile,
+    rooms: &[RoomAssignment],
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> bool {
+    let bonuses = cc_bonuses(op, registry, building_data);
+    if bonuses.is_empty() {
+        return false; // no CC value to begin with - a plain filler, leave it be
+    }
+    !bonuses.iter().any(|b| match &b.conditional {
+        None => true, // an unconditional bonus always lands
+        Some(c) => cc_condition_fires(c, rooms, op_index),
+    })
+}
+
 /// Does this Control Center buff stack with same-type buffs? It does NOT (only the
 /// strongest applies) when it carries the game's non-stacking clause.
 fn cc_buff_stacks(buff: &Buff) -> bool {
@@ -732,7 +1097,20 @@ fn assign_control_center(
     let candidates: Vec<(&OperatorBaseProfile, Vec<CcBonus>)> = operators
         .iter()
         .filter(|op| !exclude.contains(&op.char_id))
-        .map(|op| (op, cc_bonuses(op, registry, building_data)))
+        .map(|op| {
+            // Drop conditional bonuses whose gate the roster can never satisfy
+            // (e.g. SilverAsh's "3 Kjerag in a Trading Post" with too few Kjerag
+            // traders) so they earn neither a selection weight nor a CC seat.
+            let bonuses = cc_bonuses(op, registry, building_data)
+                .into_iter()
+                .filter(|b| {
+                    b.conditional
+                        .as_ref()
+                        .is_none_or(|c| cc_condition_feasible(c, operators, building_data))
+                })
+                .collect::<Vec<_>>();
+            (op, bonuses)
+        })
         .filter(|(_, b)| !b.is_empty())
         .collect();
 
@@ -878,6 +1256,22 @@ fn assign_production_rooms(
     // Apply the winning assignment's used operators to the real assigned set
     *assigned = best_assigned_snapshot;
 
+    // Cross-formula cleanup: free a generic operator from a formula-specific room
+    // for one that lacks a dedicated operator, seating an idle specialist in its
+    // place. Runs before padding (EXP rooms still have open seats) and applies only
+    // value-raising moves, so it never regresses the assignment.
+    reallocate_across_formulas(
+        &mut best_assignments,
+        operators,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        global_bonuses,
+        cc_conditions,
+        morale_drains,
+    );
+
     // Now that every room has its best *beneficial* team (and only now - so a
     // valuable operator is never wasted as a filler in a room where they do
     // nothing), top each room up to a full crew with leftover operators.
@@ -895,6 +1289,119 @@ fn assign_production_rooms(
     );
 
     best_assignments
+}
+
+/// Move a generic operator out of a formula-specific room into a different-formula
+/// room that has an open seat, when doing so raises total value. A generic (`+30%`
+/// to any product) in a Gold factory is worth the same in an EXP factory, so when
+/// the Gold side already has enough output (excess gold is unsold) the generic is
+/// better spent producing EXP; the seat it frees is later backfilled (by a Metalwork
+/// specialist if one is idle). Gated on the full `assignment_value` - which couples
+/// gold to trading - so it never regresses the assignment.
+#[allow(clippy::too_many_arguments)]
+fn reallocate_across_formulas(
+    rooms: &mut [RoomAssignment],
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    global_bonuses: &HashMap<String, f64>,
+    cc_conditions: &[CcCondition],
+    morale_drains: &HashMap<String, f64>,
+) {
+    let op_index = build_op_index(operators);
+    // Recompute a room as if staffed by `ops` (efficiency incl. global, order value).
+    let scored = |tpl: &RoomAssignment, ops: Vec<String>| -> RoomAssignment {
+        let (speed, value) = compute_team_efficiency(
+            &ops,
+            &tpl.room_type,
+            tpl.formula_type.as_deref(),
+            &op_index,
+            registry,
+            building_data,
+            facility_counts,
+            total_dorm_levels,
+            morale_drains,
+            cc_conditions,
+        );
+        let global = *global_bonuses.get(&tpl.room_type).unwrap_or(&0.0);
+        RoomAssignment {
+            operators: ops,
+            total_efficiency: speed + global,
+            order_value: value,
+            ..tpl.clone()
+        }
+    };
+
+    for _ in 0..3 {
+        let base_val = assignment_value(rooms);
+        // Best strictly-improving move this pass: (room A, generic index, room B).
+        let mut best: Option<(usize, usize, usize)> = None;
+        let mut best_delta = 1e-6;
+
+        for ai in 0..rooms.len() {
+            if !is_production_room(&rooms[ai].room_type) || rooms[ai].formula_type.is_none() {
+                continue;
+            }
+            let fa = rooms[ai].formula_type.clone();
+            let fa_ref = fa.as_deref();
+            for gi in 0..rooms[ai].operators.len() {
+                let g_id = rooms[ai].operators[gi].clone();
+                let Some(g_op) = op_index.get(g_id.as_str()).copied() else {
+                    continue;
+                };
+                // Only generics move - a specialist earns its keep right here.
+                if op_is_formula_specialist(g_op, &rooms[ai].room_type, fa_ref, building_data) {
+                    continue;
+                }
+                let mut a_ops = rooms[ai].operators.clone();
+                a_ops.remove(gi);
+                let a_new = scored(&rooms[ai], a_ops);
+                for bi in 0..rooms.len() {
+                    if bi == ai
+                        || !is_production_room(&rooms[bi].room_type)
+                        || rooms[bi].formula_type == fa
+                    {
+                        continue;
+                    }
+                    let max_b = max_stationed_at_level(
+                        building_data,
+                        &rooms[bi].room_type,
+                        rooms[bi].level,
+                    );
+                    if rooms[bi].operators.len() as i32 >= max_b {
+                        continue; // only rooms with an open seat (no displacement)
+                    }
+                    let mut b_ops = rooms[bi].operators.clone();
+                    b_ops.push(g_id.clone());
+                    let b_new = scored(&rooms[bi], b_ops);
+
+                    let mut trial = rooms.to_vec();
+                    trial[ai] = a_new.clone();
+                    trial[bi] = b_new;
+                    let delta = assignment_value(&trial) - base_val;
+                    if delta > best_delta {
+                        best_delta = delta;
+                        best = Some((ai, gi, bi));
+                    }
+                }
+            }
+        }
+
+        let Some((ai, gi, bi)) = best else {
+            break;
+        };
+        let g_id = rooms[ai].operators[gi].clone();
+        let mut a_ops = rooms[ai].operators.clone();
+        a_ops.remove(gi);
+        let a_tpl = rooms[ai].clone();
+        rooms[ai] = scored(&a_tpl, a_ops);
+        let mut b_ops = rooms[bi].operators.clone();
+        b_ops.push(g_id);
+        let b_tpl = rooms[bi].clone();
+        rooms[bi] = scored(&b_tpl, b_ops);
+    }
 }
 
 /// Fill every production room up to its slot count with leftover operators.
@@ -941,6 +1448,14 @@ fn pad_production_rooms(
             // among equally-good picks, prefer the lowest opportunity-cost one so
             // operators useful elsewhere aren't burned as fillers.
             while (room.operators.len() as i32) < max_slots {
+                // The seat may stay empty: a filler is only worth adding if it does
+                // not LOWER the room's output. Degenbrecher (+25% speed but -6 order
+                // limit) tanks a trading post, so she must never be padded in.
+                let current_score = room_search_score(
+                    &room.room_type,
+                    room.total_efficiency - global,
+                    room.order_value,
+                );
                 let mut best_id: Option<String> = None;
                 let mut best_score = f64::NEG_INFINITY;
                 let mut best_speed = 0.0;
@@ -948,6 +1463,20 @@ fn pad_production_rooms(
                 let mut best_cost = usize::MAX;
                 for op in operators {
                     if assigned.contains(&op.char_id) {
+                        continue;
+                    }
+                    // A nullifier (Weedy-type automation, Shamare) zeroes its
+                    // teammates' output, so padding one into a working team would
+                    // wreck it. These only belong in their own dedicated team.
+                    if has_automation_buff(op, registry)
+                        || op_is_nullifier(
+                            op,
+                            &room.room_type,
+                            room.formula_type.as_deref(),
+                            registry,
+                            building_data,
+                        )
+                    {
                         continue;
                     }
                     let mut trial = room.operators.clone();
@@ -978,13 +1507,15 @@ fn pad_production_rooms(
                     }
                 }
                 match best_id {
-                    Some(id) => {
+                    // Only add when it doesn't reduce output; otherwise leave the
+                    // seat empty (a net-negative filler is worse than no filler).
+                    Some(id) if best_score >= current_score - 1e-9 => {
                         assigned.insert(id.clone());
                         room.operators.push(id);
                         room.total_efficiency = best_speed + global;
                         room.order_value = best_value;
                     }
-                    None => break, // roster exhausted
+                    _ => break, // roster exhausted, or no non-harmful filler remains
                 }
             }
         }
@@ -1158,6 +1689,35 @@ fn buff_applies(buff: &Buff, room_type: &str, formula_type: Option<&str>) -> boo
     true
 }
 
+/// A buff whose targets span more than one product family (both Gold and EXP)
+/// serves any factory equally, so it is generic - not a formula specialist.
+fn is_generic_targets(targets: &[String]) -> bool {
+    targets.iter().any(|t| t == "F_GOLD") && targets.iter().any(|t| t == "F_EXP")
+}
+
+/// True if the operator has a buff that applies to this room/formula and is
+/// formula-SPECIFIC (Metalwork-style: its targets name this product but not every
+/// product). Generic productivity buffs (which serve every formula equally) are
+/// not specialists, so when they tie a specialist they can be freed for whichever
+/// formula has no dedicated operator (e.g. an EXP factory).
+fn op_is_formula_specialist(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    formula_type: Option<&str>,
+    building_data: &BuildingDataFile,
+) -> bool {
+    let Some(formula) = formula_type else {
+        return false;
+    };
+    op.available_buffs.iter().any(|b| {
+        building_data.buffs.get(b).is_some_and(|buff| {
+            buff_applies(buff, room_type, formula_type)
+                && buff.targets.iter().any(|t| t == formula)
+                && !is_generic_targets(&buff.targets)
+        })
+    })
+}
+
 /// Resolve one `buff_id` to its strategy if the buff applies to this room/formula -
 /// the shared "look up the buff, gate on room/formula, resolve" step.
 fn applicable_strategy<'a>(
@@ -1276,7 +1836,7 @@ fn best_team_for_room(
         .iter()
         .any(|op| op_is_nullifier(op, &room.room_type, formula_type, registry, building_data));
 
-    let mut ranked: Vec<(&OperatorBaseProfile, f64)> = candidates
+    let mut ranked: Vec<(&OperatorBaseProfile, f64, bool)> = candidates
         .iter()
         .map(|op| {
             let value_boost = if has_nullifier {
@@ -1295,13 +1855,22 @@ fn best_team_for_room(
                 max_slots,
             ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
                 + value_boost;
-            (*op, bound)
+            let specialist =
+                op_is_formula_specialist(op, &room.room_type, formula_type, building_data);
+            (*op, bound, specialist)
         })
         .collect();
-    ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    // Rank by upside, breaking ties toward formula specialists: a generic operator
+    // that merely matches a specialist's value is freed for a formula that lacks
+    // one (Metalwork ops take the Gold factory, a generic +30% goes to EXP).
+    ranked.sort_by(|a, b| {
+        b.1.partial_cmp(&a.1)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| b.2.cmp(&a.2))
+    });
     ranked.truncate(CANDIDATE_LIMIT);
 
-    let pool: Vec<String> = ranked.iter().map(|(op, _)| op.char_id.clone()).collect();
+    let pool: Vec<String> = ranked.iter().map(|(op, _, _)| op.char_id.clone()).collect();
 
     let mut best_team: Vec<String> = Vec::new();
     let mut best_score = 0.0;
@@ -1469,8 +2038,12 @@ fn optimistic_bound(
             BuffResolutionStrategy::NullifyTeammatesSelfScaling { per_teammate_pct } => {
                 total += per_teammate_pct * teammates_assumed;
             }
-            BuffResolutionStrategy::TeammateOutputMirroring { cap_pct, .. }
-            | BuffResolutionStrategy::OrderLimitScaling { cap_pct, .. } => total += cap_pct,
+            BuffResolutionStrategy::TeammateOutputMirroring { cap_pct, .. } => total += cap_pct,
+            // Degenbrecher-style "+25% per 5 order-limit from teammates": triggering
+            // it needs operators that ADD order limit, which trading posts almost
+            // never field, so it virtually never fires. Don't inflate the ranking
+            // bound with its cap - the real team scorer credits it only when met.
+            BuffResolutionStrategy::OrderLimitScaling { .. } => {}
             strategy @ BuffResolutionStrategy::FacilityCountScaling { .. } => {
                 let ctx = EvalContext {
                     facility_counts,
@@ -1704,6 +2277,14 @@ fn compute_team_efficiency(
         .iter()
         .any(|op| op_is_nullifier(op, room_type, formula_type, registry, building_data));
 
+    // Weedy-type automation (Weedy, Passenger, Windflit, Eunectes) sets the
+    // productivity of all OTHER operators to 0 EXCEPT the part granted by facility
+    // count - so several automation operators stack with one another, but ANY normal
+    // operator (and a normal operator's own non-facility buffs) contributes nothing.
+    // This is why a normal operator is dead weight in an automation team, and why
+    // dropping an automation operator into a normal team wrecks it.
+    let has_automation = members.iter().any(|op| has_automation_buff(op, registry));
+
     let mut speed = 0.0;
     let mut value = 0.0;
 
@@ -1733,6 +2314,14 @@ fn compute_team_efficiency(
             // nullifier; everything else is order SPEED, which the nullifier zeroes.
             if let BuffResolutionStrategy::OrderValue { estimated_pct } = strategy {
                 value += estimated_pct;
+            } else if has_automation {
+                // Only facility-count productivity survives an automation operator.
+                if matches!(
+                    strategy,
+                    BuffResolutionStrategy::FacilityCountScaling { .. }
+                ) {
+                    speed += evaluate_buff(strategy, &ctx);
+                }
             } else if !nullified {
                 speed += evaluate_buff(strategy, &ctx);
             }
@@ -1744,6 +2333,18 @@ fn compute_team_efficiency(
         .iter()
         .map(|c| c.contribution(room_type, &members))
         .sum::<f64>();
+
+    // Trading posts can only bank so many orders. An operator that slashes the
+    // order limit (Degenbrecher: -6) strands the post far below capacity, so its
+    // throughput is throttled no matter how fast it acquires orders. Fold that
+    // bottleneck into the speed multiplier. Surplus limit is NOT rewarded (active
+    // collection, not buffer size, drives throughput), so the factor caps at 1.0.
+    if room_type == "TRADING" {
+        let net_limit: i32 = teammates.iter().map(|t| t.order_limit_contribution).sum();
+        let effective = (BASE_TRADING_ORDER_LIMIT + net_limit).max(MIN_TRADING_ORDER_LIMIT);
+        let capacity = (f64::from(effective) / f64::from(BASE_TRADING_ORDER_LIMIT)).min(1.0);
+        speed = ((1.0 + speed / 100.0) * capacity - 1.0) * 100.0;
+    }
 
     let _ = morale_drains;
     (speed, value)

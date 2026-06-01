@@ -555,13 +555,16 @@ pub fn build_registry(
                         && buff.description.contains("difference"))
                 {
                     let per = parse_first_pct(&buff.description).unwrap_or(4.0);
-                    // Cap calibrated to the order-limit reality: the "difference"
-                    // this skill scales on is bounded by the post's order limit, so
-                    // even with very-high-efficiency teammates (who add no order
-                    // limit) Jaye tops out around +40%, not +60%.
+                    // Jaye's bonus tracks the order-limit DIFFERENCE (how empty the
+                    // post is): it peaks right after a collection and decays toward 0
+                    // as orders accumulate. Recommend his TIME-AVERAGED value over a
+                    // ~12h shift (the post fills from empty toward full), which is
+                    // about half the empty-post peak - so the cap is the order-limit-
+                    // bounded ~40% peak halved to ~20%.
+                    const SHIFT_AVERAGE: f64 = 0.5;
                     BuffResolutionStrategy::TeammateOutputMirroring {
-                        ratio: per / 5.0,
-                        cap_pct: 40.0,
+                        ratio: (per / 5.0) * SHIFT_AVERAGE,
+                        cap_pct: 40.0 * SHIFT_AVERAGE,
                     }
                 }
                 // Capacity-only: true order-limit skills with no speed component.

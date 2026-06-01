@@ -19,7 +19,7 @@ pub async fn send_code(
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let server = services::auth::parse_server(&body.server)?;
     services::auth::send_code(&state, &body.email, server).await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 #[derive(Deserialize)]
@@ -78,7 +78,7 @@ pub async fn update_settings(
     auth: AuthUser,
     Json(body): Json<UpdateSettingsRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: uuid::Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: uuid::Uuid = auth.user_uuid()?;
     services::auth::update_settings(
         &state,
         user_id,
@@ -93,7 +93,7 @@ pub async fn update_settings(
         .cache
         .invalidate(&CacheKey::User { uid: &auth.uid })
         .await;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 pub async fn refresh(

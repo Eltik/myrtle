@@ -16,6 +16,14 @@ pub struct AuthUser {
     pub role: GlobalRole,
 }
 
+impl AuthUser {
+    /// The authenticated user's id parsed as a `Uuid`, returning `Unauthorized` when
+    /// the token carries a non-UUID subject (e.g. the internal "service" principal).
+    pub fn user_uuid(&self) -> Result<uuid::Uuid, ApiError> {
+        self.user_id.parse().map_err(|_| ApiError::Unauthorized)
+    }
+}
+
 impl FromRequestParts<AppState> for AuthUser {
     type Rejection = ApiError;
 

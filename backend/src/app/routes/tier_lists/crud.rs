@@ -45,7 +45,7 @@ pub async fn create(
     Json(body): Json<CreateRequest>,
 ) -> Result<Json<TierList>, ApiError> {
     validate_list_body(&body.name, body.description.as_deref())?;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = services::tier_list::create(
         &state,
         user_id,
@@ -62,7 +62,7 @@ pub async fn mine(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<TierList>>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let lists = queries::find_by_user(&state.db, user_id).await?;
     Ok(Json(lists))
 }
@@ -71,7 +71,7 @@ pub async fn favorites(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<TierList>>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let lists = queries::find_favorited_by_user(&state.db, user_id).await?;
     Ok(Json(lists))
 }
@@ -81,7 +81,7 @@ pub async fn delete(
     auth: AuthUser,
     Path(slug): Path<String>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -95,7 +95,7 @@ pub async fn delete(
     )
     .await?;
     queries::delete_list(&state.db, list.id).await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 #[derive(Deserialize)]
@@ -111,7 +111,7 @@ pub async fn update(
     Json(body): Json<UpdateRequest>,
 ) -> Result<Json<TierList>, ApiError> {
     validate_list_body(&body.name, body.description.as_deref())?;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: Uuid = auth.user_uuid()?;
     let list = services::tier_list::update_list(
         &state,
         &slug,
