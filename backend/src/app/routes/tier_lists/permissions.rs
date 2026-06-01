@@ -40,7 +40,7 @@ pub async fn grant(
     if !auth.role.is_tier_list_admin() {
         return Err(ApiError::Forbidden);
     }
-    let granter_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let granter_id: Uuid = auth.user_uuid()?;
     let tier_list = queries::find_by_slug(&state.db, &slug)
         .await?
         .ok_or(ApiError::NotFound)?;
@@ -53,7 +53,7 @@ pub async fn grant(
         granter_id,
     )
     .await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 pub async fn revoke(
@@ -69,5 +69,5 @@ pub async fn revoke(
         .ok_or(ApiError::NotFound)?;
 
     queries::revoke_permission(&state.db, tier_list.id, target_user_id, &permission).await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }

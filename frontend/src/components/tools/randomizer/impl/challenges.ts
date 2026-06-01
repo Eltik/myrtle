@@ -60,7 +60,7 @@ const SQUAD_FILTER_CHALLENGES: IChallenge[] = [
         type: "SQUAD_FILTER",
         kind: "restriction",
         title: "Low rarity only",
-        description: "Only 1★–3★ operators allowed.",
+        description: "Only 1★-3★ operators allowed.",
         filter: (op) => rarityToNumber(op.rarity) <= 3,
     },
     {

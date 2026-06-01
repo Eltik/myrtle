@@ -40,7 +40,7 @@ async fn resolve_user_id(
         Ok(profile.id)
     } else {
         let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        auth.user_id.parse().map_err(|_| ApiError::Unauthorized)
+        auth.user_uuid()
     }
 }
 

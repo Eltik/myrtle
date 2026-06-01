@@ -458,6 +458,147 @@ fn rotation_plan_orders_members_by_when_to_swap_and_names_a_backup() {
 }
 
 #[test]
+fn staggered_rotation_shares_a_small_bench_across_rooms() {
+    // A staggered rotation swaps one operator at a time, so a single versatile
+    // filler can back up several rooms - the shared bench is far smaller than a
+    // doubled roster (one backup per room), never bigger than the room count.
+    let gd = load_game_data();
+    let building = generic_base();
+    let profiles = full_roster(&gd);
+
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let rotation =
+        compute_sustained_assignment(&profiles, &building, &gd.building, &registry, &drains);
+
+    let production_rooms = rotation
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "MANUFACTURE" || r.room_type == "TRADING")
+        .count();
+    assert!(
+        production_rooms > 1,
+        "the layout has several production rooms"
+    );
+
+    // The bench is shared (no duplicates) and covers all rooms with fewer fillers
+    // than there are rooms - the same filler is reused, not one reserved per room.
+    let unique: std::collections::HashSet<&String> = rotation.shared_bench.iter().collect();
+    assert_eq!(
+        unique.len(),
+        rotation.shared_bench.len(),
+        "the shared bench holds distinct fillers"
+    );
+    assert!(
+        !rotation.shared_bench.is_empty() && rotation.shared_bench.len() <= production_rooms,
+        "a shared bench ({}) is smaller than one-backup-per-room ({production_rooms})",
+        rotation.shared_bench.len()
+    );
+
+    // No bench filler is also a main (they come from the idle pool).
+    let mains: std::collections::HashSet<&String> = rotation
+        .main
+        .rooms
+        .iter()
+        .flat_map(|r| r.operators.iter())
+        .collect();
+    assert!(
+        rotation.shared_bench.iter().all(|b| !mains.contains(b)),
+        "bench fillers are idle operators, not mains"
+    );
+}
+
+#[test]
+fn weedy_is_not_padded_into_a_normal_factory() {
+    // Weedy zeroes her teammates' output, so she only belongs in her own
+    // automation team. With a strong normal team already filling the beneficial
+    // seats, she must NOT be padded into the leftover slot (which would wreck the
+    // team). A harmless 0-value filler takes the seat instead.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // One factory + one power plant (no trading post -> the factory makes EXP,
+    // where gold specialists don't apply). The generic +30% pair are the normal
+    // team; Texas has no factory skill and is the natural filler.
+    let building = UserBuilding {
+        rooms: vec![room("mf", "MANUFACTURE", 3), room("pp", "POWER", 3)],
+    };
+    let roster = vec![
+        profile(&gd, "char_4141_marcil"), // Marcille, generic +30%
+        profile(&gd, "char_242_otter"),   // Mayer, generic +30%
+        profile(&gd, "char_400_weedy"),   // Weedy, nullifying automation
+        profile(&gd, "char_102_texas"),   // Texas, trading-only (no factory value)
+    ];
+
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let factory = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MANUFACTURE")
+        .expect("a factory in the assignment");
+
+    assert!(
+        !factory.operators.iter().any(|o| o == "char_400_weedy"),
+        "Weedy must not be padded into a normal factory (she nullifies teammates). Got: {:?}",
+        factory.operators
+    );
+}
+
+#[test]
+fn metalwork_specialists_take_gold_freeing_generics_for_exp() {
+    // A Gold factory should be staffed by Metalwork (Gold-only) specialists, not by
+    // a generic +30% who serves any product equally - the generic is freed for the
+    // EXP factory that has no dedicated operator. This is the Marcille vs Haze case.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    // Two factories (one Gold to feed the trading post, one EXP) + a trading post.
+    let building = UserBuilding {
+        rooms: vec![
+            room("mf0", "MANUFACTURE", 3),
+            room("mf1", "MANUFACTURE", 3),
+            room("tp", "TRADING", 3),
+        ],
+    };
+    // Marcille is listed FIRST to make the guard meaningful regardless of roster
+    // order: the Gold factory must still resolve to the Metalwork specialists, with
+    // the generic flowing to EXP.
+    let roster = vec![
+        profile(&gd, "char_4141_marcil"), // Marcille, generic +30% (ties Haze)
+        profile(&gd, "char_237_gravel"),  // Gravel, Metalwork +35% (Gold only)
+        profile(&gd, "char_141_nights"),  // Haze, Metalwork +30% (Gold only)
+        profile(&gd, "char_4106_bryota"), // Bryophyta, Metalwork +30% (Gold only)
+        profile(&gd, "char_102_texas"),   // a trader to staff the trading post
+        profile(&gd, "char_103_angel"),   // Exusiai, trader
+    ];
+
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let gold = asn
+        .rooms
+        .iter()
+        .find(|r| r.formula_type.as_deref() == Some("F_GOLD"))
+        .expect("a gold factory");
+    let exp = asn
+        .rooms
+        .iter()
+        .find(|r| r.formula_type.as_deref() == Some("F_EXP"))
+        .expect("an exp factory");
+
+    assert!(
+        !gold.operators.iter().any(|o| o == "char_4141_marcil"),
+        "the generic Marcille should yield the Gold factory to Metalwork specialists. Gold: {:?}",
+        gold.operators
+    );
+    assert!(
+        exp.operators.iter().any(|o| o == "char_4141_marcil"),
+        "the freed generic Marcille should staff the EXP factory. EXP: {:?}",
+        exp.operators
+    );
+}
+
+#[test]
 fn proviso_is_credited_as_a_strong_gold_trader() {
     // Proviso's Pure-Gold payoff raises LMD per ORDER (value), not order speed -
     // so it shows up in the LMD yield, not the efficiency %. By LMD she should
@@ -516,7 +657,7 @@ fn jaye_order_limit_efficiency_is_counted() {
     // Jaye's "+X% per order-limit difference" is an EFFICIENCY skill (its id
     // contains "_limit", but it must not be treated as capacity-only). It still
     // lifts the Texas+Lappland+Jaye team meaningfully above Texas's +65% alone
-    // (~+101% at E2, where Basic Needs throttles his diff-scaling - see below).
+    // TIME-AVERAGED diff bonus over a shift (~20%, not the empty-post peak).
     let gd = load_game_data();
     let team = vec![
         profile(&gd, TEXAS),
@@ -525,8 +666,8 @@ fn jaye_order_limit_efficiency_is_counted() {
     ];
     let eff = trading_efficiency(&gd, &team);
     assert!(
-        eff > 100.0,
-        "Texas+Lappland+Jaye should read above Texas's +65% (Jaye's order-limit efficiency counted), got +{eff:.1}%"
+        eff > 75.0 && eff < 95.0,
+        "Texas+Lappland+Jaye should read above Texas's +65% by Jaye's shift-averaged diff bonus (~+85%), got +{eff:.1}%"
     );
 }
 
@@ -545,8 +686,8 @@ fn jaye_diff_skill_is_bounded_by_the_order_limit() {
     ];
     let eff = trading_efficiency(&gd, &team);
     assert!(
-        (eff - 120.0).abs() < 6.0,
-        "Jaye/Exusiai/Lemuen should read ~+120% (Jaye order-limit-bounded ≈ 40), got +{eff:.1}%"
+        (eff - 100.0).abs() < 6.0,
+        "Jaye/Exusiai/Lemuen should read ~+100% (Jaye shift-averaged ≈ 20), got +{eff:.1}%"
     );
 }
 
@@ -1267,7 +1408,9 @@ fn current_preset_shifts_are_distinct() {
 fn staggered_rotation_sustains_near_peak() {
     // A staggered rotation keeps your best operators working almost all the time
     // (swap only the lowest-morale one), so sustained 24/7 output is CLOSE to peak
-    // - not a big drop from averaging weaker whole teams.
+    // - not a big drop from averaging weaker whole teams. LOCKED synergy teams can't
+    // be staggered one operator at a time, so they sustain a little further below
+    // peak (their rest gaps go uncovered), which is why the floor is ~20%.
     let gd = load_game_data();
     let building = generic_base();
     let profiles = full_roster(&gd);
@@ -1283,8 +1426,8 @@ fn staggered_rotation_sustains_near_peak() {
         .map(|r| r.total_efficiency)
         .sum();
     assert!(
-        rot.sustained_efficiency >= peak * 0.85 && rot.sustained_efficiency <= peak,
-        "sustained ({:.1}) should be within ~15% of peak ({:.1})",
+        rot.sustained_efficiency >= peak * 0.80 && rot.sustained_efficiency <= peak,
+        "sustained ({:.1}) should be within ~20% of peak ({:.1})",
         rot.sustained_efficiency,
         peak
     );
@@ -1295,7 +1438,7 @@ fn low_morale_drain_teams_sustain_better_longevity_axis() {
     // The longevity axis: a low-morale-drain factory team holds closer to peak
     // under rotation than a higher-drain team, because its operators rest less and
     // need backups to cover them less often.
-    use backend::core::grade::base::assignment::sustained_efficiency_of;
+    use backend::core::grade::base::assignment::{morale_recovery, sustained_efficiency_of};
 
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -1326,7 +1469,7 @@ fn low_morale_drain_teams_sustain_better_longevity_axis() {
         if peak <= 0.0 {
             return 1.0;
         }
-        sustained_efficiency_of(&cur, &roster, &drains) / peak
+        sustained_efficiency_of(&cur, &roster, &drains, morale_recovery(&building)) / peak
     };
     let vermeil = sustain_fraction("char_190_clour"); // -0.25/hr drain
     let neutral = sustain_fraction("char_496_wildmn"); // Wild Mane, neutral drain
@@ -1539,5 +1682,525 @@ fn grade_base_produces_a_sane_score() {
     assert!(
         (0.0..=1.0).contains(&full_score) && full_score >= partial_score - 1e-6,
         "full-roster score ({full_score}) should be in [0,1] and >= partial ({partial_score})"
+    );
+}
+
+#[test]
+fn conditional_cc_buff_is_not_credited_when_its_gate_cannot_be_met() {
+    // SilverAsh the Reignfrost's Control Center buff only helps Trading Posts that
+    // hold 3 Kjerag operators. With too few Kjerag traders in the roster the gate
+    // can never trigger, so he must NOT take a CC seat - a legitimate global op
+    // (Amiya: "all Trading Posts +X%") gets it instead.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+    };
+    let roster = vec![
+        profile(&gd, "char_1045_svash2"), // SilverAsh the Reignfrost (conditional CC)
+        profile(&gd, "char_002_amiya"),   // Amiya (unconditional CC global)
+        profile(&gd, "char_103_angel"),   // Exusiai, trader
+        profile(&gd, "char_102_texas"),   // Texas, trader
+    ];
+
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let cc = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("a control center");
+    assert!(
+        !cc.operators.iter().any(|o| o == "char_1045_svash2"),
+        "SilverAsh's unmeetable Kjerag gate must keep him out of the CC. Got: {:?}",
+        cc.operators
+    );
+    assert!(
+        cc.operators.iter().any(|o| o == "char_002_amiya"),
+        "the legitimate global CC operator should take the seat. Got: {:?}",
+        cc.operators
+    );
+}
+
+#[test]
+fn degenbrecher_is_not_used_in_a_trading_post_without_cap_synergy() {
+    // Degenbrecher gives +25% speed but slashes the order limit by 6 ("minimum 1"),
+    // and her payoff clause needs teammates who ADD order limit - which trading
+    // posts don't field. So she cripples a normal post and must be left out in
+    // favour of ordinary traders (the seat stays empty before she's forced in).
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3)],
+    };
+    let roster = vec![
+        profile(&gd, "char_4116_blkkgt"), // Degenbrecher (order-limit wrecker)
+        profile(&gd, "char_103_angel"),   // Exusiai, trader
+        profile(&gd, "char_102_texas"),   // Texas, trader
+    ];
+
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let tp = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("a trading post");
+    assert!(
+        !tp.operators.iter().any(|o| o == "char_4116_blkkgt"),
+        "Degenbrecher should not be staffed in a normal trading post. Got: {:?}",
+        tp.operators
+    );
+    assert!(
+        tp.total_efficiency > 0.0,
+        "the trading post should keep its positive efficiency, got {:.1}",
+        tp.total_efficiency
+    );
+}
+
+#[test]
+fn cross_formula_reallocation_frees_a_generic_for_exp() {
+    // Two generic +30% operators would both pile into the single Gold factory, but
+    // the second's gold is unsold (one trading post). The cross-formula pass frees
+    // one of them for the empty EXP factory, where it produces real value.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+
+    let building = UserBuilding {
+        rooms: vec![
+            room("g", "MANUFACTURE", 3),
+            room("e", "MANUFACTURE", 3),
+            room("tp", "TRADING", 3),
+        ],
+    };
+    let roster = vec![
+        profile(&gd, "char_4141_marcil"), // Marcille, generic +30%
+        profile(&gd, "char_242_otter"),   // Mayer, generic +30%
+        profile(&gd, "char_103_angel"),   // Exusiai, trader
+    ];
+
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let exp = asn
+        .rooms
+        .iter()
+        .find(|r| r.formula_type.as_deref() == Some("F_EXP"))
+        .expect("an exp factory");
+    assert!(
+        !exp.operators.is_empty(),
+        "a surplus generic should be reallocated from Gold to the EXP factory"
+    );
+}
+
+#[test]
+fn texas_is_not_a_standalone_rotation_backup_without_lappland() {
+    // Texas's trading value is entirely conditional on Lappland sharing the post
+    // (her base is 0). As a staggered rotation backup she is swapped in to cover one
+    // resting main, so with no Lappland present she does nothing - she must NOT be
+    // chosen as a standalone backup over a real trader.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 3)],
+    };
+    // Three strong traders staff the post; Texas (no Lappland) and one ordinary
+    // trader sit idle. The ordinary trader, not Texas, should be the backup.
+    let roster = vec![
+        profile(&gd, "char_103_angel"),  // Exusiai +35
+        profile(&gd, "char_4032_provs"), // Proviso (order value)
+        profile(&gd, "char_502_nblade"), // Yato +30
+        profile(&gd, "char_185_frncat"), // Mousse +30
+        profile(&gd, "char_102_texas"),  // Texas (conditional on Lappland)
+    ];
+    let rot = compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let tp = rot
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("a trading post rotation");
+    assert_ne!(
+        tp.backup.as_deref(),
+        Some("char_102_texas"),
+        "Texas must not be a standalone backup with no Lappland to enable her"
+    );
+    assert!(
+        !rot.shared_bench.iter().any(|b| b == "char_102_texas"),
+        "Texas should not sit on the shared rotation bench as a useless filler"
+    );
+}
+
+#[test]
+fn low_level_dorms_reduce_sustained_output() {
+    // Morale recovery scales with dorm level, so the same production setup sustains
+    // further below peak when its dormitories are low-level (a 252 reality) than when
+    // they are fully developed. The peak (main) staffing is identical either way.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let layout = |dorm_lv: i32| UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", dorm_lv),
+            room("d1", "DORMITORY", dorm_lv),
+        ],
+    };
+    let roster = full_roster(&gd);
+    let hi = compute_sustained_assignment(&roster, &layout(5), &gd.building, &registry, &drains);
+    let lo = compute_sustained_assignment(&roster, &layout(1), &gd.building, &registry, &drains);
+    assert!(
+        lo.sustained_efficiency < hi.sustained_efficiency,
+        "low-level dorms should sustain below high-level dorms (lo {:.1} vs hi {:.1})",
+        lo.sustained_efficiency,
+        hi.sustained_efficiency
+    );
+}
+
+#[test]
+fn dead_conditional_cc_operator_is_dropped_after_assignment() {
+    // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
+    // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
+    // traders win the single post's seats, so no post ever holds 3 Kjerag - his +10%
+    // never fires. The post-assignment check must drop him and reseat a real op.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
+    };
+    let roster = vec![
+        profile(&gd, "char_1045_svash2"), // SilverAsh the Reignfrost (CC, Kjerag gate)
+        profile(&gd, "char_002_amiya"),   // Amiya (unconditional CC global)
+        profile(&gd, "char_198_blackd"),  // Courier (Kjerag, weak trader)
+        profile(&gd, "char_199_yak"),     // Matterhorn (Kjerag, weak trader)
+        profile(&gd, "char_173_slchan"),  // Cliffheart (Kjerag, weak trader)
+        profile(&gd, "char_103_angel"),   // Exusiai (strong trader)
+        profile(&gd, "char_502_nblade"),  // Yato (strong trader)
+        profile(&gd, "char_185_frncat"),  // Mousse (strong trader)
+    ];
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let cc = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("a control center");
+    assert!(
+        !cc.operators.iter().any(|o| o == "char_1045_svash2"),
+        "SilverAsh's never-firing Kjerag gate must drop him from the CC. Got: {:?}",
+        cc.operators
+    );
+    assert!(
+        cc.operators.iter().any(|o| o == "char_002_amiya"),
+        "the contributing global CC operator should hold the seat. Got: {:?}",
+        cc.operators
+    );
+}
+
+#[test]
+fn morale_operator_takes_a_spare_cc_seat_and_lifts_sustain() {
+    // A global morale-recovery operator (Wiš'adel: workers in other buildings recover
+    // faster) should claim a spare Control Center seat instead of being burned as a
+    // zero-value production filler, and its base-wide recovery boost must raise the
+    // sustained output - the "add a morale operator" the rotation wants.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let layout = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp", "TRADING", 3),
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", 2),
+            room("d1", "DORMITORY", 2),
+        ],
+    };
+    let roster = |morale: bool| {
+        let mut r = vec![
+            profile(&gd, "char_103_angel"),
+            profile(&gd, "char_502_nblade"),
+            profile(&gd, "char_4032_provs"),
+            profile(&gd, "char_237_gravel"),
+            profile(&gd, "char_141_nights"),
+        ];
+        if morale {
+            r.push(profile(&gd, "char_1035_wisdel"));
+        }
+        r
+    };
+
+    let with =
+        compute_sustained_assignment(&roster(true), &layout, &gd.building, &registry, &drains);
+    let without =
+        compute_sustained_assignment(&roster(false), &layout, &gd.building, &registry, &drains);
+
+    let cc = with
+        .main
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("a control center");
+    assert!(
+        cc.operators.iter().any(|o| o == "char_1035_wisdel"),
+        "the morale operator should take the spare CC seat. Got: {:?}",
+        cc.operators
+    );
+    assert!(
+        with.sustained_efficiency > without.sustained_efficiency,
+        "the morale operator's recovery boost should raise sustained output ({:.2} vs {:.2})",
+        with.sustained_efficiency,
+        without.sustained_efficiency
+    );
+}
+
+#[test]
+fn insufficient_dorm_capacity_throttles_sustained_output() {
+    // A base can only rest as many operators at once as its dorms hold. With the same
+    // production rooms and the same dorm LEVEL (so recovery rate is identical), fewer
+    // dorms - less capacity - means the rotation can't rest everyone and sustained
+    // output is throttled. This is the "you can only rest 20, so you need 3 sets" cap.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let layout = |dorms: usize| {
+        let mut rooms = vec![room("tp0", "TRADING", 3), room("tp1", "TRADING", 3)];
+        rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+        rooms.extend((0..dorms).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+        UserBuilding { rooms }
+    };
+    let roster = full_roster(&gd);
+    let cramped =
+        compute_sustained_assignment(&roster, &layout(1), &gd.building, &registry, &drains);
+    let roomy = compute_sustained_assignment(&roster, &layout(4), &gd.building, &registry, &drains);
+    assert!(
+        cramped.sustained_efficiency < roomy.sustained_efficiency,
+        "too few dorms should throttle sustained output (cramped {:.1} vs roomy {:.1})",
+        cramped.sustained_efficiency,
+        roomy.sustained_efficiency
+    );
+}
+
+#[test]
+fn rotation_is_expressed_as_overlapping_sets() {
+    // The rotation surfaces as a few overlapping staffings: each set rests one main
+    // per room (covered by the backup), consecutive sets share all-but-one operator,
+    // and across the sets every main rests in turn - so the whole base is never
+    // swapped at once.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let rot = compute_sustained_assignment(
+        &full_roster(&gd),
+        &generic_base(),
+        &gd.building,
+        &registry,
+        &drains,
+    );
+
+    assert!(
+        !rot.sets.is_empty(),
+        "a deep roster yields a multi-set rotation"
+    );
+    assert!(
+        rot.sets.len() <= 3,
+        "at most three sets (the 12h-swap cadence)"
+    );
+
+    // The trading post's working crew in each set.
+    let tp_working: Vec<Vec<String>> = rot
+        .sets
+        .iter()
+        .map(|set| {
+            let tp = set
+                .rooms
+                .iter()
+                .find(|r| r.room_type == "TRADING")
+                .expect("a trading post in each set");
+            assert!(
+                tp.resting
+                    .as_ref()
+                    .is_none_or(|rest| !tp.working.contains(rest)),
+                "the resting main is not also working in the same set"
+            );
+            tp.working.clone()
+        })
+        .collect();
+
+    let mains = tp_working[0].len();
+    assert!(
+        tp_working.iter().all(|w| w.len() == mains),
+        "every set fully staffs the post"
+    );
+
+    // Each set rests a DIFFERENT main (the rotation visits each in turn).
+    let rested: Vec<&String> = rot
+        .sets
+        .iter()
+        .filter_map(|s| {
+            s.rooms
+                .iter()
+                .find(|r| r.room_type == "TRADING")
+                .and_then(|r| r.resting.as_ref())
+        })
+        .collect();
+    let unique: std::collections::HashSet<&&String> = rested.iter().collect();
+    assert_eq!(unique.len(), rested.len(), "each set rests a distinct main");
+
+    // Overlap: consecutive sets share all-but-one working operator.
+    for pair in tp_working.windows(2) {
+        let a: std::collections::HashSet<&String> = pair[0].iter().collect();
+        let b: std::collections::HashSet<&String> = pair[1].iter().collect();
+        assert!(
+            a.intersection(&b).count() >= mains - 1,
+            "consecutive sets share all but one operator"
+        );
+    }
+}
+
+#[test]
+fn set_count_tracks_real_rest_demand_not_seat_count() {
+    // The number of rotation sets should reflect how many operators actually run low
+    // on morale within a cycle - NOT just the seat count. A factory of low-drain
+    // operators (Vermeil/Vulcan-type, ~48h before a swap) needs no rest slots and
+    // yields zero sets, while the same factory of neutral-drain operators (~24h)
+    // rotates each of them and yields the full three sets.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![room("mf", "MANUFACTURE", 3), room("d0", "DORMITORY", 3)],
+    };
+    let sets_for = |ids: &[&str]| {
+        let roster: Vec<_> = ids.iter().map(|id| profile(&gd, id)).collect();
+        compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains)
+            .sets
+            .len()
+    };
+    // Low-drain factory operators (each lasts ~48h, beyond the ~36h cycle).
+    let low_drain = sets_for(&[
+        "char_163_hpsts",  // Vulcan
+        "char_452_bstalk", // Beanstalk
+        "char_190_clour",  // Vermeil
+        "char_485_pallas", // Pallas
+        "char_369_bena",   // Bena
+    ]);
+    // Neutral-drain factory operators (each lasts ~24h, inside the cycle).
+    let neutral = sets_for(&[
+        "char_242_otter",   // Mayer
+        "char_4141_marcil", // Marcille
+        "char_4063_quartz", // Quartz
+        "char_4041_chnut",  // Chestnut
+        "char_496_wildmn",  // Wild Mane
+    ]);
+    assert_eq!(
+        low_drain, 0,
+        "a factory of low-drain operators needs no rotation sets"
+    );
+    assert!(
+        neutral > low_drain,
+        "neutral-drain operators rotate, so they yield more sets ({neutral}) than low-drain ({low_drain})"
+    );
+}
+
+#[test]
+fn weedy_is_not_suggested_as_a_rotation_backup() {
+    // Weedy sets every non-automation teammate's output to 0, so swapping her into a
+    // working room as a backup would wreck it. When she is not a main she must not be
+    // offered as a backup for any room (and certainly not for several at once).
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // Four factories + one power plant: Weedy's lone automation output (one plant)
+    // loses to the strong normal teams, so she sits idle - the exact case where she
+    // used to be offered as a backup for EVERY factory at once.
+    let mut rooms: Vec<UserRoom> = (0..4)
+        .map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3))
+        .collect();
+    rooms.push(room("p0", "POWER", 3));
+    rooms.push(room("d0", "DORMITORY", 3));
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [
+        "char_242_otter",
+        "char_4141_marcil",
+        "char_237_gravel",
+        "char_141_nights",
+        "char_4063_quartz",
+        "char_496_wildmn",
+        "char_4041_chnut",
+        "char_135_halo",
+        "char_4066_highmo",
+        "char_430_fartth",
+        "char_431_ashlok",
+        "char_484_robrta",
+        "char_400_weedy",
+    ]
+    .iter()
+    .map(|c| profile(&gd, c))
+    .collect();
+    let rot = compute_sustained_assignment(&roster, &building, &gd.building, &registry, &drains);
+
+    // Weedy is not staffing any room as a main here (normal teams out-produce her).
+    let is_main = rot
+        .main
+        .rooms
+        .iter()
+        .any(|r| r.operators.iter().any(|o| o == "char_400_weedy"));
+    assert!(!is_main, "precondition: Weedy is idle, not a main");
+
+    assert!(
+        rot.rooms
+            .iter()
+            .all(|r| r.backup.as_deref() != Some("char_400_weedy")),
+        "Weedy must never be a room backup (she nullifies the team)"
+    );
+    assert!(
+        !rot.shared_bench.iter().any(|b| b == "char_400_weedy"),
+        "Weedy must not sit on the shared rotation bench"
+    );
+}
+
+#[test]
+fn locked_synergy_teams_get_no_individual_backup() {
+    // A locked synergy team (its operators depend on each other) can't be staggered
+    // one operator at a time without breaking the combo, so the rotation must NOT
+    // offer it an individual backup. Flexible rooms still get one. (generic_base's
+    // optimal forms locked trading-post synergy teams.)
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let rot = compute_sustained_assignment(
+        &full_roster(&gd),
+        &generic_base(),
+        &gd.building,
+        &registry,
+        &drains,
+    );
+
+    let locked_slots: std::collections::HashSet<&String> = rot
+        .main
+        .rooms
+        .iter()
+        .filter(|r| r.locked)
+        .map(|r| &r.slot_id)
+        .collect();
+    assert!(
+        !locked_slots.is_empty(),
+        "precondition: a locked synergy team forms"
+    );
+
+    for room in &rot.rooms {
+        if locked_slots.contains(&room.slot_id) {
+            assert!(
+                room.backup.is_none(),
+                "locked team {} must not get an individual backup",
+                room.slot_id
+            );
+        }
+    }
+    assert!(
+        rot.rooms.iter().any(|r| r.backup.is_some()),
+        "flexible rooms still get a backup"
     );
 }

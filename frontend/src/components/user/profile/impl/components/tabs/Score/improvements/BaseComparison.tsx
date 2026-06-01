@@ -15,7 +15,7 @@ function roomLabel(t: string): string {
     return ROOM_LABELS[t] ?? t.charAt(0) + t.slice(1).toLowerCase();
 }
 
-/** The resource a room produces — so the comparison only lines up like-for-like. */
+/** The resource a room produces - so the comparison only lines up like-for-like. */
 function resourceKey(room: IRoomAssignment): string {
     if (room.room_type === "TRADING") return "TRADING";
     if (room.room_type === "MANUFACTURE") {
@@ -43,7 +43,7 @@ interface IProps {
 
 /**
  * Side-by-side comparison of the player's current base against the optimizer's
- * peak staffing — Control Center and room by room. Rooms line up by resource.
+ * peak staffing - Control Center and room by room. Rooms line up by resource.
  */
 export function BaseComparison({ current, optimal, accent }: IProps) {
     if (!optimal) return null;
@@ -58,8 +58,8 @@ export function BaseComparison({ current, optimal, accent }: IProps) {
     const optCC = optimal.rooms.find((r) => r.room_type === "CONTROL");
 
     // Group production rooms by RESOURCE (trading / gold / EXP) and pair them up
-    // within each group, so the comparison is always like-for-like — gold→gold,
-    // EXP→EXP — even when the optimizer re-assigns a factory's formula.
+    // within each group, so the comparison is always like-for-like - gold→gold,
+    // EXP→EXP - even when the optimizer re-assigns a factory's formula.
     const byEff = (a: IRoomAssignment, b: IRoomAssignment) => b.total_efficiency - a.total_efficiency;
     const groupRooms = (asn: IBaseAssignment, key: string) => asn.rooms.filter((r) => resourceKey(r) === key).sort(byEff);
     const groups = RESOURCE_GROUPS.map((g) => {
@@ -129,12 +129,12 @@ function TotalTile({ label, cur, opt, accent, highlight }: { label: string; cur:
 function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; optimal?: IRoomAssignment; accent: string }) {
     const curIds = new Set((current?.operators ?? []).map((o) => o.operator_id));
 
-    // The Control Center produces no resource yield — its metric is the global
+    // The Control Center produces no resource yield - its metric is the global
     // production buff it grants (its `total_efficiency`), labelled accordingly.
     const isControl = (current ?? optimal)?.room_type === "CONTROL";
 
     // The primary comparison is the per-day YIELD delta in the room's resource
-    // (LMD / gold / EXP) — that's what actually matters, not the headline %.
+    // (LMD / gold / EXP) - that's what actually matters, not the headline %.
     const curY = current ? roomYield(current) : null;
     const optY = optimal ? roomYield(optimal) : null;
     const unit = optY?.unit ?? curY?.unit ?? null;
@@ -178,7 +178,7 @@ function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; o
 
 function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignment; accent: string; muted?: boolean; highlightIds?: Set<string> }) {
     if (!room) {
-        return <span className={cn(TEXT_BADGE, "text-muted-foreground/40")}>— none —</span>;
+        return <span className={cn(TEXT_BADGE, "text-muted-foreground/40")}>- none -</span>;
     }
     const yieldLabel = roomYieldLabel(room);
     return (

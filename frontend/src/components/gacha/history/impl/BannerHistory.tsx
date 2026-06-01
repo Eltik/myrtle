@@ -100,7 +100,7 @@ function PullTable({ items, operatorsById, bannersById, total }: { items: IGacha
             {pageCount > 1 ? (
                 <div className="flex items-center justify-between border-border border-t pt-3">
                     <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                        {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {formatNumber(sorted.length)} pulls
+                        {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {formatNumber(sorted.length)} pulls
                     </span>
                     <div className="flex items-center gap-1.5">
                         <button

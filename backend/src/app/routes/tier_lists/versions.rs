@@ -33,12 +33,15 @@ pub async fn publish(
     Path(slug): Path<String>,
     Json(body): Json<PublishRequest>,
 ) -> Result<Json<TierListVersion>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Publish)
-        .await?;
+    let user_id: Uuid = auth.user_uuid()?;
+    let list = services::tier_list::find_and_authorize(
+        &state,
+        &slug,
+        user_id,
+        auth.role,
+        Permission::Publish,
+    )
+    .await?;
 
     // Build snapshot from current state
     let detail = services::tier_list::get_by_slug(&state, &slug).await?;

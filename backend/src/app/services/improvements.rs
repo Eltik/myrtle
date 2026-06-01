@@ -15,7 +15,7 @@ use crate::core::gamedata::types::operator::{
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment, compute_sustained_assignment,
-    sustained_efficiency_of,
+    morale_recovery, sustained_efficiency_of,
 };
 use crate::core::grade::base::buff_registry::{
     build_name_to_char, build_registry, faction_tags_of,
@@ -214,8 +214,30 @@ pub struct RotationDto {
     pub main: BaseAssignmentDto,
     /// Per-room rotation plan: who to swap first, when, and the backup.
     pub rooms: Vec<RoomRotationDto>,
+    /// The small shared bench that covers every room: because only one operator is
+    /// swapped at a time, a versatile filler can back up several rooms at once.
+    pub shared_bench: Vec<AssignedOperator>,
+    /// The rotation expressed as a few overlapping staffings to cycle through, so the
+    /// whole base is never swapped at once. Consecutive sets share all-but-one
+    /// operator per room.
+    pub sets: Vec<RotationSetDto>,
     /// Sustained 24/7 output - near peak, reduced only by backup-coverage time.
     pub sustained_efficiency: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationSetDto {
+    pub rooms: Vec<RotationSetRoomDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RotationSetRoomDto {
+    pub slot_id: String,
+    pub room_type: String,
+    /// The operators working this room in this set.
+    pub working: Vec<AssignedOperator>,
+    /// The main resting this set (covered by the backup), if any.
+    pub resting: Option<AssignedOperator>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -974,11 +996,18 @@ async fn build_base_improvements(
 
     // The player's current base as a rotation main, so the comparison can show
     // their sustained output against the optimizer's.
-    let current_sustained = sustained_efficiency_of(&current, &profiles, &morale_drains);
+    let current_sustained = sustained_efficiency_of(
+        &current,
+        &profiles,
+        &morale_drains,
+        morale_recovery(&user_building),
+    );
     let current_rotation = Some(rotation_to_dto(
         &RotationAssignment {
             main: current.clone(),
             rooms: Vec::new(),
+            shared_bench: Vec::new(),
+            sets: Vec::new(),
             sustained_efficiency: current_sustained,
         },
         game_data,
@@ -1058,6 +1087,34 @@ fn rotation_to_dto(asn: &RotationAssignment, game_data: &GameData) -> RotationDt
                     .backup
                     .as_deref()
                     .map(|id| assigned_operator(id, game_data)),
+            })
+            .collect(),
+        shared_bench: asn
+            .shared_bench
+            .iter()
+            .map(|id| assigned_operator(id, game_data))
+            .collect(),
+        sets: asn
+            .sets
+            .iter()
+            .map(|s| RotationSetDto {
+                rooms: s
+                    .rooms
+                    .iter()
+                    .map(|r| RotationSetRoomDto {
+                        slot_id: r.slot_id.clone(),
+                        room_type: r.room_type.clone(),
+                        working: r
+                            .working
+                            .iter()
+                            .map(|id| assigned_operator(id, game_data))
+                            .collect(),
+                        resting: r
+                            .resting
+                            .as_deref()
+                            .map(|id| assigned_operator(id, game_data)),
+                    })
+                    .collect(),
             })
             .collect(),
         sustained_efficiency: asn.sustained_efficiency,

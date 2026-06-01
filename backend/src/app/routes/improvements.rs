@@ -46,7 +46,7 @@ async fn resolve_uid(
         Ok(profile.uid)
     } else {
         let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        let user_uuid: uuid::Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+        let user_uuid: uuid::Uuid = auth.user_uuid()?;
         let profile = users::find_by_id(&state.db, user_uuid)
             .await?
             .ok_or(ApiError::Unauthorized)?;

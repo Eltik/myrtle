@@ -41,12 +41,15 @@ pub async fn create(
 ) -> Result<Json<Tier>, ApiError> {
     validate_tier_body(&body)?;
 
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
-        .await?;
+    let user_id: Uuid = auth.user_uuid()?;
+    let list = services::tier_list::find_and_authorize(
+        &state,
+        &slug,
+        user_id,
+        auth.role,
+        Permission::Edit,
+    )
+    .await?;
 
     let tier = queries::create_tier(
         &state.db,
@@ -68,11 +71,8 @@ pub async fn update(
 ) -> Result<Json<Tier>, ApiError> {
     validate_tier_body(&body)?;
 
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
+    let user_id: Uuid = auth.user_uuid()?;
+    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit)
         .await?;
 
     let tier = queries::update_tier(
@@ -92,13 +92,10 @@ pub async fn delete(
     auth: AuthUser,
     Path((slug, tier_id)): Path<(String, Uuid)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Admin)
+    let user_id: Uuid = auth.user_uuid()?;
+    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin)
         .await?;
 
     queries::delete_tier(&state.db, tier_id).await?;
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }

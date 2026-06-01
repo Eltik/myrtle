@@ -38,7 +38,7 @@ pub async fn leaderboard(
     let sort = params.sort.as_deref().unwrap_or("total_score");
     let movement_interval = params.movement_interval.as_deref();
     if let Some(interval) = movement_interval {
-        if !matches!(interval, "1 day" | "7 days" | "30 days") {
+        if !crate::app::validation::is_valid_interval(interval) {
             return Err(ApiError::BadRequest(
                 "movement_interval must be '1 day', '7 days', or '30 days'".into(),
             ));
@@ -82,7 +82,7 @@ pub async fn top_movers(
         ));
     }
     let interval = params.interval.as_deref().unwrap_or("7 days");
-    if !matches!(interval, "1 day" | "7 days" | "30 days") {
+    if !crate::app::validation::is_valid_interval(interval) {
         return Err(ApiError::BadRequest("invalid interval".into()));
     }
     let limit = params.limit.unwrap_or(50).min(100);
@@ -125,7 +125,7 @@ pub async fn standing(
 ) -> Result<Json<PlayerStanding>, ApiError> {
     let window = params.window.unwrap_or(5).min(50);
     let interval = params.interval.as_deref().unwrap_or("7 days");
-    if !matches!(interval, "1 day" | "7 days" | "30 days") {
+    if !crate::app::validation::is_valid_interval(interval) {
         return Err(ApiError::BadRequest(
             "interval must be '1 day', '7 days', or '30 days'".into(),
         ));

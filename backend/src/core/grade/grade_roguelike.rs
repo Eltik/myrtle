@@ -4,6 +4,8 @@ use serde::Deserialize;
 
 use crate::core::gamedata::types::roguelike::{RoguelikeGameData, RoguelikeThemeGameData};
 
+use super::{Dimension, weighted_average};
+
 const WEIGHT_ENDINGS: f64 = 30.0;
 const WEIGHT_DIFFICULTY: f64 = 25.0;
 const WEIGHT_COLLECTIBLES: f64 = 20.0;
@@ -22,8 +24,6 @@ fn theme_weight(theme_id: &str) -> f64 {
         _ => 0.20, // future themes get neutral weight
     }
 }
-
-type Dimension = (f64, f64);
 
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -194,13 +194,7 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
         dimensions.push((WEIGHT_CHALLENGES, score));
     }
 
-    // Weighted average
-    let total_weight: f64 = dimensions.iter().map(|(w, _)| w).sum();
-    if total_weight > 0.0 {
-        dimensions.iter().map(|(w, s)| w * s).sum::<f64>() / total_weight
-    } else {
-        0.0
-    }
+    weighted_average(&dimensions)
 }
 
 fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 {

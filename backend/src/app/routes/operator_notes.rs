@@ -72,7 +72,7 @@ pub async fn update(
         return Err(ApiError::Forbidden);
     }
 
-    let user_id: uuid::Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
+    let user_id: uuid::Uuid = auth.user_uuid()?;
 
     let note = services::operator_notes::update(
         &state,

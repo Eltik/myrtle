@@ -290,12 +290,39 @@ pub struct BaseAssignment {
 /// swap only the lowest-morale operator in a room for its backup, so the base runs
 /// at near-peak almost always and few operators sit in the dorms at once.
 /// `rooms` gives the per-room rotation plan (swap order + timing + backup).
+/// `shared_bench` is the small pool of fillers that covers ALL rooms: because only
+/// one operator is swapped at a time, a versatile filler backs up several rooms.
 /// `sustained_efficiency` is the 24/7 output: close to `main`'s peak, reduced only
 /// by the time a backup covers a resting operator (low-drain teams rest less).
+/// `sets` expresses the rotation as a handful of overlapping staffings to cycle
+/// through (rather than swapping the whole base at once).
 pub struct RotationAssignment {
     pub main: BaseAssignment,
     pub rooms: Vec<RoomRotation>,
+    pub shared_bench: Vec<String>,
+    pub sets: Vec<RotationSet>,
     pub sustained_efficiency: f64,
+}
+
+/// One snapshot of the staggered rotation: a complete base staffing in which each
+/// room has (at most) one main resting, covered by a backup. Cycling through the
+/// sets every swap interval rests every operator in turn, and CONSECUTIVE sets share
+/// all-but-one operator per room - so you never break the whole base at once. E.g.
+/// a 2-seat post over {Proviso, Gravel, Spot} cycles Proviso+Gravel -> Proviso+Spot
+/// -> Gravel+Spot.
+pub struct RotationSet {
+    pub rooms: Vec<RotationSetRoom>,
+}
+
+/// One room's staffing within a rotation set.
+pub struct RotationSetRoom {
+    pub slot_id: String,
+    pub room_type: String,
+    /// The operators working this room in this set (the resting main swapped out for
+    /// the backup).
+    pub working: Vec<String>,
+    /// The main resting this set (whom `working` covers via the backup), if any.
+    pub resting: Option<String>,
 }
 
 /// The rotation plan for one production room: who to swap first and when.

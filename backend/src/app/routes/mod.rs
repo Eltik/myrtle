@@ -1,9 +1,14 @@
 use axum::{
-    Router,
+    Json, Router,
     routing::{get, post, put},
 };
 
 use crate::app::state::AppState;
+
+/// The standard `{"status":"ok"}` success body for endpoints that return no payload.
+pub fn ok_status() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "status": "ok" }))
+}
 
 pub mod assets;
 pub mod auth;

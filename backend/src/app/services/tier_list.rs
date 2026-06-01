@@ -70,6 +70,22 @@ pub async fn check_permission(
     }
 }
 
+/// Load the tier list by `slug` (404 if absent) and confirm `user_id`/`role` may
+/// perform `required` on it (403 otherwise), returning the authorized list.
+pub async fn find_and_authorize(
+    state: &AppState,
+    slug: &str,
+    user_id: Uuid,
+    role: GlobalRole,
+    required: Permission,
+) -> Result<TierList, ApiError> {
+    let list = queries::find_by_slug(&state.db, slug)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+    check_permission(state, &list, user_id, role, required).await?;
+    Ok(list)
+}
+
 pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail, ApiError> {
     let list = queries::find_by_slug(&state.db, slug)
         .await?

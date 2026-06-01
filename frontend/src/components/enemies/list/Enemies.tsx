@@ -217,7 +217,7 @@ export function EnemiesList() {
 
                 <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                     <span>
-                        Showing <strong className="text-foreground">{fromIndex}</strong>–<strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{filteredEnemies.length}</strong> enemies
+                        Showing <strong className="text-foreground">{fromIndex}</strong>-<strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{filteredEnemies.length}</strong> enemies
                         {activeFilterCount > 0 && (
                             <>
                                 {" · "}

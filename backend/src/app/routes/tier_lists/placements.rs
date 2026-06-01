@@ -31,11 +31,8 @@ pub async fn add(
         body.description.as_deref(),
         PLACEMENT_DESCRIPTION_MAX,
     )?;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
+    let user_id: Uuid = auth.user_uuid()?;
+    services::tier_list::find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit)
         .await?;
 
     let placement = queries::add_placement(
@@ -65,12 +62,15 @@ pub async fn update_description(
         body.description.as_deref(),
         PLACEMENT_DESCRIPTION_MAX,
     )?;
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
-        .await?;
+    let user_id: Uuid = auth.user_uuid()?;
+    let list = services::tier_list::find_and_authorize(
+        &state,
+        &slug,
+        user_id,
+        auth.role,
+        Permission::Edit,
+    )
+    .await?;
 
     let placement = queries::set_placement_description(
         &state.db,
@@ -88,12 +88,15 @@ pub async fn remove(
     auth: AuthUser,
     Path((slug, operator_id)): Path<(String, String)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
-        .await?;
+    let user_id: Uuid = auth.user_uuid()?;
+    let list = services::tier_list::find_and_authorize(
+        &state,
+        &slug,
+        user_id,
+        auth.role,
+        Permission::Edit,
+    )
+    .await?;
 
     // Find which tier this operator is in, then remove. Idempotent: if the
     // placement is already gone (e.g. cascade-deleted by a prior tier delete in
@@ -106,7 +109,7 @@ pub async fn remove(
             break;
         }
     }
-    Ok(Json(serde_json::json!({ "status": "ok" })))
+    Ok(crate::app::routes::ok_status())
 }
 
 #[derive(Deserialize)]
@@ -121,12 +124,15 @@ pub async fn move_to(
     Path((slug, operator_id)): Path<(String, String)>,
     Json(body): Json<MovePlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
-    let user_id: Uuid = auth.user_id.parse().map_err(|_| ApiError::Unauthorized)?;
-    let list = queries::find_by_slug(&state.db, &slug)
-        .await?
-        .ok_or(ApiError::NotFound)?;
-    services::tier_list::check_permission(&state, &list, user_id, auth.role, Permission::Edit)
-        .await?;
+    let user_id: Uuid = auth.user_uuid()?;
+    let list = services::tier_list::find_and_authorize(
+        &state,
+        &slug,
+        user_id,
+        auth.role,
+        Permission::Edit,
+    )
+    .await?;
 
     // Find current tier
     let tiers = queries::get_tiers(&state.db, list.id).await?;

@@ -257,7 +257,7 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
 }
 
 /**
- * NORMAL = standard `main_*` stage, ADVERSE = `tough_*` variant (chapters 10–14),
+ * NORMAL = standard `main_*` stage, ADVERSE = `tough_*` variant (chapters 10-14),
  * STORY = `easy_*` (filtered out of the playable pool, but defensively handled).
  */
 function getStageMode(stage: IStage): "NORMAL" | "ADVERSE" | "STORY" | null {
@@ -267,7 +267,7 @@ function getStageMode(stage: IStage): "NORMAL" | "ADVERSE" | "STORY" | null {
     return null;
 }
 
-/** FOUR_STAR is the legacy CM (ch 0–14); SIX_STAR is the ch 15+ challenge variant. */
+/** FOUR_STAR is the legacy CM (ch 0-14); SIX_STAR is the ch 15+ challenge variant. */
 function isChallengeModeStage(stage: IStage): boolean {
     return stage.difficulty === "FOUR_STAR" || stage.difficulty === "SIX_STAR";
 }

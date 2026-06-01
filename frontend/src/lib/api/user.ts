@@ -230,11 +230,11 @@ export interface IMedalImprovements {
 export interface IUpgradeDelta {
     /** Matching one of the entries in `IOperatorGap.missing` (ELITE, MAX_LEVEL, M3, SL7, MOD3, POT6, TRUST). */
     tag: string;
-    /** Change in this operator's own score if the milestone were reached (0.0–1.0). */
+    /** Change in this operator's own score if the milestone were reached (0.0-1.0). */
     operator_score_delta: number;
-    /** Change in the user's operator_grade subscore (0.0–1.0). */
+    /** Change in the user's operator_grade subscore (0.0-1.0). */
     operator_grade_delta: number;
-    /** Change in the user's overall total_score (0.0–1.0). */
+    /** Change in the user's overall total_score (0.0-1.0). */
     total_score_delta: number;
 }
 
@@ -252,7 +252,7 @@ export interface IOperatorGap {
     missing: string[];
     /** One delta per tag in `missing` (same order). */
     deltas: IUpgradeDelta[];
-    /** Combined gain to the Operators subscore (0.0–1.0) if the user did every
+    /** Combined gain to the Operators subscore (0.0-1.0) if the user did every
      *  upgrade on this op - ELITE and MAX_LEVEL overlap are deduped. */
     subscore_potential_gain: number;
     /** Same combination as `subscore_potential_gain` but in overall total_score units. */
@@ -275,7 +275,7 @@ export interface IRoomAssignment {
     formula_type: string | null;
     /** Order-acquisition speed % (the productivity bonus the game shows). */
     total_efficiency: number;
-    /** Order-value % (LMD per order, e.g. Proviso) — lifts LMD, not speed. */
+    /** Order-value % (LMD per order, e.g. Proviso) - lifts LMD, not speed. */
     order_value: number;
     /** True = fixed synergy squad (operators depend on each other); false = flexible. */
     locked: boolean;
@@ -311,12 +311,30 @@ export interface IRoomRotation {
     backup: IAssignedOperator | null;
 }
 
+export interface IRotationSetRoom {
+    slot_id: string;
+    room_type: string;
+    /** The operators working this room in this set. */
+    working: IAssignedOperator[];
+    /** The main resting this set (covered by the backup), if any. */
+    resting: IAssignedOperator | null;
+}
+
+export interface IRotationSet {
+    rooms: IRotationSetRoom[];
+}
+
 export interface IRotation {
-    /** The main staffing — your best operators, working almost all the time. */
+    /** The main staffing - your best operators, working almost all the time. */
     main: IBaseAssignment;
     /** Per-room rotation plan: who to swap first, when, and the backup. */
     rooms: IRoomRotation[];
-    /** Sustained 24/7 output — near peak, reduced only by backup-coverage time. */
+    /** The small shared bench that covers every room (one swap at a time). */
+    shared_bench?: IAssignedOperator[];
+    /** The rotation as a few overlapping staffings to cycle through, so the whole
+     * base is never swapped at once. Consecutive sets share all-but-one operator. */
+    sets?: IRotationSet[];
+    /** Sustained 24/7 output - near peak, reduced only by backup-coverage time. */
     sustained_efficiency: number;
 }
 
