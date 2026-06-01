@@ -5,6 +5,7 @@ pub mod audio;
 pub mod building;
 pub mod campaign;
 pub mod chibi;
+pub mod climb_tower;
 pub mod enemy;
 pub mod gacha;
 pub mod handbook;

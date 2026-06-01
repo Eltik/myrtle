@@ -20,7 +20,11 @@ const RARITY_T3D5: f64 = 40.0; // Not in data but defined in schema
 
 const HIDDEN_MULTIPLIER: f64 = 1.5;
 
-pub fn grade_medals(user_medals: &[UserMedalRow], medal_data: &MedalData) -> f64 {
+pub fn grade_medals(
+    user_medals: &[UserMedalRow],
+    medal_data: &MedalData,
+    owned_operators: &HashSet<&str>,
+) -> f64 {
     if medal_data.medals.is_empty() {
         return 0.0;
     }
@@ -35,17 +39,36 @@ pub fn grade_medals(user_medals: &[UserMedalRow], medal_data: &MedalData) -> f64
         .collect();
 
     let now = chrono::Utc::now().timestamp();
-    let permanent_score = score_permanent_pool(&earned, medal_data, now);
-    let event_score = score_event_pool(&earned, medal_data, now);
+    let permanent_score = score_permanent_pool(&earned, medal_data, owned_operators, now);
+    let event_score = score_event_pool(&earned, medal_data, owned_operators, now);
 
     (permanent_score * PERMANENT_POOL_WEIGHT) + (event_score * EVENT_POOL_WEIGHT)
 }
 
-fn score_permanent_pool(earned: &HashSet<&str>, medal_data: &MedalData, now: i64) -> f64 {
+/// True when a medal can't be earned by *this* user: it's gated on a collab
+/// operator the user doesn't own. Such medals are dropped from the pool entirely
+/// (like one-time competitive stages in the stage universe) so players aren't
+/// penalized for medals they have no way to earn. If the user owns the operator,
+/// the medal is achievable and scored normally.
+fn is_unobtainable_for(medal_id: &str, medal_data: &MedalData, owned: &HashSet<&str>) -> bool {
+    medal_data
+        .operator_lock(medal_id)
+        .is_some_and(|lock| !owned.contains(lock.operator_id.as_str()))
+}
+
+fn score_permanent_pool(
+    earned: &HashSet<&str>,
+    medal_data: &MedalData,
+    owned: &HashSet<&str>,
+    now: i64,
+) -> f64 {
     let mut earned_weight = 0.0;
     let mut total_weight = 0.0;
 
     for medal in medal_data.medals.values() {
+        if is_unobtainable_for(&medal.medal_id, medal_data, owned) {
+            continue;
+        }
         if !matches!(
             medal_data.obtainability(&medal.medal_id, now),
             Obtainability::Permanent
@@ -68,11 +91,19 @@ fn score_permanent_pool(earned: &HashSet<&str>, medal_data: &MedalData, now: i64
     (earned_weight / total_weight).min(1.0)
 }
 
-fn score_event_pool(earned: &HashSet<&str>, medal_data: &MedalData, now: i64) -> f64 {
+fn score_event_pool(
+    earned: &HashSet<&str>,
+    medal_data: &MedalData,
+    owned: &HashSet<&str>,
+    now: i64,
+) -> f64 {
     let mut earned_weighted = 0.0;
     let mut cap = 0.0;
 
     for medal in medal_data.medals.values() {
+        if is_unobtainable_for(&medal.medal_id, medal_data, owned) {
+            continue;
+        }
         let Obtainability::Event { proxy_close_ts } =
             medal_data.obtainability(&medal.medal_id, now)
         else {

@@ -221,6 +221,13 @@ export interface ISandboxImprovements {
     quests: IProgressPair;
 }
 
+export interface IMedalOperatorLock {
+    operatorId: string;
+    operatorName: string;
+    /** Human-readable reason, e.g. "collab" or "event reward". */
+    reason: string;
+}
+
 export interface IMedalGap {
     medal_id: string;
     name: string;
@@ -229,11 +236,15 @@ export interface IMedalGap {
     description: string;
     is_hidden: boolean;
     end_time: number | null;
+    /** Set when the medal is locked behind an operator that can't be obtained. */
+    operator_lock?: IMedalOperatorLock | null;
 }
 
 export interface IMedalImprovements {
     permanent_missing: IMedalGap[];
     event_in_window_missing: IMedalGap[];
+    /** Medals gated on a collab / one-time operator - shown for reference, excluded from scoring. */
+    operator_locked: IMedalGap[];
 }
 
 export interface IUpgradeDelta {

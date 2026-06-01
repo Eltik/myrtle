@@ -43,8 +43,8 @@ function MedalIcon({ medal, color }: { medal: IMedalGap; color: string }) {
 }
 
 export function MedalPanel({ improvements, accent }: IProps) {
-    const { permanent_missing: permanent, event_in_window_missing: event } = improvements.medals;
-    if (permanent.length === 0 && event.length === 0) {
+    const { permanent_missing: permanent, event_in_window_missing: event, operator_locked: locked } = improvements.medals;
+    if (permanent.length === 0 && event.length === 0 && locked.length === 0) {
         return (
             <div className={PANEL_PADDING}>
                 <EmptyHint>You've earned every medal that's currently reachable. Nice work.</EmptyHint>
@@ -56,11 +56,20 @@ export function MedalPanel({ improvements, accent }: IProps) {
         <div className={`${PANEL_PADDING} flex flex-col gap-5`}>
             {event.length > 0 && <MedalList title="Event medals - limited time" subtitle="Sorted by earliest ending. Hidden medals are still listed but their hint is suppressed." medals={event} accent={accent} mode="event" />}
             {permanent.length > 0 && <MedalList title="Permanent medals" subtitle="Sorted by rarity desc. Highest-rarity gaps first." medals={permanent} accent={accent} mode="permanent" />}
+            {locked.length > 0 && (
+                <MedalList
+                    title="Behind unavailable operators"
+                    subtitle="These require a collab operator you don't own. Since collab operators aren't normally obtainable, these medals don't count toward your medal score. Earn the operator in a rerun and they'll count again. Shown for reference."
+                    medals={locked}
+                    accent={accent}
+                    mode="locked"
+                />
+            )}
         </div>
     );
 }
 
-function MedalList({ title, subtitle, medals, accent, mode }: { title: string; subtitle: string; medals: IMedalGap[]; accent: string; mode: "permanent" | "event" }) {
+function MedalList({ title, subtitle, medals, accent, mode }: { title: string; subtitle: string; medals: IMedalGap[]; accent: string; mode: "permanent" | "event" | "locked" }) {
     const [showAll, setShowAll] = useState(false);
     const visible = useMemo(() => (showAll ? medals : medals.slice(0, INITIAL_VISIBLE)), [showAll, medals]);
 
@@ -78,11 +87,12 @@ function MedalList({ title, subtitle, medals, accent, mode }: { title: string; s
     );
 }
 
-function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "event" }) {
+function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "event" | "locked" }) {
     const color = medalRarityColor(medal.rarity);
     const daysLeft = medal.end_time ? Math.max(0, Math.ceil((medal.end_time * 1000 - Date.now()) / 86_400_000)) : null;
+    const lock = medal.operator_lock;
     return (
-        <div className="flex items-center gap-2.5 rounded-md border border-border/40 bg-muted/15 px-3 py-2 transition-colors hover:border-border/65 hover:bg-muted/25">
+        <div className={cn("flex items-center gap-2.5 rounded-md border border-border/40 bg-muted/15 px-3 py-2 transition-colors hover:border-border/65 hover:bg-muted/25", mode === "locked" && "opacity-70")}>
             <Tooltip>
                 <TooltipTrigger
                     render={
@@ -113,6 +123,22 @@ function MedalRow({ medal, mode }: { medal: IMedalGap; mode: "permanent" | "even
                 <Pill color={daysLeft <= 7 ? URGENT_COLOR : color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
                     {daysLeft <= 0 ? "ending now" : `${daysLeft}d left`}
                 </Pill>
+            )}
+            {mode === "locked" && lock && (
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Pill color={color} className={cn("shrink-0 whitespace-nowrap", TEXT_BADGE)}>
+                                {lock.reason}
+                            </Pill>
+                        }
+                    />
+                    <TooltipContent sideOffset={4}>
+                        <p>
+                            Requires {lock.operatorName}, a {lock.reason} operator you don't own. Excluded from your medal score until you have them.
+                        </p>
+                    </TooltipContent>
+                </Tooltip>
             )}
         </div>
     );

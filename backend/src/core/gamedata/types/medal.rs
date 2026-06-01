@@ -6,6 +6,29 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::activity::ActivityBasicInfo;
+use super::operator::Operator;
+
+/// Medal `Template`s whose first `UnlockParam` is a `char_*` id, i.e. the medal
+/// is gated on owning / investing in a specific operator.
+const OPERATOR_GATED_TEMPLATES: &[&str] = &[
+    "GotChars",
+    "GotCharsBeforeTime",
+    "CharPotential",
+    "CharStoryUnlock",
+    "CharEvolvePhase",
+];
+
+/// A medal gated on a collab operator. Whether it's actually *locked* for a
+/// given user depends on whether they own the operator - that per-user check
+/// happens at scoring / improvements time, not here. This just records the
+/// gating operator so consumers don't have to re-resolve it.
+#[derive(Debug, Clone)]
+pub struct OperatorLock {
+    pub operator_id: String,
+    pub operator_name: String,
+}
+
 /// Root structure for `medal_table.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -108,6 +131,34 @@ pub struct MedalData {
     /// Activity medals are the only type the game groups; everything else
     /// (player / story / camp / etc.) falls back to the medal's own `ExpireTimes`.
     pub medal_to_group: HashMap<String, String>,
+    /// `medal_id` -> the collab operator that gates it. Populated by
+    /// [`Self::link_operator_locks`] once operator data is available. A medal here
+    /// is only *unobtainable for a given user* if they don't own the operator -
+    /// that per-user check lives in scoring / improvements, not in this map.
+    pub operator_locked: HashMap<String, OperatorLock>,
+    /// `medal_id` -> Stationary Security Service tower season windows, for medals
+    /// whose unlock requires a tower that only runs in certain seasons. Their own
+    /// `ExpireTimes` are empty (so they'd look permanent), so availability is
+    /// driven by the climb-tower schedule instead. Populated by
+    /// [`Self::link_content_windows`].
+    pub tower_windows: HashMap<String, Vec<(i64, i64)>>,
+    /// `medal_id` -> its event activity's window. Used to repair medals whose
+    /// `ExpireTimes` mislabel event content as permanent/ongoing - the activity
+    /// schedule is authoritative. Populated by [`Self::link_content_windows`].
+    pub event_windows: HashMap<String, EventWindow>,
+}
+
+/// An event medal's earnable window, resolved from its activity.
+#[derive(Debug, Clone, Copy)]
+pub struct EventWindow {
+    pub start: i64,
+    /// Reward-claimable-until timestamp (`0` if the activity has no close).
+    pub close: i64,
+    /// True for one-time competitive / minigame modes (auto-chess, enemy duel,
+    /// boss rush, etc.) that never rerun. Once such a mode is over its medals are
+    /// *excluded* from scoring rather than recency-decayed - matching how the
+    /// stage universe drops those stages entirely.
+    pub one_time: bool,
 }
 
 /// Whether a medal can currently be earned. Used to keep "dead event" medals out
@@ -124,6 +175,11 @@ pub enum Obtainability {
     ///     event pool with recency-decayed weight.
     ///   - `proxy_close_ts == 0`: ongoing event with no scheduled close (full weight).
     Event { proxy_close_ts: i64 },
+    /// Not currently reachable and shouldn't count for *or* against the user:
+    /// seasonal/event content whose window is entirely in the future (e.g. an
+    /// SSS tower season that hasn't started on this server yet). Excluded from
+    /// both scoring pools and from the "available" improvement lists.
+    Unobtainable,
 }
 
 impl MedalData {
@@ -172,6 +228,123 @@ impl MedalData {
         data
     }
 
+    /// Populate [`Self::operator_locked`] by cross-referencing operator-gated
+    /// medals against operator obtainability. Call once at load after operators
+    /// are built. Idempotent - rebuilds the map each call.
+    pub fn link_operator_locks(&mut self, operators: &HashMap<String, Operator>) {
+        let mut locked = HashMap::new();
+        for medal in self.medals.values() {
+            if !OPERATOR_GATED_TEMPLATES.contains(&medal.template.as_str()) {
+                continue;
+            }
+            let Some(char_id) = medal.unlock_param.first() else {
+                continue;
+            };
+            if !char_id.starts_with("char_") {
+                continue;
+            }
+            let Some(op) = operators.get(char_id) else {
+                continue;
+            };
+            if op.is_collab() {
+                locked.insert(
+                    medal.medal_id.clone(),
+                    OperatorLock {
+                        operator_id: char_id.clone(),
+                        operator_name: op.name.clone(),
+                    },
+                );
+            }
+        }
+        self.operator_locked = locked;
+    }
+
+    /// Lock info for a medal gated on an unobtainable operator, if any.
+    pub fn operator_lock(&self, medal_id: &str) -> Option<&OperatorLock> {
+        self.operator_locked.get(medal_id)
+    }
+
+    /// Populate [`Self::tower_windows`] and [`Self::event_windows`] from the
+    /// authoritative schedules. Call once at load after groups are indexed.
+    ///
+    /// - `tower_schedule`: `tower_id -> [(season_start, season_end)]` from the
+    ///   climb-tower (Stationary Security Service) table.
+    /// - `activities`: used to map each event medal (via its activity's medal
+    ///   group) to the activity's real `(start, close)` window.
+    pub fn link_content_windows(
+        &mut self,
+        tower_schedule: &HashMap<String, Vec<(i64, i64)>>,
+        activities: &HashMap<String, ActivityBasicInfo>,
+    ) {
+        // SSS tower medals (`PassTower`, first unlock param is the tower id) ->
+        // that tower's season windows. Their own ExpireTimes are empty/placeholder.
+        // Only NORMAL towers (`tower_n_*`) are season-gated; training towers
+        // (`tower_tr_*`) are always-available practice and keep their ExpireTimes.
+        // Towers with no season entry are the original pre-schedule SSS
+        // (`tower_n_01..04`) that were never carried into `SeasonInfos`; they get
+        // empty windows, which classify as Unobtainable (retired, not playable)
+        // rather than slipping through to Permanent.
+        let mut tower_windows = HashMap::new();
+        for medal in self.medals.values() {
+            if medal.template != "PassTower" {
+                continue;
+            }
+            let Some(tower_id) = medal.unlock_param.first() else {
+                continue;
+            };
+            if !tower_id.starts_with("tower_n_") {
+                continue;
+            }
+            let windows = tower_schedule.get(tower_id).cloned().unwrap_or_default();
+            tower_windows.insert(medal.medal_id.clone(), windows);
+        }
+        self.tower_windows = tower_windows;
+
+        // Event medals -> their activity's (start, close) window, resolved from
+        // the medal id: `medal_activity_<suffix>_<n>` / `medal_hidden_<suffix>_<n>`
+        // map to activity `<suffix>` or `act<suffix>`. This covers grouped medal
+        // sets, `_NNN` upgrade variants, ungrouped special-mode medals (auto-chess,
+        // enemy duel, boss rush, ...), AND hidden event medals ("obtain operator
+        // X during event Y", event stage-challenge medals) alike - all of which
+        // the medal table's own ExpireTimes mislabel as permanent/ongoing.
+        // `RewardEndTime` (claimable-until) is preferred over the stage `EndTime`.
+        let mut event_windows = HashMap::new();
+        for medal in self.medals.values() {
+            let Some(suffix) = medal
+                .medal_id
+                .strip_prefix("medal_activity_")
+                .or_else(|| medal.medal_id.strip_prefix("medal_hidden_"))
+            else {
+                continue;
+            };
+            // Drop the trailing medal number (`_05`, `_105`, ...) to get the
+            // activity suffix.
+            let Some((act_suffix, _)) = suffix.rsplit_once('_') else {
+                continue;
+            };
+            let activity = activities
+                .get(act_suffix)
+                .or_else(|| activities.get(&format!("act{act_suffix}")));
+            let Some(act) = activity else {
+                continue;
+            };
+            let close = if act.reward_end_time > 0 {
+                act.reward_end_time
+            } else {
+                act.end_time
+            };
+            event_windows.insert(
+                medal.medal_id.clone(),
+                EventWindow {
+                    start: act.start_time,
+                    close,
+                    one_time: act.is_one_time_competitive(),
+                },
+            );
+        }
+        self.event_windows = event_windows;
+    }
+
     /// Get the display name for a medal category
     pub fn get_category_name(&self, category: &str) -> String {
         self.category_names
@@ -198,11 +371,72 @@ impl MedalData {
             return Obtainability::Event { proxy_close_ts: 0 };
         };
 
+        if let Some(windows) = self.tower_windows.get(medal_id) {
+            return classify_windows(windows, now);
+        }
+
         let group = self.resolve_group(medal);
         let times: &[ExpireTime] =
             group.map_or(&medal.expire_times, |g| g.shared_expire_times.as_slice());
 
-        classify_expire_times(times, group.is_some(), now)
+        let base = classify_expire_times(times, group.is_some(), now);
+
+        // For event medals the activity schedule is authoritative over the medal
+        // table's ExpireTimes, which routinely mislabel event content as
+        // permanent (PERM/-1) or ongoing (open-ended TEMP) - e.g. one-time
+        // auto-chess / enemy-duel / boss-rush medals, or events whose End is a
+        // placeholder. We only override when the base classification claims the
+        // medal is permanently/indefinitely earnable; a properly-bounded event
+        // window (Event with a real close ts - e.g. a TEMP->PERM medal keyed off
+        // its TEMP end, which already covers reruns) is left as-is.
+        if let Some(&EventWindow {
+            start,
+            close,
+            one_time,
+        }) = self.event_windows.get(medal_id)
+        {
+            let active = now >= start && (close <= 0 || now <= close);
+
+            // One-time competitive / minigame modes (auto-chess, enemy duel, boss
+            // rush, multiplayer, ...) never rerun. While the mode is live the
+            // medal is earnable; once it's over (or before it opens) it's excluded
+            // from scoring entirely - matching how the stage universe drops these
+            // activities - rather than lingering as a decayed gap. This holds
+            // regardless of what the medal's own ExpireTimes claim.
+            if one_time {
+                return if active {
+                    Obtainability::Event {
+                        proxy_close_ts: if close > 0 { close } else { 0 },
+                    }
+                } else {
+                    Obtainability::Unobtainable
+                };
+            }
+
+            // Otherwise the activity schedule only *repairs* medals the table
+            // mislabels as permanently/indefinitely earnable; a properly-bounded
+            // event window (e.g. a TEMP->PERM medal keyed off its TEMP end, which
+            // already covers reruns) is trusted as-is.
+            let base_says_open = matches!(
+                base,
+                Obtainability::Permanent | Obtainability::Event { proxy_close_ts: 0 }
+            );
+            if base_says_open {
+                if active {
+                    return Obtainability::Event {
+                        proxy_close_ts: if close > 0 { close } else { 0 },
+                    };
+                }
+                if now < start {
+                    return Obtainability::Unobtainable;
+                }
+                return Obtainability::Event {
+                    proxy_close_ts: close,
+                };
+            }
+        }
+
+        base
     }
 
     /// Find the group that determines a medal's obtainability, walking up the
@@ -246,6 +480,28 @@ impl MedalData {
     }
 }
 
+/// Classify seasonal content (e.g. SSS towers) from its open/close windows.
+/// A tower may appear in several seasons (it gets replicated), so we take the
+/// best-case window: currently open beats already-closed beats not-yet-open.
+fn classify_windows(windows: &[(i64, i64)], now: i64) -> Obtainability {
+    if let Some(&(_, end)) = windows.iter().find(|&&(s, e)| s <= now && (e <= 0 || now <= e)) {
+        return Obtainability::Event {
+            proxy_close_ts: if end > 0 { end } else { 0 },
+        };
+    }
+    if let Some(last_end) = windows
+        .iter()
+        .filter(|&&(_, e)| e > 0 && e < now)
+        .map(|&(_, e)| e)
+        .max()
+    {
+        return Obtainability::Event {
+            proxy_close_ts: last_end,
+        };
+    }
+    Obtainability::Unobtainable
+}
+
 fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Obtainability {
     if times.is_empty() {
         return Obtainability::Permanent;
@@ -281,10 +537,25 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
     }
 
     if has_perm_open {
-        // TEMP → PERM transition (e.g. Wolumonde): once temp, now permanently
-        // earnable through the post-event permanent route.
+        // TEMP + open-ended PERM. The TEMP window is the real earnable period
+        // (it spans the event's original run and its rerun); the open-ended PERM
+        // entry is a display/collection artifact, NOT a "permanently earnable"
+        // signal. These are event medals - typically EX-stage challenge medals
+        // ("clear GA-EX-7 with ...") whose stages live in ACTIVITY zones (the
+        // event pool, not the permanent archive), so they can't be earned once
+        // the event is over. The in-window case already returned above, so here
+        // the window has closed: treat as a recency-decayed past event keyed off
+        // the TEMP end (covers both grouped sets and `_105` upgrade variants).
         if has_any_temp {
-            return Obtainability::Permanent;
+            let last_temp_end = times
+                .iter()
+                .filter(|e| e.expire_type == "TEMP")
+                .map(|e| if e.end > 0 { e.end } else { e.start })
+                .max()
+                .unwrap_or(0);
+            return Obtainability::Event {
+                proxy_close_ts: last_temp_end,
+            };
         }
         // PERM-only: ungrouped medals (player level, story, tower, etc.) are
         // genuinely permanent. Grouped activity medals with this pattern are

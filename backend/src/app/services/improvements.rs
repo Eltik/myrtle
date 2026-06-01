@@ -133,6 +133,10 @@ pub struct MedalImprovements {
     /// Event medals still in their reachable window the user hasn't earned.
     /// Sorted by `end_time` asc (most urgent first).
     pub event_in_window_missing: Vec<MedalGap>,
+    /// Medals gated on a collab / one-time operator the player can't reliably
+    /// obtain. These are excluded from medal scoring; surfaced separately so the
+    /// user understands why they're stuck rather than seeing them as earnable.
+    pub operator_locked: Vec<MedalGap>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -145,6 +149,18 @@ pub struct MedalGap {
     pub is_hidden: bool,
     /// Event end-timestamp in unix seconds, if this is an event medal.
     pub end_time: Option<i64>,
+    /// Set when the medal is locked behind an unobtainable operator.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operator_lock: Option<MedalOperatorLock>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MedalOperatorLock {
+    pub operator_id: String,
+    pub operator_name: String,
+    /// Human-readable reason, e.g. "collab" or "event reward".
+    pub reason: &'static str,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -321,11 +337,12 @@ pub async fn get_improvements(
         roster_queries::get_supports(&state.db, user_id),
     )?;
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
+    let owned_operators: HashSet<&str> = roster.iter().map(|e| e.operator_id.as_str()).collect();
 
     let stages = build_stage_improvements(&state.db, user_id, &game_data).await?;
     let roguelike = build_roguelike_improvements(&state.db, user_id, &game_data).await?;
     let sandbox = build_sandbox_improvements(&state.db, user_id, &game_data).await?;
-    let medals = build_medal_improvements(&state.db, user_id, &game_data).await?;
+    let medals = build_medal_improvements(&state.db, user_id, &game_data, &owned_operators).await?;
     let operators = build_operator_improvements(&roster, &game_data, &support_ids);
     let base = build_base_improvements(&state.db, user_id, &roster, &game_data).await?;
 
@@ -675,6 +692,7 @@ async fn build_medal_improvements(
     pool: &PgPool,
     user_id: Uuid,
     game_data: &GameData,
+    owned_operators: &HashSet<&str>,
 ) -> Result<MedalImprovements, ApiError> {
     let rows = medal_queries::get_user_medals(pool, user_id).await?;
     let earned: HashSet<String> = rows
@@ -690,11 +708,28 @@ async fn build_medal_improvements(
 
     let mut permanent_missing: Vec<MedalGap> = Vec::new();
     let mut event_in_window_missing: Vec<MedalGap> = Vec::new();
+    let mut operator_locked: Vec<MedalGap> = Vec::new();
 
     for medal in game_data.medals.medals.values() {
         if earned.contains(&medal.medal_id) {
             continue;
         }
+        // Collab-gated medal the user CAN'T currently earn (they don't own the
+        // operator). It isn't an "improvement opportunity" - surface it in its
+        // own list with operator context instead of the permanent/event gaps.
+        // If the user *owns* the collab operator, fall through and treat it as a
+        // normal achievable gap.
+        if let Some(lock) = game_data.medals.operator_lock(&medal.medal_id)
+            && !owned_operators.contains(lock.operator_id.as_str()) {
+                let mut gap = medal_gap(medal, &game_data.medals, None);
+                gap.operator_lock = Some(MedalOperatorLock {
+                    operator_id: lock.operator_id.clone(),
+                    operator_name: lock.operator_name.clone(),
+                    reason: "collab",
+                });
+                operator_locked.push(gap);
+                continue;
+            }
         match game_data.medals.obtainability(&medal.medal_id, now) {
             Obtainability::Permanent => {
                 permanent_missing.push(medal_gap(medal, &game_data.medals, None));
@@ -718,6 +753,11 @@ async fn build_medal_improvements(
                     },
                 ));
             }
+            #[allow(clippy::needless_continue)]
+            // Seasonal/event content not yet reachable (e.g. an SSS tower season
+            // that hasn't started). Not an improvement opportunity right now, so
+            // it's left out of the lists entirely.
+            Obtainability::Unobtainable => continue,
         }
     }
 
@@ -734,9 +774,17 @@ async fn build_medal_improvements(
             .cmp(&b.end_time.unwrap_or(i64::MAX))
     });
 
+    operator_locked.sort_by(|a, b| {
+        rarity_weight(&b.rarity)
+            .partial_cmp(&rarity_weight(&a.rarity))
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.medal_id.cmp(&b.medal_id))
+    });
+
     Ok(MedalImprovements {
         permanent_missing,
         event_in_window_missing,
+        operator_locked,
     })
 }
 
@@ -749,6 +797,7 @@ fn medal_gap(medal: &MedalDefinition, medal_data: &MedalData, end_time: Option<i
         description: medal_data.resolve_description(&medal.medal_id),
         is_hidden: medal.is_hidden,
         end_time,
+        operator_lock: None,
     }
 }
 
