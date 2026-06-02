@@ -544,14 +544,32 @@ pub struct Operator {
 /// like "Event Reward" but remain obtainable, so that signal over-excludes.
 const COLLAB_TEAMS: &[&str] = &["rainbow", "mujica", "laios"];
 
+/// Collab `DisplayNumber` prefixes for collabs that lack a dedicated team. The
+/// Monster Hunter collab (`MH01..`) is split across a shared in-game team
+/// (`action4`, alongside the obtainable base ops) and a team-less Palico, so the
+/// only signal common to all three is the `MH` display number. Base `action4`
+/// ops use `A##`, so this doesn't catch them. Other collabs (Rainbow Six `RS`,
+/// Ave Mujica `AM`, Delicious in Dungeon `DD`) are already covered by team.
+const COLLAB_DISPLAY_PREFIXES: &[&str] = &["MH"];
+
 impl Operator {
     /// True if this is a collab (third-party IP) operator. The one consolidated
     /// place that answers "is this a collab op" - consumers (medal locks,
     /// scoring, future roster features) should call this rather than re-derive.
     pub fn is_collab(&self) -> bool {
-        self.team_id
+        if self
+            .team_id
             .as_deref()
             .is_some_and(|t| COLLAB_TEAMS.contains(&t))
+        {
+            return true;
+        }
+        let prefix: String = self
+            .display_number
+            .chars()
+            .take_while(char::is_ascii_alphabetic)
+            .collect();
+        !prefix.is_empty() && COLLAB_DISPLAY_PREFIXES.contains(&prefix.as_str())
     }
 }
 

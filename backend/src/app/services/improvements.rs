@@ -720,16 +720,17 @@ async fn build_medal_improvements(
         // If the user *owns* the collab operator, fall through and treat it as a
         // normal achievable gap.
         if let Some(lock) = game_data.medals.operator_lock(&medal.medal_id)
-            && !owned_operators.contains(lock.operator_id.as_str()) {
-                let mut gap = medal_gap(medal, &game_data.medals, None);
-                gap.operator_lock = Some(MedalOperatorLock {
-                    operator_id: lock.operator_id.clone(),
-                    operator_name: lock.operator_name.clone(),
-                    reason: "collab",
-                });
-                operator_locked.push(gap);
-                continue;
-            }
+            && !owned_operators.contains(lock.operator_id.as_str())
+        {
+            let mut gap = medal_gap(medal, &game_data.medals, None);
+            gap.operator_lock = Some(MedalOperatorLock {
+                operator_id: lock.operator_id.clone(),
+                operator_name: lock.operator_name.clone(),
+                reason: "collab",
+            });
+            operator_locked.push(gap);
+            continue;
+        }
         match game_data.medals.obtainability(&medal.medal_id, now) {
             Obtainability::Permanent => {
                 permanent_missing.push(medal_gap(medal, &game_data.medals, None));

@@ -228,11 +228,16 @@ pub enum BuffResolutionStrategy {
 
     /// Boosts LMD *per order* (order value) rather than order speed. Because the
     /// trade rate is a fixed 500 LMD per Pure Gold bar, an LMD-per-order boost is
-    /// an LMD-per-hour boost of the same proportion (gold-supply permitting).
-    /// Crucially this is NOT "order acquisition efficiency", so a Shamare-style
-    /// nullifier does NOT zero it - which is exactly why Shamare + Proviso +
-    /// Tequila is the top LMD team. `estimated_pct` is the LMD-equivalent value.
-    OrderValue { estimated_pct: f64 },
+    /// an LMD-per-hour boost of the same proportion (gold-supply permitting). This
+    /// is NOT "order acquisition efficiency", so a flat-LMD value (Tequila) survives
+    /// a Shamare-style speed-nullifier. `estimated_pct` is the LMD-equivalent value.
+    ///
+    /// `pure_gold` marks a value that depends on Pure-Gold orders specifically
+    /// (Proviso boosts low/"defaulted" Pure-Gold orders). A Shamare-type operator
+    /// shifts the post toward higher-yield Precious-Metal orders, so a Pure-Gold
+    /// value no longer applies in a Shamare team - which is why Proviso, unlike
+    /// Tequila, does NOT benefit from Shamare.
+    OrderValue { estimated_pct: f64, pure_gold: bool },
 
     /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
@@ -527,20 +532,27 @@ pub fn build_registry(
                 }
                 // Order-VALUE trading skills: raise LMD *per order* rather than
                 // order speed. Calibrated against the trading-post economy (Pure
-                // Gold = 500 LMD/bar, L3 order mix 30/50/20 low/med/high):
+                // Gold = 500 LMD/bar, L3 order mix 30/50/20 low/med/high). NOTE these
+                // do NOT stack across operators (the team scorer keeps only the
+                // strongest); their payoff is realised by pairing the value operator
+                // with order-acquisition SPEED, not with a second value operator:
                 //   - Proviso "Damages for Breach" (+2 Pure Gold to defaulted
                 //     low/med orders, same completion time): avg order 1450→2250
                 //     LMD ⇒ ×1.55, i.e. +55% LMD/hour.
-                //   - Tequila "+N LMD on non-defaulted high orders": ~+10% over a
-                //     realistic order mix.
+                //   - Tequila "+N LMD on non-defaulted high orders": ~+10% in
+                //     isolation, but its bonus EXCLUDES the defaulted orders Proviso
+                //     boosts, so it adds nothing alongside Proviso.
                 //   - Precious-Metal "higher-yield chance" (Tailoring): shifts the
                 //     order mix up; gold/hour ≈ flat, value realised via the order
                 //     cap ⇒ ~+10%.
                 //   - A bare enabler with no payoff (Proviso "Contract Law") ⇒ 0.
                 else if buff.room_type == "TRADING"
-                    && let Some(est) = order_value_estimate(&buff.description)
+                    && let Some((est, pure_gold)) = order_value_estimate(&buff.description)
                 {
-                    BuffResolutionStrategy::OrderValue { estimated_pct: est }
+                    BuffResolutionStrategy::OrderValue {
+                        estimated_pct: est,
+                        pure_gold,
+                    }
                 }
                 // Jaye-style: efficiency scales with the order-limit difference
                 // that teammates' efficiency creates ("increases order acquisition
@@ -826,15 +838,18 @@ fn parse_scaling_cap(desc: &str) -> Option<f64> {
 /// LMD-equivalent value of an order-VALUE trading skill, or `None` if the buff
 /// isn't one. Calibrated from the trading-post economy (500 LMD per Pure Gold
 /// bar; L3 order mix 30/50/20). See the call site for the derivations.
-fn order_value_estimate(desc: &str) -> Option<f64> {
+/// `(estimated LMD-equivalent %, pure_gold)`. `pure_gold` is true for values that
+/// only apply to Pure-Gold orders (Proviso), which a Shamare-type Precious-Metal
+/// shift nullifies; false for flat-LMD (Tequila) and Precious-Metal values.
+fn order_value_estimate(desc: &str) -> Option<(f64, bool)> {
     if desc.contains("increase the LMD") {
-        Some(10.0) // Tequila-type: flat +N LMD on non-defaulted high orders
+        Some((10.0, false)) // Tequila-type: flat +N LMD on non-defaulted high orders
     } else if desc.contains("Pure Gold") && desc.contains("traded <@cc.vup>") {
-        Some(55.0) // Proviso payoff: +2 Pure Gold per defaulted order
+        Some((55.0, true)) // Proviso payoff: +2 Pure Gold per defaulted order
     } else if desc.contains("Precious Metal") || desc.contains("higher-yield") {
-        Some(10.0) // higher-yield order chance (Tailoring etc.)
+        Some((10.0, false)) // higher-yield order chance (Tailoring etc.)
     } else if desc.contains("Pure Gold") || desc.contains("Defaulted trade") {
-        Some(0.0) // enabler with no direct payoff (Proviso "Contract Law")
+        Some((0.0, true)) // enabler with no direct payoff (Proviso "Contract Law")
     } else {
         None
     }

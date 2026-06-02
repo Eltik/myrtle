@@ -87,7 +87,7 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
         }
 
         // Order value is an LMD-per-order multiplier; treated as efficiency here.
-        BuffResolutionStrategy::OrderValue { estimated_pct } => *estimated_pct,
+        BuffResolutionStrategy::OrderValue { estimated_pct, .. } => *estimated_pct,
 
         BuffResolutionStrategy::GlobalEffect { bonus_pct, .. } => {
             // Global effects are not evaluated per-room - they're summed
