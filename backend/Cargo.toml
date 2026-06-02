@@ -35,6 +35,14 @@ path = "src/bin/resync_gacha.rs"
 name = "export-gacha"
 path = "src/bin/export_gacha.rs"
 
+# jemalloc: glibc malloc retains freed memory across tokio's many per-thread arenas,
+# so transient load spikes (daily regrade, cache-miss recomputes, login parsing) leave
+# the server's RSS permanently inflated to 1-2GB. jemalloc fragments far less and returns
+# freed pages to the OS, keeping the long-running server near its ~255MB baseline.
+# Only the `backend` server binary installs it (see src/main.rs). Unsupported on MSVC.
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = "0.6"
+
 [dependencies]
 anyhow = "1.0.102"
 arc-swap = "1"
