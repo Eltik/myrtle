@@ -1747,7 +1747,11 @@ fn applicable_strategies<'a>(
 }
 
 /// Sum of an operator's order-VALUE contributions (LMD per order) in this room.
-fn op_order_value(
+/// An operator's order value that SURVIVES a Shamare-type speed-nullifier: flat-LMD
+/// and Precious-Metal value count, but Pure-Gold value (Proviso) does not, because
+/// Shamare shifts the post away from Pure-Gold orders. This is what makes an operator
+/// a genuine Shamare partner versus a mere warm body.
+fn op_surviving_order_value(
     op: &OperatorBaseProfile,
     room_type: &str,
     formula_type: Option<&str>,
@@ -1756,7 +1760,10 @@ fn op_order_value(
 ) -> f64 {
     applicable_strategies(op, room_type, formula_type, registry, building_data)
         .map(|s| match s {
-            BuffResolutionStrategy::OrderValue { estimated_pct } => *estimated_pct,
+            BuffResolutionStrategy::OrderValue {
+                estimated_pct,
+                pure_gold: false,
+            } => *estimated_pct,
             _ => 0.0,
         })
         .sum()
@@ -1827,20 +1834,45 @@ fn best_team_for_room(
         }
     }
 
-    // A nullifier (Shamare) zeroes teammates' SPEED, so its only useful partners
-    // are order-VALUE operators (Proviso, Tequila, Bibeak) - whose LMD-per-order
-    // survives the nullify. Those score ~0 on speed and would be cut, so when a
-    // nullifier is in the pool, fold their order value into the ranking so the
-    // Shamare money-printer combos can form.
+    // A nullifier (Shamare) zeroes teammates' SPEED and gains efficiency per
+    // teammate, so its only worthwhile partners are operators whose order VALUE
+    // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal). Every
+    // other operator would merely be a warm body for the per-teammate scaling - and
+    // that body slot is better filled by a true benchwarmer (during padding) than by
+    // consuming a value operator (Proviso, who is wasted here) or a teammate-gated
+    // operator (Lappland, reserved for when her partner is around). So when a
+    // nullifier is present, only the nullifier itself and surviving-value operators
+    // are eligible team members; the rest are left for padding to fill as bodies.
     let has_nullifier = candidates
         .iter()
         .any(|op| op_is_nullifier(op, &room.room_type, formula_type, registry, building_data));
 
+    let candidates: Vec<&OperatorBaseProfile> = if has_nullifier {
+        candidates
+            .into_iter()
+            .filter(|op| {
+                op_is_nullifier(op, &room.room_type, formula_type, registry, building_data)
+                    || op_surviving_order_value(
+                        op,
+                        &room.room_type,
+                        formula_type,
+                        registry,
+                        building_data,
+                    ) > 0.0
+            })
+            .collect()
+    } else {
+        candidates
+    };
+
     let mut ranked: Vec<(&OperatorBaseProfile, f64, bool)> = candidates
         .iter()
         .map(|op| {
+            // Fold surviving order value into the ranking so value partners (which
+            // score ~0 on speed) survive the top-K cut alongside the nullifier.
             let value_boost = if has_nullifier {
-                op_order_value(op, &room.room_type, formula_type, registry, building_data) * 5.0
+                op_surviving_order_value(op, &room.room_type, formula_type, registry, building_data)
+                    * 5.0
             } else {
                 0.0
             };
@@ -2001,6 +2033,7 @@ fn optimistic_bound(
             }
             | BuffResolutionStrategy::OrderValue {
                 estimated_pct: value,
+                ..
             }
             | BuffResolutionStrategy::MoraleDecayEfficiency {
                 time_averaged_value: value,
@@ -2286,12 +2319,18 @@ fn compute_team_efficiency(
     let has_automation = members.iter().any(|op| has_automation_buff(op, registry));
 
     let mut speed = 0.0;
-    let mut value = 0.0;
+    // Order VALUE (extra LMD per Pure-Gold order) does NOT stack across operators:
+    // they target the same orders by disjoint rules, so two value operators don't
+    // combine (Proviso boosts the low/"defaulted" orders, while Tequila's bonus
+    // EXPLICITLY excludes defaulted orders). Only the strongest value operator
+    // applies, so a second value operator is wasted - the best partner for a value
+    // operator is order-acquisition SPEED, not another value operator.
+    let mut value: f64 = 0.0;
 
     for (i, op) in members.iter().enumerate() {
         // A nullifier (Shamare) zeroes teammates' *speed/efficiency*, but their
-        // *order-value* buffs survive - this is the Shamare + Proviso + Tequila
-        // synergy. So a nullified teammate still contributes its OrderValue.
+        // *order-value* buffs survive. So a nullified teammate still contributes its
+        // OrderValue (subject to the non-stacking rule above).
         let nullified =
             has_nullifier && !op_is_nullifier(op, room_type, formula_type, registry, building_data);
 
@@ -2308,12 +2347,26 @@ fn compute_team_efficiency(
             room_teammates: others,
         };
 
+        let mut op_value: f64 = 0.0;
         for strategy in applicable_strategies(op, room_type, formula_type, registry, building_data)
         {
-            // Order VALUE (LMD/order) is tracked separately and survives a
-            // nullifier; everything else is order SPEED, which the nullifier zeroes.
-            if let BuffResolutionStrategy::OrderValue { estimated_pct } = strategy {
-                value += estimated_pct;
+            // Order VALUE is tracked separately (non-stacking, see above); everything
+            // else is order SPEED, which a nullifier zeroes.
+            if let BuffResolutionStrategy::OrderValue {
+                estimated_pct,
+                pure_gold,
+            } = strategy
+            {
+                // A Shamare-type nullifier shifts the post toward Precious-Metal
+                // orders, so a Pure-Gold value (Proviso) no longer applies in its
+                // team - only flat-LMD value (Tequila) survives. This is why Proviso,
+                // unlike Tequila, does not benefit from Shamare.
+                if !(has_nullifier
+                    && *pure_gold
+                    && !op_is_nullifier(op, room_type, formula_type, registry, building_data))
+                {
+                    op_value += estimated_pct;
+                }
             } else if has_automation {
                 // Only facility-count productivity survives an automation operator.
                 if matches!(
@@ -2326,6 +2379,8 @@ fn compute_team_efficiency(
                 speed += evaluate_buff(strategy, &ctx);
             }
         }
+        // Non-stacking: keep only the strongest order-value operator's contribution.
+        value = value.max(op_value);
     }
     // Faction-gated Control Center bonuses: order SPEED, but only for the posts
     // whose team actually satisfies the faction condition.

@@ -484,7 +484,10 @@ impl MedalData {
 /// A tower may appear in several seasons (it gets replicated), so we take the
 /// best-case window: currently open beats already-closed beats not-yet-open.
 fn classify_windows(windows: &[(i64, i64)], now: i64) -> Obtainability {
-    if let Some(&(_, end)) = windows.iter().find(|&&(s, e)| s <= now && (e <= 0 || now <= e)) {
+    if let Some(&(_, end)) = windows
+        .iter()
+        .find(|&&(s, e)| s <= now && (e <= 0 || now <= e))
+    {
         return Obtainability::Event {
             proxy_close_ts: if end > 0 { end } else { 0 },
         };

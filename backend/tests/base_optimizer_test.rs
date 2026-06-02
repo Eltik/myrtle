@@ -619,36 +619,29 @@ fn proviso_is_credited_as_a_strong_gold_trader() {
 }
 
 #[test]
-fn shamare_proviso_tequila_is_the_money_printer() {
-    // Shamare zeroes teammates' SPEED, but order-VALUE buffs (Proviso's Pure Gold,
-    // Tequila's LMD bonus) survive - that's why the trio is the top LMD team. A
-    // Shamare post with Proviso + Tequila must beat a Shamare post with two
-    // value-less bodies by roughly their surviving order value.
+fn proviso_value_does_not_survive_shamare() {
+    // Shamare shifts the post toward Precious-Metal orders, so Proviso's Pure-Gold
+    // value no longer applies in her team. A Shamare + Proviso post reads only
+    // Shamare's own ~10% value, NOT Proviso's +55% - she is wasted with Shamare and
+    // belongs in a fast post instead.
     let gd = load_game_data();
-    const SHAMARE: &str = "char_254_vodfox";
-    const PROVISO: &str = "char_4032_provs";
-    const TEQUILA: &str = "char_486_takila";
-
-    let printer = trading_lmd(
-        &gd,
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let asn = compute_optimal_assignment(
         &[
-            profile(&gd, SHAMARE),
-            profile(&gd, PROVISO),
-            profile(&gd, TEQUILA),
+            profile(&gd, "char_254_vodfox"),
+            profile(&gd, "char_4032_provs"),
         ],
+        &trading_post(3),
+        &gd.building,
+        &registry,
+        &drains,
     );
-    let bodies = trading_lmd(
-        &gd,
-        &[
-            profile(&gd, SHAMARE),
-            profile(&gd, "char_003_kalts"),  // no trading value
-            profile(&gd, "char_180_amgoat"), // no trading value
-        ],
-    );
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
     assert!(
-        printer > bodies * 1.2,
-        "Proviso/Tequila order value must survive Shamare's nullify and lift LMD \
-         (printer {printer:.0} vs value-less bodies {bodies:.0})"
+        tp.order_value < 20.0,
+        "Proviso's +55% Pure-Gold value must be nullified by Shamare, got {:.0}",
+        tp.order_value
     );
 }
 
@@ -2202,5 +2195,104 @@ fn locked_synergy_teams_get_no_individual_backup() {
     assert!(
         rot.rooms.iter().any(|r| r.backup.is_some()),
         "flexible rooms still get a backup"
+    );
+}
+
+#[test]
+fn proviso_and_tequila_order_value_does_not_stack() {
+    // Proviso's Pure-Gold value (+gold on low/"defaulted" orders) and Tequila's bonus
+    // (+LMD on high orders, which EXCLUDES defaulted orders) target the same orders by
+    // disjoint rules, so they do NOT combine. A post with both reads only the stronger
+    // operator's value, not the sum.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // Level-2 post (2 seats) forces both value operators in together.
+    let asn = compute_optimal_assignment(
+        &[
+            profile(&gd, "char_4032_provs"),
+            profile(&gd, "char_486_takila"),
+        ],
+        &trading_post(2),
+        &gd.building,
+        &registry,
+        &drains,
+    );
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    assert!(
+        (50.0..60.0).contains(&tp.order_value),
+        "Proviso + Tequila value must be the stronger one (~55%), not the sum (~65%), got {:.1}",
+        tp.order_value
+    );
+}
+
+#[test]
+fn proviso_pairs_with_speed_not_another_value_operator() {
+    // Because a second value operator is wasted, Proviso's best partners are the
+    // fastest order-acquisition operators. The optimizer must staff Proviso with the
+    // two fastest speed traders and leave Tequila out.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = vec![
+        profile(&gd, "char_4032_provs"), // Proviso (value)
+        profile(&gd, "char_486_takila"), // Tequila (value)
+        profile(&gd, "char_103_angel"),  // Exusiai +35 speed
+        profile(&gd, "char_502_nblade"), // Yato +30 speed
+        profile(&gd, "char_185_frncat"), // Mousse +30 speed
+    ];
+    let asn =
+        compute_optimal_assignment(&roster, &trading_post(3), &gd.building, &registry, &drains);
+    let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    assert!(
+        tp.operators.iter().any(|o| o == "char_4032_provs"),
+        "Proviso should staff the post. Got: {:?}",
+        tp.operators
+    );
+    assert!(
+        !tp.operators.iter().any(|o| o == "char_486_takila"),
+        "Tequila adds nothing alongside Proviso and must be left out. Got: {:?}",
+        tp.operators
+    );
+}
+
+#[test]
+fn proviso_is_not_staffed_in_a_shamare_post() {
+    // Proviso's Pure-Gold value is nullified by Shamare, so she belongs in her OWN
+    // post. With two posts and no Texas, the optimizer must NOT put Proviso and
+    // Shamare in the same post (the bad "Lappland + Proviso + Shamare" team); Proviso
+    // gets her own post, and Shamare's post is staffed with surviving-value/filler ops.
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![
+            room("t0", "TRADING", 3),
+            room("t1", "TRADING", 3),
+            room("d", "DORMITORY", 3),
+        ],
+    };
+    let roster = vec![
+        profile(&gd, "char_140_whitew"), // Lappland (needs Texas, absent)
+        profile(&gd, "char_4032_provs"), // Proviso
+        profile(&gd, "char_254_vodfox"), // Shamare
+        profile(&gd, "char_486_takila"), // Tequila
+        profile(&gd, "char_003_kalts"),  // body
+        profile(&gd, "char_180_amgoat"), // body
+    ];
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let same_post = asn.rooms.iter().any(|r| {
+        r.room_type == "TRADING"
+            && r.operators.iter().any(|o| o == "char_4032_provs")
+            && r.operators.iter().any(|o| o == "char_254_vodfox")
+    });
+    assert!(
+        !same_post,
+        "Proviso must not share a post with Shamare. Rooms: {:?}",
+        asn.rooms
+            .iter()
+            .filter(|r| r.room_type == "TRADING")
+            .map(|r| (&r.slot_id, &r.operators))
+            .collect::<Vec<_>>()
     );
 }
