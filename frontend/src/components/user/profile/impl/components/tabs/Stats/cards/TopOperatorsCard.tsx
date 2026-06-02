@@ -10,28 +10,16 @@ import { PALETTE } from "../palette";
 import { Kicker, StatCard } from "../primitives";
 
 const TOP_OPERATOR_LIMIT = 8;
-const EXCLUDED_MODULE_KEYS = ["uniequip_000", "uniequip_001"];
 
-/**
- * Investment-weighted score for ranking the top operators.
- * Weights are intentionally rough - they only have to produce a sensible
- * ordering for the showcase.
- */
 const SCORE_WEIGHTS = {
     elitePromotion: 300,
     levelProgressMax: 100,
-    masteryLevel: 15,
-    moduleUnlocked: 25,
-    moduleMaxed: 15,
 } as const;
 
 function operatorScore(entry: IRosterEntry, rarity: number): number {
     const maxLevel = MAX_LEVEL_BY_RARITY[rarity]?.[entry.elite] ?? 90;
-    const usableModules = entry.modules.filter((m) => !EXCLUDED_MODULE_KEYS.some((k) => m.id.startsWith(k)) && !m.locked && m.level > 0);
-    const masteryTotal = entry.masteries.reduce((s, m) => s + m.mastery, 0);
-    const moduleMaxed = usableModules.filter((m) => m.level === 3).length;
 
-    return entry.elite * SCORE_WEIGHTS.elitePromotion + (entry.level / maxLevel) * SCORE_WEIGHTS.levelProgressMax + masteryTotal * SCORE_WEIGHTS.masteryLevel + usableModules.length * SCORE_WEIGHTS.moduleUnlocked + moduleMaxed * SCORE_WEIGHTS.moduleMaxed;
+    return entry.elite * SCORE_WEIGHTS.elitePromotion + (entry.level / maxLevel) * SCORE_WEIGHTS.levelProgressMax;
 }
 
 interface IRanked {
