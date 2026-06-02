@@ -39,16 +39,24 @@ const LATIN_FOLD: Record<string, string> = {
 };
 const LATIN_FOLD_RE = new RegExp(`[${Object.keys(LATIN_FOLD).join("")}]`, "g");
 
-/**
- * Folds a string into a diacritic-free, lowercase form suitable for search
- * comparison: `Młynar` → `mlynar`, `Vigïl` → `vigil`, `Ægir` → `aegir`.
- */
+const STRIP_PUNCT_RE = /['’.-]/g;
+
 export function normalizeForSearch(input: string): string {
     return input
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "")
         .replace(LATIN_FOLD_RE, (c) => LATIN_FOLD[c] ?? c)
+        .replace(STRIP_PUNCT_RE, "")
         .toLowerCase();
+}
+
+/**
+ * Whitespace-insensitive variant of {@link normalizeForSearch}: collapses all
+ * spacing too, so `miss christine` matches `Miss.Christine` (→ `misschristine`)
+ * regardless of how the user spaces or punctuates the query.
+ */
+export function compactForSearch(input: string): string {
+    return normalizeForSearch(input).replace(/\s+/g, "");
 }
 
 const SCORE_NAME_EXACT = 1000;
@@ -79,10 +87,15 @@ export function scoreMatch(query: string, target: IScoreTarget): number {
     const nameIdx = name.indexOf(q);
     if (nameIdx >= 0) return SCORE_NAME_CONTAINS - nameIdx + lengthBonus(name);
 
+    const qc = q.replace(/\s+/g, "");
+    const ncIdx = name.replace(/\s+/g, "").indexOf(qc);
+    if (ncIdx >= 0) return SCORE_NAME_CONTAINS - ncIdx + lengthBonus(name);
+
     if (isSubsequence(q, name)) return SCORE_NAME_SUBSEQUENCE + lengthBonus(name);
 
     if (extra.length > 0) {
         if (extra.includes(q)) return SCORE_EXTRA_CONTAINS;
+        if (extra.replace(/\s+/g, "").includes(qc)) return SCORE_EXTRA_CONTAINS;
         if (isSubsequence(q, extra)) return SCORE_EXTRA_SUBSEQUENCE;
     }
 
