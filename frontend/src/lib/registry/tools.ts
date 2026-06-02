@@ -28,6 +28,15 @@ export function modKey(isMac: boolean): string {
 
 export const TOOLS: ITool[] = [
     {
+        id: "recruitment",
+        href: "/tools/recruitment",
+        label: "Recruitment calculator",
+        desc: "Guaranteed tag combos · 1h parity",
+        icon: "calc",
+        category: "calculator",
+        keywords: ["recruit", "tag", "calculator", "hire"],
+    },
+    {
         id: "dps",
         href: "/tools/dps",
         label: "DPS charts",
@@ -44,15 +53,6 @@ export const TOOLS: ITool[] = [
         icon: "heart",
         category: "calculator",
         keywords: ["healing", "hps", "heal", "medic", "chart", "skill", "curve", "calculator"],
-    },
-    {
-        id: "recruitment",
-        href: "/tools/recruitment",
-        label: "Recruitment calculator",
-        desc: "Guaranteed tag combos · 1h parity",
-        icon: "calc",
-        category: "calculator",
-        keywords: ["recruit", "tag", "calculator", "hire"],
     },
     {
         id: "randomizer",

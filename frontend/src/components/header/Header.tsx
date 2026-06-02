@@ -34,6 +34,15 @@ export default function Header() {
                     { href: "/enemies", label: "Enemies", desc: "Every enemy catalogued, with stats and traits.", icon: "crosshair" },
                 ],
             },
+            { href: "/tools", label: "Tools", items: toolItems, sections: toolSections },
+            {
+                href: "/gacha",
+                label: "Gacha",
+                items: [
+                    { href: "/gacha/community", label: "Community", desc: "Pull rates, top operators, and timing across opted-in doctors", icon: "users" },
+                    { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
+                ],
+            },
             { href: "/tier-lists", label: "Tier Lists" },
             {
                 href: "/user",
@@ -44,15 +53,6 @@ export default function Header() {
                     { href: "/user/leaderboard", label: "Leaderboard", desc: "Top Doctors ranked by score", icon: "trophy" },
                 ],
             },
-            {
-                href: "/gacha",
-                label: "Gacha",
-                items: [
-                    { href: "/gacha/community", label: "Community", desc: "Pull rates, top operators, and timing across opted-in doctors", icon: "users" },
-                    { href: "/gacha/history", label: "History", desc: "Your synced pulls, rarity splits, and pity counters", icon: "history" },
-                ],
-            },
-            { href: "/tools", label: "Tools", items: toolItems, sections: toolSections },
         ];
     }, [user]);
 
