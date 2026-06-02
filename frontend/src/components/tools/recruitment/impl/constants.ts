@@ -35,6 +35,9 @@ export const SENIOR_OPERATOR_TAG_ID = 14;
 export const STARTER_TAG_ID = 17;
 export const ROBOT_TAG_ID = 28;
 
+export const HIDDEN_TAG_IDS = new Set<number>([1012, 1013]);
+export const HIDDEN_TAG_NAMES = new Set<string>(["Male", "Female"]);
+
 export const RARITY_COLORS: Record<number, { bg: string; text: string; border: string; hoverBg: string; hoverBorder: string }> = {
     6: { bg: "bg-orange-500/15", text: "text-orange-600 dark:text-orange-400", border: "border-orange-500/30", hoverBg: "hover:bg-orange-500/25", hoverBorder: "hover:border-orange-500/50" },
     5: { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", border: "border-amber-500/30", hoverBg: "hover:bg-amber-500/25", hoverBorder: "hover:border-amber-500/50" },

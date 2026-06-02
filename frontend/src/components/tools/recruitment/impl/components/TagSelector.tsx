@@ -24,7 +24,7 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                                 const selected = selectedTagIds.has(tag.id);
                                 const disabled = !selected && maxReached;
                                 return (
-                                    <Button key={tag.id} size="xs" variant={selected ? "default" : "outline"} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(tag.id)}>
+                                    <Button key={tag.id} size="sm" variant={selected ? "default" : "outline"} disabled={disabled} aria-pressed={selected} onClick={() => onToggle(tag.id)}>
                                         {tag.name}
                                     </Button>
                                 );
