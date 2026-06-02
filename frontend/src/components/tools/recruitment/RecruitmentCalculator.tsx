@@ -15,8 +15,8 @@ import { groupTagsByType, transformTags } from "./impl/helpers";
 import type { ICalculatorOptions, IRecruitmentTag, OperatorSortMode } from "./impl/types";
 
 const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
-    showLowRarity: false,
     includeRobots: true,
+    prioritizeFiveStarChance: true,
     operatorSortMode: "rarity-desc",
 };
 
@@ -80,11 +80,11 @@ export function RecruitmentCalculator(): React.ReactElement {
         setSelectedIds(() => []);
     }, [setSelectedIds]);
 
-    const onChangeShowLowRarity = React.useCallback((value: boolean) => {
-        setOptions((prev) => ({ ...prev, showLowRarity: value }));
-    }, []);
     const onChangeIncludeRobots = React.useCallback((value: boolean) => {
         setOptions((prev) => ({ ...prev, includeRobots: value }));
+    }, []);
+    const onChangePrioritizeFiveStar = React.useCallback((value: boolean) => {
+        setOptions((prev) => ({ ...prev, prioritizeFiveStarChance: value }));
     }, []);
     const onChangeSortMode = React.useCallback((value: OperatorSortMode) => {
         setOptions((prev) => ({ ...prev, operatorSortMode: value }));
@@ -94,7 +94,7 @@ export function RecruitmentCalculator(): React.ReactElement {
     const maxReached = selectedIds.length >= MAX_SELECTED_TAGS;
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] py-5 pb-20">
+        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                 <span>Tools</span>
                 <ChevronRight className="size-2.5" />
@@ -103,14 +103,16 @@ export function RecruitmentCalculator(): React.ReactElement {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Recruitment Calculator</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] text-muted-foreground leading-normal">Pick the tags shown in your recruitment screen - up to {MAX_SELECTED_TAGS}. Combinations are ranked by guaranteed minimum rarity. Six-star operators only appear when "Top Operator" is selected.</p>
+                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">
+                        Pick the tags shown in your recruitment screen - up to {MAX_SELECTED_TAGS}. Combinations are ranked by guaranteed minimum rarity. Six-star operators only appear when "Top Operator" is selected.
+                    </p>
                 </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
-                <aside className="flex min-w-0 flex-col gap-4">
+            <div className="mt-5 grid grid-cols-1 items-start gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-[330px_1fr] xl:grid-cols-[400px_1fr]">
+                <aside className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="p-4 sm:p-6">
                             <CardTitle className="text-[15px]">
                                 Tags
                                 <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">
@@ -118,23 +120,23 @@ export function RecruitmentCalculator(): React.ReactElement {
                                 </span>
                             </CardTitle>
                         </CardHeader>
-                        <CardPanel className="pt-0">
+                        <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
                             <TagSelector groups={tagGroups} selectedTagIds={selectedIdSet} onToggle={onToggle} maxReached={maxReached} />
                         </CardPanel>
                     </Card>
 
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="p-4 sm:p-6">
                             <CardTitle className="text-[15px]">Options</CardTitle>
                         </CardHeader>
-                        <CardPanel className="pt-0">
-                            <CalculatorOptionsPanel options={options} onChangeShowLowRarity={onChangeShowLowRarity} onChangeIncludeRobots={onChangeIncludeRobots} onChangeSortMode={onChangeSortMode} />
+                        <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
+                            <CalculatorOptionsPanel options={options} onChangeIncludeRobots={onChangeIncludeRobots} onChangePrioritizeFiveStar={onChangePrioritizeFiveStar} onChangeSortMode={onChangeSortMode} />
                         </CardPanel>
                     </Card>
                 </aside>
 
-                <main className="flex min-w-0 flex-col gap-4">
-                    <SelectedTagsBar selectedTags={selectedTags} onRemove={onRemove} onReset={onReset} />
+                <main className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                    <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
                     <ResultsList results={results} hasSelection={selectedTags.length > 0} />
                 </main>
             </div>

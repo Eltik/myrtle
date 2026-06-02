@@ -25,6 +25,10 @@ Handled rewrites:
   * Literal renames:     break-words         -> wrap-break-word
   * Prefix renames:      bg-gradient-to-t    -> bg-linear-to-t
                          bg-gradient-to-br   -> bg-linear-to-br
+  * Arbitrary-property shorthand:
+      [grid-template-columns:repeat(auto-fill,minmax(7rem,1fr))]
+        -> grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]
+      [grid-template-rows:...] -> grid-rows-[...]
 
 Pass --write to apply changes; default is dry-run.
 
@@ -386,6 +390,48 @@ LITERAL_RE = _build_literal_re(LITERAL_RENAMES)
 PREFIX_RE = _build_prefix_re(PREFIX_RENAMES)
 
 
+# ---------------------------------------------------------------------------
+# Arbitrary-property shorthand — `[css-property:value]` -> `utility-[value]`
+# Example: [grid-template-columns:repeat(auto-fill,minmax(7rem,1fr))]
+#          -> grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]
+# The bracketed value may contain parens/commas but not a closing `]`.
+# ---------------------------------------------------------------------------
+ARBITRARY_PROPERTY_RENAMES: dict[str, str] = {
+    "grid-template-columns": "grid-cols",
+    "grid-template-rows": "grid-rows",
+}
+
+
+def _build_arbitrary_property_re(mapping: dict[str, str]) -> re.Pattern[str] | None:
+    if not mapping:
+        return None
+    props = sorted(mapping.keys(), key=len, reverse=True)
+    return re.compile(
+        r"(?P<boundary>(?:^|[\s\"'`{(:]))"
+        r"\[(?P<prop>" + "|".join(re.escape(p) for p in props) + r")"
+        r":(?P<value>[^\]]*)\]"
+    )
+
+
+ARBITRARY_PROPERTY_RE = _build_arbitrary_property_re(ARBITRARY_PROPERTY_RENAMES)
+
+
+def rewrite_arbitrary_properties(text: str, edits: list[tuple[str, str]]) -> str:
+    if ARBITRARY_PROPERTY_RE is None:
+        return text
+
+    def sub(m: re.Match[str]) -> str:
+        prop = m.group("prop")
+        value = m.group("value")
+        prefix = ARBITRARY_PROPERTY_RENAMES[prop]
+        original = f"[{prop}:{value}]"
+        canonical = f"{prefix}-[{value}]"
+        edits.append((original, canonical))
+        return m.group("boundary") + canonical
+
+    return ARBITRARY_PROPERTY_RE.sub(sub, text)
+
+
 def rewrite_literals(text: str, edits: list[tuple[str, str]]) -> str:
     if LITERAL_RE is None:
         return text
@@ -472,6 +518,7 @@ def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     text = rewrite_ease(text, edits)
     text = rewrite_literals(text, edits)
     text = rewrite_prefixes(text, edits)
+    text = rewrite_arbitrary_properties(text, edits)
     text = rewrite_bang(text, edits)
     text = rewrite_emdashes(text, edits)
     return text, edits

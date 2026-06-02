@@ -135,7 +135,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
                 have to hunt down the math. */}
             <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
                 The header's <span className="text-foreground/80">+{totalOverallGainPct.toFixed(1)} to overall grade</span> is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are <span className="text-foreground/80">% of this section</span>{" "}
-                (the percentage shown at the top of the card) — there's +{totalSubscoreGainPct.toFixed(1)}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
+                (the percentage shown at the top of the card) - there's +{totalSubscoreGainPct.toFixed(1)}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
             </p>
         </div>
     );

@@ -17,7 +17,7 @@ interface IResultCardProps {
 export function ResultCard({ result }: IResultCardProps): React.ReactElement {
     return (
         <Card>
-            <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-3 px-4 py-3">
+            <CardHeader className="flex grid-rows-1 flex-row items-center justify-between gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
                     {result.tagNames.map((name) => (
                         <Badge key={name} variant="outline" size="default">
@@ -26,7 +26,7 @@ export function ResultCard({ result }: IResultCardProps): React.ReactElement {
                     ))}
                 </div>
             </CardHeader>
-            <CardPanel className="px-4 pt-0 pb-3">
+            <CardPanel className="px-3 pt-0 pb-3 sm:px-4">
                 <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                     {result.operators.map((op) => (
                         <OperatorRow key={op.id} operator={op} />
@@ -48,7 +48,7 @@ function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.Re
             <HoverCard>
                 <HoverCardTrigger
                     render={
-                        <button type="button" onClick={() => setMobileExpanded((v) => !v)} aria-expanded={mobileExpanded} aria-controls={`op-tags-${operator.id}`} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left">
+                        <button type="button" onClick={() => setMobileExpanded((v) => !v)} aria-expanded={mobileExpanded} aria-controls={`op-tags-${operator.id}`} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-left sm:py-1.5">
                             <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px]">
                                 <OperatorAvatar charId={operator.id} name={operator.name} />
                             </span>

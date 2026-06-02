@@ -147,7 +147,7 @@ function CompareRow({ current, optimal, accent }: { current?: IRoomAssignment; o
     return (
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-md border border-border/35 bg-muted/10 px-2 py-1.5">
             <RoomSide room={current} accent={accent} muted />
-            <div className="flex min-w-[4.5rem] flex-col items-center gap-0.5">
+            <div className="flex min-w-18 flex-col items-center gap-0.5">
                 {unit ? (
                     // Yield-bearing room: yield delta primary, % delta secondary.
                     <>

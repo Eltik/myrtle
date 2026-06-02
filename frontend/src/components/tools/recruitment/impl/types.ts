@@ -36,7 +36,7 @@ export interface ITagCombinationResult {
 export type OperatorSortMode = "rarity-desc" | "common-first";
 
 export interface ICalculatorOptions {
-    showLowRarity?: boolean;
     includeRobots?: boolean;
+    prioritizeFiveStarChance?: boolean;
     operatorSortMode?: OperatorSortMode;
 }

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { PROFESSION_LABELS } from "#/components/tools/recruitment/impl/constants";
+import { HIDDEN_TAG_NAMES, PROFESSION_LABELS } from "#/components/tools/recruitment/impl/constants";
 import type { IGachaTag } from "#/components/tools/recruitment/impl/helpers";
 import type { IRecruitableOperatorWithTags } from "#/components/tools/recruitment/impl/types";
 import { deepCamelize } from "#/lib/api/operators";
@@ -55,7 +55,7 @@ function buildOperatorTagList(op: IOperatorListItem, rarity: number): string[] {
     if (rarity === 5) tags.push("Senior Operator");
     if (rarity === 1) tags.push("Robot");
 
-    if (op.tagList) tags.push(...op.tagList);
+    if (op.tagList) tags.push(...op.tagList.filter((t) => !HIDDEN_TAG_NAMES.has(t)));
 
     return tags;
 }

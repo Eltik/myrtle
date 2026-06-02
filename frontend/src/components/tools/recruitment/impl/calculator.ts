@@ -1,28 +1,29 @@
 import { rarityToNumber } from "#/lib/utils";
-import { SENIOR_OPERATOR_TAG_ID, STARTER_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
+import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { ICalculatorOptions, IRecruitableOperator, IRecruitableOperatorWithTags, ITagCombinationResult, OperatorSortMode } from "./types";
 
-function getCommonFirstPriority(rarity: number): number {
-    const priorityMap: Record<number, number> = {
-        4: 0,
-        3: 1,
-        2: 2,
-        5: 3,
-        1: 4,
-        6: 5,
-    };
-    return priorityMap[rarity] ?? 99;
-}
+// "Highest rarity first": 6 > 5 > 4 > Robot(1) > 3 > 2.
+// Robots sit just above 3-stars because they are valuable guaranteed pulls.
+const RARITY_DESC_PRIORITY: Record<number, number> = { 6: 0, 5: 1, 4: 2, 1: 3, 3: 4, 2: 5 };
+// "Most common first": Robot(1) > 3 > 4 > 2 > 5 > 6.
+// 3-stars are the most common recruit, with robots elevated above them.
+const COMMON_FIRST_PRIORITY: Record<number, number> = { 1: 0, 3: 1, 4: 2, 2: 3, 5: 4, 6: 5 };
 
 function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode): IRecruitableOperator[] {
+    const priority = mode === "common-first" ? COMMON_FIRST_PRIORITY : RARITY_DESC_PRIORITY;
     return [...operators].sort((a, b) => {
-        if (mode === "common-first") {
-            const priorityDiff = getCommonFirstPriority(a.rarity) - getCommonFirstPriority(b.rarity);
-            if (priorityDiff !== 0) return priorityDiff;
-            return b.rarity - a.rarity;
-        }
-        return b.rarity - a.rarity;
+        const diff = (priority[a.rarity] ?? 99) - (priority[b.rarity] ?? 99);
+        if (diff !== 0) return diff;
+        return a.name.localeCompare(b.name);
     });
+}
+
+function resultHasRarity(result: ITagCombinationResult, rarity: number): boolean {
+    return result.operators.some((op) => op.rarity === rarity);
+}
+
+function isRobotValuable(result: ITagCombinationResult): boolean {
+    return resultHasRarity(result, 1) && !resultHasRarity(result, 3);
 }
 
 function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tagName: string): boolean {
@@ -86,7 +87,7 @@ export function getCombinations<T>(arr: T[], maxSize: number): T[][] {
 }
 
 export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperatorWithTags[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
-    const { showLowRarity = false, includeRobots = true, operatorSortMode = "rarity-desc" } = options;
+    const { includeRobots = true, prioritizeFiveStarChance = true, operatorSortMode = "rarity-desc" } = options;
 
     if (selectedTags.length === 0) return [];
 
@@ -120,11 +121,6 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
             filteredOps = filteredOps.filter((op) => op.rarity !== 1);
         }
 
-        if (!showLowRarity) {
-            const wantsStarter = tagIds.includes(STARTER_TAG_ID);
-            filteredOps = filteredOps.filter((op) => op.rarity >= 3 || op.rarity === 1 || (op.rarity === 2 && wantsStarter));
-        }
-
         if (filteredOps.length === 0) continue;
 
         const minRarity = Math.min(...filteredOps.map((op) => op.rarity));
@@ -149,12 +145,27 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
     }
 
     return results.sort((a, b) => {
-        if (b.guaranteedRarity !== a.guaranteedRarity) {
-            return b.guaranteedRarity - a.guaranteedRarity;
+        const aGuaranteedHigh = a.guaranteedRarity >= 5 ? a.guaranteedRarity : 0;
+        const bGuaranteedHigh = b.guaranteedRarity >= 5 ? b.guaranteedRarity : 0;
+        if (aGuaranteedHigh !== bGuaranteedHigh) return bGuaranteedHigh - aGuaranteedHigh;
+
+        if (prioritizeFiveStarChance) {
+            const aFiveChance = a.maxRarity === 5 && a.guaranteedRarity < 5 ? 1 : 0;
+            const bFiveChance = b.maxRarity === 5 && b.guaranteedRarity < 5 ? 1 : 0;
+            if (aFiveChance !== bFiveChance) return bFiveChance - aFiveChance;
         }
-        if (a.operators.length !== b.operators.length) {
-            return a.operators.length - b.operators.length;
+
+        const aRobot = isRobotValuable(a) ? 1 : 0;
+        const bRobot = isRobotValuable(b) ? 1 : 0;
+        if (aRobot !== bRobot) return bRobot - aRobot;
+
+        if (b.guaranteedRarity !== a.guaranteedRarity) return b.guaranteedRarity - a.guaranteedRarity;
+
+        if (operatorSortMode === "common-first") {
+            if (a.operators.length !== b.operators.length) return b.operators.length - a.operators.length;
+            return b.maxRarity - a.maxRarity;
         }
-        return b.maxRarity - a.maxRarity;
+        if (b.maxRarity !== a.maxRarity) return b.maxRarity - a.maxRarity;
+        return a.operators.length - b.operators.length;
     });
 }
