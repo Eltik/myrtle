@@ -1,31 +1,22 @@
+import { ChevronDown, Download } from "lucide-react";
+import { type ReactNode, type RefObject, useRef, useState } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Dialog, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
-import type { IAssignedOperator, IBaseAssignment, IBaseImprovements, IImprovementsResponse, IRoomAssignment, IRoomRotation, IRotation, IRotationSet } from "#/lib/api/user";
+import type { IAssignedOperator, IBaseAssignment, IBaseImprovements, IImprovementsResponse, IRoomAssignment, IRoomRotation, IRotation, IRotationSet, IShift, IShiftRoom, IShiftRotation } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { BaseComparison } from "./BaseComparison";
 import { compactNum, roomYieldLabel, signedCompact } from "./baseYield";
+import { ExportPlanContent } from "./ExportPlanContent";
+import { exportPlanAsImage } from "./exportPlan";
+import { roomAccent, roomFormulaLabel, roomLabel } from "./roomColors";
 import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE, TEXT_BODY, TEXT_KICKER, TEXT_META } from "./shared";
 
 interface IProps {
     improvements: IImprovementsResponse;
     accent: string;
-}
-
-const ROOM_LABELS: Record<string, string> = {
-    MANUFACTURE: "Factory",
-    TRADING: "Trading Post",
-    POWER: "Power Plant",
-    DORMITORY: "Dormitory",
-    WORKSHOP: "Workshop",
-    MEETING: "Reception",
-    HIRE: "Office",
-    TRAINING: "Training",
-    CONTROL: "Control Center",
-};
-
-function roomLabel(t: string): string {
-    return ROOM_LABELS[t] ?? t.charAt(0) + t.slice(1).toLowerCase();
 }
 
 /** A "/day" suffix that clarifies the per-day LMD/gold/EXP figures are an AVERAGE
@@ -73,13 +64,19 @@ export function BasePanel({ improvements, accent }: IProps) {
                 <div className="flex flex-col gap-2">
                     <SectionHeader title="Current layout" accent={accent} />
                     <div className="flex flex-wrap gap-1.5">
-                        {base.layout.map((l) => (
-                            <span key={l.room_type} className={cn("flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/15 px-2 py-1", TEXT_BODY)}>
-                                <span className="font-medium">{roomLabel(l.room_type)}</span>
-                                <span className={cn(TEXT_BADGE, "text-muted-foreground")}>×{l.count}</span>
-                                <span className={cn(TEXT_BADGE, "text-muted-foreground")}>L{l.levels.join(", L")}</span>
-                            </span>
-                        ))}
+                        {base.layout.map((l) => {
+                            const a = roomAccent(l.room_type);
+                            return (
+                                <span key={l.room_type} className={cn("flex items-center gap-1.5 rounded-md border px-2 py-1", TEXT_BODY)} style={{ borderColor: a.border, background: a.tint }}>
+                                    <span className="size-2 rounded-[3px]" style={{ background: a.color }} />
+                                    <span className="font-medium" style={{ color: a.text }}>
+                                        {roomLabel(l.room_type)}
+                                    </span>
+                                    <span className={cn(TEXT_BADGE, "text-muted-foreground")}>×{l.count}</span>
+                                    <span className={cn(TEXT_BADGE, "text-muted-foreground")}>L{l.levels.join(", L")}</span>
+                                </span>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -106,46 +103,253 @@ export function BasePanel({ improvements, accent }: IProps) {
 
                     {/* The entire base plan in a dialog - available on every screen
                         size, including desktop, for a focused full-screen view. */}
-                    <Dialog>
-                        <DialogTrigger className={cn("self-start rounded-md border border-border/45 bg-background/60 px-2 py-1 transition-colors hover:border-foreground/25", TEXT_KICKER, "text-muted-foreground hover:text-foreground")}>View full base plan →</DialogTrigger>
-                        <DialogPopup className="max-w-3xl">
-                            <DialogTitle className="px-6 pt-6 text-base">Base optimization plan</DialogTitle>
-                            <DialogPanel>
-                                <BasePlanBody base={base} accent={accent} />
-                            </DialogPanel>
-                        </DialogPopup>
-                    </Dialog>
-
-                    {/* Inline room-by-room comparison on wide screens. */}
-                    <div className="mt-1 hidden border-border/30 border-t pt-3 2xl:block">
-                        <BaseComparison current={base.current} optimal={base.optimal} accent={accent} />
-                    </div>
+                    <FullPlanDialog base={base} accent={accent} />
                 </div>
             )}
-
-            <RotationSection rotation={base.rotation} accent={accent} />
-            <PeakSection optimal={base.optimal} accent={accent} />
         </div>
     );
 }
 
-/** The Control Center / room-by-room comparison + rotation plan + peak staffing -
- *  the full base optimization, reused inline and in the full-plan dialog. */
+/** The full-plan dialog plus its "Export plan" action. The exported image captures a
+ *  dedicated wide poster (`ExportPlanContent`) kept off-screen, NOT the tall dialog
+ *  body, so the PNG is well-proportioned rather than a long vertical ribbon. */
+function FullPlanDialog({ base, accent }: { base: IBaseImprovements; accent: string }) {
+    const captureRef = useRef<HTMLDivElement>(null);
+    return (
+        <Dialog>
+            <DialogTrigger className={cn("self-start rounded-md border border-border/45 bg-background/60 px-2 py-1 transition-colors hover:border-foreground/25", TEXT_KICKER, "text-muted-foreground hover:text-foreground")}>View full base plan →</DialogTrigger>
+            <DialogPopup className="max-w-3xl">
+                <div className="flex items-center justify-between gap-3 px-6 pt-6">
+                    <DialogTitle className="text-base">Base optimization plan</DialogTitle>
+                    <ExportPlanButton targetRef={captureRef} />
+                </div>
+                <DialogPanel>
+                    <BasePlanBody base={base} accent={accent} />
+                </DialogPanel>
+            </DialogPopup>
+            {/* Off-screen export layout - present in the DOM so its ref is ready, but
+                visually hidden and laid out at its own fixed width. */}
+            <div aria-hidden className="pointer-events-none fixed top-0 left-[-99999px] opacity-0">
+                <div ref={captureRef}>
+                    <ExportPlanContent base={base} />
+                </div>
+            </div>
+        </Dialog>
+    );
+}
+
+/** Exports a dedicated, wide poster layout (rendered off-screen) to a PNG - capturing
+ *  that instead of the tall dialog body keeps the image well-proportioned. */
+function ExportPlanButton({ targetRef }: { targetRef: RefObject<HTMLDivElement | null> }) {
+    const [busy, setBusy] = useState(false);
+    const handleExport = async () => {
+        if (busy || !targetRef.current) return;
+        setBusy(true);
+        try {
+            await exportPlanAsImage(targetRef.current, "base-plan.png");
+        } catch {
+            toastManager.add({
+                id: `base-export-${Date.now()}`,
+                title: "Couldn't export plan",
+                description: "Something went wrong rendering the image. Try again in a moment.",
+                type: "error",
+            });
+        } finally {
+            setBusy(false);
+        }
+    };
+    return (
+        <button type="button" onClick={handleExport} disabled={busy} className={cn("flex shrink-0 items-center gap-1.5 rounded-md border border-border/45 bg-background/60 px-2 py-1 transition-colors hover:border-foreground/25 disabled:opacity-60", TEXT_KICKER, "text-muted-foreground hover:text-foreground")}>
+            <Download className="size-3.5" />
+            {busy ? "Exporting…" : "Export plan"}
+        </button>
+    );
+}
+
+/**
+ * The consolidated full base plan. Leads with the shift rotation (the primary,
+ * actionable view) and the current-vs-optimal comparison; the sustained 24/7
+ * rotation and peak single-shift are tucked into collapsible sections so the
+ * dialog opens focused instead of as one long wall.
+ */
 function BasePlanBody({ base, accent }: { base: IBaseImprovements; accent: string }) {
+    const hasShifts = Boolean(base.shift_rotation && base.shift_rotation.shifts.length > 0);
     return (
         <div className="flex flex-col gap-5">
-            {base.current && base.optimal && <BaseComparison current={base.current} optimal={base.optimal} accent={accent} />}
-            <RotationSection rotation={base.rotation} accent={accent} />
-            <PeakSection optimal={base.optimal} accent={accent} />
+            <ShiftRotationSection rotation={base.shift_rotation} accent={accent} />
+
+            {base.current && base.optimal && (
+                <section className="flex flex-col gap-3">
+                    <SectionHeader title="Current vs optimal" accent={accent} />
+                    <BaseComparison current={base.current} optimal={base.optimal} accent={accent} />
+                </section>
+            )}
+
+            {base.rotation && base.rotation.rooms.length > 0 && (
+                <CollapsibleSection title="Sustained 24/7 rotation" count={`+${base.rotation.sustained_efficiency.toFixed(1)}% sustained`} accent={accent} defaultOpen={!hasShifts}>
+                    <RotationBody rotation={base.rotation} accent={accent} />
+                </CollapsibleSection>
+            )}
+
+            {base.optimal && (
+                <CollapsibleSection title="Peak single-shift" count={`+${base.optimal.total_production_efficiency.toFixed(1)}%`} accent={accent}>
+                    <PeakBody optimal={base.optimal} />
+                </CollapsibleSection>
+            )}
         </div>
     );
 }
 
-function RotationSection({ rotation, accent }: { rotation: IRotation | null; accent: string }) {
-    if (!rotation || rotation.rooms.length === 0) return null;
+// ─── Shared room card ─────────────────────────────────────────────────────────
+
+/** A single room's crew framed in a shape border tinted with the building's
+ *  in-game colour. */
+function RoomShell({ roomType, formula, badge, right, dim, children }: { roomType: string; formula?: string | null; badge?: ReactNode; right?: ReactNode; dim?: boolean; children: ReactNode }) {
+    const a = roomAccent(roomType);
+    return (
+        <div className={cn("flex flex-col gap-1.5 rounded-lg border-2 px-2.5 py-2", dim && "opacity-60")} style={{ borderColor: a.border, background: a.tint }}>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
+                    <span className={cn(TEXT_KICKER)} style={{ color: a.text }}>
+                        {roomFormulaLabel(roomType, formula)}
+                    </span>
+                    {badge}
+                </div>
+                {right}
+            </div>
+            {children}
+        </div>
+    );
+}
+
+/** Legend mapping each room colour to its name, shown above the rotation. */
+function RoomColorLegend({ types }: { types: string[] }) {
+    const seen = [...new Set(types)];
+    if (seen.length === 0) return null;
+    return (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border/30 bg-muted/10 px-2.5 py-1.5">
+            {seen.map((t) => {
+                const a = roomAccent(t);
+                return (
+                    <span key={t} className="flex items-center gap-1.5">
+                        <span className="size-2.5 rounded-[3px] border" style={{ background: a.tint, borderColor: a.border }} />
+                        <span className={cn(TEXT_BADGE)} style={{ color: a.text }}>
+                            {roomLabel(t)}
+                        </span>
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
+
+/** A collapsible secondary section (sustained rotation, peak) - keeps the dialog
+ *  focused on the rotation while leaving the detail one click away. */
+function CollapsibleSection({ title, count, accent, defaultOpen = false, children }: { title: string; count?: ReactNode; accent: string; defaultOpen?: boolean; children: ReactNode }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <Collapsible open={open} onOpenChange={setOpen} className="flex flex-col gap-3">
+            <CollapsibleTrigger className="flex items-center justify-between gap-2 border-border/40 border-b pb-1.5 text-left transition-colors hover:border-border">
+                <span className={cn(TEXT_KICKER)} style={{ color: `color-mix(in oklch, ${accent} 60%, var(--foreground))` }}>
+                    {title}
+                </span>
+                <span className="flex items-center gap-2">
+                    {count !== undefined && <span className={cn(TEXT_BADGE, "rounded-md border border-border/40 bg-muted/30 px-1.5 py-0.5 text-muted-foreground")}>{count}</span>}
+                    <ChevronDown className={cn("size-3.5 text-muted-foreground transition-transform", open && "rotate-180")} />
+                </span>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+                <div className="flex flex-col gap-3 pt-0.5">{children}</div>
+            </CollapsibleContent>
+        </Collapsible>
+    );
+}
+
+// ─── Shift rotation (primary) ─────────────────────────────────────────────────
+
+/** A chip whose border/tint signals whether the operator should be added (green),
+ *  removed (red, struck through), or kept (neutral). */
+function ShiftOpChip({ op, tone }: { op: IAssignedOperator; tone: "add" | "remove" | "keep" }) {
+    const toneCls = tone === "add" ? "border-emerald-500/55 bg-emerald-500/15" : tone === "remove" ? "border-rose-500/45 bg-rose-500/15" : "border-border/40 bg-background/55";
+    return (
+        <span className={cn("flex items-center gap-1 rounded-md border px-1 py-0.5", toneCls)}>
+            <span className="relative size-4 overflow-hidden rounded-sm">
+                <OperatorAvatar charId={op.operator_id} name={op.name} />
+            </span>
+            <span className={cn(TEXT_BADGE, "max-w-[10ch] truncate font-medium", tone === "remove" && "text-rose-500/80 line-through")}>{op.name}</span>
+        </span>
+    );
+}
+
+/** Recommended 3-shift rotation vs the player's saved in-game presets. */
+function ShiftRotationSection({ rotation, accent }: { rotation: IShiftRotation | null | undefined; accent: string }) {
+    if (!rotation || rotation.shifts.length === 0) return null;
+    const types = rotation.shifts.flatMap((s) => s.rooms.map((r) => r.room_type));
     return (
         <div className="flex flex-col gap-3">
-            <SectionHeader title="Sustained 24/7 rotation" count={`+${rotation.sustained_efficiency.toFixed(1)}% sustained`} accent={accent} />
+            <SectionHeader title="Shift rotation vs your presets" accent={accent} />
+            <p className={cn(TEXT_META, "text-muted-foreground")}>
+                Run three teams per room so each rests one shift. Each card is one room, outlined in its in-game colour. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove. Power plants swap every shift; the Control
+                Center runs two shifts on, one off.
+            </p>
+            <RoomColorLegend types={types} />
+            <div className="flex flex-col gap-3">
+                {rotation.shifts.map((shift) => (
+                    <ShiftCard key={shift.index} shift={shift} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ShiftCard({ shift }: { shift: IShift }) {
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+                <span className={cn(TEXT_KICKER, "shrink-0 rounded bg-muted/40 px-1.5 py-0.5 text-foreground/75")}>Shift {shift.index}</span>
+                <span className="h-px flex-1 bg-border/40" />
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {shift.rooms.map((room) => (
+                    <ShiftRoomCard key={room.slot_id} room={room} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ShiftRoomCard({ room }: { room: IShiftRoom }) {
+    const swapOutIds = new Set(room.swap_out.map((o) => o.operator_id));
+    const swapInIds = new Set(room.swap_in.map((o) => o.operator_id));
+    const hasPreset = room.current.length > 0;
+    const badge = !room.active ? <span className={cn(TEXT_BADGE, "text-amber-500/80")}>off this shift</span> : hasPreset && room.matches ? <span className="text-[10px] text-emerald-500/80">✓ matches yours</span> : undefined;
+    return (
+        <RoomShell roomType={room.room_type} formula={room.formula_type} dim={!room.active} badge={badge}>
+            <div className="flex flex-wrap items-center gap-1">
+                {room.recommended.length === 0 && <span className={cn(TEXT_BADGE, "text-muted-foreground/50")}>-</span>}
+                {room.recommended.map((op) => (
+                    <ShiftOpChip key={op.operator_id} op={op} tone={swapInIds.has(op.operator_id) ? "add" : "keep"} />
+                ))}
+            </div>
+            {hasPreset && !room.matches && (
+                <div className="flex flex-wrap items-center gap-1 border-border/25 border-t pt-1.5">
+                    <span className={cn(TEXT_BADGE, "min-w-9 text-muted-foreground/55")}>yours</span>
+                    {room.current.map((op) => (
+                        <ShiftOpChip key={op.operator_id} op={op} tone={swapOutIds.has(op.operator_id) ? "remove" : "keep"} />
+                    ))}
+                </div>
+            )}
+            {!hasPreset && room.active && <span className={cn(TEXT_BADGE, "text-muted-foreground/45")}>no saved preset for this shift</span>}
+        </RoomShell>
+    );
+}
+
+// ─── Sustained 24/7 rotation (secondary) ──────────────────────────────────────
+
+function RotationBody({ rotation, accent }: { rotation: IRotation; accent: string }) {
+    return (
+        <>
             <p className={cn(TEXT_META, "text-muted-foreground")}>
                 Staggered rotation: keep the main team working, and when you log in swap only the <span className="font-medium">⚡ first operator</span> in each room (the one whose morale runs low soonest) for its backup - never a whole team at once. Times below are roughly how long each operator works before it needs
                 rest.
@@ -156,7 +360,7 @@ function RotationSection({ rotation, accent }: { rotation: IRotation | null; acc
                 ))}
             </div>
             <RotationSetsSection sets={rotation.sets} accent={accent} />
-        </div>
+        </>
     );
 }
 
@@ -191,46 +395,21 @@ function RotationSetRow({ set, index, accent }: { set: IRotationSet; index: numb
                 {resting.length > 0 && <span className={cn(TEXT_BADGE, "truncate text-muted-foreground/60")}>resting: {resting.join(", ")}</span>}
             </div>
             <div className="flex flex-col gap-1">
-                {set.rooms.map((r) => (
-                    <div key={r.slot_id} className="flex items-start gap-2">
-                        <span className={cn("min-w-24 shrink-0 pt-0.5", TEXT_BADGE, "text-muted-foreground/65")}>{roomLabel(r.room_type)}</span>
-                        <div className="flex flex-1 flex-wrap items-center gap-1">
-                            {r.working.map((op) => (
-                                <SetOpChip key={op.operator_id} op={op} />
-                            ))}
+                {set.rooms.map((r) => {
+                    const a = roomAccent(r.room_type);
+                    return (
+                        <div key={r.slot_id} className="flex items-start gap-2">
+                            <span className={cn("min-w-24 shrink-0 pt-0.5", TEXT_BADGE)} style={{ color: a.text }}>
+                                {roomLabel(r.room_type)}
+                            </span>
+                            <div className="flex flex-1 flex-wrap items-center gap-1">
+                                {r.working.map((op) => (
+                                    <ShiftOpChip key={op.operator_id} op={op} tone="keep" />
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function SetOpChip({ op }: { op: IAssignedOperator }) {
-    return (
-        <span className="flex items-center gap-1 rounded-md border border-border/40 bg-background/55 px-1 py-0.5">
-            <span className="relative size-4 overflow-hidden rounded-sm">
-                <OperatorAvatar charId={op.operator_id} name={op.name} />
-            </span>
-            <span className={cn(TEXT_BADGE, "max-w-[10ch] truncate font-medium")}>{op.name}</span>
-        </span>
-    );
-}
-
-function PeakSection({ optimal, accent }: { optimal: IBaseAssignment | null; accent: string }) {
-    if (!optimal) return null;
-    return (
-        <div className="flex flex-col gap-3">
-            <SectionHeader title="Peak single-shift" count={`+${optimal.total_production_efficiency.toFixed(1)}%`} accent={accent} />
-            <p className={cn(TEXT_META, "text-muted-foreground")}>Best possible arrangement at one snapshot in time - useful for set-and-forget AFK runs.</p>
-            <div className="flex items-center justify-between rounded-md border border-border/35 bg-muted/10 px-2.5 py-1.5">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Realized yield</span>
-                <YieldSummary assignment={optimal} />
-            </div>
-            <div className="flex flex-col gap-2">
-                {optimal.rooms.map((room) => (
-                    <RoomRow key={`${room.slot_id}-${room.room_type}`} room={room} accent={accent} />
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -238,11 +417,14 @@ function PeakSection({ optimal, accent }: { optimal: IBaseAssignment | null; acc
 
 /** One production room's rotation plan: who to swap first, when, and the backup. */
 function RotationRoomRow({ room, accent }: { room: IRoomRotation; accent: string }) {
+    const a = roomAccent(room.room_type);
     return (
-        <div className="flex items-center gap-2 rounded-md border border-border/35 bg-muted/15 px-2.5 py-2">
-            <span className="min-w-24 shrink-0">
-                <span className={cn(TEXT_BODY, "font-semibold")}>{roomLabel(room.room_type)}</span>
-                <span className={cn("ml-1.5", TEXT_BADGE, "text-muted-foreground/55")}>{room.slot_id}</span>
+        <div className="flex items-center gap-2 rounded-lg border-2 px-2.5 py-2" style={{ borderColor: a.border, background: a.tint }}>
+            <span className="flex min-w-24 shrink-0 items-center gap-1.5">
+                <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
+                <span className={cn(TEXT_BODY, "font-semibold")} style={{ color: a.text }}>
+                    {roomLabel(room.room_type)}
+                </span>
             </span>
             <div className="flex flex-1 flex-wrap items-center gap-1.5">
                 {room.members.map((m, i) => (
@@ -269,7 +451,7 @@ function RotationRoomRow({ room, accent }: { room: IRoomRotation; accent: string
                 ))}
                 {room.backup && (
                     <>
-                        <span className="px-0.5 text-muted-foreground/50" style={{ color: `color-mix(in oklch, ${accent} 55%, var(--muted-foreground))` }}>
+                        <span className="px-0.5" style={{ color: `color-mix(in oklch, ${accent} 55%, var(--muted-foreground))` }}>
                             ⇄
                         </span>
                         <Tooltip>
@@ -295,14 +477,36 @@ function RotationRoomRow({ room, accent }: { room: IRoomRotation; accent: string
     );
 }
 
-function RoomRow({ room, accent, compact }: { room: IRoomAssignment; accent: string; compact?: boolean }) {
-    const label = roomLabel(room.room_type);
+// ─── Peak single-shift (secondary) ────────────────────────────────────────────
+
+function PeakBody({ optimal }: { optimal: IBaseAssignment }) {
+    return (
+        <>
+            <p className={cn(TEXT_META, "text-muted-foreground")}>Best possible arrangement at one snapshot in time - useful for set-and-forget AFK runs.</p>
+            <div className="flex items-center justify-between rounded-md border border-border/35 bg-muted/10 px-2.5 py-1.5">
+                <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Realized yield</span>
+                <YieldSummary assignment={optimal} />
+            </div>
+            <div className="flex flex-col gap-2">
+                {optimal.rooms.map((room) => (
+                    <RoomRow key={`${room.slot_id}-${room.room_type}`} room={room} />
+                ))}
+            </div>
+        </>
+    );
+}
+
+function RoomRow({ room }: { room: IRoomAssignment }) {
+    const a = roomAccent(room.room_type);
     const yieldLabel = roomYieldLabel(room);
     return (
-        <div className={cn("flex items-center gap-2 rounded-md border border-border/35 bg-muted/15", compact ? "px-2 py-1.5" : "px-2.5 py-2")}>
+        <div className="flex items-center gap-2 rounded-lg border-2 px-2.5 py-2" style={{ borderColor: a.border, background: a.tint }}>
             <div className="flex min-w-28 flex-col">
                 <div className="flex items-center gap-1.5">
-                    <span className={cn(TEXT_BODY, "font-semibold")}>{label}</span>
+                    <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
+                    <span className={cn(TEXT_BODY, "font-semibold")} style={{ color: a.text }}>
+                        {roomLabel(room.room_type)}
+                    </span>
                     <span className={cn("rounded-sm border border-border/40 bg-background px-1 py-0.5 text-muted-foreground", TEXT_BADGE)}>L{room.level}</span>
                     {room.locked && room.operators.length > 0 && (
                         <Tooltip>
@@ -313,7 +517,7 @@ function RoomRow({ room, accent, compact }: { room: IRoomAssignment; accent: str
                         </Tooltip>
                     )}
                 </div>
-                <div className={cn("flex items-center gap-1.5 text-muted-foreground", TEXT_BADGE)}>
+                <div className={cn("flex items-center gap-1.5 pl-3.5 text-muted-foreground", TEXT_BADGE)}>
                     <span className="opacity-65">{room.slot_id}</span>
                     {room.formula_type && (
                         <Tooltip>
@@ -346,7 +550,7 @@ function RoomRow({ room, accent, compact }: { room: IRoomAssignment; accent: str
                 ))}
             </div>
             <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <span className={cn("font-semibold", TEXT_BODY, "font-mono tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 65%, var(--foreground))` }}>
+                <span className={cn("font-semibold", TEXT_BODY, "font-mono tabular-nums")} style={{ color: a.strong }}>
                     +{room.total_efficiency.toFixed(1)}%
                 </span>
                 {room.room_type === "CONTROL" && (

@@ -21,6 +21,7 @@ use crate::core::grade::base::assignment::{
 use crate::core::grade::base::buff_registry::{
     build_name_to_char, build_registry, faction_tags_of,
 };
+use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
 use crate::core::grade::base::types::{
     BaseAssignment, OperatorBaseProfile, RoomAssignment, RotationAssignment, UserBuilding,
 };
@@ -224,6 +225,9 @@ pub struct BaseImprovements {
     pub rotation: Option<RotationDto>,
     /// User's room layout (counts + levels per room type)
     pub layout: Vec<RoomLayoutEntry>,
+    /// Recommended 3-shift rotation paired with the player's saved presets, for the
+    /// preset-vs-recommended comparison. `None` when the base has no production rooms.
+    pub shift_rotation: Option<ShiftRotationDto>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -313,6 +317,39 @@ pub struct RoomAssignmentDto {
 pub struct AssignedOperator {
     pub operator_id: String,
     pub name: String,
+}
+
+/// A recommended 3-shift rotation alongside the player's saved presets, for the
+/// preset-vs-recommended comparison.
+#[derive(Debug, Clone, Serialize)]
+pub struct ShiftRotationDto {
+    pub shifts: Vec<ShiftDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ShiftDto {
+    /// 1-indexed shift number.
+    pub index: usize,
+    pub rooms: Vec<ShiftRoomDto>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ShiftRoomDto {
+    pub slot_id: String,
+    pub room_type: String,
+    pub formula_type: Option<String>,
+    /// False when this room is deliberately unstaffed this shift (CC's off shift).
+    pub active: bool,
+    pub recommended: Vec<AssignedOperator>,
+    /// The player's saved preset for this room and shift (empty if none).
+    pub current: Vec<AssignedOperator>,
+    /// Recommended operators the player should ADD (in the recommendation, not the
+    /// current preset).
+    pub swap_in: Vec<AssignedOperator>,
+    /// Current preset operators the player should REMOVE (not in the recommendation).
+    pub swap_out: Vec<AssignedOperator>,
+    /// True when the player's preset already matches the recommendation.
+    pub matches: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -1100,13 +1137,98 @@ async fn build_base_improvements(
     let rotation_dto = rotation_to_dto(&sustained, game_data);
     let layout = build_layout_summary(&user_building);
 
+    // The shift rotation is only shown for a 243 base layout (2 trading posts,
+    // 4 factories, 3 power plants) - the structure the rotation is designed around.
+    let shift_rotation = if is_243_layout(&user_building) {
+        let rotation = recommend_shift_rotation(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &registry,
+            &morale_drains,
+        );
+        Some(shift_rotation_to_dto(&rotation, game_data))
+    } else {
+        None
+    };
+
     Ok(BaseImprovements {
         current: Some(current_dto),
         current_rotation,
         optimal: Some(optimal_dto),
         rotation: Some(rotation_dto),
         layout,
+        shift_rotation,
     })
+}
+
+/// A "243" base: exactly 2 trading posts, 4 factories, and 3 power plants. The
+/// shift rotation is built for this layout, so it is only offered for it.
+fn is_243_layout(building: &UserBuilding) -> bool {
+    let count = |room_type: &str| {
+        building
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == room_type)
+            .count()
+    };
+    count("TRADING") == 2 && count("MANUFACTURE") == 4 && count("POWER") == 3
+}
+
+/// Convert a recommended rotation into its DTO, computing the per-room diff between
+/// the player's saved preset and the recommendation.
+fn shift_rotation_to_dto(
+    rotation: &crate::core::grade::base::shift_rotation::ShiftRotation,
+    game_data: &GameData,
+) -> ShiftRotationDto {
+    let ops = |ids: &[String]| -> Vec<AssignedOperator> {
+        ids.iter()
+            .map(|id| assigned_operator(id, game_data))
+            .collect()
+    };
+    ShiftRotationDto {
+        shifts: rotation
+            .shifts
+            .iter()
+            .map(|shift| ShiftDto {
+                index: shift.index,
+                rooms: shift
+                    .rooms
+                    .iter()
+                    .map(|room| {
+                        let rec: HashSet<&str> =
+                            room.recommended.iter().map(String::as_str).collect();
+                        let cur: HashSet<&str> = room.current.iter().map(String::as_str).collect();
+                        let swap_in: Vec<String> = room
+                            .recommended
+                            .iter()
+                            .filter(|id| !cur.contains(id.as_str()))
+                            .cloned()
+                            .collect();
+                        let swap_out: Vec<String> = room
+                            .current
+                            .iter()
+                            .filter(|id| !rec.contains(id.as_str()))
+                            .cloned()
+                            .collect();
+                        ShiftRoomDto {
+                            slot_id: room.slot_id.clone(),
+                            room_type: room.room_type.clone(),
+                            formula_type: room.formula_type.clone(),
+                            active: room.active,
+                            recommended: ops(&room.recommended),
+                            current: ops(&room.current),
+                            matches: !room.current.is_empty()
+                                && swap_in.is_empty()
+                                && swap_out.is_empty(),
+                            swap_in: ops(&swap_in),
+                            swap_out: ops(&swap_out),
+                        }
+                    })
+                    .collect(),
+            })
+            .collect(),
+    }
 }
 
 fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {

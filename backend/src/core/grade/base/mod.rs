@@ -2,6 +2,7 @@ pub mod assignment;
 pub mod buff_registry;
 pub mod evaluate;
 pub mod score;
+pub mod shift_rotation;
 pub mod types;
 pub(crate) mod util;
 pub mod yield_model;

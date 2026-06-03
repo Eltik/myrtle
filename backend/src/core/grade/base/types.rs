@@ -155,6 +155,7 @@ impl UserBuilding {
     }
 }
 
+#[derive(Clone)]
 pub struct OperatorBaseProfile {
     pub char_id: String,
     /// Which `buff_ids` this operator has unlocked (based on their elite/level
