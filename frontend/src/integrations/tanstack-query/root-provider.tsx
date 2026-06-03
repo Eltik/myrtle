@@ -1,13 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// A fresh QueryClient is created per request on the server (see `getRouter`).
-// Every query schedules a `setTimeout(gcTime)` that keeps the query's data — and,
-// transitively, the whole client — reachable until it fires. With our long gcTimes
-// (up to 24h on static game data) each SSR request's fetched payloads stay resident
-// for hours, so traffic accumulates GBs until the OOM killer reaps the `bun` server.
-//
-// On the server the cache only needs to outlive dehydration (synchronous, within the
-// request), so clamp gcTime hard. The browser keeps its long-lived caches untouched.
+
 const isServer = import.meta.env.SSR;
 const SERVER_MAX_GC_TIME = 1_000;
 
