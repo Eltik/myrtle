@@ -364,6 +364,32 @@ export interface IRoomLayoutEntry {
     levels: number[];
 }
 
+export interface IShiftRoom {
+    slot_id: string;
+    room_type: string;
+    formula_type: string | null;
+    /** False when the room is deliberately unstaffed this shift (CC's off shift). */
+    active: boolean;
+    recommended: IAssignedOperator[];
+    /** The player's saved preset for this room and shift (empty if none). */
+    current: IAssignedOperator[];
+    /** Operators to ADD (in the recommendation, not the current preset). */
+    swap_in: IAssignedOperator[];
+    /** Operators to REMOVE (in the current preset, not the recommendation). */
+    swap_out: IAssignedOperator[];
+    /** True when the player's preset already matches the recommendation. */
+    matches: boolean;
+}
+
+export interface IShift {
+    index: number;
+    rooms: IShiftRoom[];
+}
+
+export interface IShiftRotation {
+    shifts: IShift[];
+}
+
 export interface IBaseImprovements {
     /** The player's current base exactly as stationed right now. */
     current: IBaseAssignment | null;
@@ -372,6 +398,8 @@ export interface IBaseImprovements {
     optimal: IBaseAssignment | null;
     rotation: IRotation | null;
     layout: IRoomLayoutEntry[];
+    /** Recommended 3-shift rotation paired with the player's saved presets. */
+    shift_rotation?: IShiftRotation | null;
 }
 
 export interface IImprovementsResponse {

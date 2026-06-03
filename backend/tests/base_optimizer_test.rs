@@ -2296,3 +2296,90 @@ fn proviso_is_not_staffed_in_a_shamare_post() {
             .collect::<Vec<_>>()
     );
 }
+
+#[test]
+fn shift_rotation_forms_three_overlapping_shifts() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    // A 243 layout: 2 trading posts, 4 factories, 3 power plants, CC, dorms.
+    let mut rooms = vec![room("cc", "CONTROL", 5)];
+    rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
+    rooms.extend((0..4).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..3).map(|i| room(&format!("p{i}"), "POWER", 3)));
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let rot = recommend_shift_rotation(
+        &full_roster(&gd),
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+    );
+
+    assert_eq!(rot.shifts.len(), 3, "three shifts");
+
+    // The Control Center runs two shifts on, one off.
+    let cc_active: Vec<bool> = rot
+        .shifts
+        .iter()
+        .map(|s| {
+            s.rooms
+                .iter()
+                .find(|r| r.room_type == "CONTROL")
+                .unwrap()
+                .active
+        })
+        .collect();
+    assert_eq!(cc_active, vec![true, true, false], "CC is 2-on-1-off");
+
+    // The two trading posts cycle three teams so each team rests exactly one shift.
+    let tp_team = |shift: usize, slot: &str| -> Vec<String> {
+        rot.shifts[shift]
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .map(|r| {
+                let mut v = r.recommended.clone();
+                v.sort();
+                v
+            })
+            .unwrap()
+    };
+    let teams: std::collections::HashSet<Vec<String>> = (0..3)
+        .flat_map(|s| [tp_team(s, "tp0"), tp_team(s, "tp1")])
+        .collect();
+    assert_eq!(
+        teams.len(),
+        3,
+        "exactly three distinct trading-post teams rotate"
+    );
+    // Each distinct team appears in exactly two of the three shifts (rests one).
+    for team in &teams {
+        let appearances = (0..3)
+            .filter(|&s| tp_team(s, "tp0") == *team || tp_team(s, "tp1") == *team)
+            .count();
+        assert_eq!(appearances, 2, "each team works two shifts, rests one");
+    }
+
+    // Power plants get a fresh crew every shift (no operator repeats across shifts).
+    let p0: Vec<&String> = rot
+        .shifts
+        .iter()
+        .flat_map(|s| {
+            s.rooms
+                .iter()
+                .find(|r| r.slot_id == "p0")
+                .unwrap()
+                .recommended
+                .iter()
+        })
+        .collect();
+    let p0_unique: std::collections::HashSet<&&String> = p0.iter().collect();
+    assert_eq!(
+        p0_unique.len(),
+        p0.len(),
+        "a power plant swaps to fresh operators each shift"
+    );
+}

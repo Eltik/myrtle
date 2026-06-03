@@ -743,12 +743,16 @@ pub fn build_registry(
                         cap_pct: cap,
                     }
                 }
-                // Building-resource dependent (Felvine, Engineering Robots, etc.)
+                // Building-resource dependent (Marcille's "+1% per Monster Meal",
+                // Engineering Robots, Chain of Thought, Witchcraft Crystal, etc.):
+                // scales with a special stockpile resource the optimizer can't assume
+                // the player has banked, so it's worth 0 in the baseline - crediting
+                // the per-unit % (as if one unit were stocked) over-ranks the operator
+                // against reliable specialists. Any always-on flat productivity lives
+                // in a separate base-skill slot, captured by the `efficiency > 0`
+                // branch above.
                 else if prefix.contains("_bd") {
-                    let per_unit = parse_first_pct(&buff.description).unwrap_or(1.0);
-                    BuffResolutionStrategy::Complex {
-                        estimated_pct: per_unit,
-                    }
+                    BuffResolutionStrategy::Complex { estimated_pct: 0.0 }
                 }
                 // Trading gold-line scaling
                 else if prefix.contains("&gold") || prefix.contains("&trade") {

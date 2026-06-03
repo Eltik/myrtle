@@ -3,17 +3,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip
 import type { IBaseAssignment, IRoomAssignment } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { assignmentTotals, compactNum, roomYield, roomYieldLabel, signedCompact } from "./baseYield";
+import { roomAccent, roomLabel } from "./roomColors";
 import { TEXT_BADGE, TEXT_KICKER, TEXT_META } from "./shared";
-
-const ROOM_LABELS: Record<string, string> = {
-    MANUFACTURE: "Factory",
-    TRADING: "Trading Post",
-    CONTROL: "Control Center",
-};
-
-function roomLabel(t: string): string {
-    return ROOM_LABELS[t] ?? t.charAt(0) + t.slice(1).toLowerCase();
-}
 
 /** The resource a room produces - so the comparison only lines up like-for-like. */
 function resourceKey(room: IRoomAssignment): string {
@@ -92,13 +83,13 @@ export function BaseComparison({ current, optimal, accent }: IProps) {
             <div className="flex flex-col gap-2.5">
                 {(curCC || optCC) && (
                     <div className="flex flex-col gap-1.5">
-                        <span className={cn(TEXT_BADGE, "px-1 text-muted-foreground/60")}>Control Center (global buff)</span>
+                        <GroupLabel roomType="CONTROL" label="Control Center (global buff)" />
                         <CompareRow current={curCC} optimal={optCC} accent={accent} />
                     </div>
                 )}
                 {groups.map((g) => (
                     <div key={g.key} className="flex flex-col gap-1.5">
-                        <span className={cn(TEXT_BADGE, "px-1 text-muted-foreground/60")}>{g.label}</span>
+                        <GroupLabel roomType={g.key === "TRADING" ? "TRADING" : "MANUFACTURE"} label={g.label} />
                         {g.pairs.map((pair, i) => (
                             <CompareRow key={`${g.key}-${pair.cur?.slot_id ?? pair.opt?.slot_id ?? i}`} current={pair.cur} optimal={pair.opt} accent={accent} />
                         ))}
@@ -106,6 +97,17 @@ export function BaseComparison({ current, optimal, accent }: IProps) {
                 ))}
             </div>
         </div>
+    );
+}
+
+/** A resource-group heading tinted with the building's in-game colour. */
+function GroupLabel({ roomType, label }: { roomType: string; label: string }) {
+    const a = roomAccent(roomType);
+    return (
+        <span className={cn(TEXT_BADGE, "flex items-center gap-1.5 px-1")} style={{ color: a.text }}>
+            <span className="size-1.5 rounded-[2px]" style={{ background: a.color }} />
+            {label}
+        </span>
     );
 }
 
@@ -181,14 +183,16 @@ function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignmen
         return <span className={cn(TEXT_BADGE, "text-muted-foreground/40")}>- none -</span>;
     }
     const yieldLabel = roomYieldLabel(room);
+    const a = roomAccent(room.room_type);
     return (
         <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center justify-between gap-1.5">
-                <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>
+                <span className={cn(TEXT_BADGE, "flex items-center gap-1 truncate")} style={{ color: a.text }}>
+                    <span className="size-1.5 shrink-0 rounded-[2px]" style={{ background: a.color }} />
                     {roomLabel(room.room_type)}
                     {room.formula_type ? ` · ${room.formula_type}` : ""}
                 </span>
-                <span className={cn("shrink-0 font-mono font-semibold tabular-nums", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${accent} 65%, var(--foreground))` }}>
+                <span className={cn("shrink-0 font-mono font-semibold tabular-nums", TEXT_BADGE)} style={{ color: a.strong }}>
                     +{room.total_efficiency.toFixed(0)}%
                 </span>
             </div>
