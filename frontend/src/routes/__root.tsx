@@ -141,7 +141,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
                 <HeadContent />
             </head>
-            <body className="wrap-anywhere font-sans antialiased selection:bg-primary">
+            <body className="wrap-anywhere font-sans antialiased selection:bg-primary/30 selection:text-foreground">
                 <RouterProgress />
                 <CommandProvider>
                     <SiteChrome>{children}</SiteChrome>
