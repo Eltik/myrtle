@@ -11,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myrtle -d myrtle"]
+      test: [ "CMD-SHELL", "pg_isready -U myrtle -d myrtle" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -29,7 +29,7 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -50,6 +50,9 @@ services:
         condition: service_healthy
         required: false
       redis:
+        condition: service_healthy
+        required: false
+      asset-watcher:
         condition: service_healthy
         required: false
     environment:
@@ -89,8 +92,30 @@ services:
       INTERNAL_SERVICE_KEY: ${SERVICE_KEY}
     volumes:
       - ./frontend:/src
+      - /src/node_modules
     ports:
       - "3000:3000"
+    networks:
+      - myrtle
+    profiles:
+      - "true"
+
+  asset-watcher:
+    build:
+      context: ./assets
+      platforms:
+        - linux/amd64
+    restart: unless-stopped
+    volumes:
+      - ./assets:/app
+      - /app/node_modules
+      - /app/binaries
+      - ./assets/ArkAssets:/data/ArkAssets
+      - ./assets/output:/data/output
+    working_dir: /app
+    command: bun run.mjs ws --non-interactive --port 9160
+    ports:
+      - "9160:9160"
     networks:
       - myrtle
     profiles:
