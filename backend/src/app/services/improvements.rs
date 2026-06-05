@@ -732,6 +732,8 @@ async fn build_sandbox_improvements(
         .and_then(|u| u.as_array())
         .map_or(0, std::vec::Vec::len);
 
+    // Completed Records/Archive quests (`story_*` ids) - the same set
+    // `max_quests` (`ArchiveQuestData`) counts.
     let quests_completed = sandbox
         .get("collect")
         .and_then(|c| c.get("complete"))

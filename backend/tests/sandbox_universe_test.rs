@@ -29,3 +29,26 @@ fn sandbox_node_count_reflects_one_playthrough() {
         universe.max_nodes
     );
 }
+
+/// Regression test for the quest-count inflation: the old code counted all 113
+/// individual `QuestData` *steps* as the "Quests" total, which both showed a
+/// bogus 113 and deflated the quest sub-score. The total should be the in-game
+/// Records/Archive quest log (`ArchiveQuestData`: the 7 story acts), the same
+/// set the player's `collect.complete.quest` records completion against.
+#[test]
+fn sandbox_quest_count_reflects_archive_quests() {
+    let data_dir_str =
+        std::env::var("GAME_DATA_DIR").unwrap_or_else(|_| "../assets/output/gamedata/excel".into());
+    let path = Path::new(&data_dir_str).join("sandbox_perm_table.json");
+    let raw: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).expect("read sandbox_perm_table"))
+            .expect("parse sandbox_perm_table");
+
+    let universe = SandboxUniverse::build(&raw);
+
+    assert_eq!(
+        universe.max_quests, 7,
+        "max_quests should be the 7 Records/Archive quests (ArchiveQuestData), got {}",
+        universe.max_quests
+    );
+}

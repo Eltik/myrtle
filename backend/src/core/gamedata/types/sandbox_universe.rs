@@ -34,7 +34,7 @@ impl SandboxUniverse {
             max_nodes: Self::count_map_nodes(sandbox_data),
             max_zones: count("ZoneData"),
             max_tech_nodes: count("DevelopmentData"),
-            max_quests: count("QuestData"),
+            max_quests: count("ArchiveQuestData"),
             max_stages: count("StageData"),
             max_recipes: count("FoodData"),
             max_music: count("ArchiveMusicUnlockData"),

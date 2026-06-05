@@ -138,6 +138,8 @@ fn score_tech(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize) {
 }
 
 fn score_quests(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usize) {
+    // `collect.complete.quest` is the player's completed Records/Archive quests
+    // (`story_*` ids), the same set `max_quests` (`ArchiveQuestData`) counts.
     let completed = sandbox
         .get("collect")
         .and_then(|c| c.get("complete"))
