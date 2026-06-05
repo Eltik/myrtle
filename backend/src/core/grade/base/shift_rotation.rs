@@ -19,9 +19,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::{
-    assignment::{
-        compute_optimal_assignment, morale_recovery, morale_sustained_beneficiaries,
-    },
+    assignment::{compute_optimal_assignment, morale_recovery, morale_sustained_beneficiaries},
     buff_registry::BuffResolutionStrategy,
     evaluate::evaluate_buff,
     types::{BaseAssignment, EvalContext, OperatorBaseProfile, UserBuilding},
@@ -132,7 +130,11 @@ pub fn recommend_shift_rotation(
     // work / rest / work cycle and never shuffles rooms; a morale-sustained team works all three
     // shifts. Reserve teams are matched to the main rooms by what they produce, in order.
     let mut reserve_offs: HashMap<String, VecDeque<Vec<String>>> = HashMap::new();
-    for room in reserve.rooms.iter().filter(|r| is_production_room(&r.room_type)) {
+    for room in reserve
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+    {
         reserve_offs
             .entry(group_key(&room.room_type, room.formula_type.as_deref()))
             .or_default()
@@ -149,7 +151,12 @@ pub fn recommend_shift_rotation(
             off: reserve_offs
                 .get_mut(&group_key(&r.room_type, r.formula_type.as_deref()))
                 .and_then(VecDeque::pop_front),
-            kept: r.operators.iter().filter(|op| sustained.contains(*op)).cloned().collect(),
+            kept: r
+                .operators
+                .iter()
+                .filter(|op| sustained.contains(*op))
+                .cloned()
+                .collect(),
             main: r.operators.clone(),
         })
         .collect();
@@ -249,7 +256,12 @@ pub fn recommend_shift_rotation(
                 let mut team = room.kept.clone();
                 let need = room.main.len().saturating_sub(team.len());
                 if let Some(off) = &room.off {
-                    team.extend(off.iter().filter(|op| !room.kept.contains(*op)).take(need).cloned());
+                    team.extend(
+                        off.iter()
+                            .filter(|op| !room.kept.contains(*op))
+                            .take(need)
+                            .cloned(),
+                    );
                 }
                 (team, true)
             };
@@ -265,7 +277,11 @@ pub fn recommend_shift_rotation(
 
         // Power plants: the strongest specialist two shifts, then its off-team covers the third.
         for plant in &power_plan {
-            let crew = if power_off && !plant.backup.is_empty() { &plant.backup } else { &plant.main };
+            let crew = if power_off && !plant.backup.is_empty() {
+                &plant.backup
+            } else {
+                &plant.main
+            };
             rooms.push(ShiftRoom {
                 slot_id: plant.slot_id.clone(),
                 room_type: "POWER".to_string(),
@@ -330,9 +346,12 @@ pub fn recommend_shift_rotation(
 /// An operator with no power skill (e.g. a pure Dormitory/Training operator) is dead
 /// weight there, so only genuine power specialists are recommended for the plants.
 fn has_power_skill(op: &OperatorBaseProfile, building_data: &BuildingDataFile) -> bool {
-    op.available_buffs
-        .iter()
-        .any(|b| building_data.buffs.get(b).is_some_and(|buff| buff.room_type == "POWER"))
+    op.available_buffs.iter().any(|b| {
+        building_data
+            .buffs
+            .get(b)
+            .is_some_and(|buff| buff.room_type == "POWER")
+    })
 }
 
 /// Rough strength of an operator's POWER base skill, for ranking who staffs the plants:
@@ -352,17 +371,21 @@ fn power_value(
     };
     op.available_buffs
         .iter()
-        .filter(|b| building_data.buffs.get(*b).is_some_and(|buff| buff.room_type == "POWER"))
+        .filter(|b| {
+            building_data
+                .buffs
+                .get(*b)
+                .is_some_and(|buff| buff.room_type == "POWER")
+        })
         .filter_map(|b| registry.get(b))
         .map(|s| match s {
             // A facility-count enabler (Greyy the Lightningbearer E2) earns no drone output, but
             // it must be STATIONED in a power plant for its "+1 Power Plant" to fire and power the
             // automation factories - so rank it highly here, above ordinary drone operators.
-            BuffResolutionStrategy::FacilityCountModifier { target_room, amount }
-                if target_room == "POWER" =>
-            {
-                f64::from(*amount) * 30.0
-            }
+            BuffResolutionStrategy::FacilityCountModifier {
+                target_room,
+                amount,
+            } if target_room == "POWER" => f64::from(*amount) * 30.0,
             other => evaluate_buff(other, &ctx),
         })
         .fold(0.0, f64::max)
@@ -418,7 +441,12 @@ fn build_power_plan(
         .iter()
         .filter(|op| !used.contains(op.char_id.as_str()))
         .filter(|op| has_power_skill(op, building_data))
-        .map(|op| (op.char_id.clone(), power_value(op, building_data, registry, facility_counts)))
+        .map(|op| {
+            (
+                op.char_id.clone(),
+                power_value(op, building_data, registry, facility_counts),
+            )
+        })
         .collect();
     ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
     let mut best = ranked.into_iter().map(|(id, _)| id);
@@ -429,8 +457,14 @@ fn build_power_plan(
         .collect();
     // Hand every plant its main crew FIRST (so the strongest operators are the ones actually
     // working most), then a second pass fills each plant's off-team from what remains.
-    let mut mains: Vec<Vec<String>> = slots.iter().map(|n| (0..*n).filter_map(|_| best.next()).collect()).collect();
-    let backups: Vec<Vec<String>> = slots.iter().map(|n| (0..*n).filter_map(|_| best.next()).collect()).collect();
+    let mut mains: Vec<Vec<String>> = slots
+        .iter()
+        .map(|n| (0..*n).filter_map(|_| best.next()).collect())
+        .collect();
+    let backups: Vec<Vec<String>> = slots
+        .iter()
+        .map(|n| (0..*n).filter_map(|_| best.next()).collect())
+        .collect();
     power_rooms
         .iter()
         .enumerate()

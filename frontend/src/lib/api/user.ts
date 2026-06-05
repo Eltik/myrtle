@@ -135,8 +135,6 @@ export function userInventoryQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
-/** One encountered enemy. Handbook fields are null when the synced id isn't
- *  present in the static `enemy_handbook_table` (e.g. an unreleased variant). */
 export interface IEncounteredEnemy {
     enemyId: string;
     name: string | null;

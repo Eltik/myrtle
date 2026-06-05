@@ -1138,7 +1138,13 @@ async fn build_base_improvements(
     // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
     // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
     let perception = is_243_layout(&user_building).then(|| {
-        perception::evaluate(&profiles, &user_building, &game_data.building, &morale_drains, &registry)
+        perception::evaluate(
+            &profiles,
+            &user_building,
+            &game_data.building,
+            &morale_drains,
+            &registry,
+        )
     });
 
     // The economy boosts its CONSUMERS (a direct productivity buff the optimizer values and
@@ -1150,8 +1156,10 @@ async fn build_base_improvements(
     let mut optimal_pins: Vec<(String, String)> = Vec::new();
     if let Some(p) = &perception {
         for (buff_id, pct) in &p.overrides {
-            optimal_registry
-                .insert(buff_id.clone(), BuffResolutionStrategy::DirectEfficiency { value: *pct });
+            optimal_registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::DirectEfficiency { value: *pct },
+            );
         }
         // Global Control-Center consumers (Sakiko's Passion -> all Factories) fold in as a
         // whole-room buff, so the optimizer values stationing them in the Control Center.
@@ -1288,7 +1296,11 @@ fn perception_to_dto(
         })
         .collect();
     // Strongest bonus first - a stable, meaningful order for the UI.
-    consumers.sort_by(|a, b| b.bonus_pct.partial_cmp(&a.bonus_pct).unwrap_or(std::cmp::Ordering::Equal));
+    consumers.sort_by(|a, b| {
+        b.bonus_pct
+            .partial_cmp(&a.bonus_pct)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     Some(PerceptionPlanDto {
         support: result
             .support
@@ -1342,17 +1354,23 @@ fn match_current_teams(
     for shift in &rotation.shifts {
         for room in &shift.rooms {
             let key = (shift.index, room.slot_id.clone());
-            rec_by_type.entry(room.room_type.as_str()).or_default().push(Cell {
-                key: key.clone(),
-                set: room.recommended.iter().cloned().collect(),
-                ops: room.recommended.clone(),
-            });
-            if !room.current.is_empty() {
-                cur_by_type.entry(room.room_type.as_str()).or_default().push(Cell {
-                    key,
-                    set: room.current.iter().cloned().collect(),
-                    ops: room.current.clone(),
+            rec_by_type
+                .entry(room.room_type.as_str())
+                .or_default()
+                .push(Cell {
+                    key: key.clone(),
+                    set: room.recommended.iter().cloned().collect(),
+                    ops: room.recommended.clone(),
                 });
+            if !room.current.is_empty() {
+                cur_by_type
+                    .entry(room.room_type.as_str())
+                    .or_default()
+                    .push(Cell {
+                        key,
+                        set: room.current.iter().cloned().collect(),
+                        ops: room.current.clone(),
+                    });
             }
         }
     }
@@ -1428,7 +1446,11 @@ fn shift_rotation_to_dto(
             .rooms
             .iter()
             .filter(|r| r.active)
-            .flat_map(|r| r.recommended.iter().map(move |id| (id.as_str(), r.slot_id.as_str())))
+            .flat_map(|r| {
+                r.recommended
+                    .iter()
+                    .map(move |id| (id.as_str(), r.slot_id.as_str()))
+            })
             .collect();
         let mut kept: HashSet<String> = HashSet::new();
 
@@ -1462,8 +1484,26 @@ fn shift_rotation_to_dto(
                 && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING")
             {
                 let f = room.formula_type.as_deref();
-                let rec_v = team_value(&room.recommended, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
-                let cur_v = team_value(&current, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
+                let rec_v = team_value(
+                    &room.recommended,
+                    &room.room_type,
+                    f,
+                    profiles,
+                    building,
+                    &game_data.building,
+                    registry,
+                    morale_drains,
+                );
+                let cur_v = team_value(
+                    &current,
+                    &room.room_type,
+                    f,
+                    profiles,
+                    building,
+                    &game_data.building,
+                    registry,
+                    morale_drains,
+                );
                 // Keeping this team is only valid if it doesn't double-book an operator the shift
                 // needs in another room (recommended there, or already kept here).
                 let conflicts = current.iter().any(|id| {
@@ -1481,7 +1521,11 @@ fn shift_rotation_to_dto(
             // Record the operators this cell tells the player to actually run, so a later cell
             // can't keep a team that reuses one of them.
             if room.active {
-                let running = if equivalent || matches { &current } else { &room.recommended };
+                let running = if equivalent || matches {
+                    &current
+                } else {
+                    &room.recommended
+                };
                 kept.extend(running.iter().cloned());
             }
 
@@ -1498,7 +1542,10 @@ fn shift_rotation_to_dto(
                 swap_out: ops(&swap_out),
             });
         }
-        shift_dtos.push(ShiftDto { index: shift.index, rooms: room_dtos });
+        shift_dtos.push(ShiftDto {
+            index: shift.index,
+            rooms: room_dtos,
+        });
     }
     ShiftRotationDto { shifts: shift_dtos }
 }
@@ -1681,8 +1728,16 @@ mod shift_match_tests {
             }],
         };
         let m = match_current_teams(&rotation);
-        assert_eq!(sorted(&m[&(1, "a".to_string())]), vec!["A", "B", "C"], "post a pairs with the A/B/C team wherever the player keeps it");
-        assert_eq!(sorted(&m[&(1, "b".to_string())]), vec!["D", "E", "F"], "post b pairs with the D/E/F team");
+        assert_eq!(
+            sorted(&m[&(1, "a".to_string())]),
+            vec!["A", "B", "C"],
+            "post a pairs with the A/B/C team wherever the player keeps it"
+        );
+        assert_eq!(
+            sorted(&m[&(1, "b".to_string())]),
+            vec!["D", "E", "F"],
+            "post b pairs with the D/E/F team"
+        );
     }
 
     #[test]

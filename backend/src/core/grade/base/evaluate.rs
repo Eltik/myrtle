@@ -189,7 +189,13 @@ pub fn evaluate_buff(strategy: &BuffResolutionStrategy, ctx: &EvalContext) -> f6
         } => {
             // Each operator in the room (this one + teammates) earns the high tier when its own
             // capacity bonus clears the threshold, else the low tier; the room gains the sum.
-            let tier = |cap: i32| if cap > *threshold { *high_pct } else { *low_pct };
+            let tier = |cap: i32| {
+                if cap > *threshold {
+                    *high_pct
+                } else {
+                    *low_pct
+                }
+            };
             let mut total = tier(ctx.self_order_limit);
             for t in &ctx.room_teammates {
                 total += tier(t.order_limit_contribution);

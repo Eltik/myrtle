@@ -34,9 +34,7 @@ fn make_test_key(
     res_shred_mult: f64,
     res_shred_flat: f64,
 ) -> String {
-    let base = format!(
-        "{operator_name}_s{skill}_m{module}_{defense:.0}_{res:.0}"
-    );
+    let base = format!("{operator_name}_s{skill}_m{module}_{defense:.0}_{res:.0}");
     if fragile != 0.0
         || def_shred_mult != 1.0
         || res_shred_mult != 1.0

@@ -7,6 +7,27 @@ export type LeaderboardScope = "global" | "friends";
 export const SERVERS = ["EN", "JP", "CN", "KR", "TW"] as const;
 export type ServerCode = (typeof SERVERS)[number];
 
+export const LEADERBOARD_SORTS = [
+    { value: "total_score", label: "Total" },
+    { value: "operator_score", label: "Operators" },
+    { value: "stage_score", label: "Stages" },
+    { value: "roguelike_score", label: "Roguelike" },
+    { value: "sandbox_score", label: "Sandbox" },
+    { value: "medal_score", label: "Medals" },
+    { value: "base_score", label: "Base" },
+    { value: "skin_score", label: "Skins" },
+] as const;
+export type LeaderboardSort = (typeof LEADERBOARD_SORTS)[number]["value"];
+
+export function toPct(score01: number | null | undefined): number {
+    if (score01 == null || Number.isNaN(score01)) return 0;
+    return Math.max(0, Math.min(100, score01 * 100));
+}
+
+export function formatPct(score01: number | null | undefined, digits = 1): string {
+    return `${toPct(score01).toFixed(digits)}%`;
+}
+
 export const INTERVALS = [
     { value: "1 day", short: "1d", label: "Today", subtitle: "today", since: "since yesterday" },
     { value: "7 days", short: "7d", label: "Past 7 days", subtitle: "7 days", since: "in the past 7 days" },
