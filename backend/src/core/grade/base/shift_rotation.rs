@@ -14,12 +14,14 @@
 //! shifts on, one off. The teams come from the optimizer (best deployment, plus a
 //! reserve team formed from the remaining operators).
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::{
-    assignment::compute_optimal_assignment,
+    assignment::{
+        compute_optimal_assignment, morale_recovery, morale_sustained_beneficiaries,
+    },
     buff_registry::BuffResolutionStrategy,
     evaluate::evaluate_buff,
     types::{BaseAssignment, EvalContext, OperatorBaseProfile, UserBuilding},
@@ -55,22 +57,24 @@ pub struct ShiftRoom {
     pub active: bool,
 }
 
-/// A group of same-kind production rooms and the three teams that rotate through them.
-struct RoomGroup {
-    /// The physical room slots in this group (in assignment order).
-    rooms: Vec<RoomSlot>,
-    /// Three operator teams (`char_id` lists) that rotate across the rooms.
-    teams: Vec<Vec<String>>,
-}
-
-struct RoomSlot {
+/// A production room's rotation plan: its MAIN team (the best deployment) runs shifts 1 & 3 and
+/// rests the middle shift, where the reserve OFF-team covers it (or the room rests dark). On the
+/// rest shift the team's `kept` operators stay put - a morale-swap manager (Fiammetta) holds ONE
+/// operator at full morale, not the whole team - while their teammates rest and the off-team fills
+/// the vacated seats.
+struct ProdRoom {
     slot_id: String,
     room_type: String,
     formula_type: Option<String>,
+    main: Vec<String>,
+    off: Option<Vec<String>>,
+    /// Main operators a morale-swap manager keeps working through the rest shift (usually empty;
+    /// at most one per Fiammetta the player owns).
+    kept: Vec<String>,
 }
 
-/// Key a production room by what it produces, so Trading Posts, Gold factories, and
-/// EXP factories each rotate within their own pool.
+/// Key a production room by what it produces, so Trading Posts, Gold factories, and EXP factories
+/// each draw their reserve off-team from their own pool.
 fn group_key(room_type: &str, formula: Option<&str>) -> String {
     match formula {
         Some(f) => format!("{room_type}:{f}"),
@@ -112,7 +116,43 @@ pub fn recommend_shift_rotation(
         morale_drains,
     );
 
-    let groups = build_production_groups(&primary, &reserve);
+    // Operators a morale-swap manager (Fiammetta) keeps at full morale 24/7: their team is exempt
+    // from the rest rotation, so a player "24/7-ing" them (e.g. Proviso) isn't told to rest.
+    let sustained = morale_sustained_beneficiaries(
+        &primary,
+        operators,
+        morale_drains,
+        morale_recovery(building),
+        building_data,
+    );
+
+    // Production runs like the Control Center: each room keeps its MAIN team (from the best
+    // deployment) on shifts 1 & 3 and rests the middle shift, where a reserve OFF-team of the same
+    // kind covers it (or the room rests dark when the roster has no reserve). Every operator gets a
+    // work / rest / work cycle and never shuffles rooms; a morale-sustained team works all three
+    // shifts. Reserve teams are matched to the main rooms by what they produce, in order.
+    let mut reserve_offs: HashMap<String, VecDeque<Vec<String>>> = HashMap::new();
+    for room in reserve.rooms.iter().filter(|r| is_production_room(&r.room_type)) {
+        reserve_offs
+            .entry(group_key(&room.room_type, room.formula_type.as_deref()))
+            .or_default()
+            .push_back(room.operators.clone());
+    }
+    let prod_rooms: Vec<ProdRoom> = primary
+        .rooms
+        .iter()
+        .filter(|r| is_production_room(&r.room_type))
+        .map(|r| ProdRoom {
+            slot_id: r.slot_id.clone(),
+            room_type: r.room_type.clone(),
+            formula_type: r.formula_type.clone(),
+            off: reserve_offs
+                .get_mut(&group_key(&r.room_type, r.formula_type.as_deref()))
+                .and_then(VecDeque::pop_front),
+            kept: r.operators.iter().filter(|op| sustained.contains(*op)).cloned().collect(),
+            main: r.operators.clone(),
+        })
+        .collect();
 
     // Preset shifts per room slot, from the in-game preset queue.
     let presets: HashMap<&str, &Vec<Vec<String>>> = building
@@ -174,6 +214,7 @@ pub fn recommend_shift_rotation(
         registry,
         &facility_counts,
         &primary,
+        &reserve,
     );
 
     let mut shifts = Vec::with_capacity(SHIFT_COUNT);
@@ -185,21 +226,41 @@ pub fn recommend_shift_rotation(
         // different shifts from the Control Center's.
         let cc_off = k == SHIFT_COUNT / 2;
         let aux_off = k == SHIFT_COUNT / 2;
+        let prod_off = k == SHIFT_COUNT / 2;
         let power_off = k == SHIFT_COUNT - 1;
 
-        // Production rooms: rotate the three teams so each rests one shift.
-        for group in &groups {
-            for (j, room) in group.rooms.iter().enumerate() {
-                let team = &group.teams[(j + k) % group.teams.len().max(1)];
-                rooms.push(ShiftRoom {
-                    slot_id: room.slot_id.clone(),
-                    room_type: room.room_type.clone(),
-                    formula_type: room.formula_type.clone(),
-                    recommended: team.clone(),
-                    current: preset_for(&room.slot_id, k),
-                    active: true,
-                });
-            }
+        // Production rooms: the main team runs shifts 1 & 3 and RESTS the middle shift - covered by
+        // its reserve off-team, or dark when the roster has no reserve - so operators get a work /
+        // rest / work cycle and don't shuffle rooms. Any morale-sustained operators (a Fiammetta
+        // holds ONE, not the team) keep working through the rest shift; their teammates rest and the
+        // off-team fills their seats.
+        for room in &prod_rooms {
+            let (team, active) = if !prod_off {
+                (room.main.clone(), true)
+            } else if room.kept.is_empty() {
+                // Whole team rests this shift: the off-team covers, or the room goes dark.
+                match &room.off {
+                    Some(off) => (off.clone(), true),
+                    None => (room.main.clone(), false),
+                }
+            } else {
+                // Keep the sustained operator(s); fill the seats their resting teammates vacate from
+                // the off-team (the room still runs, just understaffed, if there's no reserve).
+                let mut team = room.kept.clone();
+                let need = room.main.len().saturating_sub(team.len());
+                if let Some(off) = &room.off {
+                    team.extend(off.iter().filter(|op| !room.kept.contains(*op)).take(need).cloned());
+                }
+                (team, true)
+            };
+            rooms.push(ShiftRoom {
+                slot_id: room.slot_id.clone(),
+                room_type: room.room_type.clone(),
+                formula_type: room.formula_type.clone(),
+                recommended: team,
+                current: preset_for(&room.slot_id, k),
+                active,
+            });
         }
 
         // Power plants: the strongest specialist two shifts, then its off-team covers the third.
@@ -262,71 +323,6 @@ pub fn recommend_shift_rotation(
     }
 
     ShiftRotation { shifts }
-}
-
-/// Group the production rooms by what they produce and attach three rotation teams:
-/// the deployment's own crews plus a reserve crew from the second deployment.
-fn build_production_groups(primary: &BaseAssignment, reserve: &BaseAssignment) -> Vec<RoomGroup> {
-    let mut order: Vec<String> = Vec::new();
-    let mut by_key: HashMap<String, RoomGroup> = HashMap::new();
-
-    for room in primary
-        .rooms
-        .iter()
-        .filter(|r| is_production_room(&r.room_type))
-    {
-        let key = group_key(&room.room_type, room.formula_type.as_deref());
-        let group = by_key.entry(key.clone()).or_insert_with(|| {
-            order.push(key.clone());
-            RoomGroup {
-                rooms: Vec::new(),
-                teams: Vec::new(),
-            }
-        });
-        group.rooms.push(RoomSlot {
-            slot_id: room.slot_id.clone(),
-            room_type: room.room_type.clone(),
-            formula_type: room.formula_type.clone(),
-        });
-        group.teams.push(room.operators.clone());
-    }
-
-    // Reserve teams from the second deployment, matched by what they produce.
-    let mut reserve_teams: HashMap<String, Vec<Vec<String>>> = HashMap::new();
-    for room in reserve
-        .rooms
-        .iter()
-        .filter(|r| is_production_room(&r.room_type))
-    {
-        let key = group_key(&room.room_type, room.formula_type.as_deref());
-        reserve_teams
-            .entry(key)
-            .or_default()
-            .push(room.operators.clone());
-    }
-
-    // Top up each group to SHIFT_COUNT teams using the reserves.
-    for (key, group) in &mut by_key {
-        if let Some(extra) = reserve_teams.get(key) {
-            for team in extra {
-                if group.teams.len() >= SHIFT_COUNT {
-                    break;
-                }
-                group.teams.push(team.clone());
-            }
-        }
-        // If still short (small roster), reuse existing teams so the rotation is
-        // defined - the comparison still shows the gap.
-        while group.teams.len() < SHIFT_COUNT && !group.teams.is_empty() {
-            let dup = group.teams[group.teams.len() % group.teams.len().max(1)].clone();
-            group.teams.push(dup);
-        }
-    }
-
-    order
-        .into_iter()
-        .filter_map(|k| by_key.remove(&k))
-        .collect()
 }
 
 /// A power plant's electricity output is fixed by its level - operators only matter
@@ -397,6 +393,7 @@ fn build_power_plan(
     registry: &HashMap<String, BuffResolutionStrategy>,
     facility_counts: &HashMap<String, usize>,
     primary: &BaseAssignment,
+    reserve: &BaseAssignment,
 ) -> Vec<PowerPlant> {
     let power_rooms: Vec<&super::types::UserRoom> = building
         .rooms
@@ -407,10 +404,14 @@ fn build_power_plan(
         return Vec::new();
     }
 
+    // Exclude every operator already stationed anywhere in the assembled rotation - BOTH the
+    // primary and the reserve deployment, across all room types (production, Control Center,
+    // Office/Reception). Otherwise a power specialist who also earns a reserve production seat or
+    // an aux seat would be double-booked into two rooms in the same shift.
     let used: HashSet<&str> = primary
         .rooms
         .iter()
-        .filter(|r| is_production_room(&r.room_type) || r.room_type == "CONTROL")
+        .chain(reserve.rooms.iter())
         .flat_map(|r| r.operators.iter().map(String::as_str))
         .collect();
     let mut ranked: Vec<(String, f64)> = operators

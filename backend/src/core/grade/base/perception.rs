@@ -30,14 +30,15 @@
 //! static building data, so those converters contribute 0 here rather than a guess.
 //! Callers gate this to 243 layouts; 252 is intentionally left unmodeled for now.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 use regex::Regex;
 
 use crate::core::gamedata::types::building::BuildingDataFile;
 
-use super::assignment::{morale_recovery, op_uptime};
+use super::assignment::{best_ordinary_cc_fill, morale_recovery, op_uptime};
+use super::buff_registry::BuffResolutionStrategy;
 use super::types::{OperatorBaseProfile, UserBuilding};
 use super::util::max_stationed_at_level;
 
@@ -195,6 +196,20 @@ fn number_after(desc: &str, pos: usize, want_pct: bool) -> Option<f64> {
         .and_then(|c| c[1].parse().ok())
 }
 
+/// A GENERATED amount written `<@cc...>+N</>` between `pos` and `window_end` - i.e. a `+`-signed,
+/// non-% value. Distinguishes "Passion +20" (generation) from a bare threshold like "when Passion
+/// is 40 or higher" (a condition, whose `40` carries no `+` and must not be read as +40 generated).
+fn generated_amount_after(desc: &str, pos: usize, window_end: usize) -> Option<f64> {
+    static RE_PLUS: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"<@cc\.(?:vup|kw)>\+(\d+)</>").unwrap());
+    let end = window_end.min(desc.len());
+    let start = pos.min(end);
+    RE_PLUS
+        .captures_iter(&desc[start..end])
+        .next()
+        .and_then(|c| c[1].parse().ok())
+}
+
 type Classified = (Vec<Generator>, Vec<Converter>, Vec<Consumer>, Vec<Conditional>);
 
 fn classify(desc: &str, room_type: &str) -> Classified {
@@ -261,8 +276,9 @@ fn classify(desc: &str, room_type: &str) -> Classified {
                 if before.contains("for every") || before.contains("for each") || before.contains("per ") {
                     continue;
                 }
-                let window = (r.end + 30).min(desc.len());
-                if let Some(amount) = number_after(&desc[..window], r.end, false).filter(|n| *n > 0.0) {
+                // Require a `+`-signed amount: "Passion +20" generates, but "when Passion is 40 or
+                // higher" is a threshold whose bare 40 must not be read as +40 generated.
+                if let Some(amount) = generated_amount_after(desc, r.end, r.end + 30).filter(|n| *n > 0.0) {
                     gens.push(Generator {
                         resource: r.id.to_string(),
                         per_unit: amount,
@@ -433,6 +449,183 @@ struct SupportCandidate {
     contributions: Vec<(String, f64)>,
 }
 
+/// The Control-Center resource combo decided under the room's seat budget. Closes the three gaps
+/// of the old per-operator model: over-subscription (generators and consumers contended for the
+/// same seats independently), no supply<->demand reconciliation (the credited pool summed every
+/// generator whether or not it could be seated alongside the consumers), and no atomic commit
+/// (generators have ~0 standalone value, so the ordinary fill never chose them on merit).
+struct CcBundle {
+    /// Resources owned by the Control-Center global-consumer economy. A CONTROL generator feeding
+    /// one of these is managed here, never by the generic support packing.
+    global_resources: HashSet<String>,
+    /// Pure-generator `char_ids` to PIN into the Control Center (committed supply). Empty when the
+    /// combo isn't worth committing.
+    generator_pins: Vec<String>,
+    /// Realized pool contributions (`resource -> [(contributor, points)]`) from the seated combo:
+    /// the global consumers' own co-present generation plus the pinned generators. Empty when not
+    /// committed (the consumers then fall back to their base Control-Center value).
+    pool: HashMap<String, Vec<(String, f64)>>,
+    /// Control-Center seats the committed combo occupies (consumers + pinned generators), so the
+    /// generic support packing doesn't oversubscribe the room.
+    cc_seats: usize,
+}
+
+/// Jointly value a Control-Center resource combo (Passion: generators + global consumers, all
+/// competing for the same Control-Center seats) as ONE atomic commitment, reconciling generator
+/// supply with consumer demand under the room's seat budget.
+///
+/// The global consumers are the demand and MUST be seated (their `GlobalEffect` is the payoff); the
+/// pure generators are optional supply. Because the Control Center holds at most ~5 operators, an
+/// exhaustive subset search over the generators is exact and cheap. For each feasible seating we
+/// build the realized pool from only the seated occupants (each consumer's own co-present
+/// generation + the chosen generators), value the consumers' resulting whole-base production bonus
+/// in LMD-equivalent, and add the value of ordinary global buffs on the leftover seats. The combo
+/// commits only when that total beats the best ordinary fill of the whole room - otherwise the
+/// Control Center is left to the ordinary bonus-greedy unchanged.
+///
+/// A dual-role operator (generates AND consumes, e.g. Monster of Acting) is seated once as a
+/// consumer with its generation counted co-present, so it never takes two seats. The consumers are
+/// NOT pinned - they're seated by the optimizer's bonus-greedy via their realized `GlobalEffect`
+/// (the combo only commits when that out-ranks ordinary buffs, so they win their seats); only the
+/// pure generators, which carry no Control-Center bonus of their own, need pinning.
+#[allow(clippy::too_many_arguments)]
+fn solve_cc_bundle(
+    econ: &Economy,
+    ctx: BaseContext,
+    control_slots: i32,
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> CcBundle {
+    // Global Control-Center consumers (Sakiko -> factories, Monster of Acting -> trading) are the
+    // demand; the resources they read are the combo's pool.
+    let global_cons: Vec<&(String, String, Consumer)> =
+        econ.consumers.iter().filter(|(_, _, c)| c.global).collect();
+    let global_resources: HashSet<String> =
+        global_cons.iter().map(|(_, _, c)| c.resource.clone()).collect();
+    let mut bundle = CcBundle {
+        global_resources,
+        generator_pins: Vec::new(),
+        pool: HashMap::new(),
+        cc_seats: 0,
+    };
+    if global_cons.is_empty() || control_slots <= 0 {
+        return bundle;
+    }
+    let consumer_chars: HashSet<&str> = global_cons.iter().map(|(c, _, _)| c.as_str()).collect();
+
+    // CONTROL generators feeding a combo resource. A generator whose operator is ALSO a global
+    // consumer is co-present self-generation (full, no extra seat); the rest are optional supply,
+    // one seat each (summed per operator, deduped to one seat).
+    let mut self_gen: Vec<(String, String, f64)> = Vec::new();
+    let mut pure_gen: HashMap<String, (String, f64)> = HashMap::new();
+    for (char_id, g) in &econ.generators {
+        if g.room_type != "CONTROL" || !bundle.global_resources.contains(&g.resource) {
+            continue;
+        }
+        let pts = g.contribution(ctx);
+        if pts <= 0.0 {
+            continue;
+        }
+        if consumer_chars.contains(char_id.as_str()) {
+            self_gen.push((char_id.clone(), g.resource.clone(), pts));
+        } else {
+            let slot = pure_gen.entry(char_id.clone()).or_insert_with(|| (g.resource.clone(), 0.0));
+            slot.1 += pts;
+        }
+    }
+
+    let reserved = consumer_chars.len() as i32;
+    if reserved > control_slots {
+        return bundle; // can't even seat the demand
+    }
+    let optional_seats = (control_slots - reserved).max(0) as usize;
+    // Strongest generators first, so capping a (hypothetically) large pool keeps the best supply.
+    let mut pure: Vec<(String, String, f64)> =
+        pure_gen.into_iter().map(|(c, (r, p))| (c, r, p)).collect();
+    pure.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Combo-eligible operators are excluded from the leftover-seat (filler) ordinary fill so a seat
+    // isn't credited twice; the baseline (no combo) excludes nothing.
+    let exclude_combo: HashSet<String> = consumer_chars
+        .iter()
+        .map(|s| (*s).to_string())
+        .chain(pure.iter().map(|(c, _, _)| c.clone()))
+        .collect();
+    let baseline =
+        best_ordinary_cc_fill(operators, building, building_data, registry, control_slots, &HashSet::new());
+    let room_count = |rt: &str| building.rooms.iter().filter(|r| r.room_type == rt).count();
+    // Ordinary value of the leftover seats depends only on HOW MANY the combo leaves free, so
+    // precompute it per generator-count instead of inside the subset loop.
+    let filler_by_used: Vec<f64> = (0..=optional_seats)
+        .map(|used| {
+            let leftover = control_slots - reserved - used as i32;
+            best_ordinary_cc_fill(operators, building, building_data, registry, leftover, &exclude_combo)
+        })
+        .collect();
+
+    // Realized consumer bonus (LMD-equivalent) for a seating of `subset` pure generators, plus the
+    // direct pool contributions (pre-conversion) to merge if this seating wins.
+    let value_of = |subset: &[&(String, String, f64)]| -> (f64, HashMap<String, Vec<(String, f64)>>) {
+        let mut direct: HashMap<String, Vec<(String, f64)>> = HashMap::new();
+        for (c, r, p) in &self_gen {
+            direct.entry(r.clone()).or_default().push((c.clone(), *p));
+        }
+        for (c, r, p) in subset {
+            direct.entry(r.clone()).or_default().push((c.clone(), *p));
+        }
+        // Apply conversions onto a pre-conversion snapshot (matches `solve`), for valuation only.
+        let mut converted = direct.clone();
+        for cv in &econ.converters {
+            if let Some(from) = direct.get(&cv.from) {
+                for (contributor, amount) in from {
+                    converted.entry(cv.to.clone()).or_default().push((contributor.clone(), amount * cv.ratio));
+                }
+            }
+        }
+        let mut consumer_value = 0.0;
+        for (_c, _b, cons) in &global_cons {
+            let points: f64 =
+                converted.get(&cons.resource).map_or(0.0, |v| v.iter().map(|(_, a)| a).sum());
+            let pct = points * cons.pct_per_point;
+            consumer_value +=
+                super::yield_model::global_bonus_value(&cons.room_type, room_count(&cons.room_type), pct);
+        }
+        (consumer_value + filler_by_used[subset.len()], direct)
+    };
+
+    // Exhaustive subset search (control_slots is tiny, so the generator pool is too). Bound the
+    // bitmask defensively in case a future roster fields an unusually large combo. The best seating
+    // keeps its value, the generators to pin, and the realized direct pool to merge.
+    type Seating = (f64, Vec<String>, HashMap<String, Vec<(String, f64)>>);
+    let n = pure.len().min(16);
+    let mut best: Option<Seating> = None;
+    for mask in 0u32..(1u32 << n) {
+        let subset: Vec<&(String, String, f64)> =
+            (0..n).filter(|i| mask & (1 << i) != 0).map(|i| &pure[i]).collect();
+        if subset.len() > optional_seats {
+            continue;
+        }
+        let (val, direct) = value_of(&subset);
+        if best.as_ref().is_none_or(|(b, _, _)| val > *b) {
+            let pins = subset.iter().map(|(c, _, _)| c.clone()).collect();
+            best = Some((val, pins, direct));
+        }
+    }
+
+    let Some((best_val, pins, direct)) = best else {
+        return bundle;
+    };
+    if best_val <= baseline {
+        return bundle; // ordinary fill wins - leave the Control Center to the bonus-greedy
+    }
+    bundle.cc_seats = reserved as usize + pins.len();
+    bundle.generator_pins = pins;
+    bundle.pool = direct;
+    bundle
+}
+
 /// Solve the economy for a base. Production self-feeding generators (Rosmontis, Ebenholz,
 /// Mr. Nothing - generator *and* consumer in their own room) count once, since the main
 /// optimizer stations them for their bonus. Support generators (Mulberry in HR,
@@ -446,11 +639,12 @@ fn solve(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
     building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> Solved {
     let ctx = base_context(building, building_data);
     let econ = parse_economy(operators, building_data);
     let rates = effective_rates(&econ.consumers, &econ.converters);
-    let consumer_chars: std::collections::HashSet<&str> =
+    let consumer_chars: HashSet<&str> =
         econ.consumers.iter().map(|(c, _, _)| c.as_str()).collect();
     let rate = |res: &str| rates.get(res).copied().unwrap_or(0.0);
 
@@ -458,7 +652,27 @@ fn solve(
     let mut deployed: Vec<(String, String)> = Vec::new();
     let mut support: Vec<SupportCandidate> = Vec::new();
 
+    // A Control-Center resource combo (Passion: generators + global consumers, all contesting the
+    // same Control-Center seats) is valued JOINTLY under the room's seat budget and committed only
+    // when it beats the best ordinary Control-Center fill - see `solve_cc_bundle`. The combo OWNS
+    // its resources: a CONTROL generator feeding one is seated (or dropped) by the bundle, never by
+    // the generic support packing below, so the credited pool reflects what the room can actually
+    // hold rather than every generator at once.
+    let control_slots = room_capacity(building, building_data, "CONTROL");
+    let bundle = solve_cc_bundle(&econ, ctx, control_slots, operators, building, building_data, registry);
+    for id in &bundle.generator_pins {
+        deployed.push((id.clone(), "CONTROL".to_string()));
+    }
+    for (res, contribs) in &bundle.pool {
+        pool.entry(res.clone()).or_default().extend(contribs.iter().cloned());
+    }
+
     for (char_id, g) in econ.generators {
+        // CONTROL generators feeding a combo resource belong to the bundle's seat-budgeted solve
+        // (committed as a pin above, or intentionally dropped when the combo doesn't pay).
+        if g.room_type == "CONTROL" && bundle.global_resources.contains(&g.resource) {
+            continue;
+        }
         match g.room_type.as_str() {
             // A production generator is realised only if its operator is also a consumer
             // (so the optimizer actually stations it for the bonus). Tag the contribution with
@@ -484,7 +698,8 @@ fn solve(
     // morale sides, then keep only the side that pays more (the operator can't be on both).
     let mut sides: ConditionalSides = HashMap::new();
     for (char_id, c) in econ.conditionals {
-        let entry = sides.entry(char_id).or_insert((Vec::new(), Vec::new(), c.room_type.clone()));
+        let entry =
+            sides.entry(char_id).or_insert_with(|| (Vec::new(), Vec::new(), c.room_type.clone()));
         if c.above { &mut entry.0 } else { &mut entry.1 }.push((c.resource, c.amount));
     }
     let conditional_chars: std::collections::HashSet<String> = sides.keys().cloned().collect();
@@ -507,6 +722,12 @@ fn solve(
     // each candidate's room capacity packs every room with its best candidates first.
     support.sort_by(|a, b| b.value.partial_cmp(&a.value).unwrap_or(std::cmp::Ordering::Equal));
     let mut used: HashMap<String, i32> = HashMap::new();
+    // The committed Control-Center combo already holds `cc_seats` of the room (its consumers, seated
+    // by the optimizer's bonus-greedy, plus the pinned generators), so other support generators
+    // (Ling/Dusk/Chongyue) only contend for what's left - never oversubscribing the Control Center.
+    if bundle.cc_seats > 0 {
+        used.insert("CONTROL".to_string(), bundle.cc_seats as i32);
+    }
     for cand in support {
         if cand.value <= 0.0 {
             continue;
@@ -614,8 +835,9 @@ pub fn evaluate(
     building: &UserBuilding,
     building_data: &BuildingDataFile,
     morale_drains: &HashMap<String, f64>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
 ) -> PerceptionResult {
-    let s = solve(operators, building, building_data);
+    let s = solve(operators, building, building_data, registry);
     let recovery = morale_recovery(building);
     let uptimes: HashMap<&str, f64> = operators
         .iter()
@@ -654,13 +876,13 @@ pub fn evaluate(
         if c.global {
             let ov = global_overrides
                 .entry(buff_id.clone())
-                .or_insert((c.room_type.clone(), 0.0));
+                .or_insert_with(|| (c.room_type.clone(), 0.0));
             ov.1 = ov.1.max(bonus);
         } else {
             let ov = overrides.entry(buff_id.clone()).or_insert(0.0);
             *ov = ov.max(bonus);
         }
-        let slot = by_char.entry(char_id.clone()).or_insert(PerceptionConsumer {
+        let slot = by_char.entry(char_id.clone()).or_insert_with(|| PerceptionConsumer {
             char_id: char_id.clone(),
             room_type: c.room_type.clone(),
             resource: c.resource.clone(),
@@ -720,5 +942,45 @@ mod bd_tests {
             Trading Posts' order efficiency <@cc.vup>+1%</>";
         let (gens2, _c2, _co2, _cd2) = classify(consume_desc, "CONTROL");
         assert!(gens2.is_empty(), "a consumed resource must not be read as flat generation");
+    }
+
+    #[test]
+    fn passion_threshold_is_not_read_as_generation() {
+        // Monster-of-Acting's bandmate downside: "self Morale loss per hour +0.05 when Passion is
+        // 40 or higher". The bare 40 is a THRESHOLD, not generation - its lack of a `+` sign must
+        // keep it out of the pool (otherwise the combo's pool inflates by a phantom +40).
+        let desc = "self Morale loss per hour <@cc.vdown>+0.05</> when Passion is \
+            <@cc.kw>40</> or higher";
+        let (gens, _c, _co, _cd) = classify(desc, "CONTROL");
+        assert!(gens.is_empty(), "a 'Passion is N' threshold must not be flat generation, got {} gens", gens.len());
+    }
+
+    #[test]
+    fn dual_role_op_generates_and_consumes_one_resource() {
+        // Monster of Acting: GENERATES Passion +20 AND, as a Control-Center op, globally consumes
+        // it for trading. One buff yields one flat generator and one global consumer of the SAME
+        // resource - so the bundle can seat it once with its +20 counted co-present.
+        let desc = "<$cc.bd_mujica><@cc.rem>Passion</></> <@cc.vup>+20</>; for every <@cc.vup>8</> \
+            <$cc.bd_mujica><@cc.rem>Passion</></>, self Morale consumed per hour <@cc.vdown>+0.01</> \
+            and all Trading Posts' order efficiency <@cc.vup>+1%</> (Only the strongest effect of this type takes place)";
+        let (gens, _conv, cons, _cond) = classify(desc, "CONTROL");
+        assert_eq!(gens.len(), 1, "expected exactly one (+20) generator, got {}", gens.len());
+        assert!(matches!(gens[0].unit, Unit::Flat) && (gens[0].per_unit - 20.0).abs() < 1e-9, "the generator should be a flat +20");
+        assert_eq!(cons.len(), 1, "expected one global trading consumer");
+        assert!(cons[0].global && cons[0].room_type == "TRADING");
+        assert_eq!(gens[0].resource, cons[0].resource, "generator and consumer share the resource");
+    }
+
+    #[test]
+    fn idols_aura_generation_is_dorm_scaled() {
+        // "for every Operator in the Dormitories, Passion +1" scales on resting capacity, with no
+        // explicit divisor (the bare "every"), so each resting operator adds one point.
+        let desc = "for <@cc.vup>every</> Operator in the Dormitories, \
+            <$cc.bd_mujica><@cc.rem>Passion</></> <@cc.vup>+1</>";
+        let (gens, _conv, _cons, _cond) = classify(desc, "CONTROL");
+        assert_eq!(gens.len(), 1);
+        assert!(matches!(gens[0].unit, super::Unit::Resting));
+        let ctx = super::BaseContext { resting: 17, single_dorm: 5, recruit_slots: 4, sui_count: 5 };
+        assert!((gens[0].contribution(ctx) - 17.0).abs() < 1e-9, "17 resting operators -> +17 Passion");
     }
 }

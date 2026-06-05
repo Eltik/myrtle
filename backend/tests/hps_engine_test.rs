@@ -1,8 +1,11 @@
-//! Parity test: Rust HPS engine vs. upstream ArknightsDpsCompare Python.
+//! Parity test: Rust HPS engine vs. upstream `ArknightsDpsCompare` Python.
 //!
 //! Drives every healer × skill × module combination through `engine::calculate_hps`
 //! and compares the `(skill_hps, base_hps, avg_hps)` triple against the
 //! `tests/fixtures/expected_hps.json` values produced by the Python reference.
+
+// The `*_hps` fixture struct fields and the integer/float casts on reference data are intentional.
+#![allow(clippy::struct_field_names, clippy::cast_precision_loss)]
 
 use backend::core::gamedata;
 use backend::dps::engine;

@@ -16,7 +16,7 @@ use crate::core::gamedata::types::operator::{
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     compute_current_assignment, compute_optimal_assignment_with_pins, compute_sustained_assignment,
-    morale_recovery, sustained_efficiency_of,
+    morale_recovery, morale_sustained_beneficiaries, sustained_efficiency_of,
 };
 use crate::core::grade::base::buff_registry::{
     BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
@@ -1114,15 +1114,14 @@ async fn build_base_improvements(
         .iter()
         .filter_map(|entry| {
             let bc = game_data.building.chars.get(&entry.operator_id)?;
-            let faction_tags = game_data
-                .operators
-                .get(&entry.operator_id)
-                .map(faction_tags_of)
-                .unwrap_or_default();
+            let static_op = game_data.operators.get(&entry.operator_id);
+            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
                 entry,
                 bc,
                 faction_tags,
+                rarity,
                 &game_data.building,
             ))
         })
@@ -1138,8 +1137,9 @@ async fn build_base_improvements(
     // and its support plan + consumer payoffs are surfaced below. It's a peak/snapshot
     // strategy (it needs operators resting to feed the pool), so the overrides apply ONLY to
     // `optimal` - not `current`, `sustained`, or the shift rotation. 252 is left unmodeled.
-    let perception = is_243_layout(&user_building)
-        .then(|| perception::evaluate(&profiles, &user_building, &game_data.building, &morale_drains));
+    let perception = is_243_layout(&user_building).then(|| {
+        perception::evaluate(&profiles, &user_building, &game_data.building, &morale_drains, &registry)
+    });
 
     // The economy boosts its CONSUMERS (a direct productivity buff the optimizer values and
     // places) and reserves its SUPPORT operators in the rooms that feed the pool, so the optimal
@@ -1195,14 +1195,24 @@ async fn build_base_improvements(
     );
 
     // The player's current base as a rotation main, so the comparison can show
-    // their sustained output against the optimizer's.
+    // their sustained output against the optimizer's. A morale-swap manager (Fiammetta) the player
+    // owns holds one operator (e.g. a 24/7 Proviso) at full morale, so credit it here too.
+    let cur_recovery = morale_recovery(&user_building);
+    let cur_sustained_set = morale_sustained_beneficiaries(
+        &current,
+        &profiles,
+        &morale_drains,
+        cur_recovery,
+        &game_data.building,
+    );
     let current_sustained = sustained_efficiency_of(
         &current,
         &profiles,
         &morale_drains,
-        morale_recovery(&user_building),
+        cur_recovery,
         &registry,
         &game_data.building,
+        &cur_sustained_set,
     );
     let current_rotation = Some(rotation_to_dto(
         &RotationAssignment {
@@ -1404,74 +1414,93 @@ fn shift_rotation_to_dto(
     };
     // Order-independent pairing of each recommended cell to the player's closest current team.
     let matched = match_current_teams(rotation);
-    ShiftRotationDto {
-        shifts: rotation
-            .shifts
+    let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
+    for shift in &rotation.shifts {
+        // An operator can physically be in only ONE room per shift. The recommended teams are
+        // already a conflict-free partition, but the order-independent `equivalent` overlay can
+        // surface the player's team (matched from a DIFFERENT slot) for one cell while another
+        // cell recommends the same operator - so the same face would show twice in one shift.
+        // Each operator is authoritative in the cell that RECOMMENDS it; a cell may only KEEP its
+        // current team (mark `equivalent`) when none of that team's operators are recommended
+        // elsewhere this shift, nor already kept by an earlier cell. Otherwise it falls back to the
+        // real recommendation + swap.
+        let rec_owner: HashMap<&str, &str> = shift
+            .rooms
             .iter()
-            .map(|shift| ShiftDto {
-                index: shift.index,
-                rooms: shift
-                    .rooms
-                    .iter()
-                    .map(|room| {
-                        let current = matched
-                            .get(&(shift.index, room.slot_id.clone()))
-                            .cloned()
-                            .unwrap_or_default();
-                        let rec: HashSet<&str> =
-                            room.recommended.iter().map(String::as_str).collect();
-                        let cur: HashSet<&str> = current.iter().map(String::as_str).collect();
-                        let mut swap_in: Vec<String> = room
-                            .recommended
-                            .iter()
-                            .filter(|id| !cur.contains(id.as_str()))
-                            .cloned()
-                            .collect();
-                        let mut swap_out: Vec<String> = current
-                            .iter()
-                            .filter(|id| !rec.contains(id.as_str()))
-                            .cloned()
-                            .collect();
-                        let mut matches =
-                            !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
+            .filter(|r| r.active)
+            .flat_map(|r| r.recommended.iter().map(move |id| (id.as_str(), r.slot_id.as_str())))
+            .collect();
+        let mut kept: HashSet<String> = HashSet::new();
 
-                        // A factory / trading-post team the player ALREADY runs that ties the
-                        // recommendation's output needs no swap (Bryophyta vs a Dorothy-boosted
-                        // Rhine operator). Only checked when there's a difference to suppress,
-                        // and only for production rooms.
-                        let mut equivalent = false;
-                        if !matches
-                            && !current.is_empty()
-                            && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING")
-                        {
-                            let f = room.formula_type.as_deref();
-                            let rec_v = team_value(&room.recommended, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
-                            let cur_v = team_value(&current, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
-                            if cur_v + 1e-4 >= rec_v {
-                                equivalent = true;
-                                matches = true;
-                                swap_in.clear();
-                                swap_out.clear();
-                            }
-                        }
+        let mut room_dtos = Vec::with_capacity(shift.rooms.len());
+        for room in &shift.rooms {
+            let current = matched
+                .get(&(shift.index, room.slot_id.clone()))
+                .cloned()
+                .unwrap_or_default();
+            let rec: HashSet<&str> = room.recommended.iter().map(String::as_str).collect();
+            let cur: HashSet<&str> = current.iter().map(String::as_str).collect();
+            let mut swap_in: Vec<String> = room
+                .recommended
+                .iter()
+                .filter(|id| !cur.contains(id.as_str()))
+                .cloned()
+                .collect();
+            let mut swap_out: Vec<String> = current
+                .iter()
+                .filter(|id| !rec.contains(id.as_str()))
+                .cloned()
+                .collect();
+            let mut matches = !current.is_empty() && swap_in.is_empty() && swap_out.is_empty();
 
-                        ShiftRoomDto {
-                            slot_id: room.slot_id.clone(),
-                            room_type: room.room_type.clone(),
-                            formula_type: room.formula_type.clone(),
-                            active: room.active,
-                            recommended: ops(&room.recommended),
-                            current: ops(&current),
-                            matches,
-                            equivalent,
-                            swap_in: ops(&swap_in),
-                            swap_out: ops(&swap_out),
-                        }
-                    })
-                    .collect(),
-            })
-            .collect(),
+            // A factory / trading-post team the player ALREADY runs that ties the recommendation's
+            // output needs no swap (Bryophyta vs a Dorothy-boosted Rhine operator). Only checked
+            // when there's a difference to suppress, and only for production rooms.
+            let mut equivalent = false;
+            if !matches
+                && !current.is_empty()
+                && matches!(room.room_type.as_str(), "MANUFACTURE" | "TRADING")
+            {
+                let f = room.formula_type.as_deref();
+                let rec_v = team_value(&room.recommended, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
+                let cur_v = team_value(&current, &room.room_type, f, profiles, building, &game_data.building, registry, morale_drains);
+                // Keeping this team is only valid if it doesn't double-book an operator the shift
+                // needs in another room (recommended there, or already kept here).
+                let conflicts = current.iter().any(|id| {
+                    matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id)
+                        || kept.contains(id)
+                });
+                if cur_v + 1e-4 >= rec_v && !conflicts {
+                    equivalent = true;
+                    matches = true;
+                    swap_in.clear();
+                    swap_out.clear();
+                }
+            }
+
+            // Record the operators this cell tells the player to actually run, so a later cell
+            // can't keep a team that reuses one of them.
+            if room.active {
+                let running = if equivalent || matches { &current } else { &room.recommended };
+                kept.extend(running.iter().cloned());
+            }
+
+            room_dtos.push(ShiftRoomDto {
+                slot_id: room.slot_id.clone(),
+                room_type: room.room_type.clone(),
+                formula_type: room.formula_type.clone(),
+                active: room.active,
+                recommended: ops(&room.recommended),
+                current: ops(&current),
+                matches,
+                equivalent,
+                swap_in: ops(&swap_in),
+                swap_out: ops(&swap_out),
+            });
+        }
+        shift_dtos.push(ShiftDto { index: shift.index, rooms: room_dtos });
     }
+    ShiftRotationDto { shifts: shift_dtos }
 }
 
 fn base_assignment_to_dto(asn: &BaseAssignment, game_data: &GameData) -> BaseAssignmentDto {
