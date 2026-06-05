@@ -3,8 +3,8 @@
 
 #![allow(unused_imports, unused_variables)]
 
-use crate::fb_json_macros::{EnumToJson, FlatBufferToJson};
-use serde_json::{Map, Value, json};
+use crate::fb_json_macros::{FlatBufferToJson, EnumToJson};
+use serde_json::{json, Map, Value};
 use std::panic::{self, AssertUnwindSafe};
 
 use crate::generated_fbs_yostar::battle_equip_table_generated;
@@ -224,9 +224,7 @@ impl EnumToJson for token_table_generated::enum__Torappu_AttributeType {
     }
 }
 
-impl EnumToJson
-    for token_table_generated::enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType
-{
+impl EnumToJson for token_table_generated::enum__Torappu_AttributeModifierData_AttributeModifier_FormulaItemType {
     fn to_json_value(&self) -> Value {
         match self.variant_name() {
             Some(name) => json!(name),
@@ -235,12 +233,11 @@ impl EnumToJson
     }
 }
 
+
 // ============ Struct Implementations ============
 
 // From battle_equip_table_generated
-impl FlatBufferToJson
-    for battle_equip_table_generated::clz_Torappu_CharacterData_UnlockCondition<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_CharacterData_UnlockCondition<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
@@ -308,10 +305,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_EquipTalentD
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -356,11 +350,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_EquipTalentD
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -401,10 +391,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_TalentData<'
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -449,11 +436,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_TalentData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -481,19 +464,13 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_TalentData<'
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTalentDataBundle<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTalentDataBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -505,9 +482,7 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTraitData<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTraitData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
@@ -529,10 +504,7 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -541,11 +513,7 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -584,19 +552,13 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTraitDataBundle<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_CharacterData_EquipTraitDataBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -654,10 +616,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleUniEqu
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(nested) = self.addOrOverrideTalentDataBundle() {
-                return Some((
-                    "AddOrOverrideTalentDataBundle".to_string(),
-                    nested.to_json(),
-                ));
+                return Some(("AddOrOverrideTalentDataBundle".to_string(), nested.to_json()));
             }
             #[allow(unreachable_code)]
             None
@@ -677,9 +636,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleUniEqu
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::dict__string__list_clz_Torappu_Blackboard_DataPair<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::dict__string__list_clz_Torappu_Blackboard_DataPair<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -707,11 +664,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.parts() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Parts".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -722,11 +675,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.attributeBlackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AttributeBlackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -737,11 +686,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.tokenAttributeBlackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("TokenAttributeBlackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -759,11 +704,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.phases() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Phases".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -775,9 +716,7 @@ impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_BattleEquipP
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::dict__string__clz_Torappu_BattleEquipPack<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::dict__string__clz_Torappu_BattleEquipPack<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -790,19 +729,13 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for battle_equip_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_>
-{
+impl FlatBufferToJson for battle_equip_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_BattleEquipPack<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equips() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Equips".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -894,10 +827,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_T
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -906,11 +836,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_T
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -955,11 +881,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_T
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1045,20 +967,14 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesData<
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "HpRecoveryPerSec".to_string(),
-                json!(self.hpRecoveryPerSec()),
-            ));
+            return Some(("HpRecoveryPerSec".to_string(), json!(self.hpRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpRecoveryPerSec".to_string(),
-                json!(self.spRecoveryPerSec()),
-            ));
+            return Some(("SpRecoveryPerSec".to_string(), json!(self.spRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1135,10 +1051,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesData<
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "DisarmedCombatImmune".to_string(),
-                json!(self.disarmedCombatImmune()),
-            ));
+            return Some(("DisarmedCombatImmune".to_string(), json!(self.disarmedCombatImmune())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1253,11 +1166,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.attributesKeyFrames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AttributesKeyFrames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1268,11 +1177,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.evolveCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("EvolveCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1284,9 +1189,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
     }
 }
 
-impl FlatBufferToJson
-    for character_table_generated::clz_Torappu_CharacterData_MainSkill_SpecializeLevelData<'_>
-{
+impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_MainSkill_SpecializeLevelData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
@@ -1308,11 +1211,7 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelUpCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LevelUpCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1357,11 +1256,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_M
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelUpCostCond() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LevelUpCostCond".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1406,10 +1301,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_TalentData<'_> 
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1454,11 +1346,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_TalentData<'_> 
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1486,19 +1374,13 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_TalentData<'_> 
     }
 }
 
-impl FlatBufferToJson
-    for character_table_generated::clz_Torappu_CharacterData_TalentDataBundle<'_>
-{
+impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_TalentDataBundle<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1510,26 +1392,18 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for character_table_generated::clz_Torappu_AttributeModifierData_AttributeModifier<'_>
-{
+impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributeModifierData_AttributeModifier<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "AttributeType".to_string(),
-                self.attributeType().to_json_value(),
-            ));
+            return Some(("AttributeType".to_string(), self.attributeType().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "FormulaItem".to_string(),
-                self.formulaItem().to_json_value(),
-            ));
+            return Some(("FormulaItem".to_string(), self.formulaItem().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1543,20 +1417,14 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "LoadFromBlackboard".to_string(),
-                json!(self.loadFromBlackboard()),
-            ));
+            return Some(("LoadFromBlackboard".to_string(), json!(self.loadFromBlackboard())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "FetchBaseValueFromSourceEntity".to_string(),
-                json!(self.fetchBaseValueFromSourceEntity()),
-            ));
+            return Some(("FetchBaseValueFromSourceEntity".to_string(), json!(self.fetchBaseValueFromSourceEntity())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1627,11 +1495,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributeModifi
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.attributeModifiers() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AttributeModifiers".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1690,11 +1554,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_P
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equivalentCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("EquivalentCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1780,20 +1640,14 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesDelta
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "HpRecoveryPerSec".to_string(),
-                json!(self.hpRecoveryPerSec()),
-            ));
+            return Some(("HpRecoveryPerSec".to_string(), json!(self.hpRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpRecoveryPerSec".to_string(),
-                json!(self.spRecoveryPerSec()),
-            ));
+            return Some(("SpRecoveryPerSec".to_string(), json!(self.spRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1870,10 +1724,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_AttributesDelta
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "DisarmedCombatImmune".to_string(),
-                json!(self.disarmedCombatImmune()),
-            ));
+            return Some(("DisarmedCombatImmune".to_string(), json!(self.disarmedCombatImmune())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -1942,11 +1793,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData_S
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.lvlUpCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LvlUpCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -1987,10 +1834,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpTargetType".to_string(),
-                self.spTargetType().to_json_value(),
-            ));
+            return Some(("SpTargetType".to_string(), self.spTargetType().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2006,20 +1850,14 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "CanUseGeneralPotentialItem".to_string(),
-                json!(self.canUseGeneralPotentialItem()),
-            ));
+            return Some(("CanUseGeneralPotentialItem".to_string(), json!(self.canUseGeneralPotentialItem())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "CanUseActivityPotentialItem".to_string(),
-                json!(self.canUseActivityPotentialItem()),
-            ));
+            return Some(("CanUseActivityPotentialItem".to_string(), json!(self.canUseActivityPotentialItem())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2091,11 +1929,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subPower() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("SubPower".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2181,10 +2015,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "MaxPotentialLevel".to_string(),
-                json!(self.maxPotentialLevel()),
-            ));
+            return Some(("MaxPotentialLevel".to_string(), json!(self.maxPotentialLevel())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2225,11 +2056,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.phases() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Phases".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2240,11 +2067,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.skills() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Skills".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2255,11 +2078,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.displayTokenDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("DisplayTokenDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2270,11 +2089,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.talents() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Talents".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2285,11 +2100,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.potentialRanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("PotentialRanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2300,11 +2111,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.favorKeyFrames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("FavorKeyFrames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2315,11 +2122,7 @@ impl FlatBufferToJson for character_table_generated::clz_Torappu_CharacterData<'
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.allSkillLvlup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AllSkillLvlup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2344,19 +2147,13 @@ impl FlatBufferToJson for character_table_generated::dict__string__clz_Torappu_C
     }
 }
 
-impl FlatBufferToJson
-    for character_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_>
-{
+impl FlatBufferToJson for character_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Characters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2373,10 +2170,7 @@ impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_EPBreakBuffD
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "ElementBreakDuration".to_string(),
-                json!(self.elementBreakDuration()),
-            ));
+            return Some(("ElementBreakDuration".to_string(), json!(self.elementBreakDuration())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2397,9 +2191,7 @@ impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_EPBreakBuffD
     }
 }
 
-impl FlatBufferToJson
-    for ep_breakbuff_table_generated::dict__string__clz_Torappu_EPBreakBuffData<'_>
-{
+impl FlatBufferToJson for ep_breakbuff_table_generated::dict__string__clz_Torappu_EPBreakBuffData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(k) = panic::catch_unwind(AssertUnwindSafe(|| self.key())) {
@@ -2412,19 +2204,13 @@ impl FlatBufferToJson
     }
 }
 
-impl FlatBufferToJson
-    for ep_breakbuff_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_>
-{
+impl FlatBufferToJson for ep_breakbuff_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_EPBreakBuffData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.ep_breakbuffs() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Ep_breakbuffs".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2516,10 +2302,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Trait
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2528,11 +2311,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Trait
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2577,11 +2356,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Trait
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2667,20 +2442,14 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesData<'_> 
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "HpRecoveryPerSec".to_string(),
-                json!(self.hpRecoveryPerSec()),
-            ));
+            return Some(("HpRecoveryPerSec".to_string(), json!(self.hpRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpRecoveryPerSec".to_string(),
-                json!(self.spRecoveryPerSec()),
-            ));
+            return Some(("SpRecoveryPerSec".to_string(), json!(self.spRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2757,10 +2526,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesData<'_> 
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "DisarmedCombatImmune".to_string(),
-                json!(self.disarmedCombatImmune()),
-            ));
+            return Some(("DisarmedCombatImmune".to_string(), json!(self.disarmedCombatImmune())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -2875,11 +2641,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Phase
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.attributesKeyFrames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AttributesKeyFrames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2890,11 +2652,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Phase
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.evolveCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("EvolveCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2906,9 +2664,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Phase
     }
 }
 
-impl FlatBufferToJson
-    for token_table_generated::clz_Torappu_CharacterData_MainSkill_SpecializeLevelData<'_>
-{
+impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_MainSkill_SpecializeLevelData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
@@ -2930,11 +2686,7 @@ impl FlatBufferToJson
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelUpCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LevelUpCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -2979,11 +2731,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_MainS
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.levelUpCostCond() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LevelUpCostCond".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3028,10 +2776,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_TalentData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "RequiredPotentialRank".to_string(),
-                json!(self.requiredPotentialRank()),
-            ));
+            return Some(("RequiredPotentialRank".to_string(), json!(self.requiredPotentialRank())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3076,11 +2821,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_TalentData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.blackboard() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Blackboard".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3114,11 +2855,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Talen
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.candidates() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Candidates".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3130,26 +2867,18 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Talen
     }
 }
 
-impl FlatBufferToJson
-    for token_table_generated::clz_Torappu_AttributeModifierData_AttributeModifier<'_>
-{
+impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributeModifierData_AttributeModifier<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "AttributeType".to_string(),
-                self.attributeType().to_json_value(),
-            ));
+            return Some(("AttributeType".to_string(), self.attributeType().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "FormulaItem".to_string(),
-                self.formulaItem().to_json_value(),
-            ));
+            return Some(("FormulaItem".to_string(), self.formulaItem().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3163,20 +2892,14 @@ impl FlatBufferToJson
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "LoadFromBlackboard".to_string(),
-                json!(self.loadFromBlackboard()),
-            ));
+            return Some(("LoadFromBlackboard".to_string(), json!(self.loadFromBlackboard())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "FetchBaseValueFromSourceEntity".to_string(),
-                json!(self.fetchBaseValueFromSourceEntity()),
-            ));
+            return Some(("FetchBaseValueFromSourceEntity".to_string(), json!(self.fetchBaseValueFromSourceEntity())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3247,11 +2970,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributeModifierDa
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.attributeModifiers() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AttributeModifiers".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3310,11 +3029,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Poten
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.equivalentCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("EquivalentCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3400,20 +3115,14 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesDeltaData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "HpRecoveryPerSec".to_string(),
-                json!(self.hpRecoveryPerSec()),
-            ));
+            return Some(("HpRecoveryPerSec".to_string(), json!(self.hpRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpRecoveryPerSec".to_string(),
-                json!(self.spRecoveryPerSec()),
-            ));
+            return Some(("SpRecoveryPerSec".to_string(), json!(self.spRecoveryPerSec())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3490,10 +3199,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_AttributesDeltaData
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "DisarmedCombatImmune".to_string(),
-                json!(self.disarmedCombatImmune()),
-            ));
+            return Some(("DisarmedCombatImmune".to_string(), json!(self.disarmedCombatImmune())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3562,11 +3268,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData_Skill
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.lvlUpCost() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("LvlUpCost".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3607,10 +3309,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "SpTargetType".to_string(),
-                self.spTargetType().to_json_value(),
-            ));
+            return Some(("SpTargetType".to_string(), self.spTargetType().to_json_value()));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3626,20 +3325,14 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "CanUseGeneralPotentialItem".to_string(),
-                json!(self.canUseGeneralPotentialItem()),
-            ));
+            return Some(("CanUseGeneralPotentialItem".to_string(), json!(self.canUseGeneralPotentialItem())));
             #[allow(unreachable_code)]
             None
         })) {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "CanUseActivityPotentialItem".to_string(),
-                json!(self.canUseActivityPotentialItem()),
-            ));
+            return Some(("CanUseActivityPotentialItem".to_string(), json!(self.canUseActivityPotentialItem())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3711,11 +3404,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.subPower() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("SubPower".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3801,10 +3490,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
             map.insert(k, v);
         }
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
-            return Some((
-                "MaxPotentialLevel".to_string(),
-                json!(self.maxPotentialLevel()),
-            ));
+            return Some(("MaxPotentialLevel".to_string(), json!(self.maxPotentialLevel())));
             #[allow(unreachable_code)]
             None
         })) {
@@ -3845,11 +3531,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.phases() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Phases".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3860,11 +3542,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.skills() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Skills".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3875,11 +3553,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.displayTokenDict() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("DisplayTokenDict".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3890,11 +3564,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.talents() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Talents".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3905,11 +3575,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.potentialRanks() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("PotentialRanks".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3920,11 +3586,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.favorKeyFrames() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("FavorKeyFrames".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3935,11 +3597,7 @@ impl FlatBufferToJson for token_table_generated::clz_Torappu_CharacterData<'_> {
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.allSkillLvlup() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("AllSkillLvlup".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3964,19 +3622,13 @@ impl FlatBufferToJson for token_table_generated::dict__string__clz_Torappu_Chara
     }
 }
 
-impl FlatBufferToJson
-    for token_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_>
-{
+impl FlatBufferToJson for token_table_generated::clz_Torappu_SimpleKVTable_clz_Torappu_CharacterData<'_> {
     fn to_json(&self) -> Value {
         let mut map = Map::new();
         if let Ok(Some((k, v))) = panic::catch_unwind(AssertUnwindSafe(|| {
             if let Some(vec) = self.characters() {
                 assert!(vec.len() <= 10_000_000, "FB vector too large");
-                let arr: Vec<Value> = (0..vec.len())
-                    .filter_map(|i| {
-                        panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()
-                    })
-                    .collect();
+                let arr: Vec<Value> = (0..vec.len()).filter_map(|i| panic::catch_unwind(AssertUnwindSafe(|| vec.get(i).to_json())).ok()).collect();
                 return Some(("Characters".to_string(), json!(arr)));
             }
             #[allow(unreachable_code)]
@@ -3987,3 +3639,4 @@ impl FlatBufferToJson
         Value::Object(map)
     }
 }
+
