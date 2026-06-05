@@ -379,6 +379,9 @@ export interface IShiftRoom {
     swap_out: IAssignedOperator[];
     /** True when the player's preset already matches the recommendation. */
     matches: boolean;
+    /** True when the player's CURRENT team differs but produces at least as much (an exact tie),
+     *  so no swap is suggested - e.g. a Dorothy-boosted Rhine operator matching Bryophyta. */
+    equivalent: boolean;
 }
 
 export interface IShift {
@@ -388,6 +391,32 @@ export interface IShift {
 
 export interface IShiftRotation {
     shifts: IShift[];
+}
+
+/** A support operator to station outside production to feed the resource economy. */
+export interface IPerceptionSupport {
+    operator: IAssignedOperator;
+    room_type: string;
+}
+
+/** A production operator the resource economy powers, with the bonus it gains. */
+export interface IPerceptionConsumer {
+    operator: IAssignedOperator;
+    room_type: string;
+    /** Peak bonus (fresh-operator snapshot). */
+    bonus_pct: number;
+    /** Sustained 24/7 bonus (peak x working uptime). */
+    sustained_pct: number;
+}
+
+/** The base-wide resource economy plan (Rosmontis / Ebenholz "Perception Information"). */
+export interface IPerceptionPlan {
+    support: IPerceptionSupport[];
+    consumers: IPerceptionConsumer[];
+    /** The morale-swap operator (Fiammetta) sustaining the Ling/Dusk rotation, if owned. */
+    rotation_manager?: IAssignedOperator | null;
+    /** True when the plan uses Ling/Dusk but the roster has no morale-swap manager. */
+    needs_rotation_manager: boolean;
 }
 
 export interface IBaseImprovements {
@@ -400,6 +429,8 @@ export interface IBaseImprovements {
     layout: IRoomLayoutEntry[];
     /** Recommended 3-shift rotation paired with the player's saved presets. */
     shift_rotation?: IShiftRotation | null;
+    /** The base-wide resource economy plan, if a 243 roster can field it. */
+    perception?: IPerceptionPlan | null;
 }
 
 export interface IImprovementsResponse {

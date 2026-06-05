@@ -105,7 +105,7 @@ function GroupLabel({ roomType, label }: { roomType: string; label: string }) {
     const a = roomAccent(roomType);
     return (
         <span className={cn(TEXT_BADGE, "flex items-center gap-1.5 px-1")} style={{ color: a.text }}>
-            <span className="size-1.5 rounded-[2px]" style={{ background: a.color }} />
+            <span className="size-1.5 rounded-xs" style={{ background: a.color }} />
             {label}
         </span>
     );
@@ -188,7 +188,7 @@ function RoomSide({ room, accent, muted, highlightIds }: { room?: IRoomAssignmen
         <div className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center justify-between gap-1.5">
                 <span className={cn(TEXT_BADGE, "flex items-center gap-1 truncate")} style={{ color: a.text }}>
-                    <span className="size-1.5 shrink-0 rounded-[2px]" style={{ background: a.color }} />
+                    <span className="size-1.5 shrink-0 rounded-xs" style={{ background: a.color }} />
                     {roomLabel(room.room_type)}
                     {room.formula_type ? ` · ${room.formula_type}` : ""}
                 </span>

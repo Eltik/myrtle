@@ -1,39 +1,12 @@
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { IAssignedOperator, IBaseImprovements, IShiftRoom } from "#/lib/api/user";
-import { cn } from "#/lib/utils";
+import type { IBaseImprovements } from "#/lib/api/user";
 import { compactNum } from "./baseYield";
-import { roomAccent, roomFormulaLabel, roomLabel } from "./roomColors";
+import { MiniChip, RoomBlock, ShiftRoomBlock } from "./planParts";
+import { roomLabel } from "./roomColors";
 
-function OpChip({ op, add }: { op: IAssignedOperator; add?: boolean }) {
-    return (
-        <span className={cn("flex items-center gap-1 rounded border px-1 py-0.5", add ? "border-emerald-500/55 bg-emerald-500/10" : "border-border/40 bg-background/60")}>
-            <span className="relative size-4 shrink-0 overflow-hidden rounded-sm">
-                <OperatorAvatar charId={op.operator_id} name={op.name} />
-            </span>
-            <span className="max-w-[8ch] truncate font-medium text-[10px]">{op.name}</span>
-        </span>
-    );
-}
-
-/** A room's crew with a colour accent matching the building's in-game hue. */
-function ShiftRoomBlock({ room }: { room: IShiftRoom }) {
-    const a = roomAccent(room.room_type);
-    const swapIn = new Set(room.swap_in.map((o) => o.operator_id));
-    return (
-        <div className={cn("flex flex-col gap-0.5 rounded-r border-l-2 pl-1.5", !room.active && "opacity-60")} style={{ borderColor: a.border, background: a.tint }}>
-            <span className="flex items-center gap-1 font-medium text-[10px]" style={{ color: a.text }}>
-                <span className="size-1.5 rounded-[2px]" style={{ background: a.color }} />
-                {roomFormulaLabel(room.room_type, room.formula_type)}
-                {!room.active && <span className="text-amber-500/80"> · off</span>}
-            </span>
-            <div className="flex flex-wrap items-center gap-0.5">
-                {room.recommended.map((op) => (
-                    <OpChip key={op.operator_id} op={op} add={swapIn.has(op.operator_id)} />
-                ))}
-            </div>
-        </div>
-    );
-}
+/** A room with its own base-skill efficiency (production, Control Center, a staffed
+ *  Office/Reception) shows a "+X%"; a perception-support room reserved to feed the economy
+ *  carries no efficiency, so it shows an "economy" tag instead of a misleading +0%. */
+const PRODUCTION_OR_CONTROL = new Set(["MANUFACTURE", "TRADING", "POWER", "CONTROL"]);
 
 /**
  * A compact, fixed-width, multi-column layout of the base plan tailored for image
@@ -44,7 +17,7 @@ function ShiftRoomBlock({ room }: { room: IShiftRoom }) {
 export function ExportPlanContent({ base }: { base: IBaseImprovements }) {
     const rotation = base.shift_rotation;
     return (
-        <div className="flex w-[960px] flex-col gap-3 bg-background p-5 text-foreground">
+        <div className="flex w-240 flex-col gap-3 bg-background p-5 text-foreground">
             <div className="flex items-end justify-between border-border/40 border-b pb-2">
                 <div className="flex flex-col">
                     <span className="font-semibold text-base">Base optimization plan</span>
@@ -79,22 +52,20 @@ export function ExportPlanContent({ base }: { base: IBaseImprovements }) {
             ) : (
                 base.optimal && (
                     <div className="grid grid-cols-2 gap-2.5">
-                        {base.optimal.rooms.map((room) => {
-                            const a = roomAccent(room.room_type);
-                            return (
-                                <div key={`${room.slot_id}-${room.room_type}`} className="flex flex-col gap-0.5 rounded-md border-2 p-2" style={{ borderColor: a.border, background: a.tint }}>
-                                    <span className="flex items-center gap-1 font-medium text-[10px]" style={{ color: a.text }}>
-                                        <span className="size-1.5 rounded-[2px]" style={{ background: a.color }} />
-                                        {roomFormulaLabel(room.room_type, room.formula_type)} · +{room.total_efficiency.toFixed(0)}%
-                                    </span>
-                                    <div className="flex flex-wrap items-center gap-0.5">
-                                        {room.operators.map((op) => (
-                                            <OpChip key={op.operator_id} op={op} />
-                                        ))}
-                                    </div>
+                        {base.optimal.rooms.map((room) => (
+                            <RoomBlock
+                                key={`${room.slot_id}-${room.room_type}`}
+                                roomType={room.room_type}
+                                formula={room.formula_type}
+                                right={PRODUCTION_OR_CONTROL.has(room.room_type) || room.total_efficiency > 0 ? <span className="font-mono text-[10px]">+{room.total_efficiency.toFixed(0)}%</span> : <span className="text-muted-foreground/70">economy</span>}
+                            >
+                                <div className="flex flex-wrap items-center gap-0.5">
+                                    {room.operators.map((op) => (
+                                        <MiniChip key={op.operator_id} op={op} />
+                                    ))}
                                 </div>
-                            );
-                        })}
+                            </RoomBlock>
+                        ))}
                     </div>
                 )
             )}

@@ -2,16 +2,16 @@ import { ChevronDown, Download } from "lucide-react";
 import { type ReactNode, type RefObject, useRef, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Dialog, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
-import type { IAssignedOperator, IBaseAssignment, IBaseImprovements, IImprovementsResponse, IRoomAssignment, IRoomRotation, IRotation, IRotationSet, IShift, IShiftRoom, IShiftRotation } from "#/lib/api/user";
+import type { IBaseAssignment, IBaseImprovements, IImprovementsResponse, IPerceptionPlan, IRoomAssignment, IRoomRotation, IRotation, IRotationSet, IShift, IShiftRotation } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
 import { BaseComparison } from "./BaseComparison";
 import { compactNum, roomYieldLabel, signedCompact } from "./baseYield";
 import { ExportPlanContent } from "./ExportPlanContent";
 import { exportPlanAsImage } from "./exportPlan";
-import { roomAccent, roomFormulaLabel, roomLabel } from "./roomColors";
+import { MiniChip, RoomBlock, ShiftRoomBlock } from "./planParts";
+import { roomAccent, roomLabel } from "./roomColors";
 import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE, TEXT_BODY, TEXT_KICKER, TEXT_META } from "./shared";
 
 interface IProps {
@@ -118,7 +118,7 @@ function FullPlanDialog({ base, accent }: { base: IBaseImprovements; accent: str
     return (
         <Dialog>
             <DialogTrigger className={cn("self-start rounded-md border border-border/45 bg-background/60 px-2 py-1 transition-colors hover:border-foreground/25", TEXT_KICKER, "text-muted-foreground hover:text-foreground")}>View full base plan →</DialogTrigger>
-            <DialogPopup className="max-w-3xl">
+            <DialogPopup className="max-w-4xl">
                 <div className="flex items-center justify-between gap-3 px-6 pt-6">
                     <DialogTitle className="text-base">Base optimization plan</DialogTitle>
                     <ExportPlanButton targetRef={captureRef} />
@@ -129,7 +129,7 @@ function FullPlanDialog({ base, accent }: { base: IBaseImprovements; accent: str
             </DialogPopup>
             {/* Off-screen export layout - present in the DOM so its ref is ready, but
                 visually hidden and laid out at its own fixed width. */}
-            <div aria-hidden className="pointer-events-none fixed top-0 left-[-99999px] opacity-0">
+            <div aria-hidden className="pointer-events-none fixed top-0 -left-24999.75 opacity-0">
                 <div ref={captureRef}>
                     <ExportPlanContent base={base} />
                 </div>
@@ -167,23 +167,19 @@ function ExportPlanButton({ targetRef }: { targetRef: RefObject<HTMLDivElement |
 }
 
 /**
- * The consolidated full base plan. Leads with the shift rotation (the primary,
- * actionable view) and the current-vs-optimal comparison; the sustained 24/7
- * rotation and peak single-shift are tucked into collapsible sections so the
- * dialog opens focused instead of as one long wall.
+ * The consolidated full base plan, laid out like the downloadable poster: a compact
+ * header (layout + yield), then the 3-shift rotation as a side-by-side grid of
+ * colour-accented room blocks. The sustained 24/7 rotation, peak single-shift, resource
+ * economy, and full comparison are tucked into collapsible sections so the dialog opens
+ * focused instead of as one long wall.
  */
 function BasePlanBody({ base, accent }: { base: IBaseImprovements; accent: string }) {
     const hasShifts = Boolean(base.shift_rotation && base.shift_rotation.shifts.length > 0);
     return (
-        <div className="flex flex-col gap-5">
-            <ShiftRotationSection rotation={base.shift_rotation} accent={accent} />
+        <div className="flex flex-col gap-4">
+            <PlanHeader base={base} accent={accent} />
 
-            {base.current && base.optimal && (
-                <section className="flex flex-col gap-3">
-                    <SectionHeader title="Current vs optimal" accent={accent} />
-                    <BaseComparison current={base.current} optimal={base.optimal} accent={accent} />
-                </section>
-            )}
+            {hasShifts && base.shift_rotation ? <ShiftPoster rotation={base.shift_rotation} /> : base.optimal && <PeakGrid optimal={base.optimal} />}
 
             {base.rotation && base.rotation.rooms.length > 0 && (
                 <CollapsibleSection title="Sustained 24/7 rotation" count={`+${base.rotation.sustained_efficiency.toFixed(1)}% sustained`} accent={accent} defaultOpen={!hasShifts}>
@@ -191,61 +187,172 @@ function BasePlanBody({ base, accent }: { base: IBaseImprovements; accent: strin
                 </CollapsibleSection>
             )}
 
-            {base.optimal && (
+            {hasShifts && base.optimal && (
                 <CollapsibleSection title="Peak single-shift" count={`+${base.optimal.total_production_efficiency.toFixed(1)}%`} accent={accent}>
-                    <PeakBody optimal={base.optimal} />
+                    <PeakGrid optimal={base.optimal} />
+                </CollapsibleSection>
+            )}
+
+            {base.perception && base.perception.consumers.length > 0 && (
+                <CollapsibleSection title="Resource economy (max ceiling)" count={`+${Math.max(...base.perception.consumers.map((c) => c.bonus_pct)).toFixed(0)}% peak`} accent={accent}>
+                    <PerceptionSection plan={base.perception} />
+                </CollapsibleSection>
+            )}
+
+            {base.current && base.optimal && (
+                <CollapsibleSection title="Current vs optimal detail" accent={accent}>
+                    <BaseComparison current={base.current} optimal={base.optimal} accent={accent} />
                 </CollapsibleSection>
             )}
         </div>
     );
 }
 
-// ─── Shared room card ─────────────────────────────────────────────────────────
-
-/** A single room's crew framed in a shape border tinted with the building's
- *  in-game colour. */
-function RoomShell({ roomType, formula, badge, right, dim, children }: { roomType: string; formula?: string | null; badge?: ReactNode; right?: ReactNode; dim?: boolean; children: ReactNode }) {
-    const a = roomAccent(roomType);
+/** Poster-style header: the base layout as colour chips (doubling as the room-colour
+ *  legend) and the current → optimal yield headline. */
+function PlanHeader({ base, accent }: { base: IBaseImprovements; accent: string }) {
     return (
-        <div className={cn("flex flex-col gap-1.5 rounded-lg border-2 px-2.5 py-2", dim && "opacity-60")} style={{ borderColor: a.border, background: a.tint }}>
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                    <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
-                    <span className={cn(TEXT_KICKER)} style={{ color: a.text }}>
-                        {roomFormulaLabel(roomType, formula)}
-                    </span>
-                    {badge}
+        <div className="flex flex-col gap-2.5 border-border/40 border-b pb-3">
+            {base.layout.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {base.layout.map((l) => {
+                        const a = roomAccent(l.room_type);
+                        return (
+                            <span key={l.room_type} className="flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px]" style={{ borderColor: a.border, background: a.tint }}>
+                                <span className="size-1.5 rounded-xs" style={{ background: a.color }} />
+                                <span className="font-medium" style={{ color: a.text }}>
+                                    {roomLabel(l.room_type)}
+                                </span>
+                                <span className="text-muted-foreground">×{l.count}</span>
+                            </span>
+                        );
+                    })}
                 </div>
-                {right}
-            </div>
-            {children}
-        </div>
-    );
-}
-
-/** Legend mapping each room colour to its name, shown above the rotation. */
-function RoomColorLegend({ types }: { types: string[] }) {
-    const seen = [...new Set(types)];
-    if (seen.length === 0) return null;
-    return (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border/30 bg-muted/10 px-2.5 py-1.5">
-            {seen.map((t) => {
-                const a = roomAccent(t);
-                return (
-                    <span key={t} className="flex items-center gap-1.5">
-                        <span className="size-2.5 rounded-[3px] border" style={{ background: a.tint, borderColor: a.border }} />
-                        <span className={cn(TEXT_BADGE)} style={{ color: a.text }}>
-                            {roomLabel(t)}
-                        </span>
+            )}
+            {base.current && base.optimal && (
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <YieldSummary assignment={base.current} />
+                    <span className="text-muted-foreground/50">→</span>
+                    <span className="font-mono font-semibold text-sm tabular-nums" style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}>
+                        {compactNum(base.optimal.yield_lmd_per_day)} LMD
+                        {base.optimal.yield_exp_per_day > 0 && <> · {compactNum(base.optimal.yield_exp_per_day)} EXP</>}
+                        <PerDay className="font-sans text-muted-foreground/60" />
                     </span>
-                );
-            })}
+                    <span className={cn(TEXT_BADGE, "text-muted-foreground")}>({signedCompact(base.optimal.total_production_efficiency - base.current.total_production_efficiency)}% efficiency)</span>
+                </div>
+            )}
         </div>
     );
 }
 
-/** A collapsible secondary section (sustained rotation, peak) - keeps the dialog
- *  focused on the rotation while leaving the detail one click away. */
+// ─── Shift rotation (primary) ─────────────────────────────────────────────────
+
+/** The recommended 3-shift rotation as a side-by-side poster (mirrors the export image):
+ *  one column per shift, each a stack of colour-accented room blocks. Green = add vs your
+ *  preset, red = remove. */
+function ShiftPoster({ rotation }: { rotation: IShiftRotation }) {
+    if (rotation.shifts.length === 0) return null;
+    return (
+        <div className="flex flex-col gap-2.5">
+            <p className={cn(TEXT_META, "text-muted-foreground")}>
+                Run three teams per room so each rests one shift. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove. Power plants swap every shift; the Control Center runs two on, one off.
+            </p>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                {rotation.shifts.map((shift) => (
+                    <ShiftColumn key={shift.index} shift={shift} />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ShiftColumn({ shift }: { shift: IShift }) {
+    return (
+        <div className="flex flex-col gap-1.5 rounded-md border border-border/35 bg-muted/10 p-2">
+            <span className="font-semibold text-[11px]">Shift {shift.index}</span>
+            {shift.rooms.map((room) => (
+                <ShiftRoomBlock key={room.slot_id} room={room} interactive />
+            ))}
+        </div>
+    );
+}
+
+// ─── Resource economy (Perception Information) ────────────────────────────────
+
+/** The base-wide resource economy: support operators to station outside production, and the
+ *  production operators they power. A niche, max-output ceiling - not a normal-base default. */
+function PerceptionSection({ plan }: { plan: IPerceptionPlan }) {
+    return (
+        <>
+            <p className={cn(TEXT_META, "text-muted-foreground")}>Operators resting in your dormitories fuel a shared pool that supercharges specific production operators. Station the support crew, and the powered operators climb far past a normal team - a high-ceiling, high-effort strategy most players can skip.</p>
+            {plan.support.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                    <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Station support</span>
+                    <div className="flex flex-wrap gap-1">
+                        {plan.support.map((s) => (
+                            <MiniChip
+                                key={s.operator.operator_id}
+                                op={s.operator}
+                                suffix={
+                                    <span className="font-mono text-[9px]" style={{ color: roomAccent(s.room_type).text }}>
+                                        → {roomLabel(s.room_type)}
+                                    </span>
+                                }
+                                tip={
+                                    <p>
+                                        Station {s.operator.name} in the {roomLabel(s.room_type)} to feed the pool.
+                                    </p>
+                                }
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+                <span className={cn(TEXT_KICKER, "text-muted-foreground")}>
+                    Powers <span className="font-normal normal-case opacity-70">(peak · sustained 24/7)</span>
+                </span>
+                <div className="flex flex-wrap gap-1">
+                    {plan.consumers.map((c) => {
+                        const a = roomAccent(c.room_type);
+                        return (
+                            <MiniChip
+                                key={c.operator.operator_id}
+                                op={c.operator}
+                                suffix={
+                                    <span className="font-mono text-[9px]">
+                                        <span style={{ color: a.strong }}>+{c.bonus_pct.toFixed(0)}%</span> <span className="text-muted-foreground/60">+{c.sustained_pct.toFixed(0)}%·24/7</span>
+                                    </span>
+                                }
+                                tip={
+                                    <p>
+                                        {c.operator.name} gains +{c.bonus_pct.toFixed(0)}% at peak ({c.sustained_pct.toFixed(0)}% sustained 24/7) from the {roomLabel(c.room_type)} pool.
+                                    </p>
+                                }
+                            />
+                        );
+                    })}
+                </div>
+            </div>
+            {plan.rotation_manager && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Rotation manager</span>
+                    <MiniChip op={plan.rotation_manager} suffix={<span className="font-mono text-[9px] text-muted-foreground/70">swaps morale</span>} tip={<p>{plan.rotation_manager.name} keeps the Ling/Dusk morale rotation running.</p>} />
+                </div>
+            )}
+            {plan.needs_rotation_manager && (
+                <p className={cn(TEXT_META, "rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-500/90")}>
+                    ⚠ This rotation relies on Ling/Dusk, which need a morale-swap operator (e.g. <span className="font-medium">Fiammetta</span>) to sustain. You don't have one - the figures above are a peak ceiling rather than a sustainable plan.
+                </p>
+            )}
+        </>
+    );
+}
+
+// ─── Shared collapsible ───────────────────────────────────────────────────────
+
+/** A collapsible secondary section (sustained rotation, peak, economy) - keeps the
+ *  dialog focused on the primary view while leaving the detail one click away. */
 function CollapsibleSection({ title, count, accent, defaultOpen = false, children }: { title: string; count?: ReactNode; accent: string; defaultOpen?: boolean; children: ReactNode }) {
     const [open, setOpen] = useState(defaultOpen);
     return (
@@ -266,101 +373,54 @@ function CollapsibleSection({ title, count, accent, defaultOpen = false, childre
     );
 }
 
-// ─── Shift rotation (primary) ─────────────────────────────────────────────────
-
-/** A chip whose border/tint signals whether the operator should be added (green),
- *  removed (red, struck through), or kept (neutral). */
-function ShiftOpChip({ op, tone }: { op: IAssignedOperator; tone: "add" | "remove" | "keep" }) {
-    const toneCls = tone === "add" ? "border-emerald-500/55 bg-emerald-500/15" : tone === "remove" ? "border-rose-500/45 bg-rose-500/15" : "border-border/40 bg-background/55";
-    return (
-        <span className={cn("flex items-center gap-1 rounded-md border px-1 py-0.5", toneCls)}>
-            <span className="relative size-4 overflow-hidden rounded-sm">
-                <OperatorAvatar charId={op.operator_id} name={op.name} />
-            </span>
-            <span className={cn(TEXT_BADGE, "max-w-[10ch] truncate font-medium", tone === "remove" && "text-rose-500/80 line-through")}>{op.name}</span>
-        </span>
-    );
-}
-
-/** Recommended 3-shift rotation vs the player's saved in-game presets. */
-function ShiftRotationSection({ rotation, accent }: { rotation: IShiftRotation | null | undefined; accent: string }) {
-    if (!rotation || rotation.shifts.length === 0) return null;
-    const types = rotation.shifts.flatMap((s) => s.rooms.map((r) => r.room_type));
-    return (
-        <div className="flex flex-col gap-3">
-            <SectionHeader title="Shift rotation vs your presets" accent={accent} />
-            <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Run three teams per room so each rests one shift. Each card is one room, outlined in its in-game colour. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove. Power plants swap every shift; the Control
-                Center runs two shifts on, one off.
-            </p>
-            <RoomColorLegend types={types} />
-            <div className="flex flex-col gap-3">
-                {rotation.shifts.map((shift) => (
-                    <ShiftCard key={shift.index} shift={shift} />
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function ShiftCard({ shift }: { shift: IShift }) {
-    return (
-        <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-                <span className={cn(TEXT_KICKER, "shrink-0 rounded bg-muted/40 px-1.5 py-0.5 text-foreground/75")}>Shift {shift.index}</span>
-                <span className="h-px flex-1 bg-border/40" />
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {shift.rooms.map((room) => (
-                    <ShiftRoomCard key={room.slot_id} room={room} />
-                ))}
-            </div>
-        </div>
-    );
-}
-
-function ShiftRoomCard({ room }: { room: IShiftRoom }) {
-    const swapOutIds = new Set(room.swap_out.map((o) => o.operator_id));
-    const swapInIds = new Set(room.swap_in.map((o) => o.operator_id));
-    const hasPreset = room.current.length > 0;
-    const badge = !room.active ? <span className={cn(TEXT_BADGE, "text-amber-500/80")}>off this shift</span> : hasPreset && room.matches ? <span className="text-[10px] text-emerald-500/80">✓ matches yours</span> : undefined;
-    return (
-        <RoomShell roomType={room.room_type} formula={room.formula_type} dim={!room.active} badge={badge}>
-            <div className="flex flex-wrap items-center gap-1">
-                {room.recommended.length === 0 && <span className={cn(TEXT_BADGE, "text-muted-foreground/50")}>-</span>}
-                {room.recommended.map((op) => (
-                    <ShiftOpChip key={op.operator_id} op={op} tone={swapInIds.has(op.operator_id) ? "add" : "keep"} />
-                ))}
-            </div>
-            {hasPreset && !room.matches && (
-                <div className="flex flex-wrap items-center gap-1 border-border/25 border-t pt-1.5">
-                    <span className={cn(TEXT_BADGE, "min-w-9 text-muted-foreground/55")}>yours</span>
-                    {room.current.map((op) => (
-                        <ShiftOpChip key={op.operator_id} op={op} tone={swapOutIds.has(op.operator_id) ? "remove" : "keep"} />
-                    ))}
-                </div>
-            )}
-            {!hasPreset && room.active && <span className={cn(TEXT_BADGE, "text-muted-foreground/45")}>no saved preset for this shift</span>}
-        </RoomShell>
-    );
-}
-
 // ─── Sustained 24/7 rotation (secondary) ──────────────────────────────────────
 
 function RotationBody({ rotation, accent }: { rotation: IRotation; accent: string }) {
     return (
         <>
             <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Staggered rotation: keep the main team working, and when you log in swap only the <span className="font-medium">⚡ first operator</span> in each room (the one whose morale runs low soonest) for its backup - never a whole team at once. Times below are roughly how long each operator works before it needs
-                rest.
+                Staggered rotation: keep the main team working, and when you log in swap only the <span className="font-medium">⚡ first operator</span> in each room (the one whose morale runs low soonest) for its backup - never a whole team at once. Times are roughly how long each operator works before it needs rest.
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 {rotation.rooms.map((room) => (
-                    <RotationRoomRow key={room.slot_id} room={room} accent={accent} />
+                    <RotationRoomBlock key={room.slot_id} room={room} accent={accent} />
                 ))}
             </div>
             <RotationSetsSection sets={rotation.sets} accent={accent} />
         </>
+    );
+}
+
+/** One production room's rotation plan as a room block: who to swap first (⚡), how long
+ *  each lasts, and the dashed backup. */
+function RotationRoomBlock({ room, accent }: { room: IRoomRotation; accent: string }) {
+    return (
+        <RoomBlock roomType={room.room_type}>
+            <div className="flex flex-wrap items-center gap-0.5">
+                {room.members.map((m, i) => (
+                    <MiniChip
+                        key={m.operator.operator_id}
+                        op={m.operator}
+                        lead={i === 0 ? <span className="text-[10px] text-amber-500/90">⚡</span> : undefined}
+                        suffix={<span className="font-mono text-[9px] text-muted-foreground/65 tabular-nums">~{m.lasts_hours.toFixed(0)}h</span>}
+                        tip={
+                            <p>
+                                {i === 0 ? "Swap this one first - " : ""}
+                                {m.operator.name} works ~{m.lasts_hours.toFixed(0)}h before its morale runs low.
+                            </p>
+                        }
+                    />
+                ))}
+                {room.backup && (
+                    <>
+                        <span className="px-0.5 text-[10px]" style={{ color: `color-mix(in oklch, ${accent} 55%, var(--muted-foreground))` }}>
+                            ⇄
+                        </span>
+                        <MiniChip op={room.backup} dashed suffix={<span className="font-mono text-[9px] text-muted-foreground/55">backup</span>} tip={<p>Rotate {room.backup.name} in when the ⚡ first operator needs rest.</p>} />
+                    </>
+                )}
+            </div>
+        </RoomBlock>
     );
 }
 
@@ -372,10 +432,8 @@ function RotationSetsSection({ sets, accent }: { sets: IRotationSet[] | undefine
     return (
         <div className="mt-1 flex flex-col gap-2 border-border/30 border-t pt-3">
             <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Overlapping sets to cycle through</span>
-            <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Don't break the whole base at once. Cycle through these {sets.length} sets one swap at a time - each set rests only the operators that actually run low on morale (covered by a backup), while low-drain operators keep working. Consecutive sets share all but one operator per room.
-            </p>
-            <div className="flex flex-col gap-2">
+            <p className={cn(TEXT_META, "text-muted-foreground")}>Cycle through these {sets.length} sets one swap at a time - each rests only the operators that actually run low on morale (covered by a backup). Consecutive sets share all but one operator per room.</p>
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 {sets.map((set, i) => (
                     <RotationSetRow key={set.rooms.map((r) => r.resting?.operator_id ?? r.slot_id).join("-")} set={set} index={i} accent={accent} />
                 ))}
@@ -387,7 +445,7 @@ function RotationSetsSection({ sets, accent }: { sets: IRotationSet[] | undefine
 function RotationSetRow({ set, index, accent }: { set: IRotationSet; index: number; accent: string }) {
     const resting = set.rooms.map((r) => r.resting?.name).filter((n): n is string => Boolean(n));
     return (
-        <div className="flex flex-col gap-1.5 rounded-md border border-border/35 bg-muted/15 px-2.5 py-2">
+        <div className="flex flex-col gap-1 rounded-md border border-border/35 bg-muted/15 px-2 py-1.5">
             <div className="flex items-center justify-between gap-2">
                 <span className={cn(TEXT_KICKER, "font-semibold")} style={{ color: accent }}>
                     Set {index + 1}
@@ -395,189 +453,80 @@ function RotationSetRow({ set, index, accent }: { set: IRotationSet; index: numb
                 {resting.length > 0 && <span className={cn(TEXT_BADGE, "truncate text-muted-foreground/60")}>resting: {resting.join(", ")}</span>}
             </div>
             <div className="flex flex-col gap-1">
-                {set.rooms.map((r) => {
-                    const a = roomAccent(r.room_type);
-                    return (
-                        <div key={r.slot_id} className="flex items-start gap-2">
-                            <span className={cn("min-w-24 shrink-0 pt-0.5", TEXT_BADGE)} style={{ color: a.text }}>
-                                {roomLabel(r.room_type)}
-                            </span>
-                            <div className="flex flex-1 flex-wrap items-center gap-1">
-                                {r.working.map((op) => (
-                                    <ShiftOpChip key={op.operator_id} op={op} tone="keep" />
-                                ))}
-                            </div>
+                {set.rooms.map((r) => (
+                    <RoomBlock key={r.slot_id} roomType={r.room_type}>
+                        <div className="flex flex-wrap items-center gap-0.5">
+                            {r.working.map((op) => (
+                                <MiniChip key={op.operator_id} op={op} />
+                            ))}
                         </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-/** One production room's rotation plan: who to swap first, when, and the backup. */
-function RotationRoomRow({ room, accent }: { room: IRoomRotation; accent: string }) {
-    const a = roomAccent(room.room_type);
-    return (
-        <div className="flex items-center gap-2 rounded-lg border-2 px-2.5 py-2" style={{ borderColor: a.border, background: a.tint }}>
-            <span className="flex min-w-24 shrink-0 items-center gap-1.5">
-                <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
-                <span className={cn(TEXT_BODY, "font-semibold")} style={{ color: a.text }}>
-                    {roomLabel(room.room_type)}
-                </span>
-            </span>
-            <div className="flex flex-1 flex-wrap items-center gap-1.5">
-                {room.members.map((m, i) => (
-                    <Tooltip key={m.operator.operator_id}>
-                        <TooltipTrigger
-                            render={
-                                <span className={cn("flex items-center gap-1.5 rounded-md border bg-background/65 px-1.5 py-0.5", i === 0 ? "border-amber-500/55" : "border-border/40")}>
-                                    {i === 0 && <span className="text-amber-500/90 text-xs">⚡</span>}
-                                    <span className="relative size-5 overflow-hidden rounded-sm">
-                                        <OperatorAvatar charId={m.operator.operator_id} name={m.operator.name} />
-                                    </span>
-                                    <span className={cn(TEXT_BODY, "max-w-[10ch] truncate font-medium")}>{m.operator.name}</span>
-                                    <span className={cn(TEXT_BADGE, "font-mono text-muted-foreground/70 tabular-nums")}>~{m.lasts_hours.toFixed(0)}h</span>
-                                </span>
-                            }
-                        />
-                        <TooltipContent sideOffset={4}>
-                            <p>
-                                {i === 0 ? "Swap this one first - " : ""}
-                                {m.operator.name} works ~{m.lasts_hours.toFixed(0)}h before its morale runs low.
-                            </p>
-                        </TooltipContent>
-                    </Tooltip>
+                    </RoomBlock>
                 ))}
-                {room.backup && (
-                    <>
-                        <span className="px-0.5" style={{ color: `color-mix(in oklch, ${accent} 55%, var(--muted-foreground))` }}>
-                            ⇄
-                        </span>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <span className="flex items-center gap-1.5 rounded-md border border-border/45 border-dashed bg-background/40 px-1.5 py-0.5">
-                                        <span className="relative size-5 overflow-hidden rounded-sm opacity-80">
-                                            <OperatorAvatar charId={room.backup.operator_id} name={room.backup.name} />
-                                        </span>
-                                        <span className={cn(TEXT_BODY, "max-w-[10ch] truncate font-medium text-muted-foreground")}>{room.backup.name}</span>
-                                        <span className={cn(TEXT_BADGE, "text-muted-foreground/55")}>backup</span>
-                                    </span>
-                                }
-                            />
-                            <TooltipContent sideOffset={4}>
-                                <p>Rotate {room.backup.name} in when the ⚡ first operator needs rest.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </>
-                )}
             </div>
         </div>
     );
 }
 
-// ─── Peak single-shift (secondary) ────────────────────────────────────────────
+// ─── Peak single-shift (primary fallback / secondary) ─────────────────────────
 
-function PeakBody({ optimal }: { optimal: IBaseAssignment }) {
+const PRODUCTION_ROOMS = new Set(["MANUFACTURE", "TRADING", "POWER"]);
+
+/** The peak arrangement as a 2-column grid of room blocks (mirrors the export's
+ *  no-rotation fallback): the best single-snapshot staffing per room. */
+function PeakGrid({ optimal }: { optimal: IBaseAssignment }) {
     return (
-        <>
-            <p className={cn(TEXT_META, "text-muted-foreground")}>Best possible arrangement at one snapshot in time - useful for set-and-forget AFK runs.</p>
+        <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between rounded-md border border-border/35 bg-muted/10 px-2.5 py-1.5">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Realized yield</span>
+                <span className={cn(TEXT_KICKER, "text-muted-foreground")}>Peak yield</span>
                 <YieldSummary assignment={optimal} />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 {optimal.rooms.map((room) => (
-                    <RoomRow key={`${room.slot_id}-${room.room_type}`} room={room} />
+                    <PeakRoomBlock key={`${room.slot_id}-${room.room_type}`} room={room} />
                 ))}
             </div>
-        </>
+        </div>
     );
 }
 
-function RoomRow({ room }: { room: IRoomAssignment }) {
+function PeakRoomBlock({ room }: { room: IRoomAssignment }) {
     const a = roomAccent(room.room_type);
     const yieldLabel = roomYieldLabel(room);
+    // A perception-support room (a generator reserved into an Office/dormitory to feed the
+    // economy) carries no efficiency of its own - show its role instead of a misleading +0%.
+    // The Office/Reception staffed for their own base skill DO have a value, so show that.
+    const isSupportRoom = room.room_type !== "CONTROL" && !PRODUCTION_ROOMS.has(room.room_type) && room.total_efficiency === 0;
+    const right = isSupportRoom ? (
+        <span className="text-[9px] text-muted-foreground/70">economy</span>
+    ) : (
+        <span className="font-mono font-semibold text-[10px] tabular-nums" style={{ color: a.strong }}>
+            +{room.total_efficiency.toFixed(0)}%
+        </span>
+    );
+    const badge =
+        room.locked && room.operators.length > 0 ? (
+            <Tooltip>
+                <TooltipTrigger render={<span className="cursor-help text-amber-500/80">🔒</span>} />
+                <TooltipContent sideOffset={4}>
+                    <p>Fixed synergy squad - these operators depend on each other and can't be swapped without breaking the combo.</p>
+                </TooltipContent>
+            </Tooltip>
+        ) : undefined;
     return (
-        <div className="flex items-center gap-2 rounded-lg border-2 px-2.5 py-2" style={{ borderColor: a.border, background: a.tint }}>
-            <div className="flex min-w-28 flex-col">
-                <div className="flex items-center gap-1.5">
-                    <span className="size-2 shrink-0 rounded-[3px]" style={{ background: a.color }} />
-                    <span className={cn(TEXT_BODY, "font-semibold")} style={{ color: a.text }}>
-                        {roomLabel(room.room_type)}
-                    </span>
-                    <span className={cn("rounded-sm border border-border/40 bg-background px-1 py-0.5 text-muted-foreground", TEXT_BADGE)}>L{room.level}</span>
-                    {room.locked && room.operators.length > 0 && (
-                        <Tooltip>
-                            <TooltipTrigger render={<span className={cn("rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-amber-500/90", TEXT_BADGE)}>🔒 fixed</span>} />
-                            <TooltipContent sideOffset={4}>
-                                <p>Fixed synergy squad - these operators depend on each other (e.g. Shamare + Tequila, or Texas + Lappland) and can't be swapped without breaking the combo.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-                </div>
-                <div className={cn("flex items-center gap-1.5 pl-3.5 text-muted-foreground", TEXT_BADGE)}>
-                    <span className="opacity-65">{room.slot_id}</span>
-                    {room.formula_type && (
-                        <Tooltip>
-                            <TooltipTrigger render={<span className="opacity-80">{room.formula_type}</span>} />
-                            <TooltipContent sideOffset={4}>
-                                <p>Production formula assigned to this room.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-                </div>
-            </div>
-            <div className="flex flex-1 flex-wrap gap-1">
-                {room.operators.length === 0 && <span className={cn(TEXT_KICKER, "text-muted-foreground/60")}>No assignment</span>}
+        <RoomBlock roomType={room.room_type} formula={room.formula_type} badge={badge} right={right}>
+            <div className="flex flex-wrap items-center gap-0.5">
+                {room.operators.length === 0 && <span className="text-[10px] text-muted-foreground/50">No assignment</span>}
                 {room.operators.map((op) => (
-                    <Tooltip key={op.operator_id}>
-                        <TooltipTrigger
-                            render={
-                                <span className="flex items-center gap-1.5 rounded-md border border-border/40 bg-background/65 px-1.5 py-0.5">
-                                    <span className="relative size-5 overflow-hidden rounded-sm">
-                                        <OperatorAvatar charId={op.operator_id} name={op.name} />
-                                    </span>
-                                    <span className={cn(TEXT_BODY, "max-w-[11ch] truncate font-medium")}>{op.name}</span>
-                                </span>
-                            }
-                        />
-                        <TooltipContent sideOffset={4}>
-                            <p>{op.name}</p>
-                        </TooltipContent>
-                    </Tooltip>
+                    <MiniChip key={op.operator_id} op={op} tip={<p>{op.name}</p>} />
                 ))}
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <span className={cn("font-semibold", TEXT_BODY, "font-mono tabular-nums")} style={{ color: a.strong }}>
-                    +{room.total_efficiency.toFixed(1)}%
-                </span>
-                {room.room_type === "CONTROL" && (
-                    <Tooltip>
-                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "text-muted-foreground/70")}>global buff</span>} />
-                        <TooltipContent sideOffset={4}>
-                            <p>Production boost the Control Center applies to every Factory & Trading Post in the base.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                )}
-                {room.order_value > 0 && (
-                    <Tooltip>
-                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "text-amber-500/85")}>+{room.order_value.toFixed(0)}% value</span>} />
-                        <TooltipContent sideOffset={4}>
-                            <p>Order value (LMD per order, e.g. Proviso) - raises LMD without adding order speed.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                )}
-                {yieldLabel && (
-                    <Tooltip>
-                        <TooltipTrigger render={<span className={cn(TEXT_BADGE, "cursor-help text-muted-foreground/70")}>{yieldLabel}</span>} />
-                        <TooltipContent sideOffset={4}>
-                            <p className="max-w-xs">Averaged over a ~36h staggered-rotation cycle (sustained daily average, not a constant peak).{yieldLabel.includes("*") ? " * Trading-post LMD assumes it's gold-supplied." : ""}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                )}
-            </div>
-        </div>
+            {(room.order_value > 0 || yieldLabel || room.room_type === "CONTROL") && (
+                <div className="flex flex-wrap items-center gap-x-1.5 font-mono text-[9px] text-muted-foreground/65">
+                    {room.room_type === "CONTROL" && <span>global buff</span>}
+                    {room.order_value > 0 && <span className="text-amber-500/85">+{room.order_value.toFixed(0)}% value</span>}
+                    {yieldLabel && <span>{yieldLabel}</span>}
+                </div>
+            )}
+        </RoomBlock>
     );
 }

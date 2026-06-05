@@ -1,6 +1,7 @@
 pub mod assignment;
 pub mod buff_registry;
 pub mod evaluate;
+pub mod perception;
 pub mod score;
 pub mod shift_rotation;
 pub mod types;

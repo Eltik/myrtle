@@ -49,8 +49,14 @@ static RE_FIRST_PCT: LazyLock<Regex> =
 static RE_FIRST_FLOAT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>").unwrap());
 
+/// A `<@cc.vup>+N</>` immediately followed by "Morale" - the actual morale-recovery figure,
+/// as opposed to a resource-generation number ("…Worldly Plight<@cc.vup>+5</>") that happens
+/// to come first in the text.
+static RE_MORALE_RECOVERY: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>\s*Morale").unwrap());
+
 static RE_TAG_KEYWORD: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"<@cc\.kw>(\w+)</>").unwrap());
+    LazyLock::new(|| Regex::new(r"<@cc\.kw>([^<]+)</>").unwrap());
 
 static RE_LAST_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
@@ -65,11 +71,13 @@ static RE_VDOWN_PCT: LazyLock<Regex> =
 static RE_PER_HOUR_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%?</>\s*per hour").unwrap());
 
+// Factories phrase the queue cap as "capacity limit", trading posts as "order limit" - the
+// same mechanic, so accept either so a factory capacity skill (Vermeil's "+8") is counted.
 static RE_ORDER_LIMIT_POS: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"order limit\s*<@cc\.vup>\+?(\d+)</>").unwrap());
+    LazyLock::new(|| Regex::new(r"(?:order|capacity) limit\s*<@cc\.vup>\+?(\d+)</>").unwrap());
 
 static RE_ORDER_LIMIT_NEG: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"order limit\s*<@cc\.vdown>-?(\d+)</>").unwrap());
+    LazyLock::new(|| Regex::new(r"(?:order|capacity) limit\s*<@cc\.vdown>-?(\d+)</>").unwrap());
 
 static RE_NTH_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
@@ -112,6 +120,7 @@ static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*<@cc\.vup>-?([\d.]+)</>").unwrap()
 });
 
+#[derive(Clone)]
 pub enum BuffResolutionStrategy {
     /// Efficiency field is the bonus %. Value = efficiency as f64.
     DirectEfficiency { value: f64 },
@@ -169,10 +178,35 @@ pub enum BuffResolutionStrategy {
     /// Scales with total order limit contributions from teammates.
     /// e.g. Degenbrecher E2: "+25% per 5 CAP from teammates, max +100%"
     /// e.g. Jaye E0+1: "+4% per 1 order limit increase from others"
+    /// e.g. Vermeil E1: "+2% per capacity limit in the factory" (her OWN +8 counts too)
     OrderLimitScaling {
         per_cap_threshold: f64,   // every N CAP
         bonus_per_threshold: f64, // gives this much %
         cap_pct: f64,             // max bonus
+        /// True when the operator's OWN capacity counts toward the total it scales on
+        /// (Vermeil scales on the whole factory's capacity, including her own +8). False for
+        /// "from others/teammates" skills (Jaye, Degenbrecher - whose own -6 must not self-reduce).
+        includes_self: bool,
+    },
+
+    /// Per-operator capacity-tier scaling (Bubble E1): each operator in the factory - including
+    /// this one - gains `low_pct` productivity if its own capacity-limit bonus is at or below
+    /// `threshold`, else `high_pct`. The room bonus is the SUM across the team, so it rewards
+    /// stacking high-capacity operators.
+    CapacityTierScaling {
+        threshold: i32,
+        low_pct: f64,
+        high_pct: f64,
+    },
+
+    /// Raises a room type's EFFECTIVE facility count by `amount` ("Power Plant +1, only affects
+    /// facility quantity" - Greyy the Lightningbearer E2; Eunectes E2 "+2"). It grants no
+    /// productivity itself, but every `FacilityCountScaling` buff that scales per that facility
+    /// (factory automation - Weedy/Eunectes/Pudding) reads the boosted count, so it powers those
+    /// combos. Resolved by adjusting the facility counts the optimizer scores against.
+    FacilityCountModifier {
+        target_room: String,
+        amount: i32,
     },
 
     /// Efficiency scales with the number of teammates that match a keyword the
@@ -278,8 +312,10 @@ pub enum BuffResolutionStrategy {
         is_self_only: bool,     // true for single-target, false for AoE
     },
 
-    /// Only affects capacity/order limits, not speed.
-    CapacityOnly,
+    /// Only affects the room's capacity/order limit, not speed. `order_limit` is the cap it
+    /// adds (e.g. Vermeil's "capacity limit +8") - it contributes no productivity itself, but
+    /// feeds operators whose output scales with the room's total order/capacity limit.
+    CapacityOnly { order_limit: i32 },
 
     /// Non-production facilities (workshop, HR, training, reception).
     /// Store the efficiency or parsed value for secondary scoring.
@@ -310,6 +346,35 @@ pub fn build_registry(
         let prefix = buff_id.split('[').next().unwrap_or(buff_id);
         // "manu_prod_spd&power[000]" → "manu_prod_spd&power"
         // Then check: prefix.contains("&power"), prefix.contains("_variable"), etc.
+
+        // Facility-count enablers (Greyy the Lightningbearer E2 "Power Plant +1", Eunectes E2
+        // "+2") raise a room type's EFFECTIVE facility count - they grant no productivity but
+        // power every per-facility automation scaler. Detected room-agnostically by their stock
+        // "(only affects facility quantity/count)" clause and the room they name.
+        // Match ONLY the enabler clause "(only affects facility quantity/count)" - not the
+        // automation buffs (Weedy/Eunectes) that merely mention "...based on facility count".
+        let desc_l = buff.description.to_lowercase();
+        if desc_l.contains("only affects facility quantity")
+            || desc_l.contains("only affects the facility count")
+        {
+            let target_room = if desc_l.contains("power plant") {
+                "POWER"
+            } else if desc_l.contains("trading post") {
+                "TRADING"
+            } else {
+                "MANUFACTURE"
+            };
+            let amount = parse_first_float(&buff.description).unwrap_or(1.0) as i32;
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::FacilityCountModifier {
+                    target_room: target_room.to_string(),
+                    amount,
+                },
+            );
+            continue;
+        }
+
         let strategy = match buff.room_type.as_str() {
             "WORKSHOP" | "HIRE" | "TRAINING" | "MEETING" => {
                 let effiency = if buff.efficiency == 0 {
@@ -367,8 +432,9 @@ pub fn build_registry(
                     || prefix.contains("_cost")
                     || prefix.contains("allCost")
                 {
-                    // Morale gain
-                    let recovery = parse_first_float(&buff.description).unwrap_or(0.0);
+                    // Base-wide morale recovery. Skips perception-resource generation that the
+                    // morale parser would otherwise misread (Chongyue's "Worldly Plight +5").
+                    let recovery = parse_morale_recovery(&buff.description).unwrap_or(0.0);
                     BuffResolutionStrategy::MoraleModifier {
                         recovery_per_hour: recovery,
                         is_self_only: false,
@@ -584,7 +650,9 @@ pub fn build_registry(
                     && !prefix.contains("_spd")
                     && buff.efficiency == 0
                 {
-                    BuffResolutionStrategy::CapacityOnly
+                    BuffResolutionStrategy::CapacityOnly {
+                        order_limit: parse_order_limit(&buff.description).unwrap_or(0),
+                    }
                 }
                 // Morale-decay dependent: efficiency decreases as morale drops
                 else if prefix.contains("_reduce")
@@ -660,6 +728,7 @@ pub fn build_registry(
                         per_cap_threshold: threshold,
                         bonus_per_threshold: bonus,
                         cap_pct: cap,
+                        includes_self: false, // "from teammates" - excludes Degenbrecher's own -6
                     }
                 }
                 // Jaye's "Investment Solicitations": "+4% per order limit increase from others"
@@ -669,6 +738,33 @@ pub fn build_registry(
                         per_cap_threshold: 1.0,
                         bonus_per_threshold: per,
                         cap_pct: f64::MAX,
+                        includes_self: false, // "from others"
+                    }
+                }
+                // Vermeil-type: factory productivity scales with the team's capacity-limit
+                // boosts ("+X% productivity per capacity limit increase"). The manufacture
+                // analogue of Jaye's order-limit scaling - strong in capacity-stacking teams.
+                // Counts the WHOLE factory's capacity, including this operator's own (+8).
+                else if prefix == "manu_prod_spd_variable" {
+                    let per = parse_first_pct(&buff.description).unwrap_or(2.0);
+                    BuffResolutionStrategy::OrderLimitScaling {
+                        per_cap_threshold: 1.0,
+                        bonus_per_threshold: per,
+                        cap_pct: f64::MAX,
+                        includes_self: true,
+                    }
+                }
+                // Bubble E1: per-operator capacity tiers - each operator in the factory gains
+                // `low`% if its capacity bonus is <= threshold, else `high`%. Strong when paired
+                // with high-capacity operators (Vulcan/Ceobe/Wulfenite etc.).
+                else if prefix == "manu_prod_spd_variable3" {
+                    let threshold = parse_first_vup_number(&buff.description).unwrap_or(16.0) as i32;
+                    let low = parse_nth_pct(&buff.description, 0).unwrap_or(1.0);
+                    let high = parse_nth_pct(&buff.description, 1).unwrap_or(3.0);
+                    BuffResolutionStrategy::CapacityTierScaling {
+                        threshold,
+                        low_pct: low,
+                        high_pct: high,
                     }
                 }
                 // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
@@ -743,14 +839,19 @@ pub fn build_registry(
                         cap_pct: cap,
                     }
                 }
-                // Building-resource dependent (Marcille's "+1% per Monster Meal",
-                // Engineering Robots, Chain of Thought, Witchcraft Crystal, etc.):
-                // scales with a special stockpile resource the optimizer can't assume
-                // the player has banked, so it's worth 0 in the baseline - crediting
-                // the per-unit % (as if one unit were stocked) over-ranks the operator
-                // against reliable specialists. Any always-on flat productivity lives
-                // in a separate base-skill slot, captured by the `efficiency > 0`
-                // branch above.
+                // Building-resource dependent. Two kinds, both worth 0 in the baseline:
+                //   - Unstockable consumables (Marcille's "+1% per Monster Meal",
+                //     Engineering Robots, Witchcraft Crystal): can't assume the player
+                //     has any banked, and crediting the per-unit % (as if one unit were
+                //     stocked) over-ranks the operator against reliable specialists.
+                //   - The Perception Information / Chain of Thought / Soundless Resonance
+                //     economy (Rosmontis, Ebenholz, ...): a base-wide resource loop fed
+                //     by operators resting in dorms (and CC/HR/Training generators). Real
+                //     and potentially large, but it spans the whole base, so it needs a
+                //     cross-building resource simulation rather than a per-room estimate -
+                //     0 until that exists, which is safer than a wrong per-unit guess.
+                // Any always-on flat productivity lives in a separate base-skill slot,
+                // captured by the `efficiency > 0` branch above.
                 else if prefix.contains("_bd") {
                     BuffResolutionStrategy::Complex { estimated_pct: 0.0 }
                 }
@@ -770,13 +871,24 @@ pub fn build_registry(
                         base_pct: 0.0,
                     }
                 }
+                // Drone-recovery power skill scaling with max Drone capacity (Greyy the
+                // Lightningbearer's "+1% per 10 max Drone capacity, Max +25%"). The flat
+                // `power_rec_spd` variants are already caught by `efficiency > 0`; this is the
+                // capacity-scaled kind (efficiency 0) - value it at its stated cap so a dedicated
+                // power operator ranks among the drone specialists instead of at its per-unit %.
+                else if buff.room_type == "POWER" && buff.description.contains("Drone recovery") {
+                    let value = parse_last_pct(&buff.description)
+                        .or_else(|| parse_first_pct(&buff.description))
+                        .unwrap_or(0.0);
+                    BuffResolutionStrategy::DirectEfficiency { value }
+                }
                 // Fallback
                 else {
                     let est = parse_first_pct(&buff.description).unwrap_or(15.0);
                     BuffResolutionStrategy::Complex { estimated_pct: est }
                 }
             }
-            _ => BuffResolutionStrategy::CapacityOnly,
+            _ => BuffResolutionStrategy::CapacityOnly { order_limit: 0 },
         };
 
         let mut drain = 0.0;
@@ -851,7 +963,12 @@ fn order_value_estimate(desc: &str) -> Option<(f64, bool)> {
     } else if desc.contains("Pure Gold") && desc.contains("traded <@cc.vup>") {
         Some((55.0, true)) // Proviso payoff: +2 Pure Gold per defaulted order
     } else if desc.contains("Precious Metal") || desc.contains("higher-yield") {
-        Some((10.0, false)) // higher-yield order chance (Tailoring etc.)
+        // Higher-yield order chance (Tailoring etc.). The E0/E1 tier reads "increased
+        // slightly"; the promoted (E2) tier drops "slightly" for a stronger shift. Value them
+        // apart so an E2 trader (e.g. Bibeak's [010]) outranks the un-promoted "slightly" tier
+        // of the same kind of trader (e.g. an E1 Kafka's [001]), while two E2 traders tie.
+        let pct = if desc.contains("slightly") { 5.0 } else { 10.0 };
+        Some((pct, false))
     } else if desc.contains("Pure Gold") || desc.contains("Defaulted trade") {
         Some((0.0, true)) // enabler with no direct payoff (Proviso "Contract Law")
     } else {
@@ -915,9 +1032,39 @@ fn parse_first_float(desc: &str) -> Option<f64> {
         .and_then(|c| c[1].parse().ok())
 }
 
-/// Extract tag keyword like "Knight" from <@cc.kw>Knight</>
+/// Base-wide morale recovery from a Control-Center buff. Prefers the figure tied to "Morale"
+/// (e.g. "recover <@cc.vup>+0.05</> Morale per hour"); a buff whose only `<@cc.vup>` number is
+/// a perception-RESOURCE generation (it mentions a `<$cc.bd_…>` resource like Worldly Plight)
+/// recovers no morale at all - that economy is valued separately, not as base-wide morale.
+/// Otherwise falls back to the first `<@cc.vup>` figure (buffs phrased without "Morale" nearby).
+fn parse_morale_recovery(desc: &str) -> Option<f64> {
+    if let Some(c) = RE_MORALE_RECOVERY.captures(desc) {
+        return c[1].parse().ok();
+    }
+    if desc.contains("<$cc.bd_") {
+        return Some(0.0);
+    }
+    parse_first_float(desc)
+}
+
+/// Extract the faction/tag token from a `<@cc.kw>…</>` keyword, normalised to match an
+/// operator's faction tag (`nation_id`/`group_id`/`team_id`). A dotted acronym like "L.G.D."
+/// collapses to its letters ("lgd"), which is how the L.G.D. group is tagged - a plain word
+/// match would otherwise drop it and the conditional buff would be credited unconditionally.
+/// Anything else takes its leading word ("Blacksteel Worldwide" -> "blacksteel", "Kjerag" ->
+/// "kjerag"), matching the existing behaviour.
 fn parse_tag_keyword(desc: &str) -> Option<String> {
-    RE_TAG_KEYWORD.captures(desc).map(|c| c[1].to_lowercase())
+    let kw = RE_TAG_KEYWORD.captures(desc)?.get(1)?.as_str();
+    if kw.contains('.') && kw.chars().all(|c| c.is_ascii_alphabetic() || c == '.') {
+        let collapsed: String =
+            kw.chars().filter(char::is_ascii_alphabetic).map(|c| c.to_ascii_lowercase()).collect();
+        if !collapsed.is_empty() {
+            return Some(collapsed);
+        }
+    }
+    let first: String =
+        kw.chars().take_while(char::is_ascii_alphanumeric).map(|c| c.to_ascii_lowercase()).collect();
+    (!first.is_empty()).then_some(first)
 }
 
 /// Extract the last percentage in description (for cap values)
