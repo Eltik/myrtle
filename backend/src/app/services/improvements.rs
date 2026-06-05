@@ -29,7 +29,7 @@ use crate::core::grade::base::types::{
 use crate::core::grade::grade_operators::{
     UpgradeDelta, operator_upgrade_deltas, rarity_to_weight, total_roster_weight,
 };
-use crate::core::grade::stages::SYNC_GRACE_SECONDS;
+use crate::core::grade::stages::event_is_gradeable;
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::{
     building as building_queries, medals as medal_queries, roguelike as roguelike_queries,
@@ -463,15 +463,8 @@ async fn build_stage_improvements(
         })
     };
 
-    let event_in_window = |e: &EventEntry| -> bool {
-        if !known.contains(&e.stage_id) {
-            return false;
-        }
-        match (e.start_time, last_synced_ts) {
-            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
-            _ => true,
-        }
-    };
+    let event_in_window =
+        |e: &EventEntry| -> bool { event_is_gradeable(e, now, last_synced_ts, Some(&known)) };
 
     let mut permanent = StagePoolImprovements::default();
     for entry in &universe.permanent {

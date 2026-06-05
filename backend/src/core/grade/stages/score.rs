@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::core::gamedata::types::GameData;
 use crate::database::queries::stages::{get_known_stage_ids_for_server, get_user_stage_clears};
 
-use super::event::{SYNC_GRACE_SECONDS, score_event_pool};
+use super::event::{event_is_gradeable, score_event_pool};
 use super::permanent::score_permanent_pool;
 
 const PERMANENT_POOL_WEIGHT: f64 = 0.70;
@@ -88,13 +88,7 @@ pub async fn grade_stages_detail(
         .count();
 
     let event_in_window = |e: &crate::core::gamedata::types::stage_universe::EventEntry| -> bool {
-        if !in_known(&e.stage_id) {
-            return false;
-        }
-        match (e.start_time, last_synced_ts) {
-            (Some(start), Some(sync)) => start <= sync + SYNC_GRACE_SECONDS,
-            _ => true,
-        }
+        event_is_gradeable(e, now, last_synced_ts, allowed)
     };
 
     let event_total = universe.event.iter().filter(|e| event_in_window(e)).count();
