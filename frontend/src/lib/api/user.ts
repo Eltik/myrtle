@@ -135,6 +135,43 @@ export function userInventoryQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
+/** One encountered enemy. Handbook fields are null when the synced id isn't
+ *  present in the static `enemy_handbook_table` (e.g. an unreleased variant). */
+export interface IEncounteredEnemy {
+    enemyId: string;
+    name: string | null;
+    enemyIndex: string | null;
+    sortId: number | null;
+}
+
+export interface IEncounteredEnemies {
+    encounteredCount: number;
+    handbookTotal: number;
+    enemies: IEncounteredEnemy[];
+}
+
+export const getUserEncounteredEnemiesFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/encountered-enemies?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        if (!res.ok) {
+            // 403 = private profile, 404 = no such user - treat both as "unavailable".
+            if (res.status === 404 || res.status === 403) return null;
+            throw new Error(`Failed to load encountered enemies: ${res.status}`);
+        }
+        return (await res.json()) as IEncounteredEnemies;
+    });
+
+export function userEncounteredEnemiesQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "encountered-enemies", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserEncounteredEnemiesFn({ data: { uid, bearerToken } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
 export const getUserScoreFn = createServerFn({ method: "GET" })
     .inputValidator((uid: string) => uid)
     .handler(async ({ data: uid }) => {

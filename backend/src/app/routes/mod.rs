@@ -13,6 +13,7 @@ pub fn ok_status() -> Json<serde_json::Value> {
 pub mod assets;
 pub mod auth;
 pub mod dps;
+pub mod enemies;
 pub mod gacha;
 pub mod health;
 pub mod improvements;
@@ -68,6 +69,10 @@ pub fn router() -> Router<AppState> {
         .route("/roster", get(roster::get_roster))
         .route("/roster/{operator_id}", get(roster::get_operator))
         .route("/stage-clears", get(stages::get_stage_clears))
+        .route(
+            "/encountered-enemies",
+            get(enemies::get_encountered_enemies),
+        )
         .route(
             "/user/improvements",
             get(improvements::get_user_improvements),
