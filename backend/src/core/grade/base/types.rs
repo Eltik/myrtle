@@ -245,6 +245,9 @@ pub struct EvalContext<'a> {
     pub total_dorm_levels: i32,
     /// Other operators in the same room (borrowed to avoid per-evaluation clones).
     pub room_teammates: Vec<&'a TeammateInfo>,
+    /// The evaluating operator's OWN order/capacity-limit contribution, so a self-counting
+    /// scaler (Vermeil) can include it on top of `room_teammates`'.
+    pub self_order_limit: i32,
 }
 
 #[derive(Clone)]

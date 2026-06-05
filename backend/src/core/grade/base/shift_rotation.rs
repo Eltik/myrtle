@@ -21,7 +21,8 @@ use crate::core::gamedata::types::building::BuildingDataFile;
 use super::{
     assignment::compute_optimal_assignment,
     buff_registry::BuffResolutionStrategy,
-    types::{BaseAssignment, OperatorBaseProfile, UserBuilding},
+    evaluate::evaluate_buff,
+    types::{BaseAssignment, EvalContext, OperatorBaseProfile, UserBuilding},
     util::{is_production_room, max_stationed_at_level},
 };
 
@@ -77,17 +78,6 @@ fn group_key(room_type: &str, formula: Option<&str>) -> String {
     }
 }
 
-/// Operators staffing the production rooms of `assignment` (used to exclude a
-/// deployment's crews when forming the reserve teams).
-fn production_operators(assignment: &BaseAssignment) -> Vec<String> {
-    assignment
-        .rooms
-        .iter()
-        .filter(|r| is_production_room(&r.room_type))
-        .flat_map(|r| r.operators.iter().cloned())
-        .collect()
-}
-
 /// Build the recommended rotation for the player's base, pairing each shift's
 /// recommended crews with their saved presets.
 pub fn recommend_shift_rotation(
@@ -98,11 +88,17 @@ pub fn recommend_shift_rotation(
     morale_drains: &HashMap<String, f64>,
 ) -> ShiftRotation {
     // Best deployment, then the best reserve deployment from the operators it didn't
-    // use - together these give enough teams to rotate.
+    // use - together these give enough teams to rotate. The reserve excludes EVERY operator
+    // the primary stations (production AND the Control Center), so the reserve's Control-Center
+    // crew is a genuinely different off-team that lets the primary CC operators actually rest -
+    // not the same faces re-picked.
     let primary =
         compute_optimal_assignment(operators, building, building_data, registry, morale_drains);
-    let used: std::collections::HashSet<String> =
-        production_operators(&primary).into_iter().collect();
+    let used: std::collections::HashSet<String> = primary
+        .rooms
+        .iter()
+        .flat_map(|r| r.operators.iter().cloned())
+        .collect();
     let reserve_pool: Vec<OperatorBaseProfile> = operators
         .iter()
         .filter(|op| !used.contains(&op.char_id))
@@ -132,19 +128,64 @@ pub fn recommend_shift_rotation(
             .unwrap_or_default()
     };
 
-    // Control Center and Power plants, taken from the best deployment.
-    let cc_ops: Vec<(String, Vec<String>)> = primary
+    // Control Center: the best crew from the primary deployment, plus an OFF-SHIFT backup
+    // crew from the reserve deployment so the Center keeps running while the main team rests
+    // (mirrors how production rotates) instead of going dark a shift.
+    let cc_main: Vec<(String, Vec<String>)> = primary
         .rooms
         .iter()
         .filter(|r| r.room_type == "CONTROL")
         .map(|r| (r.slot_id.clone(), r.operators.clone()))
         .collect();
-    // slot_id -> per-shift fresh power crews.
-    let power_plan = build_power_plan(operators, building, building_data, &primary);
+    let cc_backup: Vec<Vec<String>> = reserve
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "CONTROL")
+        .map(|r| r.operators.clone())
+        .collect();
+
+    // Auxiliary facilities (HR Office, Reception Room): a rotating main + off-team, like the
+    // production rooms and Control Center. The main crew comes from the best deployment and the
+    // off-team from the reserve deployment (different operators, so the main actually rests),
+    // matched by slot. With no reserve crew the room just rests its shift (the old behaviour).
+    let aux_main: Vec<(String, String, Vec<String>)> = primary
+        .rooms
+        .iter()
+        .filter(|r| matches!(r.room_type.as_str(), "HIRE" | "MEETING"))
+        .map(|r| (r.slot_id.clone(), r.room_type.clone(), r.operators.clone()))
+        .collect();
+    let aux_backup: HashMap<String, Vec<String>> = reserve
+        .rooms
+        .iter()
+        .filter(|r| matches!(r.room_type.as_str(), "HIRE" | "MEETING"))
+        .map(|r| (r.slot_id.clone(), r.operators.clone()))
+        .collect();
+
+    // Power plants: the best stable crew per plant.
+    let facility_counts: HashMap<String, usize> =
+        building.rooms.iter().fold(HashMap::new(), |mut m, r| {
+            *m.entry(r.room_type.clone()).or_insert(0) += 1;
+            m
+        });
+    let power_plan = build_power_plan(
+        operators,
+        building,
+        building_data,
+        registry,
+        &facility_counts,
+        &primary,
+    );
 
     let mut shifts = Vec::with_capacity(SHIFT_COUNT);
     for k in 0..SHIFT_COUNT {
         let mut rooms = Vec::new();
+        // The Control Center rests its main on the MIDDLE shift (work / off / work) so its
+        // operators never sit through two shifts back-to-back - they were staying in too long.
+        // Power plants rest their main on the last shift, staggering the weaker off-teams onto
+        // different shifts from the Control Center's.
+        let cc_off = k == SHIFT_COUNT / 2;
+        let aux_off = k == SHIFT_COUNT / 2;
+        let power_off = k == SHIFT_COUNT - 1;
 
         // Production rooms: rotate the three teams so each rests one shift.
         for group in &groups {
@@ -161,28 +202,56 @@ pub fn recommend_shift_rotation(
             }
         }
 
-        // Power plants: a fresh crew every shift so the operators actually rest.
-        for (slot, shift_crews) in &power_plan {
+        // Power plants: the strongest specialist two shifts, then its off-team covers the third.
+        for plant in &power_plan {
+            let crew = if power_off && !plant.backup.is_empty() { &plant.backup } else { &plant.main };
             rooms.push(ShiftRoom {
-                slot_id: slot.clone(),
+                slot_id: plant.slot_id.clone(),
                 room_type: "POWER".to_string(),
                 formula_type: None,
-                recommended: shift_crews.get(k).cloned().unwrap_or_default(),
-                current: preset_for(slot, k),
+                recommended: crew.clone(),
+                current: preset_for(&plant.slot_id, k),
                 active: true,
             });
         }
 
-        // Control Center: two shifts on, one off (the last shift rests it).
-        let cc_active = k != SHIFT_COUNT - 1;
-        for (slot, ops) in &cc_ops {
+        // Auxiliary facilities (Office, Reception): main crew two shifts, then the off-team
+        // covers the rest shift (rests on the MIDDLE shift, like the Control Center, so its
+        // operators never sit two shifts back-to-back). With no reserve crew the room rests dark.
+        for (slot, room_type, main) in &aux_main {
+            let backup = aux_backup.get(slot).filter(|b| !b.is_empty());
+            let (team, active) = match (aux_off, backup) {
+                (true, Some(b)) => (b.clone(), true),
+                (true, None) => (main.clone(), false),
+                (false, _) => (main.clone(), true),
+            };
+            rooms.push(ShiftRoom {
+                slot_id: slot.clone(),
+                room_type: room_type.clone(),
+                formula_type: None,
+                recommended: team,
+                current: preset_for(slot, k),
+                active,
+            });
+        }
+
+        // Control Center: main crew two shifts, then the backup off-team covers the rest shift
+        // so the global buff never drops. With no reserve crew (small roster) the room genuinely
+        // has no off-team, so it rests that shift (active = false), the old behaviour.
+        for (i, (slot, main)) in cc_main.iter().enumerate() {
+            let backup = cc_backup.get(i).filter(|b| !b.is_empty());
+            let (team, active) = match (cc_off, backup) {
+                (true, Some(b)) => (b.clone(), true),
+                (true, None) => (main.clone(), false),
+                (false, _) => (main.clone(), true),
+            };
             rooms.push(ShiftRoom {
                 slot_id: slot.clone(),
                 room_type: "CONTROL".to_string(),
                 formula_type: None,
-                recommended: ops.clone(),
+                recommended: team,
                 current: preset_for(slot, k),
-                active: cc_active,
+                active,
             });
         }
 
@@ -270,18 +339,65 @@ fn has_power_skill(op: &OperatorBaseProfile, building_data: &BuildingDataFile) -
         .any(|b| building_data.buffs.get(b).is_some_and(|buff| buff.room_type == "POWER"))
 }
 
-/// Power plants generate power regardless of who staffs them, so the optimizer doesn't
-/// pick their crews. Fill them with the leftover POWER SPECIALISTS (operators with a
-/// power base skill that aren't already staffing a production room or the Control
-/// Center), giving each plant a fresh crew every shift so they share the load and rest.
-/// Operators with no power skill are left out entirely - parking them here would do
-/// nothing but drain their morale. Returns each plant's per-shift crews in shift order.
+/// Rough strength of an operator's POWER base skill, for ranking who staffs the plants:
+/// the largest value any of its power buffs resolves to (drone recovery, power output,
+/// etc.). Promoted skills resolve higher, so an E2 power specialist outranks an E0 one.
+fn power_value(
+    op: &OperatorBaseProfile,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    facility_counts: &HashMap<String, usize>,
+) -> f64 {
+    let ctx = EvalContext {
+        facility_counts,
+        total_dorm_levels: 0,
+        room_teammates: Vec::new(),
+        self_order_limit: 0,
+    };
+    op.available_buffs
+        .iter()
+        .filter(|b| building_data.buffs.get(*b).is_some_and(|buff| buff.room_type == "POWER"))
+        .filter_map(|b| registry.get(b))
+        .map(|s| match s {
+            // A facility-count enabler (Greyy the Lightningbearer E2) earns no drone output, but
+            // it must be STATIONED in a power plant for its "+1 Power Plant" to fire and power the
+            // automation factories - so rank it highly here, above ordinary drone operators.
+            BuffResolutionStrategy::FacilityCountModifier { target_room, amount }
+                if target_room == "POWER" =>
+            {
+                f64::from(*amount) * 30.0
+            }
+            other => evaluate_buff(other, &ctx),
+        })
+        .fold(0.0, f64::max)
+}
+
+/// A power plant's main crew plus an off-team that covers its rest shift.
+struct PowerPlant {
+    slot_id: String,
+    /// Best specialist(s), stationed two of the three shifts.
+    main: Vec<String>,
+    /// Next-best specialist(s), covering the shift the main rests (empty if the roster has no
+    /// spare power operator, in which case the main simply stays on).
+    backup: Vec<String>,
+}
+
+/// Power plants generate electricity regardless of who staffs them, so the optimizer
+/// doesn't pick their crews. Staff each plant with the BEST leftover power specialists
+/// (operators carrying a power base skill that aren't already in a production room or the
+/// Control Center), ranked by power-skill strength so the strongest drone/power operators
+/// go in - not whoever happens to be first in the roster. Each plant also gets an OFF-TEAM
+/// (the next-best specialist) that covers the shift its main rests, so the plant rotates a
+/// stable two-operator pair rather than churning through nine random picks. Operators with no
+/// power skill are left out entirely - parking them here would do nothing but drain morale.
 fn build_power_plan(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
     building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    facility_counts: &HashMap<String, usize>,
     primary: &BaseAssignment,
-) -> Vec<(String, Vec<Vec<String>>)> {
+) -> Vec<PowerPlant> {
     let power_rooms: Vec<&super::types::UserRoom> = building
         .rooms
         .iter()
@@ -297,26 +413,30 @@ fn build_power_plan(
         .filter(|r| is_production_room(&r.room_type) || r.room_type == "CONTROL")
         .flat_map(|r| r.operators.iter().map(String::as_str))
         .collect();
-    let mut leftovers = operators
+    let mut ranked: Vec<(String, f64)> = operators
         .iter()
         .filter(|op| !used.contains(op.char_id.as_str()))
         .filter(|op| has_power_skill(op, building_data))
-        .map(|op| op.char_id.clone());
-
-    // Hand out a fresh crew per plant per shift, sequentially from the leftover pool.
-    let mut plan: Vec<(String, Vec<Vec<String>>)> = power_rooms
-        .iter()
-        .map(|r| (r.slot_id.clone(), vec![Vec::new(); SHIFT_COUNT]))
+        .map(|op| (op.char_id.clone(), power_value(op, building_data, registry, facility_counts)))
         .collect();
-    for shift in 0..SHIFT_COUNT {
-        for (i, room) in power_rooms.iter().enumerate() {
-            let slots = max_stationed_at_level(building_data, "POWER", room.level).max(1) as usize;
-            for _ in 0..slots {
-                if let Some(op) = leftovers.next() {
-                    plan[i].1[shift].push(op);
-                }
-            }
-        }
-    }
-    plan
+    ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+    let mut best = ranked.into_iter().map(|(id, _)| id);
+
+    let slots: Vec<usize> = power_rooms
+        .iter()
+        .map(|r| max_stationed_at_level(building_data, "POWER", r.level).max(1) as usize)
+        .collect();
+    // Hand every plant its main crew FIRST (so the strongest operators are the ones actually
+    // working most), then a second pass fills each plant's off-team from what remains.
+    let mut mains: Vec<Vec<String>> = slots.iter().map(|n| (0..*n).filter_map(|_| best.next()).collect()).collect();
+    let backups: Vec<Vec<String>> = slots.iter().map(|n| (0..*n).filter_map(|_| best.next()).collect()).collect();
+    power_rooms
+        .iter()
+        .enumerate()
+        .map(|(i, r)| PowerPlant {
+            slot_id: r.slot_id.clone(),
+            main: std::mem::take(&mut mains[i]),
+            backup: backups[i].clone(),
+        })
+        .collect()
 }

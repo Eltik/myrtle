@@ -39,10 +39,61 @@ pub fn compute_optimal_assignment(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
 ) -> BaseAssignment {
-    let facility_counts = count_facilities(building);
-    let total_dorm_levels = building.total_dorm_levels();
+    compute_optimal_assignment_with_pins(
+        operators,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+        &[],
+    )
+}
 
-    let assigned: HashSet<String> = HashSet::new();
+/// As `compute_optimal_assignment`, but with a set of `(char_id, room_type)` PINS - operators
+/// the plan must station in a specific room and reserve from everything else. This is how the
+/// base-wide resource economy (perception) wires into the real optimizer rather than living in
+/// a side panel: its support generators (Mulberry -> Office, the dorm generators, Ling/Dusk ->
+/// Control Center) and its morale-swap manager (Fiammetta -> dormitory) are reserved so
+/// production and the rest of the Control Center are optimized AROUND them (never double-booking
+/// an operator), and the rooms they occupy are surfaced in the plan. Empty pins reproduces the
+/// plain optimum exactly, so non-243 / no-economy bases are unaffected.
+pub fn compute_optimal_assignment_with_pins(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+) -> BaseAssignment {
+    optimal_inner(operators, building, building_data, registry, morale_drains, pins, false)
+}
+
+/// The shared optimizer body. `cap_aware` switches production-team scoring to the SUSTAINED
+/// objective (factory product-buffer stall during AFK), so a high-capacity team is preferred
+/// where it out-produces a denser team over a long unattended stretch; `false` is the plain
+/// peak objective used everywhere else.
+#[allow(clippy::too_many_arguments)]
+fn optimal_inner(
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+    cap_aware: bool,
+) -> BaseAssignment {
+    let facility_counts = effective_facility_counts(building, operators, registry);
+    let total_dorm_levels = building.total_dorm_levels();
+    let op_index = build_op_index(operators);
+
+    // Reserve every pinned operator up front so neither production nor Control-Center padding
+    // can claim one - the economy needs them where perception placed them.
+    let pinned_ids: HashSet<String> = pins
+        .iter()
+        .filter(|(id, _)| op_index.contains_key(id.as_str()))
+        .map(|(id, _)| id.clone())
+        .collect();
+    let assigned: HashSet<String> = pinned_ids.clone();
 
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
     // Only staff the Control Center if one is actually built - otherwise we'd
@@ -52,12 +103,19 @@ pub fn compute_optimal_assignment(
     } else {
         0
     };
+    // Control-Center pins (Ling/Dusk) are forced into the CC, so leave their seats out of the
+    // bonus-greedy selection and prepend them afterwards.
+    let cc_pins: Vec<String> = pins
+        .iter()
+        .filter(|(id, rt)| rt == "CONTROL" && pinned_ids.contains(id))
+        .map(|(id, _)| id.clone())
+        .collect();
+    let bonus_slots = (control_slots - cc_pins.len() as i32).max(0);
     let production_rooms: Vec<&UserRoom> = building
         .rooms
         .iter()
         .filter(|r| is_production_room(&r.room_type))
         .collect();
-    let op_index = build_op_index(operators);
 
     // Assign the Control Center, then production. If a CC operator turns out to be
     // dead weight - its only effect is a conditional the optimized teams never
@@ -69,7 +127,7 @@ pub fn compute_optimal_assignment(
         let (mut cc_room, global_bonuses, cc_conditions) = assign_control_center(
             operators,
             control_room,
-            control_slots,
+            bonus_slots,
             registry,
             building_data,
             &exclude_cc,
@@ -82,7 +140,7 @@ pub fn compute_optimal_assignment(
         // unlike a benchwarmer they lift every working operator's sustain.
         reserve_cc_morale_seats(
             &mut cc_room,
-            control_slots,
+            bonus_slots,
             operators,
             &mut assigned,
             registry,
@@ -99,6 +157,7 @@ pub fn compute_optimal_assignment(
             &global_bonuses,
             &cc_conditions,
             morale_drains,
+            cap_aware,
         );
         let newly_dead: Vec<String> = cc_room
             .operators
@@ -127,9 +186,17 @@ pub fn compute_optimal_assignment(
     let mut rooms = room_assignments;
     // Surface the Control Center so its operators (and the global bonuses they
     // provide to every production room) are visible in the recommendation.
+    let mut cc_room = cc_room;
+    // Force perception's Control-Center generators (Ling/Dusk) into the CC: their payoff is the
+    // resource economy they feed, not a CC production bonus, so the bonus-greedy selector skips
+    // them. They are already reserved, so prepend them and top up any remaining seats.
+    for id in cc_pins.iter().rev() {
+        if !cc_room.operators.contains(id) {
+            cc_room.operators.insert(0, id.clone());
+        }
+    }
     // Fill any remaining CC slots with leftover operators - production has
     // already claimed everyone it benefits from, so these are true spares.
-    let mut cc_room = cc_room;
     fill_remaining_slots(
         &mut cc_room.operators,
         control_slots,
@@ -142,9 +209,130 @@ pub fn compute_optimal_assignment(
         rooms.insert(0, cc);
     }
 
+    // Surface the support generators and morale-swap manager in the rooms they occupy (Office,
+    // dormitories) so the plan shows the full staffing the economy needs, not just the
+    // production rooms its pool boosts. These rooms carry no production efficiency (their value
+    // is already credited to the consumers they power), so they don't change the yield math.
+    append_support_rooms(&mut rooms, pins, &pinned_ids, building, building_data);
+
+    // Staff the auxiliary facilities (HR Office, Reception Room) with the best leftover
+    // operators, so they aren't left empty in the plan.
+    assign_auxiliary_rooms(&mut rooms, building, building_data, operators, registry, &mut assigned);
+
     BaseAssignment {
         rooms,
         total_production_efficiency,
+    }
+}
+
+/// An operator's strength in a non-production facility (HR Office, Reception Room): the largest
+/// value any of its base skills for that room resolves to (HR contacting speed, reception
+/// clue/credit rate). Zero if it has no skill for the room.
+fn aux_room_value(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    op.available_buffs
+        .iter()
+        .filter(|b| building_data.buffs.get(*b).is_some_and(|buff| buff.room_type == room_type))
+        .filter_map(|b| match registry.get(b) {
+            Some(BuffResolutionStrategy::NonProduction { value }) => Some(*value),
+            _ => None,
+        })
+        .fold(0.0, f64::max)
+}
+
+/// Fill the auxiliary facilities (HR Office, Reception Room) with the best AVAILABLE operators -
+/// the optimizer otherwise only staffs production and the Control Center, leaving these empty.
+/// Operators are ranked by their room base-skill strength and reserved so the rest of the plan
+/// doesn't double-book them; a room already staffed (e.g. an Office held by a perception support
+/// generator) is left alone.
+fn assign_auxiliary_rooms(
+    rooms: &mut Vec<RoomAssignment>,
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    assigned: &mut HashSet<String>,
+) {
+    for room_type in ["HIRE", "MEETING"] {
+        for room in building.rooms.iter().filter(|r| r.room_type == room_type) {
+            if rooms.iter().any(|r| r.slot_id == room.slot_id) {
+                continue; // already staffed (e.g. by a perception pin)
+            }
+            let cap = max_stationed_at_level(building_data, room_type, room.level).max(0) as usize;
+            if cap == 0 {
+                continue;
+            }
+            let mut ranked: Vec<(&str, f64)> = operators
+                .iter()
+                .filter(|op| !assigned.contains(&op.char_id))
+                .map(|op| (op.char_id.as_str(), aux_room_value(op, room_type, registry, building_data)))
+                .filter(|(_, v)| *v > 0.0)
+                .collect();
+            ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+            let crew: Vec<String> = ranked.iter().take(cap).map(|(id, _)| (*id).to_string()).collect();
+            if crew.is_empty() {
+                continue;
+            }
+            let eff: f64 = ranked.iter().take(cap).map(|(_, v)| *v).sum();
+            for id in &crew {
+                assigned.insert(id.clone());
+            }
+            rooms.push(RoomAssignment {
+                slot_id: room.slot_id.clone(),
+                room_type: room_type.to_string(),
+                level: room.level,
+                formula_type: None,
+                operators: crew,
+                total_efficiency: eff,
+                order_value: 0.0,
+                locked: false,
+            });
+        }
+    }
+}
+
+/// Append a room per non-production, non-Control-Center pin group (Office, dormitories),
+/// distributing the pinned operators across that type's actual rooms up to each room's capacity.
+fn append_support_rooms(
+    rooms: &mut Vec<RoomAssignment>,
+    pins: &[(String, String)],
+    pinned_ids: &HashSet<String>,
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+) {
+    let mut by_type: Vec<(&str, Vec<String>)> = Vec::new();
+    for (id, rt) in pins {
+        if rt == "CONTROL" || is_production_room(rt) || !pinned_ids.contains(id) {
+            continue;
+        }
+        match by_type.iter_mut().find(|(t, _)| *t == rt.as_str()) {
+            Some((_, ops)) => ops.push(id.clone()),
+            None => by_type.push((rt.as_str(), vec![id.clone()])),
+        }
+    }
+    for (room_type, ops) in by_type {
+        let mut ops = ops.into_iter();
+        for room in building.rooms.iter().filter(|r| r.room_type == room_type) {
+            let cap = max_stationed_at_level(building_data, room_type, room.level).max(0) as usize;
+            let members: Vec<String> = ops.by_ref().take(cap).collect();
+            if members.is_empty() {
+                continue;
+            }
+            rooms.push(RoomAssignment {
+                slot_id: room.slot_id.clone(),
+                room_type: room_type.to_string(),
+                level: room.level,
+                formula_type: None,
+                operators: members,
+                total_efficiency: 0.0,
+                order_value: 0.0,
+                locked: false,
+            });
+        }
     }
 }
 
@@ -362,6 +550,8 @@ pub fn sustained_efficiency_of(
     operators: &[OperatorBaseProfile],
     morale_drains: &HashMap<String, f64>,
     recovery: f64,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
 ) -> f64 {
     let op_index = build_op_index(operators);
     main.rooms
@@ -371,8 +561,21 @@ pub fn sustained_efficiency_of(
             // A locked synergy team can't be staggered, so a resting member's gap is
             // uncovered; a flexible room recovers `BACKUP_COVERAGE` of it.
             let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
-            r.total_efficiency
-                * room_sustain_factor(&r.operators, &op_index, morale_drains, recovery, coverage)
+            let rotation =
+                room_sustain_factor(&r.operators, &op_index, morale_drains, recovery, coverage);
+            // AFK product-buffer stall: a gold factory that overflows its buffer loses the excess,
+            // so its sustained output is throttled unless its team carries enough capacity.
+            let cap = team_capacity_bonus(
+                &r.operators,
+                &r.room_type,
+                r.formula_type.as_deref(),
+                &op_index,
+                registry,
+                building_data,
+            );
+            let cap_factor =
+                factory_cap_factor(r.formula_type.as_deref(), r.level, r.total_efficiency, cap);
+            r.total_efficiency * rotation * cap_factor
         })
         .sum()
 }
@@ -384,11 +587,11 @@ pub fn compute_sustained_assignment(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
 ) -> RotationAssignment {
-    // The main staffing is the peak arrangement - in a staggered rotation your
-    // best operators work almost all the time.
-    let main =
-        compute_optimal_assignment(operators, building, building_data, registry, morale_drains);
-    let facility_counts = count_facilities(building);
+    // The main staffing for the SUSTAINED view uses the cap-aware objective, so factories that
+    // keep producing through long AFK (high product-buffer capacity, e.g. Vermeil teams) are
+    // preferred over denser teams that would overflow and stall.
+    let main = optimal_inner(operators, building, building_data, registry, morale_drains, &[], true);
+    let facility_counts = effective_facility_counts(building, operators, registry);
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
     // Dormitories set the base recovery rate; a morale operator in the Control Center
@@ -400,7 +603,7 @@ pub fn compute_sustained_assignment(
     // well its team holds up under rotation (low morale drain / low-level dorms ->
     // further below peak).
     let mut sustained_efficiency =
-        sustained_efficiency_of(&main, operators, morale_drains, recovery);
+        sustained_efficiency_of(&main, operators, morale_drains, recovery, registry, building_data);
 
     // Dorm-capacity throttle: a base can only rest as many operators at once as its
     // dormitories hold. If more than that need to rest, the rotation falls behind and
@@ -613,7 +816,7 @@ pub fn compute_current_assignment(
     morale_drains: &HashMap<String, f64>,
     shift: Option<usize>,
 ) -> BaseAssignment {
-    let facility_counts = count_facilities(building);
+    let facility_counts = effective_facility_counts(building, operators, registry);
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
 
@@ -713,6 +916,35 @@ fn count_facilities(building: &UserBuilding) -> HashMap<String, usize> {
         *facility_counts.entry(room.room_type.clone()).or_insert(0) += 1;
     }
     facility_counts
+}
+
+/// The building's facility counts WITH any enabler bonuses the roster can field (Greyy the
+/// Lightningbearer E2 "+1 Power Plant", Eunectes E2 "+2"): each distinct enabler buff family
+/// contributes its amount once (the in-game gate is self-exclusive, so duplicate copies don't
+/// stack), assuming it is stationed where it fires - optimal whenever the base runs the
+/// per-facility automation it powers. Automation scalers (Weedy/Eunectes/Pudding) then score
+/// against the boosted count, so those combos are correctly valued; bases without such operators
+/// are unaffected (nothing reads the extra count).
+fn effective_facility_counts(
+    building: &UserBuilding,
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> HashMap<String, usize> {
+    let mut counts = count_facilities(building);
+    let mut seen_families: HashSet<&str> = HashSet::new();
+    for op in operators {
+        for buff_id in &op.available_buffs {
+            if let Some(BuffResolutionStrategy::FacilityCountModifier { target_room, amount }) =
+                registry.get(buff_id)
+            {
+                let family = buff_id.split('[').next().unwrap_or(buff_id);
+                if *amount > 0 && seen_families.insert(family) {
+                    *counts.entry(target_room.clone()).or_insert(0) += *amount as usize;
+                }
+            }
+        }
+    }
+    counts
 }
 
 /// Max stationed for the user's highest-level room of `room_type` (e.g. their CC).
@@ -1163,6 +1395,7 @@ fn assign_production_rooms(
     global_bonuses: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
 ) -> Vec<RoomAssignment> {
     let factory_rooms: Vec<&&UserRoom> = rooms
         .iter()
@@ -1204,6 +1437,7 @@ fn assign_production_rooms(
                 global_bonuses,
                 cc_conditions,
                 morale_drains,
+                cap_aware,
             );
             trial_rooms.push(room_assignment);
         }
@@ -1222,6 +1456,7 @@ fn assign_production_rooms(
                 global_bonuses,
                 cc_conditions,
                 morale_drains,
+                cap_aware,
             );
             trial_rooms.push(room_assignment);
         }
@@ -1535,6 +1770,7 @@ fn assign_single_room(
     global_bonuses: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
 ) -> RoomAssignment {
     let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
     let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
@@ -1552,6 +1788,7 @@ fn assign_single_room(
         max_slots,
         cc_conditions,
         morale_drains,
+        cap_aware,
     );
 
     // Mode 2: automation (factories only) - a single op's facility-count buff
@@ -1789,6 +2026,7 @@ fn best_team_for_room(
     max_slots: i32,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
 ) -> (Vec<String>, f64, f64) {
     if max_slots <= 0 {
         return (Vec::new(), 0.0, 0.0);
@@ -1922,7 +2160,13 @@ fn best_team_for_room(
             morale_drains,
             cc_conditions,
         );
-        let score = room_search_score(&room.room_type, speed, value);
+        let mut score = room_search_score(&room.room_type, speed, value);
+        // Sustained objective: throttle a gold factory by its AFK buffer stall, so a high-capacity
+        // team (Vermeil) that keeps producing across long AFK beats a denser team that overflows.
+        if cap_aware {
+            let cap = team_capacity_bonus(&combo, &room.room_type, formula_type, &op_index, registry, building_data);
+            score *= factory_cap_factor(formula_type, room.level, speed, cap);
+        }
         if score > best_score {
             best_score = score;
             best_speed = speed;
@@ -2072,16 +2316,33 @@ fn optimistic_bound(
                 total += per_teammate_pct * teammates_assumed;
             }
             BuffResolutionStrategy::TeammateOutputMirroring { cap_pct, .. } => total += cap_pct,
-            // Degenbrecher-style "+25% per 5 order-limit from teammates": triggering
-            // it needs operators that ADD order limit, which trading posts almost
-            // never field, so it virtually never fires. Don't inflate the ranking
-            // bound with its cap - the real team scorer credits it only when met.
-            BuffResolutionStrategy::OrderLimitScaling { .. } => {}
+            // Bubble: optimistically assume every operator in the room (this one + teammates)
+            // clears the capacity threshold and earns the high tier.
+            BuffResolutionStrategy::CapacityTierScaling { high_pct, .. } => {
+                total += high_pct * (teammates_assumed + 1.0);
+            }
+            // Output scales with teammates that ADD order/capacity limit. TRADING posts almost
+            // never field those (Jaye/Degenbrecher virtually never fire there), so keep their
+            // bound at 0. FACTORIES, though, routinely stack capacity operators - this is
+            // Vermeil's whole comp - so credit an optimistic capacity-rich room there, otherwise
+            // she'd rank at zero and get cut before the real scorer ever tries her with the
+            // capacity teammates that make her strong.
+            BuffResolutionStrategy::OrderLimitScaling {
+                bonus_per_threshold,
+                per_cap_threshold,
+                cap_pct,
+                ..
+            } if room_type == "MANUFACTURE" => {
+                const ASSUMED_CAP: f64 = 20.0;
+                total +=
+                    ((ASSUMED_CAP / per_cap_threshold).floor() * bonus_per_threshold).min(*cap_pct);
+            }
             strategy @ BuffResolutionStrategy::FacilityCountScaling { .. } => {
                 let ctx = EvalContext {
                     facility_counts,
                     total_dorm_levels,
                     room_teammates: Vec::new(),
+                    self_order_limit: 0,
                 };
                 total += evaluate_buff(strategy, &ctx);
             }
@@ -2139,6 +2400,7 @@ fn score_operator_facility_only(
         facility_counts,
         total_dorm_levels,
         room_teammates: Vec::new(),
+        self_order_limit: 0,
     };
 
     let mut total = 0.0;
@@ -2218,6 +2480,9 @@ fn compute_order_limit(
                 order_limit,
                 ..
             } if present.contains(req) => total += order_limit,
+            // A pure capacity skill (Vermeil's "+8") feeds the room's order/capacity limit,
+            // which capacity-scaling operators convert into productivity.
+            BuffResolutionStrategy::CapacityOnly { order_limit } => total += order_limit,
             _ => {}
         }
     }
@@ -2345,6 +2610,7 @@ fn compute_team_efficiency(
             facility_counts,
             total_dorm_levels,
             room_teammates: others,
+            self_order_limit: teammates[i].order_limit_contribution,
         };
 
         let mut op_value: f64 = 0.0;
@@ -2405,6 +2671,40 @@ fn compute_team_efficiency(
     (speed, value)
 }
 
+/// Score an arbitrary team stationed in a production room with the same speed/value objective
+/// the room search uses - so a caller can tell whether a player's CURRENT team is already at
+/// least as good as a recommended one (and the plan needn't nag them to swap). `operators` is
+/// the full roster, needed to resolve in-room synergies (e.g. Dorothy's bonus to a Rhine
+/// teammate). Faction-gated Control-Center conditions are ignored - a small approximation that
+/// keeps this a pure team-vs-team comparison.
+#[allow(clippy::too_many_arguments)]
+pub fn team_value(
+    team: &[String],
+    room_type: &str,
+    formula_type: Option<&str>,
+    operators: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+) -> f64 {
+    let op_index = build_op_index(operators);
+    let facility_counts = effective_facility_counts(building, operators, registry);
+    let (speed, value) = compute_team_efficiency(
+        team,
+        room_type,
+        formula_type,
+        &op_index,
+        registry,
+        building_data,
+        &facility_counts,
+        building.total_dorm_levels(),
+        morale_drains,
+        &[],
+    );
+    room_search_score(room_type, speed, value)
+}
+
 /// The optimizer's per-room objective: a room's LMD-equivalent output, with order
 /// VALUE multiplying trading LMD (not adding to speed). Within a room the base
 /// rate is constant, so maximizing this multiplier maximizes the room's yield.
@@ -2415,6 +2715,66 @@ fn room_search_score(room_type: &str, speed_pct: f64, value_pct: f64) -> f64 {
     } else {
         speed_mult
     }
+}
+
+// ── Cap-aware sustained model (AFK product-buffer stall) ──────────────────────
+// A factory makes products into a fixed buffer; once full, it STOPS. A player who
+// leaves the base running and collects on a cadence loses everything a factory
+// makes past its buffer, so high-throughput / low-capacity factories stall and a
+// LARGE capacity (Vermeil's "+8" etc.) keeps a factory producing across long AFK.
+// Peak/active play never stalls (you collect as you go), so this only shapes the
+// SUSTAINED objective.
+/// Assumed days between product collections for the sustained metric - the buffer
+/// stalls a factory that overproduces within this window. Tunable; ~1.5 days is the
+/// "set it and check back" cadence where factory capacity starts to matter without
+/// over-penalising a normal base that collects more often.
+const SUSTAINED_AFK_DAYS: f64 = 1.5;
+/// Gold bars a Pure-Gold factory produces per day at +0% (mirrors `yield_model`'s base).
+const GOLD_PRODUCTS_PER_DAY_BASE: f64 = 20.0;
+
+/// A factory level's base product-buffer capacity (`OutputCapacity` in gamedata).
+const fn gold_base_capacity(level: i32) -> f64 {
+    match level {
+        1 => 24.0,
+        2 => 36.0,
+        _ => 54.0,
+    }
+}
+
+/// Fraction of a GOLD factory's peak output that survives the AFK buffer stall (<= 1.0): the
+/// buffer (base capacity + operators' capacity bonuses) caps how much it can make before
+/// stopping, so a factory whose peak production over `SUSTAINED_AFK_DAYS` exceeds its buffer is
+/// throttled to buffer/window. Capacity operators raise the buffer and lift this toward 1.0.
+/// Non-gold factories don't stall in realistic AFK (an EXP buffer dwarfs its card output), so
+/// they return 1.0.
+fn factory_cap_factor(formula: Option<&str>, level: i32, efficiency: f64, capacity_bonus: i32) -> f64 {
+    if formula != Some("F_GOLD") {
+        return 1.0;
+    }
+    let buffer = gold_base_capacity(level) + f64::from(capacity_bonus.max(0));
+    let peak_over_window =
+        GOLD_PRODUCTS_PER_DAY_BASE * (1.0 + efficiency / 100.0) * SUSTAINED_AFK_DAYS;
+    if peak_over_window <= 0.0 {
+        return 1.0;
+    }
+    (buffer / peak_over_window).min(1.0)
+}
+
+/// A team's total capacity-limit bonus in a room (sum of its operators' order/capacity-limit
+/// contributions) - the buffer headroom it adds for the cap-aware sustained model.
+fn team_capacity_bonus(
+    team: &[String],
+    room_type: &str,
+    formula_type: Option<&str>,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> i32 {
+    let present: HashSet<String> = team.iter().cloned().collect();
+    team.iter()
+        .filter_map(|id| op_index.get(id.as_str()).copied())
+        .map(|op| compute_order_limit(op, room_type, formula_type, registry, building_data, &present))
+        .sum()
 }
 
 /// Total realized daily output of a production assignment, as a single
@@ -2570,5 +2930,35 @@ fn rebalance_rooms(
         if !improved {
             break;
         }
+    }
+}
+
+#[cfg(test)]
+mod cap_tests {
+    use super::{factory_cap_factor, gold_base_capacity, SUSTAINED_AFK_DAYS};
+
+    #[test]
+    fn cap_factor_throttles_high_throughput_low_capacity_gold() {
+        // A high-productivity gold factory with no extra capacity overflows its buffer during
+        // AFK and is throttled below 1.0; piling on capacity (Vermeil-style) lifts it back to 1.0.
+        let lvl = 3;
+        let high_eff = 110.0;
+        let no_cap = factory_cap_factor(Some("F_GOLD"), lvl, high_eff, 0);
+        assert!(no_cap < 1.0, "a +110% gold factory with no capacity should stall, got {no_cap}");
+        let with_cap = factory_cap_factor(Some("F_GOLD"), lvl, high_eff, 40);
+        assert!(with_cap > no_cap, "adding capacity should reduce the stall ({no_cap} -> {with_cap})");
+        // Enough capacity to hold the whole AFK window's production -> no stall.
+        assert!((with_cap - 1.0).abs() < 1e-9 || with_cap >= no_cap);
+    }
+
+    #[test]
+    fn cap_factor_is_neutral_for_low_throughput_and_non_gold() {
+        // A modest gold factory doesn't fill its buffer in the window -> no throttle.
+        assert!((factory_cap_factor(Some("F_GOLD"), 3, 10.0, 0) - 1.0).abs() < 1e-9);
+        // EXP and trading don't stall in realistic AFK -> always 1.0.
+        assert_eq!(factory_cap_factor(Some("F_EXP"), 3, 300.0, 0), 1.0);
+        assert_eq!(factory_cap_factor(None, 3, 300.0, 0), 1.0);
+        // Sanity on the constants the model rests on.
+        assert!(SUSTAINED_AFK_DAYS > 0.0 && gold_base_capacity(3) > gold_base_capacity(1));
     }
 }
