@@ -89,6 +89,7 @@ services:
       - backend
     environment:
       BACKEND_URL: ${BACKEND_URL}
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL}
       INTERNAL_SERVICE_KEY: ${SERVICE_KEY}
     volumes:
       - ./frontend:/src
