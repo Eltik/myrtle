@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star } from "lucide-react";
+import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star, TrendingUp } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -25,7 +25,12 @@ function aggregate(items: ILevelUpCostItem[]): ILevelUpCostItem[] {
         if (prev) prev.count += it.count;
         else map.set(it.id, { ...it });
     }
-    return [...map.values()].sort((a, b) => b.count - a.count);
+    return [...map.values()].sort((a, b) => {
+        const aPrio = a.id === "4001" ? 0 : a.id === "5001" ? 1 : 2;
+        const bPrio = b.id === "4001" ? 0 : b.id === "5001" ? 1 : 2;
+        if (aPrio !== bPrio) return aPrio - bPrio;
+        return b.count - a.count;
+    });
 }
 
 function formatItemCount(count: number): string {
@@ -108,6 +113,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     const { data: materials } = useQuery(materialsQueryOptions());
 
     const elitePromotions = useMemo(() => operator.phases.map((p, idx) => ({ to: idx, cost: p.evolveCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
+    const levelingRows = useMemo(() => operator.phases.map((p, idx) => ({ phase: idx, maxLevel: p.maxLevel, cost: p.levelUpCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
     const allSkillRows = useMemo(() => operator.allSkillLevelUp.filter((l) => l.lvlUpCost?.length), [operator.allSkillLevelUp]);
     const masterySkills = useMemo(() => operator.skills.filter((s) => s.levelUpCostCond?.length), [operator.skills]);
     const validModules = useMemo(() => operator.modules.filter((m) => m.itemCost && Object.keys(m.itemCost).length > 0), [operator.modules]);
@@ -115,6 +121,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     const grandTotal = useMemo(() => {
         const all: ILevelUpCostItem[] = [
             ...operator.phases.flatMap((p) => p.evolveCost ?? []),
+            ...operator.phases.flatMap((p) => p.levelUpCost ?? []),
             ...operator.allSkillLevelUp.flatMap((l) => l.lvlUpCost ?? []),
             ...operator.skills.flatMap((s) => s.levelUpCostCond.flatMap((c) => c.levelUpCost ?? [])),
             ...operator.modules.flatMap((m) => (m.itemCost ? Object.values(m.itemCost).flat() : [])),
@@ -151,6 +158,14 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
             </div>
 
             <div className="flex flex-col gap-5">
+                {levelingRows.length > 0 && (
+                    <Section icon={<TrendingUp className="h-4 w-4" />} subtitle="Cost of leveling the operator to max level" title="Operator Level">
+                        {levelingRows.map((r) => (
+                            <CostRow hint={`Level 1 to ${r.maxLevel}`} items={r.cost} key={r.phase} label={`Elite ${r.phase}`} materials={materials} />
+                        ))}
+                    </Section>
+                )}
+
                 {elitePromotions.length > 0 && (
                     <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle="Materials required to advance promotion stages" title="Elite Promotion">
                         {elitePromotions.map((r) => (

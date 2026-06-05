@@ -1,6 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
 
-
 const isServer = import.meta.env.SSR;
 const SERVER_MAX_GC_TIME = 1_000;
 

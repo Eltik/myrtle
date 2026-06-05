@@ -114,6 +114,7 @@ export interface IOperatorPhase {
     maxLevel: number;
     attributesKeyFrames: IAttributeKeyFrame[];
     evolveCost: IEvolveCost[] | null;
+    levelUpCost: ILevelUpCostItem[] | null;
 }
 
 export interface ILevelUpCostItem {
