@@ -206,6 +206,8 @@ pub struct Phase {
     pub attributes_key_frames: Vec<AttributeKeyFrame>,
     #[serde(default)]
     pub evolve_cost: Option<Vec<EvolveCost>>,
+    #[serde(default)]
+    pub level_up_cost: Option<Vec<LevelUpCostItem>>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

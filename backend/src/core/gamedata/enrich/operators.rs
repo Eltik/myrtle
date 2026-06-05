@@ -6,6 +6,7 @@ use crate::core::gamedata::{
     types::{
         audio::OperatorAudio,
         building::BuildingDataFile,
+        consts::GameDataConst,
         handbook::Handbook,
         material::Materials,
         module::{BattleEquip, RawModules},
@@ -39,6 +40,7 @@ pub struct EnrichCtx<'a> {
     pub tmpl_groups: &'a HashMap<String, CharPatchInfo>,
     /// Operator-linked battle audio, keyed by char id (see `enrich::audio`).
     pub audio: &'a HashMap<String, Vec<OperatorAudio>>,
+    pub consts: &'a GameDataConst,
 }
 
 pub fn enrich_all_operators(
@@ -101,7 +103,8 @@ pub fn extract_all_drones(raw_operators: &HashMap<String, RawOperator>) -> HashM
 }
 
 fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
-    let enriched_phases = enrich_phases(&raw.phases, ctx);
+    let rarity = raw.rarity.to_star_int() as usize;
+    let enriched_phases = enrich_phases(&raw.phases, rarity, ctx);
     let enriched_all_skill_level_up = enrich_all_skill_level_up(&raw.all_skill_lvlup, ctx);
     let operator_drones = resolve_drones(id, raw, ctx.drones);
 
@@ -226,18 +229,116 @@ fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) 
     result
 }
 
-fn enrich_phases(phases: &[Phase], ctx: &EnrichCtx) -> Vec<Phase> {
+fn enrich_phases(phases: &[Phase], rarity: usize, ctx: &EnrichCtx) -> Vec<Phase> {
     phases
         .iter()
-        .map(|phase| Phase {
-            character_prefab_key: phase.character_prefab_key.clone(),
-            range_id: phase.range_id.clone(),
-            max_level: phase.max_level,
-            attributes_key_frames: phase.attributes_key_frames.clone(),
-            evolve_cost: phase
+        .enumerate()
+        .map(|(elite_index, phase)| {
+            let mut exp_needed = 0;
+            let mut lmd_needed = 0;
+
+            if let Some(exp_map) = ctx.consts.character_exp_map.get(elite_index) {
+                for lvl in 1..phase.max_level {
+                    if let Some(&exp) = exp_map.values.get((lvl - 1) as usize)
+                        && exp > 0
+                    {
+                        exp_needed += exp;
+                    }
+                }
+            }
+
+            if let Some(lmd_map) = ctx.consts.character_upgrade_cost_map.get(elite_index) {
+                for lvl in 1..phase.max_level {
+                    if let Some(&lmd) = lmd_map.values.get((lvl - 1) as usize)
+                        && lmd > 0
+                    {
+                        lmd_needed += lmd;
+                    }
+                }
+            }
+
+            let mut level_up_cost = Vec::new();
+            if lmd_needed > 0 {
+                let (icon_id, image) = resolve_item_icon("4001", ctx.materials, ctx.assets);
+                level_up_cost.push(LevelUpCostItem {
+                    id: "4001".to_owned(),
+                    count: lmd_needed,
+                    item_type: "GOLD".to_owned(),
+                    icon_id,
+                    image,
+                });
+            }
+            if exp_needed > 0 {
+                let (icon_id, image) = resolve_item_icon("5001", ctx.materials, ctx.assets);
+                level_up_cost.push(LevelUpCostItem {
+                    id: "5001".to_owned(),
+                    count: exp_needed,
+                    item_type: "EXP_PLAYER".to_owned(),
+                    icon_id,
+                    image,
+                });
+            }
+            let level_up_cost_opt = if level_up_cost.is_empty() {
+                None
+            } else {
+                Some(level_up_cost)
+            };
+            let mut evolve_cost = phase
                 .evolve_cost
                 .as_ref()
-                .map(|costs| costs.iter().map(|c| enrich_evolve_cost(c, ctx)).collect()),
+                .map(|costs| {
+                    costs
+                        .iter()
+                        .map(|c| enrich_evolve_cost(c, ctx))
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            if elite_index > 0 && rarity > 0 {
+                if let Some(gold_cost_entry) = ctx.consts.evolve_gold_cost.get(rarity - 1) {
+                    if let Some(&promo_lmd) = gold_cost_entry.values.get(elite_index - 1) {
+                        if promo_lmd > 0 {
+                            let (icon_id, image) =
+                                resolve_item_icon("4001", ctx.materials, ctx.assets);
+                            let lmd_cost_item = EvolveCost {
+                                id: "4001".to_owned(),
+                                count: promo_lmd,
+                                item_type: crate::core::gamedata::types::material::ItemType::Gold,
+                                icon_id,
+                                image,
+                            };
+                            evolve_cost.push(lmd_cost_item);
+                        }
+                    }
+                }
+            }
+
+            evolve_cost.sort_by(|a, b| {
+                let a_prio = match a.id.as_str() {
+                    "4001" => 0,
+                    "5001" => 1,
+                    _ => 2,
+                };
+                let b_prio = match b.id.as_str() {
+                    "4001" => 0,
+                    "5001" => 1,
+                    _ => 2,
+                };
+                a_prio.cmp(&b_prio)
+            });
+            let evolve_cost_opt = if evolve_cost.is_empty() {
+                None
+            } else {
+                Some(evolve_cost)
+            };
+
+            Phase {
+                character_prefab_key: phase.character_prefab_key.clone(),
+                range_id: phase.range_id.clone(),
+                max_level: phase.max_level,
+                attributes_key_frames: phase.attributes_key_frames.clone(),
+                evolve_cost: evolve_cost_opt,
+                level_up_cost: level_up_cost_opt,
+            }
         })
         .collect()
 }

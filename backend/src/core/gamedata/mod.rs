@@ -20,6 +20,7 @@ use crate::core::gamedata::{
         building::BuildingDataFile,
         campaign::{CampaignRotations, CampaignTableFile},
         climb_tower::ClimbTowerTableFile,
+        consts::GameDataConst,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
         gacha::GachaTableFile,
         handbook::HandbookTableFile,
@@ -103,6 +104,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
     let activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
+    let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
 
     let materials = item_file.into_materials();
     let raw_modules = equip_file.into_raw_modules();
@@ -165,6 +167,7 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
             building: &building_file,
             tmpl_groups: &tmpl_groups,
             audio: &operator_audio,
+            consts: &consts,
         },
     );
 
@@ -215,5 +218,6 @@ pub fn init_game_data(data_dir: &Path, assets_dir: &Path) -> Result<GameData, Da
         stage_universe,
         sandbox_universe,
         campaign_rotations,
+        consts,
     })
 }

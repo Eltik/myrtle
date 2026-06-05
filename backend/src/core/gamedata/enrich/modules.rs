@@ -102,7 +102,7 @@ fn convert_item_costs(
         costs
             .iter()
             .map(|(stage, items)| {
-                let converted = items
+                let mut converted: Vec<ModuleItemCost> = items
                     .iter()
                     .map(|item| {
                         let (icon_id, image) = resolve_item_icon(&item.id, materials, assets);
@@ -115,6 +115,21 @@ fn convert_item_costs(
                         }
                     })
                     .collect();
+
+                converted.sort_by(|a, b| {
+                    let a_prio = match a.id.as_str() {
+                        "4001" => 0,
+                        "5001" => 1,
+                        _ => 2,
+                    };
+                    let b_prio = match b.id.as_str() {
+                        "4001" => 0,
+                        "5001" => 1,
+                        _ => 2,
+                    };
+                    a_prio.cmp(&b_prio)
+                });
+
                 (stage.to_string(), converted)
             })
             .collect()
