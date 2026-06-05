@@ -376,7 +376,20 @@ pub fn build_registry(
         }
 
         let strategy = match buff.room_type.as_str() {
-            "WORKSHOP" | "HIRE" | "TRAINING" | "MEETING" => {
+            "MEETING" => {
+                // Clue-search speed. Most reception buffs carry it in `efficiency`, but several put
+                // (or raise) the % in the description: a time-ramping skill states a higher ceiling
+                // ("…by 2% per hour, up to a maximum of 30%" - Ines, which `efficiency` reports as
+                // its lower 20% starting value), and solo / Clue-Exchange skills leave `efficiency`
+                // 0 entirely (Caper's exchange skill, solo specialists). Credit the sustained
+                // ceiling first, then the `efficiency` field, then any plain description %.
+                let value = parse_reception_ceiling(&buff.description)
+                    .or_else(|| (buff.efficiency != 0).then(|| f64::from(buff.efficiency)))
+                    .or_else(|| parse_first_pct(&buff.description))
+                    .unwrap_or(0.0);
+                BuffResolutionStrategy::NonProduction { value }
+            }
+            "WORKSHOP" | "HIRE" | "TRAINING" => {
                 let effiency = if buff.efficiency == 0 {
                     // parse from description
                     0.0
@@ -988,6 +1001,14 @@ fn first_token(s: &str) -> String {
 /// Extract first percentage like "+25%" from description markup
 fn parse_first_pct(desc: &str) -> Option<f64> {
     RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
+}
+
+/// The sustained ceiling of a time-ramping reception skill ("…then by 2% per hour, up to a maximum
+/// of 30%") - the value it holds during continuous operation. `None` when the skill has no ramp.
+fn parse_reception_ceiling(desc: &str) -> Option<f64> {
+    // "maximum of" is ASCII, so the lowercased index is a valid byte offset into the original.
+    let idx = desc.to_lowercase().find("maximum of")?;
+    parse_first_pct_from(desc, idx)
 }
 
 /// First `<@cc.vup>+N%` efficiency at or after byte offset `start` - used to

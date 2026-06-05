@@ -255,7 +255,8 @@ function ShiftPoster({ rotation }: { rotation: IShiftRotation }) {
     return (
         <div className="flex flex-col gap-2.5">
             <p className={cn(TEXT_META, "text-muted-foreground")}>
-                Run three teams per room so each rests one shift. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove. Power plants swap every shift; the Control Center runs two on, one off.
+                Run your main team on shifts 1 &amp; 3 and rest it on the middle shift, where a backup covers - so operators recover instead of grinding all three. <span className="font-medium text-emerald-500/85">Green</span> = add to your preset; <span className="text-rose-500/85 line-through">red</span> = remove.
+                Power plants swap every shift; the Control Center runs two on, one off.
             </p>
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                 {rotation.shifts.map((shift) => (

@@ -169,6 +169,10 @@ pub struct OperatorBaseProfile {
     /// leading word of each of this operator's skill names (e.g. "rhine",
     /// "standardization"). Computed once here rather than in the hot inner loop.
     pub match_tags: Vec<String>,
+    /// Star rarity (1-6). Drives the Reception Room ambience bonus (6★ > 5★ > 4★).
+    pub rarity: i16,
+    /// Elite/promotion phase (0/1/2). Drives the Reception Room elite bonus (E2 > E1 > E0).
+    pub elite: i16,
 }
 
 impl OperatorBaseProfile {
@@ -176,6 +180,7 @@ impl OperatorBaseProfile {
         roster: &RosterEntry,
         building_char: &BuildingChar,
         faction_tags: Vec<String>,
+        rarity: i16,
         building_data: &crate::core::gamedata::types::building::BuildingDataFile,
     ) -> Self {
         let mut available_buffs = Vec::new();
@@ -200,6 +205,8 @@ impl OperatorBaseProfile {
             available_buffs,
             faction_tags,
             match_tags,
+            rarity,
+            elite: roster.elite,
         }
     }
 }

@@ -92,6 +92,23 @@ impl BaseFlows {
     }
 }
 
+/// LMD-equivalent value of a +`pct`% global productivity bonus applied to every room of
+/// `room_type` in a base with `room_count` such rooms. Puts Control-Center global buffs
+/// (factory gold productivity, trading order efficiency) on one comparable LMD scale so the
+/// optimizer can weigh a resource combo (Passion: factory + trading) against an ordinary CC
+/// fill on equal terms. Factory bonuses are valued at the gold rate - the combo's "Precious
+/// Metals" target and the dominant factory output; an EXP factory's bonus sits close enough
+/// (8000 vs 10000 LMD-equivalent/day) that one symmetric rate keeps the comparison fair
+/// without re-deriving the gold->trade coupling here. Unknown room types are worth 0.
+pub fn global_bonus_value(room_type: &str, room_count: usize, pct: f64) -> f64 {
+    let per_room_base = match room_type {
+        "MANUFACTURE" => FACTORY_GOLD_PER_DAY_BASE * GOLD_BAR_LMD,
+        "TRADING" => TRADING_GOLD_SOLD_PER_DAY_BASE * GOLD_BAR_LMD,
+        _ => return 0.0,
+    };
+    per_room_base * room_count as f64 * pct / 100.0
+}
+
 /// Per-room natural yield, for display.
 #[derive(Debug, Clone, Default)]
 pub struct RoomYield {

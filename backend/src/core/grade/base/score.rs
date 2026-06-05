@@ -85,15 +85,14 @@ fn build_operator_profiles(
         let building_char = game_data.building.chars.get(&entry.operator_id);
 
         if let Some(bc) = building_char {
-            let faction_tags = game_data
-                .operators
-                .get(&entry.operator_id)
-                .map(faction_tags_of)
-                .unwrap_or_default();
+            let static_op = game_data.operators.get(&entry.operator_id);
+            let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+            let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             profiles.push(OperatorBaseProfile::build(
                 entry,
                 bc,
                 faction_tags,
+                rarity,
                 &game_data.building,
             ));
         }
@@ -142,11 +141,15 @@ fn build_max_profiles(
 
             let faction_tags = faction_map.get(&bc.char_id).cloned().unwrap_or_default();
             let match_tags = compute_match_tags(&faction_tags, &available_buffs, building_data);
+            // The theoretical-max roster is everyone at E2-max; rarity isn't in building_data and
+            // doesn't affect the (binary) secondary-facility grade, so it's left unweighted here.
             OperatorBaseProfile {
                 char_id: bc.char_id.clone(),
                 available_buffs,
                 faction_tags,
                 match_tags,
+                rarity: 0,
+                elite: 2,
             }
         })
         .collect()
