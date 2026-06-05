@@ -3,10 +3,11 @@ import { useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
-import { userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
+import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { Hero } from "./impl/components/Hero";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
+import { EnemiesTab } from "./impl/components/tabs/Enemies/EnemiesTab";
 import { ItemsTab } from "./impl/components/tabs/Items/ItemsTab";
 import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
 import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
@@ -40,6 +41,7 @@ export function UserProfile() {
         ...userImprovementsQueryOptions(id),
         enabled: activeTab === "score",
     });
+    const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery(userEncounteredEnemiesQueryOptions(id));
     const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
     const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
 
@@ -49,8 +51,9 @@ export function UserProfile() {
             { id: "score" as TabId, label: "Score" },
             { id: "roster" as TabId, label: "Roster", count: data?.operator_count ?? roster?.length ?? undefined },
             { id: "inventory" as TabId, label: "Inventory", count: data?.item_count ?? inventory?.length ?? undefined },
+            { id: "enemies" as TabId, label: "Enemies", count: encounteredEnemies?.encounteredCount ?? undefined },
         ],
-        [data, roster, inventory],
+        [data, roster, inventory, encounteredEnemies],
     );
 
     if (isLoading) {
@@ -139,6 +142,7 @@ export function UserProfile() {
             <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
             {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
             {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
+            {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
             {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} uid={id} />}
             {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} />}
         </main>

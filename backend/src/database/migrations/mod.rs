@@ -52,6 +52,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v018_consolidate_placement_notes",
         include_str!("v018_consolidate_placement_notes.sql"),
     ),
+    (
+        "v019_user_enemy_progress",
+        include_str!("v019_user_enemy_progress.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

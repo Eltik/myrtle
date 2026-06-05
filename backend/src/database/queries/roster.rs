@@ -52,9 +52,10 @@ pub async fn sync_user_data(
     checkin: &[i16],
     supports: &serde_json::Value,
     nick_number: Option<&str>,
+    enemies: &serde_json::Value,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)"
+        "CALL sp_sync_user_data($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)"
     )
     .bind(uid)
     .bind(server_id)
@@ -78,6 +79,7 @@ pub async fn sync_user_data(
     .bind(checkin)
     .bind(supports)
     .bind(nick_number)
+    .bind(enemies)
     .execute(pool)
     .await?;
     Ok(())

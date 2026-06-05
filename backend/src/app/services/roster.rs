@@ -253,6 +253,10 @@ pub async fn refresh(
     let medals = extract_medals(&user.medal);
     let building = user.building.unwrap_or_default();
     let checkin: Vec<i16> = user.checkin.and_then(|c| c.history).unwrap_or_default();
+    let enemies = raw
+        .pointer("/user/dexNav/enemy/enemies")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!({}));
 
     roster::sync_user_data(
         &state.db,
@@ -278,6 +282,7 @@ pub async fn refresh(
         &checkin,
         &supports,
         nick_number,
+        &enemies,
     )
     .await?;
 
